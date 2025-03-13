@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_thirdparty_integrated_apps_not_allowed(Check):
+class entra_user_thirdparty_integrated_apps_not_allowed(Check):
     """Check if third-party integrated apps are not allowed for non-admin users in Entra.
 
     This check verifies that non-admin users are not allowed to create third-party apps.

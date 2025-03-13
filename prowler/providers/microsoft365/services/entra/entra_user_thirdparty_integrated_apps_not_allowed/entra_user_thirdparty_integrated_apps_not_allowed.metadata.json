@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_thirdparty_integrated_apps_not_allowed",
+  "CheckID": "entra_user_thirdparty_integrated_apps_not_allowed",
   "CheckTitle": "Ensure third party integrated applications are not allowed",
   "CheckType": [],
   "ServiceName": "entra",

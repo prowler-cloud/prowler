@@ -10,7 +10,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_thirdparty_integrated_apps_not_allowed:
+class Test_entra_user_thirdparty_integrated_apps_not_allowed:
     def test_entra_no_authorization_policy(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -21,17 +21,17 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed import (
-                entra_thirdparty_integrated_apps_not_allowed,
+            from prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed import (
+                entra_user_thirdparty_integrated_apps_not_allowed,
             )
 
             entra_client.authorization_policy = None
 
-            check = entra_thirdparty_integrated_apps_not_allowed()
+            check = entra_user_thirdparty_integrated_apps_not_allowed()
             result = check.execute()
             assert len(result) == 0
 
@@ -47,15 +47,15 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed.entra_client",
                 new=entra_client,
             ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 AuthorizationPolicy,
             )
-            from prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed import (
-                entra_thirdparty_integrated_apps_not_allowed,
+            from prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed import (
+                entra_user_thirdparty_integrated_apps_not_allowed,
             )
 
             role_permissions = DefaultUserRolePermissions(allowed_to_create_apps=False)
@@ -66,7 +66,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 default_user_role_permissions=role_permissions,
             )
 
-            check = entra_thirdparty_integrated_apps_not_allowed()
+            check = entra_user_thirdparty_integrated_apps_not_allowed()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -91,15 +91,15 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed.entra_client",
                 new=entra_client,
             ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 AuthorizationPolicy,
             )
-            from prowler.providers.microsoft365.services.entra.entra_thirdparty_integrated_apps_not_allowed.entra_thirdparty_integrated_apps_not_allowed import (
-                entra_thirdparty_integrated_apps_not_allowed,
+            from prowler.providers.microsoft365.services.entra.entra_user_thirdparty_integrated_apps_not_allowed.entra_user_thirdparty_integrated_apps_not_allowed import (
+                entra_user_thirdparty_integrated_apps_not_allowed,
             )
 
             role_permissions = DefaultUserRolePermissions(allowed_to_create_apps=True)
@@ -110,7 +110,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 default_user_role_permissions=role_permissions,
             )
 
-            check = entra_thirdparty_integrated_apps_not_allowed()
+            check = entra_user_thirdparty_integrated_apps_not_allowed()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
