@@ -4,6 +4,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     GrantControlOperator,
+    SignInFrequencyInterval,
 )
 
 
@@ -50,10 +51,15 @@ class entra_managed_device_required_for_authentication(Check):
                 not in policy.grant_controls.built_in_controls
                 or ConditionalAccessGrantControl.MFA
                 not in policy.grant_controls.built_in_controls
+                or policy.grant_controls.operator != GrantControlOperator.OR
             ):
                 continue
 
-            if policy.grant_controls.operator == GrantControlOperator.OR:
+            if (
+                policy.session_controls.sign_in_frequency.is_enabled
+                and policy.session_controls.sign_in_frequency.interval
+                == SignInFrequencyInterval.EVERY_TIME
+            ):
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
                     resource=policy,
