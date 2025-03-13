@@ -100,8 +100,8 @@ export const authConfig = {
       },
     }),
     Credentials({
-      id: "google-oauth",
-      name: "google-oauth",
+      id: "social-oauth",
+      name: "social-oauth",
       credentials: {
         accessToken: { label: "Access Token", type: "text" },
         refreshToken: { label: "Refresh Token", type: "text" },

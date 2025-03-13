@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const response = await fetch(`${keyServer}/tokens/google`, {
+    const response = await fetch(`${keyServer}/tokens/github`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Error in Google callback:", error);
+    console.error("Error in Github callback:", error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 },

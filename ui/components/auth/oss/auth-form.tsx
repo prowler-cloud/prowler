@@ -18,7 +18,7 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { getGoogleAuthUrl } from "@/lib/helper";
+import { getAuthUrl } from "@/lib/helper";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
@@ -301,7 +301,7 @@ export const AuthForm = ({
                   }
                   variant="bordered"
                   as="a"
-                  href={getGoogleAuthUrl()}
+                  href={getAuthUrl("google")}
                 >
                   Continue with Google
                 </Button>
@@ -314,6 +314,8 @@ export const AuthForm = ({
                     />
                   }
                   variant="bordered"
+                  as="a"
+                  href={getAuthUrl("github")}
                 >
                   Continue with Github
                 </Button>
