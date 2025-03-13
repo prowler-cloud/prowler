@@ -16,6 +16,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Added a handled response in case local files are missing [(#7183)](https://github.com/prowler-cloud/prowler/pull/7183).
+- Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
 
 ---
 

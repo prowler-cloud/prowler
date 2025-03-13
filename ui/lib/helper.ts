@@ -1,5 +1,38 @@
 import { getTask } from "@/actions/task";
-import { MetaDataProps, PermissionInfo } from "@/types";
+import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
+
+export const getAuthUrl = (provider: AuthSocialProvider) => {
+  const config = {
+    google: {
+      baseUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+      params: {
+        redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URI,
+        prompt: "consent",
+        response_type: "code",
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        scope: "openid email profile",
+        access_type: "offline",
+      },
+    },
+    github: {
+      baseUrl: "https://github.com/login/oauth/authorize",
+      params: {
+        client_id: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID,
+        redirect_uri: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK_URL,
+        scope: "user:email",
+      },
+    },
+  };
+
+  const { baseUrl, params } = config[provider];
+  const url = new URL(baseUrl);
+
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value || "");
+  });
+
+  return url.toString();
+};
 
 export async function checkTaskStatus(
   taskId: string,
