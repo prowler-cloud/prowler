@@ -51,15 +51,6 @@ class Migration(migrations.Migration):
                 ("configuration", models.JSONField(default=dict)),
                 ("_credentials", models.BinaryField(db_column="credentials")),
                 (
-                    "providers",
-                    models.ManyToManyField(
-                        related_name="integrations",
-                        through="api.IntegrationProviderRelationship",
-                        to="api.provider",
-                        blank=True,
-                    ),
-                ),
-                (
                     "tenant",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
@@ -125,6 +116,16 @@ class Migration(migrations.Migration):
                 "tenant_id",
                 name="rls_on_integrationproviderrelationship",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddField(
+            model_name="integration",
+            name="providers",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="integrations",
+                through="api.IntegrationProviderRelationship",
+                to="api.provider",
             ),
         ),
     ]
