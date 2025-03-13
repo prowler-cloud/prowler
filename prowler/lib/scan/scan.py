@@ -219,10 +219,6 @@ class Scan:
         return self._duration
 
     @property
-    def status(self) -> list[str]:
-        return self._status
-
-    @property
     def bulk_checks_metadata(self) -> dict[str, CheckMetadata]:
         return self._bulk_checks_metadata
 
@@ -261,7 +257,7 @@ class Scan:
             # Initialize the Audit Metadata
             # TODO: this should be done in the provider class
             # Refactor(Core): Audit manager?
-            self.provider.audit_metadata = Audit_Metadata(
+            self._provider.audit_metadata = Audit_Metadata(
                 services_scanned=0,
                 expected_checks=checks_to_execute,
                 completed_checks=0,
@@ -276,36 +272,36 @@ class Scan:
                     service = get_service_name_from_check_name(check_name)
                     try:
                         # Import check module
-                        check_module_path = f"prowler.providers.{self.provider.type}.services.{service}.{check_name}.{check_name}"
+                        check_module_path = f"prowler.providers.{self._provider.type}.services.{service}.{check_name}.{check_name}"
                         lib = import_check(check_module_path)
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()
                     except ModuleNotFoundError:
                         logger.error(
-                            f"Check '{check_name}' was not found for the {self.provider.type.upper()} provider"
+                            f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
                         )
                         continue
                     # Execute the check
                     check_findings = execute(
                         check,
-                        self.provider,
+                        self._provider,
                         custom_checks_metadata,
                         output_options=None,
                     )
 
                     # Filter the findings by the status
-                    if self.status:
+                    if self._status:
                         for finding in check_findings:
-                            if finding.status not in self.status:
+                            if finding.status not in self._status:
                                 check_findings.remove(finding)
 
                     # Remove the executed check
-                    self.service_checks_to_execute[service].remove(check_name)
-                    if len(self.service_checks_to_execute[service]) == 0:
+                    self._service_checks_to_execute[service].remove(check_name)
+                    if len(self._service_checks_to_execute[service]) == 0:
                         self._service_checks_to_execute.pop(service, None)
                     # Add the completed check
-                    if service not in self.service_checks_completed:
+                    if service not in self._service_checks_completed:
                         self._service_checks_completed[service] = set()
                     self._service_checks_completed[service].add(check_name)
                     self._number_of_checks_completed += 1
@@ -314,7 +310,7 @@ class Scan:
                     # This metadata needs to get to the services not within the provider
                     # since it is present in the Scan class
                     self._provider.audit_metadata = update_audit_metadata(
-                        self.provider.audit_metadata,
+                        self._provider.audit_metadata,
                         self.get_completed_services(),
                         self.get_completed_checks(),
                     )
@@ -336,7 +332,7 @@ class Scan:
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
-                        f"Check '{check_name}' was not found for the {self.provider.type.upper()} provider"
+                        f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
                     )
                 except Exception as error:
                     logger.error(
@@ -356,7 +352,7 @@ class Scan:
         Example:
             get_completed_services() -> {"ec2", "s3"}
         """
-        return self.service_checks_completed.keys()
+        return self._service_checks_completed.keys()
 
     def get_completed_checks(self) -> set[str]:
         """
@@ -366,7 +362,7 @@ class Scan:
             get_completed_checks() -> {"ec2_instance_public_ip", "s3_bucket_public"}
         """
         completed_checks = set()
-        for checks in self.service_checks_completed.values():
+        for checks in self._service_checks_completed.values():
             completed_checks.update(checks)
         return completed_checks
 
