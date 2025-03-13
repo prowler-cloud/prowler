@@ -5,8 +5,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ---
 
 ## [v1.6.0] (Prowler UNRELEASED)
-
 ### Added
+- Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
 - Support for read only replicas in the database [(#7210)](https://github.com/prowler-cloud/prowler/pull/7210).
 
 ---
@@ -29,6 +29,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Daily scheduled scan instances are now created beforehand with `SCHEDULED` state [(#6700)](https://github.com/prowler-cloud/prowler/pull/6700).
 - Findings endpoints now require at least one date filter [(#6800)](https://github.com/prowler-cloud/prowler/pull/6800).
 - Findings metadata endpoint received a performance improvement [(#6863)](https://github.com/prowler-cloud/prowler/pull/6863).
-- Increase the allowed length of the provider UID for Kubernetes providers [(#6869)](https://github.com/prowler-cloud/prowler/pull/6869).
+- Increased the allowed length of the provider UID for Kubernetes providers [(#6869)](https://github.com/prowler-cloud/prowler/pull/6869).
 
 ---

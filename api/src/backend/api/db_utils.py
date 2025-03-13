@@ -318,3 +318,15 @@ class InvitationStateEnum(EnumType):
 class InvitationStateEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("invitation_state", *args, **kwargs)
+
+
+# Postgres enum definition for Integration type
+
+
+class IntegrationTypeEnum(EnumType):
+    enum_type_name = "integration_type"
+
+
+class IntegrationTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("integration_type", *args, **kwargs)
