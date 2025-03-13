@@ -10,6 +10,7 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
+    JiraBasicAuthError,
     JiraCreateIssueError,
     JiraGetAccessTokenError,
     JiraGetAuthResponseError,
@@ -84,6 +85,7 @@ class Jira:
         - JiraCreateIssueError: Failed to create an issue in Jira
         - JiraSendFindingsResponseError: Failed to send the findings to Jira
         - JiraTestConnectionError: Failed to test the connection
+        - JiraBasicAuthError: Failed to authenticate using basic auth
 
     Usage:
         jira = Jira(
@@ -98,6 +100,10 @@ class Jira:
     _client_id: str = None
     _client_secret: str = None
     _access_token: str = None
+    _client_mail: str = None
+    _api_token: str = None
+    _site_name: str = None
+    _using_basic_auth: bool = False
     _refresh_token: str = None
     _expiration_date: int = None
     _cloud_id: str = None
@@ -120,14 +126,25 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
+        client_mail: str = None,
+        api_token: str = None,
+        site_name: str = None,
     ):
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
+        self._client_mail = client_mail
+        self._api_token = api_token
+        self._site_name = site_name
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
-        auth_url = self.auth_code_url()
-        authorization_code = self.input_authorization_code(auth_url)
-        self.get_auth(authorization_code)
+        # If the client mail, api token and site name are present, use basic auth
+        if client_mail and api_token and site_name:
+            self._using_basic_auth = True
+            self.get_basic_auth()
+        else:
+            auth_url = self.auth_code_url()
+            authorization_code = self.input_authorization_code(auth_url)
+            self.get_auth(authorization_code)
 
     @property
     def redirect_uri(self):
@@ -156,6 +173,10 @@ class Jira:
     @property
     def scopes(self):
         return self._scopes
+
+    @property
+    def using_basic_auth(self):
+        return self._using_basic_auth
 
     def get_params(self, state_encoded):
         return {
@@ -208,6 +229,28 @@ class Jira:
             - datetime: The timestamp with the seconds added
         """
         return (datetime.now() + timedelta(seconds=seconds)).isoformat()
+
+    def get_basic_auth(self) -> None:
+        """Get the access token using the mail and api token
+
+        Returns:
+            - None
+        """
+        try:
+            user_string = f"{self._client_mail}:{self._api_token}"
+            self._access_token = base64.b64encode(user_string.encode("utf-8")).decode(
+                "utf-8"
+            )
+            self._cloud_id = self.get_cloud_id(
+                self._access_token, site_name=self._site_name
+            )
+        except Exception as e:
+            message_error = f"Failed to get auth using basic auth: {e}"
+            logger.error(message_error)
+            raise JiraBasicAuthError(
+                message=message_error,
+                file=os.path.basename(__file__),
+            )
 
     def get_auth(self, auth_code: str = None) -> None:
         """Get the access token and refresh token
@@ -269,11 +312,12 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_cloud_id(self, access_token: str = None) -> str:
+    def get_cloud_id(self, access_token: str = None, site_name: str = None) -> str:
         """Get the cloud ID from Jira
 
         Args:
             - access_token: The access token from Jira
+            - site_name: The site name from Jira
 
         Returns:
             - str: The cloud ID
@@ -284,8 +328,17 @@ class Jira:
             - JiraGetCloudIDError: Failed to get the cloud ID from Jira
         """
         try:
-            headers = {"Authorization": f"Bearer {access_token}"}
-            response = requests.get(self.API_TOKEN_URL, headers=headers)
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+                response = requests.get(
+                    f"https://{site_name}.atlassian.net/_edge/tenant_info",
+                    headers=headers,
+                )
+                response = response.json()
+                return response.get("cloudId")
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                response = requests.get(self.API_TOKEN_URL, headers=headers)
 
             if response.status_code == 200:
                 resources = response.json()
@@ -326,6 +379,10 @@ class Jira:
             - JiraGetAccessTokenError: Failed to get the access token
         """
         try:
+            # If using basic auth, return the access token
+            if self._using_basic_auth:
+                return self._access_token
+
             if self.auth_expiration and datetime.now() < datetime.fromisoformat(
                 self.auth_expiration
             ):
@@ -392,6 +449,9 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
+        client_mail: str = None,
+        api_token: str = None,
+        site_name: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """Test the connection to Jira
@@ -400,6 +460,9 @@ class Jira:
             - redirect_uri: The redirect URI
             - client_id: The client ID
             - client_secret: The client secret
+            - client_mail: The client mail
+            - api_token: The API token
+            - site_name: The site name
             - raise_on_exception: Whether to raise an exception or not
 
         Returns:
@@ -417,13 +480,20 @@ class Jira:
                 redirect_uri=redirect_uri,
                 client_id=client_id,
                 client_secret=client_secret,
+                client_mail=client_mail,
+                api_token=api_token,
+                site_name=site_name,
             )
             access_token = jira.get_access_token()
 
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            headers = {"Authorization": f"Bearer {access_token}"}
+            if jira.using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{jira.cloud_id}/rest/api/3/myself",
                 headers=headers,
@@ -461,6 +531,13 @@ class Jira:
             if raise_on_exception:
                 raise auth_error
             return Connection(error=auth_error)
+        except JiraBasicAuthError as basic_auth_error:
+            logger.error(
+                f"{basic_auth_error.__class__.__name__}[{basic_auth_error.__traceback__.tb_lineno}]: {basic_auth_error}"
+            )
+            if raise_on_exception:
+                raise basic_auth_error
+            return Connection(error=basic_auth_error)
         except Exception as error:
             logger.error(f"Failed to test connection: {error}")
             if raise_on_exception:
@@ -489,7 +566,11 @@ class Jira:
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            headers = {"Authorization": f"Bearer {access_token}"}
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
@@ -500,7 +581,7 @@ class Jira:
                 projects = {
                     project["key"]: project["name"] for project in response.json()
                 }
-                if len(projects) == 0:
+                if projects == {}:  # If no projects are found
                     logger.error("No projects found")
                     raise JiraNoProjectsError(
                         message="No projects found in Jira",
@@ -555,7 +636,11 @@ class Jira:
                     file=os.path.basename(__file__),
                 )
 
-            headers = {"Authorization": f"Bearer {access_token}"}
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
                 headers=headers,
@@ -1109,10 +1194,17 @@ class Jira:
                 raise JiraInvalidIssueTypeError(
                     message="The issue type is invalid", file=os.path.basename(__file__)
                 )
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-            }
+
+            if self._using_basic_auth:
+                headers = {
+                    "Authorization": f"Basic {access_token}",
+                    "Content-Type": "application/json",
+                }
+            else:
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                }
 
             for finding in findings:
                 status_color = self.get_color_from_status(finding.status.value)
