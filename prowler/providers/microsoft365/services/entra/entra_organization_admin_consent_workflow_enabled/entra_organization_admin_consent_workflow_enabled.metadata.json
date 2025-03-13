@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_admin_consent_workflow_enabled",
+  "CheckID": "entra_organization_admin_consent_workflow_enabled",
   "CheckTitle": "Ensure the admin consent workflow is enabled.",
   "CheckType": [],
   "ServiceName": "entra",
