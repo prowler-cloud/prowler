@@ -6,10 +6,10 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
     google: {
       baseUrl: "https://accounts.google.com/o/oauth2/v2/auth",
       params: {
-        redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URI,
+        redirect_uri: process.env.SOCIAL_GOOGLE_OAUTH_CALLBACK_URL,
         prompt: "consent",
         response_type: "code",
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        client_id: process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID,
         scope: "openid email profile",
         access_type: "offline",
       },
@@ -17,8 +17,8 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
     github: {
       baseUrl: "https://github.com/login/oauth/authorize",
       params: {
-        client_id: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID,
-        redirect_uri: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK_URL,
+        client_id: process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID,
+        redirect_uri: process.env.SOCIAL_GITHUB_OAUTH_CALLBACK_URL,
         scope: "user:email",
       },
     },
