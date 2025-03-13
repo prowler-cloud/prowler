@@ -1,6 +1,7 @@
 import glob
 import os
 
+import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
@@ -1280,7 +1281,14 @@ class ScanViewSet(BaseRLSViewSet):
             filename = os.path.basename(output_location.split("/")[-1])
         else:
             zip_files = glob.glob(output_location)
-            file_path = zip_files[0]
+            try:
+                file_path = zip_files[0]
+            except IndexError as e:
+                sentry_sdk.capture_exception(e)
+                return Response(
+                    {"detail": "The scan has no reports."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             with open(file_path, "rb") as f:
                 file_content = f.read()
             filename = os.path.basename(file_path)
