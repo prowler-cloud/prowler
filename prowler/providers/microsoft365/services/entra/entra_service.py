@@ -178,6 +178,14 @@ class Entra(Microsoft365Service):
                                 [],
                             )
                         ],
+                        sign_in_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "sign_in_risk_levels",
+                                [],
+                            )
+                        ],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -347,6 +355,7 @@ class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     user_risk_levels: List[RiskLevel] = []
+    sign_in_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
