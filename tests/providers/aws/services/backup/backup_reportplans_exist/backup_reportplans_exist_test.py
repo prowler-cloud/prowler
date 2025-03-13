@@ -16,12 +16,15 @@ class Test_backup_reportplans_exist:
         backup_client = mock.MagicMock
         backup_client.region = AWS_REGION
         backup_client.backup_plans = []
-        with mock.patch(
-            "prowler.providers.aws.services.backup.backup_service.Backup",
-            new=backup_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
-            new=backup_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_service.Backup",
+                new=backup_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
+                new=backup_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist import (
@@ -59,12 +62,15 @@ class Test_backup_reportplans_exist:
             )
         ]
         backup_client.backup_report_plans = []
-        with mock.patch(
-            "prowler.providers.aws.services.backup.backup_service.Backup",
-            new=backup_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
-            new=backup_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_service.Backup",
+                new=backup_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
+                new=backup_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist import (
@@ -121,12 +127,15 @@ class Test_backup_reportplans_exist:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.backup.backup_service.Backup",
-            new=backup_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
-            new=backup_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_service.Backup",
+                new=backup_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist.backup_client",
+                new=backup_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_reportplans_exist.backup_reportplans_exist import (

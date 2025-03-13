@@ -27,7 +27,7 @@ export const filterScans = [
   },
   {
     key: "trigger",
-    labelCheckboxGroup: "Schedule",
+    labelCheckboxGroup: "Trigger",
     values: ["scheduled", "manual"],
   },
   // Add more filter categories as needed

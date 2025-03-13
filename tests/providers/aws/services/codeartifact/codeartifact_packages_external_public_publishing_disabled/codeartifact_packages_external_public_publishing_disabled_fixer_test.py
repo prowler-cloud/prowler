@@ -47,12 +47,15 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
         ):
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
-                new=CodeArtifact(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
+                    new=CodeArtifact(aws_provider),
+                ),
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled_fixer import (
@@ -70,12 +73,15 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
-                new=CodeArtifact(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
+                    new=CodeArtifact(aws_provider),
+                ),
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled_fixer import (
