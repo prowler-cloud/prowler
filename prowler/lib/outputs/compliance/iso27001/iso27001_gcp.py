@@ -13,7 +13,7 @@ class GCPISO27001(ComplianceOutput):
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into AWS ENS compliance format.
+        - transform: Transforms findings into GCP ISO 27001 compliance format.
     """
 
     def transform(

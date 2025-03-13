@@ -1,19 +1,19 @@
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.iso27001.models import AzureISO27001Model
+from prowler.lib.outputs.compliance.iso27001.models import KubernetesISO27001Model
 from prowler.lib.outputs.finding import Finding
 
 
-class AzureISO27001(ComplianceOutput):
+class KubernetesISO27001(ComplianceOutput):
     """
-    This class represents the Azure ISO 27001 compliance output.
+    This class represents the Kubernetes ISO 27001 compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Azure ISO 27001 compliance format.
+        - transform: Transforms findings into Kubernetes ISO 27001 compliance format.
     """
 
     def transform(
@@ -23,7 +23,7 @@ class AzureISO27001(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Azure ISO 27001 compliance format.
+        Transforms a list of findings into Kubernetes ISO 27001 compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -39,11 +39,11 @@ class AzureISO27001(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = AzureISO27001Model(
+                        compliance_row = KubernetesISO27001Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            SubscriptionId=finding.account_uid,
-                            Location=finding.region,
+                            Context=finding.account_name,
+                            Namespace=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
@@ -64,11 +64,11 @@ class AzureISO27001(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = AzureISO27001Model(
+                    compliance_row = KubernetesISO27001Model(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        SubscriptionId="",
-                        Location="",
+                        Context="",
+                        Namespace="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
