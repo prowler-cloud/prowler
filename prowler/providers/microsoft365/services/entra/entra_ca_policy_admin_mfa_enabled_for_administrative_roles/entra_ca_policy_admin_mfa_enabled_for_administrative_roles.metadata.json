@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_admin_mfa_enabled_for_administrative_roles",
+  "CheckID": "entra_ca_policy_admin_mfa_enabled_for_administrative_roles",
   "CheckTitle": "Ensure multifactor authentication is enabled for all users in administrative roles.",
   "CheckType": [],
   "ServiceName": "entra",
