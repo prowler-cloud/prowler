@@ -6,7 +6,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_password_hash_sync_enabled:
+class Test_entra_organization_password_hash_sync_enabled:
     def test_password_hash_sync_enabled(self):
         entra_client = mock.MagicMock()
 
@@ -16,12 +16,12 @@ class Test_entra_password_hash_sync_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
-                entra_password_hash_sync_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled import (
+                entra_organization_password_hash_sync_enabled,
             )
 
             org = Organization(
@@ -31,7 +31,7 @@ class Test_entra_password_hash_sync_enabled:
             )
             entra_client.organizations = [org]
 
-            check = entra_password_hash_sync_enabled()
+            check = entra_organization_password_hash_sync_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -54,12 +54,12 @@ class Test_entra_password_hash_sync_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
-                entra_password_hash_sync_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled import (
+                entra_organization_password_hash_sync_enabled,
             )
 
             org1 = Organization(
@@ -74,7 +74,7 @@ class Test_entra_password_hash_sync_enabled:
             )
             entra_client.organizations = [org1, org2]
 
-            check = entra_password_hash_sync_enabled()
+            check = entra_organization_password_hash_sync_enabled()
             result = check.execute()
 
             assert len(result) == 2
@@ -106,12 +106,12 @@ class Test_entra_password_hash_sync_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
-                entra_password_hash_sync_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled import (
+                entra_organization_password_hash_sync_enabled,
             )
 
             org = Organization(
@@ -121,7 +121,7 @@ class Test_entra_password_hash_sync_enabled:
             )
             entra_client.organizations = [org]
 
-            check = entra_password_hash_sync_enabled()
+            check = entra_organization_password_hash_sync_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -145,15 +145,15 @@ class Test_entra_password_hash_sync_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
-                entra_password_hash_sync_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_organization_password_hash_sync_enabled.entra_organization_password_hash_sync_enabled import (
+                entra_organization_password_hash_sync_enabled,
             )
 
-            check = entra_password_hash_sync_enabled()
+            check = entra_organization_password_hash_sync_enabled()
             result = check.execute()
 
             assert len(result) == 0

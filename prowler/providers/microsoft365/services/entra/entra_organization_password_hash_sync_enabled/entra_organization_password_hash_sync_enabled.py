@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_password_hash_sync_enabled(Check):
+class entra_organization_password_hash_sync_enabled(Check):
     """
     Check if password hash synchronization is enabled for hybrid Microsoft Entra deployments.
 
