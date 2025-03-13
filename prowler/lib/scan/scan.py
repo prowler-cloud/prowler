@@ -1,4 +1,5 @@
 import datetime
+from types import SimpleNamespace
 from typing import Generator
 
 from prowler.lib.check.check import (
@@ -38,6 +39,8 @@ class Scan:
     _progress: float = 0.0
     _duration: int = 0
     _status: list[str] = None
+    _bulk_checks_metadata: dict[str, CheckMetadata]
+    _bulk_compliance_frameworks: dict
 
     def __init__(
         self,
@@ -88,18 +91,18 @@ class Scan:
                 raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
         # Load bulk compliance frameworks
-        bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
+        self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
 
         # Get bulk checks metadata for the provider
-        bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+        self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
         # Complete checks metadata with the compliance framework specification
-        bulk_checks_metadata = update_checks_metadata_with_compliance(
-            bulk_compliance_frameworks, bulk_checks_metadata
+        self._bulk_checks_metadata = update_checks_metadata_with_compliance(
+            self._bulk_compliance_frameworks, self._bulk_checks_metadata
         )
 
         # Create a list of valid categories
         valid_categories = set()
-        for check, metadata in bulk_checks_metadata.items():
+        for check, metadata in self._bulk_checks_metadata.items():
             for category in metadata.Categories:
                 if category not in valid_categories:
                     valid_categories.add(category)
@@ -107,7 +110,7 @@ class Scan:
         # Validate checks
         if checks:
             for check in checks:
-                if check not in bulk_checks_metadata.keys():
+                if check not in self._bulk_checks_metadata.keys():
                     raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
 
         # Validate services
@@ -121,7 +124,7 @@ class Scan:
         # Validate compliances
         if compliances:
             for compliance in compliances:
-                if compliance not in bulk_compliance_frameworks.keys():
+                if compliance not in self._bulk_compliance_frameworks.keys():
                     raise ScanInvalidComplianceFrameworkError(
                         f"Invalid compliance provided: {compliance}."
                     )
@@ -147,8 +150,8 @@ class Scan:
         # Load checks to execute
         self._checks_to_execute = sorted(
             load_checks_to_execute(
-                bulk_checks_metadata=bulk_checks_metadata,
-                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                bulk_checks_metadata=self._bulk_checks_metadata,
+                bulk_compliance_frameworks=self._bulk_compliance_frameworks,
                 check_list=checks,
                 service_list=services,
                 compliance_frameworks=compliances,
@@ -215,6 +218,18 @@ class Scan:
     def duration(self) -> int:
         return self._duration
 
+    @property
+    def status(self) -> list[str]:
+        return self._status
+
+    @property
+    def bulk_checks_metadata(self) -> dict[str, CheckMetadata]:
+        return self._bulk_checks_metadata
+
+    @property
+    def bulk_compliance_frameworks(self) -> dict[str, CheckMetadata]:
+        return self._bulk_compliance_frameworks
+
     def scan(
         self,
         custom_checks_metadata: dict = None,
@@ -234,25 +249,24 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
-            # Load bulk compliance frameworks
-            bulk_compliance_frameworks = Compliance.get_bulk(self.provider.type)
+            if self.status:
+                arguments_status = self.status
+            else:
+                arguments_status = ["PASS", "FAIL", "MANUAL", "MUTED"]
 
-            # Get bulk checks metadata for the provider
-            bulk_checks_metadata = CheckMetadata.get_bulk(self.provider.type)
-            # Complete checks metadata with the compliance framework specification
-            bulk_checks_metadata = update_checks_metadata_with_compliance(
-                bulk_compliance_frameworks, bulk_checks_metadata
-            )
+            # Using SimpleNamespace to create an object with the status, as it is the only argument needed
+            arguments = SimpleNamespace(status=arguments_status)
 
             output_options = ProviderOutputOptions(
-                bulk_checks_metadata=bulk_checks_metadata,
+                arguments=arguments,
+                bulk_checks_metadata=self.bulk_checks_metadata,
             )
 
             checks_to_execute = self.checks_to_execute
             # Initialize the Audit Metadata
             # TODO: this should be done in the provider class
             # Refactor(Core): Audit manager?
-            self._provider.audit_metadata = Audit_Metadata(
+            self.provider.audit_metadata = Audit_Metadata(
                 services_scanned=0,
                 expected_checks=checks_to_execute,
                 completed_checks=0,
@@ -267,36 +281,36 @@ class Scan:
                     service = get_service_name_from_check_name(check_name)
                     try:
                         # Import check module
-                        check_module_path = f"prowler.providers.{self._provider.type}.services.{service}.{check_name}.{check_name}"
+                        check_module_path = f"prowler.providers.{self.provider.type}.services.{service}.{check_name}.{check_name}"
                         lib = import_check(check_module_path)
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()
                     except ModuleNotFoundError:
                         logger.error(
-                            f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
+                            f"Check '{check_name}' was not found for the {self.provider.type.upper()} provider"
                         )
                         continue
                     # Execute the check
                     check_findings = execute(
                         check,
-                        self._provider,
+                        self.provider,
                         custom_checks_metadata,
-                        output_options=None,
+                        output_options=output_options,
                     )
 
                     # Filter the findings by the status
-                    if self._status:
+                    if self.status:
                         for finding in check_findings:
-                            if finding.status not in self._status:
+                            if finding.status not in self.status:
                                 check_findings.remove(finding)
 
                     # Remove the executed check
-                    self._service_checks_to_execute[service].remove(check_name)
-                    if len(self._service_checks_to_execute[service]) == 0:
+                    self.service_checks_to_execute[service].remove(check_name)
+                    if len(self.service_checks_to_execute[service]) == 0:
                         self._service_checks_to_execute.pop(service, None)
                     # Add the completed check
-                    if service not in self._service_checks_completed:
+                    if service not in self.service_checks_completed:
                         self._service_checks_completed[service] = set()
                     self._service_checks_completed[service].add(check_name)
                     self._number_of_checks_completed += 1
@@ -305,7 +319,7 @@ class Scan:
                     # This metadata needs to get to the services not within the provider
                     # since it is present in the Scan class
                     self._provider.audit_metadata = update_audit_metadata(
-                        self._provider.audit_metadata,
+                        self.provider.audit_metadata,
                         self.get_completed_services(),
                         self.get_completed_checks(),
                     )
@@ -315,7 +329,9 @@ class Scan:
                         try:
                             findings.append(
                                 Finding.generate_output(
-                                    self._provider, finding, output_options=None
+                                    self.provider,
+                                    finding,
+                                    output_options=output_options,
                                 )
                             )
                         except Exception:
@@ -325,7 +341,7 @@ class Scan:
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
-                        f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
+                        f"Check '{check_name}' was not found for the {self.provider.type.upper()} provider"
                     )
                 except Exception as error:
                     logger.error(
@@ -345,7 +361,7 @@ class Scan:
         Example:
             get_completed_services() -> {"ec2", "s3"}
         """
-        return self._service_checks_completed.keys()
+        return self.service_checks_completed.keys()
 
     def get_completed_checks(self) -> set[str]:
         """
@@ -355,7 +371,7 @@ class Scan:
             get_completed_checks() -> {"ec2_instance_public_ip", "s3_bucket_public"}
         """
         completed_checks = set()
-        for checks in self._service_checks_completed.values():
+        for checks in self.service_checks_completed.values():
             completed_checks.update(checks)
         return completed_checks
 
