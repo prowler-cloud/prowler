@@ -1,3 +1,4 @@
+from pathlib import Path
 from shutil import rmtree
 
 from celery import chain, shared_task
@@ -264,10 +265,14 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     uploaded = _upload_to_s3(tenant_id, output_directory, scan_id)
 
     if uploaded:
+        # Remove the local files after upload
+        try:
+            rmtree(Path(output_directory).parent, ignore_errors=True)
+        except FileNotFoundError as e:
+            logger.error(f"Error deleting output files: {e}")
+
         output_directory = uploaded
         uploaded = True
-        # Remove the local files after upload
-        rmtree(DJANGO_TMP_OUTPUT_DIRECTORY, ignore_errors=True)
     else:
         uploaded = False
 
