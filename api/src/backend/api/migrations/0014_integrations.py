@@ -53,7 +53,10 @@ class Migration(migrations.Migration):
                 (
                     "providers",
                     models.ManyToManyField(
-                        related_name="integrations", to="api.provider", blank=True
+                        related_name="integrations",
+                        through="api.IntegrationProviderRelationship",
+                        to="api.provider",
+                        blank=True,
                     ),
                 ),
                 (
