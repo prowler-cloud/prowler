@@ -21,7 +21,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_admin_mfa_enabled_for_administrative_roles:
+class Test_entra_capolicy_administrative_roles_have_mfa_enabled:
     def test_no_conditional_access_policies(self):
         """No conditional access policies configured: expected FAIL."""
         entra_client = mock.MagicMock
@@ -34,17 +34,17 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -70,12 +70,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -114,7 +114,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -144,12 +144,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -188,7 +188,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -218,12 +218,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -263,7 +263,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -298,12 +298,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -342,7 +342,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -375,12 +375,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -435,7 +435,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -468,12 +468,12 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_mfa_enabled_for_administrative_roles.entra_admin_mfa_enabled_for_administrative_roles import (
-                entra_admin_mfa_enabled_for_administrative_roles,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_administrative_roles_have_mfa_enabled.entra_capolicy_administrative_roles_have_mfa_enabled import (
+                entra_capolicy_administrative_roles_have_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -527,7 +527,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                 )
             }
 
-            check = entra_admin_mfa_enabled_for_administrative_roles()
+            check = entra_capolicy_administrative_roles_have_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
