@@ -170,6 +170,22 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
+                        user_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "user_risk_levels",
+                                [],
+                            )
+                        ],
+                        sign_in_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "sign_in_risk_levels",
+                                [],
+                            )
+                        ],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -328,9 +344,18 @@ class UsersConditions(BaseModel):
     excluded_roles: List[str]
 
 
+class RiskLevel(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    NO_RISK = "none"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
+    user_risk_levels: List[RiskLevel] = []
+    sign_in_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
@@ -364,6 +389,7 @@ class ConditionalAccessGrantControl(Enum):
     MFA = "mfa"
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
+    PASSWORD_CHANGE = "passwordChange"
 
 
 class GrantControlOperator(Enum):

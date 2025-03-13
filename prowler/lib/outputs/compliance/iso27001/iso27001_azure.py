@@ -13,7 +13,7 @@ class AzureISO27001(ComplianceOutput):
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into AWS ENS compliance format.
+        - transform: Transforms findings into Azure ISO 27001 compliance format.
     """
 
     def transform(
@@ -23,7 +23,7 @@ class AzureISO27001(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Azure ENS compliance format.
+        Transforms a list of findings into Azure ISO 27001 compliance format.
 
         Parameters:
             - findings (list): A list of findings.

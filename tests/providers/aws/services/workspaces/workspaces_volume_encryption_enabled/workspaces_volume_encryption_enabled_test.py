@@ -12,12 +12,15 @@ class Test_workspaces_volume_encryption_enabled:
     def test_no_workspaces(self):
         workspaces_client = mock.MagicMock
         workspaces_client.workspaces = []
-        with mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-            workspaces_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
-            workspaces_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+                workspaces_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
+                workspaces_client,
+            ),
         ):
             from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
@@ -40,12 +43,15 @@ class Test_workspaces_volume_encryption_enabled:
                 subnet_id="subnet-12345678",
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-            workspaces_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
-            workspaces_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+                workspaces_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
+                workspaces_client,
+            ),
         ):
             from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
@@ -76,12 +82,15 @@ class Test_workspaces_volume_encryption_enabled:
                 subnet_id="subnet-12345678",
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-            workspaces_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
-            workspaces_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+                workspaces_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
+                workspaces_client,
+            ),
         ):
             from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
@@ -112,12 +121,15 @@ class Test_workspaces_volume_encryption_enabled:
                 subnet_id="subnet-12345678",
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-            workspaces_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
-            workspaces_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+                workspaces_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
+                workspaces_client,
+            ),
         ):
             from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,
@@ -148,12 +160,15 @@ class Test_workspaces_volume_encryption_enabled:
                 subnet_id="subnet-12345678",
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
-            workspaces_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
-            workspaces_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_service.WorkSpaces",
+                workspaces_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.workspaces.workspaces_client.workspaces_client",
+                workspaces_client,
+            ),
         ):
             from prowler.providers.aws.services.workspaces.workspaces_volume_encryption_enabled.workspaces_volume_encryption_enabled import (
                 workspaces_volume_encryption_enabled,

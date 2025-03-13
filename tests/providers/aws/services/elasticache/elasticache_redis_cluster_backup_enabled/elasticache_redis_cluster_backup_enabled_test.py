@@ -39,12 +39,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
         elasticache_client = MagicMock
         elasticache_client.replication_groups = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
@@ -76,12 +79,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
@@ -124,12 +130,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
@@ -172,12 +181,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
@@ -219,12 +231,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 1}
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
@@ -266,12 +281,15 @@ class Test_elasticache_redis_cluster_backup_enabled:
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 3}
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_backup_enabled.elasticache_redis_cluster_backup_enabled import (
                 elasticache_redis_cluster_backup_enabled,
