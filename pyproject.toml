@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 
 # https://peps.python.org/pep-0621/
 [project]
