@@ -17,9 +17,11 @@ class network_http_internet_access_restricted(Check):
                     (
                         rule.destination_port_range == "80"
                         or (
-                            "-" in rule.destination_port_range
-                            if rule.destination_port_range is not None
-                            else False
+                            (
+                                "-" in rule.destination_port_range
+                                if rule.destination_port_range is not None
+                                else False
+                            )
                             and int(rule.destination_port_range.split("-")[0]) <= 80
                             and int(rule.destination_port_range.split("-")[1]) >= 80
                         )

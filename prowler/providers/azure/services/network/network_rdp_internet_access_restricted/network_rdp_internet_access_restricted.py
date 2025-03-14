@@ -17,9 +17,11 @@ class network_rdp_internet_access_restricted(Check):
                     (
                         rule.destination_port_range == "3389"
                         or (
-                            "-" in rule.destination_port_range
-                            if rule.destination_port_range is not None
-                            else False
+                            (
+                                "-" in rule.destination_port_range
+                                if rule.destination_port_range is not None
+                                else False
+                            )
                             and int(rule.destination_port_range.split("-")[0]) <= 3389
                             and int(rule.destination_port_range.split("-")[1]) >= 3389
                         )
