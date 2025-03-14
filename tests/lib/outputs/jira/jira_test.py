@@ -8,6 +8,7 @@ from freezegun import freeze_time
 
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
+    JiraBasicAuthError,
     JiraCreateIssueError,
     JiraGetAvailableIssueTypesError,
     JiraGetCloudIDError,
@@ -87,7 +88,7 @@ class TestJiraIntegration:
 
     @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     def test_get_auth_successful_basic_auth(self, mock_get_cloud_id):
-        """Test successful token retrieval in get_auth."""
+        """Test successful token retrieval in get_basic_auth."""
         # To disable vulture
         mock_get_cloud_id = mock_get_cloud_id
 
@@ -100,6 +101,15 @@ class TestJiraIntegration:
 
         assert self.jira_integration_basic_auth._access_token == user_string_base64
         assert self.jira_integration_basic_auth._cloud_id == "test_cloud_id"
+
+    @patch.object(Jira, "get_cloud_id", side_effect=Exception("Connection error"))
+    def test_get_auth_error_basic_auth(self, mock_get_cloud_id):
+        """Test successful token retrieval in get_basic_auth."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
+
+        with pytest.raises(JiraBasicAuthError):
+            self.jira_integration_basic_auth.get_basic_auth()
 
     @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")
@@ -309,6 +319,33 @@ class TestJiraIntegration:
         assert connection.is_connected
         assert connection.error is None
 
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
+    @patch.object(Jira, "get_basic_auth", return_value=None)
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_test_connection_successful_basic_auth(
+        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+    ):
+        """Test that a successful connection returns an active Connection object."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_auth = mock_get_auth
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"id": "test_user_id"}
+        mock_get.return_value = mock_response
+
+        connection = self.jira_integration_basic_auth.test_connection(
+            client_mail=self.client_mail,
+            api_token=self.api_token,
+            site_name=self.site_name,
+        )
+
+        assert connection.is_connected
+        assert connection.error is None
+
     @patch.object(
         Jira,
         "get_access_token",
@@ -324,6 +361,23 @@ class TestJiraIntegration:
                 redirect_uri=self.redirect_uri,
                 client_id=self.client_id,
                 client_secret=self.client_secret,
+            )
+
+    @patch.object(
+        Jira,
+        "get_cloud_id",
+        side_effect=JiraBasicAuthError("Failed to authenticate with Jira"),
+    )
+    def test_test_connection_failed_basic_auth(self, mock_get_access_token):
+        """Test that a failed connection raises JiraAuthenticationError."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraBasicAuthError):
+            self.jira_integration_basic_auth.test_connection(
+                client_mail=self.client_mail,
+                api_token=self.api_token,
+                site_name=self.site_name,
             )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
