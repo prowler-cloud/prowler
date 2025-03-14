@@ -5,10 +5,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ---
 
 ## [v1.6.0] (Prowler UNRELEASED)
-
 ### Added
-
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
+- Support for read only replicas in the database [(#7210)](https://github.com/prowler-cloud/prowler/pull/7210).
 
 ---
 
