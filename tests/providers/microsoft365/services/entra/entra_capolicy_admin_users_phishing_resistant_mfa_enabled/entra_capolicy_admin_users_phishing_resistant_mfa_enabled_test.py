@@ -21,7 +21,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
+class Test_entra_capolicy_admin_users_phishing_resistant_mfa_enabled:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -32,17 +32,17 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled import (
-                entra_ca_policy_admin_users_phishing_resistant_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled import (
+                entra_capolicy_admin_users_phishing_resistant_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_ca_policy_admin_users_phishing_resistant_mfa_enabled()
+            check = entra_capolicy_admin_users_phishing_resistant_mfa_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -68,12 +68,12 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled import (
-                entra_ca_policy_admin_users_phishing_resistant_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled import (
+                entra_capolicy_admin_users_phishing_resistant_mfa_enabled,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -133,7 +133,7 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 )
             }
 
-            check = entra_ca_policy_admin_users_phishing_resistant_mfa_enabled()
+            check = entra_capolicy_admin_users_phishing_resistant_mfa_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -159,12 +159,12 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled import (
-                entra_ca_policy_admin_users_phishing_resistant_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled import (
+                entra_capolicy_admin_users_phishing_resistant_mfa_enabled,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -224,7 +224,7 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 )
             }
 
-            check = entra_ca_policy_admin_users_phishing_resistant_mfa_enabled()
+            check = entra_capolicy_admin_users_phishing_resistant_mfa_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -253,12 +253,12 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled.entra_ca_policy_admin_users_phishing_resistant_mfa_enabled import (
-                entra_ca_policy_admin_users_phishing_resistant_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_admin_users_phishing_resistant_mfa_enabled.entra_capolicy_admin_users_phishing_resistant_mfa_enabled import (
+                entra_capolicy_admin_users_phishing_resistant_mfa_enabled,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -318,7 +318,7 @@ class Test_entra_ca_policy_admin_users_phishing_resistant_mfa_enabled:
                 )
             }
 
-            check = entra_ca_policy_admin_users_phishing_resistant_mfa_enabled()
+            check = entra_capolicy_admin_users_phishing_resistant_mfa_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
