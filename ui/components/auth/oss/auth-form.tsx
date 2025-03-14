@@ -25,10 +25,14 @@ export const AuthForm = ({
   type,
   invitationToken,
   isCloudEnv,
+  isGoogleOAuthEnabled,
+  isGithubOAuthEnabled,
 }: {
   type: string;
   invitationToken?: string | null;
   isCloudEnv?: boolean;
+  isGoogleOAuthEnabled?: boolean;
+  isGithubOAuthEnabled?: boolean;
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
@@ -302,9 +306,11 @@ export const AuthForm = ({
                   variant="bordered"
                   as="a"
                   href={getAuthUrl("google")}
+                  isDisabled={!isGoogleOAuthEnabled}
                 >
                   Continue with Google
                 </Button>
+
                 <Button
                   startContent={
                     <Icon
@@ -316,6 +322,7 @@ export const AuthForm = ({
                   variant="bordered"
                   as="a"
                   href={getAuthUrl("github")}
+                  isDisabled={!isGithubOAuthEnabled}
                 >
                   Continue with Github
                 </Button>
