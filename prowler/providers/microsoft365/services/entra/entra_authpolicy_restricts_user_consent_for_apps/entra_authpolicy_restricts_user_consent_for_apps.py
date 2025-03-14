@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_auth_policy_restricts_user_consent_for_apps(Check):
+class entra_authpolicy_restricts_user_consent_for_apps(Check):
     """Check if the authorization policy restricts users from consenting apps.
 
     This check verifies whether the default user role permissions in Microsoft Entra
