@@ -55,7 +55,7 @@ class Test_entra_capolicy_identity_protection_sign_in_risk_enabled:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_identity_protection_user_risk_policy_disabled(self):
+    def test_entra_identity_protection_sign_in_risk_policy_disabled(self):
         id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -128,7 +128,9 @@ class Test_entra_capolicy_identity_protection_sign_in_risk_enabled:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_identity_protection_user_risk_policy_enabled_not_enough_risk(self):
+    def test_entra_identity_protection_sign_in_risk_policy_enabled_not_enough_risk(
+        self,
+    ):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -210,7 +212,7 @@ class Test_entra_capolicy_identity_protection_sign_in_risk_enabled:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_identity_protection_user_risk_policy_enabled_for_reporting(self):
+    def test_entra_identity_protection_sign_in_risk_policy_enabled_for_reporting(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -292,7 +294,7 @@ class Test_entra_capolicy_identity_protection_sign_in_risk_enabled:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_identity_protection_user_risk_policy_enabled(self):
+    def test_entra_identity_protection_sign_in_risk_policy_enabled(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
