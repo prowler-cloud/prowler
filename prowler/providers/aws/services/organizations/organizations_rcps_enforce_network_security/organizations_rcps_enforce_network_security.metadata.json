@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_rcps_enforce_network_security",
+  "CheckTitle": "Check if Resource Control Policies enforce network security controls",
+  "CheckType": [
+    "Network Security",
+    "Configuration and Vulnerability Analysis"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "rcp",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organization is using Resource Control Policies to enforce network security controls in alignment with NIST 800-53 SC-7, SC-8, and SC-13 controls.",
+  "Risk": "Without enforced network security controls, organizations risk unauthorized network access, data exposure through insecure data transmission, and vulnerabilities from insecure network configurations. NIST 800-53 requires boundary protection, transmission confidentiality and integrity, and cryptographic protection.",
+  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations create-policy --name 'NetworkSecurityRCP' --description 'Resource Control Policy to enforce network security controls' --type RESOURCE_CONTROL_POLICY --content file://networkSecurityRCP.json",
+      "NativeIaC": "",
+      "Other": "Example RCP content:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"PreventPublicInternetAccess\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"ec2:AuthorizeSecurityGroupIngress\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"ec2:CidrIp\": \"0.0.0.0/0\"\n        }\n      }\n    },\n    {\n      \"Sid\": \"RequireVPCEndpoints\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:*\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringNotEquals\": {\n          \"aws:SourceVpce\": \"vpce-example\"\n        }\n      }\n    }\n  ]\n}",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create Resource Control Policies that enforce network security controls such as preventing public internet access, requiring VPC endpoints, enforcing secure TLS versions, and requiring WAF for public-facing resources. This aligns with NIST 800-53 controls SC-7 (Boundary Protection), SC-8 (Transmission Confidentiality and Integrity), and SC-13 (Cryptographic Protection).",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html"
+    }
+  },
+  "Categories": [
+    "governance",
+    "compliance",
+    "network"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_resource_control_policies_enabled"
+  ],
+  "Notes": "This check specifically looks for RCPs that enforce network security controls in alignment with NIST 800-53 SC-7, SC-8, and SC-13 controls."
+}
