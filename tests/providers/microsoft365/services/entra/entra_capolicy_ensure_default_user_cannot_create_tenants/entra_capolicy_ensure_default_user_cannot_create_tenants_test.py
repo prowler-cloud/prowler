@@ -10,7 +10,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_policy_ensure_default_user_cannot_create_tenants:
+class Test_entra_capolicy_ensure_default_user_cannot_create_tenants:
     def test_entra_empty_tenant(self):
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {}
@@ -21,15 +21,15 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
-                entra_policy_ensure_default_user_cannot_create_tenants,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants import (
+                entra_capolicy_ensure_default_user_cannot_create_tenants,
             )
 
-            check = entra_policy_ensure_default_user_cannot_create_tenants()
+            check = entra_capolicy_ensure_default_user_cannot_create_tenants()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -52,12 +52,12 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
-                entra_policy_ensure_default_user_cannot_create_tenants,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants import (
+                entra_capolicy_ensure_default_user_cannot_create_tenants,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -69,7 +69,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 ),
             )
 
-            check = entra_policy_ensure_default_user_cannot_create_tenants()
+            check = entra_capolicy_ensure_default_user_cannot_create_tenants()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -92,12 +92,12 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
-                entra_policy_ensure_default_user_cannot_create_tenants,
+            from prowler.providers.microsoft365.services.entra.entra_capolicy_ensure_default_user_cannot_create_tenants.entra_capolicy_ensure_default_user_cannot_create_tenants import (
+                entra_capolicy_ensure_default_user_cannot_create_tenants,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -109,7 +109,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 ),
             )
 
-            check = entra_policy_ensure_default_user_cannot_create_tenants()
+            check = entra_capolicy_ensure_default_user_cannot_create_tenants()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

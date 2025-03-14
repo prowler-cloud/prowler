@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_policy_ensure_default_user_cannot_create_tenants(Check):
+class entra_capolicy_ensure_default_user_cannot_create_tenants(Check):
     """Check if default users are restricted from creating tenants.
 
     This check verifies whether the authorization policy prevents non-admin users
