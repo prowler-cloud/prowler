@@ -11,6 +11,8 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Set short git commit SHA
         id: vars
         run: |
@@ -26,7 +28,6 @@ jobs:
           client-payload: '{
             "PROWLER_COMMIT_SHA": "${{ github.sha }}",
             "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
-            "PROWLER_COMMIT_MESSAGE": "${{ github.event.head_commit.message }}",
             "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
             "PROWLER_PR_BODY": "${{ github.event.pull_request.body }}"
           }'
