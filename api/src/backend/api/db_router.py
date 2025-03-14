@@ -3,7 +3,7 @@ ALLOWED_APPS = ("django", "socialaccount", "account", "authtoken", "silk")
 
 class MainRouter:
     default_db = "default"
-    user_read = "prowler_user_read"
+    default_read = "default_read"
     admin_db = "admin"
     admin_read = "admin_read"
 
@@ -11,7 +11,7 @@ class MainRouter:
         model_table_name = model._meta.db_table
         if any(model_table_name.startswith(f"{app}_") for app in ALLOWED_APPS):
             return self.admin_read
-        return self.user_read
+        return self.default_read
 
     def db_for_write(self, model, **hints):  # noqa: F841
         model_table_name = model._meta.db_table
@@ -24,7 +24,7 @@ class MainRouter:
 
     def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
         # Allow relations if both objects are using one of our defined connectors
-        allowed = {self.user_write, self.default_db, self.admin_db, self.admin_read}
+        allowed = {self.default_db, self.default_read, self.admin_db, self.admin_read}
         if {obj1._state.db, obj2._state.db} <= allowed:
             return True
         return None

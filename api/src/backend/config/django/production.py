@@ -14,13 +14,13 @@ DATABASES = {
         "HOST": env("POSTGRES_HOST"),
         "PORT": env("POSTGRES_PORT"),
     },
-    "prowler_user_read": {
+    "default_read": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST_READ_ONLY", env("POSTGRES_HOST")),
-        "PORT": env("POSTGRES_PORT_READ_ONLY", env("POSTGRES_PORT")),
+        "HOST": env("POSTGRES_HOST_READ_ONLY", default=env("POSTGRES_HOST")),
+        "PORT": env("POSTGRES_PORT_READ_ONLY", default=env("POSTGRES_PORT")),
     },
     "admin": {
         "ENGINE": "psqlextra.backend",
@@ -35,8 +35,8 @@ DATABASES = {
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_ADMIN_USER"),
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD"),
-        "HOST": env("POSTGRES_HOST_READ_ONLY", env("POSTGRES_HOST")),
-        "PORT": env("POSTGRES_PORT_READ_ONLY", env("POSTGRES_PORT")),
+        "HOST": env("POSTGRES_HOST_READ_ONLY", default=env("POSTGRES_HOST")),
+        "PORT": env("POSTGRES_PORT_READ_ONLY", default=env("POSTGRES_PORT")),
     },
 }
 DATABASES["default"] = DATABASES["prowler_user"]
