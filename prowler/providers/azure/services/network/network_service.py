@@ -34,6 +34,7 @@ class Network(AzureService):
                                     id=rule.id,
                                     name=rule.name,
                                     destination_port_range=rule.destination_port_range,
+                                    source_address_prefix=rule.source_address_prefix,
                                     protocol=rule.protocol,
                                     access=rule.access,
                                     direction=rule.direction,
