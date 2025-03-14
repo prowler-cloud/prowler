@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_authpolicy_ensure_default_user_cannot_create_tenants",
+  "CheckID": "entra_policy_ensure_default_user_cannot_create_tenants",
   "CheckTitle": "Ensure that 'Restrict non-admin users from creating tenants' is set to 'Yes'",
   "CheckType": [],
   "ServiceName": "entra",
