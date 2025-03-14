@@ -34,6 +34,14 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+export const isGoogleOAuthEnabled =
+  process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID !== "" &&
+  process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET !== "";
+
+export const isGithubOAuthEnabled =
+  process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID !== "" &&
+  process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET !== "";
+
 export async function checkTaskStatus(
   taskId: string,
 ): Promise<{ completed: boolean; error?: string }> {
