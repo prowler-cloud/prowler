@@ -28,34 +28,34 @@ class ProviderOutputOptions:
     unix_timestamp: bool
 
     def __init__(self, arguments, bulk_checks_metadata):
-        self.status = arguments.status
-        self.output_modes = arguments.output_formats
-        self.output_directory = arguments.output_directory
-        self.verbose = arguments.verbose
+        self.status = getattr(arguments, "status", None)
+        self.output_modes = getattr(arguments, "output_formats", None)
+        self.output_directory = getattr(arguments, "output_directory", None)
+        self.verbose = getattr(arguments, "verbose", None)
         self.bulk_checks_metadata = bulk_checks_metadata
-        self.only_logs = arguments.only_logs
-        self.unix_timestamp = arguments.unix_timestamp
-        self.shodan_api_key = arguments.shodan
+        self.only_logs = getattr(arguments, "only_logs", None)
+        self.unix_timestamp = getattr(arguments, "unix_timestamp", None)
+        self.shodan_api_key = getattr(arguments, "shodan", None)
         self.fixer = getattr(arguments, "fixer", None)
 
         # Shodan API Key
-        if arguments.shodan:
+        if self.shodan_api_key:
             # TODO: revisit this logic
             provider = Provider.get_global_provider()
             updated_audit_config = Provider.update_provider_config(
-                provider.audit_config, "shodan_api_key", arguments.shodan
+                provider.audit_config, "shodan_api_key", self.shodan_api_key
             )
             if updated_audit_config:
                 provider._audit_config = updated_audit_config
 
         # Check output directory, if it is not created -> create it
-        if arguments.output_directory and not self.fixer:
-            if not isdir(arguments.output_directory):
-                if arguments.output_formats:
-                    makedirs(arguments.output_directory, exist_ok=True)
-            if not isdir(arguments.output_directory + "/compliance"):
-                if arguments.output_formats:
-                    makedirs(arguments.output_directory + "/compliance", exist_ok=True)
+        if self.output_directory and not self.fixer:
+            if not isdir(self.output_directory):
+                if self.output_modes:
+                    makedirs(self.output_directory, exist_ok=True)
+            if not isdir(self.output_directory + "/compliance"):
+                if self.output_modes:
+                    makedirs(self.output_directory + "/compliance", exist_ok=True)
 
 
 @dataclass
