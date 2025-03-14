@@ -406,6 +406,7 @@ class AzureProvider(Provider):
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                graph_credential_scopes=config["graph_credential_scopes"],
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -891,7 +892,10 @@ class AzureProvider(Provider):
                     logger.info(
                         "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                     )
-                    client = GraphServiceClient(credentials=credentials)
+                    client = GraphServiceClient(
+                        credentials=credentials,
+                        scopes=self.region_config.graph_credential_scopes,
+                    )
 
                     domain_result = await client.domains.get()
                     if getattr(domain_result, "value"):
@@ -930,9 +934,12 @@ class AzureProvider(Provider):
                     identity.identity_type = "User"
                     try:
                         logger.info(
-                            "Trying to retrieve user information from AAD to populate identity structure ..."
+                            "Trying to retrieve user information from Microsoft Graph to populate identity structure ..."
                         )
-                        client = GraphServiceClient(credentials=credentials)
+                        client = GraphServiceClient(
+                            credentials=credentials,
+                            scopes=self.region_config.graph_credential_scopes,
+                        )
 
                         me = await client.me.get()
                         if me:
