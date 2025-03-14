@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "ResourceType": "Authorization Policy",
   "Description": "Require administrators or appropriately delegated users to create new tenants.",
   "Risk": "It is recommended to only allow an administrator to create new tenants. This prevent users from creating new Azure AD or Azure AD B2C tenants and ensures that only authorized users are able to do so.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions",
