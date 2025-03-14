@@ -85,7 +85,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name="Test",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=[], excluded_applications=[]
+                            included_applications=[],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -159,7 +161,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -255,7 +259,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -348,7 +354,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -441,7 +449,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -537,7 +547,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],

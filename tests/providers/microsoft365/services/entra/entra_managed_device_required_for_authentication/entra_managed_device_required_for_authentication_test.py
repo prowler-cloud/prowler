@@ -83,7 +83,9 @@ class Test_entra_managed_device_required_for_authentication:
                     display_name="Test",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=[], excluded_applications=[]
+                            included_applications=[],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -157,6 +159,7 @@ class Test_entra_managed_device_required_for_authentication:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -238,6 +241,7 @@ class Test_entra_managed_device_required_for_authentication:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
