@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_ca_policy_managed_device_required_for_mfa_registration(Check):
+class entra_capolicy_managed_device_required_for_mfa_registration(Check):
     """Check if Conditional Access policies enforce MFA registration on a managed device.
 
     This check ensures that Conditional Access policies are in place to enforce MFA registration on a managed device.
