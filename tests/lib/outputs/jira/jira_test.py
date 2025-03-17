@@ -47,14 +47,14 @@ class TestJiraIntegration:
         # To disable vulture
         mock_get_basic_auth = mock_get_basic_auth
 
-        self.client_mail = "test_client_mail"
+        self.user_mail = "test_user_mail"
         self.api_token = "test_api_token"
-        self.site_name = "test_site_name"
+        self.domain = "test_domain"
 
         self.jira_integration_basic_auth = Jira(
-            client_mail=self.client_mail,
+            user_mail=self.user_mail,
             api_token=self.api_token,
-            site_name=self.site_name,
+            domain=self.domain,
         )
 
     @patch.object(Jira, "get_auth", return_value=None)
@@ -94,7 +94,7 @@ class TestJiraIntegration:
 
         self.jira_integration_basic_auth.get_basic_auth()
 
-        user_string = "test_client_mail:test_api_token"
+        user_string = "test_user_mail:test_api_token"
         user_string_base64 = base64.b64encode(user_string.encode("utf-8")).decode(
             "utf-8"
         )
@@ -338,9 +338,9 @@ class TestJiraIntegration:
         mock_get.return_value = mock_response
 
         connection = self.jira_integration_basic_auth.test_connection(
-            client_mail=self.client_mail,
+            user_mail=self.user_mail,
             api_token=self.api_token,
-            site_name=self.site_name,
+            domain=self.domain,
         )
 
         assert connection.is_connected
@@ -375,9 +375,9 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraBasicAuthError):
             self.jira_integration_basic_auth.test_connection(
-                client_mail=self.client_mail,
+                user_mail=self.user_mail,
                 api_token=self.api_token,
-                site_name=self.site_name,
+                domain=self.domain,
             )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
