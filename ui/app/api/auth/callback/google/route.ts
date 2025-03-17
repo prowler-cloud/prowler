@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
+import { baseUrl } from "@/lib/helper";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -42,14 +43,14 @@ export async function GET(req: Request) {
         accessToken: access,
         refreshToken: refresh,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: `${baseUrl}/`,
       });
 
       if (result?.error) {
         throw new Error(result.error);
       }
 
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/", baseUrl));
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("SignIn error:", error);
