@@ -22,6 +22,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
+    JiraInvalidParameterError,
     JiraInvalidProjectKeyError,
     JiraNoProjectsError,
     JiraNoTokenError,
@@ -86,6 +87,7 @@ class Jira:
         - JiraSendFindingsResponseError: Failed to send the findings to Jira
         - JiraTestConnectionError: Failed to test the connection
         - JiraBasicAuthError: Failed to authenticate using basic auth
+        - JiraInvalidParameterError: The provided parameters in Init are invalid
 
     Usage:
         jira = Jira(
@@ -100,9 +102,9 @@ class Jira:
     _client_id: str = None
     _client_secret: str = None
     _access_token: str = None
-    _client_mail: str = None
+    _user_mail: str = None
     _api_token: str = None
-    _site_name: str = None
+    _domain: str = None
     _using_basic_auth: bool = False
     _refresh_token: str = None
     _expiration_date: int = None
@@ -126,25 +128,31 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
-        client_mail: str = None,
+        user_mail: str = None,
         api_token: str = None,
-        site_name: str = None,
+        domain: str = None,
     ):
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
-        self._client_mail = client_mail
+        self._user_mail = user_mail
         self._api_token = api_token
-        self._site_name = site_name
+        self._domain = domain
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
-        # If the client mail, api token and site name are present, use basic auth
-        if client_mail and api_token and site_name:
+        # If the client mail, API token and site name are present, use basic auth
+        if user_mail and api_token and domain:
             self._using_basic_auth = True
             self.get_basic_auth()
-        else:
+        # If the redirect URI, client ID and client secret are present, use auth code flow
+        elif redirect_uri and client_id and client_secret:
             auth_url = self.auth_code_url()
             authorization_code = self.input_authorization_code(auth_url)
             self.get_auth(authorization_code)
+        else:
+            init_error = "Failed to initialize Jira object, missing parameters."
+            raise JiraInvalidParameterError(
+                message=init_error, file=os.path.basename(__file__)
+            )
 
     @property
     def redirect_uri(self):
@@ -231,7 +239,7 @@ class Jira:
         return (datetime.now() + timedelta(seconds=seconds)).isoformat()
 
     def get_basic_auth(self) -> None:
-        """Get the access token using the mail and api token
+        """Get the access token using the mail and API token.
 
         Returns:
             - None
@@ -240,13 +248,11 @@ class Jira:
             - JiraBasicAuthError: Failed to authenticate using basic auth
         """
         try:
-            user_string = f"{self._client_mail}:{self._api_token}"
+            user_string = f"{self._user_mail}:{self._api_token}"
             self._access_token = base64.b64encode(user_string.encode("utf-8")).decode(
                 "utf-8"
             )
-            self._cloud_id = self.get_cloud_id(
-                self._access_token, site_name=self._site_name
-            )
+            self._cloud_id = self.get_cloud_id(self._access_token, domain=self._domain)
         except Exception as e:
             message_error = f"Failed to get auth using basic auth: {e}"
             logger.error(message_error)
@@ -315,12 +321,12 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_cloud_id(self, access_token: str = None, site_name: str = None) -> str:
+    def get_cloud_id(self, access_token: str = None, domain: str = None) -> str:
         """Get the cloud ID from Jira
 
         Args:
             - access_token: The access token from Jira
-            - site_name: The site name from Jira
+            - domain: The site name from Jira
 
         Returns:
             - str: The cloud ID
@@ -334,7 +340,7 @@ class Jira:
             if self._using_basic_auth:
                 headers = {"Authorization": f"Basic {access_token}"}
                 response = requests.get(
-                    f"https://{site_name}.atlassian.net/_edge/tenant_info",
+                    f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
                 )
                 response = response.json()
@@ -452,9 +458,9 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
-        client_mail: str = None,
+        user_mail: str = None,
         api_token: str = None,
-        site_name: str = None,
+        domain: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """Test the connection to Jira
@@ -463,9 +469,9 @@ class Jira:
             - redirect_uri: The redirect URI
             - client_id: The client ID
             - client_secret: The client secret
-            - client_mail: The client mail
+            - user_mail: The client mail
             - api_token: The API token
-            - site_name: The site name
+            - domain: The site name
             - raise_on_exception: Whether to raise an exception or not
 
         Returns:
@@ -483,9 +489,9 @@ class Jira:
                 redirect_uri=redirect_uri,
                 client_id=client_id,
                 client_secret=client_secret,
-                client_mail=client_mail,
+                user_mail=user_mail,
                 api_token=api_token,
-                site_name=site_name,
+                domain=domain,
             )
             access_token = jira.get_access_token()
 
