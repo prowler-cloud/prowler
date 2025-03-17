@@ -1,7 +1,19 @@
+from unittest.mock import ANY, Mock, patch
+
 import pytest
 from django.urls import reverse
 from rest_framework import status
-from unittest.mock import patch, ANY, Mock
+
+from api.models import (
+    Membership,
+    ProviderGroup,
+    ProviderGroupMembership,
+    Role,
+    RoleProviderGroupRelationship,
+    User,
+    UserRoleRelationship,
+)
+from api.v1.serializers import TokenSerializer
 
 
 @pytest.mark.django_db
@@ -304,3 +316,96 @@ class TestProviderViewSet:
             reverse("provider-connection", kwargs={"pk": provider.id})
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestLimitedVisibility:
+    TEST_EMAIL = "rbac@rbac.com"
+    TEST_PASSWORD = "thisisapassword123"
+
+    @pytest.fixture
+    def limited_admin_user(
+        self, django_db_setup, django_db_blocker, tenants_fixture, providers_fixture
+    ):
+        with django_db_blocker.unblock():
+            tenant = tenants_fixture[0]
+            provider = providers_fixture[0]
+            user = User.objects.create_user(
+                name="testing",
+                email=self.TEST_EMAIL,
+                password=self.TEST_PASSWORD,
+            )
+            Membership.objects.create(
+                user=user,
+                tenant=tenant,
+                role=Membership.RoleChoices.OWNER,
+            )
+
+            role = Role.objects.create(
+                name="limited_visibility",
+                tenant=tenant,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=False,
+            )
+            UserRoleRelationship.objects.create(
+                user=user,
+                role=role,
+                tenant=tenant,
+            )
+
+            provider_group = ProviderGroup.objects.create(
+                name="limited_visibility_group",
+                tenant=tenant,
+            )
+            ProviderGroupMembership.objects.create(
+                tenant=tenant,
+                provider=provider,
+                provider_group=provider_group,
+            )
+
+            RoleProviderGroupRelationship.objects.create(
+                tenant=tenant, role=role, provider_group=provider_group
+            )
+
+        return user
+
+    @pytest.fixture
+    def authenticated_client_rbac_limited(
+        self, limited_admin_user, tenants_fixture, client
+    ):
+        client.user = limited_admin_user
+        tenant_id = tenants_fixture[0].id
+        serializer = TokenSerializer(
+            data={
+                "type": "tokens",
+                "email": self.TEST_EMAIL,
+                "password": self.TEST_PASSWORD,
+                "tenant_id": tenant_id,
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access"]
+        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+        return client
+
+    def test_integrations(
+        self, authenticated_client_rbac_limited, integrations_fixture, providers_fixture
+    ):
+        # Integration 2 is related to provider1 and provider 2
+        # This user cannot see provider 2
+        integration = integrations_fixture[1]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert integration.providers.count() == 2
+        assert (
+            response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
+        )

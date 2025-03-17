@@ -11,12 +11,15 @@ class Test_compute_project_os_login_enabled:
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
                 compute_project_os_login_enabled,
@@ -48,12 +51,15 @@ class Test_compute_project_os_login_enabled:
         }
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
                 compute_project_os_login_enabled,
@@ -94,12 +100,15 @@ class Test_compute_project_os_login_enabled:
         }
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
                 compute_project_os_login_enabled,

@@ -16,12 +16,15 @@ class Test_sqs_queues_server_side_encryption_enabled:
     def test_no_queues(self):
         sqs_client = mock.MagicMock
         sqs_client.queues = []
-        with mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            new=sqs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
-            new=sqs_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_service.SQS",
+                new=sqs_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+                new=sqs_client,
+            ),
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,
@@ -43,12 +46,15 @@ class Test_sqs_queues_server_side_encryption_enabled:
                 arn=test_queue_arn,
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            new=sqs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
-            new=sqs_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_service.SQS",
+                new=sqs_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+                new=sqs_client,
+            ),
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,
@@ -76,12 +82,15 @@ class Test_sqs_queues_server_side_encryption_enabled:
                 arn=test_queue_arn,
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            new=sqs_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
-            new=sqs_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_service.SQS",
+                new=sqs_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+                new=sqs_client,
+            ),
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_server_side_encryption_enabled.sqs_queues_server_side_encryption_enabled import (
                 sqs_queues_server_side_encryption_enabled,

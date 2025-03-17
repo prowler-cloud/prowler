@@ -6,6 +6,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
+    GrantControlOperator,
     GrantControls,
     PersistentBrowser,
     SessionControls,
@@ -93,7 +94,9 @@ class Test_entra_admin_portals_role_limited_access:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=False, mode="always"
@@ -165,7 +168,8 @@ class Test_entra_admin_portals_role_limited_access:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -241,7 +245,8 @@ class Test_entra_admin_portals_role_limited_access:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(

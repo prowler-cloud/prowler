@@ -83,15 +83,19 @@ class Test_elb_ssl_listeners_use_acm_certificate:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
-            new=ELB(aws_mocked_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
@@ -137,15 +141,19 @@ class Test_elb_ssl_listeners_use_acm_certificate:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
-            new=ELB(aws_mocked_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
                 elb_ssl_listeners_use_acm_certificate,
@@ -199,15 +207,19 @@ class Test_elb_ssl_listeners_use_acm_certificate:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
-            new=ELB(aws_mocked_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
                 elb_ssl_listeners_use_acm_certificate,
@@ -258,15 +270,19 @@ class Test_elb_ssl_listeners_use_acm_certificate:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
-            new=ELB(aws_mocked_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
                 elb_ssl_listeners_use_acm_certificate,
@@ -317,15 +333,19 @@ class Test_elb_ssl_listeners_use_acm_certificate:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
-            new=ELB(aws_mocked_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
                 elb_ssl_listeners_use_acm_certificate,

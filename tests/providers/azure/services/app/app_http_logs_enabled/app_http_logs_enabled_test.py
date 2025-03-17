@@ -12,12 +12,15 @@ class Test_app_http_logs_enabled:
         app_client = mock.MagicMock
         app_client.apps = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
+                new=app_client,
+            ),
         ):
 
             from prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled import (
@@ -32,12 +35,15 @@ class Test_app_http_logs_enabled:
         app_client = mock.MagicMock
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity import (
                 app_register_with_identity,
@@ -49,12 +55,15 @@ class Test_app_http_logs_enabled:
 
     def test_no_diagnostics_settings(self):
         app_client = mock.MagicMock()
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled import (
                 app_http_logs_enabled,
@@ -91,12 +100,15 @@ class Test_app_http_logs_enabled:
     def test_diagnostic_setting_configured(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled import (
                 app_http_logs_enabled,
