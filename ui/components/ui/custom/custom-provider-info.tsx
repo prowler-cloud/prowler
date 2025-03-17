@@ -10,9 +10,9 @@ import Link from "next/link";
 
 interface CustomProviderInfoProps {
     provider: ProviderType;
-  }
+}
 
-  export const CustomProviderInfo = ({ provider }: CustomProviderInfoProps) => {
+export const CustomProviderInfo = ({ provider }: CustomProviderInfoProps) => {
     return (
       <div className="mb-4 flex items-center space-x-4">
         {provider && getProviderLogo(provider)}
@@ -32,4 +32,4 @@ interface CustomProviderInfoProps {
         </p>
       </div>
     );
-  };
+};
