@@ -4,8 +4,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-<<<<<<< HEAD
-=======
 ## [v1.6.0] (Prowler UNRELEASED)
 
 ### Added
@@ -22,7 +20,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 9594c4c99 (fix: add a handled response in case local files are missing (#7183))
 ## [v1.5.0] (Prowler v5.4.0)
 
 ### Added
