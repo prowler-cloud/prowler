@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 // HTTP Security Headers
+// 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode
 const cspHeader = `
     img-src 'self';
     font-src 'self';
