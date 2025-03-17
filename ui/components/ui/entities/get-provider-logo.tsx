@@ -38,3 +38,33 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Unknown Provider";
   }
 };
+
+export const getProviderVideoLink = (providerType: ProviderType) => {
+  switch (providerType) {
+    case "aws":
+      return {
+        text: "How to setup an AWS account",
+        link: "https://google.com",
+      };
+    case "azure":
+      return {
+        text: "How to setup an Azure subscription",
+        link: "https://google.com",
+      };
+    case "gcp":
+      return {
+        text: "How to setup a GCP project",
+        link: "https://google.com",
+      };
+    case "kubernetes":
+      return {
+        text: "How to setup a Kubernetes cluster",
+        link: "https://google.com",
+      };
+    default:
+      return {
+        text: "How to setup a provider",
+        link: "https://google.com",
+      };
+  }
+};
