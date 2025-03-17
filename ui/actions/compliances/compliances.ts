@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { apiBaseUrl, parseStringify } from "@/lib";
 
 export const getCompliancesOverview = async ({
   scanId,
@@ -15,8 +15,7 @@ export const getCompliancesOverview = async ({
 }) => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/compliance-overviews`);
+  const url = new URL(`${apiBaseUrl}/compliance-overviews`);
 
   if (scanId) url.searchParams.append("filter[scan_id]", scanId);
   if (query) url.searchParams.append("filter[search]", query);
