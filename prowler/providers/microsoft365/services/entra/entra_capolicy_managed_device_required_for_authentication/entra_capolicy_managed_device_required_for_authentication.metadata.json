@@ -2,6 +2,9 @@
   "Provider": "microsoft365",
   "CheckID": "entra_capolicy_managed_device_required_for_authentication",
   "CheckTitle": "Ensure that only managed devices are required for authentication",
+  "CheckAliases": [
+    "entra_managed_device_required_for_authentication"
+  ],
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",

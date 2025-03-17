@@ -2,6 +2,9 @@
   "Provider": "microsoft365",
   "CheckID": "entra_capolicy_admin_users_sign_in_frequency_enabled",
   "CheckTitle": "Ensure Sign-in frequency periodic reauthentication is enabled and properly configured.",
+  "CheckAliases": [
+    "entra_admin_users_sign_in_frequency_enabled"
+  ],
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",

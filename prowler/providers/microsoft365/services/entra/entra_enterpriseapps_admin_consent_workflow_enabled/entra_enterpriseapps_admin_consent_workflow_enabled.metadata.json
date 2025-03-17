@@ -1,0 +1,33 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "entra_enterpriseapps_admin_consent_workflow_enabled",
+  "CheckTitle": "Ensure the admin consent workflow is enabled.",
+  "CheckAliases": [
+    "entra_admin_consent_workflow_enabled"
+  ],
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Enterprise Applications Settings",
+  "Description": "Ensure that the admin consent workflow is enabled in Microsoft Entra to allow users to request admin approval for applications requiring consent.",
+  "Risk": "If the admin consent workflow is not enabled, users may be blocked from accessing applications that require admin consent, leading to potential work disruptions or unauthorized workarounds.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Click to expand Identity > Applications and select Enterprise applications. 3. Under Security, select Consent and permissions. 4. Under Manage, select Admin consent settings. 5. Set 'Users can request admin consent to apps they are unable to consent to' to 'Yes'. 6. Configure the reviewers and email notifications settings. 7. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the admin consent workflow in Microsoft Entra to securely manage application consent requests.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

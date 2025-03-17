@@ -2,6 +2,9 @@
   "Provider": "microsoft365",
   "CheckID": "entra_capolicy_identity_protection_sign_in_risk_enabled",
   "CheckTitle": "Ensure that Identity Protection sign-in risk policies are enabled",
+  "CheckAliases": [
+    "entra_identity_protection_sign_in_risk_enabled"
+  ],
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
