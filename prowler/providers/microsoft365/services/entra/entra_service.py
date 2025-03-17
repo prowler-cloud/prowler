@@ -2,6 +2,7 @@ from asyncio import gather, get_event_loop
 from enum import Enum
 from typing import List, Optional
 
+import requests
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -12,9 +13,12 @@ from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Pro
 class Entra(Microsoft365Service):
     def __init__(self, provider: Microsoft365Provider):
         super().__init__(provider)
-
         loop = get_event_loop()
         self.tenant_domain = provider.identity.tenant_domain
+        self.teams_headers = self.get_headers(
+            endpoint="48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"
+        )
+        self.get_teams_settings()
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -24,12 +28,18 @@ class Entra(Microsoft365Service):
                 self._get_organization(),
             )
         )
-
         self.authorization_policy = attributes[0]
         self.conditional_access_policies = attributes[1]
         self.admin_consent_policy = attributes[2]
         self.groups = attributes[3]
         self.organizations = attributes[4]
+
+    def get_teams_settings(self):
+        teams = requests.get(
+            "https://ring0.api.interfaces.records.teams.microsoft.com/Skype.Policy/configurations/TeamsClientConfiguration",
+            headers=self.teams_headers,
+        )
+        print(teams.json())
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
