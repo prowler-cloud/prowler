@@ -2,6 +2,7 @@ import { getTask } from "@/actions/task";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
+export const apiBaseUrl = process.env.API_BASE_URL;
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {
