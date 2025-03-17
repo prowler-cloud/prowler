@@ -3,7 +3,7 @@
   "CheckID": "entra_capolicy_ensure_default_user_cannot_create_tenants",
   "CheckTitle": "Ensure that 'Restrict non-admin users from creating tenants' is set to 'Yes'",
   "CheckAliases": [
-    "entra_ensure_default_user_cannot_create_tenants"
+    "entra_policy_ensure_default_user_cannot_create_tenants"
   ],
   "CheckType": [],
   "ServiceName": "entra",
