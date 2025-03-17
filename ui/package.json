@@ -54,7 +54,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",
-    "autoprefixer": "10.4.19",
+    "autoprefixer": "10.4.21",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.23",
     "eslint-config-prettier": "^10.0.1",
