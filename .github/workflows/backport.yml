@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Check labels
         id: preview_label_check
-        uses: docker://agilepathway/pull-request-label-checker:v1.6.55
+        uses: docker://agilepathway/pull-request-label-checker:sha-c3d16ad # v1.6.65
         with:
           allow_failure: true
           prefix_mode: true
