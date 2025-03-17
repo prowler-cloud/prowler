@@ -44,22 +44,22 @@ export const getProviderVideoLink = (providerType: ProviderType) => {
     case "aws":
       return {
         text: "How to setup an AWS account",
-        link: "https://google.com",
+        link: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-41-aws-credentials",
       };
     case "azure":
       return {
         text: "How to setup an Azure subscription",
-        link: "https://google.com",
+        link: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-42-azure-credentials",
       };
     case "gcp":
       return {
         text: "How to setup a GCP project",
-        link: "https://google.com",
+        link: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-43-gcp-credentials",
       };
     case "kubernetes":
       return {
         text: "How to setup a Kubernetes cluster",
-        link: "https://google.com",
+        link: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-44-kubernetes-credentials",
       };
     default:
       return {
