@@ -149,12 +149,11 @@ class TestProwlerProviderConnectionTest:
         self, mock_return_prowler_provider, providers_fixture
     ):
         mock_return_prowler_provider.return_value = MagicMock()
-        with pytest.raises(Provider.secret.RelatedObjectDoesNotExist) as error:
-            connection = prowler_provider_connection_test(providers_fixture[0])
-            assert connection.is_connected is False
-            raise connection.error
+        connection = prowler_provider_connection_test(providers_fixture[0])
 
-        assert str(error.value) == "Provider has no secret."
+        assert connection.is_connected is False
+        assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
+        assert str(connection.error) == "Provider has no secret."
 
 
 class TestGetProwlerProviderKwargs:
