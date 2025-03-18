@@ -150,6 +150,7 @@ class TestProwlerProviderConnectionTest:
         provider = MagicMock()
         provider.uid = "111122223333"
         mock_return_prowler_provider.return_value = MagicMock()
+        provider.secret = None
 
         connection = prowler_provider_connection_test(provider)
         assert connection.is_connected is False
@@ -160,7 +161,7 @@ class TestProwlerProviderConnectionTest:
         self, mock_return_prowler_provider
     ):
         provider = MagicMock()
-        provider.uid = "333322221111"
+        provider.uid = "1234567890"
         exception = Exception("test exception")
         mock_return_prowler_provider.side_effect = exception
 
