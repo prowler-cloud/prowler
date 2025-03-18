@@ -186,4 +186,4 @@ This action downloads a `zip` file containing an `output` folder, which includes
 <img src="../../img/output_folder.png" alt="Output folder" width="700"/>
 
 ???+ note "API Note"
-    To learn more about the API endpoint used to perform the download check: [Prowler API Reference](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
+    To learn more about the API endpoint the UI uses to download ZIP exports, see: [Prowler API Reference - Download Scan Output](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
