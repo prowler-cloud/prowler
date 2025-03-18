@@ -24,7 +24,6 @@ class Entra(Microsoft365Service):
                 self._get_groups(),
                 self._get_organization(),
                 self._get_users(),
-                # self._get_directory_roles(),
             )
         )
 
@@ -34,7 +33,6 @@ class Entra(Microsoft365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
-        # self.directory_roles = attributes[6]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
