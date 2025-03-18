@@ -145,14 +145,10 @@ class TestProwlerProviderConnectionTest:
 
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_without_secret(
-        self, mock_return_prowler_provider
+        self, mock_return_prowler_provider, providers_fixture
     ):
-        provider = MagicMock()
-        provider.uid = "111122223333"
         mock_return_prowler_provider.return_value = MagicMock()
-        provider.secret = None
-
-        connection = prowler_provider_connection_test(provider)
+        connection = prowler_provider_connection_test(providers_fixture[0])
         assert connection.is_connected is False
         assert connection.error == Provider.secret.RelatedObjectDoesNotExist
 
