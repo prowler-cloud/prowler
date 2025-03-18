@@ -129,9 +129,8 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     Returns:
         Connection: A connection object representing the result of the connection test for the specified provider.
     """
-
+    prowler_provider = return_prowler_provider(provider)
     try:
-        prowler_provider = return_prowler_provider(provider)
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
