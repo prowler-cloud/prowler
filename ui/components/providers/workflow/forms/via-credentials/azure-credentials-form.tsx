@@ -10,7 +10,7 @@ export const AzureCredentialsForm = ({
 }) => {
   return (
     <>
-      <div className="text-left">
+      <div className="flex flex-col">
         <div className="text-md font-bold leading-9 text-default-foreground">
           Connect via Credentials
         </div>
