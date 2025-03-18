@@ -236,3 +236,10 @@ DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
 )
 DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
 DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")
+
+# HTTP Security Headers
+# Prevent browsers from guessing MIME types (X-Content-Type-Options: nosniff)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Prevent framing (Clickjacking protection)
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
