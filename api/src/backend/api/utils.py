@@ -134,8 +134,6 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
-    except Exception as error:
-        return Connection(is_connected=False, error=error)
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )

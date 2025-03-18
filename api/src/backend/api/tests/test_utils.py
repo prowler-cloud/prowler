@@ -156,19 +156,6 @@ class TestProwlerProviderConnectionTest:
         assert connection.is_connected is False
         assert connection.error == Provider.secret.RelatedObjectDoesNotExist
 
-    @patch("api.utils.return_prowler_provider")
-    def test_prowler_provider_connection_test_generic_exception(
-        self, mock_return_prowler_provider
-    ):
-        provider = MagicMock()
-        provider.uid = "1234567890"
-        exception = Exception("test exception")
-        mock_return_prowler_provider.side_effect = exception
-
-        connection = prowler_provider_connection_test(provider)
-        assert connection.is_connected is False
-        assert connection.error == exception
-
 
 class TestGetProwlerProviderKwargs:
     @pytest.mark.parametrize(
