@@ -1,6 +1,7 @@
 import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 from boto3 import Session
 from botocore import exceptions
@@ -38,7 +39,19 @@ class S3:
     _output_directory: str
 
     def __init__(
-        self, session: Session, bucket_name: str, output_directory: str
+        self,
+        session: Session,
+        bucket_name: str,
+        output_directory: str,
+        role_arn: str = None,
+        session_duration: int = None,
+        external_id: str = None,
+        role_session_name: str = None,
+        mfa: bool = None,
+        profile: str = None,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
     ) -> None:
         """
         Initializes a new instance of the `S3` class.
@@ -47,6 +60,15 @@ class S3:
         - session: An instance of the `Session` class representing the AWS session.
         - bucket_name: A string representing the name of the S3 bucket.
         - output_directory: A string representing the output directory path.
+        - role_arn: The ARN of the IAM role to assume.
+        - session_duration: The duration of the session in seconds, between 900 and 43200.
+        - external_id: The external ID to use when assuming the IAM role.
+        - role_session_name: The name of the session when assuming the IAM role.
+        - mfa: A boolean indicating whether MFA is enabled.
+        - profile: The name of the AWS CLI profile to use.
+        - aws_access_key_id: The AWS access key ID.
+        - aws_secret_access_key: The AWS secret access key.
+        - aws_session_token: The AWS session token, optional.
         """
         self._session = session.client(__class__.__name__.lower())
         self._bucket_name = bucket_name
