@@ -11,10 +11,10 @@ export const AWScredentialsForm = ({
   return (
     <>
       <div className="text-left">
-        <div className="text-2xl font-bold leading-9 text-default-foreground">
+        <div className="text-md font-bold leading-9 text-default-foreground">
           Connect via Credentials
         </div>
-        <div className="py-2 text-small text-default-500">
+        <div className="text-sm text-default-500">
           Please provide the information for your AWS credentials.
         </div>
       </div>
