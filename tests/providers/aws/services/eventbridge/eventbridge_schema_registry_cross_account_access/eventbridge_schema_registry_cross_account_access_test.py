@@ -51,12 +51,15 @@ class Test_eventbridge_schema_registry_cross_account_access:
         schema_client = mock.MagicMock
         schema_client.registries = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
-            new=schema_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
-            new=schema_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
+                new=schema_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
+                new=schema_client,
+            ),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_schema_registry_cross_account_access.eventbridge_schema_registry_cross_account_access import (
                 eventbridge_schema_registry_cross_account_access,
@@ -83,12 +86,15 @@ class Test_eventbridge_schema_registry_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
-            new=schema_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
-            new=schema_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
+                new=schema_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
+                new=schema_client,
+            ),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_schema_registry_cross_account_access.eventbridge_schema_registry_cross_account_access import (
                 eventbridge_schema_registry_cross_account_access,
@@ -123,12 +129,15 @@ class Test_eventbridge_schema_registry_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
-            new=schema_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
-            new=schema_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
+                new=schema_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
+                new=schema_client,
+            ),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_schema_registry_cross_account_access.eventbridge_schema_registry_cross_account_access import (
                 eventbridge_schema_registry_cross_account_access,
@@ -163,12 +172,15 @@ class Test_eventbridge_schema_registry_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
-            new=schema_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
-            new=schema_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.eventbridge_service.Schema",
+                new=schema_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.eventbridge.schema_client.schema_client",
+                new=schema_client,
+            ),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_schema_registry_cross_account_access.eventbridge_schema_registry_cross_account_access import (
                 eventbridge_schema_registry_cross_account_access,

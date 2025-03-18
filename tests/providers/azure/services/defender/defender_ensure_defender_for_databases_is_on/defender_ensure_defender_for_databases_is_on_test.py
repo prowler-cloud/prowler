@@ -13,12 +13,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
         defender_client = mock.MagicMock
         defender_client.pricings = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -41,12 +44,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -69,12 +75,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -97,12 +106,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -125,12 +137,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -168,12 +183,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             },
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -219,12 +237,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
             },
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,

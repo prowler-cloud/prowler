@@ -11,12 +11,15 @@ class Test_app_function_vnet_integration_enabled:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled import (
                 app_function_vnet_integration_enabled,
@@ -31,12 +34,15 @@ class Test_app_function_vnet_integration_enabled:
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled import (
                 app_function_vnet_integration_enabled,
@@ -51,12 +57,15 @@ class Test_app_function_vnet_integration_enabled:
     def test_app_function_vnet_integration_enabled(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled import (
                 app_function_vnet_integration_enabled,
@@ -97,12 +106,15 @@ class Test_app_function_vnet_integration_enabled:
     def test_app_function_vnet_integration_disabled(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_vnet_integration_enabled.app_function_vnet_integration_enabled import (
                 app_function_vnet_integration_enabled,
