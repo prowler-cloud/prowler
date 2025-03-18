@@ -12,12 +12,15 @@ class Test_app_ensure_python_version_is_latest:
         app_client = mock.MagicMock
         app_client.apps = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
@@ -31,12 +34,15 @@ class Test_app_ensure_python_version_is_latest:
         app_client = mock.MagicMock
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
@@ -49,12 +55,15 @@ class Test_app_ensure_python_version_is_latest:
     def test_app_configurations_none(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
@@ -85,12 +94,15 @@ class Test_app_ensure_python_version_is_latest:
 
         app_client.audit_config = {"python_latest_version": "3.12"}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
@@ -130,12 +142,15 @@ class Test_app_ensure_python_version_is_latest:
 
         app_client.audit_config = {"python_latest_version": "3.12"}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
