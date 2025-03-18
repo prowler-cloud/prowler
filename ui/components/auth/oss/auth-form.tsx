@@ -301,13 +301,12 @@ export const AuthForm = ({
               <div className="flex flex-col gap-2">
                 <Tooltip
                   content={
-                    <div className="flex flex-col items-center text-small">
-                      Google Sign-in is not enabled. Configure the social OAuth
-                      environment variables to enable it.
+                    <div className="flex-inline text-small">
+                      Social Login with Google is not enabled.{" "}
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary"
+                        className="text-small font-medium text-primary"
                       >
                         Read the docs
                       </Link>
@@ -335,13 +334,12 @@ export const AuthForm = ({
                 </Tooltip>
                 <Tooltip
                   content={
-                    <div className="flex flex-col items-center text-small">
-                      Github Sign-in is not enabled. Configure the social OAuth
-                      environment variables to enable it.
+                    <div className="flex-inline text-small">
+                      Social Login with Github is not enabled.{" "}
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary"
+                        className="text-small font-medium text-primary"
                       >
                         Read the docs
                       </Link>
