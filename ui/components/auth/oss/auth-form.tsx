@@ -18,19 +18,22 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { getAuthUrl } from "@/lib/helper";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
   type,
   invitationToken,
   isCloudEnv,
+  googleAuthUrl,
+  githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
 }: {
   type: string;
   invitationToken?: string | null;
   isCloudEnv?: boolean;
+  googleAuthUrl?: string;
+  githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
 }) => {
@@ -326,7 +329,7 @@ export const AuthForm = ({
                       variant="bordered"
                       className="w-full"
                       as="a"
-                      href={getAuthUrl("google")}
+                      href={googleAuthUrl}
                       isDisabled={!isGoogleOAuthEnabled}
                     >
                       Continue with Google
@@ -364,7 +367,7 @@ export const AuthForm = ({
                       variant="bordered"
                       className="w-full"
                       as="a"
-                      href={getAuthUrl("github")}
+                      href={githubAuthUrl}
                       isDisabled={!isGithubOAuthEnabled}
                     >
                       Continue with Github
