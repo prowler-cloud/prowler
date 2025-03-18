@@ -1,25 +1,24 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
+from api.utils import (
+    get_prowler_provider_kwargs,
+    initialize_prowler_provider,
+    merge_dicts,
+    prowler_provider_connection_test,
+    return_prowler_provider,
+    validate_invitation,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
-
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation
-from api.models import Provider
-from api.utils import (
-    merge_dicts,
-    return_prowler_provider,
-    initialize_prowler_provider,
-    prowler_provider_connection_test,
-    get_prowler_provider_kwargs,
-)
-from api.utils import validate_invitation
 
 
 class TestMergeDicts:
@@ -143,6 +142,31 @@ class TestProwlerProviderConnectionTest:
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
         )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_without_secret(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "1234567890"
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        connection = prowler_provider_connection_test(provider)
+        assert connection.is_connected is False
+        assert connection.error == Provider.secret.RelatedObjectDoesNotExist
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_generic_exception(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "1234567890"
+        exception = Exception("test exception")
+        mock_return_prowler_provider.side_effect = exception
+
+        connection = prowler_provider_connection_test(provider)
+        assert connection.is_connected is False
+        assert connection.error == exception
 
 
 class TestGetProwlerProviderKwargs:
