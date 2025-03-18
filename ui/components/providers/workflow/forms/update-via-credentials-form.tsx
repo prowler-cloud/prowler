@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Divider } from "@nextui-org/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
@@ -9,8 +10,6 @@ import * as z from "zod";
 import { updateCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
-import { getProviderLogo } from "@/components/ui/entities";
-import { getProviderName } from "@/components/ui/entities";
 import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 import {
@@ -22,6 +21,7 @@ import {
   KubernetesCredentials,
 } from "@/types";
 
+import { ProviderTitleDocs } from "../provider-title-docs";
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
@@ -178,14 +178,9 @@ export const UpdateViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <div className="mb-4 flex items-center space-x-4">
-          {providerType && getProviderLogo(providerType as ProviderType)}
-          <span className="text-lg font-semibold">
-            {providerType
-              ? getProviderName(providerType as ProviderType)
-              : "Unknown Provider"}
-          </span>
-        </div>
+        <ProviderTitleDocs providerType={providerType as ProviderType} />
+
+        <Divider />
 
         {providerType === "aws" && (
           <AWScredentialsForm
