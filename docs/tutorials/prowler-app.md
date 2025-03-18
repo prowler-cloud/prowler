@@ -184,3 +184,6 @@ To download these files, click the **Download** button. This button becomes avai
 This action downloads a `zip` file containing an `output` folder, which includes the files mentioned above: CSV, JSON-OSCF, and HTML reports.
 
 <img src="../../img/output_folder.png" alt="Output folder" width="700"/>
+
+???+ note "API Note"
+    To learn more about the API endpoint the UI uses to download ZIP exports, see: [Prowler API Reference - Download Scan Output](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)

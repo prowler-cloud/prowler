@@ -2,6 +2,7 @@ import { getTask } from "@/actions/task";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
+export const apiBaseUrl = process.env.API_BASE_URL;
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {
@@ -37,12 +38,12 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
 };
 
 export const isGoogleOAuthEnabled =
-  process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID !== "" &&
-  process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET !== "";
+  !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&
+  !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET;
 
 export const isGithubOAuthEnabled =
-  process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID !== "" &&
-  process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET !== "";
+  !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
+  !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
 export async function checkTaskStatus(
   taskId: string,

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
 
 export const getInvitations = async ({
   page = 1,
@@ -16,8 +16,7 @@ export const getInvitations = async ({
 
   if (isNaN(Number(page)) || page < 1) redirect("/invitations");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tenants/invitations`);
+  const url = new URL(`${apiBaseUrl}/tenants/invitations`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -50,11 +49,10 @@ export const getInvitations = async ({
 
 export const sendInvite = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const email = formData.get("email");
   const role = formData.get("role");
-  const url = new URL(`${keyServer}/tenants/invitations`);
+  const url = new URL(`${apiBaseUrl}/tenants/invitations`);
 
   const body = JSON.stringify({
     data: {
@@ -99,7 +97,6 @@ export const sendInvite = async (formData: FormData) => {
 
 export const updateInvite = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const invitationId = formData.get("invitationId");
   const invitationEmail = formData.get("invitationEmail");
@@ -108,7 +105,7 @@ export const updateInvite = async (formData: FormData) => {
     formData.get("expires_at") ||
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+  const url = new URL(`${apiBaseUrl}/tenants/invitations/${invitationId}`);
 
   const body: any = {
     data: {
@@ -165,8 +162,7 @@ export const updateInvite = async (formData: FormData) => {
 
 export const getInvitationInfoById = async (invitationId: string) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+  const url = new URL(`${apiBaseUrl}/tenants/invitations/${invitationId}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -188,14 +184,13 @@ export const getInvitationInfoById = async (invitationId: string) => {
 
 export const revokeInvite = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
   const invitationId = formData.get("invitationId");
 
   if (!invitationId) {
     return { error: "Invitation ID is required" };
   }
 
-  const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+  const url = new URL(`${apiBaseUrl}/tenants/invitations/${invitationId}`);
 
   try {
     const response = await fetch(url.toString(), {
