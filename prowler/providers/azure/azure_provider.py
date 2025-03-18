@@ -202,7 +202,7 @@ class AzureProvider(Provider):
                 ...     sp_env_auth=True,
                 ...     browser_auth=False,
                 ...     managed_identity_auth=False,
-                ...     region="AzureUSGovernment",
+                ...     region="AzureUSGovernmentL4",
                 ... )
             - Subscriptions: rowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
               Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.

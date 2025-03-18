@@ -17,7 +17,8 @@ class Test_azure_regions:
         allowed_regions = [
             "AzureCloud",
             "AzureChinaCloud",
-            "AzureUSGovernment",
+            "AzureUSGovernmentL4",
+            "AzureUSGovernmentL5",
         ]
         expected_output = {
             "AzureCloud": {
@@ -32,14 +33,17 @@ class Test_azure_regions:
                 "credential_scopes": [AZURE_CHINA_CLOUD + "/.default"],
                 "graph_credential_scopes": [AZURE_GRAPH_CHINA],
             },
-            "AzureUSGovernment": {
+            "AzureUSGovernmentL4": {
                 "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
                 "base_url": AZURE_US_GOV_CLOUD,
                 "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
-                "graph_credential_scopes": [
-                    AZURE_GRAPH_GOV_US_L4,
-                    AZURE_GRAPH_GOV_US_L5,
-                ],
+                "graph_credential_scopes": [AZURE_GRAPH_GOV_US_L4],
+            },
+            "AzureUSGovernmentL5": {
+                "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
+                "base_url": AZURE_US_GOV_CLOUD,
+                "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
+                "graph_credential_scopes": [AZURE_GRAPH_GOV_US_L5],
             },
         }
 

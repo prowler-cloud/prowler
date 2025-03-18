@@ -14,7 +14,7 @@ AZURE_GRAPH_CHINA = "https://microsoftgraph.chinacloudapi.cn/.default"
 def get_regions_config(region):
     allowed_regions = {
         "AzureCloud": {
-            "authority": None,
+            "authority": AzureAuthorityHosts.AZURE_PUBLIC_CLOUD,
             "base_url": AZURE_GENERIC_CLOUD,
             "credential_scopes": [AZURE_GENERIC_CLOUD + "/.default"],
             "graph_credential_scopes": [AZURE_GRAPH_GLOBAL],
@@ -25,11 +25,17 @@ def get_regions_config(region):
             "credential_scopes": [AZURE_CHINA_CLOUD + "/.default"],
             "graph_credential_scopes": [AZURE_GRAPH_CHINA],
         },
-        "AzureUSGovernment": {
+        "AzureUSGovernmentL4": {
             "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
             "base_url": AZURE_US_GOV_CLOUD,
             "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
-            "graph_credential_scopes": [AZURE_GRAPH_GOV_US_L4, AZURE_GRAPH_GOV_US_L5],
+            "graph_credential_scopes": [AZURE_GRAPH_GOV_US_L4],
+        },
+        "AzureUSGovernmentL5": {
+            "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
+            "base_url": AZURE_US_GOV_CLOUD,
+            "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
+            "graph_credential_scopes": [AZURE_GRAPH_GOV_US_L5],
         },
     }
     return allowed_regions[region]

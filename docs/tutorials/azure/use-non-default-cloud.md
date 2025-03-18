@@ -6,7 +6,11 @@ By default, Prowler uses `AzureCloud` cloud which is the comercial one. (you can
 At the time of writing this documentation the available Azure Clouds from different regions are the following:
 - AzureCloud
 - AzureChinaCloud
-- AzureUSGovernment
+- AzureUSGovernmentL4
+- AzureUSGovernmentL5
+
+???+ note
+    More information about Azure US Goverment region [here](https://devblogs.microsoft.com/microsoft365dev/new-microsoft-graph-endpoints-in-us-government-cloud/)
 
 If you want to change the default one you must include the flag `--azure-region`, i.e.:
 
