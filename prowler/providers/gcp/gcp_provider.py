@@ -2,7 +2,6 @@ import json
 import os
 import re
 import sys
-from typing import Optional
 
 from colorama import Fore, Style
 from google.auth import default, impersonated_credentials, load_credentials_from_dict
@@ -426,7 +425,7 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         service_account: str = None,
         raise_on_exception: bool = True,
-        provider_id: Optional[str] = None,
+        provider_id: str = None,
         client_id: str = None,
         client_secret: str = None,
         refresh_token: str = None,
@@ -483,6 +482,11 @@ class GcpProvider(Provider):
                 ... )
         """
         try:
+            if not provider_id:
+                logger.error("Provider ID is required.")
+                raise GCPInvalidProviderIdError(
+                    file=__file__, message="Provider ID is required."
+                )
             # Set the GCP credentials using the provided client_id, client_secret and refresh_token from ADC
             gcp_credentials = None
             if any([client_id, client_secret, refresh_token]):
@@ -495,12 +499,14 @@ class GcpProvider(Provider):
                 gcp_credentials=gcp_credentials,
                 service_account_key=service_account_key,
             )
+
             if provider_id and project_id != provider_id:
                 # Logic to check if the provider ID matches the project ID
                 GcpProvider.validate_project_id(
                     provider_id=provider_id,
                     credentials=session,
                 )
+                project_id = provider_id
 
             # Test the connection using the Service Usage API since it is enabled by default
             client = discovery.build("serviceusage", "v1", credentials=session)
