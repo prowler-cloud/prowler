@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-const { type } = require('os');
-
 // HTTP Security Headers
 // 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode
 const cspHeader = `
