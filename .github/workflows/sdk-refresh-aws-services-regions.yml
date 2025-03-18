@@ -52,6 +52,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           commit-message: "feat(regions_update): Update regions for AWS services"
           branch: "aws-services-regions-updated-${{ github.sha }}"
