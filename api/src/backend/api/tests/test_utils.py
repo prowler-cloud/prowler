@@ -148,7 +148,7 @@ class TestProwlerProviderConnectionTest:
         self, mock_return_prowler_provider
     ):
         provider = MagicMock()
-        provider.uid = "1234567890"
+        provider.uid = "111122223333"
         mock_return_prowler_provider.return_value = MagicMock()
 
         connection = prowler_provider_connection_test(provider)
@@ -160,7 +160,7 @@ class TestProwlerProviderConnectionTest:
         self, mock_return_prowler_provider
     ):
         provider = MagicMock()
-        provider.uid = "1234567890"
+        provider.uid = "333322221111"
         exception = Exception("test exception")
         mock_return_prowler_provider.side_effect = exception
 
