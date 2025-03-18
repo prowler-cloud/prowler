@@ -151,7 +151,9 @@ class TestProwlerProviderConnectionTest:
         mock_return_prowler_provider.return_value = MagicMock()
         connection = prowler_provider_connection_test(providers_fixture[0])
         assert connection.is_connected is False
-        assert connection.error == Provider.secret.RelatedObjectDoesNotExist()
+        assert connection.error == Provider.secret.RelatedObjectDoesNotExist(
+            "Provider has no secret."
+        )
 
 
 class TestGetProwlerProviderKwargs:
