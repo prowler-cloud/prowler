@@ -306,7 +306,7 @@ export const AuthForm = ({
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-small font-medium text-primary"
+                        className="text-xs font-medium text-primary"
                       >
                         Read the docs
                       </Link>
@@ -339,7 +339,7 @@ export const AuthForm = ({
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-small font-medium text-primary"
+                        className="text-xs font-medium text-primary"
                       >
                         Read the docs
                       </Link>
