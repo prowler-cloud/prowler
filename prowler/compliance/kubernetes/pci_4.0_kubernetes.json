@@ -2461,18 +2461,6 @@
       ]
     },
     {
-      "Id": "1.4.2.16",
-      "Description": "Checks if the Ingress Controllers in Kubernetes use SSL certificates provided by a certificate manager such as cert-manager or AWS Certificate Manager. To use this rule, ensure that Ingress resources are configured with HTTPS routes. This rule is applicable to Ingress Controllers and does not check for LoadBalancer services without an Ingress configuration.",
-      "Name": "API Server",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "1.4.2: Network connections between trusted and untrusted networks are controlled.",
-          "Service": "API Server"
-        }
-      ]
-    },
-    {
       "Id": "1.4.2.17",
       "Description": "Checks if an account in Kubernetes has network policies that restrict public access. The rule is NON_COMPLIANT if AllowAllIngress is true, or if true, ports other than Port 22 are listed in IngressRules.",
       "Name": "Core",
@@ -3747,20 +3735,6 @@
         {
           "Section": "10.2.1.1: Audit logs are implemented to support the detection of anomalies and suspicious activity, and the forensic analysis of events.",
           "Service": "Core"
-        }
-      ]
-    },
-    {
-      "Id": "10.2.1.1.10",
-      "Description": "The Kubernetes equivalent of monitoring for enabled CloudTrail in AWS can be likened to ensuring that auditing is enabled in the cluster, which tracks API calls and the actions performed on resources. This is critical for security and compliance purposes.",
-      "Name": "API Server",
-      "Checks": [
-        "apiserver_audit_log_path_set"
-      ],
-      "Attributes": [
-        {
-          "Section": "10.2.1.1: Audit logs are implemented to support the detection of anomalies and suspicious activity, and the forensic analysis of events.",
-          "Service": "API Server"
         }
       ]
     },
@@ -5599,20 +5573,6 @@
         {
           "Section": "10.2.1.6: Audit logs are implemented to support the detection of anomalies and suspicious activity, and the forensic analysis of events.",
           "Service": "RBAC"
-        }
-      ]
-    },
-    {
-      "Id": "10.2.1.6.8",
-      "Description": "The equivalence in Kubernetes for enabling CloudTrail in AWS is similar to ensuring that audit logging is enabled for security monitoring in Kubernetes. This can be achieved by configuring the audit logging settings in the Kubernetes API server.",
-      "Name": "API Server",
-      "Checks": [
-        "apiserver_audit_log_path_set"
-      ],
-      "Attributes": [
-        {
-          "Section": "10.2.1.6: Audit logs are implemented to support the detection of anomalies and suspicious activity, and the forensic analysis of events.",
-          "Service": "API Server"
         }
       ]
     },
@@ -7729,18 +7689,6 @@
         {
           "Section": "10.3.3: Audit logs are protected from destruction and unauthorized modifications.",
           "Service": "API Server"
-        }
-      ]
-    },
-    {
-      "Id": "10.3.3.8",
-      "Description": "Checks if RDS DB instances have backups enabled. Optionally, the rule checks the backup retention period and the backup window.",
-      "Name": "AWS RDS",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "10.3.3: Audit logs are protected from destruction and unauthorized modifications.",
-          "Service": "AWS RDS"
         }
       ]
     },
@@ -10953,18 +10901,6 @@
       ]
     },
     {
-      "Id": "3.5.1.7",
-      "Description": "Checks if the Kubernetes project (namespace/pod) contains environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. The rule is NON_COMPLIANT when the environment variables contain plaintext credentials.",
-      "Name": "Core",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "3.5.1: Primary account number (PAN) is secured wherever it is stored.",
-          "Service": "Core"
-        }
-      ]
-    },
-    {
       "Id": "3.5.1.8",
       "Description": "Checks if a Kubernetes Pod's logs configured with a persistent volume have encryption enabled for its logs. The rule is NON_COMPLIANT if 'encryptionEnabled' is set to 'false' in the volume configuration of a Pod.",
       "Name": "Core",
@@ -11067,18 +11003,6 @@
         {
           "Section": "3.5.1: Primary account number (PAN) is secured wherever it is stored.",
           "Service": "Core"
-        }
-      ]
-    },
-    {
-      "Id": "3.5.1.17",
-      "Description": "Verifies whether Kubernetes clusters in the Amazon Elastic Kubernetes Service (EKS) are set up to ensure that Kubernetes secrets are encrypted using AWS Key Management Service (KMS) keys.",
-      "Name": "Amazon Elastic Kubernetes Service (EKS)",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "3.5.1: Primary account number (PAN) is secured wherever it is stored.",
-          "Service": "Amazon Elastic Kubernetes Service (EKS)"
         }
       ]
     },
@@ -11639,18 +11563,6 @@
         {
           "Section": "3.6.1.4: Cryptographic keys used to protect stored account data are secured.",
           "Service": "API Server"
-        }
-      ]
-    },
-    {
-      "Id": "3.6.1.4.9",
-      "Description": "Checks if Kubernetes secrets that are used for encryption (similar to AWS KMS keys) are not marked for deletion. The rule is NON_COMPLIANT if any Kubernetes secrets are marked for deletion.",
-      "Name": "RBAC (Role-Based Access Control)",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "3.6.1.4: Cryptographic keys used to protect stored account data are secured.",
-          "Service": "RBAC (Role-Based Access Control)"
         }
       ]
     },
@@ -16207,18 +16119,6 @@
       ]
     },
     {
-      "Id": "8.2.2.1",
-      "Description": "Checks if the Kubernetes Pod specification contains environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as plain text in the spec. The rule is NON_COMPLIANT when these environment variables are present in plaintext credentials within a Pod definition.",
-      "Name": "Core",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "8.2.2: User identification and related accounts for users and administrators are strictly managed throughout an accounts lifecycle.",
-          "Service": "Core"
-        }
-      ]
-    },
-    {
       "Id": "8.2.2.2",
       "Description": "Checks if running Kubernetes pods are deployed using service accounts. The rule is NON_COMPLIANT if a running pod is deployed without an associated service account.",
       "Name": "API Server",
@@ -17355,18 +17255,6 @@
       ]
     },
     {
-      "Id": "8.3.2.11",
-      "Description": "Checks if the Kubernetes namespace contains environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in any pod. The rule is NON_COMPLIANT when any pod in the namespace has plaintext credentials in environment variables.",
-      "Name": "Core",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "8.3.2: Strong authentication for users and administrators is established and managed.",
-          "Service": "Core"
-        }
-      ]
-    },
-    {
       "Id": "8.3.2.12",
       "Description": "Checks if a Kubernetes Pod configured with Persistent Volumes has encryption enabled for its storage. The rule is NON_COMPLIANT if 'encryptionDisabled' is set to 'true' in the PersistentVolumeClaim specifications.",
       "Name": "Core",
@@ -17515,18 +17403,6 @@
         {
           "Section": "8.3.2: Strong authentication for users and administrators is established and managed.",
           "Service": "API Server"
-        }
-      ]
-    },
-    {
-      "Id": "8.3.2.24",
-      "Description": "Checks if Kubernetes clusters on Amazon Elastic Kubernetes Service have secrets encrypted using AWS Key Management Service (KMS) keys.",
-      "Name": "Amazon Elastic Kubernetes Service (EKS)",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "8.3.2: Strong authentication for users and administrators is established and managed.",
-          "Service": "Amazon Elastic Kubernetes Service (EKS)"
         }
       ]
     },
@@ -20047,18 +19923,6 @@
         {
           "Section": "A3.3.1: PCI DSS is incorporated into business-as-usual (BAU) activities.",
           "Service": "Core"
-        }
-      ]
-    },
-    {
-      "Id": "A3.3.1.9",
-      "Description": "Checks if AWS Security Hub is enabled for an AWS Account. The rule is NON_COMPLIANT if AWS Security Hub is not enabled.",
-      "Name": "AWS Security Hub",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "A3.3.1: PCI DSS is incorporated into business-as-usual (BAU) activities.",
-          "Service": "AWS Security Hub"
         }
       ]
     },
