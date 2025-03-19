@@ -20,7 +20,8 @@ from colorama import Fore, Style
 from kiota_authentication_azure.azure_identity_authentication_provider import (
     AzureIdentityAuthenticationProvider,
 )
-from msgraph import GraphServiceClient
+from msgraph import GraphRequestAdapter, GraphServiceClient
+from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
     default_config_file_path,
@@ -903,12 +904,23 @@ class AzureProvider(Provider):
                         )
                     else:
                         auth_provider = AzureIdentityAuthenticationProvider(
-                            self.credential,
+                            credentials,
                             scopes=[self.region_config.graph_credential_scopes],
-                            allowed_hosts=[self.region_config.graph_base_url],
+                            allowed_hosts=[
+                                self.region_config.graph_base_url.replace(
+                                    "http://", ""
+                                ).replace("https://", "")
+                            ],
                         )
                         http_client = GraphClientFactory.create_with_default_middleware(
                             host=self.region_config.graph_base_url
+                        )
+                        adapter = GraphRequestAdapter(
+                            auth_provider=auth_provider, client=http_client
+                        )
+                        adapter.base_url = self.region_config.graph_base_url
+                        client = GraphServiceClient(
+                            request_adapter=adapter,
                         )
 
                     domain_result = await client.domains.get()
@@ -950,10 +962,33 @@ class AzureProvider(Provider):
                         logger.info(
                             "Trying to retrieve user information from Microsoft Graph to populate identity structure ..."
                         )
-                        client = GraphServiceClient(
-                            credentials=credentials,
-                            scopes=self.region_config.graph_credential_scopes,
-                        )
+                        if self.region_config.name == "AzureCloud":
+                            client = GraphServiceClient(
+                                credentials=credentials,
+                                scopes=self.region_config.graph_credential_scopes,
+                            )
+                        else:
+                            auth_provider = AzureIdentityAuthenticationProvider(
+                                credentials,
+                                scopes=[self.region_config.graph_credential_scopes],
+                                allowed_hosts=[
+                                    self.region_config.graph_base_url.replace(
+                                        "http://", ""
+                                    ).replace("https://", "")
+                                ],
+                            )
+                            http_client = (
+                                GraphClientFactory.create_with_default_middleware(
+                                    host=self.region_config.graph_base_url
+                                )
+                            )
+                            adapter = GraphRequestAdapter(
+                                auth_provider=auth_provider, client=http_client
+                            )
+                            adapter.base_url = self.region_config.graph_base_url
+                            client = GraphServiceClient(
+                                request_adapter=adapter,
+                            )
 
                         me = await client.me.get()
                         if me:
