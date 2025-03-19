@@ -66,10 +66,11 @@ class TestAzureProvider:
 
             assert azure_provider.region_config == AzureRegionConfig(
                 name="AzureCloud",
-                authority=None,
+                authority="login.microsoftonline.com",
                 base_url="https://management.azure.com",
                 credential_scopes=["https://management.azure.com/.default"],
                 graph_credential_scopes=["https://graph.microsoft.com/.default"],
+                graph_base_url="https://graph.microsoft.com",
             )
             assert isinstance(azure_provider.session, DefaultAzureCredential)
             assert azure_provider.identity == AzureIdentityInfo(
