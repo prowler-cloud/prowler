@@ -9,10 +9,22 @@ You can also access to the auto-generated **Prowler API** documentation at [http
     If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user you can see API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
 
 ## **Step 1: Sign Up**
+### **Sign up with Email**
 To get started, sign up using your email and password:
 
 <img src="../../img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="../../img/sign-up.png" alt="Sign Up" width="285"/>
+
+### **Sign up with Social Login**
+
+If Social Login is enabled, you can sign up using your preferred provider (e.g., Google, GitHub).
+
+???+ note "How Social Login Works"
+    - If your email is already registered, you will be logged in, and your social account will be linked.
+    - If your email is not registered, a new account will be created using your social account email.
+
+???+ note "Enable Social Login"
+    See [how to configure Social Login for Prowler](prowler-app-social-login.md) to enable this feature in your own deployments.
 
 ---
 
