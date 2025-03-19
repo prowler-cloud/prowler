@@ -2,7 +2,7 @@
 
 The **Prowler App** supports social login using Google and GitHub OAuth providers. This document guides you through configuring the required environment variables to enable social authentication.
 
-<img src="../tutorials/img/social-login/social_login_buttons.png" alt="Social login buttons" width="700" />
+<img src="../img/social-login/social_login_buttons.png" alt="Social login buttons" width="700" />
 
 ## Configuring Social Login Credentials
 
@@ -31,7 +31,8 @@ SOCIAL_GITHUB_OAUTH_CLIENT_SECRET=""
 - If either `SOCIAL_GOOGLE_OAUTH_CLIENT_ID` or `SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET` is empty or not defined, the Google login button will be disabled.
 - If either `SOCIAL_GITHUB_OAUTH_CLIENT_ID` or `SOCIAL_GITHUB_OAUTH_CLIENT_SECRET` is empty or not defined, the GitHub login button will be disabled.
 
-<img src="../tutorials/img/social-login/social_login_buttons_disabled.png" alt="Social Login Buttons Disabled" width="700"/>
+
+<img src="../img/social-login/social_login_buttons_disabled.png" alt="Social login buttons disabled" width="700" />
 
 ## Obtaining OAuth Credentials
 
