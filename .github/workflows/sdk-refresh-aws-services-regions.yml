@@ -56,7 +56,7 @@ jobs:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           commit-message: "feat(regions_update): Update regions for AWS services"
           branch: "aws-services-regions-updated-${{ github.sha }}"
-          labels: "status/waiting-for-revision, severity/low, provider/aws, backport-to-v3"
+          labels: "status/waiting-for-revision, severity/low, provider/aws"
           title: "chore(regions_update): Changes in regions for AWS services"
           body: |
             ### Description
