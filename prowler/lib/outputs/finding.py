@@ -5,6 +5,8 @@ from typing import Optional, Union
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import (
     Check_Report,
     CheckMetadata,
@@ -296,14 +298,18 @@ class Finding(BaseModel):
             Finding: A new Finding instance populated with data from the provided model.
         """
         # Missing Finding's API values
-        finding.muted = False
-        finding.resource_details = ""
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
+        finding.resource = resource.metadata
+        finding.resource_details = resource.details
+        finding.partition = resource.partition
 
-        # TODO: Change this when the API has all the values
-        finding.resource = {}
+        # Add CheckMetadata to the output_options
+        output_options = SimpleNamespace()
+        output_options.bulk_checks_metadata = update_checks_metadata_with_compliance(
+            Compliance.get_bulk(provider.type), CheckMetadata.get_bulk(provider.type)
+        )
 
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid
 
@@ -358,7 +364,7 @@ class Finding(BaseModel):
         finding.resource_tags = unroll_tags(
             [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
         )
-        return cls.generate_output(provider, finding, SimpleNamespace())
+        return cls.generate_output(provider, finding, output_options)
 
     def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
         """

@@ -191,6 +191,15 @@ def perform_prowler_scan(
                         if resource_instance.type != finding.resource_type:
                             resource_instance.type = finding.resource_type
                             updated_fields.append("type")
+                        if resource_instance.metadata != finding.resource_metadata:
+                            resource_instance.metadata = finding.resource_metadata
+                            updated_fields.append("metadata")
+                        if resource_instance.details != finding.resource_details:
+                            resource_instance.details = finding.resource_details
+                            updated_fields.append("details")
+                        if resource_instance.partition != finding.partition:
+                            resource_instance.partition = finding.partition
+                            updated_fields.append("partition")
                         if updated_fields:
                             with rls_transaction(tenant_id):
                                 resource_instance.save(update_fields=updated_fields)
@@ -267,6 +276,8 @@ def perform_prowler_scan(
                         check_id=finding.check_id,
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
+                        muted=finding.muted,
+                        compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
 
@@ -414,9 +425,9 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                     output_field=IntegerField(),
                 )
             ),
-            muted=Sum(
+            muted_count=Sum(
                 Case(
-                    When(status="MUTED", then=1),
+                    When(muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -498,7 +509,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 region=agg["resources__region"],
                 fail=agg["fail"],
                 _pass=agg["_pass"],
-                muted=agg["muted"],
+                muted=agg["muted_count"],
                 total=agg["total"],
                 new=agg["new"],
                 changed=agg["changed"],

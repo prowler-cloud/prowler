@@ -519,6 +519,11 @@ class Resource(RowLevelSecurityProtectedModel):
         editable=False,
     )
 
+    metadata = models.JSONField(default=dict, null=True, blank=True)
+    details = models.TextField(blank=True, null=True)
+    partition = models.TextField(blank=True, null=True)
+
+    # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
         verbose_name="Tags associated with the resource, by provider",
@@ -656,6 +661,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     tags = models.JSONField(default=dict, null=True, blank=True)
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
+
+    muted = models.BooleanField(default=False)
+    compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
