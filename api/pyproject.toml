@@ -22,7 +22,7 @@ dependencies = [
   "drf-spectacular==0.27.2",
   "drf-spectacular-jsonapi==0.5.1",
   "gunicorn==23.0.0",
-  "prowler @ git+https://github.com/prowler-cloud/prowler.git@master",
+  "prowler @ git+https://github.com/prowler-cloud/prowler.git@v5.5",
   "psycopg2-binary==2.9.9",
   "pytest-celery[redis] (>=1.0.1,<2.0.0)",
   "sentry-sdk[django] (>=2.20.0,<3.0.0)",

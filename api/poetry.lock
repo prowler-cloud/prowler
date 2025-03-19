@@ -437,14 +437,14 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "34.0.0"
+version = "34.1.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_containerservice-34.0.0-py3-none-any.whl", hash = "sha256:34be8172241e3c2c444682407970a938f60e3b2bd06304eaae0a1ba641f2262d"},
-    {file = "azure_mgmt_containerservice-34.0.0.tar.gz", hash = "sha256:822d07828b746a5ea5408a8b3770f41dc424d6c4c28de53c29611b62bef8aea3"},
+    {file = "azure_mgmt_containerservice-34.1.0-py3-none-any.whl", hash = "sha256:1faa1714e0100c6ee4cfb8d2eadb1c270b548a84b0070c74e9fe646056a5cb12"},
+    {file = "azure_mgmt_containerservice-34.1.0.tar.gz", hash = "sha256:637a6cf8f06636c016ad151d76f9c7ba75bd05d4334b3dd7837eb8b517f30dbe"},
 ]
 
 [package.dependencies]
@@ -627,20 +627,21 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-storage"
-version = "21.2.1"
+version = "22.1.1"
 description = "Microsoft Azure Storage Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure-mgmt-storage-21.2.1.tar.gz", hash = "sha256:503a7ff9c31254092b0656445f5728bfdfda2d09d46a82e97019eaa9a1ecec64"},
-    {file = "azure_mgmt_storage-21.2.1-py3-none-any.whl", hash = "sha256:f97df1fa39cde9dbacf2cd96c9cba1fc196932185e24853e276f74b18a0bd031"},
+    {file = "azure_mgmt_storage-22.1.1-py3-none-any.whl", hash = "sha256:a4a4064918dcfa4f1cbebada5bf064935d66f2a3647a2f46a1f1c9348736f5d9"},
+    {file = "azure_mgmt_storage-22.1.1.tar.gz", hash = "sha256:25aaa5ae8c40c30e2f91f8aae6f52906b0557e947d5c1b9817d4ff9decc11340"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-subscription"
@@ -2091,14 +2092,14 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.161.0"
+version = "2.163.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "google_api_python_client-2.161.0-py2.py3-none-any.whl", hash = "sha256:9476a5a4f200bae368140453df40f9cda36be53fa7d0e9a9aac4cdb859a26448"},
-    {file = "google_api_python_client-2.161.0.tar.gz", hash = "sha256:324c0cce73e9ea0a0d2afd5937e01b7c2d6a4d7e2579cdb6c384f9699d6c9f37"},
+    {file = "google_api_python_client-2.163.0-py2.py3-none-any.whl", hash = "sha256:080e8bc0669cb4c1fb8efb8da2f5b91a2625d8f0e7796cfad978f33f7016c6c4"},
+    {file = "google_api_python_client-2.163.0.tar.gz", hash = "sha256:88dee87553a2d82176e2224648bf89272d536c8f04dcdda37ef0a71473886dd7"},
 ]
 
 [package.dependencies]
@@ -3574,7 +3575,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.4.0"
+version = "5.5.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">3.9.1,<3.13"
@@ -3591,7 +3592,7 @@ azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "34.0.0"
 azure-mgmt-containerregistry = "10.3.0"
-azure-mgmt-containerservice = "34.0.0"
+azure-mgmt-containerservice = "34.1.0"
 azure-mgmt-cosmosdb = "9.7.0"
 azure-mgmt-keyvault = "10.3.1"
 azure-mgmt-monitor = "6.0.2"
@@ -3601,7 +3602,7 @@ azure-mgmt-resource = "23.2.0"
 azure-mgmt-search = "9.1.0"
 azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
-azure-mgmt-storage = "21.2.1"
+azure-mgmt-storage = "22.1.1"
 azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "8.0.0"
 azure-storage-blob = "12.24.1"
@@ -3612,7 +3613,7 @@ cryptography = "44.0.1"
 dash = "2.18.2"
 dash-bootstrap-components = "1.6.0"
 detect-secrets = "1.5.0"
-google-api-python-client = "2.161.0"
+google-api-python-client = "2.163.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "32.0.1"
@@ -3622,19 +3623,19 @@ numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.3.1"
 pydantic = "1.10.21"
-python-dateutil = "^2.9.0.post0"
+python-dateutil = ">=2.9.0.post0,<3.0.0"
 pytz = "2025.1"
 schema = "0.7.7"
 shodan = "1.31.0"
 slack-sdk = "3.34.0"
 tabulate = "0.9.0"
-tzlocal = "5.2"
+tzlocal = "5.3.1"
 
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "master"
-resolved_reference = "931df361bf5ee287139112f485580241099094cb"
+reference = "v5.5"
+resolved_reference = "c7f2f5c27dc629ef84bef4b328bc4b06a4960d0f"
 
 [[package]]
 name = "psutil"
@@ -5083,14 +5084,14 @@ markers = {dev = "sys_platform == \"win32\""}
 
 [[package]]
 name = "tzlocal"
-version = "5.2"
+version = "5.3.1"
 description = "tzinfo object for the local timezone"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "tzlocal-5.2-py3-none-any.whl", hash = "sha256:49816ef2fe65ea8ac19d19aa7a1ae0551c834303d5014c6d5a62e4cbda8047b8"},
-    {file = "tzlocal-5.2.tar.gz", hash = "sha256:8d399205578f1a9342816409cc1e46a93ebd5755e39ea2d85334bea911bf0e6e"},
+    {file = "tzlocal-5.3.1-py3-none-any.whl", hash = "sha256:eb1a66c3ef5847adf7a834f1be0800581b683b5608e74f86ecbcef8ab91bb85d"},
+    {file = "tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd"},
 ]
 
 [package.dependencies]
@@ -5433,4 +5434,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "5892eb6b702f29a7eebff3f9dc899ea8d78cac622aa8f299ef4c662df8f5b51d"
+content-hash = "4ca97b869831c2c56a2bbed4d1d7c7ea11bf4e744bcb8ec76e9537cfd3b5a37f"
