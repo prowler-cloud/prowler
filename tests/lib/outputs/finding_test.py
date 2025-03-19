@@ -71,12 +71,25 @@ class DummyTags:
 
 
 class DummyResource:
-    def __init__(self, uid, name, resource_arn, region, tags):
+    def __init__(
+        self,
+        uid,
+        name,
+        resource_arn,
+        region,
+        tags,
+        details=None,
+        metadata=None,
+        partition=None,
+    ):
         self.uid = uid
         self.name = name
         self.resource_arn = resource_arn
         self.region = region
         self.tags = DummyTags(tags)
+        self.details = details or ""
+        self.metadata = metadata or {}
+        self.partition = partition
 
     def __iter__(self):
         yield "uid", self.uid
@@ -112,8 +125,6 @@ class DummyAPIFinding:
     Attributes will be added dynamically.
     """
 
-    pass
-
 
 class TestFinding:
     @patch(
@@ -145,7 +156,7 @@ class TestFinding:
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="aws")
-        check_output.resource = {}
+        check_output.resource = {"metadata": "mock_metadata"}
 
         # Mock output options
         output_options = MagicMock()
@@ -160,6 +171,8 @@ class TestFinding:
         assert finding_output.resource_name == "test_resource_id"
         assert finding_output.resource_uid == "test_resource_arn"
         assert finding_output.resource_details == "test_resource_details"
+        assert finding_output.resource_metadata == {"metadata": "mock_metadata"}
+        assert finding_output.partition == "aws"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
             "mock_compliance_key": "mock_compliance_value"
@@ -586,6 +599,7 @@ class TestFinding:
         dummy_finding.status_extended = "extended"
         dummy_finding.check_metadata = check_metadata
         dummy_finding.resources = resources
+        dummy_finding.muted = True
 
         # Call the transform_api_finding classmethod
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
@@ -709,6 +723,7 @@ class TestFinding:
         )
         api_finding.resources = DummyResources(api_resource)
         api_finding.subscription = "default"
+        api_finding.muted = False
         finding_obj = Finding.transform_api_finding(api_finding, provider)
 
         assert finding_obj.account_organization_uid == "test-ing-432a-a828-d9c965196f87"
@@ -807,6 +822,7 @@ class TestFinding:
         dummy_finding.check_metadata = check_metadata
         dummy_finding.raw_result = {}
         dummy_finding.project_id = "project1"
+        dummy_finding.muted = True
 
         resource = DummyResource(
             uid="gcp-resource-uid",
@@ -893,6 +909,7 @@ class TestFinding:
         )
         resource.region = "namespace: default"
         api_finding.resources = DummyResources(resource)
+        api_finding.muted = True
         finding_obj = Finding.transform_api_finding(api_finding, provider)
         assert finding_obj.auth_method == "in-cluster"
         assert finding_obj.resource_name == "k8s-resource-name"
@@ -958,6 +975,7 @@ class TestFinding:
             tags=[],
         )
         dummy_finding.resources = DummyResources(resource)
+        dummy_finding.muted = True
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
         assert finding_obj.auth_method == "ms_identity_type: ms_identity_id"
         assert finding_obj.account_uid == "ms-tenant-id"
