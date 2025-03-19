@@ -303,7 +303,6 @@ class Finding(BaseModel):
         finding.resource_name = resource.name
         finding.resource = resource.metadata
         finding.resource_details = resource.details
-        finding.partition = resource.partition
 
         # Add CheckMetadata to the output_options
         output_options = SimpleNamespace()

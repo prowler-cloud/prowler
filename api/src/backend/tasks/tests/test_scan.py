@@ -108,6 +108,11 @@ class TestPerformScan:
             finding.resource_type = "resource_type"
             finding.resource_tags = {"tag1": "value1", "tag2": "value2"}
             finding.raw = {}
+            finding.resource_metadata = {"test": "metadata"}
+            finding.resource_details = {"details": "test"}
+            finding.partition = "partition"
+            finding.muted = True
+            finding.compliance = {"compliance1": "PASS"}
 
             # Mock the ProwlerScan instance
             mock_prowler_scan_instance = MagicMock()
@@ -145,6 +150,8 @@ class TestPerformScan:
         assert scan_finding.severity == finding.severity
         assert scan_finding.check_id == finding.check_id
         assert scan_finding.raw_result == finding.raw
+        assert scan_finding.muted
+        assert scan_finding.compliance == finding.compliance
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
@@ -152,6 +159,9 @@ class TestPerformScan:
         assert scan_resource.service == finding.service_name
         assert scan_resource.type == finding.resource_type
         assert scan_resource.name == finding.resource_name
+        assert scan_resource.metadata == finding.resource_metadata
+        assert scan_resource.details == f"{finding.resource_details}"
+        assert scan_resource.partition == finding.partition
 
         # Assert that the resource tags have been created and associated
         tags = scan_resource.tags.all()
