@@ -17,6 +17,9 @@ from azure.identity import (
 )
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
+from kiota_authentication_azure.azure_identity_authentication_provider import (
+    AzureIdentityAuthenticationProvider,
+)
 from msgraph import GraphServiceClient
 
 from prowler.config.config import (
@@ -407,6 +410,7 @@ class AzureProvider(Provider):
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
                 graph_credential_scopes=config["graph_credential_scopes"],
+                graph_base_url=config["graph_base_url"],
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -892,10 +896,20 @@ class AzureProvider(Provider):
                     logger.info(
                         "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                     )
-                    client = GraphServiceClient(
-                        credentials=credentials,
-                        scopes=self.region_config.graph_credential_scopes,
-                    )
+                    if self.region_config.name == "AzureCloud":
+                        client = GraphServiceClient(
+                            credentials=credentials,
+                            scopes=self.region_config.graph_credential_scopes,
+                        )
+                    else:
+                        auth_provider = AzureIdentityAuthenticationProvider(
+                            self.credential,
+                            scopes=[self.region_config.graph_credential_scopes],
+                            allowed_hosts=[self.region_config.graph_base_url],
+                        )
+                        http_client = GraphClientFactory.create_with_default_middleware(
+                            host=self.region_config.graph_base_url
+                        )
 
                     domain_result = await client.domains.get()
                     if getattr(domain_result, "value"):
