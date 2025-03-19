@@ -500,13 +500,15 @@ class GcpProvider(Provider):
                 service_account_key=service_account_key,
             )
 
+            if not project_id:
+                project_id = provider_id
+
             if provider_id and project_id != provider_id:
                 # Logic to check if the provider ID matches the project ID
                 GcpProvider.validate_project_id(
                     provider_id=provider_id,
                     credentials=session,
                 )
-                project_id = provider_id
 
             # Test the connection using the Service Usage API since it is enabled by default
             client = discovery.build("serviceusage", "v1", credentials=session)
