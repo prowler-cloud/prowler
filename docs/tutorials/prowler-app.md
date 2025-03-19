@@ -66,6 +66,11 @@ Optionally, provide a **Provider Alias** for easier identification. Follow the i
 For AWS, enter your `AWS Account ID` and choose one of the following methods to connect:
 
 #### **Step 4.1.1: IAM Access Keys**
+
+[Video - Static User Credentials](https://www.youtube.com/watch?v=CtmZxduNHlE&ab_channel=Prowler "Video - Static User Credentials")
+
+<iframe width="320" height="180" src="https://www.youtube-nocookie.com/embed/CtmZxduNHlE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 1. Select `Connect via Credentials`.
 
     <img src="../../img/connect-aws-credentials.png" alt="AWS Credentials" width="350"/>
@@ -75,6 +80,11 @@ For AWS, enter your `AWS Account ID` and choose one of the following methods to 
     <img src="../../img/aws-credentials.png" alt="AWS Credentials" width="350"/>
 
 #### **Step 4.1.2: IAM Role**
+
+[Video - Assume Role](https://www.youtube.com/watch?v=RPgIWOCERzY "Video - Assume Role")
+
+<iframe width="320" height="180" src="https://www.youtube-nocookie.com/embed/RPgIWOCERzY " title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+
 1. Select `Connect assuming IAM Role`.
 
     <img src="../../img/connect-aws-role.png" alt="AWS Role" width="350"/>
