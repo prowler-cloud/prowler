@@ -1897,6 +1897,13 @@ class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
         return obj.requirements
 
 
+class ComplianceOverviewMetadataSerializer(serializers.Serializer):
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "compliance-overviews-metadata"
+
+
 # Overviews
 
 
