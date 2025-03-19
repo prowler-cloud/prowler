@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
+- HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
 
 ---
 
