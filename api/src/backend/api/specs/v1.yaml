@@ -3674,6 +3674,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -3792,6 +3793,8 @@ paths:
             - -manage_users
             - manage_account
             - -manage_account
+            - manage_integrations
+            - -manage_integrations
             - manage_providers
             - -manage_providers
             - manage_scans
@@ -3867,6 +3870,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -8398,6 +8402,8 @@ components:
                   type: boolean
                 manage_account:
                   type: boolean
+                manage_integrations:
+                  type: boolean
                 manage_providers:
                   type: boolean
                 manage_scans:
@@ -10050,6 +10056,8 @@ components:
               type: boolean
             manage_account:
               type: boolean
+            manage_integrations:
+              type: boolean
             manage_providers:
               type: boolean
             manage_scans:
@@ -10178,6 +10186,8 @@ components:
             manage_users:
               type: boolean
             manage_account:
+              type: boolean
+            manage_integrations:
               type: boolean
             manage_providers:
               type: boolean
@@ -10312,6 +10322,8 @@ components:
                 manage_users:
                   type: boolean
                 manage_account:
+                  type: boolean
+                manage_integrations:
                   type: boolean
                 manage_providers:
                   type: boolean
