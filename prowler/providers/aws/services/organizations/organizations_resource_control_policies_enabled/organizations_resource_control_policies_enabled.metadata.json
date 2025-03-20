@@ -1,0 +1,37 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_resource_control_policies_enabled",
+  "CheckTitle": "Check if AWS Organization is using Resource Control Policies",
+  "CheckType": [
+    "Governance",
+    "IAM"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "rcp",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organization is using Resource Control Policies for resource governance and security.",
+  "Risk": "Without Resource Control Policies, organizations lack granular control over resources across accounts. This increases the risk of misconfigured resources, security vulnerabilities, and governance gaps at the resource level that can't be addressed by Service Control Policies alone.",
+  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations create-policy --name 'MyResourceControlPolicy' --description 'Resource Control Policy to enforce security controls on resources' --type RESOURCE_CONTROL_POLICY --content file://rcpContent.json",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create Resource Control Policies to enforce security guardrails at the resource level across your organization. Consider implementing RCPs for critical resource types like S3 buckets, IAM roles, and Lambda functions.",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html"
+    }
+  },
+  "Categories": [
+    "governance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_scp_check_deny_regions"
+  ],
+  "Notes": "Resource Control Policies were introduced in 2023 and provide resource-level governance capabilities beyond what Service Control Policies can do."
+}
