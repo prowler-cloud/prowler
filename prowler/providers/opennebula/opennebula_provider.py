@@ -1,34 +1,34 @@
 import pyone  
 from configparser import ConfigParser
-
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.opennebula.models import (
-    OpenNebulaSessionModel,
-    OpenNebulaIdentityModel,
-    OpenNebulaOutputOptionsModel
+    OpenNebulaSession,
+    OpenNebulaIdentity,
+    OpenNebulaOutputOptions
 )
 from prowler.providers.opennebula.exceptions.exceptions import OpenNebulaError
 from colorama import Fore
 
 class OpenNebulaProvider(Provider):
     _type: str = "opennebula"
-    _identity: OpenNebulaIdentityModel
-    _session: OpenNebulaSessionModel
+    _identity: OpenNebulaIdentity
+    _session: OpenNebulaSession
     _audit_config: dict
-    _output_options: OpenNebulaOutputOptionsModel
+    _output_options: OpenNebulaOutputOptions
     _mutelist: dict
     audit_metadata: Audit_Metadata
 
     def __init__(
         self, 
-        credentials_file=None,
-        config_file=None,
-        mutelist_file=None):
+        credentials_file: str = None,
+        config_file: str = None,
+        mutelist_path: str = None,
+        mutelist_content: dict = {},
+    ):
         """
         Initializes the OpenNebulaProvider instance.
         Args:
@@ -39,30 +39,29 @@ class OpenNebulaProvider(Provider):
         # Set up the session
         self._session = self.setup_session(credentials_file)
         
-        # Get user and group information
-        user_info = self._session.client.user.info()
-        group_info = self._session.client.group.info()
-        
         # Set the identity
         self._identity = self.set_identity()
         
         # Set the output options
-        self._output_options = OpenNebulaOutputOptionsModel(
-            endpoint=self._session.endpoint,
-            user_name=self._identity.user_name
+        self._output_options = OpenNebulaOutputOptions(
+            None,
+            {},
+            self.identity
         )
         
         # Set provider configuration
         self._audit_config = load_and_validate_config_file(
             config_file,
         )
-        
-        # Set the mutelist
-        if mutelist_file:
-            self._mutelist = parse_mutelist_file(mutelist_file)
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = mutelist_content
         else:
-            self._mutelist = {}
-            
+            if not mutelist_path:
+                mutelist_path = {}
+            self._mutelist = mutelist_path
+
         # Set audit metadata
         self.audit_metadata = Audit_Metadata(
             provider=self._type,
@@ -93,7 +92,7 @@ class OpenNebulaProvider(Provider):
     def setup_session(
         self, 
         credentials_file: str = None
-    ) -> OpenNebulaSessionModel:
+    ) -> OpenNebulaSession:
         """
         Sets up the OpenNebula session.
         
@@ -113,7 +112,7 @@ class OpenNebulaProvider(Provider):
         # Create OpenNebula client
         client = pyone.OneServer(endpoint, f"{username}:{auth_token}")
         self.test_connection(client)
-        return OpenNebulaSessionModel(
+        return OpenNebulaSession(
             client=client,
             endpoint=endpoint,
             username=username,
@@ -124,8 +123,7 @@ class OpenNebulaProvider(Provider):
         """Print the provider's credentials information."""
         print_boxes(
             [
-                f"OpenNebula Endpoint: {Fore.YELLOW}{self._output_options.endpoint}{Fore.RESET}",
-                f"OpenNebula User: {Fore.YELLOW}{self._output_options.user_name}{Fore.RESET}",
+                f"OpenNebula User: {Fore.YELLOW}{self.identity.user_name}{Fore.RESET}",
             ]
         )
 
@@ -138,14 +136,14 @@ class OpenNebulaProvider(Provider):
             logger.error("Connection to OpenNebula API failed.")
             raise OpenNebulaError(original_exception=e)
     
-    def set_identity(self):
+    def set_identity(self) -> OpenNebulaIdentity:
         """Set the identity of the OpenNebula provider."""
         identity = self._session.client.user.info(-1),
         user_id = identity.get('ID')
         user_name = identity.get('NAME')
         group_id = identity.get('GID')
         group_name = identity.get('GNAME')
-        return OpenNebulaIdentityModel(
+        return OpenNebulaIdentity(
             user_id=user_id,
             user_name=user_name,
             group_id=group_id,
