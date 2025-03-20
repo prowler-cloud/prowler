@@ -68,7 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pipx install poetry==1.8.5
+          pipx install poetry==2.1.1
 
       - name: Setup Python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
