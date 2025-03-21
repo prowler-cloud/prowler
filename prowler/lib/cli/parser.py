@@ -26,7 +26,7 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,dashboard,oppennebula} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,dashboard,opennebula} ...",
             epilog="""
 Available Cloud Providers:
   {aws,azure,gcp,kubernetes}
