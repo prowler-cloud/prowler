@@ -851,6 +851,10 @@ class ScanSerializer(RLSSerializer):
             "url",
         ]
 
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
 
 class ScanIncludeSerializer(RLSSerializer):
     trigger = serializers.ChoiceField(
@@ -1895,6 +1899,13 @@ class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
         Returns the detailed structure of requirements.
         """
         return obj.requirements
+
+
+class ComplianceOverviewMetadataSerializer(serializers.Serializer):
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "compliance-overviews-metadata"
 
 
 # Overviews
