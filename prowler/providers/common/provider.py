@@ -226,7 +226,7 @@ class Provider(ABC):
                     provider_class(
                         credentials_file=arguments.credentials_file,
                         config_file=arguments.config_file,
-                        mutelist_content=arguments.mutelist_content,
+                        mutelist_content=arguments.mutelist_file,
                     )
 
         except TypeError as error:

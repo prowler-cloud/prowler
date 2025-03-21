@@ -11,6 +11,7 @@ from prowler.providers.opennebula.models import (
     OpennebulaOutputOptions
 )
 from prowler.providers.opennebula.exceptions.exceptions import OpennebulaError
+from prowler.providers.opennebula.lib.mutelist.mutelist import OpennebulaMutelist
 from colorama import Fore
 
 class OpennebulaProvider(Provider):
@@ -80,6 +81,10 @@ class OpennebulaProvider(Provider):
     @property
     def output_options(self):
         return self._output_options
+
+    @property
+    def mutelist(self):
+        return OpennebulaMutelist(self._mutelist)
 
     @staticmethod
     def setup_session(
