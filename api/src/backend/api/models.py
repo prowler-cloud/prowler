@@ -1,5 +1,6 @@
 import json
 import re
+from enum import Enum
 from uuid import UUID, uuid4
 
 from cryptography.fernet import Fernet
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -47,6 +49,16 @@ fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
+
+
+class CustomJSONEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        if isinstance(obj, Enum):
+            return obj.value
+
+        return super().default(obj)
 
 
 class StatusChoices(models.TextChoices):
@@ -519,11 +531,19 @@ class Resource(RowLevelSecurityProtectedModel):
         editable=False,
     )
 
+    metadata = models.TextField(blank=True, null=True)
+    details = models.TextField(blank=True, null=True)
+    partition = models.TextField(blank=True, null=True)
+
+    # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
         verbose_name="Tags associated with the resource, by provider",
         through="ResourceTagMapping",
     )
+
+    def set_metadata(self, value):
+        self.metadata = json.dumps(value, cls=CustomJSONEncoder)
 
     def get_tags(self, tenant_id: str) -> dict:
         return {tag.key: tag.value for tag in self.tags.filter(tenant_id=tenant_id)}
@@ -656,6 +676,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     tags = models.JSONField(default=dict, null=True, blank=True)
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
+
+    muted = models.BooleanField(default=False)
+    compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
