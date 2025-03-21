@@ -222,6 +222,12 @@ class Provider(ABC):
                         tenant_id=arguments.tenant_id,
                         fixer_config=fixer_config,
                     )
+                elif "opennebula" in provider_class_name.lower():
+                    provider_class(
+                        credentials_file=arguments.credentials_file,
+                        config_file=arguments.config_file,
+                        mutelist_content=arguments.mutelist_content,
+                    )
 
         except TypeError as error:
             logger.critical(
