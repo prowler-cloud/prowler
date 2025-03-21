@@ -26,7 +26,6 @@ class OpenNebulaProvider(Provider):
         self, 
         credentials_file: str = None,
         config_file: str = None,
-        mutelist_path: str = None,
         mutelist_content: dict = {},
     ):
         """
@@ -38,6 +37,7 @@ class OpenNebulaProvider(Provider):
         
         # Set up the session
         self._session = self.setup_session(credentials_file)
+        self.test_connection(self.session.client)
         
         # Set the identity
         self._identity = self.set_identity()
@@ -50,23 +50,16 @@ class OpenNebulaProvider(Provider):
         )
         
         # Set provider configuration
-        self._audit_config = load_and_validate_config_file(
-            config_file,
-        )
+        if (config_file):
+            self._audit_config = load_and_validate_config_file(
+                self,
+                config_file,
+            )
 
         # Mutelist
-        if mutelist_content:
-            self._mutelist = mutelist_content
-        else:
-            if not mutelist_path:
-                mutelist_path = {}
-            self._mutelist = mutelist_path
+        self._mutelist = mutelist_content
 
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            credentials_file=credentials_file,
-        )
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):
@@ -90,7 +83,6 @@ class OpenNebulaProvider(Provider):
 
     @staticmethod
     def setup_session(
-        self, 
         credentials_file: str = None
     ) -> OpenNebulaSession:
         """
@@ -108,10 +100,8 @@ class OpenNebulaProvider(Provider):
         endpoint = config.get('opennebula', 'endpoint')
         username = config.get('opennebula', 'username')
         auth_token = config.get('opennebula', 'auth_token')
-        
         # Create OpenNebula client
         client = pyone.OneServer(endpoint, f"{username}:{auth_token}")
-        self.test_connection(client)
         return OpenNebulaSession(
             client=client,
             endpoint=endpoint,
@@ -121,12 +111,12 @@ class OpenNebulaProvider(Provider):
 
     def print_credentials(self):
         """Print the provider's credentials information."""
-        print_boxes(
-            [
-                f"OpenNebula User: {Fore.YELLOW}{self.identity.user_name}{Fore.RESET}",
-            ]
-        )
+        credentials = [
+            f"{k}: {Fore.YELLOW}{v}{Fore.RESET}" for k, v in self.identity.__dict__.items()
+        ]
+        print_boxes(credentials, "OpenNebula Credentials")
 
+    @staticmethod
     def test_connection(client: pyone.OneServer):
         """Test the connection to the OpenNebula API."""
         try:
@@ -138,11 +128,11 @@ class OpenNebulaProvider(Provider):
     
     def set_identity(self) -> OpenNebulaIdentity:
         """Set the identity of the OpenNebula provider."""
-        identity = self._session.client.user.info(-1),
-        user_id = identity.get('ID')
-        user_name = identity.get('NAME')
-        group_id = identity.get('GID')
-        group_name = identity.get('GNAME')
+        identity = self.session.client.user.info(-1),
+        user_id = identity[0].get_ID()
+        user_name = identity[0].get_NAME()
+        group_id = identity[0].get_GID()
+        group_name = identity[0].get_GNAME()
         return OpenNebulaIdentity(
             user_id=user_id,
             user_name=user_name,
