@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
@@ -301,7 +302,7 @@ class Finding(BaseModel):
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
-        finding.resource = resource.metadata
+        finding.resource = json.loads(resource.metadata)
         finding.resource_details = resource.details
 
         # Add CheckMetadata to the output_options

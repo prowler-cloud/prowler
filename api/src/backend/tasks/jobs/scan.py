@@ -192,7 +192,7 @@ def perform_prowler_scan(
                             resource_instance.type = finding.resource_type
                             updated_fields.append("type")
                         if resource_instance.metadata != finding.resource_metadata:
-                            resource_instance.metadata = finding.resource_metadata
+                            resource_instance.set_metadata(finding.resource_metadata)
                             updated_fields.append("metadata")
                         if resource_instance.details != finding.resource_details:
                             resource_instance.details = finding.resource_details
