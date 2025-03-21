@@ -16,12 +16,24 @@ ps.stdin.write("Connect-MicrosoftTeams\n")
 ps.stdin.write("Get-CsTeamsClientConfiguration | ConvertTo-Json\n")
 ps.stdin.flush()
 
-# Read output
-stdout, stderr = ps.communicate()
+# Read output without closing the process
+output_lines = []
+while True:
+    line = ps.stdout.readline()
+    if not line:
+        break
+    output_lines.append(line)
+    if "}" in line:  # Suponiendo que el JSON termina con }
+        break
 
-if stderr:
-    print("Error:", stderr)
-    exit(1)
+stdout = "".join(output_lines)
+
+# Read output
+# stdout, stderr = ps.communicate() # Closes the process
+#
+# if stderr:
+#     print("Error:", stderr)
+#     exit(1)
 
 # Extract only the JSON response
 json_match = re.search(r"(\{.*\})", stdout, re.DOTALL)
