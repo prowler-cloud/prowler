@@ -851,6 +851,10 @@ class ScanSerializer(RLSSerializer):
             "url",
         ]
 
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
 
 class ScanIncludeSerializer(RLSSerializer):
     trigger = serializers.ChoiceField(
