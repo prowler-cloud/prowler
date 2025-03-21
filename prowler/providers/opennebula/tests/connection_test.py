@@ -1,26 +1,26 @@
-# Test the OpenNebulaProvider class
+# Test the OpennebulaProvider class
 import os
 import sys
 import logging
-from prowler.providers.opennebula.opennebula_provider import OpenNebulaProvider
-from prowler.providers.opennebula.exceptions.exceptions import OpenNebulaError
+from prowler.providers.opennebula.opennebula_provider import OpennebulaProvider
+from prowler.providers.opennebula.exceptions.exceptions import OpennebulaError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def test_opennebula_provider(credentials_file: str = None) -> bool:
-    """Test the OpenNebulaProvider class."""
-    logger.info("Starting OpenNebulaProvider test")
+    """Test the OpennebulaProvider class."""
+    logger.info("Starting OpennebulaProvider test")
     
     try:
-        provider = OpenNebulaProvider(credentials_file)
+        provider = OpennebulaProvider(credentials_file)
         # Print credentials using the class method
         provider.print_credentials()
         return True
     
-    except OpenNebulaError as e:
-        logger.error(f"OpenNebula API Error: {e}")
+    except OpennebulaError as e:
+        logger.error(f"Opennebula API Error: {e}")
         return False
     except Exception as e:
         logger.error(f"Unexpected error: {e}")

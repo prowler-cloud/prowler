@@ -1,14 +1,14 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 9000 to 9999 are reserved for OpenNebula exceptions
-class OpenNebulaBaseException(ProwlerException):
-    """Base class for OpenNebula errors."""
+# Exceptions codes from 9000 to 9999 are reserved for Opennebula exceptions
+class OpennebulaBaseException(ProwlerException):
+    """Base class for Opennebula errors."""
 
-    OpenNebula_ERROR_CODES = {
-        (4004, "OpenNebulaError"): {
-            "message": "An error occurred in the OpenNebula provider.",
-            "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting OpenNebula providers, refer to the OpenNebula documentation",
+    Opennebula_ERROR_CODES = {
+        (4004, "OpennebulaError"): {
+            "message": "An error occurred in the Opennebula provider.",
+            "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Opennebula providers, refer to the Opennebula documentation",
         },
     }
 
@@ -19,8 +19,8 @@ class OpenNebulaBaseException(ProwlerException):
         original_exception=None,
         message=None,
     ):
-        provider = "OpenNebula"
-        error_info = self.OpenNebula_ERROR_CODES.get((code, self.__class__.__name__))
+        provider = "Opennebula"
+        error_info = self.Opennebula_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
         super().__init__(
@@ -32,6 +32,6 @@ class OpenNebulaBaseException(ProwlerException):
         )
 
 
-class OpenNebulaError(OpenNebulaBaseException):
+class OpennebulaError(OpennebulaBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(4004, file, original_exception, message)

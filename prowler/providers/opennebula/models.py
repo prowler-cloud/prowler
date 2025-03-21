@@ -4,23 +4,23 @@ from prowler.providers.common.models import ProviderOutputOptions
 from prowler.config.config import output_file_timestamp
 
 @dataclass
-class OpenNebulaSession:
-    """Class to hold the OpenNebula session information"""
+class OpennebulaSession:
+    """Class to hold the Opennebula session information"""
     client: OneServer 
     endpoint: str
     username: str
     auth_token: str
 
 @dataclass
-class OpenNebulaIdentity:
-    """Class to hold the OpenNebula identity information"""
+class OpennebulaIdentity:
+    """Class to hold the Opennebula identity information"""
     user_id: str
     user_name: str
     group_id: str
     group_name: str
 
 
-class OpenNebulaOutputOptions(ProviderOutputOptions):
+class OpennebulaOutputOptions(ProviderOutputOptions):
     def __init__(self, arguments, bulk_checks_metadata, identity):
         # First call ProviderOutputOptions init
         super().__init__(arguments, bulk_checks_metadata)
