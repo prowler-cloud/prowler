@@ -1,7 +1,7 @@
 def init_parser(self):
     """Init the OpenNebula Provider CLI parser"""
     open_parser = self.subparsers.add_parser(
-        "OpenNebula", parents=[self.common_providers_parser], help="OpenNebula Provider"
+        "opennebula", parents=[self.common_providers_parser], help="OpenNebula Provider"
     )
     # # Authentication and Configuration
     # k8s_auth_subparser = k8s_parser.add_argument_group(
