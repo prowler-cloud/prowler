@@ -68,6 +68,7 @@ export const CustomSelectProvider: React.FC = () => {
       placeholder="Select a provider"
       classNames={{
         selectorIcon: "right-2",
+        label:"!z-0"
       }}
       label="Provider"
       labelPlacement="inside"
