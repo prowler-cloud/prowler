@@ -95,6 +95,7 @@ pytest-randomly = "3.16.0"
 pytest-xdist = "3.6.1"
 safety = "3.2.9"
 vulture = "2.14"
+ipdb = "^0.13.13"
 
 [tool.poetry.group.docs]
 optional = true

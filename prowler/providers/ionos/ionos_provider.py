@@ -7,11 +7,14 @@ import ionoscloud
 from ionoscloud import ApiClient, Configuration
 from ionoscloud.rest import ApiException
 import ionoscloud_dataplatform
+from ionoscloud.api.data_centers_api import DataCentersApi
 
-from prowler.config.config import load_and_validate_config_file
+from prowler.config.config import get_default_mute_file_path, load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.ionos.lib.mutelist.mutelist import IonosMutelist
+from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
+from colorama import Fore, Style
 
 from prowler.providers.common.provider import Provider
 
@@ -23,14 +26,17 @@ class IonosProvider(Provider):
     _output_options: Optional[Any] = None
     _mutelist: IonosMutelist
     audit_metadata: Optional[Any] = None
+    _token = None
+    _username = None
+    _password = None
 
     def __init__(
         self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        ionos_username: Optional[str] = None,
+        ionos_password: Optional[str] = None,
         config_path: Optional[str] = None,
         mutelist_path: Optional[str] = None,
-        mutelist_content: dic = None,
+        mutelist_content: dict = None,
     ):
         """
         Inicializa la clase IonosProvider y configura la sesión.
@@ -38,24 +44,37 @@ class IonosProvider(Provider):
         """
         logger.info("Initializing IONOS Provider...")
         # Se asigna la identidad (usuario)
-        self._identity = username
+        self._identity = ionos_username
         self._audit_config = load_and_validate_config_file("ionos", config_path)
-        self._mutelist = Mutelist(mutelist_path) if mutelist_path else None
-
+        self._mutelist = IonosMutelist(mutelist_path=mutelist_path) if mutelist_path else None
+        
+        self._username = ionos_username
+        self._password = ionos_password
+        self._token = None
+        
         # Si no se pasan usuario o contraseña, se cargan desde las variables de entorno.
-        if not username or not password:
-            username, password, token = self.load_env_credentials()
+        if not self._username or not self._password:
+            print('por aqui')
+            self._username, self._password, self._token = self.load_env_credentials()
         else:
+            print('por allá')
             # Si se proporcionan explícitamente, se puede intentar obtener el token del entorno o asignarlo a None
-            token = os.getenv("IONOS_TOKEN")
+            token = self.load_ionosctl_token()
+            self._token = token
 
-        self.setup_session(username, password, token)
+        ionos_session = self.setup_session(
+            username = self._username, 
+            password = self._password, 
+            token = self._token
+        )
+
+        self._session = ionos_session
 
         # Mutelist
         if mutelist_content:
             self._mutelist = IonosMutelist(
                 mutelist_content=mutelist_content,
-                session=self._session.current_session,
+                session=self._session,
                 #aws_account_id=self._identity.account,
             )
         else:
@@ -63,7 +82,7 @@ class IonosProvider(Provider):
                 mutelist_path = get_default_mute_file_path(self.type)
             self._mutelist = IonosMutelist(
                 mutelist_path=mutelist_path,
-                session=self._session.current_session,
+                session=self._session,
                 #aws_account_id=self._identity.account,
             )
 
@@ -87,21 +106,26 @@ class IonosProvider(Provider):
         return username, password, token
 
     @staticmethod
-    def load_ionosctl_credentials() -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    def load_ionosctl_token() -> Optional[str]:
         """
-        Lee las credenciales de IONOS desde el archivo de configuración de ionosctl.
-        Nota: Se amplía para incluir token si fuese necesario.
+        Lee el token de IONOS desde el archivo de configuración de ionosctl.
         """
-        config_path = os.path.expanduser("~/.config/ionosctl/config.json")
+        config_path = os.path.join(
+            os.path.expanduser("~"),
+            "Library",
+            "Application Support",
+            "ionosctl",
+            "config.json"
+        )
         try:
             with open(config_path, "r") as config_file:
                 config = json.load(config_file)
-                logger.info("Loaded IONOS credentials from ionosctl config file.")
-                # Se asume que el token puede estar en el config, si no, se retorna None.
-                return config.get("username"), config.get("password"), config.get("token")
+                logger.info("Loaded IONOS token from ionosctl config file.")
+                return config.get("userdata.token")
         except (FileNotFoundError, json.JSONDecodeError) as error:
-            logger.warning(f"Failed to load IONOS credentials from ionosctl: {error}")
-            return None, None, None
+            logger.warning(f"Failed to load IONOS token from ionosctl: {error}")
+            return None
+
 
     @property
     def type(self) -> str:
@@ -131,15 +155,23 @@ class IonosProvider(Provider):
         username: str, 
         password: str, 
         token: Optional[str]
-    ):
+    ) -> ApiClient:
         """
         Configura la sesión para interactuar con la API de IONOS Cloud.
         """
         try:
-            # Se utiliza la librería ionoscloud_dataplatform para configurar la sesión.
-            config = ionoscloud_dataplatform.Configuration(username=username, password=password, token=token)
-            self._session = ionoscloud_dataplatform.ApiClient(configuration=config)
+            print("Se va a inciar sesión con las siguientes credenciales:")
+            print(f"Username: {username}")
+            print(f"Password: {password}")
+            print(f"Token: {token}")
+            config = Configuration()
+
+            config.username = username
+            config.password = password
+            config.token = token
+
             logger.info("Successfully initialized IONOS Cloud API session.")
+            return ApiClient(configuration=config)
         except Exception as error:
             logger.critical(f"Failed to initialize IONOS session: {error}")
             sys.exit(1)
@@ -148,7 +180,53 @@ class IonosProvider(Provider):
         """
         Muestra la identidad del proveedor en el CLI.
         """
-        logger.info(f"IONOS Provider Identity: {self._identity}")
+        #logger.info(f"IONOS Provider Identity: {self._identity}")
+        
+        """
+        Print the IONOS Cloud credentials.
+
+        This method prints the IONOS Cloud credentials used by the provider.
+
+        Example output:
+        ```
+        Using the IONOS Cloud credentials below:
+        API Token: XXXXXXXXXXXXXX (masked)
+        Base URL: https://api.ionos.com/cloudapi/v6
+        Datacenter ID: my-datacenter-id
+        Timeout: 60 seconds
+        ```
+        """
+        # Mask the API token to display only the first and last 4 characters
+        #token = self._token
+        username = self._session.configuration.username
+        host = self._session.configuration.host
+        print(username)
+        if self._token:
+            if len(self._token) > 8:
+                masked_token = self._token[:4] + "*" * 16 + self._token[-4:]
+            else:
+                masked_token = self._token
+        else:
+            masked_token = "Not Provided"
+
+        # Retrieve other IONOS configuration parameters
+        #base_url = self._config.base_url if hasattr(self._config, "base_url") and self._config.base_url else "Not Configured"
+        #timeout = self._config.timeout if hasattr(self._config, "timeout") and self._config.timeout else "Default"
+        
+        datacenter_api = DataCentersApi(self._session)
+        datacenters = datacenter_api.datacenters_get(pretty=True, depth=1).items
+        datacenter_id = datacenters[0].id if datacenters else "Not Found"
+
+        report_lines = [
+            f"API Endpoint: {Fore.YELLOW}{host}{Style.RESET_ALL}",
+            f"API Token (masked): {Fore.YELLOW}{masked_token}{Style.RESET_ALL}",
+            f"Datacenter ID: {Fore.YELLOW}{datacenter_id}{Style.RESET_ALL}",
+            f"Datacenter Name: {Fore.YELLOW}{datacenters[0].properties.name}{Style.RESET_ALL}",
+            f"Datacenter Location: {Fore.YELLOW}{datacenters[0].properties.location}{Style.RESET_ALL}",
+        ]
+        report_title = f"{Style.BRIGHT}Using the IONOS Cloud credentials below:{Style.RESET_ALL}"
+        print_boxes(report_lines, report_title)
+
 
     def test_connection(self) -> bool:
         """

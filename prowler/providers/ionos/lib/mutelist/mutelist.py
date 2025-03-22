@@ -1,6 +1,9 @@
 import json
 import os
 
+from prowler.lib.mutelist.mutelist import Mutelist
+
+
 class IonosMutelist(Mutelist):
     """
     Clase Mutelist para IONOS Cloud.
@@ -18,15 +21,18 @@ class IonosMutelist(Mutelist):
     }
     """
 
-    def __init__(self, filepath: str):
+    def __init__(
+        self, 
+        mutelist_content: dict = {},
+        mutelist_path: str = None, 
+        session: any = None,
+    ) -> "IonosMutelist":
         """
         Inicializa la instancia de Mutelist cargando la configuración desde el archivo indicado.
         Si el archivo no existe o no es válido, se inicia con una lista vacía.
-        
-        :param filepath: Ruta al archivo JSON que contiene la configuración del mutelist.
         """
-        self.filepath = filepath
-        self.mutelist = self.load_mutelist()
+        self._mutelist_path = mutelist_path
+        self._mutelist = self.load_mutelist()
 
     def load_mutelist(self) -> dict:
         """
@@ -34,15 +40,15 @@ class IonosMutelist(Mutelist):
         
         :return: Diccionario con la configuración (por ejemplo, la clave "muted_checks").
         """
-        if not os.path.isfile(self.filepath):
-            # Si el archivo no existe, retorna un diccionario vacío
+        # Verifica que self.mutelist_path sea válido
+        if not self._mutelist_path or not os.path.isfile(self._mutelist_path):
+            # Si la ruta no se proporcionó o el archivo no existe, retorna un diccionario vacío.
             return {}
         try:
-            with open(self.filepath, 'r') as file:
-                data = json.load(file)
-            return data
+            # Se asume que 'get_mutelist_file_from_local_file' lee y devuelve el contenido del archivo.
+            return self.get_mutelist_file_from_local_file(self._mutelist_path)
         except Exception as e:
-            print(f"Error al cargar el mutelist desde {self.filepath}: {e}")
+            print(f"Error al cargar el mutelist desde {self.mutelist_path}: {e}")
             return {}
 
     def is_muted(self, check_id: str) -> bool:
@@ -86,3 +92,14 @@ class IonosMutelist(Mutelist):
                 json.dump(self.mutelist, file, indent=4)
         except Exception as e:
             print(f"Error al guardar el mutelist en {self.filepath}: {e}")
+
+    def is_finding_muted(self, finding: dict) -> bool:
+        """
+        Verifica si un hallazgo (finding) debe ser muteado.
+        
+        Se espera que 'finding' sea un diccionario que contenga un identificador de check,
+        por ejemplo, en la clave 'check_id'.
+        """
+        check_id = finding.get("check_id")
+        return self.is_muted(check_id)
+

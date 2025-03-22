@@ -437,3 +437,21 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+ionos:
+  # Configuración para IONOS Cloud API
+  # Obtén tu API token desde el portal de IONOS Cloud
+  api_token: "TU_API_TOKEN_AQUI"
+
+  # URL base de la API de IONOS Cloud (para la versión 6)
+  base_url: "https://api.ionos.com/cloudapi/v6"
+
+  # (Opcional) Datacenter predeterminado, en caso de que tus checks requieran referenciarlo
+  datacenter_id: "TU_DATACENTER_ID_AQUI"
+
+  # (Opcional) Tiempo máximo de espera para las solicitudes a la API (en segundos)
+  timeout: 60
+
+  # (Opcional) Umbral o configuraciones específicas para tus checks, por ejemplo:
+  # Número máximo de días sin uso de una clave de acceso, similar a la configuración de AWS
+  max_unused_access_keys_days: 45

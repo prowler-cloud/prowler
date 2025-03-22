@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import ipdb; 
+ipdb.set_trace()
 
 import sys
 from os import environ
@@ -89,6 +91,7 @@ def prowler():
 
     # Save Arguments
     provider = args.provider
+    print(args)
     if provider == "dashboard":
         from dashboard import DASHBOARD_ARGS
         from dashboard.__main__ import dashboard
@@ -190,6 +193,18 @@ def prowler():
         categories=categories,
         provider=provider,
     )
+
+    #print("Bulk Checks Metadata:", bulk_checks_metadata)
+    #print("Bulk Compliance Frameworks:", bulk_compliance_frameworks)
+    #print("Checks File:", checks_file)
+    #print("Checks:", checks)
+    #print("Services:", services)
+    #print("Severities:", severities)
+    #print("Compliance Framework:", compliance_framework)
+    #print("Categories:", categories)
+    #print("Provider:", provider)
+
+    #print(checks_to_execute)
 
     # if --list-checks-json, dump a json file and exit
     if args.list_checks_json:

@@ -213,10 +213,10 @@ class Provider(ABC):
                     )
                 elif "ionos" in provider_class_name.lower():
                     provider_class(
-                        username=getattr(arguments, 'username', None),
-                        password=getattr(arguments, 'password', None),
-                        config_path=getattr(arguments, 'config_file', None),
-                        mutelist_path=getattr(arguments, 'mutelist_file', None),
+                        ionos_username=arguments.ionos_username,
+                        ionos_password=arguments.ionos_password,
+                        #config_path=getattr(arguments, 'config_file', None),
+                        #mutelist_path=getattr(arguments, 'mutelist_file', None),
                     )
 
 
