@@ -40,6 +40,9 @@ def display_summary_table(
         elif provider.type == "kubernetes":
             entity_type = "Context"
             audited_entities = provider.identity.context
+        elif provider.type == "ionos":
+            entity_type = "Datacenter ID"
+            audited_entities = provider.identity.username
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

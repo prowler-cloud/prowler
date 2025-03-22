@@ -42,6 +42,7 @@ def recover_checks_from_provider(
 
 # List all available modules in the selected provider and service
 def list_modules(provider: str, service: str):
+    print(f"Listing modules for provider: {provider} and service: {service}")
     # This module path requires the full path including "prowler."
     module_path = f"prowler.providers.{provider}.services"
     if service:

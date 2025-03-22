@@ -156,11 +156,15 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
+    print("1")
     bulk_compliance_frameworks = Compliance.get_bulk(provider)
     # Complete checks metadata with the compliance framework specification
     bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata
     )
+
+    print(bulk_checks_metadata)
+    print(bulk_compliance_frameworks)
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None

@@ -1,0 +1,37 @@
+{
+    "Provider": "ionos",
+    "CheckID": "server_with_description",
+    "CheckTitle": "Ensure that servers have defined descriptions",
+    "CheckType": [
+        "Software and Configuration Checks",
+        "Documentation"
+    ],
+    "ServiceName": "compute",
+    "SubServiceName": "server",
+    "ResourceIdTemplate": "arn:ionos:compute:global:server:{{resource_id}}",
+    "Severity": "low",
+    "ResourceType": "Server",
+    "Description": "Checks that IONOS servers have defined descriptions to improve documentation and resource management.",
+    "Risk": "The lack of descriptions on servers can make it difficult to identify their purpose or role, complicating management and maintenance.",
+    "RelatedUrl": "https://docs.ionos.com/cloud/",
+    "Remediation": {
+        "Code": {
+            "CLI": "Update the server description through the web console or via the IONOS API",
+            "NativeIaC": "",
+            "Terraform": "resource \"ionoscloud_server\" \"example\" {\n  name = \"example-server\"\n  description = \"This is an example server\"\n  # Other server properties\n}",
+            "Other": ""
+        },
+        "Recommendation": {
+            "Text": "Define clear and concise descriptions for all servers that indicate their purpose, application, or environment.",
+            "Url": "https://docs.ionos.com/cloud/compute-engine/servers/manage-your-servers"
+        }
+    },
+    "Categories": [
+        "documentation",
+        "governance"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Server descriptions are important for good infrastructure management and documentation."
+}
+
