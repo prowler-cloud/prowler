@@ -10,7 +10,7 @@ from prowler.providers.opennebula.models import (
     OpennebulaIdentity,
     OpennebulaOutputOptions
 )
-from prowler.providers.opennebula.exceptions.exceptions import OpennebulaError
+from prowler.providers.opennebula.exceptions.exceptions import OpennebulaError, OpennebulaCredentialsError
 from prowler.providers.opennebula.lib.mutelist.mutelist import OpennebulaMutelist
 from colorama import Fore
 
@@ -99,20 +99,24 @@ class OpennebulaProvider(Provider):
         Returns:
             OpennebulaSessionModel: Session credentials for Opennebula.
         """
-        config = ConfigParser()
-        config.read(credentials_file)
-        
-        endpoint = config.get('opennebula', 'endpoint')
-        username = config.get('opennebula', 'username')
-        auth_token = config.get('opennebula', 'auth_token')
-        # Create Opennebula client
-        client = pyone.OneServer(endpoint, f"{username}:{auth_token}")
-        return OpennebulaSession(
-            client=client,
-            endpoint=endpoint,
-            username=username,
-            auth_token=auth_token
-        )
+        try:
+            config = ConfigParser()
+            config.read(credentials_file)
+            endpoint = config.get('opennebula', 'endpoint')
+            username = config.get('opennebula', 'username')
+            auth_token = config.get('opennebula', 'auth_token')
+            # Create Opennebula client
+            client = pyone.OneServer(endpoint, f"{username}:{auth_token}")
+            return OpennebulaSession(
+                client=client,
+                endpoint=endpoint,
+                username=username,
+                auth_token=auth_token
+            )
+        except Exception as e:
+            raise OpennebulaCredentialsError(
+                message=f"Error reading credentials file: {str(e)}"
+            )
 
     def print_credentials(self):
         """Print the provider's credentials information."""

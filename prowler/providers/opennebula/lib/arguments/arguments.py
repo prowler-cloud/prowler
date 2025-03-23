@@ -12,7 +12,7 @@ def init_parser(self):
         "--credentials-file",
         nargs="?",
         metavar="FILE_PATH",
-        help="Path to the credentials file to connect with the OpenNebula API.",
+        help="Path to the credentials file to connect with the OpenNebula API. If not provided, the default path will be used: ~/.one/one_auth",
         default="~/.one/one_auth",
     )
 

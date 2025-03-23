@@ -6,9 +6,13 @@ class OpennebulaBaseException(ProwlerException):
     """Base class for Opennebula errors."""
 
     Opennebula_ERROR_CODES = {
-        (4004, "OpennebulaError"): {
+        (9004, "OpennebulaError"): {
             "message": "An error occurred in the Opennebula provider.",
             "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Opennebula providers, refer to the Opennebula documentation",
+        },
+        (9005, "OpennebulaCredentialsError"): {
+            "message": "An error occurred in the credentials file of the Opennebula provider.",
+            "remediation": "Check the credentials file to identify the issue. For more information on troubleshooting Opennebula providers, refer to the Opennebula documentation",
         },
     }
 
@@ -34,4 +38,8 @@ class OpennebulaBaseException(ProwlerException):
 
 class OpennebulaError(OpennebulaBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
-        super().__init__(4004, file, original_exception, message)
+        super().__init__(9004, file, original_exception, message)
+
+class OpennebulaCredentialsError(OpennebulaBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(9005, file, original_exception, message)
