@@ -46,6 +46,7 @@ class TestNhnProvider:
         assert provider.session is not None
         assert provider.session.headers["X-Auth-Token"] == "fake_keystone_token"
 
+    @patch.dict(os.environ, {}, clear=True)
     @patch(
         "prowler.providers.nhn.nhn_provider.load_and_validate_config_file",
         return_value={},
