@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import requests
@@ -74,12 +75,13 @@ class NhnProvider(Provider):
         """
         logger.info("Initializing Nhn Provider...")
 
-        self.validate_arguments(username, password, tenant_id)
-
         # 1) Store argument values
-        self._username = username
-        self._password = password
-        self._tenant_id = tenant_id
+        self._username = username or os.getenv("NHN_USERNAME")
+        self._password = password or os.getenv("NHN_PASSWORD")
+        self._tenant_id = tenant_id or os.getenv("NHN_TENANT_ID")
+
+        if not all([self._username, self._password, self._tenant_id]):
+            raise ValueError("NhnProvider requires username, password and tenant_id")
 
         # 2) Load audit_config, fixer_config, mutelist
         self._fixer_config = fixer_config if fixer_config else {}

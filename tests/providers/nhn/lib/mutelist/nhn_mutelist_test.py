@@ -55,9 +55,9 @@ class TestNHNMutelist:
 
         mutelist = NHNMutelist(mutelist_content=mutelist_content)
 
-        finding = MagicMock
+        finding = MagicMock()
         finding.resource_id = "resource_1"
-        finding.check_metadata = MagicMock
+        finding.check_metadata = MagicMock()
         finding.check_metadata.CheckID = "check_test"
         finding.status = "FAIL"
         finding.resource_name = "test_resource"

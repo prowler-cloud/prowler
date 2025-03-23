@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,6 +8,14 @@ from prowler.providers.nhn.nhn_provider import NhnProvider
 
 
 class TestNhnProvider:
+    @patch.dict(
+        os.environ,
+        {
+            "NHN_USERNAME": "env_user",
+            "NHN_PASSWORD": "env_pass",
+            "NHN_TENANT_ID": "env_tenant",
+        },
+    )
     @patch("prowler.providers.nhn.nhn_provider.load_and_validate_config_file")
     @patch("requests.post")
     def test_nhn_provider_init_success(self, mock_post, mock_load_config):
