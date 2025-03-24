@@ -10,7 +10,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_authpolicy_restricts_user_consent_for_apps:
+class Test_entra_policy_restricts_user_consent_for_apps:
     def test_entra_empty_policy(self):
         """
         Test that the check fails when no authorization policy exists.
@@ -28,15 +28,15 @@ class Test_entra_authpolicy_restricts_user_consent_for_apps:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps import (
-                entra_authpolicy_restricts_user_consent_for_apps,
+            from prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
 
-            check = entra_authpolicy_restricts_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -68,12 +68,12 @@ class Test_entra_authpolicy_restricts_user_consent_for_apps:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps import (
-                entra_authpolicy_restricts_user_consent_for_apps,
+            from prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -87,7 +87,7 @@ class Test_entra_authpolicy_restricts_user_consent_for_apps:
                 ),
             )
 
-            check = entra_authpolicy_restricts_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -119,12 +119,12 @@ class Test_entra_authpolicy_restricts_user_consent_for_apps:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_restricts_user_consent_for_apps.entra_authpolicy_restricts_user_consent_for_apps import (
-                entra_authpolicy_restricts_user_consent_for_apps,
+            from prowler.providers.microsoft365.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -136,7 +136,7 @@ class Test_entra_authpolicy_restricts_user_consent_for_apps:
                 ),
             )
 
-            check = entra_authpolicy_restricts_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
