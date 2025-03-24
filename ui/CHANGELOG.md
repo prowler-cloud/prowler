@@ -11,6 +11,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Social login integration with Google and GitHub [(#7218)](https://github.com/prowler-cloud/prowler/pull/7218)
 - Added `one-time scan` feature: Adds support for single scan execution. [(#7188)](https://github.com/prowler-cloud/prowler/pull/7188)
 - Accepted invitations can no longer be edited. [(#7198)](https://github.com/prowler-cloud/prowler/pull/7198)
+- Added download column in scans table to download reports for completed scans. [(#7353)](https://github.com/prowler-cloud/prowler/pull/7353)
+
 
 #### 🔄 Changed
 
