@@ -12,6 +12,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
 - New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
 
+---
+
+## [v1.5.2] (Prowler v5.4.2)
+
 ### Changed
 - Refactored deletion logic and implemented retry mechanism for deletion tasks [(#7349)](https://github.com/prowler-cloud/prowler/pull/7349).
 
