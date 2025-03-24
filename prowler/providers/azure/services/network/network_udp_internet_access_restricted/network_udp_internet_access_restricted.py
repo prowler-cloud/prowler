@@ -17,9 +17,9 @@ class network_udp_internet_access_restricted(Check):
                     (
                         rule.protocol in ["UDP", "Udp"]
                         and (
-                            rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
-                            if rule.source_address_prefix is not None
-                            else False
+                            rule.source_address_prefix
+                            and rule.source_address_prefix
+                            in ["Internet", "*", "0.0.0.0/0"]
                         )
                         and rule.access == "Allow"
                         and rule.direction == "Inbound"

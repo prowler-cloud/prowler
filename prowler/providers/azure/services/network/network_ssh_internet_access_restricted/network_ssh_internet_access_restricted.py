@@ -18,9 +18,8 @@ class network_ssh_internet_access_restricted(Check):
                         rule.destination_port_range == "22"
                         or (
                             (
-                                "-" in rule.destination_port_range
-                                if rule.destination_port_range is not None
-                                else False
+                                rule.destination_port_range
+                                and "-" in rule.destination_port_range
                             )
                             and int(rule.destination_port_range.split("-")[0]) <= 22
                             and int(rule.destination_port_range.split("-")[1]) >= 22

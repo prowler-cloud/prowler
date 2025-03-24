@@ -33,11 +33,15 @@ class Network(AzureService):
                                 SecurityRule(
                                     id=rule.id,
                                     name=rule.name,
-                                    destination_port_range=rule.destination_port_range,
-                                    source_address_prefix=rule.source_address_prefix,
-                                    protocol=rule.protocol,
-                                    access=rule.access,
-                                    direction=rule.direction,
+                                    destination_port_range=getattr(
+                                        rule, "destination_port_range", ""
+                                    ),
+                                    protocol=getattr(rule, "protocol", ""),
+                                    source_address_prefix=getattr(
+                                        rule, "source_address_prefix", ""
+                                    ),
+                                    access=getattr(rule, "access", "Allow"),
+                                    direction=getattr(rule, "direction", "Inbound"),
                                 )
                                 for rule in getattr(
                                     security_group, "security_rules", []
