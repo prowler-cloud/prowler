@@ -5,7 +5,7 @@ from prowler.providers.microsoft365.services.entra.entra_client import entra_cli
 from prowler.providers.microsoft365.services.entra.entra_service import InvitationsFrom
 
 
-class entra_authpolicy_guest_invite_only_for_admin_roles(Check):
+class entra_policy_guest_invite_only_for_admin_roles(Check):
     """Check if guest invitations are restricted to users with specific administrative roles.
 
     This check verifies the `guest_invite_settings` property of the authorization policy.

@@ -9,7 +9,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
+class Test_entra_policy_guest_invite_only_for_admin_roles:
     def test_no_auth_policy(self):
         """
         Test when there is no authorization policy (auth_policy is None):
@@ -24,15 +24,15 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles import (
-                entra_authpolicy_guest_invite_only_for_admin_roles,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles import (
+                entra_policy_guest_invite_only_for_admin_roles,
             )
 
-            check = entra_authpolicy_guest_invite_only_for_admin_roles()
+            check = entra_policy_guest_invite_only_for_admin_roles()
             result = check.execute()
 
             assert len(result) == 1
@@ -57,12 +57,12 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles import (
-                entra_authpolicy_guest_invite_only_for_admin_roles,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles import (
+                entra_policy_guest_invite_only_for_admin_roles,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -72,7 +72,7 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 guest_invite_settings=InvitationsFrom.EVERYONE.value,
             )
 
-            check = entra_authpolicy_guest_invite_only_for_admin_roles()
+            check = entra_policy_guest_invite_only_for_admin_roles()
             result = check.execute()
 
             assert len(result) == 1
@@ -98,12 +98,12 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles import (
-                entra_authpolicy_guest_invite_only_for_admin_roles,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles import (
+                entra_policy_guest_invite_only_for_admin_roles,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -113,7 +113,7 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 guest_invite_settings=InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value,
             )
 
-            check = entra_authpolicy_guest_invite_only_for_admin_roles()
+            check = entra_policy_guest_invite_only_for_admin_roles()
             result = check.execute()
 
             assert len(result) == 1
@@ -139,12 +139,12 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_invite_only_for_admin_roles.entra_authpolicy_guest_invite_only_for_admin_roles import (
-                entra_authpolicy_guest_invite_only_for_admin_roles,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles import (
+                entra_policy_guest_invite_only_for_admin_roles,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -154,7 +154,7 @@ class Test_entra_authpolicy_guest_invite_only_for_admin_roles:
                 guest_invite_settings=InvitationsFrom.NONE.value,
             )
 
-            check = entra_authpolicy_guest_invite_only_for_admin_roles()
+            check = entra_policy_guest_invite_only_for_admin_roles()
             result = check.execute()
 
             assert len(result) == 1
