@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_ca_policy_mfa_enabled_for_all_users(Check):
+class entra_mfa_enabled_for_all_users(Check):
     """
     Ensure multifactor authentication is enabled for all users.
 

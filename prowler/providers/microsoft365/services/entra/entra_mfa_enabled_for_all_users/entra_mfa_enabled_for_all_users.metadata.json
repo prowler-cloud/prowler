@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_ca_policy_mfa_enabled_for_all_users",
+  "CheckID": "entra_mfa_enabled_for_all_users",
   "CheckTitle": "Ensure multifactor authentication is enabled for all users.",
   "CheckType": [],
   "ServiceName": "entra",
