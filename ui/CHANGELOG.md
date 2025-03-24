@@ -18,6 +18,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Tweak styles for compliance cards. [(#7148)](https://github.com/prowler-cloud/prowler/pull/7148).
 - Upgrade Next.js to v14.2.25 to fix a middleware authorization vulnerability. [(#7339)](https://github.com/prowler-cloud/prowler/pull/7339)
+- Apply default filter to show only failed items when coming from scan table. [(#7356)](https://github.com/prowler-cloud/prowler/pull/7356)
 
 ---
 
