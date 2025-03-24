@@ -105,11 +105,12 @@ def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
     return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
 
 
-def batch_delete(queryset, batch_size=5000):
+def batch_delete(tenant_id, queryset, batch_size=5000):
     """
     Deletes objects in batches and returns the total number of deletions and a summary.
 
     Args:
+        tenant_id (str): Tenant ID the queryset belongs to.
         queryset (QuerySet): The queryset of objects to delete.
         batch_size (int): The number of objects to delete in each batch.
 
@@ -120,15 +121,16 @@ def batch_delete(queryset, batch_size=5000):
     deletion_summary = {}
 
     while True:
-        # Get a batch of IDs to delete
-        batch_ids = set(
-            queryset.values_list("id", flat=True).order_by("id")[:batch_size]
-        )
-        if not batch_ids:
-            # No more objects to delete
-            break
+        with rls_transaction(tenant_id, POSTGRES_TENANT_VAR):
+            # Get a batch of IDs to delete
+            batch_ids = set(
+                queryset.values_list("id", flat=True).order_by("id")[:batch_size]
+            )
+            if not batch_ids:
+                # No more objects to delete
+                break
 
-        deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
+            deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
 
         total_deleted += deleted_count
         for model_label, count in deleted_info.items():

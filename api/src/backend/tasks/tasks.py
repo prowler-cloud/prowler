@@ -44,8 +44,7 @@ def check_provider_connection_task(provider_id: str):
 
 
 @shared_task(base=RLSTask, name="provider-deletion", queue="deletion")
-@set_tenant
-def delete_provider_task(provider_id: str):
+def delete_provider_task(provider_id: str, tenant_id: str):
     """
     Task to delete a specific Provider instance.
 
@@ -53,6 +52,7 @@ def delete_provider_task(provider_id: str):
 
     Args:
         provider_id (str): The primary key of the `Provider` instance to be deleted.
+        tenant_id (str): Tenant ID the provider belongs to.
 
     Returns:
         tuple: A tuple containing:
@@ -60,7 +60,7 @@ def delete_provider_task(provider_id: str):
             - A dictionary with the count of deleted instances per model,
               including related models if cascading deletes were triggered.
     """
-    return delete_provider(pk=provider_id)
+    return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
