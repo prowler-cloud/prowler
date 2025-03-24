@@ -88,7 +88,7 @@ class DummyResource:
         self.region = region
         self.tags = DummyTags(tags)
         self.details = details or ""
-        self.metadata = metadata or {}
+        self.metadata = metadata or "{}"
         self.partition = partition
 
     def __iter__(self):
@@ -127,10 +127,6 @@ class DummyAPIFinding:
 
 
 class TestFinding:
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_aws(self):
         # Mock provider
         provider = MagicMock()
@@ -157,6 +153,7 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="aws")
         check_output.resource = {"metadata": "mock_metadata"}
+        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
 
         # Mock output options
         output_options = MagicMock()
@@ -224,10 +221,6 @@ class TestFinding:
         assert finding_output.service_name == "mock_service_name"
         assert finding_output.raw == {}
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_azure(self):
         # Mock provider
         provider = MagicMock()
@@ -256,6 +249,7 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="azure")
         check_output.resource = {}
+        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
 
         # Mock output options
         output_options = MagicMock()
@@ -311,10 +305,6 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_gcp(self):
         # Mock provider
         provider = MagicMock()
@@ -345,6 +335,7 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="gcp")
         check_output.resource = {}
+        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
 
         # Mock output options
         output_options = MagicMock()
@@ -401,10 +392,6 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_kubernetes(self):
         # Mock provider
         provider = MagicMock()
@@ -424,6 +411,7 @@ class TestFinding:
         check_output.check_metadata = mock_check_metadata(provider="kubernetes")
         check_output.timestamp = datetime.now()
         check_output.resource = {}
+        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
 
         # Mock Output Options
         output_options = MagicMock()
