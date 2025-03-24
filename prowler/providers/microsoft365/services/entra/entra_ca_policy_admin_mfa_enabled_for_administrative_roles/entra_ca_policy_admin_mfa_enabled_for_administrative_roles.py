@@ -9,7 +9,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_capolicy_administrative_roles_have_mfa_enabled(Check):
+class entra_ca_policy_admin_mfa_enabled_for_administrative_roles(Check):
     """
     Ensure multifactor authentication is enabled for all users in administrative roles.
 
