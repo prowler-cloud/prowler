@@ -9,7 +9,7 @@ interface LinkToFindingsProps {
 export const LinkToFindingsFromScan = ({ scanId }: LinkToFindingsProps) => {
   return (
     <CustomButton
-      asLink={`/findings?filter[scan__in]=${scanId}`}
+      asLink={`/findings?filter[scan__in]=${scanId}&filter[status__in]=FAIL`}
       ariaLabel="Go to Findings page"
       variant="solid"
       color="action"
