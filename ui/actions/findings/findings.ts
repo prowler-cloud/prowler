@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { apiBaseUrl, parseStringify } from "@/lib";
 
 export const getFindings = async ({
   page = 1,
@@ -16,10 +16,9 @@ export const getFindings = async ({
   const session = await auth();
 
   if (isNaN(Number(page)) || page < 1)
-    redirect("findings?include=resources.provider,scan");
+    redirect("findings?include=resources,scan.provider");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings?include=resources.provider,scan`);
+  const url = new URL(`${apiBaseUrl}/findings?include=resources,scan.provider`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
@@ -56,8 +55,7 @@ export const getMetadataInfo = async ({
 }) => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings/metadata`);
+  const url = new URL(`${apiBaseUrl}/findings/metadata`);
 
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
@@ -82,17 +80,15 @@ export const getMetadataInfo = async ({
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch services regions: ${response.statusText}`,
-      );
+      throw new Error(`Failed to fetch metadata info: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
+    const parsedData = parseStringify(await response.json());
+
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Error fetching services regions:", error);
+    console.error("Error fetching metadata info:", error);
     return undefined;
   }
 };

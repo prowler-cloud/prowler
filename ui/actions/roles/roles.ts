@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
 
 export const getRoles = async ({
   page = 1,
@@ -16,8 +16,7 @@ export const getRoles = async ({
 
   if (isNaN(Number(page)) || page < 1) redirect("/roles");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/roles`);
+  const url = new URL(`${apiBaseUrl}/roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -50,8 +49,7 @@ export const getRoles = async ({
 
 export const getRoleInfoById = async (roleId: string) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/roles/${roleId}`);
+  const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -77,7 +75,6 @@ export const getRoleInfoById = async (roleId: string) => {
 
 export const addRole = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -118,7 +115,7 @@ export const addRole = async (formData: FormData) => {
   const body = JSON.stringify(payload);
 
   try {
-    const url = new URL(`${keyServer}/roles`);
+    const url = new URL(`${apiBaseUrl}/roles`);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
@@ -143,7 +140,6 @@ export const addRole = async (formData: FormData) => {
 
 export const updateRole = async (formData: FormData, roleId: string) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -185,7 +181,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
   const body = JSON.stringify(payload);
 
   try {
-    const url = new URL(`${keyServer}/roles/${roleId}`);
+    const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers: {
@@ -210,9 +206,8 @@ export const updateRole = async (formData: FormData, roleId: string) => {
 
 export const deleteRole = async (roleId: string) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
-  const url = new URL(`${keyServer}/roles/${roleId}`);
+  const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
@@ -222,16 +217,24 @@ export const deleteRole = async (roleId: string) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData?.message || "Failed to delete the role");
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the role");
+      } catch {
+        throw new Error("Failed to delete the role");
+      }
     }
 
-    const data = await response.json();
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/roles");
-    return data;
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting role:", error);
+    return { error: getErrorMessage(error) };
   }
 };

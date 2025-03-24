@@ -110,7 +110,7 @@ class S3:
                 for output in output_list:
                     try:
                         # Object is not written to file so we need to temporarily write it
-                        if not hasattr(output, "file_descriptor"):
+                        if not output.file_descriptor:
                             output.file_descriptor = NamedTemporaryFile(mode="a")
 
                         bucket_directory = self.get_object_path(self._output_directory)

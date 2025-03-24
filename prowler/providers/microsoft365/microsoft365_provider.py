@@ -40,7 +40,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365InteractiveBrowserCredentialError,
     Microsoft365InvalidProviderIdError,
     Microsoft365NoAuthenticationMethodError,
-    Microsoft365NotTenantIdButClientIdAndClienSecretError,
+    Microsoft365NotTenantIdButClientIdAndClientSecretError,
     Microsoft365NotValidClientIdError,
     Microsoft365NotValidClientSecretError,
     Microsoft365NotValidTenantIdError,
@@ -50,9 +50,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
-from prowler.providers.microsoft365.lib.regions.microsoft365_regions import (
-    get_regions_config,
-)
+from prowler.providers.microsoft365.lib.regions.regions import get_regions_config
 from prowler.providers.microsoft365.models import (
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
@@ -283,7 +281,7 @@ class Microsoft365Provider(Provider):
                 )
         else:
             if not tenant_id:
-                raise Microsoft365NotTenantIdButClientIdAndClienSecretError(
+                raise Microsoft365NotTenantIdButClientIdAndClientSecretError(
                     file=os.path.basename(__file__),
                     message="Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
                 )

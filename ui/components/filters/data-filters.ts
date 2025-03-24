@@ -14,8 +14,8 @@ export const filterScans = [
     values: ["aws", "azure", "gcp", "kubernetes"],
   },
   {
-    key: "state",
-    labelCheckboxGroup: "State",
+    key: "state__in",
+    labelCheckboxGroup: "Status",
     values: [
       "available",
       "scheduled",
@@ -27,7 +27,7 @@ export const filterScans = [
   },
   {
     key: "trigger",
-    labelCheckboxGroup: "Schedule",
+    labelCheckboxGroup: "Trigger",
     values: ["scheduled", "manual"],
   },
   // Add more filter categories as needed

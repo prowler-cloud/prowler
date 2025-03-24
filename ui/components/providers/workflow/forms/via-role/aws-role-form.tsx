@@ -23,11 +23,11 @@ export const AWSCredentialsRoleForm = ({
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <div className="text-2xl font-bold leading-9 text-default-foreground">
+      <div className="flex flex-col">
+        <div className="text-md font-bold leading-9 text-default-foreground">
           Connect assuming IAM Role
         </div>
-        <div className="text-small text-default-500">
+        <div className="text-sm text-default-500">
           Please provide the information for your AWS credentials.
         </div>
       </div>

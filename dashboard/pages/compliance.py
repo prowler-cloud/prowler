@@ -76,7 +76,6 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
-                result = result[result.find("CIS_") :]
             results.append(result)
 
     unique_results = set(results)
@@ -532,8 +531,8 @@ def get_bar_graph(df, column_name):
 
     # Cut the text if it is too long
     for i in range(len(colums)):
-        if len(colums[i]) > 15:
-            colums[i] = colums[i][:15] + "..."
+        if len(colums[i]) > 43:
+            colums[i] = colums[i][:43] + "..."
 
     fig = px.bar(
         df,

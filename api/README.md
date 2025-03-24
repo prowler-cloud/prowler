@@ -269,3 +269,66 @@ poetry shell
 cd src/backend
 pytest
 ```
+
+# Custom commands
+
+Django provides a way to create custom commands that can be run from the command line.
+
+> These commands can be found in: ```prowler/api/src/backend/api/management/commands```
+
+To run a custom command, you need to be in the `prowler/api/src/backend` directory and run:
+
+```console
+poetry shell
+python manage.py <command_name>
+```
+
+## Generate dummy data
+
+```console
+python manage.py findings --tenant
+<TENANT_ID> --findings <NUM_FINDINGS> --re
+sources <NUM_RESOURCES> --batch <TRANSACTION_BATCH_SIZE> --alias <ALIAS>
+```
+
+This command creates, for a given tenant, a provider, scan and a set of findings and resources related altogether.
+
+> Scan progress and state are updated in real time.
+> - 0-33%: Create resources.
+> - 33-66%: Create findings.
+> - 66%: Create resource-finding mapping.
+>
+> The last step is required to access the findings details, since the UI needs that to print all the information.
+
+### Example
+
+```console
+~/backend $ poetry run python manage.py findings --tenant
+fffb1893-3fc7-4623-a5d9-fae47da1c528 --findings 25000 --re
+sources 1000 --batch 5000 --alias test-script
+
+Starting data population
+	Tenant: fffb1893-3fc7-4623-a5d9-fae47da1c528
+	Alias: test-script
+	Resources: 1000
+	Findings: 25000
+	Batch size: 5000
+
+
+Creating resources...
+100%|███████████████████████| 1/1 [00:00<00:00,  7.72it/s]
+Resources created successfully.
+
+
+Creating findings...
+100%|███████████████████████| 5/5 [00:05<00:00,  1.09s/it]
+Findings created successfully.
+
+
+Creating resource-finding mappings...
+100%|███████████████████████| 5/5 [00:02<00:00,  1.81it/s]
+Resource-finding mappings created successfully.
+
+
+Successfully populated test data.
+```

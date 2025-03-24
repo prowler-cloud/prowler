@@ -1,14 +1,21 @@
+import glob
+import io
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
+from botocore.exceptions import NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
+    ComplianceOverview,
+    Integration,
     Invitation,
     Membership,
     Provider,
@@ -19,12 +26,27 @@ from api.models import (
     RoleProviderGroupRelationship,
     Scan,
     StateChoices,
+    Task,
     User,
     UserRoleRelationship,
 )
 from api.rls import Tenant
 
 TODAY = str(datetime.today().date())
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
+
+
+class TestViewSet:
+    def test_security_headers(self, client):
+        response = client.get("/")
+        assert response.headers["X-Content-Type-Options"] == "nosniff"
+        assert response.headers["X-Frame-Options"] == "DENY"
+        assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
 
 @pytest.mark.django_db
@@ -877,6 +899,16 @@ class TestProviderViewSet:
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
                 },
                 {
                     "provider": "azure",
@@ -2062,9 +2094,9 @@ class TestScanViewSet:
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
-                ("state", StateChoices.AVAILABLE, 2),
+                ("state", StateChoices.AVAILABLE, 1),
                 ("state", StateChoices.FAILED, 1),
-                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 3),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 2),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),
@@ -2138,6 +2170,181 @@ class TestScanViewSet:
     def test_scans_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(reverse("scan-list"), {"sort": "invalid"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_report_executing(self, authenticated_client, scans_fixture):
+        """
+        When the scan is still executing (state == EXECUTING), the view should return
+        the task data with HTTP 202 and a Content-Location header.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.EXECUTING
+        scan.save()
+
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task_data = {"id": str(task.id), "state": StateChoices.EXECUTING}
+
+        scan.task = task
+        scan.save()
+
+        with patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_celery_task_executing(self, authenticated_client, scans_fixture):
+        """
+        When the scan is not executing but a related celery task exists and is running,
+        the view should return that task data with HTTP 202.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task.id = "dummy-task-id"
+        dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
+
+        with (
+            patch("api.v1.views.Task.objects.get", return_value=dummy_task),
+            patch(
+                "api.v1.views.TaskSerializer",
+                return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+            ),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_no_output_location(self, authenticated_client, scans_fixture):
+        """
+        If the scan does not have an output_location, the view should return a 404.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
+
+    def test_report_s3_no_credentials(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """
+        When output_location is an S3 URL and get_s3_client() raises a credentials exception,
+        the view should return HTTP 403 with the proper error message.
+        """
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        def fake_get_s3_client():
+            raise NoCredentialsError()
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", fake_get_s3_client)
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "There is a problem with credentials."
+        )
+
+    def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
+        """
+        When output_location is an S3 URL and the S3 client returns the file successfully,
+        the view should return the ZIP file with HTTP 200 and proper headers.
+        """
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env", type("env", (), {"str": lambda self, key: bucket})()
+        )
+
+        class FakeS3Client:
+            def get_object(self, Bucket, Key):
+                assert Bucket == bucket
+                assert Key == key
+                return {"Body": io.BytesIO(b"s3 zip content")}
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        expected_filename = os.path.basename("report.zip")
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{expected_filename}"' in content_disposition
+        assert response.content == b"s3 zip content"
+
+    def test_report_s3_success_no_local_files(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """
+        When output_location is a local path and glob.glob returns an empty list,
+        the view should return HTTP 404 with detail "The scan has no reports."
+        """
+        scan = scans_fixture[0]
+        scan.output_location = "/tmp/nonexistent_report_pattern.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+        monkeypatch.setattr("api.v1.views.glob.glob", lambda pattern: [])
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == 404
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
+
+    def test_report_local_file(
+        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+    ):
+        """
+        When output_location is a local file path, the view should read the file from disk
+        and return it with proper headers.
+        """
+        scan = scans_fixture[0]
+        file_content = b"local zip file content"
+        file_path = tmp_path / "report.zip"
+        file_path.write_bytes(file_content)
+
+        scan.output_location = str(file_path)
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            glob,
+            "glob",
+            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+        )
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        assert response.content == file_content
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{file_path.name}"' in content_disposition
 
 
 @pytest.mark.django_db
@@ -2379,12 +2586,33 @@ class TestResourceViewSet:
 @pytest.mark.django_db
 class TestFindingViewSet:
     def test_findings_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("finding-list"))
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_list(self, authenticated_client, findings_fixture):
+    def test_findings_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("finding-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_findings_date_range_too_large(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.lte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    def test_findings_list(self, authenticated_client, findings_fixture):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
         assert (
@@ -2397,14 +2625,15 @@ class TestFindingViewSet:
         [
             ("resources", ["resources"]),
             ("scan", ["scans"]),
-            ("resources.provider,scan", ["resources", "scans", "providers"]),
+            ("resources,scan.provider", ["resources", "scans", "providers"]),
         ],
     )
     def test_findings_list_include(
         self, include_values, expected_resources, authenticated_client, findings_fixture
     ):
         response = authenticated_client.get(
-            reverse("finding-list"), {"include": include_values}
+            reverse("finding-list"),
+            {"include": include_values, "filter[inserted_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
@@ -2439,30 +2668,31 @@ class TestFindingViewSet:
                 ("service.icontains", "ec", 1),
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
-                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.gte", today_after_n_days(-1), 2),
                 (
                     "inserted_at.lte",
-                    "2028-12-31",
+                    today_after_n_days(1),
                     2,
-                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
-                ("updated_at.lte", "2024-01-01", 0),
+                ),
+                ("updated_at.lte", today_after_n_days(-1), 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
                 ("search", "dev-qa", 1),
                 ("search", "orange juice", 1),
                 # full text search on resource
                 ("search", "ec2", 2),
-                # full text search on finding tags
-                ("search", "value2", 2),
-                ("resource_tag_key", "key", 2),
-                ("resource_tag_key__in", "key,key2", 2),
-                ("resource_tag_key__icontains", "key", 2),
-                ("resource_tag_value", "value", 2),
-                ("resource_tag_value__in", "value,value2", 2),
-                ("resource_tag_value__icontains", "value", 2),
-                ("resource_tags", "key:value", 2),
-                ("resource_tags", "not:exists", 0),
-                ("resource_tags", "not:exists,key:value", 2),
+                # full text search on finding tags (disabled for now)
+                # ("search", "value2", 2),
+                # Temporary disabled until we implement tag filtering in the UI
+                # ("resource_tag_key", "key", 2),
+                # ("resource_tag_key__in", "key,key2", 2),
+                # ("resource_tag_key__icontains", "key", 2),
+                # ("resource_tag_value", "value", 2),
+                # ("resource_tag_value__in", "value,value2", 2),
+                # ("resource_tag_value__icontains", "value", 2),
+                # ("resource_tags", "key:value", 2),
+                # ("resource_tags", "not:exists", 0),
+                # ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
@@ -2474,9 +2704,13 @@ class TestFindingViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "inserted_at" not in filter_name:
+            filters["filter[inserted_at]"] = TODAY
+
         response = authenticated_client.get(
             reverse("finding-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -2485,9 +2719,7 @@ class TestFindingViewSet:
     def test_finding_filter_by_scan_id(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"),
-            {
-                "filter[scan]": findings_fixture[0].scan.id,
-            },
+            {"filter[scan]": findings_fixture[0].scan.id},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
@@ -2510,6 +2742,7 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[provider]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2524,7 +2757,8 @@ class TestFindingViewSet:
                 "filter[provider.in]": [
                     findings_fixture[0].scan.provider.id,
                     findings_fixture[1].scan.provider.id,
-                ]
+                ],
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2558,13 +2792,13 @@ class TestFindingViewSet:
     )
     def test_findings_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": sort_field}
+            reverse("finding-list"), {"sort": sort_field, "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_findings_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": "invalid"}
+            reverse("finding-list"), {"sort": "invalid", "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
@@ -2611,7 +2845,8 @@ class TestFindingViewSet:
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
-        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        # Temporarily disabled until we implement tag filtering in the UI
+        # expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
@@ -2621,7 +2856,7 @@ class TestFindingViewSet:
         assert (
             set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
         )
-        assert data["data"]["attributes"]["tags"] == expected_tags
+        # assert data["data"]["attributes"]["tags"] == expected_tags
 
     def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
@@ -2631,14 +2866,15 @@ class TestFindingViewSet:
             reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
-                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+                "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         data = response.json()
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
-        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        # Temporary disabled until we implement tag filtering in the UI
+        # expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
@@ -2648,7 +2884,7 @@ class TestFindingViewSet:
         assert (
             set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
         )
-        assert data["data"]["attributes"]["tags"] == expected_tags
+        # assert data["data"]["attributes"]["tags"] == expected_tags
 
     def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
@@ -2660,7 +2896,8 @@ class TestFindingViewSet:
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
-        assert data["data"]["attributes"]["tags"] == {}
+        # Temporary disabled until we implement tag filtering in the UI
+        # assert data["data"]["attributes"]["tags"] == {}
         assert data["data"]["attributes"]["resource_types"] == []
 
     def test_findings_metadata_invalid_date(self, authenticated_client):
@@ -4272,6 +4509,33 @@ class TestComplianceOverviewViewSet:
         assert len(response.json()["data"]) == 1
         assert response.json()["data"][0]["id"] == str(compliance_overview1.id)
 
+    def test_compliance_overview_metadata(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-metadata"),
+            {"filter[scan_id]": str(compliance_overviews_fixture[0].scan_id)},
+        )
+        data = response.json()
+
+        expected_regions = set(
+            ComplianceOverview.objects.all()
+            .values_list("region", flat=True)
+            .distinct("region")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert data["data"]["type"] == "compliance-overviews-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+
+    def test_compliance_overview_metadata_missing_scan_id(self, authenticated_client):
+        # Attempt to list compliance overviews without providing filter[scan_id]
+        response = authenticated_client.get(reverse("complianceoverview-metadata"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
+        assert response.json()["errors"][0]["code"] == "required"
+
 
 @pytest.mark.django_db
 class TestOverviewViewSet:
@@ -4280,18 +4544,15 @@ class TestOverviewViewSet:
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_overview_providers_list(
-        self, authenticated_client, findings_fixture, resources_fixture
+        self, authenticated_client, scan_summaries_fixture, resources_fixture
     ):
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
-        # Only findings from one provider
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["total"] == len(
-            findings_fixture
-        )
-        assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 0
-        assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 2
-        assert response.json()["data"][0]["attributes"]["findings"]["manual"] == 0
+        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 4
+        assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
+        assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
+        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
             resources_fixture
         )
@@ -4366,3 +4627,415 @@ class TestScheduleViewSet:
             reverse("schedule-daily"), data=json_payload, format="json"
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestIntegrationViewSet:
+    def test_integrations_list(self, authenticated_client, integrations_fixture):
+        response = authenticated_client.get(reverse("integration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(integrations_fixture)
+
+    def test_integrations_retrieve(self, authenticated_client, integrations_fixture):
+        integration1, *_ = integrations_fixture
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": integration1.id}),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["id"] == str(integration1.id)
+        assert (
+            response.json()["data"]["attributes"]["configuration"]
+            == integration1.configuration
+        )
+
+    def test_integrations_invalid_retrieve(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse(
+                "integration-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("providers", ["providers"]),
+        ],
+    )
+    def test_integrations_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        integrations_fixture,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(integrations_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
+
+    @pytest.mark.parametrize(
+        "integration_type, configuration, credentials",
+        [
+            # Amazon S3 - AWS credentials
+            (
+                Integration.IntegrationChoices.S3,
+                {
+                    "bucket_name": "bucket-name",
+                    "output_directory": "output-directory",
+                },
+                {
+                    "role_arn": "arn:aws",
+                    "external_id": "external-id",
+                },
+            ),
+            # Amazon S3 - No credentials (AWS self-hosted)
+            (
+                Integration.IntegrationChoices.S3,
+                {
+                    "bucket_name": "bucket-name",
+                    "output_directory": "output-directory",
+                },
+                {},
+            ),
+        ],
+    )
+    def test_integrations_create_valid(
+        self,
+        authenticated_client,
+        providers_fixture,
+        integration_type,
+        configuration,
+        credentials,
+    ):
+        provider = Provider.objects.first()
+
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": integration_type,
+                    "configuration": configuration,
+                    "credentials": credentials,
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [{"type": "providers", "id": str(provider.id)}]
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.count() == 1
+        integration = Integration.objects.first()
+        assert integration.configuration == data["data"]["attributes"]["configuration"]
+        assert (
+            integration.integration_type
+            == data["data"]["attributes"]["integration_type"]
+        )
+        assert "credentials" not in response.json()["data"]["attributes"]
+        assert (
+            str(provider.id)
+            == data["data"]["relationships"]["providers"]["data"][0]["id"]
+        )
+
+    def test_integrations_create_valid_relationships(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        provider1, provider2, *_ = providers_fixture
+
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.S3,
+                    "configuration": {
+                        "bucket_name": "bucket-name",
+                        "output_directory": "output-directory",
+                    },
+                    "credentials": {
+                        "role_arn": "arn:aws",
+                        "external_id": "external-id",
+                    },
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider1.id)},
+                            {"type": "providers", "id": str(provider2.id)},
+                        ]
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.first().providers.count() == 2
+
+    @pytest.mark.parametrize(
+        "attributes, error_code, error_pointer",
+        (
+            [
+                (
+                    {
+                        "integration_type": "whatever",
+                        "configuration": {
+                            "bucket_name": "bucket-name",
+                            "output_directory": "output-directory",
+                        },
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "invalid_choice",
+                    "integration_type",
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {},
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "required",
+                    "bucket_name",
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {
+                            "bucket_name": "bucket_name",
+                            "output_directory": "output_directory",
+                            "invalid_key": "invalid_value",
+                        },
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "invalid",
+                    None,
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {
+                            "bucket_name": "bucket_name",
+                            "output_directory": "output_directory",
+                        },
+                        "credentials": {"invalid_key": "invalid_key"},
+                    },
+                    "invalid",
+                    None,
+                ),
+            ]
+        ),
+    )
+    def test_integrations_invalid_create(
+        self,
+        authenticated_client,
+        attributes,
+        error_code,
+        error_pointer,
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": attributes,
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == error_code
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == f"/data/attributes/{error_pointer}"
+            if error_pointer
+            else "/data"
+        )
+
+    def test_integrations_partial_update(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "credentials": {
+                        "aws_access_key_id": "new_value",
+                    },
+                    # integration_type is `amazon_s3`
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.credentials["aws_access_key_id"] == "new_value"
+        assert integration.configuration["bucket_name"] == "new_bucket_name"
+        assert integration.configuration["output_directory"] == "new_output_directory"
+
+    def test_integrations_partial_update_relationships(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "credentials": {
+                        "aws_access_key_id": "new_value",
+                    },
+                    # integration_type is `amazon_s3`
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+                "relationships": {"providers": {"data": []}},
+            }
+        }
+
+        assert integration.providers.count() > 0
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.providers.count() == 0
+
+    def test_integrations_partial_update_invalid_content_type(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data={},
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_integrations_partial_update_invalid_content(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {"invalid_config": "value"},
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_delete(
+        self,
+        authenticated_client,
+        integrations_fixture,
+    ):
+        integration, *_ = integrations_fixture
+        response = authenticated_client.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_integrations_delete_invalid(self, authenticated_client):
+        response = authenticated_client.delete(
+            reverse(
+                "integration-detail",
+                kwargs={"pk": "e67d0283-440f-48d1-b5f8-38d0763474f4"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("integration_type", Integration.IntegrationChoices.S3, 2),
+                ("integration_type", Integration.IntegrationChoices.SLACK, 0),
+                (
+                    "integration_type__in",
+                    f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
+                    2,
+                ),
+            ]
+        ),
+    )
+    def test_integrations_filters(
+        self,
+        authenticated_client,
+        integrations_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "invalid",
+            ]
+        ),
+    )
+    def test_integrations_filters_invalid(self, authenticated_client, filter_name):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {f"filter[{filter_name}]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

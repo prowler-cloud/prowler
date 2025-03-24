@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify, wait } from "@/lib";
+import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
 export const getProviderGroups = async ({
@@ -22,8 +22,7 @@ export const getProviderGroups = async ({
 
   if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/provider-groups`);
+  const url = new URL(`${apiBaseUrl}/provider-groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -61,8 +60,7 @@ export const getProviderGroups = async ({
 
 export const getProviderGroupInfoById = async (providerGroupId: string) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/provider-groups/${providerGroupId}`);
+  const url = new URL(`${apiBaseUrl}/provider-groups/${providerGroupId}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -90,7 +88,6 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
 
 export const createProviderGroup = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const name = formData.get("name") as string;
   const providersJson = formData.get("providers") as string;
@@ -127,7 +124,7 @@ export const createProviderGroup = async (formData: FormData) => {
   const body = JSON.stringify(payload);
 
   try {
-    const url = new URL(`${keyServer}/provider-groups`);
+    const url = new URL(`${apiBaseUrl}/provider-groups`);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
@@ -152,7 +149,6 @@ export const updateProviderGroup = async (
   formData: FormData,
 ) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const name = formData.get("name") as string;
   const providersJson = formData.get("providers") as string;
@@ -180,7 +176,7 @@ export const updateProviderGroup = async (
   }
 
   try {
-    const url = `${keyServer}/provider-groups/${providerGroupId}`;
+    const url = `${apiBaseUrl}/provider-groups/${providerGroupId}`;
     const response = await fetch(url, {
       method: "PATCH",
       headers: {
@@ -209,10 +205,13 @@ export const updateProviderGroup = async (
 
 export const deleteProviderGroup = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-
   const providerGroupId = formData.get("id");
-  const url = new URL(`${keyServer}/provider-groups/${providerGroupId}`);
+
+  if (!providerGroupId) {
+    return { error: "Provider Group ID is required" };
+  }
+
+  const url = new URL(`${apiBaseUrl}/provider-groups/${providerGroupId}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -221,13 +220,28 @@ export const deleteProviderGroup = async (formData: FormData) => {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await response.json();
-    await wait(2000);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to delete the provider group",
+        );
+      } catch {
+        throw new Error("Failed to delete the provider group");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/manage-groups");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting provider group:", error);
+    return { error: getErrorMessage(error) };
   }
 };

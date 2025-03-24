@@ -57,7 +57,7 @@ class ACM(AWSService):
                             certificate_expiration_time = 0
                         self.certificates[certificate["CertificateArn"]] = Certificate(
                             arn=certificate["CertificateArn"],
-                            name=certificate["DomainName"],
+                            name=certificate.get("DomainName", ""),
                             id=certificate["CertificateArn"].split("/")[-1],
                             type=certificate["Type"],
                             key_algorithm=certificate["KeyAlgorithm"],

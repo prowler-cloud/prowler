@@ -95,7 +95,7 @@ class Rbac(KubernetesService):
                             "resources": rule.resources,
                             "verbs": rule.verbs,
                         }
-                        for rule in role.rules
+                        for rule in (role.rules or [])
                     ],
                 }
                 roles[role.metadata.uid] = Role(**formatted_role)

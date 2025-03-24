@@ -15,6 +15,8 @@ from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
+    IntegrationProviderRelationship,
     Invitation,
     Membership,
     Provider,
@@ -486,7 +488,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         name="Scan 1",
         provider=provider,
         trigger=Scan.TriggerChoices.MANUAL,
-        state=StateChoices.AVAILABLE,
+        state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
         started_at="2024-01-02T00:00:00Z",
     )
@@ -875,6 +877,46 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         muted_changed=0,
         scan=scan,
     )
+
+
+@pytest.fixture
+def integrations_fixture(providers_fixture):
+    provider1, provider2, *_ = providers_fixture
+    tenant_id = provider1.tenant_id
+    integration1 = Integration.objects.create(
+        tenant_id=tenant_id,
+        enabled=True,
+        connected=True,
+        integration_type="amazon_s3",
+        configuration={"key": "value"},
+        credentials={"psswd": "1234"},
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration1,
+        provider=provider1,
+    )
+
+    integration2 = Integration.objects.create(
+        tenant_id=tenant_id,
+        enabled=True,
+        connected=True,
+        integration_type="amazon_s3",
+        configuration={"key": "value"},
+        credentials={"psswd": "1234"},
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration2,
+        provider=provider1,
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration2,
+        provider=provider2,
+    )
+
+    return integration1, integration2
 
 
 def get_authorization_header(access_token: str) -> dict:

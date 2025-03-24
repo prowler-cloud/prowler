@@ -31,7 +31,7 @@ tags
 *.DS_Store
 
 # Prowler output
-output/
+/output
 
 # Prowler found secrets
 secrets-*/
@@ -50,6 +50,7 @@ junit-reports/
 # .env
 ui/.env*
 api/.env*
+.env.local
 
 # Coverage
 .coverage*

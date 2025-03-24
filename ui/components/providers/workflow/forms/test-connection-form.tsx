@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
+import { Checkbox } from "@nextui-org/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,7 +13,7 @@ import {
   checkConnectionProvider,
   deleteCredentials,
 } from "@/actions/providers";
-import { scheduleDaily } from "@/actions/scans";
+import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
@@ -57,9 +58,10 @@ export const TestConnectionForm = ({
 }) => {
   const { toast } = useToast();
   const router = useRouter();
+
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-  const formSchema = testConnectionFormSchema;
+
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<{
     connected: boolean;
@@ -68,10 +70,13 @@ export const TestConnectionForm = ({
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  const formSchema = testConnectionFormSchema;
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
+      runOnce: false,
     },
   });
 
@@ -120,8 +125,16 @@ export const TestConnectionForm = ({
 
         if (connected && !isUpdated) {
           try {
-            // Schedule daily scan by default
-            const data = await scheduleDaily(formData);
+            // Check if the runOnce checkbox is checked
+            const runOnce = form.watch("runOnce");
+
+            let data;
+
+            if (runOnce) {
+              data = await scanOnDemand(formData);
+            } else {
+              data = await scheduleDaily(formData);
+            }
 
             if (data.error) {
               setApiErrorMessage(data.error);
@@ -218,7 +231,7 @@ export const TestConnectionForm = ({
           </div>
           <p className="py-2 text-small text-default-500">
             {!isUpdated
-              ? "A successful connection will launch a daily scheduled scan."
+              ? "After a successful connection, a scan will automatically run every 24 hours. To run a single scan instead, select the checkbox below."
               : "A successful connection will redirect you to the providers page."}
           </p>
         </div>
@@ -258,11 +271,18 @@ export const TestConnectionForm = ({
           providerUID={providerData.data.attributes.uid}
         />
 
-        {/* {!isResettingCredentials && !connectionStatus?.error && (
-          <p className="py-2 text-small text-default-500">
-            Test connection and launch scan
-          </p>
-        )} */}
+        {!isUpdated && !connectionStatus?.error && (
+          <Checkbox
+            {...form.register("runOnce")}
+            isSelected={!!form.watch("runOnce")}
+            classNames={{
+              label: "text-small text-default-500",
+              wrapper: "checkbox-update",
+            }}
+          >
+            Run a single scan (no recurring schedule).
+          </Checkbox>
+        )}
 
         {isUpdated && !connectionStatus?.error && (
           <p className="py-2 text-small text-default-500">
@@ -292,7 +312,7 @@ export const TestConnectionForm = ({
               className="w-1/2"
               variant="solid"
               color="warning"
-              size="lg"
+              size="md"
               isLoading={isResettingCredentials}
               startContent={!isResettingCredentials && <CheckIcon size={24} />}
               isDisabled={isResettingCredentials}
@@ -311,10 +331,10 @@ export const TestConnectionForm = ({
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
               ariaLabel={"Save"}
-              className="w-1/2"
+              className="w-1/3"
               variant="solid"
               color="action"
-              size="lg"
+              size="md"
               isLoading={isLoading}
               endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
             >

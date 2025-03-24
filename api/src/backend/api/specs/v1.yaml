@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.2.0
+  version: 1.6.0
   description: |-
     Prowler API specification.
 
@@ -233,6 +233,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComplianceOverviewFullResponse'
           description: ''
+  /api/v1/compliance-overviews/metadata:
+    get:
+      operationId: compliance_overviews_metadata_retrieve
+      description: Fetch unique metadata values from a set of compliance overviews.
+        This is useful for dynamic filtering.
+      summary: Retrieve metadata values from compliance overviews
+      parameters:
+      - in: query
+        name: fields[compliance-overviews-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - regions
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Related scan ID.
+        required: true
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ComplianceOverviewMetadataResponse'
+          description: ''
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -346,6 +382,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -356,11 +395,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -476,51 +517,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -714,8 +710,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -908,11 +902,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1028,51 +1024,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -1242,8 +1193,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1284,7 +1233,6 @@ paths:
             - services
             - regions
             - resource_types
-            - tags
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -1370,6 +1318,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -1380,11 +1331,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1500,51 +1453,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -1714,8 +1622,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1738,6 +1644,298 @@ paths:
               schema:
                 $ref: '#/components/schemas/FindingMetadataResponse'
           description: ''
+  /api/v1/integrations:
+    get:
+      operationId: integrations_list
+      description: Retrieve a list of all configured integrations with options for
+        filtering by various criteria.
+      summary: List all integrations
+      parameters:
+      - in: query
+        name: fields[integrations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - enabled
+            - connected
+            - connection_last_checked_at
+            - integration_type
+            - configuration
+            - providers
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[integration_type]
+        schema:
+          type: string
+          enum:
+          - amazon_s3
+          - aws_security_hub
+          - jira
+          - saml
+          - slack
+        description: |-
+          * `amazon_s3` - Amazon S3
+          * `saml` - SAML
+          * `aws_security_hub` - AWS Security Hub
+          * `jira` - JIRA
+          * `slack` - Slack
+      - in: query
+        name: filter[integration_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - amazon_s3
+            - aws_security_hub
+            - jira
+            - saml
+            - slack
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `amazon_s3` - Amazon S3
+          * `saml` - SAML
+          * `aws_security_hub` - AWS Security Hub
+          * `jira` - JIRA
+          * `slack` - Slack
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - providers
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - enabled
+            - -enabled
+            - connected
+            - -connected
+            - connection_last_checked_at
+            - -connection_last_checked_at
+            - integration_type
+            - -integration_type
+            - configuration
+            - -configuration
+            - providers
+            - -providers
+            - url
+            - -url
+        explode: false
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedIntegrationList'
+          description: ''
+    post:
+      operationId: integrations_create
+      description: Register a new integration with the system, providing necessary
+        configuration details.
+      summary: Create a new integration
+      tags:
+      - Integration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/IntegrationCreateResponse'
+          description: ''
+  /api/v1/integrations/{id}:
+    get:
+      operationId: integrations_retrieve
+      description: Fetch detailed information about a specific integration by its
+        ID.
+      summary: Retrieve integration details
+      parameters:
+      - in: query
+        name: fields[integrations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - enabled
+            - connected
+            - connection_last_checked_at
+            - integration_type
+            - configuration
+            - providers
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - providers
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResponse'
+          description: ''
+    patch:
+      operationId: integrations_partial_update
+      description: Modify certain fields of an existing integration without affecting
+        other settings.
+      summary: Partially update an integration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedIntegrationUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedIntegrationUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedIntegrationUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/IntegrationUpdateResponse'
+          description: ''
+    delete:
+      operationId: integrations_destroy
+      description: Remove an integration from the system by its ID.
+      summary: Delete an integration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -3512,6 +3710,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -3630,6 +3829,8 @@ paths:
             - -manage_users
             - manage_account
             - -manage_account
+            - manage_integrations
+            - -manage_integrations
             - manage_providers
             - -manage_providers
             - manage_scans
@@ -3705,6 +3906,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -4074,6 +4276,17 @@ paths:
         description: |-
           * `scheduled` - Scheduled
           * `manual` - Manual
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -4188,6 +4401,17 @@ paths:
           format: uuid
         description: A UUID string identifying this scan.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Scan
       security:
@@ -4235,6 +4459,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/report:
+    get:
+      operationId: scans_report_retrieve
+      description: Returns a ZIP file containing the requested report
+      summary: Download ZIP report
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Report obtained successfully
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no reports
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -5126,6 +5387,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefreshResponse'
           description: ''
+  /api/v1/tokens/switch:
+    post:
+      operationId: tokens_switch_create
+      description: Switch tenant by providing a valid tenant ID. The authenticated
+        user must belong to the tenant.
+      summary: Switch tenant using a valid tenant ID
+      tags:
+      - Token
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TokenSwitchTenantResponse'
+          description: ''
   /api/v1/users:
     get:
       operationId: users_list
@@ -5877,6 +6167,40 @@ components:
           $ref: '#/components/schemas/ComplianceOverviewFull'
       required:
       - data
+    ComplianceOverviewMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ComplianceOverviewMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            regions:
+              type: array
+              items:
+                type: string
+          required:
+          - regions
+    ComplianceOverviewMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ComplianceOverviewMetadata'
+      required:
+      - data
+    ComplianceOverviewMetadataTypeEnum:
+      type: string
+      enum:
+      - compliance-overviews-metadata
     Finding:
       type: object
       required:
@@ -6087,13 +6411,10 @@ components:
               type: array
               items:
                 type: string
-            tags:
-              description: Tags are described as key-value pairs.
           required:
           - services
           - regions
           - resource_types
-          - tags
     FindingMetadataResponse:
       type: object
       properties:
@@ -6116,6 +6437,536 @@ components:
       type: string
       enum:
       - findings
+    Integration:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeC82Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            enabled:
+              type: boolean
+            connected:
+              type: boolean
+              nullable: true
+            connection_last_checked_at:
+              type: string
+              format: date-time
+              nullable: true
+            integration_type:
+              enum:
+              - amazon_s3
+              - saml
+              - aws_security_hub
+              - jira
+              - slack
+              type: string
+              description: |-
+                * `amazon_s3` - Amazon S3
+                * `saml` - SAML
+                * `aws_security_hub` - AWS Security Hub
+                * `jira` - JIRA
+                * `slack` - Slack
+            configuration: {}
+          required:
+          - integration_type
+        relationships:
+          type: object
+          properties:
+            providers:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - providers
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type providers
+              title: providers
+          required:
+          - providers
+    IntegrationCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeC82Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            enabled:
+              type: boolean
+              readOnly: true
+            connected:
+              type: boolean
+              readOnly: true
+              nullable: true
+            connection_last_checked_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
+            integration_type:
+              enum:
+              - amazon_s3
+              - saml
+              - aws_security_hub
+              - jira
+              - slack
+              type: string
+              description: |-
+                * `amazon_s3` - Amazon S3
+                * `saml` - SAML
+                * `aws_security_hub` - AWS Security Hub
+                * `jira` - JIRA
+                * `slack` - Slack
+            configuration:
+              oneOf:
+              - type: object
+                title: Amazon S3
+                properties:
+                  bucket_name:
+                    type: string
+                    description: The name of the S3 bucket where files will be stored.
+                  output_directory:
+                    type: string
+                    description: The directory path within the bucket where files
+                      will be saved.
+                required:
+                - bucket_name
+                - output_directory
+            credentials:
+              oneOf:
+              - type: object
+                title: AWS Credentials
+                properties:
+                  role_arn:
+                    type: string
+                    description: The Amazon Resource Name (ARN) of the role to assume.
+                      Required for AWS role assumption.
+                  external_id:
+                    type: string
+                    description: An identifier to enhance security for role assumption.
+                  aws_access_key_id:
+                    type: string
+                    description: The AWS access key ID. Only required if the environment
+                      lacks pre-configured AWS credentials.
+                  aws_secret_access_key:
+                    type: string
+                    description: The AWS secret access key. Required if 'aws_access_key_id'
+                      is provided or if no AWS credentials are pre-configured.
+                  aws_session_token:
+                    type: string
+                    description: The session token for temporary credentials, if applicable.
+                  session_duration:
+                    type: integer
+                    minimum: 900
+                    maximum: 43200
+                    default: 3600
+                    description: The duration (in seconds) for the role session.
+                  role_session_name:
+                    type: string
+                    description: |-
+                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                      Examples:
+                      - MySession123
+                      - User_Session-1
+                      - Test.Session@2
+                    pattern: ^[a-zA-Z0-9=,.@_-]+$
+              writeOnly: true
+          required:
+          - integration_type
+          - configuration
+          - credentials
+        relationships:
+          type: object
+          properties:
+            providers:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - providers
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type providers
+              title: providers
+    IntegrationCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - integrations
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                enabled:
+                  type: boolean
+                  readOnly: true
+                connected:
+                  type: boolean
+                  readOnly: true
+                  nullable: true
+                connection_last_checked_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                  nullable: true
+                integration_type:
+                  enum:
+                  - amazon_s3
+                  - saml
+                  - aws_security_hub
+                  - jira
+                  - slack
+                  type: string
+                  description: |-
+                    * `amazon_s3` - Amazon S3
+                    * `saml` - SAML
+                    * `aws_security_hub` - AWS Security Hub
+                    * `jira` - JIRA
+                    * `slack` - Slack
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Amazon S3
+                    properties:
+                      bucket_name:
+                        type: string
+                        description: The name of the S3 bucket where files will be
+                          stored.
+                      output_directory:
+                        type: string
+                        description: The directory path within the bucket where files
+                          will be saved.
+                    required:
+                    - bucket_name
+                    - output_directory
+                credentials:
+                  oneOf:
+                  - type: object
+                    title: AWS Credentials
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The Amazon Resource Name (ARN) of the role to
+                          assume. Required for AWS role assumption.
+                      external_id:
+                        type: string
+                        description: An identifier to enhance security for role assumption.
+                      aws_access_key_id:
+                        type: string
+                        description: The AWS access key ID. Only required if the environment
+                          lacks pre-configured AWS credentials.
+                      aws_secret_access_key:
+                        type: string
+                        description: The AWS secret access key. Required if 'aws_access_key_id'
+                          is provided or if no AWS credentials are pre-configured.
+                      aws_session_token:
+                        type: string
+                        description: The session token for temporary credentials,
+                          if applicable.
+                      session_duration:
+                        type: integer
+                        minimum: 900
+                        maximum: 43200
+                        default: 3600
+                        description: The duration (in seconds) for the role session.
+                      role_session_name:
+                        type: string
+                        description: |-
+                          An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                          Examples:
+                          - MySession123
+                          - User_Session-1
+                          - Test.Session@2
+                        pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  writeOnly: true
+              required:
+              - integration_type
+              - configuration
+              - credentials
+            relationships:
+              type: object
+              properties:
+                providers:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - providers
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type providers
+                  title: providers
+      required:
+      - data
+    IntegrationCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/IntegrationCreate'
+      required:
+      - data
+    IntegrationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Integration'
+      required:
+      - data
+    IntegrationUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeC82Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            enabled:
+              type: boolean
+            connected:
+              type: boolean
+              readOnly: true
+              nullable: true
+            connection_last_checked_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
+            integration_type:
+              enum:
+              - amazon_s3
+              - saml
+              - aws_security_hub
+              - jira
+              - slack
+              type: string
+              description: |-
+                * `amazon_s3` - Amazon S3
+                * `saml` - SAML
+                * `aws_security_hub` - AWS Security Hub
+                * `jira` - JIRA
+                * `slack` - Slack
+              readOnly: true
+            configuration:
+              oneOf:
+              - type: object
+                title: Amazon S3
+                properties:
+                  bucket_name:
+                    type: string
+                    description: The name of the S3 bucket where files will be stored.
+                  output_directory:
+                    type: string
+                    description: The directory path within the bucket where files
+                      will be saved.
+                required:
+                - bucket_name
+                - output_directory
+            credentials:
+              oneOf:
+              - type: object
+                title: AWS Credentials
+                properties:
+                  role_arn:
+                    type: string
+                    description: The Amazon Resource Name (ARN) of the role to assume.
+                      Required for AWS role assumption.
+                  external_id:
+                    type: string
+                    description: An identifier to enhance security for role assumption.
+                  aws_access_key_id:
+                    type: string
+                    description: The AWS access key ID. Only required if the environment
+                      lacks pre-configured AWS credentials.
+                  aws_secret_access_key:
+                    type: string
+                    description: The AWS secret access key. Required if 'aws_access_key_id'
+                      is provided or if no AWS credentials are pre-configured.
+                  aws_session_token:
+                    type: string
+                    description: The session token for temporary credentials, if applicable.
+                  session_duration:
+                    type: integer
+                    minimum: 900
+                    maximum: 43200
+                    default: 3600
+                    description: The duration (in seconds) for the role session.
+                  role_session_name:
+                    type: string
+                    description: |-
+                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                      Examples:
+                      - MySession123
+                      - User_Session-1
+                      - Test.Session@2
+                    pattern: ^[a-zA-Z0-9=,.@_-]+$
+              writeOnly: true
+        relationships:
+          type: object
+          properties:
+            providers:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - providers
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type providers
+              title: providers
+    IntegrationUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/IntegrationUpdate'
+      required:
+      - data
     Invitation:
       type: object
       required:
@@ -6753,7 +7604,7 @@ components:
                   type: integer
                 fail:
                   type: integer
-                manual:
+                muted:
                   type: integer
                 total:
                   type: integer
@@ -6900,6 +7751,15 @@ components:
             $ref: '#/components/schemas/Finding'
       required:
       - data
+    PaginatedIntegrationList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Integration'
+      required:
+      - data
     PaginatedInvitationList:
       type: object
       properties:
@@ -6997,6 +7857,151 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+      required:
+      - data
+    PatchedIntegrationUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - integrations
+            id: {}
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                enabled:
+                  type: boolean
+                connected:
+                  type: boolean
+                  readOnly: true
+                  nullable: true
+                connection_last_checked_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                  nullable: true
+                integration_type:
+                  enum:
+                  - amazon_s3
+                  - saml
+                  - aws_security_hub
+                  - jira
+                  - slack
+                  type: string
+                  description: |-
+                    * `amazon_s3` - Amazon S3
+                    * `saml` - SAML
+                    * `aws_security_hub` - AWS Security Hub
+                    * `jira` - JIRA
+                    * `slack` - Slack
+                  readOnly: true
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Amazon S3
+                    properties:
+                      bucket_name:
+                        type: string
+                        description: The name of the S3 bucket where files will be
+                          stored.
+                      output_directory:
+                        type: string
+                        description: The directory path within the bucket where files
+                          will be saved.
+                    required:
+                    - bucket_name
+                    - output_directory
+                credentials:
+                  oneOf:
+                  - type: object
+                    title: AWS Credentials
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The Amazon Resource Name (ARN) of the role to
+                          assume. Required for AWS role assumption.
+                      external_id:
+                        type: string
+                        description: An identifier to enhance security for role assumption.
+                      aws_access_key_id:
+                        type: string
+                        description: The AWS access key ID. Only required if the environment
+                          lacks pre-configured AWS credentials.
+                      aws_secret_access_key:
+                        type: string
+                        description: The AWS secret access key. Required if 'aws_access_key_id'
+                          is provided or if no AWS credentials are pre-configured.
+                      aws_session_token:
+                        type: string
+                        description: The session token for temporary credentials,
+                          if applicable.
+                      session_duration:
+                        type: integer
+                        minimum: 900
+                        maximum: 43200
+                        default: 3600
+                        description: The duration (in seconds) for the role session.
+                      role_session_name:
+                        type: string
+                        description: |-
+                          An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                          Examples:
+                          - MySession123
+                          - User_Session-1
+                          - Test.Session@2
+                        pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  writeOnly: true
+            relationships:
+              type: object
+              properties:
+                providers:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - providers
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type providers
+                  title: providers
       required:
       - data
     PatchedInvitationUpdateRequest:
@@ -7489,6 +8494,8 @@ components:
                   type: boolean
                 manage_account:
                   type: boolean
+                manage_integrations:
+                  type: boolean
                 manage_providers:
                   type: boolean
                 manage_scans:
@@ -7810,7 +8817,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
             alias:
               type: string
@@ -7922,7 +8929,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
           required:
           - uid
@@ -7966,7 +8973,7 @@ components:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
-                  maxLength: 63
+                  maxLength: 250
               required:
               - uid
       required:
@@ -9141,6 +10148,8 @@ components:
               type: boolean
             manage_account:
               type: boolean
+            manage_integrations:
+              type: boolean
             manage_providers:
               type: boolean
             manage_scans:
@@ -9269,6 +10278,8 @@ components:
             manage_users:
               type: boolean
             manage_account:
+              type: boolean
+            manage_integrations:
               type: boolean
             manage_providers:
               type: boolean
@@ -9403,6 +10414,8 @@ components:
                 manage_users:
                   type: boolean
                 manage_account:
+                  type: boolean
+                manage_integrations:
                   type: boolean
                 manage_providers:
                   type: boolean
@@ -10180,6 +11193,81 @@ components:
           $ref: '#/components/schemas/Token'
       required:
       - data
+    TokenSwitchTenant:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TokenSwitchTenantTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            tenant_id:
+              type: string
+              format: uuid
+              writeOnly: true
+              description: The tenant ID for which to request a new token.
+            access:
+              type: string
+              readOnly: true
+            refresh:
+              type: string
+              readOnly: true
+          required:
+          - tenant_id
+    TokenSwitchTenantRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - tokens-switch-tenant
+            attributes:
+              type: object
+              properties:
+                tenant_id:
+                  type: string
+                  format: uuid
+                  writeOnly: true
+                  description: The tenant ID for which to request a new token.
+                access:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+                refresh:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+              required:
+              - tenant_id
+      required:
+      - data
+    TokenSwitchTenantResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenSwitchTenant'
+      required:
+      - data
+    TokenSwitchTenantTypeEnum:
+      type: string
+      enum:
+      - tokens-switch-tenant
     TokenTypeEnum:
       type: string
       enum:
@@ -10208,6 +11296,10 @@ components:
       type: string
       enum:
       - users
+    TypeC82Enum:
+      type: string
+      enum:
+      - integrations
     TypeD4dEnum:
       type: string
       enum:
@@ -10513,3 +11605,7 @@ tags:
 - name: Task
   description: Endpoints for task management, allowing retrieval of task status and
     revoking tasks that have not started.
+- name: Integration
+  description: Endpoints for managing third-party integrations, including registration,
+    configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
+    services.

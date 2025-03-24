@@ -113,7 +113,6 @@ class TestS3:
         csv_file = f"test{extension}"
         csv = CSV(
             findings=[FINDING],
-            create_file_descriptor=True,
             file_path=f"{CURRENT_DIRECTORY}/{csv_file}",
         )
 
