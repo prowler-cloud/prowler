@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import connection, models, transaction
+from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
@@ -137,6 +138,18 @@ def batch_delete(tenant_id, queryset, batch_size=5000):
             deletion_summary[model_label] = deletion_summary.get(model_label, 0) + count
 
     return total_deleted, deletion_summary
+
+
+def delete_related_daily_task(provider_id: str):
+    """
+    Deletes the periodic task associated with a specific provider.
+
+    Args:
+        provider_id (str): The unique identifier for the provider
+                           whose related periodic task should be deleted.
+    """
+    task_name = f"scan-perform-scheduled-{provider_id}"
+    PeriodicTask.objects.filter(name=task_name).delete()
 
 
 # Postgres Enums
