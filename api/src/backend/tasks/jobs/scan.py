@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Sum, When
+from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -194,7 +195,7 @@ def perform_prowler_scan(
                             updated_fields.append("type")
                         if resource_instance.metadata != finding.resource_metadata:
                             resource_instance.metadata = json.dumps(
-                                finding.resource_metadata, default=str
+                                finding.resource_metadata, cls=CustomEncoder
                             )
                             updated_fields.append("metadata")
                         if resource_instance.details != finding.resource_details:
