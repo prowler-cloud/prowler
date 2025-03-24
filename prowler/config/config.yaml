@@ -59,6 +59,7 @@ aws:
       "python3.6",
       "python2.7",
       "python3.7",
+      "python3.8",
       "nodejs4.3",
       "nodejs4.3-edge",
       "nodejs6.10",
@@ -68,6 +69,11 @@ aws:
       "nodejs12.x",
       "nodejs14.x",
       "dotnet5.0",
+<<<<<<< HEAD
+=======
+      "dotnet6",
+      "dotnet7",
+>>>>>>> 9923def4c (chore(awslambda): update obsolete lambda runtimes (#7330))
       "dotnetcore1.0",
       "dotnetcore2.0",
       "dotnetcore2.1",
