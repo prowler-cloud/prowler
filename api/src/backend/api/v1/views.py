@@ -102,6 +102,7 @@ from api.rls import Tenant
 from api.utils import CustomOAuth2Client, validate_invitation
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
+    ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
@@ -2057,6 +2058,21 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
         "requirement information and check's status.",
     ),
+    metadata=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Retrieve metadata values from compliance overviews",
+        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
+        "filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -2118,6 +2134,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ComplianceOverviewFullSerializer
+        elif self.action == "metadata":
+            return ComplianceOverviewMetadataSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
@@ -2133,6 +2151,35 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = self.request.tenant_id
+
+        regions = list(
+            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values_list("region", flat=True)
+            .order_by("region")
+            .distinct()
+        )
+        result = {"regions": regions}
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Overview"])
