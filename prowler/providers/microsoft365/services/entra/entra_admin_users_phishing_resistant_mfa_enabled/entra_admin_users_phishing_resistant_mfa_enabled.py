@@ -7,7 +7,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_ca_policy_admin_users_phishing_resistant_mfa_enabled(Check):
+class entra_admin_users_phishing_resistant_mfa_enabled(Check):
     """Check if Conditional Access policies require Phishing-resistant MFA strength for admin users."""
 
     def execute(self) -> list[CheckReportMicrosoft365]:
