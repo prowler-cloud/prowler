@@ -514,6 +514,7 @@ class S3Control(AWSService):
         self.account_public_access_block = None
         self.access_points = {}
         self.multi_region_access_points = {}
+        self._get_public_access_block()
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
         if self.audited_partition == "aws":
