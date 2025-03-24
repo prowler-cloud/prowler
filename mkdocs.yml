@@ -34,10 +34,10 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-plugins:
-  - search
-  - git-revision-date-localized:
-      enable_creation_date: true
+# plugins:
+#   - search
+#   - git-revision-date-localized:
+#       enable_creation_date: true
 
 edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
@@ -72,6 +72,7 @@ nav:
           - Developer Guide: developer-guide/introduction.md
           - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
+          - Getting Started: tutorials/aws/getting-started-aws.md
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
