@@ -6,8 +6,6 @@ from typing import Optional, Union
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.compliance import update_checks_metadata_with_compliance
-from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import (
     Check_Report,
     CheckMetadata,
@@ -123,13 +121,16 @@ class Finding(BaseModel):
         output_data = {}
         output_data.update(common_finding_data)
 
-        bulk_checks_metadata = {}
-        if hasattr(output_options, "bulk_checks_metadata"):
-            bulk_checks_metadata = output_options.bulk_checks_metadata
+        try:
+            output_data["compliance"] = check_output.compliance
+        except AttributeError:
+            bulk_checks_metadata = {}
+            if hasattr(output_options, "bulk_checks_metadata"):
+                bulk_checks_metadata = output_options.bulk_checks_metadata
 
-        output_data["compliance"] = get_check_compliance(
-            check_output, provider.type, bulk_checks_metadata
-        )
+            output_data["compliance"] = get_check_compliance(
+                check_output, provider.type, bulk_checks_metadata
+            )
         try:
             output_data["provider"] = provider.type
             output_data["resource_metadata"] = check_output.resource
@@ -305,12 +306,6 @@ class Finding(BaseModel):
         finding.resource = json.loads(resource.metadata)
         finding.resource_details = resource.details
 
-        # Add CheckMetadata to the output_options
-        output_options = SimpleNamespace()
-        output_options.bulk_checks_metadata = update_checks_metadata_with_compliance(
-            Compliance.get_bulk(provider.type), CheckMetadata.get_bulk(provider.type)
-        )
-
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid
 
         # AWS specified field
@@ -364,7 +359,8 @@ class Finding(BaseModel):
         finding.resource_tags = unroll_tags(
             [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
         )
-        return cls.generate_output(provider, finding, output_options)
+
+        return cls.generate_output(provider, finding, SimpleNamespace())
 
     def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
         """
