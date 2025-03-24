@@ -5,7 +5,7 @@ from prowler.providers.microsoft365.services.entra.entra_client import entra_cli
 from prowler.providers.microsoft365.services.entra.entra_service import AuthPolicyRoles
 
 
-class entra_authpolicy_guest_users_access_restrictions(Check):
+class entra_policy_guest_users_access_restrictions(Check):
     """Check if guest user access is restricted to their own directory objects.
 
     This check verifies whether the authorization policy is configured so that guest users

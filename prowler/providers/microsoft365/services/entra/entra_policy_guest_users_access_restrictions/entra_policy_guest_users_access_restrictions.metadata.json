@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_authpolicy_guest_users_access_restrictions",
+  "CheckID": "entra_policy_guest_users_access_restrictions",
   "CheckTitle": "Ensure That 'Guest users access restrictions' is set to 'Guest user access is restricted to properties and memberships of their own directory objects'",
   "CheckType": [],
   "ServiceName": "entra",

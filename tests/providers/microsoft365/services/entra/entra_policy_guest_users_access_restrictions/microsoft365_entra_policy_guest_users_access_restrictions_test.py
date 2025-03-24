@@ -9,7 +9,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_authpolicy_guest_users_access_restrictions:
+class Test_entra_policy_guest_users_access_restrictions:
     def test_no_auth_policy(self):
         """
         Test when there is no authorization policy (auth_policy is None):
@@ -24,15 +24,15 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions import (
-                entra_authpolicy_guest_users_access_restrictions,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
-            check = entra_authpolicy_guest_users_access_restrictions()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -57,12 +57,12 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions import (
-                entra_authpolicy_guest_users_access_restrictions,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -72,7 +72,7 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 guest_user_role_id=AuthPolicyRoles.USER.value,
             )
 
-            check = entra_authpolicy_guest_users_access_restrictions()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -98,12 +98,12 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions import (
-                entra_authpolicy_guest_users_access_restrictions,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -113,7 +113,7 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 guest_user_role_id=AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value,
             )
 
-            check = entra_authpolicy_guest_users_access_restrictions()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -139,12 +139,12 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_authpolicy_guest_users_access_restrictions.entra_authpolicy_guest_users_access_restrictions import (
-                entra_authpolicy_guest_users_access_restrictions,
+            from prowler.providers.microsoft365.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
             entra_client.authorization_policy = AuthorizationPolicy(
@@ -154,7 +154,7 @@ class Test_entra_authpolicy_guest_users_access_restrictions:
                 guest_user_role_id=AuthPolicyRoles.GUEST_USER.value,
             )
 
-            check = entra_authpolicy_guest_users_access_restrictions()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
 
             assert len(result) == 1
