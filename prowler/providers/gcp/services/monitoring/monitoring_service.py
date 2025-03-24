@@ -86,8 +86,6 @@ class Monitoring(GCPService):
                     if key_id:
                         self.sa_keys_metrics.add(key_id)
 
-                # return self.sa_keys_metrics
-
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
