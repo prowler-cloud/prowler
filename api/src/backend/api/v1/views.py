@@ -55,6 +55,7 @@ from tasks.tasks import (
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
+from api.db_utils import delete_related_daily_task
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
@@ -240,7 +241,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.5.1"
+        spectacular_settings.VERSION = "1.5.2"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1077,6 +1078,7 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
+        delete_related_daily_task(str(provider.id))
 
         with transaction.atomic():
             task = delete_provider_task.delay(
