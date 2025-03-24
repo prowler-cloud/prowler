@@ -530,9 +530,6 @@ class Resource(RowLevelSecurityProtectedModel):
         through="ResourceTagMapping",
     )
 
-    def set_metadata(self, value):
-        self.metadata = json.dumps(value, default=str)
-
     def get_tags(self, tenant_id: str) -> dict:
         return {tag.key: tag.value for tag in self.tags.filter(tenant_id=tenant_id)}
 

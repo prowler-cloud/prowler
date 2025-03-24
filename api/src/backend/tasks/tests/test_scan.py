@@ -1,3 +1,4 @@
+import json
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -159,7 +160,9 @@ class TestPerformScan:
         assert scan_resource.service == finding.service_name
         assert scan_resource.type == finding.resource_type
         assert scan_resource.name == finding.resource_name
-        assert scan_resource.metadata == finding.resource_metadata
+        assert scan_resource.metadata == json.dumps(
+            finding.resource_metadata, default=str
+        )
         assert scan_resource.details == f"{finding.resource_details}"
         assert scan_resource.partition == finding.partition
 
