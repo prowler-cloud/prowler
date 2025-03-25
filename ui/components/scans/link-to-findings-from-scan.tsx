@@ -17,7 +17,6 @@ export const LinkToFindingsFromScan = ({
       ariaLabel="Go to Findings page"
       variant="ghost"
       className="text-xs font-medium text-default-500 hover:text-primary disabled:opacity-30"
-      // color="action"
       size="sm"
       isDisabled={isDisabled}
     >
