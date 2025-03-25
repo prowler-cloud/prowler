@@ -87,6 +87,7 @@ nav:
           - Boto3 Configuration: tutorials/aws/boto3-configuration.md
           - Threat Detection: tutorials/aws/threat-detection.md
       - Azure:
+          - Getting Started: tutorials/azure/getting-started-azure.md
           - Authentication: tutorials/azure/authentication.md
           - Non default clouds: tutorials/azure/use-non-default-cloud.md
           - Subscriptions: tutorials/azure/subscriptions.md

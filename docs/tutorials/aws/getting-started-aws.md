@@ -1,6 +1,6 @@
 # Getting Started with AWS on Prowler Cloud
 
-<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/RPgIWOCERzY" title="Prowler Cloud Onboarding" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/RPgIWOCERzY" title="Prowler Cloud Onboarding AWS" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 
 You can set-up your AWS account in order to scan it using Prowler cloud.
@@ -8,8 +8,7 @@ You can set-up your AWS account in order to scan it using Prowler cloud.
 Setting up the AWS Account requires:
 
 1. Access to Prowler Cloud
-2. Setting the AWS account to allow the authentication (Credentials or Assumed Role)
-3. Test the connection and start an Scan
+2. Setting the AWS account to allow the authentication (Credentials or Assumed Role) and add them to Prowler Cloud
 
 ## Common Set-Up: Get your AWS Account ID
 
@@ -21,11 +20,11 @@ Go to [AWS console](https://console.aws.amazon.com) and get your AWS account id 
 
 1. Go to [Prowler Cloud](https://cloud.prowler.com/) and go inside `Configuration` > `Cloud Providers` page:
 
-    ![Cloud Providers Page](./img/cloud-providers-page.png)
+    ![Cloud Providers Page](../img/cloud-providers-page.png)
 
 2. Click on `Add Cloud Provider`
 
-    ![Add a Cloud Provider](./img/add-cloud-provider.png)
+    ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
 3. Select `Amazon Web Services`
 
