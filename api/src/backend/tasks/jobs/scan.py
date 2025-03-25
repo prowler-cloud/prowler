@@ -403,21 +403,21 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         ).annotate(
             fail=Sum(
                 Case(
-                    When(status="FAIL", then=1),
+                    When(status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             _pass=Sum(
                 Case(
-                    When(status="PASS", then=1),
+                    When(status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
-            muted=Sum(
+            muted_count=Sum(
                 Case(
-                    When(status="MUTED", then=1),
+                    When(muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -425,63 +425,63 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             total=Count("id"),
             new=Sum(
                 Case(
-                    When(delta="new", then=1),
+                    When(delta="new", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             changed=Sum(
                 Case(
-                    When(delta="changed", then=1),
+                    When(delta="changed", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             unchanged=Sum(
                 Case(
-                    When(delta__isnull=True, then=1),
+                    When(delta__isnull=True, muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_new=Sum(
                 Case(
-                    When(delta="new", status="FAIL", then=1),
+                    When(delta="new", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_changed=Sum(
                 Case(
-                    When(delta="changed", status="FAIL", then=1),
+                    When(delta="changed", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_new=Sum(
                 Case(
-                    When(delta="new", status="PASS", then=1),
+                    When(delta="new", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_changed=Sum(
                 Case(
-                    When(delta="changed", status="PASS", then=1),
+                    When(delta="changed", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_new=Sum(
                 Case(
-                    When(delta="new", status="MUTED", then=1),
+                    When(delta="new", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_changed=Sum(
                 Case(
-                    When(delta="changed", status="MUTED", then=1),
+                    When(delta="changed", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -499,7 +499,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 region=agg["resources__region"],
                 fail=agg["fail"],
                 _pass=agg["_pass"],
-                muted=agg["muted"],
+                muted=agg["muted_count"],
                 total=agg["total"],
                 new=agg["new"],
                 changed=agg["changed"],
