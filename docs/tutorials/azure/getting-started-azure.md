@@ -109,14 +109,27 @@ To allow Prowler to retrieve metadata from the identity assumed and run specific
 
     ![Add API Permission](./img/add-api-permission.png)
 
-6. Once in the "Microsoft Graph" view, select "Application permissions"
+6. Once in the "Microsoft Graph" view, select "Microsoft Graph" and later "Application permissions"
+
+    ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
+    ![Select Application Permissions](./img/application-permissions-inside-graph.png)
+
 7. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
+
     * `Directory.Read.All`
+    ![Directory Permission](./img/directory-permission.png)
     * `Policy.Read.All`
+    ![Policy Permission](./img/policy-permission.png)
     * `UserAuthenticationMethod.Read.All`
+    ![User Permission](./img/user-permission.png)
+
 8. Click on "Add permissions" to apply the new permissions.
+
+    ![Click On Add Permissions](./img/click-add-permissions.png)
+
 9. Finally, an admin should click on "Grant admin consent for [your tenant]" to apply the permissions.
 
+    ![Grant Admin Consent](./img/grant-admin-consent.png)
     ![API Permissions Result](./img/api-permissions-result.png)
 
 ## Add the credentials to Prowler Cloud
