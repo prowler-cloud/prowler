@@ -73,7 +73,7 @@ class VirtualMachines(AzureService):
                                     else None
                                 ),
                                 location=vm.location,
-                                security_profile=vm.security_profile,
+                                security_profile=getattr(vm, "security_profile", None),
                                 extensions=extensions,
                             )
                         }
