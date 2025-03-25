@@ -62,15 +62,9 @@ class VirtualMachines(AzureService):
                                 storage_profile=(
                                     StorageProfile(
                                         os_disk=OSDisk(
-                                            name=(
-                                                getattr(os_disk, "name", None)
-                                                if os_disk
-                                                else None
-                                            ),
-                                            managed_disk=(
-                                                getattr(os_disk, "managed_disk", None)
-                                                if os_disk
-                                                else None
+                                            name=getattr(os_disk, "name", None),
+                                            managed_disk=getattr(
+                                                os_disk, "managed_disk", None
                                             ),
                                         ),
                                         data_disks=data_disks,
