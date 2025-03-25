@@ -105,6 +105,7 @@ class NhnProvider(Provider):
         self._identity = NHNIdentityInfo(
             tenant_id=self._tenant_id,
             username=self._username,
+            auth_method="password",
         )
 
         Provider.set_global_provider(self)

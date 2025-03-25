@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_NHN
+from prowler.lib.check.models import Check, CheckReportNHN
 from prowler.providers.nhn.services.network.network_client import network_client
 
 
@@ -6,7 +6,13 @@ class network_vpc_has_empty_routingtables(Check):
     def execute(self):
         findings = []
         for network in network_client.networks:
-            report = Check_Report_NHN(metadata=self.metadata(), resource=network)
+            report = CheckReportNHN(
+                metadata=self.metadata(),
+                resource=network,
+                resource_name=network.name,
+                resource_id=network.id,
+                resource_location="kr1",
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"VPC {network.name} does not have empty routingtables."

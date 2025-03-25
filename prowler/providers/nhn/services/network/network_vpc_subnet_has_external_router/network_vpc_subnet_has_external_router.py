@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_NHN
+from prowler.lib.check.models import Check, CheckReportNHN
 from prowler.providers.nhn.services.network.network_client import network_client
 
 
@@ -7,7 +7,13 @@ class network_vpc_subnet_has_external_router(Check):
         findings = []
         for network in network_client.networks:
             for subnet in network.subnets:
-                report = Check_Report_NHN(metadata=self.metadata(), resource=network)
+                report = CheckReportNHN(
+                    metadata=self.metadata(),
+                    resource=network,
+                    resource_name=network.name,
+                    resource_id=network.id,
+                    resource_location="kr1",
+                )
                 report.status = "PASS"
                 report.status_extended = f"VPC {network.name} Subnet {subnet.name} does not have an external router."
                 if subnet.external_router:

@@ -11,15 +11,19 @@ class NHNIdentityInfo(BaseModel):
     Attributes:
         - identity_id (str): An optional identity ID if used by NHN services.
         - identity_type (str): The type or role of the identity, if needed.
-        - tenant_id (str): The tenant ID for the NHN Cloud account.
         - tenant_domain (str): The tenant domain if applicable.
           (Some NHN services might require a domain or project domain.)
+        - tenant_id (str): The tenant ID for the NHN Cloud account.
+        - username (str): The username associated with the account.
+        - auth_method (str): The authentication method used to access the account.
     """
 
     identity_id: str = ""
     identity_type: str = ""
-    tenant_id: str = ""
     tenant_domain: str = ""
+    tenant_id: str
+    username: str
+    auth_method: str
 
 
 class NHNOutputOptions(ProviderOutputOptions):

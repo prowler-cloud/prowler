@@ -574,26 +574,34 @@ class CheckReportMicrosoft365(Check_Report):
 
 
 @dataclass
-class Check_Report_NHN(Check_Report):
+class CheckReportNHN(Check_Report):
     """Contains the NHN Check's finding information."""
 
     resource_name: str
     resource_id: str
     location: str
 
-    def __init__(self, metadata: Dict, resource: Any) -> None:
+    def __init__(
+        self,
+        metadata: dict,
+        resource: any,
+        resource_name: str,
+        resource_id: str,
+        resource_location: str = "kr1",
+    ) -> None:
         """Initialize the NHN Check's finding information.
 
         Args:
             metadata: The metadata of the check.
             resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            resource_location: The location of the resource related with the finding.
         """
         super().__init__(metadata, resource)
-        self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name", "")
-        )
-        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
-        self.location = getattr(resource, "location", "global")
+        self.resource_name = resource_name
+        self.resource_id = resource_id
+        self.location = resource_location
 
 
 # Testing Pending
