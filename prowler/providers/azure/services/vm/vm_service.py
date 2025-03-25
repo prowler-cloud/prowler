@@ -32,10 +32,7 @@ class VirtualMachines(AzureService):
                     )
 
                     data_disks = []
-                    if (
-                        storage_profile
-                        and getattr(storage_profile, "data_disks", [])
-                    ):
+                    if storage_profile and getattr(storage_profile, "data_disks", []):
                         data_disks = [
                             DataDisk(
                                 lun=data_disk.lun,
@@ -69,7 +66,8 @@ class VirtualMachines(AzureService):
                                         ),
                                         data_disks=data_disks,
                                     )
-                                    if getattr(vm, "storage_profile", None)
+                                    if storage_profile
+                                    else None
                                 ),
                                 location=vm.location,
                                 security_profile=getattr(vm, "security_profile", None),
