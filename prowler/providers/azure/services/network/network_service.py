@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from azure.mgmt.network import NetworkManagementClient
 
@@ -168,11 +168,11 @@ class NetworkWatcher:
 class SecurityRule:
     id: str
     name: str
-    destination_port_range: str
-    protocol: str
-    source_address_prefix: str
-    access: str
-    direction: str
+    destination_port_range: Optional[str]
+    protocol: Optional[str]
+    source_address_prefix: Optional[str]
+    access: Optional[str]
+    direction: Optional[str]
 
 
 @dataclass
