@@ -107,7 +107,13 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     header: "Findings",
     cell: ({ row }) => {
       const { id } = getScanData(row);
-      return <LinkToFindingsFromScan scanId={id} />;
+      const scanState = row.original.attributes?.state;
+      return (
+        <LinkToFindingsFromScan
+          scanId={id}
+          isDisabled={!["completed", "executing"].includes(scanState)}
+        />
+      );
     },
   },
   {
