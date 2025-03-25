@@ -59,7 +59,6 @@ class StatusChoices(models.TextChoices):
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
-    MUTED = "MUTED", _("Muted")
 
 
 class StateChoices(models.TextChoices):

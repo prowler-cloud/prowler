@@ -2,9 +2,10 @@
 
 from django.db import migrations, models
 
+import api.db_utils
+
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0014_integrations"),
     ]
@@ -14,5 +15,12 @@ class Migration(migrations.Migration):
             model_name="finding",
             name="muted",
             field=models.BooleanField(default=False),
+        ),
+        migrations.AlterField(
+            model_name="finding",
+            name="status",
+            field=api.db_utils.StatusEnumField(
+                choices=[("FAIL", "Fail"), ("PASS", "Pass"), ("MANUAL", "Manual")]
+            ),
         ),
     ]
