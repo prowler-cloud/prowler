@@ -9,9 +9,13 @@ Setting up the Azure Subscription requires:
 1. Get the `Subscription ID`
 2. Access to Prowler Cloud
 3. Setting the Azure subscription to allow the authentication
+
     3.1 Create the Service Principal
+
     3.2 Assign the needed Permissions
+
     3.3 Assign Permissions at Subscription level
+
 4. Add the credentials to Prowler Cloud
 
 ## First Step - Get the Subscription ID:
