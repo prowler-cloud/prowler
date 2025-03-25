@@ -186,3 +186,25 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
                 result[0].resource_id
                 == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][0].id
             )
+
+    def test_iam_custom_roles_empty_list_but_with_key(self):
+        defender_client = mock.MagicMock
+        defender_client.custom_roles = {AZURE_SUBSCRIPTION_ID: []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks import (
+                iam_custom_role_has_permissions_to_administer_resource_locks,
+            )
+
+            check = iam_custom_role_has_permissions_to_administer_resource_locks()
+            result = check.execute()
+            assert len(result) == 0
