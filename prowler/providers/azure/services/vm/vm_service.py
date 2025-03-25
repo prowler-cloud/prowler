@@ -70,16 +70,8 @@ class VirtualMachines(AzureService):
                                     else None
                                 ),
                                 location=vm.location,
-<<<<<<< HEAD
-                                security_profile=vm.security_profile,
-                                extensions=[
-                                    VirtualMachineExtension(id=extension.id)
-                                    for extension in getattr(vm, "resources", [])
-                                ],
-=======
                                 security_profile=getattr(vm, "security_profile", None),
                                 extensions=extensions,
->>>>>>> 5d6ed640f (fix(vm): handle `Nonetype is not iterable` for extensions (#7360))
                             )
                         }
                     )
@@ -167,7 +159,7 @@ class VirtualMachine:
     resource_id: str
     resource_name: str
     location: str
-    security_profile: SecurityProfile
+    security_profile: Optional[SecurityProfile]
     extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
 
