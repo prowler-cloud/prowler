@@ -34,7 +34,7 @@ class VirtualMachines(AzureService):
                     data_disks = []
                     if (
                         storage_profile
-                        and getattr(storage_profile, "data_disks", []) is not None
+                        and getattr(storage_profile, "data_disks", [])
                     ):
                         data_disks = [
                             DataDisk(
@@ -43,15 +43,15 @@ class VirtualMachines(AzureService):
                                 managed_disk=data_disk.managed_disk,
                             )
                             for data_disk in getattr(storage_profile, "data_disks", [])
-                            if data_disk is not None
+                            if data_disk
                         ]
 
                     extensions = []
-                    if getattr(vm, "resources", []) is not None:
+                    if getattr(vm, "resources", []):
                         extensions = [
                             VirtualMachineExtension(id=extension.id)
                             for extension in getattr(vm, "resources", [])
-                            if extension is not None
+                            if extension
                         ]
 
                     virtual_machines[subscription_name].update(
@@ -69,8 +69,7 @@ class VirtualMachines(AzureService):
                                         ),
                                         data_disks=data_disks,
                                     )
-                                    if storage_profile
-                                    else None
+                                    if getattr(vm, "storage_profile", None)
                                 ),
                                 location=vm.location,
                                 security_profile=getattr(vm, "security_profile", None),
