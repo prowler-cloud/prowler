@@ -11,6 +11,7 @@ Setting up the Azure Subscription requires:
 3. Setting the Azure subscription to allow the authentication
     3.1 Create the Service Principal
     3.2 Assign the needed Permissions
+    3.3 Assign Permissions at Subscription level
 4. Add the credentials to Prowler Cloud
 
 ## First Step - Get the Subscription ID:
@@ -131,6 +132,61 @@ To allow Prowler to retrieve metadata from the identity assumed and run specific
 
     ![Grant Admin Consent](./img/grant-admin-consent.png)
     ![API Permissions Result](./img/api-permissions-result.png)
+
+
+### Assign Permissions at Subscription level
+
+1. Go to [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json) and download it
+
+    ![Azure Custom Role](./img/download-prowler-role.png)
+
+2. Modify the assignableScopes field to be the subscription ID where the role assignment is going to be made, it should be something like `/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`
+
+3. Go to subscriptions page inside Azure Portal
+
+    ![Subscription Page](./img/subscription-page-azure.png)
+
+4. Access to your subscription and click on "Access control (IAM)"
+
+    ![IAM Page](./img/iam-azure-page.png)
+
+5. Click on "+ Add" and select "Add custom role"
+
+    ![Add custom role](./img/add-custom-role.png)
+
+6. On the "Baseline permissions" select "Start from JSON" and upload the file downloaded and modified in the step 1.
+
+    ![Add custom role via JSON](./img/add-custom-role-json.png)
+    ![Select custom role](./img/select-custom-role-prowler.png)
+
+7. Click on "Review + Create" to create the new role
+
+    ![Select review and create](./img/review-and-create.png)
+
+8. Go back to "Access control (IAM)" page and click on "+ Add" > "Add role assigment"
+
+    ![Add role assigment](./img/add-role-assigment.png)
+
+9. Search "Reader" and choose it, then click on next
+
+    ![Add role reader](./img/add-reader-role.png)
+
+10. Click on "+ Select Members"
+
+    ![Select Members](./img/select-members-iam.png)
+
+11. Look for your application name and Select it, later click on "Select"
+
+    ![Select Prowler App](./img/member-select-app-prowler.png)
+
+
+12. Click on "Review + Assign"
+
+    ![Review + Assign](./img/review-and-assign-last-step.png)
+
+13. [IMPORTANT] Repeat from step 8 to 12 but using `ProwlerRole` instad of `Reader` role
+
+
 
 ## Add the credentials to Prowler Cloud
 
