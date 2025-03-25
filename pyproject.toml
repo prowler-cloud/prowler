@@ -72,7 +72,7 @@ schema = "0.7.7"
 shodan = "1.31.0"
 slack-sdk = "3.35.0"
 tabulate = "0.9.0"
-tzlocal = "5.3"
+tzlocal = "5.3.1"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.8.3"
