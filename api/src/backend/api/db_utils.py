@@ -345,3 +345,15 @@ class IntegrationTypeEnum(EnumType):
 class IntegrationTypeEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("integration_type", *args, **kwargs)
+
+
+# Postgres enum definition for Processor type
+
+
+class ProcessorTypeEnum(EnumType):
+    enum_type_name = "processor_type"
+
+
+class ProcessorTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("processor_type", *args, **kwargs)
