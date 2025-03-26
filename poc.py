@@ -45,9 +45,6 @@ class PowerShellSession:
 
         full_output = "\n".join(output_lines)
 
-        return full_output
-
-        # Extract JSON from output if present
         json_match = re.search(r"(\{.*\})", full_output, re.DOTALL)
         if json_match:
             try:
@@ -55,7 +52,7 @@ class PowerShellSession:
             except json.JSONDecodeError:
                 pass  # If JSON parsing fails, return raw output
 
-        return "full_output"  # Return raw output if no JSON found
+        return full_output  # Return raw output if no JSON found
 
     def close(self):
         """Terminate the PowerShell session."""
@@ -91,19 +88,7 @@ def main():
     ps_session.execute("Connect-MicrosoftTeams -Credential $Credential")
 
     # Get Microsoft Teams configuration
-    json_response = ps_session.execute(
-        "Get-CsTeamsClientConfiguration | ConvertTo-Json"
-    )
-
-    # Extract JSON
-    json_match = re.search(r"(\{.*\})", json_response, re.DOTALL)
-    if not json_match:
-        print("Error: Failed to extract JSON")
-    try:
-        response = json.loads(json_match.group(1))
-    except json.JSONDecodeError as e:
-        print("JSON decoding error:", e)
-        response = {}
+    response = ps_session.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
 
     print(json.dumps(response, indent=4))
 
