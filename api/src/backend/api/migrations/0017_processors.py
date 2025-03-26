@@ -61,6 +61,13 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="processor",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "processor_type"),
+                name="unique_processor_types_tenant",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="processor",
             constraint=RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_processor",

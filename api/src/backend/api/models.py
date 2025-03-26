@@ -1241,6 +1241,10 @@ class Processor(RowLevelSecurityProtectedModel):
         db_table = "processors"
 
         constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "processor_type"),
+                name="unique_processor_types_tenant",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
