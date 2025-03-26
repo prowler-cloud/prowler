@@ -46,3 +46,12 @@ def init_parser(self):
         ],
         help="Microsoft365 region to be used, default is Microsoft365Global",
     )
+    # PowerShell
+    microsoft365_credentials_subparser = microsoft365_parser.add_argument_group(
+        "PowerShell"
+    )
+    microsoft365_credentials_subparser.add_argument(
+        "--credentials-env-auth",
+        action="store_true",
+        help="Use User and Password environment variables authentication to log in against Microsoft365",
+    )

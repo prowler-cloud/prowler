@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.teams.teams_client import teams_client
 
 
-class teams_settings_external_file_sharing_restricted(Check):
+class teams_external_file_sharing_restricted(Check):
     """Check if external file sharing is restricted in Teams.
 
     Attributes:

@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "teams_settings_external_file_sharing_restricted",
+  "CheckID": "teams_external_file_sharing_restricted",
   "CheckTitle": "Ensure external file sharing in Teams is enabled for only approved cloud storage services",
   "CheckType": [],
   "ServiceName": "teams",
