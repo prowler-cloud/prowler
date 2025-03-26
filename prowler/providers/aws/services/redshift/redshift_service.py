@@ -45,7 +45,8 @@ class Redshift(AWSService):
                                 "AllowVersionUpgrade", False
                             ),
                             encrypted=cluster.get("Encrypted", False),
-                            multi_az=cluster.get("MultiAZ", False),
+                            multi_az=str(cluster.get("MultiAZ", False)).lower()
+                            == "true",
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
