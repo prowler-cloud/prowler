@@ -848,6 +848,7 @@ class ScanSerializer(RLSSerializer):
             "completed_at",
             "scheduled_at",
             "next_scan_at",
+            "processor",
             "url",
         ]
 
@@ -878,6 +879,7 @@ class ScanIncludeSerializer(RLSSerializer):
             "completed_at",
             "scheduled_at",
             "provider",
+            "processor",
         ]
 
     included_serializers = {
