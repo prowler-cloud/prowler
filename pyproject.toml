@@ -25,7 +25,7 @@ dependencies = [
   "azure-mgmt-monitor==6.0.2",
   "azure-mgmt-network==28.1.0",
   "azure-mgmt-rdbms==10.1.0",
-  "azure-mgmt-resource==23.2.0",
+  "azure-mgmt-resource==23.3.0",
   "azure-mgmt-search==9.1.0",
   "azure-mgmt-security==7.0.0",
   "azure-mgmt-sql==3.0.1",
