@@ -74,6 +74,15 @@ def create_state_machine(name, logging_configuration):
             },
             1,
         ),  # Logging enabled
+        (
+            {
+                STATE_MACHINE_ARN: create_state_machine(
+                    "TestStateMachine",
+                    None,
+                )
+            },
+            1,
+        ),  # Logging configuration is None
     ],
 )
 @mock_aws(config={"stepfunctions": {"execute_state_machine": True}})
@@ -104,10 +113,9 @@ def test_stepfunctions_statemachine_logging(state_machines, expected_status):
 
         # Additional assertions for specific scenarios
         if expected_status == 1:
-            if (
-                state_machines[STATE_MACHINE_ARN].logging_configuration.level
-                == LoggingLevel.OFF
-            ):
+            logging_conf = state_machines[STATE_MACHINE_ARN].logging_configuration
+
+            if logging_conf is None or logging_conf.level == LoggingLevel.OFF:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
@@ -123,3 +131,4 @@ def test_stepfunctions_statemachine_logging(state_machines, expected_status):
             assert result[0].resource_id == STATE_MACHINE_ID
             assert result[0].resource_arn == STATE_MACHINE_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource == state_machines[STATE_MACHINE_ARN]
