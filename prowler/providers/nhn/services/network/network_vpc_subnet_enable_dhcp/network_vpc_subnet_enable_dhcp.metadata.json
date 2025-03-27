@@ -7,7 +7,7 @@
     "SubServiceName": "",
     "ResourceIdTemplate": "",
     "Risk": "",
-    "Severity": "Medium",
+    "Severity": "medium",
     "ResourceType": "VPC",
     "Description": "This check verifies if DHCP is enabled for the subnets in the VPC.",
     "Remediation": {
