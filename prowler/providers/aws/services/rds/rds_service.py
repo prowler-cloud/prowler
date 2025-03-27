@@ -170,16 +170,9 @@ class RDS(AWSService):
                                         )
                                     )
                         except ClientError as error:
-                            # If the certificate is not found and it's deprecated we show a warning and continue the execution
-                            deprecated_certs = ["rds-ca-2015", "rds-ca-2019"]
-                            if error.response["Error"][
-                                "Code"
-                            ] == "CertificateNotFound" and any(
-                                cert in error.response["Error"]["Message"]
-                                for cert in deprecated_certs
-                            ):
+                            if error.response["Error"]["Code"] == "CertificateNotFound":
                                 logger.warning(
-                                    f"{regional_client.region} -- Instance {instance.id} is using a deprecated certificate ({instance.ca_cert}) which is no longer available."
+                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                             else:
                                 logger.error(
