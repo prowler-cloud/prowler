@@ -34,6 +34,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ConfigCredentialsError,
     Microsoft365CredentialsUnavailableError,
     Microsoft365DefaultAzureCredentialError,
+    Microsoft365EnvironmentUserCredentialsError,
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
@@ -52,6 +53,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
 from prowler.providers.microsoft365.lib.regions.regions import get_regions_config
 from prowler.providers.microsoft365.models import (
+    Microsoft365Credentials,
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
 )
@@ -95,12 +97,14 @@ class Microsoft365Provider(Provider):
     _audit_config: dict
     _region_config: Microsoft365RegionConfig
     _mutelist: Microsoft365Mutelist
+    _credentials: Microsoft365Credentials
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
         sp_env_auth: bool,
+        credentials_env_auth: bool,
         az_cli_auth: bool,
         browser_auth: bool,
         tenant_id: str = None,
@@ -179,6 +183,8 @@ class Microsoft365Provider(Provider):
             client_id,
         )
 
+        self._credentials = self.get_credentials(credentials_env_auth)
+
         # Audit Config
         if config_content:
             self._audit_config = config_content
@@ -238,6 +244,11 @@ class Microsoft365Provider(Provider):
     def mutelist(self) -> Microsoft365Mutelist:
         """Mutelist object associated with this Microsoft365 provider."""
         return self._mutelist
+
+    @property
+    def credentials(self) -> Microsoft365Credentials:
+        """Return powershell credentials"""
+        return self._credentials
 
     @staticmethod
     def validate_arguments(
@@ -322,6 +333,33 @@ class Microsoft365Provider(Provider):
             raise Microsoft365SetUpRegionConfigError(
                 file=os.path.basename(__file__),
                 original_exception=error,
+            )
+
+    @staticmethod
+    def get_credentials(credentials_env_auth: bool = False) -> Microsoft365Credentials:
+        """Gets the Microsoft365 credentials.
+
+        Args:
+            credentials_env_auth (bool): Flag indicating whether to use environment variables for authentication.
+
+        Returns:
+            Microsoft365Credentials: Object containing the user credentials.
+                If credentials_env_auth is True, retrieves from environment variables.
+                If False, returns empty credentials.
+        """
+        if credentials_env_auth:
+            # Check if required environment variables exist
+            if not getenv("M365_USER") or not getenv("M365_PASSWD"):
+                logger.critical(
+                    "Microsoft365 provider: Missing M365_USER or M365_PASSWD environment variables needed for credentials authentication"
+                )
+                raise Microsoft365EnvironmentUserCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="Missing M365_USER or M365_PASSWD environment variables required for credentials authentication.",
+                )
+            return Microsoft365Credentials(
+                user=getenv("M365_USER"),
+                passwd=getenv("M365_PASSWD"),
             )
 
     def print_credentials(self):

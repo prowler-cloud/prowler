@@ -1,0 +1,41 @@
+from typing import List
+
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
+from prowler.providers.microsoft365.services.purview.purview_client import (
+    purview_client,
+)
+
+
+class purview_audit_log_search_enabled(Check):
+    """Check if Purview audit log search is enabled.
+
+    Attributes:
+        metadata: Metadata associated with the check (inherited from Check).
+    """
+
+    def execute(self) -> List[CheckReportMicrosoft365]:
+        """Execute the check for audit log search
+
+        This method checks if audit log search is enabled Purview settings
+
+        Returns:
+            List[CheckReportMicrosoft365]: A list of reports containing the result of the check.
+        """
+        findings = []
+
+        report = CheckReportMicrosoft365(
+            metadata=self.metadata(),
+            resource=purview_client.audit_log_config,
+            resource_name="Purview Settings",
+            resource_id="purviewSettings",
+        )
+        report.status = "FAIL"
+        report.status_extended = "Purview audit log search is not enabled."
+
+        if purview_client.audit_log_config.audit_log_search:
+            report.status = "PASS"
+            report.status_extended = "Purview audit log search is enabled."
+
+        findings.append(report)
+
+        return findings
