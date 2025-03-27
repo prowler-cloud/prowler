@@ -54,6 +54,8 @@ IGNORED_EXCEPTIONS = [
     "AzureClientIdAndClientSecretNotBelongingToTenantIdError",
     "AzureHTTPResponseError",
     "Error with credentials provided",
+    # AWS Service is not available in a region
+    "EndpointConnectionError",
 ]
 
 
