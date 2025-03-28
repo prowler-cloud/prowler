@@ -107,6 +107,7 @@ class TestPerformScan:
             finding.service_name = "service_name"
             finding.resource_type = "resource_type"
             finding.resource_tags = {"tag1": "value1", "tag2": "value2"}
+            finding.muted = False
             finding.raw = {}
 
             # Mock the ProwlerScan instance

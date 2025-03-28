@@ -121,10 +121,10 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     ),
     cell: ({ row }) => {
       const {
-        attributes: { status },
+        attributes: { status, muted },
       } = getFindingsData(row);
 
-      return <StatusFindingBadge size="sm" status={status} />;
+      return <StatusFindingBadge size="sm" status={muted ? "MUTED" : status} />;
     },
   },
   {

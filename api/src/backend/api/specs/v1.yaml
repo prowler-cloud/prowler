@@ -294,6 +294,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -402,6 +403,12 @@ paths:
           type: string
           format: date
         description: Maximum date range is 7 days.
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
       - in: query
         name: filter[provider]
         schema:
@@ -633,13 +640,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -756,6 +761,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -910,6 +916,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -1140,13 +1152,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -1339,6 +1349,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -1569,13 +1585,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -2020,10 +2034,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
-      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2180,10 +2190,6 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
       - in: query
         name: filter[provider_id]
         schema:
@@ -6238,13 +6244,11 @@ components:
               - FAIL
               - PASS
               - MANUAL
-              - MUTED
               type: string
               description: |-
                 * `FAIL` - Fail
                 * `PASS` - Pass
                 * `MANUAL` - Manual
-                * `MUTED` - Muted
             status_extended:
               type: string
               nullable: true
@@ -6280,6 +6284,8 @@ components:
               format: date-time
               readOnly: true
               nullable: true
+            muted:
+              type: boolean
           required:
           - uid
           - status

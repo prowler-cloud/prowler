@@ -655,6 +655,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "Description": "test description orange juice",
         },
         first_seen_at="2024-01-02T00:00:00Z",
+        muted=True,
     )
 
     finding2.add_resources([resource2])

@@ -1091,6 +1091,7 @@ class FindingSerializer(RLSSerializer):
             "inserted_at",
             "updated_at",
             "first_seen_at",
+            "muted",
             "url",
             # Relationships
             "scan",

@@ -597,10 +597,11 @@ export interface FindingProps {
   attributes: {
     uid: string;
     delta: "new" | "changed" | null;
-    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status: "PASS" | "FAIL" | "MANUAL";
     status_extended: string;
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
+    muted: boolean;
     check_metadata: {
       risk: string;
       notes: string;
