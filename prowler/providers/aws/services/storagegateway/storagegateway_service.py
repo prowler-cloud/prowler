@@ -51,7 +51,10 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe NFS FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.fs_type == "NFS":
+                if (
+                    fileshare.region == regional_client.region
+                    and fileshare.fs_type == "NFS"
+                ):
                     response = regional_client.describe_nfs_file_shares(
                         FileShareARNList=[fileshare.arn]
                     )
@@ -70,7 +73,10 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe SMB FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.fs_type == "SMB":
+                if (
+                    fileshare.region == regional_client.region
+                    and fileshare.fs_type == "SMB"
+                ):
                     response = regional_client.describe_smb_file_shares(
                         FileShareARNList=[fileshare.arn]
                     )

@@ -108,6 +108,7 @@ class TestPerformScan:
             finding.service_name = "service_name"
             finding.resource_type = "resource_type"
             finding.resource_tags = {"tag1": "value1", "tag2": "value2"}
+            finding.muted = False
             finding.raw = {}
             finding.resource_metadata = {"test": "metadata"}
             finding.resource_details = {"details": "test"}
