@@ -146,7 +146,10 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
                     .first()
                 )
                 if not affected_scan:
-                    raise ValueError
+                    raise ValueError(
+                        "Error retrieving affected scan details after detecting duplicated scheduled "
+                        "scan."
+                    )
                 # Return the affected scan details to avoid losing data
                 serializer = ScanTaskSerializer(instance=affected_scan)
             except Exception as duplicated_scan_exception:
