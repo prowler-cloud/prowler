@@ -95,7 +95,6 @@ class Finding(BaseModel):
         Returns:
             dict: A dictionary containing the metadata with keys converted to lowercase.
         """
-
         return dict_to_lowercase(self.metadata.dict())
 
     @classmethod

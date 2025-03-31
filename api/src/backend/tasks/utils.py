@@ -7,14 +7,20 @@ from django_celery_results.models import TaskResult
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, o):
+        # This is for datetime objects
         if isinstance(o, datetime):
             return o.isoformat(timespec="seconds")
         if isinstance(o, timedelta):
             return o.total_seconds()
+
+        # This is for custom objects
         try:
             return super().default(o)
         except TypeError:
-            return str(o)
+            try:
+                return o.__dict__
+            except AttributeError:
+                return str(o)
 
 
 def get_next_execution_datetime(task_id: int, provider_id: str) -> datetime:
