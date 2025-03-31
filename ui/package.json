@@ -28,7 +28,7 @@
     "jose": "^5.9.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.471.0",
-    "next": "^14.2.22",
+    "next": "^14.2.25",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.2.1",
     "radix-ui": "^1.1.3",

@@ -24,6 +24,7 @@ from api.db_utils import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     PermissionChoices,
@@ -286,6 +287,9 @@ class FindingFilter(FilterSet):
     status = ChoiceFilter(choices=StatusChoices.choices)
     severity = ChoiceFilter(choices=SeverityChoices)
     impact = ChoiceFilter(choices=SeverityChoices)
+    muted = BooleanFilter(
+        help_text="If this filter is not provided, muted and non-muted findings will be returned."
+    )
 
     resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
 
@@ -613,12 +617,6 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
-    muted_findings = BooleanFilter(method="filter_muted_findings")
-
-    def filter_muted_findings(self, queryset, name, value):
-        if not value:
-            return queryset.exclude(muted__gt=0)
-        return queryset
 
     class Meta:
         model = ScanSummary
@@ -629,8 +627,6 @@ class ScanSummaryFilter(FilterSet):
 
 
 class ServiceOverviewFilter(ScanSummaryFilter):
-    muted_findings = None
-
     def is_valid(self):
         # Check if at least one of the inserted_at filters is present
         inserted_at_filters = [
@@ -648,3 +644,19 @@ class ServiceOverviewFilter(ScanSummaryFilter):
                 }
             )
         return super().is_valid()
+
+
+class IntegrationFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    integration_type = ChoiceFilter(choices=Integration.IntegrationChoices.choices)
+    integration_type__in = ChoiceInFilter(
+        choices=Integration.IntegrationChoices.choices,
+        field_name="integration_type",
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = Integration
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+        }

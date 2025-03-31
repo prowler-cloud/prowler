@@ -50,6 +50,7 @@ junit-reports/
 # .env
 ui/.env*
 api/.env*
+.env.local
 
 # Coverage
 .coverage*

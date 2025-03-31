@@ -90,7 +90,7 @@ class Microsoft365BaseException(ProwlerException):
             "message": "Microsoft365 tenant ID error: browser authentication flag (--browser-auth) not found",
             "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
         },
-        (6021, "Microsoft365NotTenantIdButClientIdAndClienSecretError"): {
+        (6021, "Microsoft365NotTenantIdButClientIdAndClientSecretError"): {
             "message": "Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
             "remediation": "Check the Microsoft365 Tenant ID and ensure it is properly set up.",
         },
@@ -270,7 +270,7 @@ class Microsoft365BrowserAuthNoFlagError(Microsoft365CredentialsError):
         )
 
 
-class Microsoft365NotTenantIdButClientIdAndClienSecretError(
+class Microsoft365NotTenantIdButClientIdAndClientSecretError(
     Microsoft365CredentialsError
 ):
     def __init__(self, file=None, original_exception=None, message=None):
