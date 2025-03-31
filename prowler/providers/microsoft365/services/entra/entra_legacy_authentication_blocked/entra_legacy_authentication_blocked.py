@@ -47,6 +47,7 @@ class entra_legacy_authentication_blocked(Check):
             if (
                 ClientAppType.EXCHANGE_ACTIVE_SYNC
                 not in policy.conditions.client_app_types
+                or ClientAppType.OTHER_CLIENTS not in policy.conditions.client_app_types
             ):
                 continue
 
