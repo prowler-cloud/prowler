@@ -9,7 +9,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_admin_mfa_enabled_for_administrative_roles(Check):
+class entra_admin_users_mfa_enabled(Check):
     """
     Ensure multifactor authentication is enabled for all users in administrative roles.
 
@@ -68,13 +68,13 @@ class entra_admin_mfa_enabled_for_administrative_roles(Check):
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces MFA for administrative roles."
-
                 if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                     report.status = "FAIL"
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' only reports MFA for administrative roles but does not enforce it."
-                break
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces MFA for administrative roles."
+                    break
 
         findings.append(report)
         return findings
