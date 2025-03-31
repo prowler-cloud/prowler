@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
+import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,17 +18,24 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { getAuthUrl } from "@/lib/helper";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
   type,
   invitationToken,
   isCloudEnv,
+  googleAuthUrl,
+  githubAuthUrl,
+  isGoogleOAuthEnabled,
+  isGithubOAuthEnabled,
 }: {
   type: string;
   invitationToken?: string | null;
   isCloudEnv?: boolean;
+  googleAuthUrl?: string;
+  githubAuthUrl?: string;
+  isGoogleOAuthEnabled?: boolean;
+  isGithubOAuthEnabled?: boolean;
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
@@ -295,30 +302,76 @@ export const AuthForm = ({
                 <Divider className="flex-1" />
               </div>
               <div className="flex flex-col gap-2">
-                <Button
-                  startContent={
-                    <Icon icon="flat-color-icons:google" width={24} />
+                <Tooltip
+                  content={
+                    <div className="flex-inline text-small">
+                      Social Login with Google is not enabled.{" "}
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary"
+                      >
+                        Read the docs
+                      </Link>
+                    </div>
                   }
-                  variant="bordered"
-                  as="a"
-                  href={getAuthUrl("google")}
+                  placement="right-start"
+                  shadow="sm"
+                  isDisabled={isGoogleOAuthEnabled}
+                  className="w-96"
                 >
-                  Continue with Google
-                </Button>
-                <Button
-                  startContent={
-                    <Icon
-                      className="text-default-500"
-                      icon="fe:github"
-                      width={24}
-                    />
+                  <span>
+                    <Button
+                      startContent={
+                        <Icon icon="flat-color-icons:google" width={24} />
+                      }
+                      variant="bordered"
+                      className="w-full"
+                      as="a"
+                      href={googleAuthUrl}
+                      isDisabled={!isGoogleOAuthEnabled}
+                    >
+                      Continue with Google
+                    </Button>
+                  </span>
+                </Tooltip>
+                <Tooltip
+                  content={
+                    <div className="flex-inline text-small">
+                      Social Login with Github is not enabled.{" "}
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary"
+                      >
+                        Read the docs
+                      </Link>
+                    </div>
                   }
-                  variant="bordered"
-                  as="a"
-                  href={getAuthUrl("github")}
+                  placement="right-start"
+                  shadow="sm"
+                  isDisabled={isGithubOAuthEnabled}
+                  className="w-96"
                 >
-                  Continue with Github
-                </Button>
+                  <span>
+                    <Button
+                      startContent={
+                        <Icon
+                          className="text-default-500"
+                          icon="fe:github"
+                          width={24}
+                        />
+                      }
+                      variant="bordered"
+                      className="w-full"
+                      as="a"
+                      href={githubAuthUrl}
+                      isDisabled={!isGithubOAuthEnabled}
+                    >
+                      Continue with Github
+                    </Button>
+                  </span>
+                </Tooltip>
               </div>
             </>
           )}
