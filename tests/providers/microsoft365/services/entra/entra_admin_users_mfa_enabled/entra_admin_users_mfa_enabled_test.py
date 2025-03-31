@@ -21,7 +21,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_admin_users_have_mfa_enabled:
+class Test_entra_admin_users_mfa_enabled:
     def test_no_conditional_access_policies(self):
         """No conditional access policies configured: expected FAIL."""
         entra_client = mock.MagicMock
@@ -34,17 +34,17 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -70,12 +70,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -116,7 +116,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -146,12 +146,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -192,7 +192,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -222,12 +222,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -268,7 +268,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -303,12 +303,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -349,7 +349,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -382,12 +382,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -444,7 +444,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -477,12 +477,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -538,7 +538,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 )
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -572,12 +572,12 @@ class Test_entra_admin_users_have_mfa_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_users_have_mfa_enabled.entra_admin_users_have_mfa_enabled import (
-                entra_admin_users_have_mfa_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_mfa_enabled.entra_admin_users_mfa_enabled import (
+                entra_admin_users_mfa_enabled,
             )
 
             entra_client.conditional_access_policies = {
@@ -586,7 +586,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -635,7 +637,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -681,7 +685,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                 ),
             }
 
-            check = entra_admin_users_have_mfa_enabled()
+            check = entra_admin_users_mfa_enabled()
             result = check.execute()
 
             assert len(result) == 1
