@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
@@ -130,21 +131,27 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             name=f"scan-perform-scheduled-{provider_id}"
         )
 
-        if Scan.objects.filter(
+        executed_scan = Scan.objects.filter(
             tenant_id=tenant_id,
             provider_id=provider_id,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state=StateChoices.EXECUTING,
-            scheduler_task_id=periodic_task_instance.id,
-        ).exists():
-            # Duplicated task execution due to visibility timeout, scan is already running
+            task__task_runner_task__task_id=task_id,
+        ).order_by("completed_at")
+
+        if (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.EXECUTING,
+                scheduler_task_id=periodic_task_instance.id,
+                scheduled_at__date=datetime.now(timezone.utc).date(),
+            ).exists()
+            or executed_scan.exists()
+        ):
+            # Duplicated task execution due to visibility timeout or scan is already running
             logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
             try:
-                affected_scan = (
-                    Scan.objects.filter(task__task_runner_task__task_id=task_id)
-                    .order_by("completed_at")
-                    .first()
-                )
+                affected_scan = executed_scan.first()
                 if not affected_scan:
                     raise ValueError(
                         "Error retrieving affected scan details after detecting duplicated scheduled "
@@ -170,7 +177,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             defaults={
                 "state": StateChoices.SCHEDULED,
                 "name": "Daily scheduled scan",
-                "scheduled_at": next_scan_datetime,
+                "scheduled_at": next_scan_datetime - timedelta(days=1),
             },
         )
 
