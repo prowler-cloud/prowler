@@ -661,8 +661,6 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
     muted = models.BooleanField(default=False, null=False)
-
-    muted = models.BooleanField(default=False)
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Relationships
