@@ -27,7 +27,7 @@ export function Navbar({ title, icon, user }: NavbarProps) {
           <h1 className="text-sm font-bold text-default-700">{title}</h1>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
-          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsServer />} 
+          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsServer />}
           <ThemeSwitch />
           <UserNav user={user} />
         </div>
