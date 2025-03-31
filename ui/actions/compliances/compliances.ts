@@ -72,7 +72,9 @@ export const getComplianceOverviewMetadataInfo = async ({
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch compliance overview metadata info: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch compliance overview metadata info: ${response.statusText}`,
+      );
     }
 
     const parsedData = parseStringify(await response.json());
