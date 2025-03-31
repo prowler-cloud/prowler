@@ -1,7 +1,7 @@
 {
   "Provider": "microsoft365",
   "CheckID": "entra_admin_users_phishing_resistant_mfa_enabled",
-  "CheckTitle": "Ensure ",
+  "CheckTitle": "Ensure phishing-resistant MFA strength is required for all administrator accounts",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
