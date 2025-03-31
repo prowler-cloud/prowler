@@ -1,6 +1,7 @@
 from asyncio import gather, get_event_loop
 from enum import Enum
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -83,6 +84,7 @@ class Entra(Microsoft365Service):
                         )
                     ],
                 ),
+                guest_user_role_id=auth_policy.guest_user_role_id,
             )
         except Exception as error:
             logger.error(
@@ -439,6 +441,7 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    guest_user_role_id: Optional[UUID]
 
 
 class Organization(BaseModel):
@@ -477,3 +480,9 @@ class AdminRoles(Enum):
     SECURITY_ADMINISTRATOR = "194ae4cb-b126-40b2-bd5b-6091b380977d"
     SHAREPOINT_ADMINISTRATOR = "f28a1f50-f6e7-4571-818b-6a12f2af6b6c"
     USER_ADMINISTRATOR = "fe930be7-5e62-47db-91af-98c3a49a38b1"
+
+
+class AuthPolicyRoles(Enum):
+    USER = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
+    GUEST_USER = UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3")
+    GUEST_USER_ACCESS_RESTRICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
