@@ -12,6 +12,8 @@ import {
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
+import { Muted } from "../muted";
+
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
 };
@@ -66,17 +68,20 @@ export const FindingDetail = ({
             {renderValue(attributes.check_metadata.checktitle)}
           </h2>
         </div>
+        <div className="flex items-center gap-x-4">
+          <Muted isMuted={attributes.muted} />
 
-        <div
-          className={`rounded-lg px-3 py-1 text-sm font-semibold ${
-            attributes.status === "PASS"
-              ? "bg-green-100 text-green-600"
-              : attributes.status === "MANUAL"
-                ? "bg-gray-100 text-gray-600"
-                : "bg-red-100 text-red-600"
-          }`}
-        >
-          {renderValue(attributes.status)}
+          <div
+            className={`rounded-lg px-3 py-1 text-sm font-semibold ${
+              attributes.status === "PASS"
+                ? "bg-green-100 text-green-600"
+                : attributes.status === "MANUAL"
+                  ? "bg-gray-100 text-gray-600"
+                  : "bg-red-100 text-system-severity-critical"
+            }`}
+          >
+            {renderValue(attributes.status)}
+          </div>
         </div>
       </div>
 

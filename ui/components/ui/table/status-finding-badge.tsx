@@ -25,13 +25,15 @@ export const StatusFindingBadge = ({
 
   return (
     <Chip
-      className="gap-1 border-none px-2 py-1 capitalize text-default-600"
+      className="border-none px-2 py-0"
       size={size}
       variant="flat"
       color={color}
       {...props}
     >
-      {status}
+      <span className="text-xs font-light tracking-wide text-default-600">
+        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+      </span>
     </Chip>
   );
 };
