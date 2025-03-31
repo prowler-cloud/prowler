@@ -41,3 +41,25 @@ class TestMonitoringService:
             assert monitoring_client.alert_policies[1].filters == [
                 'metric.type="compute.googleapis.com/instance/disk/write_bytes_count"'
             ]
+
+    def test_sa_keys_metrics(self):
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+        ):
+            monitoring_client = Monitoring(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+            assert monitoring_client.service == "monitoring"
+            assert monitoring_client.project_ids == [GCP_PROJECT_ID]
+
+            assert len(monitoring_client.sa_keys_metrics) == 2
+            assert "key1" in monitoring_client.sa_keys_metrics
+            assert "key2" in monitoring_client.sa_keys_metrics
+            assert "key3" not in monitoring_client.sa_keys_metrics
