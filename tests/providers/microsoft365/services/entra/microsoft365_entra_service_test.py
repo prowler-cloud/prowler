@@ -14,6 +14,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     Entra,
     GrantControlOperator,
     GrantControls,
+    InvitationsFrom,
     Organization,
     PersistentBrowser,
     SessionControls,
@@ -41,6 +42,7 @@ async def mock_entra_get_authorization_policy(_):
             allowed_to_read_bitlocker_keys_for_owned_device=True,
             allowed_to_read_other_users=True,
         ),
+        guest_invite_settings=InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value,
         guest_user_role_id=AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value,
     )
 
@@ -148,6 +150,10 @@ class Test_Entra_Service:
                 allowed_to_read_bitlocker_keys_for_owned_device=True,
                 allowed_to_read_other_users=True,
             )
+        )
+        assert (
+            entra_client.authorization_policy.guest_invite_settings
+            == InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value
         )
         assert (
             entra_client.authorization_policy.guest_user_role_id

@@ -84,6 +84,7 @@ class Entra(Microsoft365Service):
                         )
                     ],
                 ),
+                guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
             )
         except Exception as error:
@@ -441,6 +442,7 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
 
 
@@ -480,6 +482,13 @@ class AdminRoles(Enum):
     SECURITY_ADMINISTRATOR = "194ae4cb-b126-40b2-bd5b-6091b380977d"
     SHAREPOINT_ADMINISTRATOR = "f28a1f50-f6e7-4571-818b-6a12f2af6b6c"
     USER_ADMINISTRATOR = "fe930be7-5e62-47db-91af-98c3a49a38b1"
+
+
+class InvitationsFrom(Enum):
+    NONE = "none"
+    ADMINS_AND_GUEST_INVITERS = "adminsAndGuestInviters"
+    ADMINS_AND_GUEST_INVITERS_AND_MEMBERS = "adminsAndGuestInvitersAndAllMembers"
+    EVERYONE = "everyone"
 
 
 class AuthPolicyRoles(Enum):
