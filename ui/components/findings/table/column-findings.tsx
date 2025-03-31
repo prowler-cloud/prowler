@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
+import { Muted } from "../muted";
+
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
 };
@@ -91,10 +93,18 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
+      const {
+        attributes: { muted },
+      } = getFindingsData(row);
       return (
-        <p className="max-w-[450px] whitespace-normal break-words text-small">
-          {checktitle}
-        </p>
+        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+          <p className="mr-7 whitespace-normal break-words text-sm">
+            {checktitle}
+          </p>
+          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+            <Muted isMuted={muted} />
+          </span>
+        </div>
       );
     },
   },
@@ -121,10 +131,10 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     ),
     cell: ({ row }) => {
       const {
-        attributes: { status, muted },
+        attributes: { status },
       } = getFindingsData(row);
 
-      return <StatusFindingBadge size="sm" status={muted ? "MUTED" : status} />;
+      return <StatusFindingBadge status={status} />;
     },
   },
   {
@@ -169,7 +179,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const region = getResourceData(row, "region");
 
       return (
-        <div className="w-[80px]">
+        <div className="w-[80px] text-xs">
           {typeof region === "string" ? region : "Invalid region"}
         </div>
       );
@@ -180,7 +190,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     header: "Service",
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-small">{servicename}</p>;
+      return <p className="max-w-96 truncate text-xs">{servicename}</p>;
     },
   },
   {
