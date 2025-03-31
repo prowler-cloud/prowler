@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_capolicy_blocks_legacy_authentication",
+  "CheckID": "entra_legacy_authentication_blocked",
   "CheckTitle": "Ensure that Conditional Access policy blocks legacy authentication",
   "CheckType": [],
   "ServiceName": "critical",

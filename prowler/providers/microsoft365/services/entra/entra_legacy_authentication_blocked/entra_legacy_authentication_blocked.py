@@ -7,7 +7,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_capolicy_blocks_legacy_authentication(Check):
+class entra_legacy_authentication_blocked(Check):
     """Check if at least one Conditional Access policy blocks legacy authentication.
 
     This check ensures that at least one Conditional Access policy blocks legacy authentication.
