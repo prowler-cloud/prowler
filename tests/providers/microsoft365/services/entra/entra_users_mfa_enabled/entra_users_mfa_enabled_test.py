@@ -84,7 +84,9 @@ class Test_entra_users_mfa_enabled:
                     display_name="Disabled Policy",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -163,7 +165,9 @@ class Test_entra_users_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -240,7 +244,9 @@ class Test_entra_users_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
