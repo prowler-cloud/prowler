@@ -1,7 +1,7 @@
 {
   "Provider": "gcp",
-  "CheckID": "iam_sa_dormant_user_managed_keys",
-  "CheckTitle": "Ensure That There Are No Dormant Service Account Keys for Each Service Account",
+  "CheckID": "iam_sa_user_managed_key_unused",
+  "CheckTitle": "Ensure That There Are No Unused Service Account Keys for Each Service Account",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
@@ -10,7 +10,7 @@
   "ResourceType": "ServiceAccountKey",
   "Description": "Ensure That There Are No Dormant Service Account Keys for Each Service Account. A key is considered dormant if it has been inactive for more than 180 days.",
   "Risk": "Anyone who has access to the keys will be able to access resources through the service account. GCP-managed keys are used by Cloud Platform services such as App Engine and Compute Engine. These keys cannot be downloaded. Google will keep the keys and automatically rotate them on an approximately weekly basis. User-managed keys are created, downloadable, and managed by users.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://cloud.google.com/iam/docs/service-account-overview#identify-unused",
   "Remediation": {
     "Code": {
       "CLI": "",
