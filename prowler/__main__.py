@@ -52,7 +52,6 @@ from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_microsoft365 import Microsoft365CIS
-from prowler.lib.outputs.compliance.cis.cis_nhn import NHNCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -64,6 +63,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
 )
+from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
@@ -696,20 +696,20 @@ def prowler():
 
     elif provider == "nhn":
         for compliance_name in input_compliance_frameworks:
-            if compliance_name.startswith("cis_"):
-                # Generate CIS Finding Object
+            if compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis = NHNCIS(
+                iso27001 = NHNISO27001(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(cis)
-                cis.batch_write_data_to_file()
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
