@@ -258,7 +258,8 @@ class Finding(BaseModel):
 
             elif provider.type == "nhn":
                 output_data["auth_method"] = (
-                    f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+                    f"passwordCredentials: username={get_nested_attribute(provider, '_identity.username')}, "
+                    f"tenantId={get_nested_attribute(provider, '_identity.tenant_id')}"
                 )
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.tenant_id"

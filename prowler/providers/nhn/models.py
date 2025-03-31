@@ -15,7 +15,6 @@ class NHNIdentityInfo(BaseModel):
           (Some NHN services might require a domain or project domain.)
         - tenant_id (str): The tenant ID for the NHN Cloud account.
         - username (str): The username associated with the account.
-        - auth_method (str): The authentication method used to access the account.
     """
 
     identity_id: str = ""
@@ -23,7 +22,6 @@ class NHNIdentityInfo(BaseModel):
     tenant_domain: str = ""
     tenant_id: str
     username: str
-    auth_method: str
 
 
 class NHNOutputOptions(ProviderOutputOptions):
