@@ -280,7 +280,7 @@ export const TestConnectionForm = ({
               wrapper: "checkbox-update",
             }}
           >
-            Run a one-time scan (disable daily schedule).
+            Run a single scan (no recurring schedule).
           </Checkbox>
         )}
 
