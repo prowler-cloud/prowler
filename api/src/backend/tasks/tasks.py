@@ -21,6 +21,7 @@ from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -128,6 +129,24 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
+
+        if Scan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.EXECUTING,
+            scheduler_task_id=periodic_task_instance.id,
+        ).exists():
+            # Duplicated task execution due to visibility timeout, scan is already running
+            affected_scan = (
+                Scan.objects.filter(task__task_runner_task__task_id=task_id)
+                .order_by("completed_at")
+                .first()
+            )
+            # Return the affected scan details to avoid losing data
+            serializer = ScanTaskSerializer(instance=affected_scan)
+            return serializer.data
+
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
@@ -135,7 +154,11 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             trigger=Scan.TriggerChoices.SCHEDULED,
             state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=periodic_task_instance.id,
-            defaults={"state": StateChoices.SCHEDULED},
+            defaults={
+                "state": StateChoices.SCHEDULED,
+                "name": "Daily scheduled scan",
+                "scheduled_at": next_scan_datetime,
+            },
         )
 
         scan_instance.task_id = task_id
