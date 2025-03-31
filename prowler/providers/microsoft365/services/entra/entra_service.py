@@ -214,6 +214,15 @@ class Entra(Microsoft365Service):
                                 getattr(policy.grant_controls, "operator", "AND")
                             )
                         ),
+                        authentication_strength=(
+                            AuthenticationStrength(
+                                policy.grant_controls.authentication_strength.display_name
+                            )
+                            if policy.grant_controls is not None
+                            and policy.grant_controls.authentication_strength
+                            is not None
+                            else None
+                        ),
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -413,9 +422,16 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
+class AuthenticationStrength(Enum):
+    MFA = "Multifactor authentication"
+    PASSWORDLESS_MFA = "Passwordless MFA"
+    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
+
+
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
+    authentication_strength: Optional[AuthenticationStrength]
 
 
 class ConditionalAccessPolicy(BaseModel):
