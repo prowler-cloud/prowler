@@ -7,11 +7,6 @@ from botocore import exceptions
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Output
-from prowler.providers.aws.aws_provider import (
-    AwsProvider,
-    get_aws_region_for_sts,
-    parse_iam_credentials_arn,
-)
 from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3BucketAccessDeniedError,
     S3ClientError,
@@ -19,12 +14,8 @@ from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3InvalidBucketNameError,
     S3TestConnectionError,
 )
-from prowler.providers.aws.models import (
-    AWSAssumeRoleConfiguration,
-    AWSAssumeRoleInfo,
-    AWSIdentityInfo,
-    AWSSession,
-)
+from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
+from prowler.providers.aws.models import AWSIdentityInfo, AWSSession
 from prowler.providers.common.models import Connection
 
 
@@ -69,7 +60,7 @@ class S3:
         """
         Initializes a new instance of the `S3` class.
 
-        Parameters:
+        Args:
         - session: An instance of the `AWSSession` class representing the AWS session.
         - bucket_name: A string representing the name of the S3 bucket.
         - output_directory: A string representing the output directory path.
@@ -84,113 +75,27 @@ class S3:
         - aws_session_token: The AWS session token, optional.
         - retries_max_attempts: The maximum number of retries for the AWS client.
         - regions: A set of regions to audit.
+
+        Returns:
+        - None
         """
         if session:
             self._session = session.client(__class__.__name__.lower())
         else:
-            validate_arguments(
+            aws_setup_session = AwsSetUpSession(
                 role_arn=role_arn,
                 session_duration=session_duration,
                 external_id=external_id,
                 role_session_name=role_session_name,
-                profile=profile,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-            )
-
-            # Setup the AWS session
-            aws_session = AwsProvider.setup_session(
                 mfa=mfa,
                 profile=profile,
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
                 aws_session_token=aws_session_token,
-            )
-            session_config = AwsProvider.set_session_config(retries_max_attempts)
-            self._session = AWSSession(
-                current_session=aws_session,
-                session_config=session_config,
-                original_session=aws_session,
-            )
-
-            ######## Validate AWS credentials
-            # After the session is created, validate it
-            logger.info("Validating credentials ...")
-            sts_region = get_aws_region_for_sts(
-                self._session.current_session.region_name, regions
-            )
-
-            # Validate the credentials
-            caller_identity = AwsProvider.validate_credentials(
-                session=self._session.current_session,
-                aws_region=sts_region,
-            )
-
-            logger.info("Credentials validated")
-            ########
-
-            ######## AWS Provider Identity
-            # Get profile region
-            profile_region = AwsProvider.get_profile_region(
-                self._session.current_session
-            )
-
-            # Set identity
-            self._identity = AwsProvider.set_identity(
-                caller_identity=caller_identity,
-                profile=profile,
+                retries_max_attempts=retries_max_attempts,
                 regions=regions,
-                profile_region=profile_region,
             )
-            ########
-
-            ######## AWS Session with Assume Role (if needed)
-            if role_arn:
-                # Validate the input role
-                valid_role_arn = parse_iam_credentials_arn(role_arn)
-                # Set assume IAM Role information
-                assumed_role_information = AWSAssumeRoleInfo(
-                    role_arn=valid_role_arn,
-                    session_duration=session_duration,
-                    external_id=external_id,
-                    mfa_enabled=mfa,
-                    role_session_name=role_session_name,
-                    sts_region=sts_region,
-                )
-                # Assume the IAM Role
-                logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-                assumed_role_credentials = self.assume_role(
-                    self._session.current_session,
-                    assumed_role_information,
-                )
-                logger.info(
-                    f"IAM Role assumed: {assumed_role_information.role_arn.arn}"
-                )
-
-                assumed_role_configuration = AWSAssumeRoleConfiguration(
-                    info=assumed_role_information, credentials=assumed_role_credentials
-                )
-                # Store the assumed role configuration since it'll be needed to refresh the credentials
-                self._assumed_role_configuration = assumed_role_configuration
-
-                # Store a new current session using the assumed IAM Role
-                self._session.current_session = self.setup_assumed_session(
-                    assumed_role_configuration.credentials
-                )
-                logger.info(
-                    "Audit session is the new session created assuming an IAM Role"
-                )
-
-                # Modify identity for the IAM Role assumed since this will be the identity to audit with
-                logger.info("Setting new identity for the AWS IAM Role assumed")
-                self._identity.account = (
-                    assumed_role_configuration.info.role_arn.account_id
-                )
-                self._identity.partition = (
-                    assumed_role_configuration.info.role_arn.partition
-                )
-                self._identity.account_arn = f"arn:{assumed_role_configuration.info.role_arn.partition}:iam::{assumed_role_configuration.info.role_arn.account_id}:root"
-            ########
+            self._session = aws_setup_session._session
 
         self._bucket_name = bucket_name
         self._output_directory = output_directory
