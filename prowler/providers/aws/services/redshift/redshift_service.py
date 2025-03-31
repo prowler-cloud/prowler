@@ -45,8 +45,7 @@ class Redshift(AWSService):
                                 "AllowVersionUpgrade", False
                             ),
                             encrypted=cluster.get("Encrypted", False),
-                            multi_az=str(cluster.get("MultiAZ", False)).lower()
-                            == "true",
+                            multi_az=cluster.get("MultiAZ", ""),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
@@ -146,7 +145,7 @@ class Cluster(BaseModel):
     vpc_security_groups: list = []
     public_access: bool = False
     encrypted: bool = False
-    multi_az: bool = False
+    multi_az: str = None
     master_username: str = None
     database_name: str = None
     endpoint_address: str = None
