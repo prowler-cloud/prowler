@@ -82,6 +82,14 @@ class JiraBaseException(ProwlerException):
             "message": "The project key is invalid.",
             "remediation": "Please check the project key and try again.",
         },
+        (9019, "JiraBasicAuthError"): {
+            "message": "Failed to authenticate with Jira using basic authentication.",
+            "remediation": "Please check the user mail and API token and try again.",
+        },
+        (9020, "JiraInvalidParameterError"): {
+            "message": "Missing parameters on Jira Init function.",
+            "remediation": "Please check the parameters and try again.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -228,4 +236,18 @@ class JiraInvalidProjectKeyError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9018, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraBasicAuthError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9019, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraInvalidParameterError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9020, file=file, original_exception=original_exception, message=message
         )

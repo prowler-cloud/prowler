@@ -233,6 +233,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComplianceOverviewFullResponse'
           description: ''
+  /api/v1/compliance-overviews/metadata:
+    get:
+      operationId: compliance_overviews_metadata_retrieve
+      description: Fetch unique metadata values from a set of compliance overviews.
+        This is useful for dynamic filtering.
+      summary: Retrieve metadata values from compliance overviews
+      parameters:
+      - in: query
+        name: fields[compliance-overviews-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - regions
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Related scan ID.
+        required: true
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ComplianceOverviewMetadataResponse'
+          description: ''
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -258,6 +294,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -366,6 +403,12 @@ paths:
           type: string
           format: date
         description: Maximum date range is 7 days.
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
       - in: query
         name: filter[provider]
         schema:
@@ -597,13 +640,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -720,6 +761,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -874,6 +916,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -1104,13 +1152,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -1303,6 +1349,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -1533,13 +1585,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -1984,10 +2034,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
-      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2144,10 +2190,6 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
       - in: query
         name: filter[provider_id]
         schema:
@@ -3674,6 +3716,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -3792,6 +3835,8 @@ paths:
             - -manage_users
             - manage_account
             - -manage_account
+            - manage_integrations
+            - -manage_integrations
             - manage_providers
             - -manage_providers
             - manage_scans
@@ -3867,6 +3912,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -4236,6 +4282,17 @@ paths:
         description: |-
           * `scheduled` - Scheduled
           * `manual` - Manual
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -4350,6 +4407,17 @@ paths:
           format: uuid
         description: A UUID string identifying this scan.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Scan
       security:
@@ -6105,6 +6173,40 @@ components:
           $ref: '#/components/schemas/ComplianceOverviewFull'
       required:
       - data
+    ComplianceOverviewMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ComplianceOverviewMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            regions:
+              type: array
+              items:
+                type: string
+          required:
+          - regions
+    ComplianceOverviewMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ComplianceOverviewMetadata'
+      required:
+      - data
+    ComplianceOverviewMetadataTypeEnum:
+      type: string
+      enum:
+      - compliance-overviews-metadata
     Finding:
       type: object
       required:
@@ -6142,13 +6244,11 @@ components:
               - FAIL
               - PASS
               - MANUAL
-              - MUTED
               type: string
               description: |-
                 * `FAIL` - Fail
                 * `PASS` - Pass
                 * `MANUAL` - Manual
-                * `MUTED` - Muted
             status_extended:
               type: string
               nullable: true
@@ -6184,6 +6284,8 @@ components:
               format: date-time
               readOnly: true
               nullable: true
+            muted:
+              type: boolean
           required:
           - uid
           - status
@@ -8398,6 +8500,8 @@ components:
                   type: boolean
                 manage_account:
                   type: boolean
+                manage_integrations:
+                  type: boolean
                 manage_providers:
                   type: boolean
                 manage_scans:
@@ -10050,6 +10154,8 @@ components:
               type: boolean
             manage_account:
               type: boolean
+            manage_integrations:
+              type: boolean
             manage_providers:
               type: boolean
             manage_scans:
@@ -10178,6 +10284,8 @@ components:
             manage_users:
               type: boolean
             manage_account:
+              type: boolean
+            manage_integrations:
               type: boolean
             manage_providers:
               type: boolean
@@ -10312,6 +10420,8 @@ components:
                 manage_users:
                   type: boolean
                 manage_account:
+                  type: boolean
+                manage_integrations:
                   type: boolean
                 manage_providers:
                   type: boolean

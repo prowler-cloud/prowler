@@ -1,6 +1,7 @@
 from asyncio import gather, get_event_loop
 from enum import Enum
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -84,6 +85,7 @@ class Entra(Microsoft365Service):
                     ],
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
+                guest_user_role_id=auth_policy.guest_user_role_id,
             )
         except Exception as error:
             logger.error(
@@ -117,6 +119,14 @@ class Entra(Microsoft365Service):
                                 for application in getattr(
                                     policy.conditions.applications,
                                     "exclude_applications",
+                                    [],
+                                )
+                            ],
+                            included_user_actions=[
+                                UserAction(user_action)
+                                for user_action in getattr(
+                                    policy.conditions.applications,
+                                    "include_user_actions",
                                     [],
                                 )
                             ],
@@ -262,31 +272,6 @@ class Entra(Microsoft365Service):
             )
         return conditional_access_policies
 
-    async def _get_organization(self):
-        logger.info("Entra - Getting organizations...")
-        organizations = []
-        try:
-            org_data = await self.client.organization.get()
-            for org in org_data.value:
-                sync_enabled = (
-                    org.on_premises_sync_enabled
-                    if org.on_premises_sync_enabled is not None
-                    else False
-                )
-
-                organization = Organization(
-                    id=org.id,
-                    name=org.display_name,
-                    on_premises_sync_enabled=sync_enabled,
-                )
-                organizations.append(organization)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        return organizations
-
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
         admin_consent_policy = None
@@ -324,6 +309,31 @@ class Entra(Microsoft365Service):
             )
         return groups
 
+    async def _get_organization(self):
+        logger.info("Entra - Getting organizations...")
+        organizations = []
+        try:
+            org_data = await self.client.organization.get()
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
+
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return organizations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -331,9 +341,14 @@ class ConditionalAccessPolicyState(Enum):
     ENABLED_FOR_REPORTING = "enabledForReportingButNotEnforced"
 
 
+class UserAction(Enum):
+    REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+
+
 class ApplicationsConditions(BaseModel):
     included_applications: List[str]
     excluded_applications: List[str]
+    included_user_actions: List[UserAction]
 
 
 class UsersConditions(BaseModel):
@@ -428,6 +443,7 @@ class AuthorizationPolicy(BaseModel):
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
+    guest_user_role_id: Optional[UUID]
 
 
 class Organization(BaseModel):
@@ -473,3 +489,9 @@ class InvitationsFrom(Enum):
     ADMINS_AND_GUEST_INVITERS = "adminsAndGuestInviters"
     ADMINS_AND_GUEST_INVITERS_AND_MEMBERS = "adminsAndGuestInvitersAndAllMembers"
     EVERYONE = "everyone"
+
+    
+class AuthPolicyRoles(Enum):
+    USER = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
+    GUEST_USER = UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3")
+    GUEST_USER_ACCESS_RESTRICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
