@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from azure.mgmt.storage import StorageManagementClient
-from azure.mgmt.storage.v2022_09_01.models import (
+from azure.mgmt.storage.models import (
     DeleteRetentionPolicy,
     NetworkRuleSet,
     PrivateEndpointConnection,

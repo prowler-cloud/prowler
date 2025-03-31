@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
+from azure.mgmt.storage.models import NetworkRuleSet
 
 from prowler.providers.azure.services.storage.storage_service import Account
 from tests.providers.azure.azure_fixtures import (

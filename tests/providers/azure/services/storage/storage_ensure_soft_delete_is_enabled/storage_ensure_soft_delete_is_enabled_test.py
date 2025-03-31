@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.storage.v2023_01_01.models import DeleteRetentionPolicy
+from azure.mgmt.storage.models import DeleteRetentionPolicy
 
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
