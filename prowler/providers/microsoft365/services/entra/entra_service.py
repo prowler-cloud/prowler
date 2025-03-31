@@ -490,7 +490,7 @@ class InvitationsFrom(Enum):
     ADMINS_AND_GUEST_INVITERS_AND_MEMBERS = "adminsAndGuestInvitersAndAllMembers"
     EVERYONE = "everyone"
 
-    
+
 class AuthPolicyRoles(Enum):
     USER = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
     GUEST_USER = UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3")
