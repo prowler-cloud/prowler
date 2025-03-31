@@ -22,10 +22,10 @@ class purview_audit_log_search_enabled(Check):
             List[CheckReportMicrosoft365]: A list of reports containing the result of the check.
         """
         findings = []
-
+        audit_log_config = purview_client.audit_log_config
         report = CheckReportMicrosoft365(
             metadata=self.metadata(),
-            resource=purview_client.audit_log_config,
+            resource=audit_log_config if audit_log_config else {},
             resource_name="Purview Settings",
             resource_id="purviewSettings",
         )

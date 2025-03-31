@@ -68,7 +68,7 @@ class PowerShellSession:
             except json.JSONDecodeError:
                 pass  # If JSON parsing fails, return raw output
 
-        return full_output  # Return raw output if no JSON found
+        return {}  # Return raw output if no JSON found
 
     def close(self):
         """Terminate the PowerShell session."""

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -37,11 +35,11 @@ class Teams(Microsoft365Service):
 
 
 class CloudStorageSettings(BaseModel):
-    allow_box: Optional[bool]
-    allow_drop_box: Optional[bool]
-    allow_egnyte: Optional[bool]
-    allow_google_drive: Optional[bool]
-    allow_share_file: Optional[bool]
+    allow_box: bool
+    allow_drop_box: bool
+    allow_egnyte: bool
+    allow_google_drive: bool
+    allow_share_file: bool
 
 
 class TeamsSettings(BaseModel):

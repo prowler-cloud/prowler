@@ -21,28 +21,29 @@ class teams_external_file_sharing_restricted(Check):
             List[CheckReportMicrosoft365]: A list of reports containing the result of the check.
         """
         findings = []
-
+        cloud_storage_settings = teams_client.teams_settings.cloud_storage_settings
         report = CheckReportMicrosoft365(
             metadata=self.metadata(),
-            resource=teams_client.teams_settings.cloud_storage_settings,
+            resource=cloud_storage_settings if cloud_storage_settings else {},
             resource_name="Cloud Storage Settings",
             resource_id="cloudStorageSettings",
         )
         report.status = "FAIL"
         report.status_extended = "External file sharing is not restricted to only approved cloud storage services."
 
-        if all(
-            report.resource.get(key, True) is False
-            for key in [
-                "allow_box",
-                "allow_drop_box",
-                "allow_egnyte",
-                "allow_google_drive",
-                "allow_share_file",
-            ]
-        ):
-            report.status = "PASS"
-            report.status_extended = "External file sharing is restricted to only approved cloud storage services."
+        if cloud_storage_settings:
+            if all(
+                not getattr(cloud_storage_settings, key, True)
+                for key in [
+                    "allow_box",
+                    "allow_drop_box",
+                    "allow_egnyte",
+                    "allow_google_drive",
+                    "allow_share_file",
+                ]
+            ):
+                report.status = "PASS"
+                report.status_extended = "External file sharing is restricted to only approved cloud storage services."
 
         findings.append(report)
 

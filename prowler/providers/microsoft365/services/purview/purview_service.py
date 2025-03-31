@@ -30,4 +30,4 @@ class Purview(Microsoft365Service):
 
 
 class AuditLogConfig(BaseModel):
-    audit_log_search: bool = False
+    audit_log_search: bool
