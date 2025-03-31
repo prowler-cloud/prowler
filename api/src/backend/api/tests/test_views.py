@@ -2693,6 +2693,8 @@ class TestFindingViewSet:
                 # ("resource_tags", "key:value", 2),
                 # ("resource_tags", "not:exists", 0),
                 # ("resource_tags", "not:exists,key:value", 2),
+                ("muted", True, 1),
+                ("muted", False, 1),
             ]
         ),
     )
