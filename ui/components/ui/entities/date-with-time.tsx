@@ -32,7 +32,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
         >
           <span className="text-xs font-semibold">{formattedDate}</span>
           {showTime && (
-            <span className="text-tiny text-gray-500">{formattedTime}</span>
+            <span className="text-xs text-gray-500">{formattedTime}</span>
           )}
         </div>
       </div>

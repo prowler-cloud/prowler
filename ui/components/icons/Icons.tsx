@@ -760,7 +760,7 @@ export const AddIcon: React.FC<IconSvgProps> = ({
 };
 
 export const ScheduleIcon: React.FC<IconSvgProps> = ({
-  size,
+  size = 24,
   height,
   width,
   ...props
@@ -768,8 +768,9 @@ export const ScheduleIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size || width || 24}
-      height={size || height || 24}
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 24 24" // <- AÑADÍ ESTO
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -806,6 +807,30 @@ export const InfoIcon: React.FC<IconSvgProps> = ({
   >
     <circle cx="12" cy="12" r="10" />
     <path d="M12 16v-4M12 8h.01" />
+  </svg>
+);
+
+export const ManualIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="10 8 16 12 10 16 10 8" />
   </svg>
 );
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
 
 export const getScans = async ({
   page = 1,
@@ -16,8 +16,7 @@ export const getScans = async ({
 
   if (isNaN(Number(page)) || page < 1) redirect("/scans");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/scans`);
+  const url = new URL(`${apiBaseUrl}/scans`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -51,8 +50,7 @@ export const getScans = async ({
 export const getScansByState = async () => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/scans`);
+  const url = new URL(`${apiBaseUrl}/scans`);
 
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
@@ -87,8 +85,7 @@ export const getScansByState = async () => {
 export const getScan = async (scanId: string) => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/scans/${scanId}`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
 
   try {
     const scan = await fetch(url.toString(), {
@@ -110,7 +107,6 @@ export const getScan = async (scanId: string) => {
 
 export const scanOnDemand = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
   const scanName = formData.get("scanName") || undefined;
@@ -119,7 +115,7 @@ export const scanOnDemand = async (formData: FormData) => {
     return { error: "Provider ID is required" };
   }
 
-  const url = new URL(`${keyServer}/scans`);
+  const url = new URL(`${apiBaseUrl}/scans`);
 
   try {
     const requestBody = {
@@ -169,11 +165,10 @@ export const scanOnDemand = async (formData: FormData) => {
 
 export const scheduleDaily = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
 
-  const url = new URL(`${keyServer}/schedules/daily`);
+  const url = new URL(`${apiBaseUrl}/schedules/daily`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -211,12 +206,11 @@ export const scheduleDaily = async (formData: FormData) => {
 
 export const updateScan = async (formData: FormData) => {
   const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
 
   const scanId = formData.get("scanId");
   const scanName = formData.get("scanName");
 
-  const url = new URL(`${keyServer}/scans/${scanId}`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -251,8 +245,7 @@ export const updateScan = async (formData: FormData) => {
 export const getExportsZip = async (scanId: string) => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/scans/${scanId}/report`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/report`);
 
   try {
     const response = await fetch(url.toString(), {

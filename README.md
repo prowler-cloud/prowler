@@ -212,7 +212,7 @@ git clone https://github.com/prowler-cloud/prowler
 cd prowler
 eval $(poetry env activate)
 poetry install
-python prowler.py -v
+python prowler-cli.py -v
 ```
 > [!IMPORTANT]
 > Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.

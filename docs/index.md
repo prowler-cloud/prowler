@@ -219,7 +219,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
     poetry install
-    poetry run python prowler.py -v
+    poetry run python prowler-cli.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
