@@ -10,6 +10,8 @@ import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
+import { Muted } from "../../../findings/muted";
+
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
 };
@@ -71,10 +73,18 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
     header: "Finding",
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
+      const {
+        attributes: { muted },
+      } = getFindingsData(row);
       return (
-        <p className="max-w-[450px] whitespace-normal break-words text-small">
-          {checktitle}
-        </p>
+        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+          <p className="mr-7 whitespace-normal break-words text-sm">
+            {checktitle}
+          </p>
+          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+            <Muted isMuted={muted} />
+          </span>
+        </div>
       );
     },
   },
