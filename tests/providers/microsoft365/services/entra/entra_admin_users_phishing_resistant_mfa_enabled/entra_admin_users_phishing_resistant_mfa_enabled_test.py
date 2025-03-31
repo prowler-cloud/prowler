@@ -87,6 +87,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -178,6 +179,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -272,6 +274,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
