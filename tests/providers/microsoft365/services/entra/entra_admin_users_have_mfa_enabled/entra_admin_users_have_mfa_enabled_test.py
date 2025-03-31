@@ -84,7 +84,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name="Disabled Policy",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -158,7 +160,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name="No Admin Roles Policy",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -234,6 +238,7 @@ class Test_entra_admin_users_have_mfa_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["MicrosoftAdminPortals"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -312,7 +317,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -389,7 +396,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -482,7 +491,9 @@ class Test_entra_admin_users_have_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["All"], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],

@@ -1,15 +1,20 @@
+import { getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
+import { useToast } from "@/components/ui";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
+
+export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
+export const apiBaseUrl = process.env.API_BASE_URL;
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {
     google: {
       baseUrl: "https://accounts.google.com/o/oauth2/v2/auth",
       params: {
-        redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URI,
+        redirect_uri: process.env.SOCIAL_GOOGLE_OAUTH_CALLBACK_URL,
         prompt: "consent",
         response_type: "code",
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        client_id: process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID,
         scope: "openid email profile",
         access_type: "offline",
       },
@@ -17,8 +22,8 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
     github: {
       baseUrl: "https://github.com/login/oauth/authorize",
       params: {
-        client_id: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID,
-        redirect_uri: process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK_URL,
+        client_id: process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID,
+        redirect_uri: process.env.SOCIAL_GITHUB_OAUTH_CALLBACK_URL,
         scope: "user:email",
       },
     },
@@ -33,6 +38,50 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
 
   return url.toString();
 };
+
+export const downloadScanZip = async (
+  scanId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+) => {
+  const result = await getExportsZip(scanId);
+
+  if (result?.success && result?.data) {
+    const binaryString = window.atob(result.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "application/zip" });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download Complete",
+      description: "Your scan report has been downloaded successfully.",
+    });
+  } else if (result?.error) {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: result.error,
+    });
+  }
+};
+
+export const isGoogleOAuthEnabled =
+  !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&
+  !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET;
+
+export const isGithubOAuthEnabled =
+  !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
+  !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
 export async function checkTaskStatus(
   taskId: string,
