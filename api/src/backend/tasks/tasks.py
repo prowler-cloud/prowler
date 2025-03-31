@@ -138,13 +138,23 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scheduler_task_id=periodic_task_instance.id,
         ).exists():
             # Duplicated task execution due to visibility timeout, scan is already running
-            affected_scan = (
-                Scan.objects.filter(task__task_runner_task__task_id=task_id)
-                .order_by("completed_at")
-                .first()
-            )
-            # Return the affected scan details to avoid losing data
-            serializer = ScanTaskSerializer(instance=affected_scan)
+            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+            try:
+                affected_scan = (
+                    Scan.objects.filter(task__task_runner_task__task_id=task_id)
+                    .order_by("completed_at")
+                    .first()
+                )
+                if not affected_scan:
+                    raise ValueError
+                # Return the affected scan details to avoid losing data
+                serializer = ScanTaskSerializer(instance=affected_scan)
+            except Exception as duplicated_scan_exception:
+                logger.error(
+                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
+                    f"{str(duplicated_scan_exception)}"
+                )
+                raise duplicated_scan_exception
             return serializer.data
 
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
