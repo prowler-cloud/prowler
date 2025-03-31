@@ -87,6 +87,7 @@ class Test_entra_legacy_authentication_blocked:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -168,6 +169,7 @@ class Test_entra_legacy_authentication_blocked:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -252,6 +254,7 @@ class Test_entra_legacy_authentication_blocked:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
