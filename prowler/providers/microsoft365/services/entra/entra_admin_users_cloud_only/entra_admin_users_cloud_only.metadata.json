@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_admin_account_cloud_only",
+  "CheckID": "entra_admin_users_cloud_only",
   "CheckTitle": "Ensure all Microsoft 365 administrative accounts are cloud-only",
   "CheckType": [],
   "ServiceName": "entra",

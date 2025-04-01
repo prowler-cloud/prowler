@@ -5,7 +5,7 @@ from prowler.providers.microsoft365.services.entra.entra_client import entra_cli
 from prowler.providers.microsoft365.services.entra.entra_service import AdminRoles
 
 
-class entra_admin_account_cloud_only(Check):
+class entra_admin_users_cloud_only(Check):
     """
     Check to ensure that there are no admin accounts with non-cloud-only accounts in Microsoft 365.
     This check verifies if any user with admin roles has an on-premises synchronized account.
@@ -37,7 +37,7 @@ class entra_admin_account_cloud_only(Check):
             )
             report.status = "PASS"
             report.status_extended = (
-                "There is no admin account with a non-cloud-only account."
+                "There is no admin users with a non-cloud-only account."
             )
 
             if non_cloud_admins:

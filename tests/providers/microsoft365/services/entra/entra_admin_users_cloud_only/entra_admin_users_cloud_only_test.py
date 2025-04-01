@@ -6,7 +6,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_admin_account_cloud_only:
+class Test_entra_admin_users_cloud_only:
     def test_admin_accounts_are_cloud_only(self):
         """
         Test when all admin accounts are cloud-only:
@@ -20,12 +20,12 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
             entra_client.users = {
@@ -49,13 +49,13 @@ class Test_entra_admin_account_cloud_only:
                 ),
             }
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin account with a non-cloud-only account."
+                "There is no admin users with a non-cloud-only account."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -75,12 +75,12 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
             entra_client.users = {
@@ -104,7 +104,7 @@ class Test_entra_admin_account_cloud_only:
                 ),
             }
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 1
@@ -130,12 +130,12 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
             entra_client.users = {
@@ -159,7 +159,7 @@ class Test_entra_admin_account_cloud_only:
                 ),
             }
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 1
@@ -185,12 +185,12 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
             entra_client.users = {
@@ -214,13 +214,13 @@ class Test_entra_admin_account_cloud_only:
                 ),
             }
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin account with a non-cloud-only account."
+                "There is no admin users with a non-cloud-only account."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -240,12 +240,12 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
             entra_client.users = {
@@ -269,13 +269,13 @@ class Test_entra_admin_account_cloud_only:
                 ),
             }
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin account with a non-cloud-only account."
+                "There is no admin users with a non-cloud-only account."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -296,15 +296,15 @@ class Test_entra_admin_account_cloud_only:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_account_cloud_only.entra_admin_account_cloud_only import (
-                entra_admin_account_cloud_only,
+            from prowler.providers.microsoft365.services.entra.entra_admin_users_cloud_only.entra_admin_users_cloud_only import (
+                entra_admin_users_cloud_only,
             )
 
-            check = entra_admin_account_cloud_only()
+            check = entra_admin_users_cloud_only()
             result = check.execute()
 
             assert len(result) == 0
