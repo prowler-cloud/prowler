@@ -2,46 +2,54 @@
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/RPgIWOCERzY" title="Prowler Cloud Onboarding AWS" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
+Set up your AWS account to enable security scanning using Prowler Cloud.
 
-You can set-up your AWS account in order to scan it using Prowler cloud.
+## Requirements
 
-Setting up the AWS Account requires:
+To configure your AWS account, you’ll need:
 
 1. Access to Prowler Cloud
-2. Setting the AWS account to allow the authentication (Credentials or Assumed Role) and add them to Prowler Cloud
+2. Properly configured AWS credentials (either static or via an assumed IAM role)
 
-## Common Set-Up: Get your AWS Account ID
+---
 
-Go to [AWS console](https://console.aws.amazon.com) and get your AWS account id (top right hand dropdown):
+## Step 1: Get Your AWS Account ID
+
+1. Log in to the [AWS Console](https://console.aws.amazon.com)
+2. Locate your AWS account ID in the top-right dropdown menu
 
 ![Account ID detail](./img/aws-account-id.png)
 
-## Access to Prowler Cloud
+---
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) and go inside `Configuration` > `Cloud Providers` page:
+## Step 2: Access Prowler Cloud
+
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/)
+2. Go to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
 
-2. Click on `Add Cloud Provider`
+3. Click `Add Cloud Provider`
 
     ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
-3. Select `Amazon Web Services`
+4. Select `Amazon Web Services`
 
     ![Select AWS Provider](./img/select-aws.png)
 
-4. Add the account ID from the previous step and add a provider alias (optional)
+5. Enter your AWS Account ID and optionally provide a friendly alias
 
     ![Add account ID](./img/add-account-id.png)
 
-5. Set the AWS account using the prefered auth mode (next step)
+6. Choose your preferred authentication method (next step)
 
     ![Select auth method](./img/select-auth-method.png)
 
+---
 
-## Setting the AWS account
+## Step 3: Set Up AWS Authentication
 
-Before setting up the AWS account, understand how it works in different authentication modes:
+Before proceeding, choose your preferred authentication mode:
 
 Credentials
 
@@ -55,127 +63,118 @@ Assumed Role
 * Permanent Credentials ✅
 * Requires access to create role ❌
 
+---
 
-### Assume Role
+### 🔐 Assume Role (Recommended)
 
 ![Assume Role Overview](./img/assume-role-overview.png)
 
-This method provides permanent credentials and is the prefered one.
+This method grants permanent access and is the recommended setup for production environments.
 
 === "CloudFormation"
 
-    1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml):
-
-        1.1 Go to [Prowler Scan Role Template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml)
+    1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml)
 
         ![Prowler Scan Role Template](./img/prowler-scan-role-template.png)
 
-        1.2 Download the file
-
         ![Download Role Template](./img/download-role-template.png)
 
-    2. Go to [AWS console](https://console.aws.amazon.com) and search for CloudFormation on the bar:
+    2. Open the [AWS Console](https://console.aws.amazon.com), search for **CloudFormation**
 
         ![CloudFormation Search](./img/cloudformation-nav.png)
 
-    3. Inside CloudFormation, go to Stacks and click on `Create stack` > `With new resources (standard)`
+    3. Go to **Stacks** and click `Create stack` > `With new resources (standard)`
 
         ![Create Stack](./img/create-stack.png)
 
-    4. Inside `Create Stack` > `Specify Template` choose the `Upload a template file` option
+    4. In **Specify Template**, choose `Upload a template file` and select the downloaded file
 
         ![Upload a template file](./img/upload-template-file.png)
-
-    5. Select the previous downloaded template and click on open
-
         ![Upload file from downloads](./img/upload-template-from-downloads.png)
 
-    6. Click on `next`
+    5. Click `Next`, provide a stack name and the **External ID** shown in the Prowler Cloud setup screen
 
-        ![Next CloudFormation Template](./img/next-cloudformation-template.png)
-
-    7. Provide an stack name and the `External ID` shown inside the Prowler Cloud page:
-
-        ![Prowler Cloud External ID](./img/prowler-cloud-external-id.png)
+        ![External ID](./img/prowler-cloud-external-id.png)
         ![Stack Data](./img/fill-stack-data.png)
 
-    8. On the next page for Stack Creation, select `I acknowledge that AWS CloudFormation might create IAM resources with customised names.` and select `next`
+    6. Acknowledge the IAM resource creation warning and proceed
 
         ![Stack Creation Second Step](./img/stack-creation-second-step.png)
 
-
-    9. Click `Submit` on the third page
+    7. Click `Submit` to deploy the stack
 
         ![Click on submit](./img/submit-third-page.png)
 
 === "Terraform"
 
-    To deploy the Prowler Scan Role in order to allow to scan you AWS account from Prowler, please run the following commands in your terminal:
+    To provision the scan role using Terraform:
 
-    1. `terraform init`
-    2. `terraform plan`
-    3. `terraform apply`
+    1. Run the following commands:
 
-    > During the terraform plan and terraform apply steps you will be asked for an External ID to be configured in the ProwlerScan IAM role. You'll find the role on the Prowler Cloud page:
+        ```bash
+        terraform init
+        terraform plan
+        terraform apply
+        ```
 
-    ![Get External ID](./img/get-external-id-prowler-cloud.png)
+    2. During `plan` and `apply`, you will be prompted for the **External ID**, which is available in the Prowler Cloud UI:
 
-    ???+ note
-        Terraform will use the AWS credentials of your default profile.
+        ![Get External ID](./img/get-external-id-prowler-cloud.png)
 
+    > 💡 Note: Terraform will use the AWS credentials of your default profile.
 
-10. Once that the role is created, we have to get the Role ARN. Click on the `ProwlerScan` role to check the role info
+---
+
+### Finish Setup with Assume Role
+
+8. Once the role is created, go to the **IAM Console**, click on the `ProwlerScan` role to open its details:
 
     ![ProwlerScan role info](./img/prowler-scan-pre-info.png)
 
-11. Copy the Role ARN
+9. Copy the **Role ARN**
 
     ![New Role Info](./img/get-role-arn.png)
 
-12. Paste the Role ARN on Prowler Cloud page
+10. Paste the ARN into the corresponding field in Prowler Cloud
 
     ![Input the Role ARN](./img/paste-role-arn-prowler.png)
 
-13. Click on `Next`
+11. Click `Next`, then `Launch Scan`
 
     ![Next button in Prowler Cloud](./img/next-button-prowler-cloud.png)
+    ![Launch Scan](./img/launch-scan-button-prowler-cloud.png)
 
+---
 
-14. Click on `Launch Scan`
+### 🔑 Credentials (Static Access Keys)
 
-    ![Launch Scan in Prowler Cloud](./img/launch-scan-button-prowler-cloud.png)
-
-
-### Credentials Auth
-
-This method will allow you to set up your AWS account on Prowler using the static credentials.
+You can also configure your AWS account using static credentials (not recommended for long-term use):
 
 ![Connect via credentials](./img/connect-via-credentials.png)
 
-1. Go to [AWS console](https://console.aws.amazon.com) and use CloudShell to retrieve the necessary credentials.
+1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
 
     ![AWS CloudShell](./img/aws-cloudshell.png)
 
-2. Once the session is created, type this inside the console:
+2. Run:
 
     ```bash
-        aws iam create-access-key
+    aws iam create-access-key
     ```
 
-3. The output of this command will give you all the needed information to set-up your account on Prowler Cloud!
+3. Copy the output containing:
+
+    - `AccessKeyId`
+    - `SecretAccessKey`
 
     ![CloudShell Output](./img/cloudshell-output.png)
 
-    ???+ note
-        Save the following values and paste them on Prowler Cloud page:
+> ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
 
-        * `"AccessKeyId"`
-        * `"SecretAccessKey"`
-
-4. Fill the credentials on Prowler Cloud and click next
+4. Complete the form in Prowler Cloud and click `Next`
 
     ![Filled credentials page](./img/prowler-cloud-credentials-next.png)
 
-5. Click on `Launch Scan`
+5. Click `Launch Scan`
 
-    ![Launch Scan in Prowler Cloud](./img/launch-scan-button-prowler-cloud.png)
+    ![Launch Scan](./img/launch-scan-button-prowler-cloud.png)

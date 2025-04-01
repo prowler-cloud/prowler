@@ -2,31 +2,39 @@
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding GCP" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
-You can set-up your GCP Project in order to scan it using Prowler cloud.
+Set up your GCP project to enable security scanning using Prowler Cloud.
 
-Setting up the GCP project requires:
+## Requirements
+
+To configure your GCP project, you’ll need:
 
 1. Get the `Project ID`
 2. Access to Prowler Cloud
-3. Setting the Project ID to allow the authentication
+3. Configure authentication in GCP:
 
-    3.1 Retrieve the credentials from Google Cloud
+    3.1 Retrieve credentials from Google Cloud
 
 4. Add the credentials to Prowler Cloud
 
-## First Step - Get the Project ID:
+---
 
-Go to [Gcloud Console](https://console.cloud.google.com/) and in the welcome page, get your project ID:
+## Step 1: Get the Project ID
+
+1. Go to the [GCP Console](https://console.cloud.google.com/)
+2. Locate your Project ID on the welcome screen
 
 ![Get the Project ID](./img/project-id-console.png)
 
-## Access to Prowler Cloud
+---
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) and go inside `Configuration` > `Cloud Providers` page:
+## Step 2: Access Prowler Cloud
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/)
+2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
 
-2. Click on `Add Cloud Provider`
+3. Click `Add Cloud Provider`
 
     ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
@@ -34,55 +42,66 @@ Go to [Gcloud Console](https://console.cloud.google.com/) and in the welcome pag
 
     ![Select GCP](./img/select-gcp.png)
 
-4. Add the Project ID from the first step, input a provider alias (optional) and click on `Next`
+5. Add the Project ID and optionally provide a provider alias, then click `Next`
 
     ![Add Project ID](./img/add-project-id.png)
 
-## Setting the Project ID to allow the authentication
+---
 
-To get the needed credentials you'll need to access [Gcloud Console](https://console.cloud.google.com/)
+## Step 3: Configure Authentication in GCP
 
-### Retrieve the credentials from Google Cloud
+### Retrieve Credentials from Google Cloud
 
-1. Click on `Activate Cloud Shell`
+1. In the [GCP Console](https://console.cloud.google.com/), click on `Activate Cloud Shell`
 
     ![Activate Cloud Shell](./img/access-console.png)
 
-2. Click on `Authorize Cloud Shell`
+2. Click `Authorize Cloud Shell`
 
     ![Authorize Cloud Shell](./img/authorize-cloud-shell.png)
 
-3. Run `gcloud auth application-default login` inside the console and type `Y` when asked:
+3. Run the following command:
+
+    ```bash
+    gcloud auth application-default login
+    ```
+
+    - Type `Y` when prompted
 
     ![Run Gcloud Auth](./img/run-gcloud-auth.png)
 
-4. Open the given link on a new browser tab and choose your account:
+4. Open the authentication URL provided in a browser and select your Google account
 
     ![Choose the account](./img/take-account-email.png)
 
-5. Fill the next steps until you get your auth code:
+5. Follow the steps to obtain the authentication code
 
     ![Copy auth code](./img/copy-auth-code.png)
 
-6. Go back to google console and paste the auth code:
+6. Paste the authentication code back in Cloud Shell
 
     ![Enter Auth Code](./img/enter-auth-code.png)
 
-7. View the content from the file using: `cat <file_name>`
+7. Use `cat <file_name>` to view the temporary credentials file
 
     ![Get the FileName](./img/get-temp-file-credentials.png)
 
-8. Get the neeed values to use in Prowler Cloud (`client_id`, `client_secret`, `refresh_token`):
+8. Extract the following values for Prowler Cloud:
+
+    - `client_id`
+    - `client_secret`
+    - `refresh_token`
 
     ![Get the values](./img/get-needed-values-auth.png)
 
+---
 
-## Add the credentials to Prowler Cloud
+## Step 4: Add Credentials to Prowler Cloud
 
-1. Go back to Prowler Cloud and fill the information needed and click on `Next`:
+1. Go back to Prowler Cloud and enter the required credentials, then click `Next`
 
     ![Enter the Credentials](./img/enter-credentials-prowler-cloud.png)
 
-2. Click on `Launch Scan`
+2. Click `Launch Scan` to begin scanning your GCP environment
 
     ![Launch Scan GCP](./img/launch-scan.png)
