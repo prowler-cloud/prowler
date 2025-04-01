@@ -104,7 +104,7 @@ class Microsoft365Provider(Provider):
     def __init__(
         self,
         sp_env_auth: bool,
-        credentials_env_auth: bool,
+        env_auth: bool,
         az_cli_auth: bool,
         browser_auth: bool,
         tenant_id: str = None,
@@ -149,6 +149,7 @@ class Microsoft365Provider(Provider):
         self.validate_arguments(
             az_cli_auth,
             sp_env_auth,
+            env_auth,
             browser_auth,
             tenant_id,
             client_id,
@@ -169,21 +170,24 @@ class Microsoft365Provider(Provider):
         self._session = self.setup_session(
             az_cli_auth,
             sp_env_auth,
+            env_auth,
             browser_auth,
             tenant_id,
             microsoft365_credentials,
             self._region_config,
         )
 
+        # Set up PowerShell session credentials
+        self._credentials = self.setup_powershell(env_auth)
+
         # Set up the identity
         self._identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
+            env_auth,
             browser_auth,
             client_id,
         )
-
-        self._credentials = self.get_credentials(credentials_env_auth)
 
         # Audit Config
         if config_content:
@@ -254,6 +258,7 @@ class Microsoft365Provider(Provider):
     def validate_arguments(
         az_cli_auth: bool,
         sp_env_auth: bool,
+        env_auth: bool,
         browser_auth: bool,
         tenant_id: str,
         client_id: str,
@@ -265,6 +270,7 @@ class Microsoft365Provider(Provider):
         Args:
             az_cli_auth (bool): Flag indicating whether Azure CLI authentication is enabled.
             sp_env_auth (bool): Flag indicating whether application authentication with environment variables is enabled.
+            env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
             tenant_id (str): The Microsoft365 Tenant ID.
             client_id (str): The Microsoft365 Client ID.
@@ -280,10 +286,15 @@ class Microsoft365Provider(Provider):
                     file=os.path.basename(__file__),
                     message="Microsoft365 tenant ID error: browser authentication flag (--browser-auth) not found",
                 )
-            elif not az_cli_auth and not sp_env_auth and not browser_auth:
+            elif (
+                not az_cli_auth
+                and not sp_env_auth
+                and not browser_auth
+                and not env_auth
+            ):
                 raise Microsoft365NoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="Microsoft365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth]",
+                    message="Microsoft365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise Microsoft365BrowserAuthNoTenantIDError(
@@ -336,18 +347,18 @@ class Microsoft365Provider(Provider):
             )
 
     @staticmethod
-    def get_credentials(credentials_env_auth: bool = False) -> Microsoft365Credentials:
+    def setup_powershell(env_auth: bool = False) -> Microsoft365Credentials:
         """Gets the Microsoft365 credentials.
 
         Args:
-            credentials_env_auth (bool): Flag indicating whether to use environment variables for authentication.
+            env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
 
         Returns:
             Microsoft365Credentials: Object containing the user credentials.
-                If credentials_env_auth is True, retrieves from environment variables.
+                If env_auth is True, retrieves from environment variables.
                 If False, returns empty credentials.
         """
-        if credentials_env_auth:
+        if env_auth:
             # Check if required environment variables exist
             if not getenv("M365_USER") or not getenv("M365_PASSWD"):
                 logger.critical(
@@ -390,6 +401,7 @@ class Microsoft365Provider(Provider):
     def setup_session(
         az_cli_auth: bool,
         sp_env_auth: bool,
+        env_auth: bool,
         browser_auth: bool,
         tenant_id: str,
         microsoft365_credentials: dict,
@@ -418,7 +430,7 @@ class Microsoft365Provider(Provider):
 
         """
         if not browser_auth:
-            if sp_env_auth:
+            if sp_env_auth or env_auth:
                 try:
                     Microsoft365Provider.check_service_principal_creds_env_vars()
                 except (
@@ -463,7 +475,9 @@ class Microsoft365Provider(Provider):
                     # DefaultAzureCredential sets just one authentication method, excluding the others
                     try:
                         credentials = DefaultAzureCredential(
-                            exclude_environment_credential=not sp_env_auth,
+                            exclude_environment_credential=not (
+                                sp_env_auth or env_auth
+                            ),
                             exclude_cli_credential=not az_cli_auth,
                             # Microsoft365 Auth using Managed Identity is not supported
                             exclude_managed_identity_credential=True,
@@ -525,6 +539,7 @@ class Microsoft365Provider(Provider):
     def test_connection(
         az_cli_auth: bool = False,
         sp_env_auth: bool = False,
+        env_auth: bool = False,
         browser_auth: bool = False,
         tenant_id: str = None,
         region: str = "Microsoft365Global",
@@ -540,6 +555,7 @@ class Microsoft365Provider(Provider):
 
             az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             tenant_id (str): The Microsoft365 Active Directory tenant ID.
             region (str): The Microsoft365 region.
@@ -571,6 +587,7 @@ class Microsoft365Provider(Provider):
             Microsoft365Provider.validate_arguments(
                 az_cli_auth,
                 sp_env_auth,
+                env_auth,
                 browser_auth,
                 tenant_id,
                 client_id,
@@ -593,6 +610,7 @@ class Microsoft365Provider(Provider):
             credentials = Microsoft365Provider.setup_session(
                 az_cli_auth,
                 sp_env_auth,
+                env_auth,
                 browser_auth,
                 tenant_id,
                 microsoft365_credentials,
@@ -722,7 +740,7 @@ class Microsoft365Provider(Provider):
         for env_var in ["AZURE_CLIENT_ID", "AZURE_TENANT_ID", "AZURE_CLIENT_SECRET"]:
             if not getenv(env_var):
                 logger.critical(
-                    f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365"
+                    f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365."
                 )
                 raise Microsoft365EnvironmentVariableError(
                     file=os.path.basename(__file__),
@@ -733,6 +751,7 @@ class Microsoft365Provider(Provider):
         self,
         az_cli_auth,
         sp_env_auth,
+        env_auth,
         browser_auth,
         client_id,
     ):
@@ -742,6 +761,7 @@ class Microsoft365Provider(Provider):
         Args:
             az_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
             sp_env_auth (bool): Flag indicating if application authentication with environment variables is used.
+            env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating if interactive browser authentication is used.
             client_id (str): The Microsoft365 client ID.
 
@@ -756,7 +776,7 @@ class Microsoft365Provider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, microsoft365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if az_cli_auth or sp_env_auth or browser_auth or client_id:
+        if env_auth or az_cli_auth or sp_env_auth or browser_auth or client_id:
 
             async def get_microsoft365_identity():
                 # Trying to recover tenant domain info
@@ -792,7 +812,7 @@ class Microsoft365Provider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth or client_id:
+                if sp_env_auth or env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal"
