@@ -111,18 +111,6 @@ class Finding(BaseModel):
             finding_output (Finding): the finding output object
 
         """
-        if not check_output.resource_id:
-            logger.error(
-                f"Check {check_output.check_metadata.CheckID} has no resource_id."
-            )
-        if provider.type != "aws" and not check_output.resource_name:
-            logger.error(
-                f"Check {check_output.check_metadata.CheckID} has no resource_name."
-            )
-        if provider.type == "aws" and not check_output.resource_arn:
-            logger.error(
-                f"Check {check_output.check_metadata.CheckID} has no resource_arn."
-            )
         # TODO: move fill_common_finding_data
         unix_timestamp = False
         if hasattr(output_options, "unix_timestamp"):
@@ -275,6 +263,15 @@ class Finding(BaseModel):
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
+
+            if not output_data["resource_uid"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_id."
+                )
+            if not output_data["resource_name"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_name."
+                )
 
             return cls(**output_data)
         except ValidationError as validation_error:
