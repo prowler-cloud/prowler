@@ -9,17 +9,19 @@ from api.models import Provider, Tenant
 class TestDeleteProvider:
     def test_delete_provider_success(self, providers_fixture):
         instance = providers_fixture[0]
-        result = delete_provider(instance.id)
+        tenant_id = str(instance.tenant_id)
+        result = delete_provider(tenant_id, instance.id)
 
         assert result
         with pytest.raises(ObjectDoesNotExist):
             Provider.objects.get(pk=instance.id)
 
-    def test_delete_provider_does_not_exist(self):
+    def test_delete_provider_does_not_exist(self, tenants_fixture):
+        tenant_id = str(tenants_fixture[0].id)
         non_existent_pk = "babf6796-cfcc-4fd3-9dcf-88d012247645"
 
         with pytest.raises(ObjectDoesNotExist):
-            delete_provider(non_existent_pk)
+            delete_provider(tenant_id, non_existent_pk)
 
 
 @pytest.mark.django_db
