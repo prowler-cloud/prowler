@@ -7,7 +7,14 @@ class defender_ensure_defender_for_azure_sql_databases_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "SqlServers" in pricings:
+<<<<<<< HEAD
                 report = Check_Report_Azure(self.metadata())
+=======
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["SqlServers"]
+                )
+                report.subscription = subscription
+>>>>>>> 5a59bb335 (fix(resources): add the correct id and names for resources (#7410))
                 report.status = "PASS"
                 report.subscription = subscription
                 report.resource_id = pricings["SqlServers"].resource_id

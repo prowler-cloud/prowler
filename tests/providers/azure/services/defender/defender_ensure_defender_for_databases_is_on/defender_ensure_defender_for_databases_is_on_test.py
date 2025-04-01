@@ -35,6 +35,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
@@ -63,6 +64,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
@@ -91,6 +93,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
@@ -119,6 +122,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
@@ -147,21 +151,25 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
@@ -198,21 +206,25 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
                 ),

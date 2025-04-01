@@ -21,6 +21,7 @@ def mock_defender_get_pricings(_):
         AZURE_SUBSCRIPTION_ID: {
             "Standard": Pricing(
                 resource_id="resource_id",
+                resource_name="resource_name",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
                 extensions={},
@@ -137,6 +138,10 @@ class Test_Defender_Service:
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_id
             == "resource_id"
+        )
+        assert (
+            defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_name
+            == "resource_name"
         )
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].pricing_tier

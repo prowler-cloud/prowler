@@ -7,7 +7,14 @@ class defender_container_images_scan_enabled(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "Containers" in pricings:
+<<<<<<< HEAD
                 report = Check_Report_Azure(self.metadata())
+=======
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["Containers"]
+                )
+                report.subscription = subscription
+>>>>>>> 5a59bb335 (fix(resources): add the correct id and names for resources (#7410))
                 report.status = "PASS"
                 report.subscription = subscription
                 report.resource_id = pricings["Containers"].resource_id
