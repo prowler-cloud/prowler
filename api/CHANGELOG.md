@@ -13,6 +13,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
 - Support for muted findings [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378).
 
+---
+
+## [v1.5.3] (Prowler v5.4.3)
+
 ### Fixed
 - Added duplicated scheduled scans handling ([#7401])(https://github.com/prowler-cloud/prowler/pull/7401).
 
