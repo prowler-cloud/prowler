@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
     AdminConsentPolicy,
+    AdminRoles,
     ApplicationsConditions,
     AuthenticationStrength,
     AuthorizationPolicy,
@@ -22,6 +23,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     SignInFrequency,
     SignInFrequencyInterval,
     SignInFrequencyType,
+    User,
     UserAction,
     UsersConditions,
 )
@@ -113,6 +115,29 @@ async def mock_entra_get_admin_consent_policy(_):
         email_reminders_to_reviewers=False,
         duration_in_days=30,
     )
+
+
+async def mock_entra_get_users(_):
+    return {
+        "user-1": User(
+            id="user-1",
+            name="User 1",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=True,
+        ),
+        "user-2": User(
+            id="user-2",
+            name="User 2",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=False,
+        ),
+        "user-3": User(
+            id="user-3",
+            name="User 3",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=True,
+        ),
+    }
 
 
 async def mock_entra_get_organization(_):
@@ -245,3 +270,29 @@ class Test_Entra_Service:
         assert entra_client.organizations[0].id == "org1"
         assert entra_client.organizations[0].name == "Organization 1"
         assert entra_client.organizations[0].on_premises_sync_enabled
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_users",
+        new=mock_entra_get_users,
+    )
+    def test_get_users(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert len(entra_client.users) == 3
+        assert entra_client.users["user-1"].id == "user-1"
+        assert entra_client.users["user-1"].name == "User 1"
+        assert entra_client.users["user-1"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert entra_client.users["user-1"].on_premises_sync_enabled
+        assert entra_client.users["user-2"].id == "user-2"
+        assert entra_client.users["user-2"].name == "User 2"
+        assert entra_client.users["user-2"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert not entra_client.users["user-2"].on_premises_sync_enabled
+        assert entra_client.users["user-3"].id == "user-3"
+        assert entra_client.users["user-3"].name == "User 3"
+        assert entra_client.users["user-3"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert entra_client.users["user-3"].on_premises_sync_enabled
