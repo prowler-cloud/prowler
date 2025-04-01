@@ -1,6 +1,7 @@
 from asyncio import gather, get_event_loop
 from enum import Enum
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -21,6 +22,7 @@ class Entra(Microsoft365Service):
                 self._get_conditional_access_policies(),
                 self._get_admin_consent_policy(),
                 self._get_groups(),
+                self._get_organization(),
             )
         )
 
@@ -28,6 +30,7 @@ class Entra(Microsoft365Service):
         self.conditional_access_policies = attributes[1]
         self.admin_consent_policy = attributes[2]
         self.groups = attributes[3]
+        self.organizations = attributes[4]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -81,6 +84,8 @@ class Entra(Microsoft365Service):
                         )
                     ],
                 ),
+                guest_invite_settings=auth_policy.allow_invites_from,
+                guest_user_role_id=auth_policy.guest_user_role_id,
             )
         except Exception as error:
             logger.error(
@@ -114,6 +119,14 @@ class Entra(Microsoft365Service):
                                 for application in getattr(
                                     policy.conditions.applications,
                                     "exclude_applications",
+                                    [],
+                                )
+                            ],
+                            included_user_actions=[
+                                UserAction(user_action)
+                                for user_action in getattr(
+                                    policy.conditions.applications,
+                                    "include_user_actions",
                                     [],
                                 )
                             ],
@@ -168,6 +181,22 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
+                        user_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "user_risk_levels",
+                                [],
+                            )
+                        ],
+                        sign_in_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "sign_in_risk_levels",
+                                [],
+                            )
+                        ],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -179,7 +208,12 @@ class Entra(Microsoft365Service):
                             ]
                             if policy.grant_controls
                             else []
-                        )
+                        ),
+                        operator=(
+                            GrantControlOperator(
+                                getattr(policy.grant_controls, "operator", "AND")
+                            )
+                        ),
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -275,6 +309,31 @@ class Entra(Microsoft365Service):
             )
         return groups
 
+    async def _get_organization(self):
+        logger.info("Entra - Getting organizations...")
+        organizations = []
+        try:
+            org_data = await self.client.organization.get()
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
+
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return organizations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -282,9 +341,14 @@ class ConditionalAccessPolicyState(Enum):
     ENABLED_FOR_REPORTING = "enabledForReportingButNotEnforced"
 
 
+class UserAction(Enum):
+    REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+
+
 class ApplicationsConditions(BaseModel):
     included_applications: List[str]
     excluded_applications: List[str]
+    included_user_actions: List[UserAction]
 
 
 class UsersConditions(BaseModel):
@@ -296,9 +360,18 @@ class UsersConditions(BaseModel):
     excluded_roles: List[str]
 
 
+class RiskLevel(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    NO_RISK = "none"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
+    user_risk_levels: List[RiskLevel] = []
+    sign_in_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
@@ -331,10 +404,18 @@ class SessionControls(BaseModel):
 class ConditionalAccessGrantControl(Enum):
     MFA = "mfa"
     BLOCK = "block"
+    DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
+    PASSWORD_CHANGE = "passwordChange"
+
+
+class GrantControlOperator(Enum):
+    AND = "AND"
+    OR = "OR"
 
 
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
+    operator: GrantControlOperator
 
 
 class ConditionalAccessPolicy(BaseModel):
@@ -361,6 +442,14 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    guest_invite_settings: Optional[str]
+    guest_user_role_id: Optional[UUID]
+
+
+class Organization(BaseModel):
+    id: str
+    name: str
+    on_premises_sync_enabled: bool
 
 
 class Group(BaseModel):
@@ -393,3 +482,16 @@ class AdminRoles(Enum):
     SECURITY_ADMINISTRATOR = "194ae4cb-b126-40b2-bd5b-6091b380977d"
     SHAREPOINT_ADMINISTRATOR = "f28a1f50-f6e7-4571-818b-6a12f2af6b6c"
     USER_ADMINISTRATOR = "fe930be7-5e62-47db-91af-98c3a49a38b1"
+
+
+class InvitationsFrom(Enum):
+    NONE = "none"
+    ADMINS_AND_GUEST_INVITERS = "adminsAndGuestInviters"
+    ADMINS_AND_GUEST_INVITERS_AND_MEMBERS = "adminsAndGuestInvitersAndAllMembers"
+    EVERYONE = "everyone"
+
+
+class AuthPolicyRoles(Enum):
+    USER = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
+    GUEST_USER = UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3")
+    GUEST_USER_ACCESS_RESTRICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")

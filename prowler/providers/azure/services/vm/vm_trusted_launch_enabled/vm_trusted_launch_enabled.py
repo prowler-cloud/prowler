@@ -14,7 +14,8 @@ class vm_trusted_launch_enabled(Check):
                 report.status_extended = f"VM {vm.resource_name} has trusted launch disabled in subscription {subscription_name}"
 
                 if (
-                    vm.security_profile.security_type == "TrustedLaunch"
+                    vm.security_profile
+                    and vm.security_profile.security_type == "TrustedLaunch"
                     and vm.security_profile.uefi_settings.secure_boot_enabled
                     and vm.security_profile.uefi_settings.v_tpm_enabled
                 ):

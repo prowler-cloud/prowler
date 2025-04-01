@@ -760,7 +760,7 @@ export const AddIcon: React.FC<IconSvgProps> = ({
 };
 
 export const ScheduleIcon: React.FC<IconSvgProps> = ({
-  size,
+  size = 24,
   height,
   width,
   ...props
@@ -768,8 +768,9 @@ export const ScheduleIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size || width || 24}
-      height={size || height || 24}
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 24 24" // <- AÑADÍ ESTO
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -806,6 +807,30 @@ export const InfoIcon: React.FC<IconSvgProps> = ({
   >
     <circle cx="12" cy="12" r="10" />
     <path d="M12 16v-4M12 8h.01" />
+  </svg>
+);
+
+export const ManualIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="10 8 16 12 10 16 10 8" />
   </svg>
 );
 
@@ -997,6 +1022,34 @@ export const GCPIcon: React.FC<IconSvgProps> = ({
       {...props}
     >
       <path d="M12 11h8.533q.066.578.067 1.184c0 2.734-.98 5.036-2.678 6.6c-1.485 1.371-3.518 2.175-5.942 2.175A8.976 8.976 0 0 1 3 11.98A8.976 8.976 0 0 1 11.98 3c2.42 0 4.453.89 6.008 2.339L16.526 6.8C15.368 5.681 13.803 5 12 5a7 7 0 0 0 0 14c3.527 0 6.144-2.608 6.577-6H12z" />
+    </svg>
+  );
+};
+
+export const MutedIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 24}
+      width={size || width || 24}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+      <path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742" />
+      <path d="m2 2 20 20" />
+      <path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05" />
     </svg>
   );
 };
