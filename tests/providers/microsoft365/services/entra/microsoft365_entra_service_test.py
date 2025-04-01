@@ -4,6 +4,7 @@ from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
     AdminConsentPolicy,
     ApplicationsConditions,
+    AuthenticationStrength,
     AuthorizationPolicy,
     AuthPolicyRoles,
     ConditionalAccessGrantControl,
@@ -70,6 +71,7 @@ async def mock_entra_get_conditional_access_policies(_):
             grant_controls=GrantControls(
                 built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                 operator=GrantControlOperator.OR,
+                authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -188,6 +190,7 @@ class Test_Entra_Service:
                 grant_controls=GrantControls(
                     built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                     operator=GrantControlOperator.OR,
+                    authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(
