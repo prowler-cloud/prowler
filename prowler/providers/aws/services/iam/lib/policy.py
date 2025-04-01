@@ -1,56 +1,231 @@
 from ipaddress import ip_address, ip_network
 
+from py_iam_expand.actions import InvalidActionHandling, expand_actions
+
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
+def get_effective_actions(policy: dict) -> set[str]:
+    """
+    Calculates the set of effectively allowed IAM actions from a policy document.
+
+    This function considers Allow/Deny effects, Action/NotAction fields,
+    expands wildcards, handles invalid NotAction patterns correctly,
+    and applies the Deny > Allow precedence. Assumes standard AWS policy
+    format where Action/NotAction is a string or a list of strings.
+
+    Args:
+        policy (dict): The IAM policy document.
+
+    Returns:
+        set[str]: A set of effectively allowed IAM action strings.
+    """
+    if not policy or "Statement" not in policy:
+        return set()
+
+    directly_allowed_actions = set()
+    directly_denied_actions = set()
+    allow_not_action_exclusions = set()
+    deny_not_action_exclusions = set()
+    has_allow_not_action_statement = False
+    has_deny_not_action_statement = False
+
+    statements = policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        if not isinstance(effect, str):
+            continue
+        effect = effect.strip().lower()
+
+        if effect not in ["allow", "deny"]:
+            continue
+
+        actions = statement.get("Action")
+        not_actions = statement.get("NotAction")
+
+        # Helper function to process standard action/notaction values
+        def get_patterns_from_standard_value(value):
+            patterns = set()
+            if isinstance(value, str):
+                patterns.add(value)  # Treat string as a single pattern
+            elif isinstance(value, list):
+                # Iterate through list, adding only string elements
+                patterns.update(item for item in value if isinstance(item, str))
+            return patterns
+
+        action_patterns_to_expand = get_patterns_from_standard_value(actions)
+        if action_patterns_to_expand:
+            expanded = set()
+            for pattern in action_patterns_to_expand:
+                expanded.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            if effect == "allow":
+                directly_allowed_actions.update(expanded)
+            else:  # deny
+                directly_denied_actions.update(expanded)
+
+        not_action_patterns_to_expand = get_patterns_from_standard_value(not_actions)
+        if not_action_patterns_to_expand:
+            expanded_exclusions = set()
+            for pattern in not_action_patterns_to_expand:
+                expanded_exclusions.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            if effect == "allow":
+                allow_not_action_exclusions.update(expanded_exclusions)
+                has_allow_not_action_statement = True
+            else:  # deny
+                deny_not_action_exclusions.update(expanded_exclusions)
+                has_deny_not_action_statement = True
+
+    all_actions = None
+
+    # Actions allowed by "Allow Action" statements
+    potentially_allowed = directly_allowed_actions
+
+    # Actions allowed by "Allow NotAction" statements
+    if has_allow_not_action_statement:
+        if all_actions is None:
+            all_actions = set(
+                expand_actions(
+                    "*",
+                    InvalidActionHandling.REMOVE,
+                )
+            )
+        allowed_by_not_action = all_actions.difference(allow_not_action_exclusions)
+        potentially_allowed.update(allowed_by_not_action)
+
+    # Actions denied by "Deny Action" statements
+    potentially_denied = directly_denied_actions
+
+    # Actions denied by "Deny NotAction" statements
+    if has_deny_not_action_statement:
+        if all_actions is None:
+            all_actions = set(
+                expand_actions(
+                    "*",
+                    InvalidActionHandling.REMOVE,
+                )
+            )
+        denied_by_not_action = all_actions.difference(deny_not_action_exclusions)
+        potentially_denied.update(denied_by_not_action)
+
+    effective_actions = potentially_allowed.difference(potentially_denied)
+
+    return effective_actions
+
+
 def check_full_service_access(service: str, policy: dict) -> bool:
     """
-    check_full_service_access checks if the policy allows full access to a service.
+    Determines if a policy grants full access to a specific AWS service
+    on all resources ("*").
+
     Args:
-        service (str): The service to check.
-        policy (dict): The policy to check.
+        service (str): The AWS service name (e.g., 's3', 'ec2', or '*' for admin).
+        policy (dict): The IAM policy document.
+
     Returns:
-        bool: True if the policy allows full access to the service, False otherwise.
+        bool: True if full access on all resources is granted, False otherwise.
     """
+    if not policy or "Statement" not in policy:
+        return False
 
-    full_access = False
+    service_wildcard = f"{service}:*" if service != "*" else "*"
+    all_target_service_actions = set(
+        expand_actions(
+            service_wildcard,
+            InvalidActionHandling.REMOVE,
+        )
+    )
 
-    if policy:
-        policy_statements = policy.get("Statement", [])
+    effective_allowed_actions = get_effective_actions(policy)
 
-        if not isinstance(policy_statements, list):
-            policy_statements = [policy["Statement"]]
+    if not all_target_service_actions.issubset(effective_allowed_actions):
+        return False
 
-        for statement in policy_statements:
-            if statement.get("Effect", "") == "Allow":
-                resources = statement.get("Resource", [])
+    actions_allowed_on_all_resources = set()
+    statements = policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
 
-                if not isinstance(resources, list):
-                    resources = [statement.get("Resource", [])]
+    all_aws_actions_for_inversion = None
 
-                if "*" in resources:
-                    if "Action" in statement:
-                        actions = statement.get("Action", [])
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        resources = statement.get("Resource", [])
 
-                        if not isinstance(actions, list):
-                            actions = [actions]
+        if not isinstance(effect, str) or effect.strip().lower() != "allow":
+            continue
+        if isinstance(resources, str):
+            resources = [resources]
+        if "*" not in resources:
+            continue
 
-                        if f"{service}:*" in actions:
-                            full_access = True
-                            break
+        actions = statement.get("Action")
+        not_actions = statement.get("NotAction")
+        statement_specific_allowed = set()
 
-                    elif "NotAction" in statement:
-                        not_actions = statement.get("NotAction", [])
+        # TODO: Check if we can merge this with the one in get_effective_actions
+        def get_patterns_from_standard_value(value):
+            patterns = set()
+            if isinstance(value, str):
+                patterns.add(value)
+            elif isinstance(value, list):
+                patterns.update(item for item in value if isinstance(item, str))
+            return patterns
 
-                        if not isinstance(not_actions, list):
-                            not_actions = [not_actions]
+        # Actions granted by "Action" field in this statement
+        action_patterns = get_patterns_from_standard_value(actions)
+        for pattern in action_patterns:
+            statement_specific_allowed.update(
+                expand_actions(
+                    pattern,
+                    InvalidActionHandling.REMOVE,
+                )
+            )
 
-                        if f"{service}:*" not in not_actions:
-                            full_access = True
-                            break
+        # Actions granted by "NotAction" field in this statement
+        not_action_patterns = get_patterns_from_standard_value(not_actions)
+        if not_action_patterns:
+            if all_aws_actions_for_inversion is None:
+                all_aws_actions_for_inversion = set(
+                    expand_actions(
+                        "*",
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
 
-    return full_access
+            statement_exclusions = set()
+            for pattern in not_action_patterns:
+                statement_exclusions.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            # Actions allowed by THIS NotAction statement
+            statement_specific_allowed.update(
+                all_aws_actions_for_inversion.difference(statement_exclusions)
+            )
+
+        actions_allowed_on_all_resources.update(
+            action
+            for action in statement_specific_allowed
+            if action in all_target_service_actions
+        )
+
+    return all_target_service_actions.issubset(actions_allowed_on_all_resources)
 
 
 def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
