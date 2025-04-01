@@ -35,7 +35,7 @@ Available Cloud Providers:
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     microsoft365        Microsoft 365 Provider
-    nhn                 NHN Cloud Platform Provider (Not Supported)
+    nhn                 NHN Provider (Unofficial)
 
 Available components:
     dashboard           Local dashboard
