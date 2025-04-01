@@ -4,17 +4,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [v1.6.0] (Prowler UNRELEASED)
-
-### Added
-
-- Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
-- HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
-- New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
-- Support for muted findings [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378).
-
----
-
 ## [v1.5.3] (Prowler v5.4.3)
 
 ### Fixed
