@@ -37,15 +37,13 @@ class entra_admin_users_cloud_only(Check):
             )
             report.status = "PASS"
             report.status_extended = (
-                "There is no admin users with a non-cloud-only account."
+                "All the users with administrative roles are cloud-only accounts."
             )
 
             if non_cloud_admins:
                 report.status = "FAIL"
                 ids_str = ", ".join(non_cloud_admins)
-                report.status_extended = (
-                    f"Users with admin roles have non-cloud-only accounts: {ids_str}"
-                )
+                report.status_extended = f"There are some users with administrative roles that are not cloud-only accounts: {ids_str}"
 
             findings.append(report)
         return findings

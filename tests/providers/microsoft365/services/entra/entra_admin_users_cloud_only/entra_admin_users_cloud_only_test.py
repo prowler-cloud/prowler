@@ -55,7 +55,7 @@ class Test_entra_admin_users_cloud_only:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin users with a non-cloud-only account."
+                "All the users with administrative roles are cloud-only accounts."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -110,7 +110,7 @@ class Test_entra_admin_users_cloud_only:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "Users with admin roles have non-cloud-only accounts: user-2"
+                "There are some users with administrative roles that are not cloud-only accounts: user-2"
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -165,7 +165,7 @@ class Test_entra_admin_users_cloud_only:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "Users with admin roles have non-cloud-only accounts: user-1, user-2, user-3"
+                "There are some users with administrative roles that are not cloud-only accounts: user-1, user-2, user-3"
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -220,7 +220,7 @@ class Test_entra_admin_users_cloud_only:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin users with a non-cloud-only account."
+                "All the users with administrative roles are cloud-only accounts."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
@@ -275,7 +275,7 @@ class Test_entra_admin_users_cloud_only:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "There is no admin users with a non-cloud-only account."
+                "All the users with administrative roles are cloud-only accounts."
             )
             assert result[0].resource_id == "cloudOnlyAccount"
             assert result[0].location == "global"
