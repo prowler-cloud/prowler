@@ -351,6 +351,45 @@ def mock_api_projects_calls(client: MagicMock):
             },
         ]
     }
+
+    client.projects().timeSeries().list().execute.return_value = {
+        "timeSeries": [
+            {
+                "metric": {
+                    "labels": {
+                        "key_id": "key1",
+                        "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                    },
+                    "resource": {
+                        "type": "iam_service_account",
+                        "labels": {
+                            "project_id": "{GCP_PROJECT_ID}",
+                            "unique_id": "111222233334444",
+                        },
+                    },
+                    "metricKind": "DELTA",
+                    "valueType": "INT64",
+                }
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "key_id": "key2",
+                        "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                    },
+                    "resource": {
+                        "type": "iam_service_account",
+                        "labels": {
+                            "project_id": "{GCP_PROJECT_ID}",
+                            "unique_id": "111222233334444",
+                        },
+                    },
+                    "metricKind": "DELTA",
+                    "valueType": "INT64",
+                }
+            },
+        ]
+    }
     client.projects().alertPolicies().list_next.return_value = None
     # Used by IAM
     client.projects().serviceAccounts().list().execute.return_value = {

@@ -11,11 +11,16 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Social login integration with Google and GitHub [(#7218)](https://github.com/prowler-cloud/prowler/pull/7218)
 - Added `one-time scan` feature: Adds support for single scan execution. [(#7188)](https://github.com/prowler-cloud/prowler/pull/7188)
 - Accepted invitations can no longer be edited. [(#7198)](https://github.com/prowler-cloud/prowler/pull/7198)
+- Added download column in scans table to download reports for completed scans. [(#7353)](https://github.com/prowler-cloud/prowler/pull/7353)
+- Show muted icon when a finding is muted. [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378)
 
 #### 🔄 Changed
 
 - Tweak styles for compliance cards. [(#7148)](https://github.com/prowler-cloud/prowler/pull/7148).
-  
+- Upgrade Next.js to v14.2.25 to fix a middleware authorization vulnerability. [(#7339)](https://github.com/prowler-cloud/prowler/pull/7339)
+- Apply default filter to show only failed items when coming from scan table. [(#7356)](https://github.com/prowler-cloud/prowler/pull/7356)
+- Fix link behavior in scan cards: only disable "View Findings" when scan is not completed or executing. [(#7368)](https://github.com/prowler-cloud/prowler/pull/7368)
+
 ---
 
 ### [v1.4.0] (Prowler v5.4.0)

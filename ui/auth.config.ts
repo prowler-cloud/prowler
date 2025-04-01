@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
+import { apiBaseUrl } from "./lib";
 
 interface CustomJwtPayload extends JwtPayload {
   user_id: string;
@@ -11,8 +12,7 @@ interface CustomJwtPayload extends JwtPayload {
 }
 
 const refreshAccessToken = async (token: JwtPayload) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tokens/refresh`);
+  const url = new URL(`${apiBaseUrl}/tokens/refresh`);
 
   const bodyData = {
     data: {
