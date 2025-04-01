@@ -15,6 +15,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.5.3] (Prowler v5.4.3)
+
+### Fixed
+- Added duplicated scheduled scans handling ([#7401])(https://github.com/prowler-cloud/prowler/pull/7401).
+
+---
+
 ## [v1.5.2] (Prowler v5.4.2)
 
 ### Changed

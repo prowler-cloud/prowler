@@ -425,20 +425,21 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-containerregistry"
-version = "10.3.0"
+version = "12.0.0"
 description = "Microsoft Azure Container Registry Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure-mgmt-containerregistry-10.3.0.tar.gz", hash = "sha256:ae21651855dfb19c42d91d6b3a965c6c611e23f8bc4bf7138835e652d2f918e3"},
-    {file = "azure_mgmt_containerregistry-10.3.0-py3-none-any.whl", hash = "sha256:851e1c57f9bc4a3589c6b21fb627c11fd6cbb57a0388b7dfccd530ba3160805f"},
+    {file = "azure_mgmt_containerregistry-12.0.0-py3-none-any.whl", hash = "sha256:464abd4d3d9ecc0456ed8f63a6b9b93afc2e3e194f2d34f26a758afb67ad3b5c"},
+    {file = "azure_mgmt_containerregistry-12.0.0.tar.gz", hash = "sha256:f19f8faa7881deaf2b5015c0eb050a92e2380cd9d18dee33cdb5f27d44a06c03"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"

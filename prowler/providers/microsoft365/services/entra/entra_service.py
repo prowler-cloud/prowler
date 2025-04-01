@@ -181,6 +181,14 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
+                        client_app_types=[
+                            ClientAppType(client_app_type)
+                            for client_app_type in getattr(
+                                policy.conditions,
+                                "client_app_types",
+                                [],
+                            )
+                        ],
                         user_risk_levels=[
                             RiskLevel(risk_level)
                             for risk_level in getattr(
@@ -213,6 +221,15 @@ class Entra(Microsoft365Service):
                             GrantControlOperator(
                                 getattr(policy.grant_controls, "operator", "AND")
                             )
+                        ),
+                        authentication_strength=(
+                            AuthenticationStrength(
+                                policy.grant_controls.authentication_strength.display_name
+                            )
+                            if policy.grant_controls is not None
+                            and policy.grant_controls.authentication_strength
+                            is not None
+                            else None
                         ),
                     ),
                     session_controls=SessionControls(
@@ -367,9 +384,18 @@ class RiskLevel(Enum):
     NO_RISK = "none"
 
 
+class ClientAppType(Enum):
+    ALL = "all"
+    BROWSER = "browser"
+    MOBILE_APPS_AND_DESKTOP_CLIENTS = "mobileAppsAndDesktopClients"
+    EXCHANGE_ACTIVE_SYNC = "exchangeActiveSync"
+    OTHER_CLIENTS = "other"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
+    client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
 
@@ -413,9 +439,16 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
+class AuthenticationStrength(Enum):
+    MFA = "Multifactor authentication"
+    PASSWORDLESS_MFA = "Passwordless MFA"
+    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
+
+
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
+    authentication_strength: Optional[AuthenticationStrength]
 
 
 class ConditionalAccessPolicy(BaseModel):
