@@ -76,6 +76,7 @@ class Test_iam_audit_logs_enabled:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
+                assert r.resource_name == GCP_PROJECT_ID
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region
 
@@ -125,5 +126,6 @@ class Test_iam_audit_logs_enabled:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
+                assert r.resource_name == GCP_PROJECT_ID
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region
