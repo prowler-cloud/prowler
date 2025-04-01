@@ -69,6 +69,7 @@ class Test_compute_project_os_login_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == project.id
+            assert result[0].resource_name == project.id
             assert result[0].location == "global"
             assert result[0].project_id == GCP_PROJECT_ID
 
@@ -115,5 +116,6 @@ class Test_compute_project_os_login_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == project.id
+            assert result[0].resource_name == project.id
             assert result[0].location == "global"
             assert result[0].project_id == GCP_PROJECT_ID
