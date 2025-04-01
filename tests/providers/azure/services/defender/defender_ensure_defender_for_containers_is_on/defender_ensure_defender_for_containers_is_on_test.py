@@ -35,6 +35,7 @@ class Test_defender_ensure_defender_for_containers_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
                 )
@@ -61,7 +62,7 @@ class Test_defender_ensure_defender_for_containers_is_on:
                 == f"Defender plan Defender for Containers from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Container Registries"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id
 
     def test_defender_container_registries_pricing_tier_standard(self):
@@ -71,6 +72,7 @@ class Test_defender_ensure_defender_for_containers_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
@@ -97,5 +99,5 @@ class Test_defender_ensure_defender_for_containers_is_on:
                 == f"Defender plan Defender for Containers from subscription {AZURE_SUBSCRIPTION_ID} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Container Registries"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id
