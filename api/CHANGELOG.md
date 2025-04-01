@@ -4,8 +4,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-<<<<<<< HEAD
-=======
 ## [v1.6.0] (Prowler UNRELEASED)
 
 ### Added
@@ -24,7 +22,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 228dd2952 (fix(scans): Handle duplicated scan tasks (#7401))
 ## [v1.5.2] (Prowler v5.4.2)
 
 ### Changed
