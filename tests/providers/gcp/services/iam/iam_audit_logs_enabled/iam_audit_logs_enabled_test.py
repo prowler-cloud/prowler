@@ -12,12 +12,15 @@ class Test_iam_audit_logs_enabled:
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled import (
                 iam_audit_logs_enabled,
@@ -48,12 +51,15 @@ class Test_iam_audit_logs_enabled:
         }
         cloudresourcemanager_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled import (
                 iam_audit_logs_enabled,
@@ -94,12 +100,15 @@ class Test_iam_audit_logs_enabled:
         }
         cloudresourcemanager_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_audit_logs_enabled.iam_audit_logs_enabled import (
                 iam_audit_logs_enabled,

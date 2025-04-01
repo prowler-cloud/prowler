@@ -15,12 +15,15 @@ class Test_dms_instance_minor_version_upgrade_enabled:
         dms_client = mock.MagicMock
         dms_client.instances = []
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
                 dms_instance_minor_version_upgrade_enabled,
@@ -47,12 +50,15 @@ class Test_dms_instance_minor_version_upgrade_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
                 dms_instance_minor_version_upgrade_enabled,
@@ -90,12 +96,15 @@ class Test_dms_instance_minor_version_upgrade_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_instance_minor_version_upgrade_enabled.dms_instance_minor_version_upgrade_enabled import (
                 dms_instance_minor_version_upgrade_enabled,

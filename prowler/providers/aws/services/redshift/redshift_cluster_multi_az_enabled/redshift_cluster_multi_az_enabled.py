@@ -11,7 +11,7 @@ class redshift_cluster_multi_az_enabled(Check):
             report.status_extended = (
                 f"Redshift Cluster {cluster.id} does not have Multi-AZ enabled."
             )
-            if cluster.multi_az:
+            if cluster.multi_az == "Enabled":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Redshift Cluster {cluster.id} has Multi-AZ enabled."

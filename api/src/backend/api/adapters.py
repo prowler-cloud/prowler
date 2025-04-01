@@ -30,6 +30,10 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         with transaction.atomic(using=MainRouter.admin_db):
             user = super().save_user(request, sociallogin, form)
             user.save(using=MainRouter.admin_db)
+            social_account_name = sociallogin.account.extra_data.get("name")
+            if social_account_name:
+                user.name = social_account_name
+                user.save(using=MainRouter.admin_db)
 
             tenant = Tenant.objects.using(MainRouter.admin_db).create(
                 name=f"{user.email.split('@')[0]} default tenant"

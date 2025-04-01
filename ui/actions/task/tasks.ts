@@ -1,13 +1,12 @@
 "use server";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
 
 export const getTask = async (taskId: string) => {
   const session = await auth();
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tasks/${taskId}`);
+  const url = new URL(`${apiBaseUrl}/tasks/${taskId}`);
 
   try {
     const response = await fetch(url.toString(), {

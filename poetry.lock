@@ -441,14 +441,14 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "34.0.0"
+version = "34.1.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_containerservice-34.0.0-py3-none-any.whl", hash = "sha256:34be8172241e3c2c444682407970a938f60e3b2bd06304eaae0a1ba641f2262d"},
-    {file = "azure_mgmt_containerservice-34.0.0.tar.gz", hash = "sha256:822d07828b746a5ea5408a8b3770f41dc424d6c4c28de53c29611b62bef8aea3"},
+    {file = "azure_mgmt_containerservice-34.1.0-py3-none-any.whl", hash = "sha256:1faa1714e0100c6ee4cfb8d2eadb1c270b548a84b0070c74e9fe646056a5cb12"},
+    {file = "azure_mgmt_containerservice-34.1.0.tar.gz", hash = "sha256:637a6cf8f06636c016ad151d76f9c7ba75bd05d4334b3dd7837eb8b517f30dbe"},
 ]
 
 [package.dependencies]
@@ -562,14 +562,14 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-resource"
-version = "23.2.0"
+version = "23.3.0"
 description = "Microsoft Azure Resource Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_resource-23.2.0-py3-none-any.whl", hash = "sha256:7af2bca928ecd58e57ea7f7731d245f45e9d927036d82f1d30b96baa0c26b569"},
-    {file = "azure_mgmt_resource-23.2.0.tar.gz", hash = "sha256:747b750df7af23ab30e53d3f36247ab0c16de1e267d666b1a5077c39a4292529"},
+    {file = "azure_mgmt_resource-23.3.0-py3-none-any.whl", hash = "sha256:ab216ee28e29db6654b989746e0c85a1181f66653929d2cb6e48fba66d9af323"},
+    {file = "azure_mgmt_resource-23.3.0.tar.gz", hash = "sha256:fc4f1fd8b6aad23f8af4ed1f913df5f5c92df117449dc354fea6802a2829fea4"},
 ]
 
 [package.dependencies]
@@ -631,20 +631,21 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-storage"
-version = "21.2.1"
+version = "22.1.1"
 description = "Microsoft Azure Storage Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure-mgmt-storage-21.2.1.tar.gz", hash = "sha256:503a7ff9c31254092b0656445f5728bfdfda2d09d46a82e97019eaa9a1ecec64"},
-    {file = "azure_mgmt_storage-21.2.1-py3-none-any.whl", hash = "sha256:f97df1fa39cde9dbacf2cd96c9cba1fc196932185e24853e276f74b18a0bd031"},
+    {file = "azure_mgmt_storage-22.1.1-py3-none-any.whl", hash = "sha256:a4a4064918dcfa4f1cbebada5bf064935d66f2a3647a2f46a1f1c9348736f5d9"},
+    {file = "azure_mgmt_storage-22.1.1.tar.gz", hash = "sha256:25aaa5ae8c40c30e2f91f8aae6f52906b0557e947d5c1b9817d4ff9decc11340"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-subscription"
@@ -5335,4 +5336,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<3.13"
-content-hash = "51530a49f2da148a64d59508f37b1b680b439a266820ad7f20982050dcd89974"
+content-hash = "7068dbcade435d5175b1635aee08f5d9127addb3d519aaba9f9680752a8147ab"

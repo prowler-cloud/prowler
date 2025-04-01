@@ -9,17 +9,13 @@ import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import {
-  getProviderLogo,
-  getProviderName,
-  ProviderType,
-} from "@/components/ui/entities";
+import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
-
+import { ProviderTitleDocs } from "../provider-title-docs";
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
 // Helper function for labels and placeholders
@@ -170,14 +166,7 @@ export const ConnectAccountForm = () => {
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
-            <div className="mb-4 flex items-center space-x-4">
-              {providerType && getProviderLogo(providerType as ProviderType)}
-              <span className="text-lg font-semibold">
-                {providerType
-                  ? getProviderName(providerType as ProviderType)
-                  : "Unknown Provider"}
-              </span>
-            </div>
+            <ProviderTitleDocs providerType={providerType as ProviderType} />
             <CustomInput
               control={form.control}
               name="providerUid"
