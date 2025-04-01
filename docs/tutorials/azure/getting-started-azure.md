@@ -90,9 +90,9 @@ To allow Prowler to assume an identity with the necessary privileges to start th
 
 To allow Prowler to retrieve metadata from the identity assumed and run specific Entra checks, it is needed to assign the following permissions:
 
-    * `Directory.Read.All`
-    * `Policy.Read.All`
-    * `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+* `Directory.Read.All`
+* `Policy.Read.All`
+* `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
 
 1. Access to Microsoft Entra ID
 

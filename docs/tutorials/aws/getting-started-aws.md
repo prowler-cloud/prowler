@@ -43,64 +43,85 @@ Go to [AWS console](https://console.aws.amazon.com) and get your AWS account id 
 
 Before setting up the AWS account, understand how it works in different authentication modes:
 
-| Feature | Credentials | Assume Role |
-| -------- | ------- | ------- |
-| Easier and faster | ✅ | ❌ |
-| Permanent credentials | ❌ | ✅ |
-| Always work with AWS org | ❌ | ✅ |
-| Preferred setup | ❌ | ✅ |
-| Requires access to create role | ❌ | ✅ |
+Credentials
+
+* Quick scan as current user ✅
+* No extra setup ✅
+* Credentials time out ❌
+
+Assumed Role
+
+* Preferred Setup ✅
+* Permanent Credentials ✅
+* Requires access to create role ❌
 
 
 ### Assume Role
 
 ![Assume Role Overview](./img/assume-role-overview.png)
 
-This method provides permanent credentials and is the prefered one. You'll need permissions to create roles.
+This method provides permanent credentials and is the prefered one.
 
-1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml):
+=== "CloudFormation"
 
-    1.1 Go to [Prowler Scan Role Template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml)
+    1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml):
 
-    ![Prowler Scan Role Template](./img/prowler-scan-role-template.png)
+        1.1 Go to [Prowler Scan Role Template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml)
 
-    1.2 Download the file
+        ![Prowler Scan Role Template](./img/prowler-scan-role-template.png)
 
-    ![Download Role Template](./img/download-role-template.png)
+        1.2 Download the file
 
-2. Go to [AWS console](https://console.aws.amazon.com) and search for CloudFormation on the bar:
+        ![Download Role Template](./img/download-role-template.png)
 
-    ![CloudFormation Search](./img/cloudformation-nav.png)
+    2. Go to [AWS console](https://console.aws.amazon.com) and search for CloudFormation on the bar:
 
-3. Inside CloudFormation, go to Stacks and click on `Create stack` > `With new resources (standard)`
+        ![CloudFormation Search](./img/cloudformation-nav.png)
 
-    ![Create Stack](./img/create-stack.png)
+    3. Inside CloudFormation, go to Stacks and click on `Create stack` > `With new resources (standard)`
 
-4. Inside `Create Stack` > `Specify Template` choose the `Upload a template file` option
+        ![Create Stack](./img/create-stack.png)
 
-    ![Upload a template file](./img/upload-template-file.png)
+    4. Inside `Create Stack` > `Specify Template` choose the `Upload a template file` option
 
-5. Select the previous downloaded template and click on open
+        ![Upload a template file](./img/upload-template-file.png)
 
-    ![Upload file from downloads](./img/upload-template-from-downloads.png)
+    5. Select the previous downloaded template and click on open
 
-6. Click on `next`
+        ![Upload file from downloads](./img/upload-template-from-downloads.png)
 
-    ![Next CloudFormation Template](./img/next-cloudformation-template.png)
+    6. Click on `next`
 
-7. Provide an stack name and the `External ID` shown inside the Prowler Cloud page:
+        ![Next CloudFormation Template](./img/next-cloudformation-template.png)
 
-    ![Prowler Cloud External ID](./img/prowler-cloud-external-id.png)
-    ![Stack Data](./img/fill-stack-data.png)
+    7. Provide an stack name and the `External ID` shown inside the Prowler Cloud page:
 
-8. On the next page for Stack Creation, select `I acknowledge that AWS CloudFormation might create IAM resources with customised names.` and select `next`
+        ![Prowler Cloud External ID](./img/prowler-cloud-external-id.png)
+        ![Stack Data](./img/fill-stack-data.png)
 
-    ![Stack Creation Second Step](./img/stack-creation-second-step.png)
+    8. On the next page for Stack Creation, select `I acknowledge that AWS CloudFormation might create IAM resources with customised names.` and select `next`
+
+        ![Stack Creation Second Step](./img/stack-creation-second-step.png)
 
 
-9. Click `Submit` on the third page
+    9. Click `Submit` on the third page
 
-    ![Click on submit](./img/submit-third-page.png)
+        ![Click on submit](./img/submit-third-page.png)
+
+=== "Terraform"
+
+    To deploy the Prowler Scan Role in order to allow to scan you AWS account from Prowler, please run the following commands in your terminal:
+
+    1. `terraform init`
+    2. `terraform plan`
+    3. `terraform apply`
+
+    > During the terraform plan and terraform apply steps you will be asked for an External ID to be configured in the ProwlerScan IAM role. You'll find the role on the Prowler Cloud page:
+
+    ![Get External ID](./img/get-external-id-prowler-cloud.png)
+
+    ???+ note
+        Terraform will use the AWS credentials of your default profile.
 
 
 10. Once that the role is created, we have to get the Role ARN. Click on the `ProwlerScan` role to check the role info
@@ -147,6 +168,7 @@ This method will allow you to set up your AWS account on Prowler using the stati
 
     ???+ note
         Save the following values and paste them on Prowler Cloud page:
+
         * `"AccessKeyId"`
         * `"SecretAccessKey"`
 
