@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "entra_admin_users_cloud_only",
+  "CheckTitle": "Ensure all Microsoft 365 administrative users are cloud-only",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Administrative User",
+  "Description": "This check verifies that all Microsoft 365 administrative users are cloud-only, not synchronized from an on-premises directory, by querying administrative users and checking their synchronization status.",
+  "Risk": "On-premises synchronized administrative users increase the attack surface and compromise the security posture of the cloud environment.  Compromise of on-premises systems could lead to unauthorized access to Microsoft 365 administrative functionalities.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#9-use-cloud-native-accounts-for-microsoft-entra-roles",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify on-premises synchronized administrative users using Microsoft Entra Connect or equivalent tools.\n2.  Create new cloud-only administrative user with appropriate permissions.\n3. Migrate administrative tasks from on-premises synchronized users to the new cloud-only user.\n4. Disable or remove the on-premises synchronized administrative users.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all Microsoft 365 administrative users are cloud-only to reduce the attack surface and improve security posture.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#9-use-cloud-native-accounts-for-microsoft-entra-roles"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
