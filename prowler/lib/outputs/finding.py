@@ -258,7 +258,7 @@ class Finding(BaseModel):
 
             # check_output Unique ID
             # TODO: move this to a function
-            # TODO: in Azure, GCP and K8s there are fidings without resource_name
+            # TODO: in Azure, GCP and K8s there are findings without resource_name
             output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
