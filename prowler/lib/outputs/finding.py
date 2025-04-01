@@ -111,6 +111,18 @@ class Finding(BaseModel):
             finding_output (Finding): the finding output object
 
         """
+        if not check_output.resource_id:
+            logger.error(
+                f"Check {check_output.check_metadata.CheckID} has no resource_id."
+            )
+        if provider.type != "aws" and not check_output.resource_name:
+            logger.error(
+                f"Check {check_output.check_metadata.CheckID} has no resource_name."
+            )
+        if provider.type == "aws" and not check_output.resource_arn:
+            logger.error(
+                f"Check {check_output.check_metadata.CheckID} has no resource_arn."
+            )
         # TODO: move fill_common_finding_data
         unix_timestamp = False
         if hasattr(output_options, "unix_timestamp"):
