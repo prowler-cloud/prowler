@@ -93,6 +93,7 @@ nav:
           - Subscriptions: tutorials/azure/subscriptions.md
           - Create Prowler Service Principal: tutorials/azure/create-prowler-service-principal.md
       - Google Cloud:
+          - Getting Started: tutorials/gcp/getting-started-gcp.md
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
           - Organization: tutorials/gcp/organization.md
