@@ -9,7 +9,7 @@ class iam_sa_dormant_user_managed_keys(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         keys_used = monitoring_client.sa_keys_metrics
-        print("--------- KEYS -------- :", keys_used)
+
         for account in iam_client.service_accounts:
             for key in account.keys:
                 if key.type == "USER_MANAGED":

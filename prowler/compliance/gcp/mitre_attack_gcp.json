@@ -141,6 +141,7 @@
         "iam_organization_essential_contacts_configured",
         "iam_role_kms_enforce_separation_of_duties",
         "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_dormant_account",
         "iam_sa_dormant_user_managed_keys",
         "iam_sa_no_administrative_privileges",
         "iam_sa_no_user_managed_keys",
