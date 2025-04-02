@@ -61,7 +61,7 @@ class PowerShellSession:
 
         full_output = "\n".join(output_lines)
 
-        json_match = re.search(r"(\{.*\})", full_output, re.DOTALL)
+        json_match = re.search(r"(\[.*\]|\{.*\})", full_output, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(1))  # Return parsed JSON
