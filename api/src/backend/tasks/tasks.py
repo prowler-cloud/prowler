@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
@@ -21,6 +22,7 @@ from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -43,9 +45,10 @@ def check_provider_connection_task(provider_id: str):
     return check_provider_connection(provider_id=provider_id)
 
 
-@shared_task(base=RLSTask, name="provider-deletion", queue="deletion")
-@set_tenant
-def delete_provider_task(provider_id: str):
+@shared_task(
+    base=RLSTask, name="provider-deletion", queue="deletion", autoretry_for=(Exception,)
+)
+def delete_provider_task(provider_id: str, tenant_id: str):
     """
     Task to delete a specific Provider instance.
 
@@ -53,6 +56,7 @@ def delete_provider_task(provider_id: str):
 
     Args:
         provider_id (str): The primary key of the `Provider` instance to be deleted.
+        tenant_id (str): Tenant ID the provider belongs to.
 
     Returns:
         tuple: A tuple containing:
@@ -60,7 +64,7 @@ def delete_provider_task(provider_id: str):
             - A dictionary with the count of deleted instances per model,
               including related models if cascading deletes were triggered.
     """
-    return delete_provider(pk=provider_id)
+    return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
@@ -126,6 +130,43 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
+
+        executed_scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            task__task_runner_task__task_id=task_id,
+        ).order_by("completed_at")
+
+        if (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.EXECUTING,
+                scheduler_task_id=periodic_task_instance.id,
+                scheduled_at__date=datetime.now(timezone.utc).date(),
+            ).exists()
+            or executed_scan.exists()
+        ):
+            # Duplicated task execution due to visibility timeout or scan is already running
+            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+            try:
+                affected_scan = executed_scan.first()
+                if not affected_scan:
+                    raise ValueError(
+                        "Error retrieving affected scan details after detecting duplicated scheduled "
+                        "scan."
+                    )
+                # Return the affected scan details to avoid losing data
+                serializer = ScanTaskSerializer(instance=affected_scan)
+            except Exception as duplicated_scan_exception:
+                logger.error(
+                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
+                    f"{str(duplicated_scan_exception)}"
+                )
+                raise duplicated_scan_exception
+            return serializer.data
+
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
@@ -133,7 +174,11 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             trigger=Scan.TriggerChoices.SCHEDULED,
             state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=periodic_task_instance.id,
-            defaults={"state": StateChoices.SCHEDULED},
+            defaults={
+                "state": StateChoices.SCHEDULED,
+                "name": "Daily scheduled scan",
+                "scheduled_at": next_scan_datetime - timedelta(days=1),
+            },
         )
 
         scan_instance.task_id = task_id
@@ -174,7 +219,7 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="tenant-deletion", queue="deletion")
+@shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
 

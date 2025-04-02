@@ -3,8 +3,11 @@ from unittest.mock import patch
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
     AdminConsentPolicy,
+    AdminRoles,
     ApplicationsConditions,
+    AuthenticationStrength,
     AuthorizationPolicy,
+    AuthPolicyRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
@@ -13,12 +16,15 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     Entra,
     GrantControlOperator,
     GrantControls,
+    InvitationsFrom,
     Organization,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
     SignInFrequencyType,
+    User,
+    UserAction,
     UsersConditions,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
@@ -39,17 +45,9 @@ async def mock_entra_get_authorization_policy(_):
             allowed_to_read_bitlocker_keys_for_owned_device=True,
             allowed_to_read_other_users=True,
         ),
+        guest_invite_settings=InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value,
+        guest_user_role_id=AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value,
     )
-
-
-async def mock_entra_get_organization(_):
-    return [
-        Organization(
-            id="org1",
-            name="Organization 1",
-            on_premises_sync_enabled=True,
-        )
-    ]
 
 
 async def mock_entra_get_conditional_access_policies(_):
@@ -61,6 +59,7 @@ async def mock_entra_get_conditional_access_policies(_):
                 application_conditions=ApplicationsConditions(
                     included_applications=["app-1", "app-2"],
                     excluded_applications=["app-3", "app-4"],
+                    included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                 ),
                 user_conditions=UsersConditions(
                     included_groups=["group-1", "group-2"],
@@ -74,6 +73,7 @@ async def mock_entra_get_conditional_access_policies(_):
             grant_controls=GrantControls(
                 built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                 operator=GrantControlOperator.OR,
+                authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -117,6 +117,39 @@ async def mock_entra_get_admin_consent_policy(_):
     )
 
 
+async def mock_entra_get_users(_):
+    return {
+        "user-1": User(
+            id="user-1",
+            name="User 1",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=True,
+        ),
+        "user-2": User(
+            id="user-2",
+            name="User 2",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=False,
+        ),
+        "user-3": User(
+            id="user-3",
+            name="User 3",
+            directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
+            on_premises_sync_enabled=True,
+        ),
+    }
+
+
+async def mock_entra_get_organization(_):
+    return [
+        Organization(
+            id="org1",
+            name="Organization 1",
+            on_premises_sync_enabled=True,
+        )
+    ]
+
+
 class Test_Entra_Service:
     def test_get_client(self):
         admincenter_client = Entra(
@@ -145,6 +178,14 @@ class Test_Entra_Service:
                 allowed_to_read_other_users=True,
             )
         )
+        assert (
+            entra_client.authorization_policy.guest_invite_settings
+            == InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value
+        )
+        assert (
+            entra_client.authorization_policy.guest_user_role_id
+            == AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value
+        )
 
     @patch(
         "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_conditional_access_policies",
@@ -160,6 +201,7 @@ class Test_Entra_Service:
                     application_conditions=ApplicationsConditions(
                         included_applications=["app-1", "app-2"],
                         excluded_applications=["app-3", "app-4"],
+                        included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                     ),
                     user_conditions=UsersConditions(
                         included_groups=["group-1", "group-2"],
@@ -173,6 +215,7 @@ class Test_Entra_Service:
                 grant_controls=GrantControls(
                     built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                     operator=GrantControlOperator.OR,
+                    authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(
@@ -227,3 +270,29 @@ class Test_Entra_Service:
         assert entra_client.organizations[0].id == "org1"
         assert entra_client.organizations[0].name == "Organization 1"
         assert entra_client.organizations[0].on_premises_sync_enabled
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_users",
+        new=mock_entra_get_users,
+    )
+    def test_get_users(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert len(entra_client.users) == 3
+        assert entra_client.users["user-1"].id == "user-1"
+        assert entra_client.users["user-1"].name == "User 1"
+        assert entra_client.users["user-1"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert entra_client.users["user-1"].on_premises_sync_enabled
+        assert entra_client.users["user-2"].id == "user-2"
+        assert entra_client.users["user-2"].name == "User 2"
+        assert entra_client.users["user-2"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert not entra_client.users["user-2"].on_premises_sync_enabled
+        assert entra_client.users["user-3"].id == "user-3"
+        assert entra_client.users["user-3"].name == "User 3"
+        assert entra_client.users["user-3"].directory_roles_ids == [
+            AdminRoles.GLOBAL_ADMINISTRATOR.value
+        ]
+        assert entra_client.users["user-3"].on_premises_sync_enabled

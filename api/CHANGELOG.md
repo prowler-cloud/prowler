@@ -10,6 +10,22 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
 - HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
+- New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
+- Support for muted findings [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378).
+
+---
+
+## [v1.5.3] (Prowler v5.4.3)
+
+### Fixed
+- Added duplicated scheduled scans handling ([#7401])(https://github.com/prowler-cloud/prowler/pull/7401).
+
+---
+
+## [v1.5.2] (Prowler v5.4.2)
+
+### Changed
+- Refactored deletion logic and implemented retry mechanism for deletion tasks [(#7349)](https://github.com/prowler-cloud/prowler/pull/7349).
 
 ---
 

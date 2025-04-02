@@ -14,6 +14,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
+    ComplianceOverview,
     Integration,
     Invitation,
     Membership,
@@ -2692,6 +2693,8 @@ class TestFindingViewSet:
                 # ("resource_tags", "key:value", 2),
                 # ("resource_tags", "not:exists", 0),
                 # ("resource_tags", "not:exists,key:value", 2),
+                ("muted", True, 1),
+                ("muted", False, 1),
             ]
         ),
     )
@@ -4507,6 +4510,33 @@ class TestComplianceOverviewViewSet:
         # No filters, now compliance_overview1 has more fails
         assert len(response.json()["data"]) == 1
         assert response.json()["data"][0]["id"] == str(compliance_overview1.id)
+
+    def test_compliance_overview_metadata(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-metadata"),
+            {"filter[scan_id]": str(compliance_overviews_fixture[0].scan_id)},
+        )
+        data = response.json()
+
+        expected_regions = set(
+            ComplianceOverview.objects.all()
+            .values_list("region", flat=True)
+            .distinct("region")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert data["data"]["type"] == "compliance-overviews-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+
+    def test_compliance_overview_metadata_missing_scan_id(self, authenticated_client):
+        # Attempt to list compliance overviews without providing filter[scan_id]
+        response = authenticated_client.get(reverse("complianceoverview-metadata"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
+        assert response.json()["errors"][0]["code"] == "required"
 
 
 @pytest.mark.django_db

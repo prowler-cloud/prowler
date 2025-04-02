@@ -59,7 +59,6 @@ class StatusChoices(models.TextChoices):
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
-    MUTED = "MUTED", _("Muted")
 
 
 class StateChoices(models.TextChoices):
@@ -656,6 +655,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     tags = models.JSONField(default=dict, null=True, blank=True)
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
+    muted = models.BooleanField(default=False, null=False)
 
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)

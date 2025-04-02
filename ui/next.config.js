@@ -14,6 +14,7 @@ const cspHeader = `
 `
 
 module.exports = {
+  poweredByHeader: false,  
   output: "standalone",
   async headers() {
     return [
