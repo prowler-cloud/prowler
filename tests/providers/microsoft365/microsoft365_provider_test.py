@@ -22,6 +22,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
 )
 from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Provider
 from prowler.providers.microsoft365.models import (
+    Microsoft365Credentials,
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
 )
@@ -71,6 +72,71 @@ class TestMicrosoft365Provider:
                 sp_env_auth=True,
                 az_cli_auth=False,
                 browser_auth=False,
+                env_auth=False,
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                region=azure_region,
+                config_path=default_config_file_path,
+                fixer_config=fixer_config,
+            )
+
+            assert microsoft365_provider.region_config == Microsoft365RegionConfig(
+                name="Microsoft365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+            assert microsoft365_provider.identity == Microsoft365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type=IDENTITY_TYPE,
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
+            )
+
+    def test_microsoft365_provider_env_auth(self):
+        tenant_id = None
+        client_id = None
+        client_secret = None
+
+        fixer_config = load_and_validate_config_file(
+            "microsoft365", default_fixer_config_file_path
+        )
+        azure_region = "Microsoft365Global"
+
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session",
+                return_value=ClientSecretCredential(
+                    client_id=CLIENT_ID,
+                    tenant_id=TENANT_ID,
+                    client_secret=CLIENT_SECRET,
+                ),
+            ),
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_identity",
+                return_value=Microsoft365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type=IDENTITY_TYPE,
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                ),
+            ),
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_powershell",
+                return_value=Microsoft365Credentials(
+                    user="test@test.com",
+                    passwd="password",
+                ),
+            ),
+        ):
+            microsoft365_provider = Microsoft365Provider(
+                sp_env_auth=False,
+                az_cli_auth=False,
+                browser_auth=False,
+                env_auth=True,
                 tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
@@ -128,6 +194,7 @@ class TestMicrosoft365Provider:
                 sp_env_auth=False,
                 az_cli_auth=True,
                 browser_auth=False,
+                env_auth=False,
                 region=azure_region,
                 config_path=default_config_file_path,
                 fixer_config=fixer_config,
@@ -177,6 +244,7 @@ class TestMicrosoft365Provider:
                 sp_env_auth=False,
                 az_cli_auth=False,
                 browser_auth=True,
+                env_auth=False,
                 tenant_id=TENANT_ID,
                 region=azure_region,
                 config_path=default_config_file_path,
@@ -307,6 +375,6 @@ class TestMicrosoft365Provider:
 
         assert exception.type == Microsoft365NoAuthenticationMethodError
         assert (
-            "Microsoft365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth]"
+            "Microsoft365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]"
             in exception.value.args[0]
         )

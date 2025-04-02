@@ -149,7 +149,7 @@ class Test_redshift_cluster_multi_az_enabled:
                     )
 
                     # Moto does not pass the multi_az parameter back.
-                    service_client.clusters[0].multi_az = 1
+                    service_client.clusters[0].multi_az = "Enabled"
                     check = redshift_cluster_multi_az_enabled()
                     result = check.execute()
 

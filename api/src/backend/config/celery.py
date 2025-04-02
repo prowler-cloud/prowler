@@ -50,9 +50,9 @@ class RLSTask(Task):
 
         tenant_id = kwargs.get("tenant_id")
         with rls_transaction(tenant_id):
-            APITask.objects.create(
+            APITask.objects.update_or_create(
                 id=task_result_instance.task_id,
                 tenant_id=tenant_id,
-                task_runner_task=task_result_instance,
+                defaults={"task_runner_task": task_result_instance},
             )
         return result
