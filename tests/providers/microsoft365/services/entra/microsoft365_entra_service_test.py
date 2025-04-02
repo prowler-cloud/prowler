@@ -5,6 +5,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     AdminConsentPolicy,
     ApplicationsConditions,
     AuthorizationPolicy,
+    AuthPolicyRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
@@ -13,12 +14,14 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     Entra,
     GrantControlOperator,
     GrantControls,
+    InvitationsFrom,
     Organization,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
     SignInFrequencyType,
+    UserAction,
     UsersConditions,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
@@ -39,17 +42,9 @@ async def mock_entra_get_authorization_policy(_):
             allowed_to_read_bitlocker_keys_for_owned_device=True,
             allowed_to_read_other_users=True,
         ),
+        guest_invite_settings=InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value,
+        guest_user_role_id=AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value,
     )
-
-
-async def mock_entra_get_organization(_):
-    return [
-        Organization(
-            id="org1",
-            name="Organization 1",
-            on_premises_sync_enabled=True,
-        )
-    ]
 
 
 async def mock_entra_get_conditional_access_policies(_):
@@ -61,6 +56,7 @@ async def mock_entra_get_conditional_access_policies(_):
                 application_conditions=ApplicationsConditions(
                     included_applications=["app-1", "app-2"],
                     excluded_applications=["app-3", "app-4"],
+                    included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                 ),
                 user_conditions=UsersConditions(
                     included_groups=["group-1", "group-2"],
@@ -117,6 +113,16 @@ async def mock_entra_get_admin_consent_policy(_):
     )
 
 
+async def mock_entra_get_organization(_):
+    return [
+        Organization(
+            id="org1",
+            name="Organization 1",
+            on_premises_sync_enabled=True,
+        )
+    ]
+
+
 class Test_Entra_Service:
     def test_get_client(self):
         admincenter_client = Entra(
@@ -145,6 +151,14 @@ class Test_Entra_Service:
                 allowed_to_read_other_users=True,
             )
         )
+        assert (
+            entra_client.authorization_policy.guest_invite_settings
+            == InvitationsFrom.ADMINS_AND_GUEST_INVITERS.value
+        )
+        assert (
+            entra_client.authorization_policy.guest_user_role_id
+            == AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value
+        )
 
     @patch(
         "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_conditional_access_policies",
@@ -160,6 +174,7 @@ class Test_Entra_Service:
                     application_conditions=ApplicationsConditions(
                         included_applications=["app-1", "app-2"],
                         excluded_applications=["app-3", "app-4"],
+                        included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                     ),
                     user_conditions=UsersConditions(
                         included_groups=["group-1", "group-2"],

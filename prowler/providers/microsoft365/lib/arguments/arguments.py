@@ -18,6 +18,11 @@ def init_parser(self):
         help="Use Azure CLI authentication to log in against Microsoft365",
     )
     microsoft365_auth_modes_group.add_argument(
+        "--env-auth",
+        action="store_true",
+        help="Use User and Password environment variables authentication to log in against Microsoft365",
+    )
+    microsoft365_auth_modes_group.add_argument(
         "--sp-env-auth",
         action="store_true",
         help="Use Azure Service Principal environment variables authentication to log in against Microsoft365",
@@ -45,13 +50,4 @@ def init_parser(self):
             "Microsoft365USGovernment",
         ],
         help="Microsoft365 region to be used, default is Microsoft365Global",
-    )
-    # PowerShell
-    microsoft365_credentials_subparser = microsoft365_parser.add_argument_group(
-        "PowerShell"
-    )
-    microsoft365_credentials_subparser.add_argument(
-        "--credentials-env-auth",
-        action="store_true",
-        help="Use User and Password environment variables authentication to log in against Microsoft365",
     )
