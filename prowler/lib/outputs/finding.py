@@ -261,11 +261,20 @@ class Finding(BaseModel):
 
             # check_output Unique ID
             # TODO: move this to a function
-            # TODO: in Azure, GCP and K8s there are fidings without resource_name
+            # TODO: in Azure, GCP and K8s there are findings without resource_name
             output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
+
+            if not output_data["resource_uid"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_id."
+                )
+            if not output_data["resource_name"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_name."
+                )
 
             return cls(**output_data)
         except ValidationError as validation_error:

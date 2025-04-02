@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.microsoft365.services.entra.entra_service import (
     ApplicationsConditions,
+    ClientAppType,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
@@ -20,7 +21,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_admin_portals_role_limited_access:
+class Test_entra_legacy_authentication_blocked:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -31,31 +32,32 @@ class Test_entra_admin_portals_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
-                entra_admin_portals_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked import (
+                entra_legacy_authentication_blocked,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_admin_portals_role_limited_access()
+            check = entra_legacy_authentication_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy blocks legacy authentication."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_disabled(self):
+    def test_entra_block_legacy_authentication_disabled(self):
         id = str(uuid4())
+        display_name = "Test"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -66,12 +68,12 @@ class Test_entra_admin_portals_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
-                entra_admin_portals_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked import (
+                entra_legacy_authentication_blocked,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -80,24 +82,32 @@ class Test_entra_admin_portals_role_limited_access:
             entra_client.conditional_access_policies = {
                 id: ConditionalAccessPolicy(
                     id=id,
-                    display_name="Test",
+                    display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=[],
+                            included_applications=["All"],
                             excluded_applications=[],
                             included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
                             excluded_groups=[],
-                            included_users=[],
+                            included_users=["All"],
                             excluded_users=[],
                             included_roles=[],
                             excluded_roles=[],
                         ),
+                        client_app_types=[
+                            ClientAppType.EXCHANGE_ACTIVE_SYNC,
+                            ClientAppType.OTHER_CLIENTS,
+                        ],
+                        user_risk_levels=[],
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[], operator=GrantControlOperator.AND
+                        built_in_controls=[
+                            ConditionalAccessGrantControl.BLOCK,
+                        ],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -114,20 +124,20 @@ class Test_entra_admin_portals_role_limited_access:
                 )
             }
 
-            check = entra_admin_portals_role_limited_access()
+            check = entra_legacy_authentication_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy blocks legacy authentication."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_enabled_for_reporting(self):
+    def test_entra_block_legacy_authentication_enabled_for_reporting(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -140,12 +150,12 @@ class Test_entra_admin_portals_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
-                entra_admin_portals_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked import (
+                entra_legacy_authentication_blocked,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -157,7 +167,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["MicrosoftAdminPortals"],
+                            included_applications=["All"],
                             excluded_applications=[],
                             included_user_actions=[],
                         ),
@@ -167,11 +177,18 @@ class Test_entra_admin_portals_role_limited_access:
                             included_users=["All"],
                             excluded_users=[],
                             included_roles=[],
-                            excluded_roles=["9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"],
+                            excluded_roles=[],
                         ),
+                        client_app_types=[
+                            ClientAppType.EXCHANGE_ACTIVE_SYNC,
+                            ClientAppType.OTHER_CLIENTS,
+                        ],
+                        user_risk_levels=[],
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        built_in_controls=[
+                            ConditionalAccessGrantControl.BLOCK,
+                        ],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -189,13 +206,13 @@ class Test_entra_admin_portals_role_limited_access:
                 )
             }
 
-            check = entra_admin_portals_role_limited_access()
+            check = entra_legacy_authentication_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports Entra Admin Center access to administrative roles but does not limit it."
+                == f"Conditional Access Policy '{display_name}' reports legacy authentication but does not block it."
             )
             assert (
                 result[0].resource
@@ -205,7 +222,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_enabled(self):
+    def test_entra_block_legacy_authentication_enabled(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -218,12 +235,12 @@ class Test_entra_admin_portals_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
-                entra_admin_portals_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_legacy_authentication_blocked.entra_legacy_authentication_blocked import (
+                entra_legacy_authentication_blocked,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -235,7 +252,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["MicrosoftAdminPortals"],
+                            included_applications=["All"],
                             excluded_applications=[],
                             included_user_actions=[],
                         ),
@@ -245,11 +262,18 @@ class Test_entra_admin_portals_role_limited_access:
                             included_users=["All"],
                             excluded_users=[],
                             included_roles=[],
-                            excluded_roles=["9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"],
+                            excluded_roles=[],
                         ),
+                        client_app_types=[
+                            ClientAppType.EXCHANGE_ACTIVE_SYNC,
+                            ClientAppType.OTHER_CLIENTS,
+                        ],
+                        user_risk_levels=[],
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        built_in_controls=[
+                            ConditionalAccessGrantControl.BLOCK,
+                        ],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -267,13 +291,13 @@ class Test_entra_admin_portals_role_limited_access:
                 )
             }
 
-            check = entra_admin_portals_role_limited_access()
+            check = entra_legacy_authentication_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' limits Entra Admin Center access to administrative roles."
+                == f"Conditional Access Policy '{display_name}' blocks legacy authentication."
             )
             assert (
                 result[0].resource
