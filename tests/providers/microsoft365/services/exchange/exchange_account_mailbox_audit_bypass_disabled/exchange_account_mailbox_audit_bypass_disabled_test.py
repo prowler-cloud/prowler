@@ -67,7 +67,7 @@ class Test_exchange_account_mailbox_audit_bypass_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Exchange mailbox auditing is bypass and not enabled on this mailbox: test."
+                == "Exchange mailbox auditing is bypassed and not enabled for mailbox: test."
             )
             assert result[0].resource == exchange_client.mailboxes_config[0].dict()
             assert result[0].resource_name == "test"
@@ -76,7 +76,7 @@ class Test_exchange_account_mailbox_audit_bypass_disabled:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Exchange mailbox auditing is enabled on this mailbox: test2."
+                == "Exchange mailbox auditing is enabled for mailbox: test2."
             )
             assert result[1].resource == exchange_client.mailboxes_config[1].dict()
             assert result[1].resource_name == "test2"
@@ -113,7 +113,7 @@ class Test_exchange_account_mailbox_audit_bypass_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Exchange mailbox auditing is bypass and not enabled on this mailbox: test."
+                == "Exchange mailbox auditing is bypassed and not enabled for mailbox: test."
             )
             assert result[0].resource == exchange_client.mailboxes_config[0].dict()
             assert result[0].resource_name == "test"
@@ -150,7 +150,7 @@ class Test_exchange_account_mailbox_audit_bypass_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Exchange mailbox auditing is enabled on this mailbox: test."
+                == "Exchange mailbox auditing is enabled for mailbox: test."
             )
             assert result[0].resource == exchange_client.mailboxes_config[0].dict()
             assert result[0].resource_name == "test"
