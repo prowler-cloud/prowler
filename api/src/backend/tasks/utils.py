@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta, timezone
+from enum import Enum
 
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -7,13 +8,16 @@ from django_celery_results.models import TaskResult
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, o):
-        # This is for datetime objects
+        # Enum serialization
+        if isinstance(o, Enum):
+            return o.value
+        # Datetime and timedelta serialization
         if isinstance(o, datetime):
             return o.isoformat(timespec="seconds")
         if isinstance(o, timedelta):
             return o.total_seconds()
 
-        # This is for custom objects
+        # Custom object serialization
         try:
             return super().default(o)
         except TypeError:
