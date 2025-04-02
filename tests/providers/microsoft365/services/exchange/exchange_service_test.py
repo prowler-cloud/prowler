@@ -18,8 +18,8 @@ def mock_exchange_get_organization_config(_):
 
 def mock_exchange_get_mailbox_audit_config(_):
     return [
-        MailboxAuditConfig(name="test", audit_enabled=False),
-        MailboxAuditConfig(name="test2", audit_enabled=True),
+        MailboxAuditConfig(name="test", id="test", audit_bypass_enabled=False),
+        MailboxAuditConfig(name="test2", id="test2", audit_bypass_enabled=True),
     ]
 
 
@@ -49,9 +49,11 @@ class Test_Exchange_Service:
 
     def test_get_mailbox_audit_config(self):
         exchange_client = Exchange(set_mocked_microsoft365_provider())
-        mailbox_audit_config = exchange_client.mailbox_audit_config
+        mailbox_audit_config = exchange_client.mailboxes_config
         assert len(mailbox_audit_config) == 2
         assert mailbox_audit_config[0].name == "test"
-        assert mailbox_audit_config[0].audit_enabled is False
+        assert mailbox_audit_config[0].id == "test"
+        assert mailbox_audit_config[0].audit_bypass_enabled is False
         assert mailbox_audit_config[1].name == "test2"
-        assert mailbox_audit_config[1].audit_enabled is True
+        assert mailbox_audit_config[1].id == "test2"
+        assert mailbox_audit_config[1].audit_bypass_enabled is True

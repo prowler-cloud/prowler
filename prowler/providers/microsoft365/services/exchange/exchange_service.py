@@ -10,7 +10,7 @@ class Exchange(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.organization_config = self._get_organization_config()
-        self.mailbox_audit_config = self._get_mailbox_audit_config()
+        self.mailboxes_config = self._get_mailbox_audit_config()
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
@@ -34,13 +34,14 @@ class Exchange(Microsoft365Service):
         mailbox_audit_data = self.powershell.execute(
             "Get-MailboxAuditBypassAssociation | ConvertTo-Json"
         )
-        mailbox_audit_config = []
+        mailboxes_config = []
         try:
-            for mailbox_audit_config in mailbox_audit_config:
-                mailbox_audit_config.append(
+            for mailbox_audit_config in mailbox_audit_data:
+                mailboxes_config.append(
                     MailboxAuditConfig(
-                        name=mailbox_audit_data.get("Name", ""),
-                        audit_enabled=mailbox_audit_data.get(
+                        name=mailbox_audit_config.get("Name", ""),
+                        id=mailbox_audit_config.get("Id", ""),
+                        audit_bypass_enabled=mailbox_audit_config.get(
                             "AuditBypassEnabled", False
                         ),
                     )
@@ -49,7 +50,7 @@ class Exchange(Microsoft365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return mailbox_audit_config
+        return mailboxes_config
 
 
 class Organization(BaseModel):
@@ -60,4 +61,5 @@ class Organization(BaseModel):
 
 class MailboxAuditConfig(BaseModel):
     name: str
-    audit_enabled: bool
+    id: str
+    audit_bypass_enabled: bool
