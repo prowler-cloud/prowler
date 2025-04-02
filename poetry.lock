@@ -318,13 +318,13 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.19.0"
+version = "1.21.0"
 description = "Microsoft Azure Identity Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_identity-1.19.0-py3-none-any.whl", hash = "sha256:e3f6558c181692d7509f09de10cca527c7dce426776454fb97df512a46527e81"},
-    {file = "azure_identity-1.19.0.tar.gz", hash = "sha256:500144dc18197d7019b81501165d4fa92225f03778f17d7ca8a2a180129a9c83"},
+    {file = "azure_identity-1.21.0-py3-none-any.whl", hash = "sha256:258ea6325537352440f71b35c3dffe9d240eae4a5126c1b7ce5efd5766bd9fd9"},
+    {file = "azure_identity-1.21.0.tar.gz", hash = "sha256:ea22ce6e6b0f429bc1b8d9212d5b9f9877bd4c82f1724bfa910760612c07a9a6"},
 ]
 
 [package.dependencies]
@@ -5099,4 +5099,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">3.9.1,<3.13"
-content-hash = "d711bb44227117b377d4b211a072d596a74ae8a53f883f8c786c1743d5241db6"
+content-hash = "8e144436168ed83fa96186d70f93bf92547c434856da1e7be41410de81a40aa2"
