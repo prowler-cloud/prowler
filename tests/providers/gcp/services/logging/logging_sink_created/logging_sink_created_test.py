@@ -134,6 +134,15 @@ class Test_logging_sink_created:
                     project_id=GCP_PROJECT_ID,
                 )
             ]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
 
             check = logging_sink_created()
             result = check.execute()
@@ -141,9 +150,9 @@ class Test_logging_sink_created:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Sink sink1 is enabled but not exporting copies of all the log entries in project {GCP_PROJECT_ID}."
+                == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
             )
-            assert result[0].resource_id == "sink1"
-            assert result[0].resource_name == "sink1"
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == "test"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
