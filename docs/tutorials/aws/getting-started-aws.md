@@ -152,29 +152,61 @@ You can also configure your AWS account using static credentials (not recommende
 
 ![Connect via credentials](./img/connect-via-credentials.png)
 
-1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
+=== "AWS SDK or CLI"
 
-    ![AWS CloudShell](./img/aws-cloudshell.png)
+    1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
 
-2. Run:
+        ![AWS CloudShell](./img/aws-cloudshell.png)
 
-    ```bash
-    aws iam create-access-key
-    ```
+    2. Run:
 
-3. Copy the output containing:
+        ```bash
+        aws iam create-access-key
+        ```
 
-    - `AccessKeyId`
-    - `SecretAccessKey`
+    3. Copy the output containing:
 
-    ![CloudShell Output](./img/cloudshell-output.png)
+        - `AccessKeyId`
+        - `SecretAccessKey`
 
-> ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
+        ![CloudShell Output](./img/cloudshell-output.png)
 
-4. Complete the form in Prowler Cloud and click `Next`
+    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
 
-    ![Filled credentials page](./img/prowler-cloud-credentials-next.png)
+=== "Using `GetSessionToken`"
 
-5. Click `Launch Scan`
+    1. Retrieve short-term credentials for the IAM identity using this command:
 
-    ![Launch Scan](./img/launch-scan-button-prowler-cloud.png)
+        ```bash
+        aws sts get-session-token \
+            --duration-seconds 900 \
+            --serial-number "YourMFADeviceSerialNumber" \
+            --token-code 123456
+        ```
+
+    2. Copy the output containing:
+
+        - `AccessKeyId`
+        - `SecretAccessKey`
+
+        > Sample output:
+            ```json
+            {
+                "Credentials": {
+                    "AccessKeyId": "ASIAIOSFODNN7EXAMPLE",
+                    "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY",
+                    "SessionToken": "AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk5TthT+FvwqnKwRcOIfrRh3c/LTo6UDdyJwOOvEVPvLXCrrrUtdnniCEXAMPLE/IvU1dYUg2RVAJBanLiHb4IgRmpRV3zrkuWJOgQs8IZZaIv2BXIa2R4OlgkBN9bkUDNCJiBeb/AXlzBBko7b15fjrBs2+cTQtpZ3CYWFXG8C5zqx37wnOE49mRl/+OtkIKGO7fAE",
+                    "Expiration": "2020-05-19T18:06:10+00:00"
+                }
+            }
+            ```
+
+    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
+
+Complete the form in Prowler Cloud and click `Next`
+
+![Filled credentials page](./img/prowler-cloud-credentials-next.png)
+
+Click `Launch Scan`
+
+![Launch Scan](./img/launch-scan-button-prowler-cloud.png)
