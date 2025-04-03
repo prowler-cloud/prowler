@@ -40,6 +40,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365HTTPResponseError,
     Microsoft365InteractiveBrowserCredentialError,
     Microsoft365InvalidProviderIdError,
+    Microsoft365MissingEnvironmentUserCredentialsError,
     Microsoft365NoAuthenticationMethodError,
     Microsoft365NotTenantIdButClientIdAndClientSecretError,
     Microsoft365NotValidClientIdError,
@@ -51,6 +52,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
+from prowler.providers.microsoft365.lib.powershell.powershell import PowerShellSession
 from prowler.providers.microsoft365.lib.regions.regions import get_regions_config
 from prowler.providers.microsoft365.models import (
     Microsoft365Credentials,
@@ -364,14 +366,21 @@ class Microsoft365Provider(Provider):
                 logger.critical(
                     "Microsoft365 provider: Missing M365_USER or M365_PASSWD environment variables needed for credentials authentication"
                 )
-                raise Microsoft365EnvironmentUserCredentialsError(
+                raise Microsoft365MissingEnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
                     message="Missing M365_USER or M365_PASSWD environment variables required for credentials authentication.",
                 )
-            return Microsoft365Credentials(
+            credentials = Microsoft365Credentials(
                 user=getenv("M365_USER"),
                 passwd=getenv("M365_PASSWD"),
             )
+            if PowerShellSession(credentials).test_credentials():
+                return credentials
+            else:
+                raise Microsoft365EnvironmentUserCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="M365_USER or M365_PASSWD environment variables are not correct. Please ensure you are using the right credentials.",
+                )
 
     def print_credentials(self):
         """Microsoft365 credentials information.

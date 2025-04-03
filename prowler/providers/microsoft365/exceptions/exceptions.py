@@ -94,9 +94,13 @@ class Microsoft365BaseException(ProwlerException):
             "message": "Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
             "remediation": "Check the Microsoft365 Tenant ID and ensure it is properly set up.",
         },
-        (6022, "Microsoft365EnvironmentUserCredentialsError"): {
+        (6022, "Microsoft365MissingEnvironmentUserCredentialsError"): {
             "message": "User and Password environment variables are needed to use Credentials authentication method.",
             "remediation": "Ensure your environment variables are properly set up.",
+        },
+        (6023, "Microsoft365EnvironmentUserCredentialsError"): {
+            "message": "User or Password environment variables are not correct.",
+            "remediation": "Ensure you are using the right credentials.",
         },
     }
 
@@ -283,8 +287,15 @@ class Microsoft365NotTenantIdButClientIdAndClientSecretError(
         )
 
 
-class Microsoft365EnvironmentUserCredentialsError(Microsoft365CredentialsError):
+class Microsoft365MissingEnvironmentUserCredentialsError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6022, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365EnvironmentUserCredentialsError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6023, file=file, original_exception=original_exception, message=message
         )

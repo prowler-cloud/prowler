@@ -32,6 +32,11 @@ class PowerShellSession:
             "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
         )
 
+    def test_credentials(self):
+        self.process.stdin.write("$credential.GetNetworkCredential().Password" + "\n")
+        self.process.stdin.write("Write-Output '<END>'\n")
+        return True if self.read_output() else False
+
     def remove_ansi(self, text):
         """Remove ANSI color codes from PowerShell output."""
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
@@ -47,8 +52,10 @@ class PowerShellSession:
 
         self.process.stdin.write(command + "\n")
         self.process.stdin.write("Write-Output '<END>'\n")
-        # self.process.stdin.flush()
 
+        return self.json_parse_output(self.read_output())
+
+    def read_output(self):
         output_lines = []
         while True:
             line = self.process.stdout.readline().strip()
@@ -59,14 +66,17 @@ class PowerShellSession:
 
         full_output = "\n".join(output_lines)
 
-        json_match = re.search(r"(\[.*\]|\{.*\})", full_output, re.DOTALL)
+        return full_output
+
+    def json_parse_output(self, output):
+        json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(1))  # Return parsed JSON
             except json.JSONDecodeError:
                 pass  # If JSON parsing fails, return raw output
 
-        return {}  # Return raw output if no JSON found
+        return {}  # Return empty output if no JSON found
 
     def close(self):
         """Terminate the PowerShell session."""
