@@ -8,14 +8,13 @@ from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Pro
 class Teams(Microsoft365Service):
     def __init__(self, provider: Microsoft365Provider):
         super().__init__(provider)
-        self.powershell.execute("Connect-MicrosoftTeams -Credential $Credential")
+        self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
+        self.powershell.close()
 
     def _get_teams_client_configuration(self):
         logger.info("Microsoft365 - Getting Teams settings...")
-        settings = self.powershell.execute(
-            "Get-CsTeamsClientConfiguration | ConvertTo-Json"
-        )
+        settings = self.powershell.get_teams_settings()
         try:
             teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(

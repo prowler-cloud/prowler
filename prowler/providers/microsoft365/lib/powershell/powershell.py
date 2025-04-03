@@ -83,6 +83,7 @@ class PowerShellSession:
         return output
 
     def json_parse_output(self, output):
+        """Parse comand execution to json format"""
         json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
         if json_match:
             try:
@@ -91,7 +92,25 @@ class PowerShellSession:
                 return {}  # Return empty output if no JSON found
 
     def close(self):
-        """Terminate the PowerShell session."""
+        """Terminate the PowerShell session"""
         self.process.stdin.write("exit\n")
         self.process.stdin.flush()
         self.process.terminate()
+
+    def connect_microsoft_teams(self):
+        """Connect to Microsoft Teams Module PowerShell Module"""
+        return self.execute("Connect-MicrosoftTeams -Credential $Credential")
+
+    def get_teams_settings(self):
+        """Get Teams Client Settings"""
+        return self.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
+
+    def connect_exchange_online(self):
+        """Connect to Exchange Online PowerShell Module"""
+        return self.execute("Connect-ExchangeOnline -Credential $Credential")
+
+    def get_audit_log_config(self):
+        """Get Purview Admin Audit Log Settings"""
+        return self.execute(
+            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
+        )

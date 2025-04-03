@@ -10,9 +10,10 @@ class Purview(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.audit_log_config = self._get_audit_log_config()
+        self.powershell.close()
 
     def _get_audit_log_config(self):
-        logger.info("Microsoft365 - Getting Purview settings...")
+        logger.info("Microsoft365 - Getting Admin Audit Log settings...")
         audit_log_config = self.powershell.execute(
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
         )
