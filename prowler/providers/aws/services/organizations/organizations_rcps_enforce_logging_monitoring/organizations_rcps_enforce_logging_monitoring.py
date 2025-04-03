@@ -26,55 +26,88 @@ class organizations_rcps_enforce_logging_monitoring(Check):
                     report.status_extended = f"AWS Organization {organizations_client.organization.id} does not have Resource Control Policies enforcing logging and monitoring controls."
 
                     # Check if Resource Control Policies are present
-                    if "RESOURCE_CONTROL_POLICY" in organizations_client.organization.policies:
+                    if (
+                        "RESOURCE_CONTROL_POLICY"
+                        in organizations_client.organization.policies
+                    ):
                         rcps = organizations_client.organization.policies.get(
                             "RESOURCE_CONTROL_POLICY", []
                         )
-                        
+
                         # Check for logging and monitoring controls in RCPs
                         logging_monitoring_rcps = []
                         for policy in rcps:
                             # Check if policy enforces logging and monitoring controls
                             if self._policy_enforces_logging_monitoring(policy):
                                 logging_monitoring_rcps.append(policy)
-                            
+
                         if logging_monitoring_rcps:
                             report.status = "PASS"
                             report.status_extended = f"AWS Organization {organizations_client.organization.id} has {len(logging_monitoring_rcps)} Resource Control Policies enforcing logging and monitoring controls."
-                
+
                 findings.append(report)
 
         return findings
-    
+
     def _policy_enforces_logging_monitoring(self, policy):
         """Check if a policy enforces logging and monitoring controls"""
         # Get policy statements
         statements = policy.content.get("Statement", [])
         if not isinstance(statements, list):
             statements = [statements]
-        
+
         # Logging and monitoring related services
         logging_services = [
-            "cloudtrail", "cloudwatch", "logs", "config", "securityhub", "guardduty", 
-            "s3:logdelivery", "logging", "kinesisanalytics", "kinesis", "events", 
-            "firehose", "sns", "eventbridge"
+            "cloudtrail",
+            "cloudwatch",
+            "logs",
+            "config",
+            "securityhub",
+            "guardduty",
+            "s3:logdelivery",
+            "logging",
+            "kinesisanalytics",
+            "kinesis",
+            "events",
+            "firehose",
+            "sns",
+            "eventbridge",
         ]
-        
+
         # Specific logging and monitoring related actions
         logging_actions = [
-            "stoplogging", "deletetrail", "updatetrail", "deleteloggingconfiguration",
-            "disablelogs", "putretentionpolicy", "deletemetricfilter", "putbucketlogging",
-            "deleteloggingpolicy", "putloggingoptions", "disableeventselection", 
-            "deleteeventdatastore", "disableall", "deregister", "deletealarm",
-            "disableimportfindings", "disablelogging", "deletesubscription"
+            "stoplogging",
+            "deletetrail",
+            "updatetrail",
+            "deleteloggingconfiguration",
+            "disablelogs",
+            "putretentionpolicy",
+            "deletemetricfilter",
+            "putbucketlogging",
+            "deleteloggingpolicy",
+            "putloggingoptions",
+            "disableeventselection",
+            "deleteeventdatastore",
+            "disableall",
+            "deregister",
+            "deletealarm",
+            "disableimportfindings",
+            "disablelogging",
+            "deletesubscription",
         ]
-        
+
         # Logging and monitoring related conditions
         logging_conditions = [
-            "logging", "log", "trail", "monitor", "cloudtrail", "cloudwatch", "aws:loggingEnabled",
-            "s3:LoggingEnabled"
+            "logging",
+            "log",
+            "trail",
+            "monitor",
+            "cloudtrail",
+            "cloudwatch",
+            "aws:loggingEnabled",
+            "s3:LoggingEnabled",
         ]
-        
+
         # Check statements for logging and monitoring controls
         for statement in statements:
             # Check if statement is about preventing logging disablement
@@ -83,9 +116,9 @@ class organizations_rcps_enforce_logging_monitoring(Check):
                 actions = statement.get("Action", [])
                 if not isinstance(actions, list):
                     actions = [actions]
-                
+
                 action_str = str(actions).lower()
-                
+
                 # Check for logging-related services in actions
                 for service in logging_services:
                     if service.lower() in action_str:
@@ -93,21 +126,24 @@ class organizations_rcps_enforce_logging_monitoring(Check):
                         for logging_action in logging_actions:
                             if logging_action.lower() in action_str:
                                 return True
-                
+
                 # Check conditions for logging-related conditions
                 condition = statement.get("Condition", {})
                 condition_str = str(condition).lower()
-                
+
                 for log_condition in logging_conditions:
                     if log_condition.lower() in condition_str:
                         return True
-            
+
             # Check if statement requires logging to be enabled
             elif "Resource" in statement:
                 resource = statement.get("Resource", "")
                 # Check if resource includes logging-related resources
                 for service in logging_services:
-                    if isinstance(resource, str) and service.lower() in resource.lower():
+                    if (
+                        isinstance(resource, str)
+                        and service.lower() in resource.lower()
+                    ):
                         # Check conditions for logging requirements
                         condition = statement.get("Condition", {})
                         if condition:
@@ -115,6 +151,6 @@ class organizations_rcps_enforce_logging_monitoring(Check):
                             for log_condition in logging_conditions:
                                 if log_condition.lower() in condition_str:
                                     return True
-        
+
         # If no logging and monitoring controls found
         return False
