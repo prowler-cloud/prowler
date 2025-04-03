@@ -28,7 +28,10 @@ class organizations_resource_control_policies_enabled(Check):
                     report.status_extended = f"AWS Organization {organizations_client.organization.id} does not have Resource Control Policies enabled."
 
                     # Check if Resource Control Policies are present and attached to targets
-                    if "RESOURCE_CONTROL_POLICY" in organizations_client.organization.policies:
+                    if (
+                        "RESOURCE_CONTROL_POLICY"
+                        in organizations_client.organization.policies
+                    ):
                         rcps = organizations_client.organization.policies.get(
                             "RESOURCE_CONTROL_POLICY", []
                         )
@@ -43,7 +46,7 @@ class organizations_resource_control_policies_enabled(Check):
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"AWS Organization {organizations_client.organization.id} has Resource Control Policies, but none are attached to targets."
-                
+
                 findings.append(report)
 
         return findings
