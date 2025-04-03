@@ -3,7 +3,7 @@
   "CheckID": "organizations_rcps_enforce_iam_controls",
   "CheckTitle": "Check if Resource Control Policies enforce IAM security controls",
   "CheckType": [
-    "Identity and Access Management"
+    "IAM"
   ],
   "ServiceName": "organizations",
   "SubServiceName": "rcp",
@@ -12,7 +12,7 @@
   "ResourceType": "Other",
   "Description": "Check if AWS Organization is using Resource Control Policies to enforce IAM security controls in alignment with NIST 800-53 AC-2, AC-3, AC-6, and IA-2 controls.",
   "Risk": "Without enforced IAM security controls, organizations risk privilege escalation, excessive permissions, and inadequate access control. NIST 800-53 requires proper account management, access enforcement, least privilege implementation, and identification and authentication mechanisms.",
-  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
   "Remediation": {
     "Code": {
       "CLI": "aws organizations create-policy --name 'IAMSecurityRCP' --description 'Resource Control Policy to enforce IAM security controls' --type RESOURCE_CONTROL_POLICY --content file://iamSecurityRCP.json",
@@ -25,11 +25,7 @@
       "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html"
     }
   },
-  "Categories": [
-    "governance",
-    "compliance",
-    "iam"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [
     "organizations_resource_control_policies_enabled"

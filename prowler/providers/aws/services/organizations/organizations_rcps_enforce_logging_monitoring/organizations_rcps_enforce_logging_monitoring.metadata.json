@@ -12,7 +12,7 @@
   "ResourceType": "Other",
   "Description": "Check if AWS Organization is using Resource Control Policies to enforce logging and monitoring controls in alignment with NIST 800-53 AU-2, AU-3, AU-8, and AU-9 controls.",
   "Risk": "Without enforced logging and monitoring controls, organizations risk inability to detect and respond to security incidents, unauthorized activities, and compliance violations. NIST 800-53 requires proper audit event selection, content, time stamps, and protection.",
-  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
   "Remediation": {
     "Code": {
       "CLI": "aws organizations create-policy --name 'LoggingMonitoringRCP' --description 'Resource Control Policy to enforce logging and monitoring controls' --type RESOURCE_CONTROL_POLICY --content file://loggingMonitoringRCP.json",
@@ -26,8 +26,6 @@
     }
   },
   "Categories": [
-    "governance",
-    "compliance",
     "logging"
   ],
   "DependsOn": [],

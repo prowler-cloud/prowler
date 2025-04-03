@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "Description": "Check if AWS Organization is using Resource Control Policies to enforce critical S3 bucket security settings.",
   "Risk": "Without Resource Control Policies enforcing S3 security settings, organizations are at higher risk of data breaches through misconfigured buckets. This can lead to data exposure, unauthorized access, and compliance violations across the organization.",
-  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
   "Remediation": {
     "Code": {
       "CLI": "aws organizations create-policy --name 'S3SecurityRCP' --description 'Resource Control Policy to enforce S3 bucket security settings' --type RESOURCE_CONTROL_POLICY --content file://s3SecurityRCP.json",
@@ -23,13 +23,11 @@
     },
     "Recommendation": {
       "Text": "Create Resource Control Policies that enforce S3 security settings such as blocking public access, requiring encryption, enabling versioning, and requiring bucket logging.",
-      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html#example-rcps-s3"
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html#example-rcp-consistent-bucket"
     }
   },
   "Categories": [
-    "governance",
-    "encryption",
-    "s3"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [

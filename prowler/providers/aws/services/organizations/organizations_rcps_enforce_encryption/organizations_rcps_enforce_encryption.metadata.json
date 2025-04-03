@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "Description": "Check if AWS Organization is using Resource Control Policies to enforce encryption requirements across various AWS services in alignment with NIST 800-53 SC-13 and SC-28 controls.",
   "Risk": "Without enforced encryption requirements at the resource level, sensitive data may be stored unencrypted, leading to potential data breaches and compliance violations including NIST 800-53, which requires protection of information at rest and in transit.",
-  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
   "Remediation": {
     "Code": {
       "CLI": "aws organizations create-policy --name 'EncryptionRCP' --description 'Resource Control Policy to enforce encryption across resources' --type RESOURCE_CONTROL_POLICY --content file://encryptionRCP.json",
@@ -27,9 +27,7 @@
     }
   },
   "Categories": [
-    "encryption",
-    "governance",
-    "compliance"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [

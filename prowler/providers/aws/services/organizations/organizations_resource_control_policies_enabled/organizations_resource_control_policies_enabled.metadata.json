@@ -3,7 +3,6 @@
   "CheckID": "organizations_resource_control_policies_enabled",
   "CheckTitle": "Check if AWS Organization is using Resource Control Policies",
   "CheckType": [
-    "Governance",
     "IAM"
   ],
   "ServiceName": "organizations",
@@ -26,12 +25,8 @@
       "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html"
     }
   },
-  "Categories": [
-    "governance"
-  ],
+  "Categories": [],
   "DependsOn": [],
-  "RelatedTo": [
-    "organizations_scp_check_deny_regions"
-  ],
+  "RelatedTo": [],
   "Notes": "Resource Control Policies were introduced in 2023 and provide resource-level governance capabilities beyond what Service Control Policies can do."
 }
