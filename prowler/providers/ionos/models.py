@@ -12,6 +12,7 @@ from ionoscloud.models.datacenters import Datacenters
 class IonosIdentityInfo:
     username: str
     password: str
+    datacenter_id: str
     token: str
 
 class IonosOutputOptions(ProviderOutputOptions):

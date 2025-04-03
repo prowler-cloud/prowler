@@ -1,0 +1,30 @@
+{"timestamp": "2025-03-31 00:12:16,530", "filename": "__main__.py:147", "level": "DEBUG", "module": "__main__", "message": "Loading checks metadata from .metadata.json files"}
+{"timestamp": "2025-03-31 00:12:16,536", "filename": "__main__.py:156", "level": "DEBUG", "module": "__main__", "message": "Loading compliance frameworks from .json files"}
+{"timestamp": "2025-03-31 00:12:16,591", "filename": "ionos_provider.py:48", "level": "INFO", "module": "ionos_provider", "message": "Initializing IONOS Provider..."}
+{"timestamp": "2025-03-31 00:12:16,592", "filename": "ionos_provider.py:125", "level": "INFO", "module": "ionos_provider", "message": "Loaded IONOS token from ionosctl config file."}
+{"timestamp": "2025-03-31 00:12:16,592", "filename": "ionos_provider.py:173", "level": "INFO", "module": "ionos_provider", "message": "Successfully initialized IONOS Cloud API session."}
+{"timestamp": "2025-03-31 00:12:17,032", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-03-31 00:12:17,207", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-03-31 00:12:17,208", "filename": "check.py:407", "level": "INFO", "module": "check", "message": "Your session file descriptors limit (2560 open files) is below 4096. Updating file descriptors session limit to 4096 during execution only."}
+{"timestamp": "2025-03-31 00:12:17,330", "filename": "check.py:519", "level": "ERROR", "module": "check", "message": "Check 'server_public_ip' was not found for the IONOS provider"}
+{"timestamp": "2025-03-31 00:12:17,335", "filename": "outputs.py:103", "level": "INFO", "module": "outputs", "message": "Extracting audit statistics..."}
+{"timestamp": "2025-04-03 11:14:20,998", "filename": "__main__.py:147", "level": "DEBUG", "module": "__main__", "message": "Loading checks metadata from .metadata.json files"}
+{"timestamp": "2025-04-03 11:14:21,005", "filename": "__main__.py:156", "level": "DEBUG", "module": "__main__", "message": "Loading compliance frameworks from .json files"}
+{"timestamp": "2025-04-03 11:14:21,053", "filename": "ionos_provider.py:48", "level": "INFO", "module": "ionos_provider", "message": "Initializing IONOS Provider..."}
+{"timestamp": "2025-04-03 11:14:21,054", "filename": "ionos_provider.py:125", "level": "INFO", "module": "ionos_provider", "message": "Loaded IONOS token from ionosctl config file."}
+{"timestamp": "2025-04-03 11:14:21,055", "filename": "ionos_provider.py:173", "level": "INFO", "module": "ionos_provider", "message": "Successfully initialized IONOS Cloud API session."}
+{"timestamp": "2025-04-03 11:14:21,348", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-04-03 11:14:21,498", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-04-03 11:14:21,498", "filename": "check.py:407", "level": "INFO", "module": "check", "message": "Your session file descriptors limit (2560 open files) is below 4096. Updating file descriptors session limit to 4096 during execution only."}
+{"timestamp": "2025-04-03 11:14:21,593", "filename": "check.py:519", "level": "ERROR", "module": "check", "message": "Check 'server_public_ip' was not found for the IONOS provider"}
+{"timestamp": "2025-04-03 11:14:21,594", "filename": "outputs.py:103", "level": "INFO", "module": "outputs", "message": "Extracting audit statistics..."}
+{"timestamp": "2025-04-03 11:23:20,833", "filename": "__main__.py:144", "level": "DEBUG", "module": "__main__", "message": "Loading checks metadata from .metadata.json files"}
+{"timestamp": "2025-04-03 11:23:20,851", "filename": "__main__.py:153", "level": "DEBUG", "module": "__main__", "message": "Loading compliance frameworks from .json files"}
+{"timestamp": "2025-04-03 11:23:20,909", "filename": "ionos_provider.py:48", "level": "INFO", "module": "ionos_provider", "message": "Initializing IONOS Provider..."}
+{"timestamp": "2025-04-03 11:23:20,923", "filename": "ionos_provider.py:125", "level": "INFO", "module": "ionos_provider", "message": "Loaded IONOS token from ionosctl config file."}
+{"timestamp": "2025-04-03 11:23:20,924", "filename": "ionos_provider.py:173", "level": "INFO", "module": "ionos_provider", "message": "Successfully initialized IONOS Cloud API session."}
+{"timestamp": "2025-04-03 11:23:21,275", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-04-03 11:23:21,399", "filename": "ionos_provider.py:255", "level": "INFO", "module": "ionos_provider", "message": "Successfully retrieved datacenters from IONOS Cloud API."}
+{"timestamp": "2025-04-03 11:23:21,404", "filename": "check.py:407", "level": "INFO", "module": "check", "message": "Your session file descriptors limit (2560 open files) is below 4096. Updating file descriptors session limit to 4096 during execution only."}
+{"timestamp": "2025-04-03 11:23:21,499", "filename": "check.py:519", "level": "ERROR", "module": "check", "message": "Check 'server_public_ip' was not found for the IONOS provider"}
+{"timestamp": "2025-04-03 11:23:21,500", "filename": "outputs.py:103", "level": "INFO", "module": "outputs", "message": "Extracting audit statistics..."}

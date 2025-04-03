@@ -28,6 +28,7 @@ class Provider(str, Enum):
     GCP = "gcp"
     AZURE = "azure"
     KUBERNETES = "kubernetes"
+    IONOS = "ionos"
 
 
 # Compliance

@@ -215,6 +215,7 @@ class Provider(ABC):
                     provider_class(
                         ionos_username=arguments.ionos_username,
                         ionos_password=arguments.ionos_password,
+                        ionos_datacenter_name=arguments.ionos_datacenter_name,
                         #config_path=getattr(arguments, 'config_file', None),
                         #mutelist_path=getattr(arguments, 'mutelist_file', None),
                     )

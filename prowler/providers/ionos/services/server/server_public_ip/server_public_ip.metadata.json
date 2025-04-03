@@ -1,0 +1,36 @@
+{
+    "Provider": "ionos",
+    "CheckID": "server_public_ip",
+    "CheckTitle": "Ensure servers don't have public IP addresses unless necessary",
+    "CheckType": [
+        "Software and Configuration Checks",
+        "Network Security"
+    ],
+    "ServiceName": "server",
+    "SubServiceName": "server",
+    "ResourceIdTemplate": "arn:ionos:server:global:server:{{resource_id}}",
+    "Severity": "medium",
+    "ResourceType": "Server",
+    "Description": "Checks if IONOS servers have public IP addresses assigned, which could expose them to the internet.",
+    "Risk": "Servers with public IP addresses are directly accessible from the internet, increasing the attack surface and potential for unauthorized access.",
+    "RelatedUrl": "https://docs.ionos.com/cloud/",
+    "Remediation": {
+        "Code": {
+            "CLI": "Use the IONOS CLI or console to reconfigure the server's network interfaces to use private IPs only",
+            "NativeIaC": "",
+            "Terraform": "resource \"ionoscloud_server\" \"example\" {\n  name = \"example-server\"\n  # Configure with only private networks\n  nic {\n    lan = \"1\" # Use a private LAN ID\n    dhcp = true\n    firewall_active = true\n  }\n}",
+            "Other": ""
+        },
+        "Recommendation": {
+            "Text": "Use private IP addresses for servers and implement secure methods like VPN or bastion hosts for remote access when needed.",
+            "Url": "https://docs.ionos.com/cloud/compute-engine/networks/configure-networking"
+        }
+    },
+    "Categories": [
+        "security",
+        "networking"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Public IP addresses should only be assigned to servers that require direct internet access for their function."
+}

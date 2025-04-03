@@ -30,11 +30,13 @@ class IonosProvider(Provider):
     _token = None
     _username = None
     _password = None
+    _datacenter_id = None
 
     def __init__(
         self,
         ionos_username: Optional[str] = None,
         ionos_password: Optional[str] = None,
+        ionos_datacenter_name: Optional[str] = None,
         config_path: Optional[str] = None,
         mutelist_path: Optional[str] = None,
         mutelist_content: dict = None,
@@ -45,12 +47,12 @@ class IonosProvider(Provider):
         """
         logger.info("Initializing IONOS Provider...")
         self._token = self.load_ionosctl_token()
+                
         self._identity = self.set_identity(
             username=ionos_username,
             password=ionos_password,
+            datacenter_id="",
         )
-        self._audit_config = load_and_validate_config_file("ionos", config_path)
-        self._mutelist = IonosMutelist(mutelist_path=mutelist_path) if mutelist_path else None
         
         #if not self._identity.username or not self._identity.password:
         #    self._username, self._password, self._token = self.load_env_credentials()
@@ -59,6 +61,17 @@ class IonosProvider(Provider):
         self._session = self.setup_session(
             identity=self._identity,
         )
+
+        self._datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
+
+        self._identity.datacenter_id = self._datacenter_id
+
+        if config_path is None:
+            self._audit_config = {}
+        else:
+            self._audit_config = load_and_validate_config_file("ionos", config_path)
+        
+        self._mutelist = IonosMutelist(mutelist_path=mutelist_path) if mutelist_path else None
 
         # Mutelist
         if mutelist_content:
@@ -85,7 +98,6 @@ class IonosProvider(Provider):
         Lee las credenciales de IONOS desde las variables de entorno.
         Retorna una tupla con (username, password, token)
         """
-        print('hola que tal')
         username = os.getenv("IONOS_USERNAME")
         password = os.getenv("IONOS_PASSWORD")
         token = os.getenv("IONOS_TOKEN")
@@ -139,6 +151,10 @@ class IonosProvider(Provider):
         mutelist method returns the provider's mutelist
         """
         return self._mutelist
+    
+    @property
+    def session(self) -> ApiClient:
+        return self._session
 
     def setup_session(
         self, 
@@ -148,11 +164,6 @@ class IonosProvider(Provider):
         Configura la sesión para interactuar con la API de IONOS Cloud.
         """
         try:
-            print("Se va a inciar sesión con las siguientes credenciales:")
-            print(f"Username: {identity.username}")
-            print(f"Password: {identity.password}")
-            print(f"Token: {identity.token}")
-
             config = Configuration()
 
             config.username = identity.username
@@ -174,7 +185,6 @@ class IonosProvider(Provider):
 
         username = self._session.configuration.username
         host = self._session.configuration.host
-        print(username)
         if self._identity.token:
             if len(self._identity.token) > 8:
                 masked_token = self._identity.token[:4] + "*" * 16 + self._identity.token[-4:]
@@ -199,6 +209,28 @@ class IonosProvider(Provider):
         report_title = f"{Style.BRIGHT}Using the IONOS Cloud credentials below:{Style.RESET_ALL}"
         print_boxes(report_lines, report_title)
 
+    def get_datacenter_id(self, datacenter_name: Optional[str] = None) -> str:
+        """
+        Obtiene el ID de un datacenter por su nombre.
+        Si el nombre es vacío o None, devuelve el primer datacenter disponible.
+        """
+        datacenters = self.get_datacenters()
+        
+        # If datacenter_name is empty or None, return the first datacenter ID
+        if not datacenter_name:
+            return datacenters[0].id if datacenters else ""
+        
+        # Otherwise search for datacenter by name
+        for datacenter in datacenters:
+            if datacenter.properties.name == datacenter_name:
+                return datacenter.id
+        return ""
+
+    def set_datacenter(self, datacenter_id: str) -> None:
+        """
+        Establece el datacenter activo para las operaciones.
+        """
+        self._identity.datacenter_id = datacenter_id
 
     def test_connection(self) -> bool:
         """
@@ -230,6 +262,7 @@ class IonosProvider(Provider):
         self,
         username: str,
         password: str,
+        datacenter_id: str,
     ) -> IonosIdentityInfo:
         """
         set_identity sets the IONOS provider identity information.
@@ -237,5 +270,6 @@ class IonosProvider(Provider):
         return IonosIdentityInfo(
             username=username,
             password=password,
+            datacenter_id=datacenter_id,
             token=self._token,
         )

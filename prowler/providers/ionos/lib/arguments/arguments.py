@@ -5,7 +5,6 @@ def init_parser(self):
     """
     Define and return the argument parser for the IONOS provider.
     """
-    print('Initializing IONOS parser...')
     ionos_parser = self.subparsers.add_parser(
         "ionos", parents=[self.common_providers_parser], help="IONOS Provider"
     )
@@ -20,6 +19,12 @@ def init_parser(self):
         "--ionos-password",
         required=False,
         help="The password for IONOS Cloud authentication."
+    )
+
+    ionos_parser.add_argument(
+        "--ionos-datacenter-name",
+        required=False,
+        help="The name of the datacenter to scan. If not provided, the first datacenter will be scanned."
     )
     
     #ionos_parser.add_argument(
