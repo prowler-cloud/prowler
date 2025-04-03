@@ -8,6 +8,7 @@ from tasks.jobs.scan import (
     _store_resources,
     perform_prowler_scan,
 )
+from tasks.utils import CustomEncoder
 
 from api.models import (
     Finding,
@@ -162,7 +163,7 @@ class TestPerformScan:
         assert scan_resource.type == finding.resource_type
         assert scan_resource.name == finding.resource_name
         assert scan_resource.metadata == json.dumps(
-            finding.resource_metadata, default=str
+            finding.resource_metadata, cls=CustomEncoder
         )
         assert scan_resource.details == f"{finding.resource_details}"
         assert scan_resource.partition == finding.partition
