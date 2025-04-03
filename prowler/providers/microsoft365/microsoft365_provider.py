@@ -374,7 +374,7 @@ class Microsoft365Provider(Provider):
                 user=getenv("M365_USER"),
                 passwd=getenv("M365_PASSWD"),
             )
-            if PowerShellSession(credentials).test_credentials():
+            if PowerShellSession(credentials).test_credentials(credentials):
                 return credentials
             else:
                 raise Microsoft365EnvironmentUserCredentialsError(

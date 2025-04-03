@@ -36,10 +36,20 @@ class PowerShellSession:
             "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
         )
 
-    def test_credentials(self):
+    def test_credentials(self, credentials: Microsoft365Credentials):
+        # Confirm Password
         self.process.stdin.write("$credential.GetNetworkCredential().Password" + "\n")
         self.process.stdin.write("Write-Output '<END>'\n")
-        return True if self.read_output() else False
+
+        if not self.read_output():
+            return False
+
+        # Confirm User
+        self.process.stdin.write(
+            "Connect-MicrosoftTeams -Credential $Credential" + "\n"
+        )
+        self.process.stdin.write("Write-Output '<END>'\n")
+        return True if credentials.user in self.read_output() else False
 
     def remove_ansi(self, text):
         """Remove ANSI color codes from PowerShell output."""
