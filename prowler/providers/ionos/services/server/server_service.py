@@ -1,7 +1,7 @@
 from typing import Optional, List
 import ionoscloud
 from ionoscloud import ApiClient, Configuration
-from ionoscloud.services import ServersApi
+from ionoscloud.api import ServersApi
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
 
