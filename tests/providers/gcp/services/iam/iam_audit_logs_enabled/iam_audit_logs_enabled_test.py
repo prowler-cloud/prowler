@@ -60,6 +60,10 @@ class Test_iam_audit_logs_enabled:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
+<<<<<<< HEAD
+=======
+                assert r.resource_name == "test"
+>>>>>>> e4d234fe0 (fix(azure): remove `resource_name` inside the `Check_Report` (#7420))
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region
 
@@ -97,5 +101,9 @@ class Test_iam_audit_logs_enabled:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
+<<<<<<< HEAD
+=======
+                assert r.resource_name == "test"
+>>>>>>> e4d234fe0 (fix(azure): remove `resource_name` inside the `Check_Report` (#7420))
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region

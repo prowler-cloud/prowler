@@ -58,6 +58,10 @@ class Test_compute_project_os_login_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == project.id
+<<<<<<< HEAD
+=======
+            assert result[0].resource_name == "test"
+>>>>>>> e4d234fe0 (fix(azure): remove `resource_name` inside the `Check_Report` (#7420))
             assert result[0].location == "global"
             assert result[0].project_id == GCP_PROJECT_ID
 
@@ -94,5 +98,9 @@ class Test_compute_project_os_login_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == project.id
+<<<<<<< HEAD
+=======
+            assert result[0].resource_name == "test"
+>>>>>>> e4d234fe0 (fix(azure): remove `resource_name` inside the `Check_Report` (#7420))
             assert result[0].location == "global"
             assert result[0].project_id == GCP_PROJECT_ID

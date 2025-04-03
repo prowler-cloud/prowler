@@ -12,10 +12,17 @@ class defender_ensure_defender_for_databases_is_on(Check):
                 and "OpenSourceRelationalDatabases" in pricings
                 and "CosmosDbs" in pricings
             ):
+<<<<<<< HEAD
                 report = Check_Report_Azure(self.metadata())
                 report.resource_name = "Defender plan Databases"
                 report.subscription = subscription
                 report.resource_id = pricings["SqlServers"].resource_id
+=======
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["SqlServers"]
+                )
+                report.subscription = subscription
+>>>>>>> e4d234fe0 (fix(azure): remove `resource_name` inside the `Check_Report` (#7420))
                 report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)."
                 if (
