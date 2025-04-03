@@ -21,12 +21,12 @@ def mock_exchange_get_organization_config(_):
 )
 class Test_Exchange_Service:
     def test_get_client(self):
-        sharepoint_client = Exchange(
+        exchange_client = Exchange(
             set_mocked_microsoft365_provider(
                 identity=Microsoft365IdentityInfo(tenant_domain=DOMAIN)
             )
         )
-        assert sharepoint_client.client.__class__.__name__ == "GraphServiceClient"
+        assert exchange_client.client.__class__.__name__ == "GraphServiceClient"
 
     def test_get_organization_config(self):
         exchange_client = Exchange(set_mocked_microsoft365_provider())
