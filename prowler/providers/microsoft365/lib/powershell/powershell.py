@@ -26,12 +26,10 @@ class PowerShellSession:
             return
 
         # Setup credentials
-        self.execute(command=f'$User = "{credentials.user}"')
+        self.execute(f'$User = "{credentials.user}"')
+        self.execute(f'$SecureString = "{credentials.passwd}" | ConvertTo-SecureString')
         self.execute(
-            f'$SecurePassword = ConvertTo-SecureString -String "{credentials.passwd}" -AsPlainText -Force'
-        )
-        self.execute(
-            "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecurePassword)"
+            "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
         )
 
     def remove_ansi(self, text):
