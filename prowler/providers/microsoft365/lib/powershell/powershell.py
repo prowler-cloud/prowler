@@ -20,14 +20,18 @@ class PowerShellSession:
         )
         self.init_credential(credentials)
 
-    def init_credential(self, credentials: Microsoft365Credentials):
-        if not credentials.user or not credentials.passwd:
-            print("Error: USER and PASSWORD environment variables are not set.")
-            return
+    def sanitize(self, value):
+        """Sanitize input to prevent command injection."""
+        return re.sub(r'["$`;&|><^]', "", value)  # Remove dangerous characters
 
-        # Setup credentials
-        self.execute(f'$User = "{credentials.user}"')
-        self.execute(f'$SecureString = "{credentials.passwd}" | ConvertTo-SecureString')
+    def init_credential(self, credentials: Microsoft365Credentials):
+        # Sanitize user and password
+        user = self.sanitize(credentials.user)
+        passwd = self.sanitize(credentials.passwd)
+
+        # Securely convert encrypted password to SecureString
+        self.execute(f'$User = "{user}"')
+        self.execute(f'$SecureString = "{passwd}" | ConvertTo-SecureString')
         self.execute(
             "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
         )
@@ -64,9 +68,9 @@ class PowerShellSession:
                 break
             output_lines.append(line)
 
-        full_output = "\n".join(output_lines)
+        output = "\n".join(output_lines)
 
-        return full_output
+        return output
 
     def json_parse_output(self, output):
         json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
@@ -74,9 +78,7 @@ class PowerShellSession:
             try:
                 return json.loads(json_match.group(1))  # Return parsed JSON
             except json.JSONDecodeError:
-                pass  # If JSON parsing fails, return raw output
-
-        return {}  # Return empty output if no JSON found
+                return {}  # Return empty output if no JSON found
 
     def close(self):
         """Terminate the PowerShell session."""
