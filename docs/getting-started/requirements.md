@@ -152,7 +152,7 @@ $encryptedPassword = $securePassword | ConvertFrom-SecureString
 
 If everything is done correctly, you will see the encrypted string that you need to set as the `M365_PASSWD` environment variable.
 ```console
-echo $encryptedPassword
+Write-Output $encryptedPassword
 6500780061006d0070006c006500700061007300730077006f0072006400
 ```
 
