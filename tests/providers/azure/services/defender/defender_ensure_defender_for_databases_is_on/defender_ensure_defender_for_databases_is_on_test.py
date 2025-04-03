@@ -214,7 +214,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
                 == f"Defender plan Defender for Databases from subscription {AZURE_SUBSCRIPTION_ID} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Databases"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id
 
     def test_defender_databases_cosmosdb_not_standard(self):
@@ -272,5 +272,5 @@ class Test_defender_ensure_defender_for_databases_is_on:
                 == f"Defender plan Defender for Databases from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Databases"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id
