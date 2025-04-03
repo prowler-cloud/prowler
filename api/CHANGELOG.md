@@ -19,6 +19,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Added duplicated scheduled scans handling ([#7401])(https://github.com/prowler-cloud/prowler/pull/7401).
+- Added environment variable to configure the deletion task batch size ([#XXXX])(https://github.com/prowler-cloud/prowler/pull/XXXX).
 
 ---
 
