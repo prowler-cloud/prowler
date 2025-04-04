@@ -246,6 +246,11 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    # Check if the scan has findings
+    if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+        logger.info(f"No findings found for scan {scan_id}")
+        return {"upload": False}
+
     # Initialize the prowler provider
     prowler_provider = initialize_prowler_provider(Provider.objects.get(id=provider_id))
 

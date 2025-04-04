@@ -377,7 +377,7 @@
       "product_uid": "prowler",
       "title": "Ensure Image Vulnerability Scanning using Azure Defender image scanning or a third party provider",
       "types": [],
-      "uid": "prowler-azure-defender_container_images_scan_enabled-<subscription_uid>-global-Dender plan for Containers"
+      "uid": "prowler-azure-defender_container_images_scan_enabled-<subscription_uid>-global-Defender plan for Containers"
     },
     "resources": [
       {
