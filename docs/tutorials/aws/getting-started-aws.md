@@ -152,7 +152,7 @@ You can also configure your AWS account using static credentials (not recommende
 
 ![Connect via credentials](./img/connect-via-credentials.png)
 
-=== "AWS SDK or CLI"
+=== "Long term credentials"
 
     1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
 
@@ -173,16 +173,18 @@ You can also configure your AWS account using static credentials (not recommende
 
     > ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
 
-=== "Using `GetSessionToken`"
+=== "Short term credentials (Recommended)"
+
+    You can use your [AWS Access Portal](https://docs.aws.amazon.com/singlesignon/latest/userguide/howtogetcredentials.html) or the CLI:
 
     1. Retrieve short-term credentials for the IAM identity using this command:
 
         ```bash
-        aws sts get-session-token \
-            --duration-seconds 900 \
-            --serial-number "YourMFADeviceSerialNumber" \
-            --token-code 123456
+        aws sts get-session-token --duration-seconds 900
         ```
+
+        ???+ note
+            Check the aws documentation [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/sts_example_sts_GetSessionToken_section.html)
 
     2. Copy the output containing:
 
