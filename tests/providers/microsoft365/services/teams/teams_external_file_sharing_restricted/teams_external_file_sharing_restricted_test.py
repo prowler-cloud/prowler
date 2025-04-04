@@ -8,7 +8,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 class Test_teams_external_file_sharing_restricted:
     def test_file_sharing_no_restricted(self):
-        teams_client = mock.MagicMock
+        teams_client = mock.MagicMock()
         teams_client.audited_tenant = "audited_tenant"
         teams_client.audited_domain = DOMAIN
 
@@ -16,6 +16,9 @@ class Test_teams_external_file_sharing_restricted:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
             ),
             mock.patch(
                 "prowler.providers.microsoft365.services.teams.teams_external_file_sharing_restricted.teams_external_file_sharing_restricted.teams_client",
@@ -30,7 +33,6 @@ class Test_teams_external_file_sharing_restricted:
                 TeamsSettings,
             )
 
-            teams_client = mock.MagicMock
             teams_client.teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(
                     allow_box=True,
@@ -40,6 +42,8 @@ class Test_teams_external_file_sharing_restricted:
                     allow_share_file=True,
                 )
             )
+
+            teams_client.audit_config = {"allowed_cloud_storage_services": []}
 
             check = teams_external_file_sharing_restricted()
             result = check.execute()
@@ -58,7 +62,7 @@ class Test_teams_external_file_sharing_restricted:
             assert result[0].location == "global"
 
     def test_file_sharing_restricted(self):
-        teams_client = mock.MagicMock
+        teams_client = mock.MagicMock()
         teams_client.audited_tenant = "audited_tenant"
         teams_client.audited_domain = DOMAIN
 
@@ -66,6 +70,9 @@ class Test_teams_external_file_sharing_restricted:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
             ),
             mock.patch(
                 "prowler.providers.microsoft365.services.teams.teams_external_file_sharing_restricted.teams_external_file_sharing_restricted.teams_client",
@@ -80,16 +87,25 @@ class Test_teams_external_file_sharing_restricted:
                 TeamsSettings,
             )
 
-            teams_client = mock.MagicMock
             teams_client.teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(
-                    allow_box=False,
-                    allow_drop_box=False,
+                    allow_box=True,
+                    allow_drop_box=True,
                     allow_egnyte=False,
-                    allow_google_drive=False,
-                    allow_share_file=False,
+                    allow_google_drive=True,
+                    allow_share_file=True,
                 )
             )
+
+            teams_client.audit_config = {
+                "allowed_cloud_storage_services": [
+                    "allow_box",
+                    "allow_drop_box",
+                    # "allow_egnyte",
+                    "allow_google_drive",
+                    "allow_share_file",
+                ]
+            }
 
             check = teams_external_file_sharing_restricted()
             result = check.execute()

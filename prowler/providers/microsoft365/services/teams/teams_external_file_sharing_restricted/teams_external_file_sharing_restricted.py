@@ -2,6 +2,9 @@ from typing import List
 
 from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.teams.teams_client import teams_client
+from prowler.providers.microsoft365.services.teams.teams_service import (
+    CloudStorageSettings,
+)
 
 
 class teams_external_file_sharing_restricted(Check):
@@ -31,19 +34,35 @@ class teams_external_file_sharing_restricted(Check):
         report.status = "FAIL"
         report.status_extended = "External file sharing is not restricted to only approved cloud storage services."
 
+        allowed_services = teams_client.audit_config.get(
+            "allowed_cloud_storage_services", []
+        )
         if cloud_storage_settings:
-            if all(
-                not getattr(cloud_storage_settings, key, True)
-                for key in [
-                    "allow_box",
-                    "allow_drop_box",
-                    "allow_egnyte",
-                    "allow_google_drive",
-                    "allow_share_file",
+            # Get storage services from CloudStorageSettings class items
+            storage_services = [
+                attr
+                for attr, type_hint in CloudStorageSettings.__annotations__.items()
+                if type_hint is bool
+            ]
+
+            if not allowed_services:
+                if all(
+                    not getattr(cloud_storage_settings, service, True)
+                    for service in storage_services
+                ):
+                    report.status = "PASS"
+                    report.status_extended = "External file sharing is restricted to only approved cloud storage services."
+            else:
+                unauthorized_services = [
+                    service
+                    for service in storage_services
+                    if getattr(cloud_storage_settings, service, True)
+                    and service not in allowed_services
                 ]
-            ):
-                report.status = "PASS"
-                report.status_extended = "External file sharing is restricted to only approved cloud storage services."
+
+                if not unauthorized_services:
+                    report.status = "PASS"
+                    report.status_extended = "External file sharing is restricted to only approved cloud storage services."
 
         findings.append(report)
 
