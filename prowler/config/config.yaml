@@ -127,6 +127,7 @@ aws:
   # ]
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
+  organizations_trusted_ids: []
 
   # AWS ECR
   # aws.ecr_repositories_scan_vulnerabilities_in_latest_image
