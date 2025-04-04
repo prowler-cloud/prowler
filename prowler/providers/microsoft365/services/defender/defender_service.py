@@ -22,7 +22,7 @@ class Defender(Microsoft365Service):
                 malware_policies.append(
                     DefenderMalwarePolicy(
                         enable_file_filter=policy.get("EnableFileFilter", True),
-                        identity=malware_policy.get("Identity", ""),
+                        identity=policy.get("Identity", ""),
                     )
                 )
         except Exception as error:
