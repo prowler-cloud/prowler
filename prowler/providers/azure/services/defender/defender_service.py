@@ -177,7 +177,7 @@ class Defender(AzureService):
                         {
                             "default": SecurityContacts(
                                 resource_id=f"/subscriptions/{self.subscriptions[subscription_name]}/providers/Microsoft.Security/securityContacts/default",
-                                name="",
+                                name="default",
                                 emails="",
                                 phone="",
                                 alert_notifications_minimal_severity="",
