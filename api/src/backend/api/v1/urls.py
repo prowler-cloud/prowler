@@ -15,6 +15,7 @@ from api.v1.views import (
     InvitationViewSet,
     MembershipViewSet,
     OverviewViewSet,
+    ProcessorViewSet,
     ProviderGroupProvidersRelationshipView,
     ProviderGroupViewSet,
     ProviderSecretViewSet,
@@ -49,6 +50,7 @@ router.register(
 router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
 router.register(r"integrations", IntegrationViewSet, basename="integration")
+router.register(r"processors", ProcessorViewSet, basename="processor")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

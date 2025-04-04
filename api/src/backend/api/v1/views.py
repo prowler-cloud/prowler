@@ -80,6 +80,7 @@ from api.models import (
     Integration,
     Invitation,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -119,6 +120,9 @@ from api.v1.serializers import (
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
+    ProcessorCreateSerializer,
+    ProcessorSerializer,
+    ProcessorUpdateSerializer,
     ProviderCreateSerializer,
     ProviderGroupCreateSerializer,
     ProviderGroupMembershipSerializer,
@@ -307,6 +311,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Integration",
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
+            },
+            {
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -2564,3 +2573,54 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Processor"],
+        summary="List all processors",
+        description="Retrieve a list of all configured processors with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Processor"],
+        summary="Retrieve processor details",
+        description="Fetch detailed information about a specific processor by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Processor"],
+        summary="Create a new processor",
+        description="Register a new processor with the system, providing necessary configuration details. There can "
+        "only be one processor of each type per tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["Processor"],
+        summary="Partially update a processor",
+        description="Modify certain fields of an existing processor without affecting other settings.",
+    ),
+    destroy=extend_schema(
+        tags=["Processor"],
+        summary="Delete a processor",
+        description="Remove a processor from the system by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ProcessorViewSet(BaseRLSViewSet):
+    queryset = Processor.objects.all()
+    serializer_class = ProcessorSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    # filterset_class = IntegrationFilter
+    ordering = ["processor_type", "-inserted_at"]
+    # RBAC required permissions
+    required_permissions = []
+
+    def get_queryset(self):
+        queryset = Processor.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return ProcessorCreateSerializer
+        elif self.action == "partial_update":
+            return ProcessorUpdateSerializer
+        return super().get_serializer_class()

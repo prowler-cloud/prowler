@@ -7,6 +7,7 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
@@ -21,6 +22,7 @@ from api.models import (
     Invitation,
     InvitationRoleRelationship,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -42,6 +44,7 @@ from api.v1.serializer_utils.integrations import (
     IntegrationCredentialField,
     S3ConfigSerializer,
 )
+from api.v1.serializer_utils.processors import ProcessorConfigField
 
 # Tokens
 
@@ -2233,3 +2236,89 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
         return super().update(instance, validated_data)
+
+
+# Processors
+
+
+class ProcessorSerializer(RLSSerializer):
+    """
+    Serializer for the Processor model.
+    """
+
+    configuration = ProcessorConfigField()
+
+    class Meta:
+        model = Processor
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+            "url",
+        ]
+
+
+class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Processor.objects.all(),
+                fields=["processor_type", "configuration"],
+                message="A processor with the same type already exists.",
+            )
+        ]
+
+    # def validate(self, attrs):
+    #     integration_type = attrs.get("integration_type")
+    #     providers = attrs.get("providers")
+    #     configuration = attrs.get("configuration")
+    #     credentials = attrs.get("credentials")
+    #
+    #     validated_attrs = super().validate(attrs)
+    #     self.validate_integration_data(
+    #         integration_type, providers, configuration, credentials
+    #     )
+    #     return validated_attrs
+
+
+class ProcessorUpdateSerializer(BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    # def validate(self, attrs):
+    #     integration_type = self.instance.integration_type
+    #     providers = attrs.get("providers")
+    #     configuration = attrs.get("configuration") or self.instance.configuration
+    #     credentials = attrs.get("credentials") or self.instance.credentials
+    #
+    #     validated_attrs = super().validate(attrs)
+    #     self.validate_integration_data(
+    #         integration_type, providers, configuration, credentials
+    #     )
+    #     return validated_attrs
