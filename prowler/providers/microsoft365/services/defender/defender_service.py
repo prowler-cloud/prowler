@@ -9,23 +9,29 @@ class Defender(Microsoft365Service):
     def __init__(self, provider: Microsoft365Provider):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
-        self.malware_policy = self._get_malware_filter_policy()
+        self.malware_policies = self._get_malware_filter_policy()
 
     def _get_malware_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender malware filter policy...")
         malware_policy = self.powershell.execute(
             "Get-MalwareFilterPolicy | ConvertTo-Json"
         )
+        malware_policies = []
         try:
-            malware_policy = DefenderMalwarePolicy(
-                enable_file_filter=malware_policy.get("EnableFileFilter", True)
-            )
+            for policy in malware_policy:
+                malware_policies.append(
+                    DefenderMalwarePolicy(
+                        enable_file_filter=policy.get("EnableFileFilter", True),
+                        identity=malware_policy.get("Identity", ""),
+                    )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return malware_policy
+        return malware_policies
 
 
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
+    identity: str

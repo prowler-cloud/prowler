@@ -12,7 +12,10 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 
 def mock_defender_get_malware_filter_policy(_):
-    return DefenderMalwarePolicy(enable_file_filter=False)
+    return [
+        DefenderMalwarePolicy(enable_file_filter=False, identity="Policy1"),
+        DefenderMalwarePolicy(enable_file_filter=True, identity="Policy2"),
+    ]
 
 
 @patch(
@@ -30,5 +33,8 @@ class Test_Defender_Service:
 
     def test__get_malware_filter_policy(self):
         defender_client = Defender(set_mocked_microsoft365_provider())
-        malware_policy = defender_client.malware_policy
-        assert malware_policy.enable_file_filter is False
+        malware_policies = defender_client.malware_policies
+        assert malware_policies[0].enable_file_filter is False
+        assert malware_policies[0].identity == "Policy1"
+        assert malware_policies[1].enable_file_filter is True
+        assert malware_policies[1].identity == "Policy2"
