@@ -30,13 +30,13 @@ export const getRoles = async ({
   });
 
   try {
-    const invitations = await fetch(url.toString(), {
+    const roles = await fetch(url.toString(), {
       headers: {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await invitations.json();
+    const data = await roles.json();
     const parsedData = parseStringify(data);
     revalidatePath("/roles");
     return parsedData;
