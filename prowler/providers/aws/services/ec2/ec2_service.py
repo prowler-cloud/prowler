@@ -102,6 +102,7 @@ class EC2(AWSService):
                                     security_groups=[
                                         sg["GroupId"]
                                         for sg in instance.get("SecurityGroups", [])
+                                        if isinstance(sg, dict) and "GroupId" in sg
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
                                     network_interfaces=enis,
