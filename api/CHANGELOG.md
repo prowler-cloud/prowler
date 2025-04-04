@@ -11,6 +11,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
 - New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
 - Support for muted findings [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378).
+- Added missing fields to API findings and resources [(#7318)](https://github.com/prowler-cloud/prowler/pull/7318).
 
 ---
 
