@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+} from "@/lib";
 
 export const getUsers = async ({
   page = 1,
@@ -12,7 +16,7 @@ export const getUsers = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/users?include=roles");
 
@@ -31,10 +35,7 @@ export const getUsers = async ({
 
   try {
     const users = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await users.json();
     const parsedData = parseStringify(data);
@@ -48,7 +49,7 @@ export const getUsers = async ({
 };
 
 export const updateUser = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const userId = formData.get("userId") as string; // Ensure userId is a string
   const userName = formData.get("name") as string | null;
@@ -75,11 +76,7 @@ export const updateUser = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify({
         data: {
           type: "users",
@@ -102,7 +99,7 @@ export const updateUser = async (formData: FormData) => {
 };
 
 export const updateUserRole = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const userId = formData.get("userId") as string;
   const roleId = formData.get("roleId") as string;
@@ -126,11 +123,7 @@ export const updateUserRole = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -152,7 +145,7 @@ export const updateUserRole = async (formData: FormData) => {
 };
 
 export const deleteUser = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const userId = formData.get("userId");
 
   if (!userId) {
@@ -164,9 +157,7 @@ export const deleteUser = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -192,16 +183,13 @@ export const deleteUser = async (formData: FormData) => {
 };
 
 export const getProfileInfo = async () => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/users/me`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {

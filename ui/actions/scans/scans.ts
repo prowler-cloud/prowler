@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+} from "@/lib";
 
 export const getScans = async ({
   page = 1,
@@ -12,7 +16,7 @@ export const getScans = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/scans");
 
@@ -31,10 +35,7 @@ export const getScans = async ({
 
   try {
     const scans = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await scans.json();
     const parsedData = parseStringify(data);
@@ -48,7 +49,7 @@ export const getScans = async ({
 };
 
 export const getScansByState = async () => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans`);
 
@@ -57,10 +58,7 @@ export const getScansByState = async () => {
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -83,16 +81,13 @@ export const getScansByState = async () => {
 };
 
 export const getScan = async (scanId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
 
   try {
     const scan = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await scan.json();
     const parsedData = parseStringify(data);
@@ -106,8 +101,7 @@ export const getScan = async (scanId: string) => {
 };
 
 export const scanOnDemand = async (formData: FormData) => {
-  const session = await auth();
-
+  const headers = await getAuthHeaders({ contentType: true });
   const providerId = formData.get("providerId");
   const scanName = formData.get("scanName") || undefined;
 
@@ -135,11 +129,7 @@ export const scanOnDemand = async (formData: FormData) => {
 
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers: headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -164,7 +154,7 @@ export const scanOnDemand = async (formData: FormData) => {
 };
 
 export const scheduleDaily = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const providerId = formData.get("providerId");
 
@@ -173,11 +163,7 @@ export const scheduleDaily = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify({
         data: {
           type: "daily-schedules",
@@ -205,7 +191,7 @@ export const scheduleDaily = async (formData: FormData) => {
 };
 
 export const updateScan = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const scanId = formData.get("scanId");
   const scanName = formData.get("scanName");
@@ -215,11 +201,7 @@ export const updateScan = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify({
         data: {
           type: "scans",
@@ -243,15 +225,13 @@ export const updateScan = async (formData: FormData) => {
 };
 
 export const getExportsZip = async (scanId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/report`);
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
