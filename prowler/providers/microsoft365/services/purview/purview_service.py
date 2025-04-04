@@ -8,15 +8,13 @@ from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Pro
 class Purview(Microsoft365Service):
     def __init__(self, provider: Microsoft365Provider):
         super().__init__(provider)
-        self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
+        self.powershell.connect_exchange_online()
         self.audit_log_config = self._get_audit_log_config()
         self.powershell.close()
 
     def _get_audit_log_config(self):
         logger.info("Microsoft365 - Getting Admin Audit Log settings...")
-        audit_log_config = self.powershell.execute(
-            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
-        )
+        audit_log_config = self.powershell.get_audit_log_config()
         try:
             audit_log_config = AuditLogConfig(
                 audit_log_search=audit_log_config.get(

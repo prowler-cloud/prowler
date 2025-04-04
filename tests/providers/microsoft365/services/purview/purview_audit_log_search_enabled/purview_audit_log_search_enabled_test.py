@@ -8,7 +8,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 class Test_purview_audit_log_search_enabled:
     def test_audit_log_search_disabled(self):
-        purview_client = mock.MagicMock
+        purview_client = mock.MagicMock()
         purview_client.audited_tenant = "audited_tenant"
         purview_client.audited_domain = DOMAIN
 
@@ -16,6 +16,9 @@ class Test_purview_audit_log_search_enabled:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.microsoft365.services.purview.purview_audit_log_search_enabled.purview_audit_log_search_enabled.purview_client",
@@ -29,7 +32,6 @@ class Test_purview_audit_log_search_enabled:
                 AuditLogConfig,
             )
 
-            purview_client = mock.MagicMock
             purview_client.audit_log_config = AuditLogConfig(audit_log_search=False)
 
             check = purview_audit_log_search_enabled()
@@ -45,7 +47,7 @@ class Test_purview_audit_log_search_enabled:
             assert result[0].location == "global"
 
     def test_audit_log_search_enabled(self):
-        purview_client = mock.MagicMock
+        purview_client = mock.MagicMock()
         purview_client.audited_tenant = "audited_tenant"
         purview_client.audited_domain = DOMAIN
 
@@ -53,6 +55,9 @@ class Test_purview_audit_log_search_enabled:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.microsoft365.services.purview.purview_audit_log_search_enabled.purview_audit_log_search_enabled.purview_client",
