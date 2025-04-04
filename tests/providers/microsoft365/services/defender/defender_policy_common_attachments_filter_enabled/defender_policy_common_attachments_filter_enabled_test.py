@@ -31,7 +31,10 @@ class Test_defender_policy_common_attachments_filter_enabled:
 
             defender_client = mock.MagicMock
             defender_client.malware_policy = DefenderMalwarePolicy(
-                enable_file_filter=False
+                enable_file_filter=False,
+                identity="Default",
+                enable_internal_sender_admin_notifications=False,
+                internal_sender_admin_address="",
             )
 
             check = defender_policy_common_attachments_filter_enabled()
@@ -71,7 +74,10 @@ class Test_defender_policy_common_attachments_filter_enabled:
 
             defender_client = mock.MagicMock
             defender_client.malware_policy = DefenderMalwarePolicy(
-                enable_file_filter=True
+                enable_file_filter=True,
+                identity="Default",
+                enable_internal_sender_admin_notifications=False,
+                internal_sender_admin_address="",
             )
 
             check = defender_policy_common_attachments_filter_enabled()
