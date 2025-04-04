@@ -12,12 +12,20 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 
 def mock_defender_get_malware_filter_policy(_):
-    return DefenderMalwarePolicy(
-        enable_file_filter=True,
-        identity="Default",
-        enable_internal_sender_admin_notifications=True,
-        internal_sender_admin_address="security@example.com",
-    )
+    return [
+        DefenderMalwarePolicy(
+            enable_file_filter=False,
+            identity="Policy1",
+            enable_internal_sender_admin_notifications=False,
+            internal_sender_admin_address="",
+        ),
+        DefenderMalwarePolicy(
+            enable_file_filter=True,
+            identity="Policy2",
+            enable_internal_sender_admin_notifications=True,
+            internal_sender_admin_address="security@example.com",
+        ),
+    ]
 
 
 @patch(
@@ -35,8 +43,14 @@ class Test_Defender_Service:
 
     def test__get_malware_filter_policy(self):
         defender_client = Defender(set_mocked_microsoft365_provider())
-        malware_policy = defender_client.malware_policy
-        assert malware_policy.enable_file_filter is True
-        assert malware_policy.identity == "Default"
-        assert malware_policy.enable_internal_sender_admin_notifications is True
-        assert malware_policy.internal_sender_admin_address == "security@example.com"
+        malware_policies = defender_client.malware_policies
+        assert malware_policies[0].enable_file_filter is False
+        assert malware_policies[0].identity == "Policy1"
+        assert malware_policies[0].enable_internal_sender_admin_notifications is False
+        assert malware_policies[0].internal_sender_admin_address == ""
+        assert malware_policies[1].enable_file_filter is True
+        assert malware_policies[1].identity == "Policy2"
+        assert malware_policies[1].enable_internal_sender_admin_notifications is True
+        assert (
+            malware_policies[1].internal_sender_admin_address == "security@example.com"
+        )

@@ -25,20 +25,20 @@ class defender_policy_common_attachments_filter_enabled(Check):
             List[CheckReportMicrosoft365]: A list of reports containing the result of the check.
         """
         findings = []
-        malware_policy = defender_client.malware_policy
-        report = CheckReportMicrosoft365(
-            metadata=self.metadata(),
-            resource=malware_policy if malware_policy else {},
-            resource_name="Defender Malware Policy",
-            resource_id="defenderMalwarePolicy",
-        )
-        report.status = "FAIL"
-        report.status_extended = "Common Attachment Types Filter is not enabled in the Defender anti-malware policy."
+        for policy in defender_client.malware_policies:
+            report = CheckReportMicrosoft365(
+                metadata=self.metadata(),
+                resource=policy,
+                resource_name="Defender Malware Policy",
+                resource_id="defenderMalwarePolicy",
+            )
+            report.status = "FAIL"
+            report.status_extended = f"Common Attachment Types Filter is not enabled in the Defender anti-malware policy {policy.identity}."
 
-        if defender_client.malware_policy.enable_file_filter:
-            report.status = "PASS"
-            report.status_extended = "Common Attachment Types Filter is enabled in the Defender anti-malware policy."
+            if policy.enable_file_filter:
+                report.status = "PASS"
+                report.status_extended = f"Common Attachment Types Filter is enabled in the Defender anti-malware policy {policy.identity}."
 
-        findings.append(report)
+            findings.append(report)
 
         return findings
