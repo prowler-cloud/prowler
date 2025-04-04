@@ -19,6 +19,11 @@ class Microsoft365RegionConfig(BaseModel):
     credential_scopes: list = []
 
 
+class Microsoft365Credentials(BaseModel):
+    user: str = ""
+    passwd: str = ""
+
+
 class Microsoft365OutputOptions(ProviderOutputOptions):
     def __init__(self, arguments, bulk_checks_metadata, identity):
         # First call Provider_Output_Options init

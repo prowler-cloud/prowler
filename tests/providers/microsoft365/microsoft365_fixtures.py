@@ -3,6 +3,7 @@ from mock import MagicMock
 
 from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Provider
 from prowler.providers.microsoft365.models import (
+    Microsoft365Credentials,
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
 )
@@ -19,7 +20,10 @@ LOCATION = "global"
 
 # Mocked Azure Audit Info
 def set_mocked_microsoft365_provider(
-    credentials: DefaultAzureCredential = DefaultAzureCredential(),
+    session_credentials: DefaultAzureCredential = DefaultAzureCredential(),
+    credentials: Microsoft365Credentials = Microsoft365Credentials(
+        user="user@email.com", passwd="111111aa111111aaa1111"
+    ),
     identity: Microsoft365IdentityInfo = Microsoft365IdentityInfo(
         identity_id=IDENTITY_ID,
         identity_type=IDENTITY_TYPE,
@@ -31,7 +35,8 @@ def set_mocked_microsoft365_provider(
 ) -> Microsoft365Provider:
     provider = MagicMock()
     provider.type = "microsoft365"
-    provider.session.credentials = credentials
+    provider.session.credentials = session_credentials
+    provider.credentials = credentials
     provider.identity = identity
     provider.audit_config = audit_config
     provider.region_config = azure_region_config

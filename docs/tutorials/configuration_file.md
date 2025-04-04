@@ -105,6 +105,7 @@ The following list includes all the Microsoft365 checks with configurable variab
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
 
 
 ## Config YAML File Structure
@@ -509,5 +510,15 @@ microsoft365:
   # Conditional Access Policy
   # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4
+  # Teams Settings
+  # allowed_cloud_storage_services
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
 
 ```

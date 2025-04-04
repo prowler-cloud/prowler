@@ -4,12 +4,17 @@ By default Prowler uses MsGraph Python SDK identity package authentication metho
 This allows Prowler to authenticate against microsoft365 using the following methods:
 
 - Service principal authentication by environment variables (Enterprise Application)
+- Service principal and Microsoft user credentials by environment variabled (using PowerShell requires this authentication method)
 - Current CLI credentials stored
 - Interactive browser authentication
+
 
 To launch the tool first you need to specify which method is used through the following flags:
 
 ```console
+# To use service principal (app) authentication and Microsoft user credentials (to use PowerShell)
+prowler microsoft365 --env-auth
+
 # To use service principal authentication
 prowler microsoft365 --sp-env-auth
 

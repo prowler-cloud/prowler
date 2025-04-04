@@ -1,5 +1,6 @@
 from msgraph import GraphServiceClient
 
+from prowler.providers.microsoft365.lib.powershell.powershell import PowerShellSession
 from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Provider
 
 
@@ -9,6 +10,8 @@ class Microsoft365Service:
         provider: Microsoft365Provider,
     ):
         self.client = GraphServiceClient(credentials=provider.session)
-
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
+
+        if provider.credentials:
+            self.powershell = PowerShellSession(provider.credentials)
