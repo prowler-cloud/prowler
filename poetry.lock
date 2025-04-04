@@ -407,14 +407,14 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-compute"
-version = "34.0.0"
+version = "34.1.0"
 description = "Microsoft Azure Compute Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_compute-34.0.0-py3-none-any.whl", hash = "sha256:f8f7b1c5c187a26fae4d1f099adf93561244242f28899484d9a42747bf0d5af4"},
-    {file = "azure_mgmt_compute-34.0.0.tar.gz", hash = "sha256:58cd01d025efa02870b84dbfb69834a3b23501a135658c03854d2434e8dfee1e"},
+    {file = "azure_mgmt_compute-34.1.0-py3-none-any.whl", hash = "sha256:5de9c4ba12a79c69e2db3d880f93869a0a80e5c99d8232dbebf6c19b1ada3638"},
+    {file = "azure_mgmt_compute-34.1.0.tar.gz", hash = "sha256:cd9d35d1cc1b8cb0bd241ad55c91b77d14e04ae73c632ada1140135f9c217fe1"},
 ]
 
 [package.dependencies]
@@ -5370,4 +5370,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "c9cf39974b08283e154ce2645e3659ccfd1e7af120b1210c8b0b5e8e7299d546"
+content-hash = "4d144ab0c7ce0fe3b1b1b1145015fca23a3f7b9caeb363d848098b2c4840f1aa"
