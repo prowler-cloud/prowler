@@ -361,25 +361,24 @@ class Microsoft365Provider(Provider):
                 If False, returns empty credentials.
         """
         if env_auth:
-            # Check if required environment variables exist
-            if not getenv("M365_USER") or not getenv("M365_PASSWD"):
+            if not getenv("M365_USER") or not getenv("M365_ENCRYPTED_PASSWORD"):
                 logger.critical(
-                    "Microsoft365 provider: Missing M365_USER or M365_PASSWD environment variables needed for credentials authentication"
+                    "Microsoft365 provider: Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables needed for credentials authentication"
                 )
                 raise Microsoft365MissingEnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
-                    message="Missing M365_USER or M365_PASSWD environment variables required for credentials authentication.",
+                    message="Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication.",
                 )
             credentials = Microsoft365Credentials(
                 user=getenv("M365_USER"),
-                passwd=getenv("M365_PASSWD"),
+                passwd=getenv("M365_ENCRYPTED_PASSWORD"),
             )
             if PowerShellSession(credentials).test_credentials(credentials):
                 return credentials
             else:
                 raise Microsoft365EnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
-                    message="M365_USER or M365_PASSWD environment variables are not correct. Please ensure you are using the right credentials.",
+                    message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
                 )
 
     def print_credentials(self):
