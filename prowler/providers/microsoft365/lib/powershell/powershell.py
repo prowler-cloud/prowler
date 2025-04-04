@@ -20,9 +20,9 @@ class PowerShellSession:
         )
         self.init_credential(credentials)
 
-    def sanitize(self, value):
-        """Sanitize input to prevent command injection."""
-        return re.sub(r'["$`;&|><^]', "", value)  # Remove dangerous characters
+    def sanitize(self, credential: str):
+        """Sanitize input to prevent command injection, allowing only letters, numbers, and @."""
+        return re.sub(r"[^a-zA-Z0-9@]", "", credential)
 
     def init_credential(self, credentials: Microsoft365Credentials):
         # Sanitize user and password
