@@ -53,7 +53,12 @@ def mock_check_metadata(provider):
 
 
 def mock_get_check_compliance(*_):
-    return {"mock_compliance_key": "mock_compliance_value"}
+    return {
+        "CIS-2.0": ["1.12"],
+        "CIS-3.0": ["1.12"],
+        "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+        "MITRE-ATTACK": ["T1098"],
+    }
 
 
 class DummyTag:
@@ -153,7 +158,12 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="aws")
         check_output.resource = {"metadata": "mock_metadata"}
-        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -172,7 +182,10 @@ class TestFinding:
         assert finding_output.partition == "aws"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -249,7 +262,12 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="azure")
         check_output.resource = {}
-        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -269,7 +287,10 @@ class TestFinding:
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -335,7 +356,12 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="gcp")
         check_output.resource = {}
-        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -351,7 +377,10 @@ class TestFinding:
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -411,7 +440,12 @@ class TestFinding:
         check_output.check_metadata = mock_check_metadata(provider="kubernetes")
         check_output.timestamp = datetime.now()
         check_output.resource = {}
-        check_output.compliance = {"mock_compliance_key": "mock_compliance_value"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock Output Options
         output_options = MagicMock()
@@ -428,7 +462,10 @@ class TestFinding:
         assert finding_output.region == "namespace: test_namespace"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -629,7 +666,10 @@ class TestFinding:
         assert finding_obj.resource_tags == {"env": "prod"}
         assert finding_obj.region == "us-east-1"
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
 
     @patch(
@@ -721,7 +761,10 @@ class TestFinding:
         assert finding_obj.region == api_resource.region
         assert finding_obj.resource_tags == {}
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
 
         assert finding_obj.status == Status("FAIL")
@@ -835,7 +878,10 @@ class TestFinding:
             == dummy_project.organization.display_name
         )
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_obj.status == Status("PASS")
         assert finding_obj.status_extended == "GCP check extended"
