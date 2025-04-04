@@ -34,12 +34,15 @@ class Test_rds_instance_certificate_expiration:
         rds_client = mock.MagicMock
         rds_client.db_instances = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -94,12 +97,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -167,12 +173,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -239,12 +248,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -311,12 +323,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -383,12 +398,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -455,12 +473,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -527,12 +548,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -599,12 +623,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -671,12 +698,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
@@ -743,12 +773,15 @@ class Test_rds_instance_certificate_expiration:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_client.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (

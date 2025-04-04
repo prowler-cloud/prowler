@@ -97,6 +97,7 @@ class Test_fms_policy_compliant:
                 == f"arn:aws:fms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:policy"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource == fms_client.fms_policies[0]
 
     def test_fms_admin_with_compliant_policies(self):
         fms_client = mock.MagicMock
@@ -150,6 +151,7 @@ class Test_fms_policy_compliant:
                 == f"arn:aws:fms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:policy"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource == {}
 
     def test_fms_admin_with_non_and_compliant_policies(self):
         fms_client = mock.MagicMock
@@ -209,6 +211,7 @@ class Test_fms_policy_compliant:
                 == f"arn:aws:fms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:policy"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource == fms_client.fms_policies[0]
 
     def test_fms_admin_without_policies(self):
         fms_client = mock.MagicMock
@@ -246,6 +249,7 @@ class Test_fms_policy_compliant:
                 == f"arn:aws:fms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:policy"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource == {}
 
     def test_fms_admin_with_policy_with_null_status(self):
         fms_client = mock.MagicMock
@@ -297,3 +301,4 @@ class Test_fms_policy_compliant:
             assert result[0].resource_id == "12345678901"
             assert result[0].resource_arn == "arn:aws:fms:us-east-1:12345678901"
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource == fms_client.fms_policies[0]

@@ -12,12 +12,15 @@ class Test_iam_sa_user_managed_key_rotate_90_days:
     def test_iam_no_sa(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days import (
                 iam_sa_user_managed_key_rotate_90_days,
@@ -34,12 +37,15 @@ class Test_iam_sa_user_managed_key_rotate_90_days:
     def test_iam_sa_no_keys(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days import (
                 iam_sa_user_managed_key_rotate_90_days,
@@ -66,12 +72,15 @@ class Test_iam_sa_user_managed_key_rotate_90_days:
     def test_iam_sa_user_managed_key_rotate_90_days(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days import (
                 iam_sa_user_managed_key_rotate_90_days,
@@ -121,12 +130,15 @@ class Test_iam_sa_user_managed_key_rotate_90_days:
     def test_iam_sa_user_managed_key_no_rotate_90_days(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_user_managed_key_rotate_90_days.iam_sa_user_managed_key_rotate_90_days import (
                 iam_sa_user_managed_key_rotate_90_days,

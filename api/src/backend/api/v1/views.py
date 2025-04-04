@@ -1,6 +1,7 @@
 import glob
 import os
 
+import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
@@ -54,9 +55,11 @@ from tasks.tasks import (
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
+from api.db_utils import delete_related_daily_task
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
+    IntegrationFilter,
     InvitationFilter,
     MembershipFilter,
     ProviderFilter,
@@ -74,6 +77,7 @@ from api.filters import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     Provider,
@@ -98,10 +102,14 @@ from api.rls import Tenant
 from api.utils import CustomOAuth2Client, validate_invitation
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
+    ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    IntegrationCreateSerializer,
+    IntegrationSerializer,
+    IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
     InvitationSerializer,
@@ -239,7 +247,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.5.0"
+        spectacular_settings.VERSION = "1.6.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -294,6 +302,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Task",
                 "description": "Endpoints for task management, allowing retrieval of task status and "
                 "revoking tasks that have not started.",
+            },
+            {
+                "name": "Integration",
+                "description": "Endpoints for managing third-party integrations, including registration, configuration,"
+                " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -1076,6 +1089,7 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
+        delete_related_daily_task(str(provider.id))
 
         with transaction.atomic():
             task = delete_provider_task.delay(
@@ -1280,7 +1294,14 @@ class ScanViewSet(BaseRLSViewSet):
             filename = os.path.basename(output_location.split("/")[-1])
         else:
             zip_files = glob.glob(output_location)
-            file_path = zip_files[0]
+            try:
+                file_path = zip_files[0]
+            except IndexError as e:
+                sentry_sdk.capture_exception(e)
+                return Response(
+                    {"detail": "The scan has no reports."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             with open(file_path, "rb") as f:
                 file_content = f.read()
             filename = os.path.basename(file_path)
@@ -2036,6 +2057,21 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
         "requirement information and check's status.",
     ),
+    metadata=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Retrieve metadata values from compliance overviews",
+        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
+        "filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -2097,6 +2133,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ComplianceOverviewFullSerializer
+        elif self.action == "metadata":
+            return ComplianceOverviewMetadataSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
@@ -2112,6 +2150,35 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = self.request.tenant_id
+
+        regions = list(
+            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values_list("region", flat=True)
+            .order_by("region")
+            .distinct()
+        )
+        result = {"regions": regions}
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Overview"])
@@ -2433,3 +2500,67 @@ class ScheduleViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Integration"],
+        summary="List all integrations",
+        description="Retrieve a list of all configured integrations with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Integration"],
+        summary="Retrieve integration details",
+        description="Fetch detailed information about a specific integration by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Integration"],
+        summary="Create a new integration",
+        description="Register a new integration with the system, providing necessary configuration details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Integration"],
+        summary="Partially update an integration",
+        description="Modify certain fields of an existing integration without affecting other settings.",
+    ),
+    destroy=extend_schema(
+        tags=["Integration"],
+        summary="Delete an integration",
+        description="Remove an integration from the system by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class IntegrationViewSet(BaseRLSViewSet):
+    queryset = Integration.objects.all()
+    serializer_class = IntegrationSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = IntegrationFilter
+    ordering = ["integration_type", "-inserted_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    allowed_providers = None
+
+    def get_queryset(self):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all integrations
+            queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            allowed_providers = get_providers(user_roles)
+            queryset = Integration.objects.filter(providers__in=allowed_providers)
+            self.allowed_providers = allowed_providers
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return IntegrationCreateSerializer
+        elif self.action == "partial_update":
+            return IntegrationUpdateSerializer
+        return super().get_serializer_class()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["allowed_providers"] = self.allowed_providers
+        return context

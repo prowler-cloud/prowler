@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import connection, models, transaction
+from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
@@ -105,11 +106,12 @@ def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
     return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
 
 
-def batch_delete(queryset, batch_size=5000):
+def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE):
     """
     Deletes objects in batches and returns the total number of deletions and a summary.
 
     Args:
+        tenant_id (str): Tenant ID the queryset belongs to.
         queryset (QuerySet): The queryset of objects to delete.
         batch_size (int): The number of objects to delete in each batch.
 
@@ -120,21 +122,34 @@ def batch_delete(queryset, batch_size=5000):
     deletion_summary = {}
 
     while True:
-        # Get a batch of IDs to delete
-        batch_ids = set(
-            queryset.values_list("id", flat=True).order_by("id")[:batch_size]
-        )
-        if not batch_ids:
-            # No more objects to delete
-            break
+        with rls_transaction(tenant_id, POSTGRES_TENANT_VAR):
+            # Get a batch of IDs to delete
+            batch_ids = set(
+                queryset.values_list("id", flat=True).order_by("id")[:batch_size]
+            )
+            if not batch_ids:
+                # No more objects to delete
+                break
 
-        deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
+            deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
 
         total_deleted += deleted_count
         for model_label, count in deleted_info.items():
             deletion_summary[model_label] = deletion_summary.get(model_label, 0) + count
 
     return total_deleted, deletion_summary
+
+
+def delete_related_daily_task(provider_id: str):
+    """
+    Deletes the periodic task associated with a specific provider.
+
+    Args:
+        provider_id (str): The unique identifier for the provider
+                           whose related periodic task should be deleted.
+    """
+    task_name = f"scan-perform-scheduled-{provider_id}"
+    PeriodicTask.objects.filter(name=task_name).delete()
 
 
 # Postgres Enums
@@ -318,3 +333,15 @@ class InvitationStateEnum(EnumType):
 class InvitationStateEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("invitation_state", *args, **kwargs)
+
+
+# Postgres enum definition for Integration type
+
+
+class IntegrationTypeEnum(EnumType):
+    enum_type_name = "integration_type"
+
+
+class IntegrationTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("integration_type", *args, **kwargs)

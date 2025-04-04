@@ -86,7 +86,7 @@ The following list includes all the Azure checks with configurable variables tha
 ## Kubernetes
 
 ### Configurable Checks
-The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
@@ -95,6 +95,17 @@ The following list includes all the Azure checks with configurable variables tha
 | `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
 | `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
+
+
+## Microsoft365
+
+### Configurable Checks
+The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+
 
 ## Config YAML File Structure
 
@@ -492,5 +503,11 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+# Microsoft365 Configuration
+microsoft365:
+  # Conditional Access Policy
+  # policy.session_controls.sign_in_frequency.frequency in hours
+  sign_in_frequency: 4
 
 ```

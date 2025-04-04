@@ -28,15 +28,19 @@ class Test_s3_account_level_public_access_blocks:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
-            new=S3(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+                new=S3(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
@@ -76,15 +80,19 @@ class Test_s3_account_level_public_access_blocks:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
-            new=S3(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+                new=S3(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
@@ -125,21 +133,55 @@ class Test_s3_account_level_public_access_blocks:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider._scan_unused_services = False
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
-            new=S3(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+                new=S3(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
                 s3_account_level_public_access_blocks,
             )
 
+            check = s3_account_level_public_access_blocks()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_none_bucket_account_public_block(self):
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+                new=S3(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+                new=S3Control(aws_provider),
+            ) as s3control_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
+                s3_account_level_public_access_blocks,
+            )
+
+            s3control_client.account_public_access_block = None
             check = s3_account_level_public_access_blocks()
             result = check.execute()
 

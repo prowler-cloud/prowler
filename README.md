@@ -72,9 +72,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
 | AWS | 564 | 82 | 33 | 10 |
-| GCP | 77 | 13 | 5 | 3 |
+| GCP | 78 | 13 | 6 | 3 |
 | Azure | 140 | 18 | 7 | 3 |
-| Kubernetes | 83 | 7 | 2 | 7 |
+| Kubernetes | 83 | 7 | 4 | 7 |
 | Microsoft365 | 5 | 2 | 1 | 0 |
 
 > You can list the checks, services, compliance frameworks and categories with `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
@@ -109,7 +109,7 @@ docker compose up -d
 **Requirements**
 
 * `git` installed.
-* `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
 * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
@@ -212,7 +212,7 @@ git clone https://github.com/prowler-cloud/prowler
 cd prowler
 eval $(poetry env activate)
 poetry install
-python prowler.py -v
+python prowler-cli.py -v
 ```
 > [!IMPORTANT]
 > Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
