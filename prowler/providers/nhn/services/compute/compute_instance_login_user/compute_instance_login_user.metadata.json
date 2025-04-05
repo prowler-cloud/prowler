@@ -1,33 +1,30 @@
 {
-    "Provider": "nhn",
-    "CheckID": "compute_instance_login_user",
-    "CheckTitle": "Check for Administrative Login Users in NHN Compute Instances",
-    "CheckType": [], 
-    "ServiceName": "compute",
-    "SubServiceName": "",
-    "ResourceIdTemplate": "",
-    "Risk": "",
-    "Severity": "high",
-    "ResourceType": "VMInstance",
-    "Description": "Checks if NHN Compute instances have administrative login users.",
-    "Remediation": {
-        "Code": {
-            "CLI": "",
-            "NativeIaC": "",
-            "Other": "",
-            "Terraform": ""
-          },
-        "Recommendation": {
-        "Text": "Review the login users configured for each VM instance.", 
-        "Url": ""
-        }
+  "Provider": "nhn",
+  "CheckID": "compute_instance_login_user",
+  "CheckTitle": "Check for Administrative Login Users in NHN Compute Instances",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "VMInstance",
+  "Description": "Checks if NHN Compute instances have administrative login users.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
     },
-    "Categories": [],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": "",
-    "RelatedUrl": "",
-    "Enabled": true,
-    "Compliances": []
-  }
-  
+    "Recommendation": {
+      "Text": "Review the login users configured for each VM instance.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
