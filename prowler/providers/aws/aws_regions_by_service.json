@@ -8342,17 +8342,6 @@
         ]
       }
     },
-    "privatenetworks": {
-      "regions": {
-        "aws": [
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "proton": {
       "regions": {
         "aws": [
