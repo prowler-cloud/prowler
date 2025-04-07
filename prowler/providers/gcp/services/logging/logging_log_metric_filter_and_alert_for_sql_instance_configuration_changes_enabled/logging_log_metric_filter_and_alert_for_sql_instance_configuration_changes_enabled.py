@@ -17,7 +17,6 @@ class logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes
                     metadata=self.metadata(),
                     resource=metric,
                     location=logging_client.region,
-                    project_id=metric.project_id,
                 )
                 projects_with_metric.add(metric.project_id)
                 report.status = "FAIL"
