@@ -628,6 +628,7 @@ class EC2(AWSService):
                         self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
                             TransitGateway(
                                 id=transit_gateway["TransitGatewayId"],
+                                arn=transit_gateway["TransitGatewayArn"],
                                 auto_accept_shared_attachments=(
                                     transit_gateway["Options"][
                                         "AutoAcceptSharedAttachments"
@@ -799,6 +800,7 @@ class VpnEndpoint(BaseModel):
 
 class TransitGateway(BaseModel):
     id: str
+    arn: str
     auto_accept_shared_attachments: bool
     region: str
     tags: Optional[list] = []
