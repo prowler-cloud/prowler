@@ -118,7 +118,6 @@ class Test_logging_log_metric_filter_and_alert_for_custom_role_changes_enabled:
 
             logging_client.metrics = [
                 Metric(
-                    id="metric_id",
                     name="metric_name",
                     type="custom.googleapis.com/invoice/paid/amount",
                     filter='resource.type="iam_role" AND (protoPayload.methodName="google.iam.admin.v1.CreateRole" OR protoPayload.methodName="google.iam.admin.v1.DeleteRole" OR protoPayload.methodName="google.iam.admin.v1.UpdateRole")',
@@ -140,7 +139,7 @@ class Test_logging_log_metric_filter_and_alert_for_custom_role_changes_enabled:
                 result[0].status_extended
                 == f"Log metric filter metric_name found but no alerts associated in project {GCP_PROJECT_ID}."
             )
-            assert result[0].resource_id == "metric_id"
+            assert result[0].resource_id == "metric_name"
             assert result[0].resource_name == "metric_name"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
@@ -173,7 +172,6 @@ class Test_logging_log_metric_filter_and_alert_for_custom_role_changes_enabled:
 
             logging_client.metrics = [
                 Metric(
-                    id="metric_id",
                     name="metric_name",
                     type="metric_type",
                     filter='resource.type="iam_role" AND (protoPayload.methodName="google.iam.admin.v1.CreateRole" OR protoPayload.methodName="google.iam.admin.v1.DeleteRole" OR protoPayload.methodName="google.iam.admin.v1.UpdateRole")',
@@ -205,7 +203,7 @@ class Test_logging_log_metric_filter_and_alert_for_custom_role_changes_enabled:
                 result[0].status_extended
                 == f"Log metric filter metric_name found with alert policy alert_policy associated in project {GCP_PROJECT_ID}."
             )
-            assert result[0].resource_id == "metric_id"
+            assert result[0].resource_id == "metric_name"
             assert result[0].resource_name == "metric_name"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
