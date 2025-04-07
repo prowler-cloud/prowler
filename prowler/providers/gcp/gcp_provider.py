@@ -632,7 +632,11 @@ class GcpProvider(Provider):
                             gcp_project = GCPProject(
                                 number=asset["resource"]["data"]["projectNumber"],
                                 id=project_id,
-                                name=asset["resource"]["data"].get("name", project_id),
+                                name=(
+                                    asset["resource"]["data"].get("name")
+                                    if asset["resource"]["data"].get("name")
+                                    else project_id
+                                ),
                                 lifecycle_state=asset["resource"]["data"].get(
                                     "lifecycleState"
                                 ),
@@ -677,7 +681,11 @@ class GcpProvider(Provider):
                             gcp_project = GCPProject(
                                 number=project["projectNumber"],
                                 id=project_id,
-                                name=project.get("name", project_id),
+                                name=(
+                                    project.get("name")
+                                    if project.get("name")
+                                    else project_id
+                                ),
                                 lifecycle_state=project["lifecycleState"],
                                 labels=labels,
                             )
