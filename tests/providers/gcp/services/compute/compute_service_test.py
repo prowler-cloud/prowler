@@ -156,19 +156,24 @@ class TestComputeService:
             assert compute_client.firewalls[2].direction == "INGRESS"
             assert compute_client.firewalls[2].project_id == GCP_PROJECT_ID
 
-            assert len(compute_client.load_balancers) == 2
+            assert len(compute_client.load_balancers) == 4
             assert compute_client.load_balancers[0].name == "url_map1"
             assert compute_client.load_balancers[0].id.__class__.__name__ == "str"
             assert compute_client.load_balancers[0].service == "service1"
             assert compute_client.load_balancers[0].project_id == GCP_PROJECT_ID
-
+            assert compute_client.load_balancers[0].logging
             assert compute_client.load_balancers[1].name == "url_map2"
             assert compute_client.load_balancers[1].id.__class__.__name__ == "str"
             assert compute_client.load_balancers[1].service == "service2"
             assert compute_client.load_balancers[1].project_id == GCP_PROJECT_ID
-
-            assert len(compute_client.load_balancers) == 2
-
-            assert compute_client.load_balancers[0].logging
-
             assert not compute_client.load_balancers[1].logging
+            assert compute_client.load_balancers[2].name == "regional_url_map1"
+            assert compute_client.load_balancers[2].id.__class__.__name__ == "str"
+            assert compute_client.load_balancers[2].service == "regional_service1"
+            assert compute_client.load_balancers[2].project_id == GCP_PROJECT_ID
+            assert not compute_client.load_balancers[2].logging
+            assert compute_client.load_balancers[3].name == "regional_url_map2"
+            assert compute_client.load_balancers[3].id.__class__.__name__ == "str"
+            assert compute_client.load_balancers[3].service == "regional_service2"
+            assert compute_client.load_balancers[3].project_id == GCP_PROJECT_ID
+            assert not compute_client.load_balancers[3].logging
