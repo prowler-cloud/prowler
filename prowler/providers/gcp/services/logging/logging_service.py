@@ -52,6 +52,7 @@ class Logging(GCPService):
                     for metric in response.get("metrics", []):
                         self.metrics.append(
                             Metric(
+                                id=metric["resourceName"],
                                 name=metric["name"],
                                 type=metric["metricDescriptor"]["type"],
                                 filter=metric["filter"],
@@ -78,6 +79,7 @@ class Sink(BaseModel):
 
 
 class Metric(BaseModel):
+    id: str
     name: str
     type: str
     filter: str
