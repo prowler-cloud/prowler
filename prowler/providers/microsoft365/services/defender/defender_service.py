@@ -25,6 +25,12 @@ class Defender(Microsoft365Service):
                     DefenderMalwarePolicy(
                         enable_file_filter=policy.get("EnableFileFilter", True),
                         identity=policy.get("Identity", ""),
+                        enable_internal_sender_admin_notifications=policy.get(
+                            "EnableInternalSenderAdminNotifications", False
+                        ),
+                        internal_sender_admin_address=policy.get(
+                            "InternalSenderAdminAddress", ""
+                        ),
                     )
                 )
         except Exception as error:
@@ -37,3 +43,5 @@ class Defender(Microsoft365Service):
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
+    enable_internal_sender_admin_notifications: bool
+    internal_sender_admin_address: str
