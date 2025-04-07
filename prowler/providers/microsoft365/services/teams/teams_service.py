@@ -15,8 +15,6 @@ class Teams(Microsoft365Service):
     def _get_teams_client_configuration(self):
         logger.info("Microsoft365 - Getting Teams settings...")
         settings = self.powershell.get_teams_settings()
-        if not settings:
-            settings = {}
         try:
             teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(
