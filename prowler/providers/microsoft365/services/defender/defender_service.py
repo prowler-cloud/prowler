@@ -16,6 +16,8 @@ class Defender(Microsoft365Service):
         malware_policy = self.powershell.execute(
             "Get-MalwareFilterPolicy | ConvertTo-Json"
         )
+        if isinstance(malware_policy, dict):
+            malware_policy = [malware_policy]
         malware_policies = []
         try:
             for policy in malware_policy:
