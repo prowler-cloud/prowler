@@ -614,32 +614,30 @@ class EC2(AWSService):
 
     def _describe_transit_gateways(self, regional_client):
         try:
-            paginator = regional_client.get_paginator("describe_transit_gateways")
+            describe_transit_gateways_paginator = regional_client.get_paginator(
+                "describe_transit_gateways"
+            )
 
-            for page in paginator.paginate():
-                for transit_gateway in page.get("TransitGateways", []):
-                    tgw_id = transit_gateway.get("TransitGatewayId")
-                    tgw_arn = transit_gateway.get("TransitGatewayArn")
-
-                    if not tgw_id or not tgw_arn:
-                        logger.warning(
-                            f"{regional_client.region} -- Skipping transit gateway due to missing ID or ARN: {transit_gateway}"
+            for page in describe_transit_gateways_paginator.paginate():
+                for transit_gateway in page["TransitGateways"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transit_gateway["TransitGatewayArn"], self.audit_resources
                         )
-                        continue
-
-                    if not self.audit_resources or is_resource_filtered(
-                        tgw_arn, self.audit_resources
                     ):
-                        self.transit_gateways[tgw_arn] = TransitGateway(
-                            id=tgw_id,
-                            auto_accept_shared_attachments=(
-                                transit_gateway.get("Options", {}).get(
-                                    "AutoAcceptSharedAttachments"
-                                )
-                                == "enable"
-                            ),
-                            region=regional_client.region,
-                            tags=transit_gateway.get("Tags"),
+                        self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
+                            TransitGateway(
+                                id=transit_gateway["TransitGatewayId"],
+                                arn=transit_gateway["TransitGatewayArn"],
+                                auto_accept_shared_attachments=(
+                                    transit_gateway["Options"][
+                                        "AutoAcceptSharedAttachments"
+                                    ]
+                                    == "enable"
+                                ),
+                                region=regional_client.region,
+                                tags=transit_gateway.get("Tags"),
+                            )
                         )
 
         except Exception as error:
@@ -802,6 +800,7 @@ class VpnEndpoint(BaseModel):
 
 class TransitGateway(BaseModel):
     id: str
+    arn: str
     auto_accept_shared_attachments: bool
     region: str
     tags: Optional[list] = []
