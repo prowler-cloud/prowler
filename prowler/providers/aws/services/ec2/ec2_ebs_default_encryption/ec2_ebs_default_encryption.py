@@ -10,7 +10,7 @@ class ec2_ebs_default_encryption(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource=ebs_encryption
                 )
-                report.resource_arn = ec2_client._get_volume_arn_template(
+                report.resource_arn = ec2_client._get_account_arn_template(
                     ebs_encryption.region
                 )
                 report.resource_id = ec2_client.audited_account
