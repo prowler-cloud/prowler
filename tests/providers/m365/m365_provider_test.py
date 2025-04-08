@@ -349,7 +349,7 @@ class TestM365Provider:
             assert exception.type == M365HTTPResponseError
             assert (
                 exception.value.args[0]
-                == "[6003] Error in HTTP response from M365 - Simulated HttpResponseError"
+                == "[6003] Error in HTTP response from Microsoft 365 - Simulated HttpResponseError"
             )
 
     def test_test_connection_with_exception(self):
