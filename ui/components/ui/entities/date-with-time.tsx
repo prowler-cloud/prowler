@@ -23,7 +23,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
     }
 
     const formattedDate = format(date, "MMM dd, yyyy");
-    const formattedTime = format(date, "p 'UTC'");
+    const formattedTime = format(date, "p");
 
     return (
       <div className="mw-fit py-[2px]">
