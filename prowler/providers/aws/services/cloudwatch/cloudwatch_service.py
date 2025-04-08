@@ -102,6 +102,9 @@ class Logs(AWSService):
                 self._list_tags_for_resource, self.log_groups.values()
             )
 
+    def _get_account_arn_template(self, region):
+        return f"arn:{self.audited_partition}:cloudwatch:{region}:{self.audited_account}:account"
+
     def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
         try:
