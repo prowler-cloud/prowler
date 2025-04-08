@@ -68,7 +68,7 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install poetry==1.8.5
+          pipx install poetry --spec "poetry>2"
           pipx inject poetry poetry-bumpversion
 
       - name: Get Prowler version
