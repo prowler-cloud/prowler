@@ -1,6 +1,8 @@
+import re
 from dataclasses import dataclass
 from typing import List, Optional
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import NetworkManagementClient
 
 from prowler.lib.logger import logger
@@ -64,14 +66,22 @@ class Network(AzureService):
                 network_watchers.update({subscription: []})
                 network_watchers_list = client.network_watchers.list_all()
                 for network_watcher in network_watchers_list:
-                    flow_logs = self._get_flow_logs(subscription, network_watcher.name)
+                    flow_logs = self._get_flow_logs(
+                        subscription, network_watcher.name, network_watcher.id
+                    )
                     network_watchers[subscription].append(
                         NetworkWatcher(
                             id=network_watcher.id,
                             name=network_watcher.name,
                             location=network_watcher.location,
                             flow_logs=[
-                                FlowLog(id=flow_log.id) for flow_log in flow_logs
+                                FlowLog(
+                                    id=flow_log.id,
+                                    name=flow_log.name,
+                                    enabled=flow_log.properties.enabled,
+                                    retention_policy=flow_log.properties.retentionPolicy,
+                                )
+                                for flow_log in flow_logs
                             ],
                         )
                     )
@@ -82,12 +92,29 @@ class Network(AzureService):
                 )
         return network_watchers
 
-    def _get_flow_logs(self, subscription, network_watcher_name):
+    def _get_flow_logs(self, subscription, network_watcher_name, network_watcher_id):
         logger.info("Network - Getting Flow Logs...")
         client = self.clients[subscription]
-        resource_group = "NetworkWatcherRG"
-        flow_logs = client.flow_logs.list(resource_group, network_watcher_name)
-        return flow_logs
+        match = re.search(r"/resourceGroups/(?P<rg>[^/]+)/", network_watcher_id)
+        if not match:
+            logger.error(
+                f"Could not extract resource group from ID: {network_watcher_id}"
+            )
+            return []
+        resource_group = match.group("rg")
+        try:
+            flow_logs = client.flow_logs.list(resource_group, network_watcher_name)
+            return flow_logs
+        except ResourceNotFoundError as error:
+            logger.warning(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
     def _get_bastion_hosts(self):
         logger.info("Network - Getting Bastion Hosts...")
