@@ -1,7 +1,7 @@
 {
   "Framework": "CIS",
   "Version": "4.0",
-  "Provider": "Microsoft365",
+  "Provider": "M365",
   "Description": "The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for establishing a secure configuration posture for Microsoft 365 Cloud offerings running on any OS.",
   "Requirements": [
     {

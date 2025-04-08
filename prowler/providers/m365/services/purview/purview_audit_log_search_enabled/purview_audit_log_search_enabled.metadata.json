@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "purview_audit_log_search_enabled",
+  "CheckTitle": "Ensure Purview audit log search is enabled",
+  "CheckType": [],
+  "ServiceName": "purview",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Purview Settings",
+  "Description": "Ensure Purview audit log search is enabled.",
+  "Risk": "Disabling Microsoft 365 audit log search can hinder the ability to track and monitor user and admin activities, making it harder to detect suspicious behavior, security incidents, or compliance violations. This can result in undetected breaches and inability to respond to incidents effectively.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Purview https://compliance.microsoft.com. 2. Select Audit to open the audit search. 3. Click Start recording user and admin activity next to the information warning at the top. 4. Click Yes on the dialog box to confirm.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that Microsoft 365 audit log search is enabled to maintain a comprehensive record of user and admin activities. This will help improve security monitoring, support compliance needs, and provide critical insights for responding to incidents.",
+      "Url": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

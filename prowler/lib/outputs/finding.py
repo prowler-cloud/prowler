@@ -245,7 +245,7 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
-            elif provider.type == "microsoft365":
+            elif provider.type == "m365":
                 output_data["auth_method"] = (
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"
                 )
