@@ -8,7 +8,39 @@ from prowler.providers.m365.models import M365Credentials
 
 
 class PowerShellSession:
-    """Manages a persistent PowerShell session for executing commands."""
+    """
+    Manages a persistent PowerShell session for executing Microsoft 365-related commands.
+
+    This class encapsulates the lifecycle and command execution of a persistent PowerShell
+    subprocess. It supports Microsoft 365 authentication using credentials provided through
+    the `M365Credentials` model and provides methods to interact with PowerShell modules.
+
+    Features:
+    - Maintains a persistent PowerShell session.
+    - Initializes and manages PowerShell credential objects securely.
+    - Sanitizes credentials to prevent command injection.
+    - Executes PowerShell commands and handles JSON-formatted responses.
+
+    Attributes
+    ----------
+    END : str
+        Marker string used to signal the end of PowerShell command output.
+    process : subprocess.Popen
+        The underlying PowerShell subprocess with open stdin, stdout, and stderr streams.
+
+    Parameters
+    ----------
+    credentials : M365Credentials
+        A credentials object containing username and password for Microsoft 365 authentication.
+
+    Examples
+    --------
+    >>> credentials = M365Credentials(user="your_email@example.com", passwd="6500780061006d0070006c006500700061007300730077006f0072006400")
+    >>> session = PowerShellSession(credentials)
+    >>> session.get_teams_settings()
+    {'AllowEmailIntoChannel': True, ...}
+    >>> session.close()
+    """
 
     END = "<END>"
 
