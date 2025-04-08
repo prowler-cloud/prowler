@@ -13,6 +13,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Accepted invitations can no longer be edited. [(#7198)](https://github.com/prowler-cloud/prowler/pull/7198)
 - Added download column in scans table to download reports for completed scans. [(#7353)](https://github.com/prowler-cloud/prowler/pull/7353)
 - Show muted icon when a finding is muted. [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378)
+- Added static status icon with link to service status page. [(#7468)](https://github.com/prowler-cloud/prowler/pull/7468)
 
 #### 🔄 Changed
 
