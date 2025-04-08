@@ -33,6 +33,10 @@ IGNORED_EXCEPTIONS = [
     "ValidationException",
     "AWSSecretAccessKeyInvalidError",
     "InvalidAction",
+    "InvalidRequestException",
+    "RequestExpired",
+    "ConnectionClosedError",
+    "HTTPSConnectionPool",
     "Pool is closed",  # The following comes from urllib3: eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
     # Authentication Errors from GCP
     "ClientAuthenticationError",
@@ -41,6 +45,8 @@ IGNORED_EXCEPTIONS = [
     "Permission denied to get service",
     "API has not been used in project",
     "HttpError 404 when requesting",
+    "HttpError 403 when requesting",
+    "HttpError 400 when requesting",
     "GCPNoAccesibleProjectsError",
     # Authentication Errors from Azure
     "ClientAuthenticationError",
