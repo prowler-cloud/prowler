@@ -76,7 +76,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | Azure | 140 | 18 | 7 | 3 |
 | Kubernetes | 83 | 7 | 4 | 7 |
 | Microsoft365 | 5 | 2 | 1 | 0 |
-| NHN (Unofficial) | 6 | 2 | 0 | 1 |
+| NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
 > You can list the checks, services, compliance frameworks and categories with `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
