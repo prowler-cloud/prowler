@@ -1,7 +1,7 @@
 {
   "Framework": "SOC2",
   "Version": "",
-  "Provider": "AWS",
+  "Provider": "GCP",
   "Description": "System and Organization Controls (SOC), defined by the American Institute of Certified Public Accountants (AICPA), is the name of a set of reports that's produced during an audit. It's intended for use by service organizations (organizations that provide information systems as a service to other organizations) to issue validated reports of internal controls over those information systems to the users of those services. The reports focus on controls grouped into five categories known as Trust Service Principles.",
   "Requirements": [
     {
@@ -17,12 +17,15 @@
         }
       ],
       "Checks": [
-        "iam_policy_attached_only_to_group_or_roles",
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges",
-        "iam_user_accesskey_unused",
-        "iam_user_console_access_unused"
+        "iam_account_access_approval_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_organization_essential_contacts_configured",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_unused"
       ]
     },
     {
@@ -33,33 +36,37 @@
         {
           "ItemId": "cc_2_1",
           "Section": "CC2.0 - Common Criteria Related to Communication and Information",
-          "Service": "aws",
+          "Service": "logging",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled"
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
       ]
     },
     {
       "Id": "cc_3_1",
       "Name": "CC3.1 COSO Principle 6: The entity specifies objectives with sufficient clarity to enable the identification and assessment of risks relating to objectives",
-      "Description": "Operations Objectives: Reflects Management's Choices - Operations objectives reflect management's choices about structure, industry considerations, and performance of the entity. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. External Financial Reporting Objectives: Complies With Applicable Accounting Standards - Financial reporting objectives are consistent with accounting principles suitable and available for that entity. The accounting principles selected are appropriate in the circumstances. External Nonfinancial Reporting Objectives: Complies With Externally Established Frameworks - Management establishes objectives consistent with laws and regulations or standards and frameworks of recognized external organizations. Reflects Entity Activities - External reporting reflects the underlying transactions and events within a range of acceptable limits. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs and based on criteria established by third parties in nonfinancial reporting. Internal Reporting Objectives: Reflects Management's Choices - Internal reporting provides management with accurate and complete information regarding management's choices and information needed in managing the entity. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs in nonfinancial reporting objectives and materiality within financial reporting objectives. Reflects Entity Activities—Internal reporting reflects the underlying transactions and events within a range of acceptable limits. Compliance Objectives: Reflects External Laws and Regulations - Laws and regulations establish minimum standards of conduct, which the entity integrates into compliance objectives. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. Additional point of focus specifically related to all engagements using the trust services criteria: Establishes Sub-objectives to Support Objectives—Management identifies sub-objectives related to security, availability, processing integrity, confidentiality, and privacy to support the achievement of the entity’s objectives related to reporting, operations, and compliance.",
+      "Description": "Operations Objectives: Reflects Management's Choices - Operations objectives reflect management's choices about structure, industry considerations, and performance of the entity. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. External Financial Reporting Objectives: Complies With Applicable Accounting Standards - Financial reporting objectives are consistent with accounting principles suitable and available for that entity. The accounting principles selected are appropriate in the circumstances. External Nonfinancial Reporting Objectives: Complies With Externally Established Frameworks - Management establishes objectives consistent with lgcp and regulations or standards and frameworks of recognized external organizations. Reflects Entity Activities - External reporting reflects the underlying transactions and events within a range of acceptable limits. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs and based on criteria established by third parties in nonfinancial reporting. Internal Reporting Objectives: Reflects Management's Choices - Internal reporting provides management with accurate and complete information regarding management's choices and information needed in managing the entity. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs in nonfinancial reporting objectives and materiality within financial reporting objectives. Reflects Entity Activities—Internal reporting reflects the underlying transactions and events within a range of acceptable limits. Compliance Objectives: Reflects External Lgcp and Regulations - Lgcp and regulations establish minimum standards of conduct, which the entity integrates into compliance objectives. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. Additional point of focus specifically related to all engagements using the trust services criteria: Establishes Sub-objectives to Support Objectives—Management identifies sub-objectives related to security, availability, processing integrity, confidentiality, and privacy to support the achievement of the entity’s objectives related to reporting, operations, and compliance.",
       "Attributes": [
         {
           "ItemId": "cc_3_1",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled",
-        "config_recorder_all_regions_enabled"
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled"
       ]
     },
     {
@@ -70,15 +77,12 @@
         {
           "ItemId": "cc_3_2",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "aws",
+          "Service": "gcr",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching",
-        "guardduty_no_high_severity_findings",
-        "guardduty_is_enabled"
+        "gcr_container_scanning_enabled"
       ]
     },
     {
@@ -89,16 +93,16 @@
         {
           "ItemId": "cc_3_3",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "aws",
+          "Service": "logging",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "iam_inline_policy_allows_privilege_escalation",
-        "iam_policy_no_full_access_to_cloudtrail",
-        "cloudtrail_threat_detection_privilege_escalation",
-        "cloudtrail_threat_detection_enumeration",
-        "cloudtrail_threat_detection_llm_jacking"
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
       ]
     },
     {
@@ -109,12 +113,12 @@
         {
           "ItemId": "cc_3_4",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "config",
+          "Service": "iam",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "config_recorder_all_regions_enabled"
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -125,13 +129,12 @@
         {
           "ItemId": "cc_4_2",
           "Section": "CC4.0 - Monitoring Activities",
-          "Service": "guardduty",
+          "Service": "iam",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings"
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -142,21 +145,20 @@
         {
           "ItemId": "cc_5_2",
           "Section": "CC5.0 - Control Activities",
-          "Service": "cloudwatch",
+          "Service": "logging",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_aws_organizations_changes",
-        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
-        "cloudwatch_log_metric_filter_policy_changes",
-        "cloudwatch_log_metric_filter_security_group_changes"
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
       ]
     },
     {
@@ -167,12 +169,12 @@
         {
           "ItemId": "cc_6_1",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "s3",
+          "Service": "cloudstorage",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "s3_bucket_public_access"
+        "cloudstorage_bucket_public_access"
       ]
     },
     {
@@ -183,12 +185,12 @@
         {
           "ItemId": "cc_6_2",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "rds",
+          "Service": "cloudsql",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "rds_instance_no_public_access"
+        "cloudsql_instance_public_access"
       ]
     },
     {
@@ -204,9 +206,11 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges"
+        "iam_account_access_approval_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_user_managed_key_unused"
       ]
     },
     {
@@ -217,56 +221,19 @@
         {
           "ItemId": "cc_6_6",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "ec2",
+          "Service": "compute",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "ec2_instance_public_ip",
-        "ec2_ami_public",
-        "ec2_ebs_public_snapshot",
-        "ec2_ebs_snapshot_account_block_public_access",
-        "ec2_launch_template_no_public_ip",
-        "ec2_securitygroup_allow_wide_open_public_ipv4",
-        "vpc_subnet_no_public_ip_by_default",
-        "vpc_subnet_separate_private_public",
-        "ec2_instance_port_cassandra_exposed_to_internet",
-        "ec2_instance_port_cifs_exposed_to_internet",
-        "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
-        "ec2_instance_port_ftp_exposed_to_internet",
-        "ec2_instance_port_kafka_exposed_to_internet",
-        "ec2_instance_port_kerberos_exposed_to_internet",
-        "ec2_instance_port_ldap_exposed_to_internet",
-        "ec2_instance_port_memcached_exposed_to_internet",
-        "ec2_instance_port_mongodb_exposed_to_internet",
-        "ec2_instance_port_mysql_exposed_to_internet",
-        "ec2_instance_port_oracle_exposed_to_internet",
-        "ec2_instance_port_postgresql_exposed_to_internet",
-        "ec2_instance_port_rdp_exposed_to_internet",
-        "ec2_instance_port_redis_exposed_to_internet",
-        "ec2_instance_port_sqlserver_exposed_to_internet",
-        "ec2_instance_port_ssh_exposed_to_internet",
-        "ec2_instance_port_telnet_exposed_to_internet",
-        "ec2_networkacl_allow_ingress_any_port",
-        "ec2_networkacl_allow_ingress_tcp_port_22",
-        "ec2_networkacl_allow_ingress_tcp_port_3389",
-        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_public_ip",
+        "compute_instance_serial_ports_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_public_address_shodan"
       ]
     },
     {
@@ -277,20 +244,17 @@
         {
           "ItemId": "cc_6_7",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "acm_certificates_expiration_check",
-        "dms_endpoint_redis_in_transit_encryption_enabled",
-        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
-        "ec2_transitgateway_auto_accept_vpc_attachments",
-        "elasticache_redis_cluster_in_transit_encryption_enabled",
-        "kafka_cluster_in_transit_encryption_enabled",
-        "kafka_connector_in_transit_encryption_enabled",
-        "redshift_cluster_in_transit_encryption_enabled",
-        "transfer_server_in_transit_encryption_enabled"
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_ssl_connections"
       ]
     },
     {
@@ -301,13 +265,12 @@
         {
           "ItemId": "cc_6_8",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -318,15 +281,12 @@
         {
           "ItemId": "cc_7_1",
           "Section": "CC7.0 - System Operations",
-          "Service": "aws",
+          "Service": "iam",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled",
-        "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching"
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -337,63 +297,70 @@
         {
           "ItemId": "cc_7_2",
           "Section": "CC7.0 - System Operations",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "rds_instance_integration_cloudwatch_logs",
-        "cloudtrail_multi_region_enabled",
-        "securityhub_enabled",
-        "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "redshift_cluster_audit_logging",
-        "vpc_flow_logs_enabled",
-        "ec2_instance_imdsv2_enabled",
-        "guardduty_is_enabled",
-        "apigateway_restapi_logging_enabled",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
       ]
     },
     {
       "Id": "cc_7_3",
       "Name": "CC7.3 The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures",
-      "Description": "Responds to Security Incidents - Procedures are in place for responding to security incidents and evaluating the effectiveness of those policies and procedures on a periodic basis. Communicates and Reviews Detected Security Events - Detected security events are communicated to and reviewed by the individuals responsible for the management of the security program and actions are taken, if necessary. Develops and Implements Procedures to Analyze Security Incidents - Procedures are in place to analyze security incidents and determine system impact. Assesses the Impact on Personal Information - Detected security events are evaluated to determine whether they could or did result in the unauthorized disclosure or use of personal information and whether there has been a failure to comply with applicable laws or regulations. Determines Personal Information Used or Disclosed - When an unauthorized use or disclosure of personal information has occurred, the affected information is identified.",
+      "Description": "Responds to Security Incidents - Procedures are in place for responding to security incidents and evaluating the effectiveness of those policies and procedures on a periodic basis. Communicates and Reviews Detected Security Events - Detected security events are communicated to and reviewed by the individuals responsible for the management of the security program and actions are taken, if necessary. Develops and Implements Procedures to Analyze Security Incidents - Procedures are in place to analyze security incidents and determine system impact. Assesses the Impact on Personal Information - Detected security events are evaluated to determine whether they could or did result in the unauthorized disclosure or use of personal information and whether there has been a failure to comply with applicable lgcp or regulations. Determines Personal Information Used or Disclosed - When an unauthorized use or disclosure of personal information has occurred, the affected information is identified.",
       "Attributes": [
         {
           "ItemId": "cc_7_3",
           "Section": "CC7.0 - System Operations",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "cloudwatch_log_group_kms_encryption_enabled",
-        "cloudtrail_log_file_validation_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "guardduty_is_enabled",
-        "apigateway_restapi_logging_enabled",
-        "rds_instance_integration_cloudwatch_logs",
-        "securityhub_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "vpc_flow_logs_enabled",
-        "guardduty_no_high_severity_findings"
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -404,23 +371,20 @@
         {
           "ItemId": "cc_7_4",
           "Section": "CC7.0 - System Operations",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "rds_instance_backup_enabled",
-        "redshift_cluster_automated_snapshot",
-        "s3_bucket_object_versioning",
-        "securityhub_enabled"
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "cloudsql_instance_automated_backups"
       ]
     },
     {
@@ -431,17 +395,12 @@
         {
           "ItemId": "cc_7_5",
           "Section": "CC7.0 - System Operations",
-          "Service": "aws",
+          "Service": "cloudsql",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "ec2_ebs_snapshots_encrypted",
-        "ec2_ebs_volume_snapshots_exists",
-        "neptune_cluster_copy_tags_to_snapshots",
-        "neptune_cluster_snapshot_encrypted",
-        "rds_instance_copy_tags_to_snapshots",
-        "redshift_cluster_automated_snapshot"
+        "cloudsql_instance_automated_backups"
       ]
     },
     {
@@ -452,12 +411,12 @@
         {
           "ItemId": "cc_8_1",
           "Section": "CC8.0 - Change Management",
-          "Service": "config",
+          "Service": "iam",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "config_recorder_all_regions_enabled"
+        "iam_cloud_asset_inventory_enabled"
       ]
     },
     {
@@ -468,49 +427,33 @@
         {
           "ItemId": "cc_a_1_1",
           "Section": "CCA1.0 - Additional Criterial for Availability",
-          "Service": "aws",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "rds_instance_backup_enabled",
-        "rds_instance_integration_cloudwatch_logs",
-        "redshift_cluster_automated_snapshot",
-        "s3_bucket_object_versioning",
-        "apigatewayv2_api_access_logging_enabled",
-        "appsync_field_level_logging_enabled",
-        "athena_workgroup_logging_enabled",
-        "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
-        "bedrock_model_invocation_logging_enabled",
-        "cloudfront_distributions_logging_enabled",
-        "cloudtrail_logs_s3_bucket_access_logging_enabled",
-        "codebuild_project_logging_enabled",
-        "datasync_task_logging_enabled",
-        "dms_replication_task_source_logging_enabled",
-        "dms_replication_task_target_logging_enabled",
-        "ec2_client_vpn_endpoint_connection_logging_enabled",
-        "ecs_task_definitions_logging_enabled",
-        "elasticbeanstalk_environment_cloudwatch_logging_enabled",
-        "elb_logging_enabled",
-        "elbv2_logging_enabled",
-        "glue_etl_jobs_logging_enabled",
-        "mq_broker_logging_enabled",
-        "networkfirewall_logging_enabled",
-        "opensearch_service_domains_audit_logging_enabled",
-        "opensearch_service_domains_cloudwatch_logging_enabled",
-        "route53_public_hosted_zones_cloudwatch_logging_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "stepfunctions_statemachine_logging_enabled",
-        "waf_global_webacl_logging_enabled",
-        "wafv2_webacl_logging_enabled",
-        "wafv2_webacl_rule_logging_enabled"
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
       ]
     },
     {
@@ -521,12 +464,16 @@
         {
           "ItemId": "cc_c_1_1",
           "Section": "CCC1.0 - Additional Criterial for Confidentiality",
-          "Service": "rds",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "rds_instance_deletion_protection"
+        "compute_instance_confidential_computing_enabled",
+        "bigquery_table_cmk_encryption",
+        "bigquery_dataset_cmk_encryption",
+        "compute_instance_encryption_with_csek_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
       ]
     },
     {
@@ -537,14 +484,12 @@
         {
           "ItemId": "cc_c_1_2",
           "Section": "CCC1.0 - Additional Criterial for Confidentiality",
-          "Service": "aws",
+          "Service": "cloudstorage",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "s3_bucket_object_versioning",
-        "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "kinesis_stream_data_retention_period"
+        "cloudstorage_bucket_log_retention_policy_lock"
       ]
     }
   ]
