@@ -39,6 +39,7 @@ class Defender(AzureService):
                         {
                             pricing.name: Pricing(
                                 resource_id=pricing.id,
+                                resource_name=pricing.name,
                                 pricing_tier=getattr(pricing, "pricing_tier", None),
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
                                 extensions=dict(
@@ -176,7 +177,7 @@ class Defender(AzureService):
                         {
                             "default": SecurityContacts(
                                 resource_id=f"/subscriptions/{self.subscriptions[subscription_name]}/providers/Microsoft.Security/securityContacts/default",
-                                name="",
+                                name="default",
                                 emails="",
                                 phone="",
                                 alert_notifications_minimal_severity="",
@@ -224,6 +225,7 @@ class Defender(AzureService):
 
 class Pricing(BaseModel):
     resource_id: str
+    resource_name: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
     extensions: Dict[str, bool] = {}

@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import gather, get_event_loop
 from enum import Enum
 from typing import List, Optional
@@ -23,6 +24,7 @@ class Entra(Microsoft365Service):
                 self._get_admin_consent_policy(),
                 self._get_groups(),
                 self._get_organization(),
+                self._get_users(),
             )
         )
 
@@ -31,6 +33,7 @@ class Entra(Microsoft365Service):
         self.admin_consent_policy = attributes[2]
         self.groups = attributes[3]
         self.organizations = attributes[4]
+        self.users = attributes[5]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -181,6 +184,14 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
+                        client_app_types=[
+                            ClientAppType(client_app_type)
+                            for client_app_type in getattr(
+                                policy.conditions,
+                                "client_app_types",
+                                [],
+                            )
+                        ],
                         user_risk_levels=[
                             RiskLevel(risk_level)
                             for risk_level in getattr(
@@ -213,6 +224,15 @@ class Entra(Microsoft365Service):
                             GrantControlOperator(
                                 getattr(policy.grant_controls, "operator", "AND")
                             )
+                        ),
+                        authentication_strength=(
+                            AuthenticationStrength(
+                                policy.grant_controls.authentication_strength.display_name
+                            )
+                            if policy.grant_controls is not None
+                            and policy.grant_controls.authentication_strength
+                            is not None
+                            else None
                         ),
                     ),
                     session_controls=SessionControls(
@@ -334,6 +354,44 @@ class Entra(Microsoft365Service):
 
         return organizations
 
+    async def _get_users(self):
+        logger.info("Entra - Getting users...")
+        users = {}
+        try:
+            users_list = await self.client.users.get()
+            directory_roles = await self.client.directory_roles.get()
+
+            async def fetch_role_members(directory_role):
+                members_response = (
+                    await self.client.directory_roles.by_directory_role_id(
+                        directory_role.id
+                    ).members.get()
+                )
+                return directory_role.role_template_id, members_response.value
+
+            tasks = [fetch_role_members(role) for role in directory_roles.value]
+            roles_members_list = await asyncio.gather(*tasks)
+
+            user_roles_map = {}
+            for role_template_id, members in roles_members_list:
+                for member in members:
+                    user_roles_map.setdefault(member.id, []).append(role_template_id)
+
+            for user in users_list.value:
+                users[user.id] = User(
+                    id=user.id,
+                    name=user.display_name,
+                    on_premises_sync_enabled=(
+                        True if (user.on_premises_sync_enabled) else False
+                    ),
+                    directory_roles_ids=user_roles_map.get(user.id, []),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return users
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -367,9 +425,18 @@ class RiskLevel(Enum):
     NO_RISK = "none"
 
 
+class ClientAppType(Enum):
+    ALL = "all"
+    BROWSER = "browser"
+    MOBILE_APPS_AND_DESKTOP_CLIENTS = "mobileAppsAndDesktopClients"
+    EXCHANGE_ACTIVE_SYNC = "exchangeActiveSync"
+    OTHER_CLIENTS = "other"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
+    client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
 
@@ -413,9 +480,16 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
+class AuthenticationStrength(Enum):
+    MFA = "Multifactor authentication"
+    PASSWORDLESS_MFA = "Passwordless MFA"
+    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
+
+
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
+    authentication_strength: Optional[AuthenticationStrength]
 
 
 class ConditionalAccessPolicy(BaseModel):
@@ -482,6 +556,13 @@ class AdminRoles(Enum):
     SECURITY_ADMINISTRATOR = "194ae4cb-b126-40b2-bd5b-6091b380977d"
     SHAREPOINT_ADMINISTRATOR = "f28a1f50-f6e7-4571-818b-6a12f2af6b6c"
     USER_ADMINISTRATOR = "fe930be7-5e62-47db-91af-98c3a49a38b1"
+
+
+class User(BaseModel):
+    id: str
+    name: str
+    on_premises_sync_enabled: bool
+    directory_roles_ids: List[str] = []
 
 
 class InvitationsFrom(Enum):

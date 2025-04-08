@@ -136,7 +136,7 @@ Prowler App can be installed in different ways, depending on your environment:
 
 ### Prowler CLI Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9, <= 3.12`:
 
 === "pipx"
 
@@ -144,7 +144,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
@@ -168,7 +168,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `Python pip >= 21.0.0`
     * AWS, GCP, Azure, Microsoft365 and/or Kubernetes credentials
 
@@ -228,7 +228,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -244,8 +244,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
-    * `Python >= 3.9`
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9, <= 3.12`.
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
@@ -94,7 +95,6 @@ class Finding(BaseModel):
         Returns:
             dict: A dictionary containing the metadata with keys converted to lowercase.
         """
-
         return dict_to_lowercase(self.metadata.dict())
 
     @classmethod
@@ -120,13 +120,16 @@ class Finding(BaseModel):
         output_data = {}
         output_data.update(common_finding_data)
 
-        bulk_checks_metadata = {}
-        if hasattr(output_options, "bulk_checks_metadata"):
-            bulk_checks_metadata = output_options.bulk_checks_metadata
+        try:
+            output_data["compliance"] = check_output.compliance
+        except AttributeError:
+            bulk_checks_metadata = {}
+            if hasattr(output_options, "bulk_checks_metadata"):
+                bulk_checks_metadata = output_options.bulk_checks_metadata
 
-        output_data["compliance"] = get_check_compliance(
-            check_output, provider.type, bulk_checks_metadata
-        )
+            output_data["compliance"] = get_check_compliance(
+                check_output, provider.type, bulk_checks_metadata
+            )
         try:
             output_data["provider"] = provider.type
             output_data["resource_metadata"] = check_output.resource
@@ -258,11 +261,20 @@ class Finding(BaseModel):
 
             # check_output Unique ID
             # TODO: move this to a function
-            # TODO: in Azure, GCP and K8s there are fidings without resource_name
+            # TODO: in Azure, GCP and K8s there are findings without resource_name
             output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
+
+            if not output_data["resource_uid"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_id."
+                )
+            if not output_data["resource_name"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_name."
+                )
 
             return cls(**output_data)
         except ValidationError as validation_error:
@@ -296,14 +308,11 @@ class Finding(BaseModel):
             Finding: A new Finding instance populated with data from the provided model.
         """
         # Missing Finding's API values
-        finding.muted = False
-        finding.resource_details = ""
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
-
-        # TODO: Change this when the API has all the values
-        finding.resource = {}
+        finding.resource = json.loads(resource.metadata)
+        finding.resource_details = resource.details
 
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid
 
@@ -358,6 +367,7 @@ class Finding(BaseModel):
         finding.resource_tags = unroll_tags(
             [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
         )
+
         return cls.generate_output(provider, finding, SimpleNamespace())
 
     def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
