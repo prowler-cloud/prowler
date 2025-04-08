@@ -77,7 +77,7 @@ tzlocal = "5.3.1"
 [tool.poetry.group.dev.dependencies]
 bandit = "1.8.3"
 black = "25.1.0"
-coverage = "7.7.1"
+coverage = "7.8.0"
 docker = "7.1.0"
 flake8 = "7.1.2"
 freezegun = "1.5.1"
