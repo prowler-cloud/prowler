@@ -22,6 +22,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -55,7 +56,6 @@ from tasks.tasks import (
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
-from api.db_utils import delete_related_daily_task
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
@@ -1078,7 +1078,8 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
-        delete_related_daily_task(str(provider.id))
+        task_name = f"scan-perform-scheduled-{pk}"
+        PeriodicTask.objects.filter(name=task_name).update(enabled=False)
 
         with transaction.atomic():
             task = delete_provider_task.delay(

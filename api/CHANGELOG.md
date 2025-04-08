@@ -4,6 +4,28 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+<<<<<<< HEAD
+=======
+## [v1.6.0] (Prowler UNRELEASED)
+
+### Added
+
+- Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
+- HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
+- New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
+- Support for muted findings [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378).
+- Added missing fields to API findings and resources [(#7318)](https://github.com/prowler-cloud/prowler/pull/7318).
+
+---
+
+## [v1.5.4] (Prowler v5.4.4)
+
+### Fixed
+- Fixed a bug with periodic tasks when trying to delete a provider ([#7466])(https://github.com/prowler-cloud/prowler/pull/7466).
+
+---
+
+>>>>>>> 5b7912b55 (fix(provider): disable periodic task on views before deleting (#7466))
 ## [v1.5.3] (Prowler v5.4.3)
 
 ### Fixed
