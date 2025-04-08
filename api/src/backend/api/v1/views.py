@@ -1092,6 +1092,7 @@ class ProviderViewSet(BaseRLSViewSet):
         # Temporarily disabled due to performance issues
         # delete_related_daily_task(str(provider.id))
 
+        # TODO: Disable instead of delete, review performance
         task_name = f"scan-perform-scheduled-{str(provider.id)}"
         PeriodicTask.objects.filter(name=task_name).update(enabled=False)
 
