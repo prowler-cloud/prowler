@@ -112,6 +112,8 @@ class DummyAPIFinding:
     Attributes will be added dynamically.
     """
 
+    pass
+
 
 class TestFinding:
     @patch(
@@ -903,9 +905,9 @@ class TestFinding:
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
-    def test_transform_api_finding_m365(self):
+    def test_transform_api_finding_microsoft365(self):
         provider = MagicMock()
-        provider.type = "m365"
+        provider.type = "microsoft365"
         provider.identity.identity_type = "ms_identity_type"
         provider.identity.identity_id = "ms_identity_id"
         provider.identity.tenant_id = "ms-tenant-id"
@@ -917,7 +919,7 @@ class TestFinding:
         dummy_finding.status = "PASS"
         dummy_finding.status_extended = "M365 check extended"
         check_metadata = {
-            "provider": "m365",
+            "provider": "microsoft365",
             "checkid": "m365-check-001",
             "checktitle": "Test M365 Check",
             "checktype": [],

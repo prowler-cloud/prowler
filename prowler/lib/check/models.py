@@ -543,8 +543,8 @@ class Check_Report_Kubernetes(Check_Report):
 
 
 @dataclass
-class CheckReportM365(Check_Report):
-    """Contains the M365 Check's finding information."""
+class CheckReportMicrosoft365(Check_Report):
+    """Contains the Microsoft365 Check's finding information."""
 
     resource_name: str
     resource_id: str
@@ -558,7 +558,7 @@ class CheckReportM365(Check_Report):
         resource_id: str,
         resource_location: str = "global",
     ) -> None:
-        """Initialize the M365 Check's finding information.
+        """Initialize the Microsoft365 Check's finding information.
 
         Args:
             metadata: The metadata of the check.

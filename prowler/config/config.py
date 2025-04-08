@@ -28,7 +28,7 @@ class Provider(str, Enum):
     GCP = "gcp"
     AZURE = "azure"
     KUBERNETES = "kubernetes"
-    MICROSOFT365 = "m365"
+    MICROSOFT365 = "microsoft365"
 
 
 # Compliance
@@ -125,7 +125,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             # and a new format with a key for each provider to include their configuration values within.
             if any(
                 key in config_file
-                for key in ["aws", "gcp", "azure", "kubernetes", "m365"]
+                for key in ["aws", "gcp", "azure", "kubernetes", "microsoft365"]
             ):
                 config = config_file.get(provider, {})
             else:

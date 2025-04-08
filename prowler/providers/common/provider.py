@@ -211,7 +211,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "m365" in provider_class_name.lower():
+                elif "microsoft365" in provider_class_name.lower():
                     provider_class(
                         region=arguments.region,
                         config_path=arguments.config_file,

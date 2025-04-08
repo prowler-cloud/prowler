@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "admincenter_groups_not_public_visibility",
+  "CheckTitle": "Ensure that only organizationally managed/approved public groups exist",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Active teams & groups",
+  "Description": "Ensure that only organizationally managed and approved public groups exist to prevent unauthorized access to sensitive group resources like SharePoint, Teams, or other shared assets.",
+  "Risk": "Unmanaged public groups can allow unauthorized access to organizational resources, posing a risk of data leakage or misuse through easily guessable SharePoint URLs or self-adding to groups via the Azure portal.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/create-groups/manage-groups?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 admin center https://admin.microsoft.com. 2. Click to expand Teams & groups select Active teams & groups. 3. On the Active teams and groups page, select the group's name that is public. 4. On the popup groups name page, select Settings. 5. Under Privacy, select Private.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review and adjust the privacy settings of Microsoft 365 Groups to ensure only organizationally managed and approved public groups exist.",
+      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/microsoft-365-groups-governance"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

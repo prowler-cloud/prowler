@@ -2,7 +2,7 @@ import csv
 import json
 import sys
 
-# Convert a CSV file following the CIS 4.0 M365 Benchmark into a Prowler v3.0 Compliance JSON file
+# Convert a CSV file following the CIS 4.0 Microsoft365 Benchmark into a Prowler v3.0 Compliance JSON file
 # CSV fields:
 # Section #,Recommendation #,Profile,Title,Assessment Status,Description,Rationale Statement,Impact Statement,Remediation Procedure,Audit Procedure,Additional Information,CIS Controls,CIS Safeguards 1 (v8),CIS Safeguards 2 (v8),CIS Safeguards 3 (v8),v8 IG1,v8 IG2,v8 IG3,CIS Safeguards 1 (v7),CIS Safeguards 2 (v7),CIS Safeguards 3 (v7),v7 IG1,v7 IG2,v7 IG3,References,Default Value
 
@@ -68,7 +68,7 @@ except UnicodeDecodeError:
                 )
 
 # Save the output JSON file
-with open("cis_4.0_m365.json", "w", encoding="utf-8") as outfile:
+with open("cis_4.0_microsoft365.json", "w", encoding="utf-8") as outfile:
     json.dump(output, outfile, indent=4, ensure_ascii=False)
 
 print("Archivo JSON generado exitosamente.")

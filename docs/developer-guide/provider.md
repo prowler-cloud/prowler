@@ -175,7 +175,7 @@ Due to the complexity and differences of each provider use the rest of the provi
 - [GCP](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
 - [Azure](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
-- [M365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/m365/m365_provider.py)
+- [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
 
 To facilitate understanding here is a pseudocode of how the most basic provider could be with examples.
 

@@ -34,7 +34,7 @@ Available Cloud Providers:
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
-    m365                Microsoft 365 Provider
+    microsoft365        Microsoft 365 Provider
 
 Available components:
     dashboard           Local dashboard

@@ -479,8 +479,8 @@ kubernetes:
     ]
 
 
-# M365 Configuration
-m365:
+# Microsoft365 Configuration
+microsoft365:
   # Conditional Access Policy
   # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4

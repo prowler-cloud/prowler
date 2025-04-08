@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "entra_admin_mfa_enabled_for_administrative_roles",
+  "CheckTitle": "Ensure multifactor authentication is enabled for all users in administrative roles.",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that multifactor authentication (MFA) is enabled for all users in administrative roles to enhance security and reduce the risk of unauthorized access.",
+  "Risk": "Without MFA enabled for administrative roles, attackers could compromise privileged accounts with only a single authentication factor, increasing the risk of data breaches and unauthorized access to sensitive resources.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com. 2. Expand Protection > Conditional Access and select Policies. 3. Click 'New policy' and configure: Users: Select users and groups > Directory roles (include admin roles). Target resources: Include 'All cloud apps' with no exclusions. Grant: Select 'Grant Access' and check 'Require multifactor authentication'. 4. Set policy to 'Report Only' for testing before full enforcement. 5. Click 'Create'.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable MFA for all users in administrative roles using a Conditional Access policy in Microsoft Entra.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
