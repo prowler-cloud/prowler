@@ -9,9 +9,6 @@ class compute_instance_login_user(Check):
             report = CheckReportNHN(
                 metadata=self.metadata(),
                 resource=instance,
-                resource_name=instance.name,
-                resource_id=instance.id,
-                resource_location="kr1",
             )
             report.status = "PASS"
             report.status_extended = (

@@ -10,9 +10,6 @@ class network_vpc_subnet_has_external_router(Check):
                 report = CheckReportNHN(
                     metadata=self.metadata(),
                     resource=network,
-                    resource_name=network.name,
-                    resource_id=network.id,
-                    resource_location="kr1",
                 )
                 report.status = "PASS"
                 report.status_extended = f"VPC {network.name} Subnet {subnet.name} does not have an external router."
