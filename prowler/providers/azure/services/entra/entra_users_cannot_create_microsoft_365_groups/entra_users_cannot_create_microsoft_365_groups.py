@@ -12,8 +12,8 @@ class entra_users_cannot_create_microsoft_365_groups(Check):
             )
             report.status = "FAIL"
             report.subscription = f"Tenant: {tenant_domain}"
-            report.resource_name = "Microsoft365 Groups"
-            report.resource_id = "Microsoft365 Groups"
+            report.resource_name = "M365 Groups"
+            report.resource_id = "M365 Groups"
             report.status_extended = "Users can create Microsoft 365 groups."
 
             for group_setting in group_settings.values():

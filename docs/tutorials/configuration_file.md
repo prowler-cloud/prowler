@@ -97,10 +97,10 @@ The following list includes all the Kubernetes checks with configurable variable
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
 
-## Microsoft365
+## M365
 
 ### Configurable Checks
-The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the M365 checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
@@ -505,8 +505,8 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# Microsoft365 Configuration
-microsoft365:
+# M365 Configuration
+m365:
   # Conditional Access Policy
   # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4

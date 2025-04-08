@@ -103,9 +103,11 @@ Those credentials must be associated to a user or service account with proper pe
 ???+ note
     By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
-## Microsoft365
+## Microsoft 365
 
-Prowler for Microsoft365 currently supports the following authentication types:
+### Authentication
+
+Prowler for M365 currently supports the following authentication types:
 
 - [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object).
 -  Service principal application and Microsoft User Credentials (recommended).

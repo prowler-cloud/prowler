@@ -16,7 +16,7 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.location.lower()
     if finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
-    if finding.check_metadata.Provider == "microsoft365":
+    if finding.check_metadata.Provider == "m365":
         details = finding.location
 
     if (verbose or fix) and (not status or finding.status in status):
