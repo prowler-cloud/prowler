@@ -74,6 +74,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:cloudwatch:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].check_metadata.ResourceType == "AwsAccount"
 
     @mock_aws
     def test_cloudwatch_trail_no_log_group(self):
@@ -142,6 +143,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:cloudwatch:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].check_metadata.ResourceType == "AwsAccount"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group(self):
@@ -302,6 +304,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].check_metadata.ResourceType == "AwsLogsLogGroup"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
@@ -400,6 +403,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].check_metadata.ResourceType == "AwsLogsLogGroup"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
@@ -498,6 +502,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].check_metadata.ResourceType == "AwsLogsLogGroup"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):
@@ -596,3 +601,4 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].check_metadata.ResourceType == "AwsLogsLogGroup"
