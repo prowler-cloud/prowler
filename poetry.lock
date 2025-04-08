@@ -1276,20 +1276,17 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "dash"
-version = "2.18.2"
+version = "3.0.2"
 description = "A Python framework for building reactive web-apps. Developed by Plotly."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "dash-2.18.2-py3-none-any.whl", hash = "sha256:0ce0479d1bc958e934630e2de7023b8a4558f23ce1f9f5a4b34b65eb3903a869"},
-    {file = "dash-2.18.2.tar.gz", hash = "sha256:20e8404f73d0fe88ce2eae33c25bbc513cbe52f30d23a401fa5f24dbb44296c8"},
+    {file = "dash-3.0.2-py3-none-any.whl", hash = "sha256:fa5b03fe47690eb1785c71402031fd22a8ebb1f4b46d556f36e8d5b0e13a4124"},
+    {file = "dash-3.0.2.tar.gz", hash = "sha256:a9e08479d8dcf4f76e87794ee8d79ed4b58423be5f367f609ac8c24bda2f78b0"},
 ]
 
 [package.dependencies]
-dash-core-components = "2.0.0"
-dash-html-components = "2.0.0"
-dash-table = "5.0.0"
 Flask = ">=1.0.4,<3.1"
 importlib-metadata = "*"
 nest-asyncio = "*"
@@ -1302,7 +1299,7 @@ Werkzeug = "<3.1"
 
 [package.extras]
 celery = ["celery[redis] (>=5.1.2)", "redis (>=3.5.3)"]
-ci = ["black (==22.3.0)", "dash-dangerously-set-inner-html", "dash-flow-example (==0.0.5)", "flake8 (==7.0.0)", "flaky (==3.8.1)", "flask-talisman (==1.0.0)", "jupyterlab (<4.0.0)", "mimesis (<=11.1.0)", "mock (==4.0.3)", "numpy (<=1.26.3)", "openpyxl", "orjson (==3.10.3)", "pandas (>=1.4.0)", "pyarrow", "pylint (==3.0.3)", "pytest-mock", "pytest-rerunfailures", "pytest-sugar (==0.9.6)", "pyzmq (==25.1.2)", "xlrd (>=2.0.1)"]
+ci = ["black (==22.3.0)", "flake8 (==7.0.0)", "flaky (==3.8.1)", "flask-talisman (==1.0.0)", "ipython (<9.0.0)", "jupyterlab (<4.0.0)", "mimesis (<=11.1.0)", "mock (==4.0.3)", "numpy (<=1.26.3)", "openpyxl", "orjson (==3.10.3)", "pandas (>=1.4.0)", "pyarrow", "pylint (==3.0.3)", "pyright (==1.1.376) ; python_version >= \"3.7\"", "pytest-mock", "pytest-rerunfailures", "pytest-sugar (==0.9.6)", "pyzmq (==25.1.2)", "xlrd (>=2.0.1)"]
 compress = ["flask-compress"]
 dev = ["PyYAML (>=5.4.1)", "coloredlogs (>=15.0.1)", "fire (>=0.4.0)"]
 diskcache = ["diskcache (>=5.2.1)", "multiprocess (>=0.70.12)", "psutil (>=5.8.0)"]
@@ -1325,42 +1322,6 @@ dash = ">=2.0.0"
 
 [package.extras]
 pandas = ["numpy (>=2.0.2)", "pandas (>=2.2.3)"]
-
-[[package]]
-name = "dash-core-components"
-version = "2.0.0"
-description = "Core component suite for Dash"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "dash_core_components-2.0.0-py3-none-any.whl", hash = "sha256:52b8e8cce13b18d0802ee3acbc5e888cb1248a04968f962d63d070400af2e346"},
-    {file = "dash_core_components-2.0.0.tar.gz", hash = "sha256:c6733874af975e552f95a1398a16c2ee7df14ce43fa60bb3718a3c6e0b63ffee"},
-]
-
-[[package]]
-name = "dash-html-components"
-version = "2.0.0"
-description = "Vanilla HTML components for Dash"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "dash_html_components-2.0.0-py3-none-any.whl", hash = "sha256:b42cc903713c9706af03b3f2548bda4be7307a7cf89b7d6eae3da872717d1b63"},
-    {file = "dash_html_components-2.0.0.tar.gz", hash = "sha256:8703a601080f02619a6390998e0b3da4a5daabe97a1fd7a9cebc09d015f26e50"},
-]
-
-[[package]]
-name = "dash-table"
-version = "5.0.0"
-description = "Dash table"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "dash_table-5.0.0-py3-none-any.whl", hash = "sha256:19036fa352bb1c11baf38068ec62d172f0515f73ca3276c79dee49b95ddc16c9"},
-    {file = "dash_table-5.0.0.tar.gz", hash = "sha256:18624d693d4c8ef2ddec99a6f167593437a7ea0bf153aa20f318c170c5bc7308"},
-]
 
 [[package]]
 name = "deprecated"
@@ -5370,4 +5331,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "b700c5d135b2f1377ffbeccd4a297909478a4a9f21020d94242809fd9e30698d"
+content-hash = "a145eeefb0e0b7112764e7c28cf3cc4c4cf0c107aef64e67c44fe15d899aeaf6"
