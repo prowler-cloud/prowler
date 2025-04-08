@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "emr",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:emr:region:account-id",
+  "ResourceIdTemplate": "arn:partition:emr:region:account-id",
   "Severity": "high",
   "ResourceType": "AwsAccount",
   "Description": "EMR Account Public Access Block enabled.",

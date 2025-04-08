@@ -18,8 +18,12 @@ class Test_emr_cluster_account_public_block_enabled:
         emr_client.region = AWS_REGION_EU_WEST_1
         emr_client.audited_partition = "aws"
         emr_client.cluster_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:cluster"
+        emr_client.account_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:account"
         emr_client._get_cluster_arn_template = mock.MagicMock(
             return_value=emr_client.cluster_arn_template
+        )
+        emr_client._get_account_arn_template = mock.MagicMock(
+            return_value=emr_client.account_arn_template
         )
         with mock.patch(
             "prowler.providers.aws.services.emr.emr_service.EMR",
@@ -36,6 +40,10 @@ class Test_emr_cluster_account_public_block_enabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
+            )
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
@@ -53,8 +61,12 @@ class Test_emr_cluster_account_public_block_enabled:
         emr_client.region = AWS_REGION_EU_WEST_1
         emr_client.audited_partition = "aws"
         emr_client.cluster_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:cluster"
+        emr_client.account_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:account"
         emr_client._get_cluster_arn_template = mock.MagicMock(
             return_value=emr_client.cluster_arn_template
+        )
+        emr_client._get_account_arn_template = mock.MagicMock(
+            return_value=emr_client.account_arn_template
         )
         with mock.patch(
             "prowler.providers.aws.services.emr.emr_service.EMR",
@@ -71,6 +83,10 @@ class Test_emr_cluster_account_public_block_enabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
+            )
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
