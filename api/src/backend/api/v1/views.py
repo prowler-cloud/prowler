@@ -1089,7 +1089,7 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
-        task_name = f"scan-perform-scheduled-{str(provider.id)}"
+        task_name = f"scan-perform-scheduled-{pk}"
         PeriodicTask.objects.filter(name=task_name).update(enabled=False)
 
         with transaction.atomic():
