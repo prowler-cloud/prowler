@@ -16,6 +16,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.5.4] (Prowler v5.4.4)
+
+### Fixed
+- Disabled periodic task deletion at view level due to performance issues ([#7466])(https://github.com/prowler-cloud/prowler/pull/7466).
+
+---
+
 ## [v1.5.3] (Prowler v5.4.3)
 
 ### Fixed
