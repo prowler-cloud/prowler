@@ -34,7 +34,7 @@ class Test_iam_sa_user_managed_key_unused:
             result = check.execute()
             assert len(result) == 0
 
-    def test_iam_sa_dormant_no_keys(self):
+    def test_iam_sa_unused_no_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -79,7 +79,7 @@ class Test_iam_sa_user_managed_key_unused:
             result = check.execute()
             assert len(result) == 0
 
-    def test_iam_sa_dormant_system_managed_keys(self):
+    def test_iam_sa_unused_system_managed_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -201,7 +201,7 @@ class Test_iam_sa_user_managed_key_unused:
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].resource_name == iam_client.service_accounts[0].email
 
-    def test_iam_sa_dormant_mixed_keys(self):
+    def test_iam_sa_unused_mixed_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
