@@ -581,7 +581,7 @@ prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 
 ```
 
-See more details about M365 Authentication in [Requirements](getting-started/requirements.md#m365)
+See more details about M365 Authentication in [Requirements](getting-started/requirements/#microsoft-365)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
