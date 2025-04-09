@@ -104,11 +104,11 @@ class AwsProvider(Provider):
     def __init__(
         self,
         retries_max_attempts: int = 3,
-        role_arn: str = None,
+        role_arn: str = "",
         session_duration: int = 3600,
         external_id: str = None,
-        role_session_name: str = None,
-        mfa: bool = None,
+        role_session_name: str = "",
+        mfa: bool = False,
         profile: str = None,
         regions: set = set(),
         organizations_role_arn: str = None,
@@ -238,7 +238,8 @@ class AwsProvider(Provider):
             profile_region=profile_region,
         )
         ########
-
+        role_arn = ""
+        role_session_name = ""
         ######## AWS Session with Assume Role (if needed)
         if role_arn:
             # Validate the input role
@@ -532,7 +533,7 @@ class AwsProvider(Provider):
         """
         try:
             logger.debug("Creating original session ...")
-
+            print("lo que llega de mfa es: ", mfa)
             session_arguments = {}
             if profile:
                 session_arguments["profile_name"] = profile
