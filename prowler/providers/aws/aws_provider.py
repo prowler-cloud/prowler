@@ -104,10 +104,10 @@ class AwsProvider(Provider):
     def __init__(
         self,
         retries_max_attempts: int = 3,
-        role_arn: str = "",
+        role_arn: str = None,
         session_duration: int = 3600,
         external_id: str = None,
-        role_session_name: str = "",
+        role_session_name: str = None,
         mfa: bool = False,
         profile: str = None,
         regions: set = set(),
