@@ -52,7 +52,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
-from prowler.providers.m365.lib.powershell.powershell import PowerShellSession
+from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
 from prowler.providers.m365.lib.regions.regions import get_regions_config
 from prowler.providers.m365.models import (
     M365Credentials,
@@ -373,7 +373,7 @@ class M365Provider(Provider):
                 user=getenv("M365_USER"),
                 passwd=getenv("M365_ENCRYPTED_PASSWORD"),
             )
-            if PowerShellSession(credentials).test_credentials(credentials):
+            if M365PowerShell(credentials).test_credentials(credentials):
                 return credentials
             else:
                 raise M365EnvironmentUserCredentialsError(

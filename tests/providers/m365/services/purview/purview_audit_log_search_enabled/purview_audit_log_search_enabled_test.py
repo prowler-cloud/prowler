@@ -15,7 +15,7 @@ class Test_purview_audit_log_search_enabled:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.purview.purview_audit_log_search_enabled.purview_audit_log_search_enabled.purview_client",
@@ -54,7 +54,7 @@ class Test_purview_audit_log_search_enabled:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.purview.purview_audit_log_search_enabled.purview_audit_log_search_enabled.purview_client",

@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.m365.lib.powershell.powershell import PowerShellSession
-from prowler.providers.m365.models import M365Credentials
+from prowler.providers.m365.lib.powershell.m365_powershell import PowerShellSession
 
 
 class TestPowerShellSession:
@@ -9,20 +8,15 @@ class TestPowerShellSession:
     def test_init(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = PowerShellSession()
 
-        with patch.object(PowerShellSession, "init_credential") as mock_init_credential:
-            session = PowerShellSession(credentials)
-
-            mock_popen.assert_called_once()
-            mock_init_credential.assert_called_once_with(credentials)
-            assert session.process == mock_process
-            assert session.END == "<END>"
+        mock_popen.assert_called_once()
+        assert session.process == mock_process
+        assert session.END == "<END>"
 
     @patch("subprocess.Popen")
     def test_sanitize(self, _):
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+        session = PowerShellSession()
 
         test_cases = [
             ("test@example.com", "test@example.com"),
@@ -45,36 +39,8 @@ class TestPowerShellSession:
             assert session.sanitize(input_str) == expected
 
     @patch("subprocess.Popen")
-    def test_init_credential(self, mock_popen):
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
-
-        session.init_credential(credentials)
-
-        mock_process.stdin.write.assert_any_call('$User = "test@example.com"\n')
-        mock_process.stdin.write.assert_any_call(
-            '$SecureString = "test_password" | ConvertTo-SecureString\n'
-        )
-        mock_process.stdin.write.assert_any_call(
-            "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)\n"
-        )
-
-    @patch("subprocess.Popen")
-    def test_test_credentials(self, mock_popen):
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
-
-        with patch.object(session, "read_output", return_value="test@example.com"):
-            assert session.test_credentials(credentials) is True
-
-    @patch("subprocess.Popen")
-    def test_remove_ansi(self, mock_popen):
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+    def test_remove_ansi(self, text):
+        session = PowerShellSession()
 
         test_cases = [
             ("\x1b[32mSuccess\x1b[0m", "Success"),
@@ -91,8 +57,7 @@ class TestPowerShellSession:
     def test_execute(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+        session = PowerShellSession()
         command = "Get-Command"
         expected_output = '{"Name": "Get-Command"}'
 
@@ -107,8 +72,7 @@ class TestPowerShellSession:
     def test_read_output(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+        session = PowerShellSession()
 
         # Test normal output
         with patch.object(session, "read_output", return_value="test@example.com"):
@@ -123,8 +87,7 @@ class TestPowerShellSession:
     def test_json_parse_output(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+        session = PowerShellSession()
 
         test_cases = [
             ('{"key": "value"}', {"key": "value"}),
@@ -147,8 +110,7 @@ class TestPowerShellSession:
     def test_close(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        credentials = M365Credentials(user="test@example.com", passwd="test_password")
-        session = PowerShellSession(credentials)
+        session = PowerShellSession()
 
         session.close()
 

@@ -26,7 +26,7 @@ class Test_Teams_Service:
     def test_get_client(self):
         with (
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
         ):
             teams_client = Teams(
@@ -35,7 +35,7 @@ class Test_Teams_Service:
                 )
             )
             assert teams_client.client.__class__.__name__ == "GraphServiceClient"
-            assert teams_client.powershell.__class__.__name__ == "PowerShellSession"
+            assert teams_client.powershell.__class__.__name__ == "M365PowerShell"
 
     @patch(
         "prowler.providers.m365.services.teams.teams_service.Teams._get_teams_client_configuration",
@@ -44,7 +44,7 @@ class Test_Teams_Service:
     def test_get_settings(self):
         with (
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
         ):
             teams_client = Teams(

@@ -17,7 +17,7 @@ class Test_Purview_Service:
     def test_get_client(self):
         with (
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
         ):
             purview_client = Purview(
@@ -26,7 +26,7 @@ class Test_Purview_Service:
                 )
             )
             assert purview_client.client.__class__.__name__ == "GraphServiceClient"
-            assert purview_client.powershell.__class__.__name__ == "PowerShellSession"
+            assert purview_client.powershell.__class__.__name__ == "M365PowerShell"
 
     @patch(
         "prowler.providers.m365.services.purview.purview_service.Purview._get_audit_log_config",
@@ -35,7 +35,7 @@ class Test_Purview_Service:
     def test_get_settings(self):
         with (
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_exchange_online"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
         ):
             purview_client = Purview(

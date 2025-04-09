@@ -15,7 +15,7 @@ class Test_teams_external_file_sharing_restricted:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
                 "prowler.providers.m365.services.teams.teams_external_file_sharing_restricted.teams_external_file_sharing_restricted.teams_client",
@@ -69,7 +69,7 @@ class Test_teams_external_file_sharing_restricted:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.lib.powershell.powershell.PowerShellSession.connect_microsoft_teams"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
                 "prowler.providers.m365.services.teams.teams_external_file_sharing_restricted.teams_external_file_sharing_restricted.teams_client",
