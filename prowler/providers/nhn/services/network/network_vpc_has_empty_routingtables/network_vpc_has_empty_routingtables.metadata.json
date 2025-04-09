@@ -1,0 +1,30 @@
+{
+  "Provider": "nhn",
+  "CheckID": "network_vpc_has_empty_routingtables",
+  "CheckTitle": "Check if VPC has empty routing tables",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VPC",
+  "Description": "Check if VPC has empty routing tables. Having empty routing tables may indicate misconfiguration or incomplete network setup.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that VPC has properly configured routing tables with necessary routes to ensure proper network connectivity. If not needed, delete the empty routing tables.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
