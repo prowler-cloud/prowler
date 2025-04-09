@@ -10,8 +10,7 @@ class iam_audit_logs_enabled(Check):
         for project in cloudresourcemanager_client.cloud_resource_manager_projects:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource=project,
-                resource_name=project.id,
+                resource=cloudresourcemanager_client.projects[project.id],
                 project_id=project.id,
                 location=cloudresourcemanager_client.region,
             )

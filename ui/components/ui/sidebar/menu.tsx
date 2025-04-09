@@ -1,11 +1,12 @@
 "use client";
 
+import { Divider } from "@nextui-org/react";
 import { Ellipsis, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { logOut } from "@/actions/auth";
-import { AddIcon } from "@/components/icons";
+import { AddIcon, InfoIcon } from "@/components/icons";
 import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
 import {
   Tooltip,
@@ -167,9 +168,25 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         </TooltipProvider>
       </div>
 
-      <span className="text-muted-foreground border-border mt-2 border-t pt-2 text-center text-xs lg:mt-4">
-        {process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
-      </span>
+      <div className="text-muted-foreground border-border mt-2 flex items-center justify-center gap-2 border-t pt-2 text-center text-xs">
+        <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
+        {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+          <>
+            <Divider orientation="vertical" />
+            <Link
+              href="https://status.prowler.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1"
+            >
+              <InfoIcon size={16} />
+              <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
+                Service Status
+              </span>
+            </Link>
+          </>
+        )}
+      </div>
     </>
   );
 };

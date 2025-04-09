@@ -966,6 +966,22 @@ def mock_api_urlMaps_calls(client: MagicMock):
     }
     client.urlMaps().list_next.return_value = None
 
+    client.regionUrlMaps().list().execute.return_value = {
+        "items": [
+            {
+                "name": "regional_url_map1",
+                "id": str(uuid4()),
+                "defaultService": "regional_service1",
+            },
+            {
+                "name": "regional_url_map2",
+                "id": str(uuid4()),
+                "defaultService": "regional_service2",
+            },
+        ]
+    }
+    client.regionUrlMaps().list_next.return_value = None
+
     client.backendServices().get().execute.side_effect = [
         {
             "logConfig": {"enable": True},
