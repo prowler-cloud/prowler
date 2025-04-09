@@ -18,6 +18,8 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.namespace.lower()
     if finding.check_metadata.Provider == "microsoft365":
         details = finding.location
+    if finding.check_metadata.Provider == "nhn":
+        details = finding.location
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
