@@ -58,6 +58,7 @@ from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
@@ -485,7 +486,6 @@ def prowler():
                 prowler_threatscore = ProwlerThreatScoreAWS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
@@ -544,6 +544,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = AzureISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             elif compliance_name == "prowler_threatscore_azure":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -552,7 +565,6 @@ def prowler():
                 prowler_threatscore = ProwlerThreatScoreAzure(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
