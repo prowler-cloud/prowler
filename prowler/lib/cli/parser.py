@@ -26,15 +26,16 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,dashboard} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,nhn,dashboard} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes}
+  {aws,azure,gcp,kubernetes,microsoft365,nhn}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
-    365        Microsoft 365 Provider
+    m365                Microsoft 365 Provider
+    nhn                 NHN Provider (Unofficial)
 
 Available components:
     dashboard           Local dashboard

@@ -277,7 +277,7 @@
         {
           "ItemId": "cc_6_7",
           "Section": "CC6.0 - Logical and Physical Access",
-          "Service": "acm",
+          "Service": "aws",
           "Type": "automated"
         }
       ],
