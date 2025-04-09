@@ -67,6 +67,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitr
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azure import (
+    ProwlerThreatScoreAzure,
+)
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
@@ -551,6 +554,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_azure":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreAzure(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

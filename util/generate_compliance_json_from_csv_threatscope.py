@@ -32,5 +32,5 @@ with open(file_name, newline="", encoding="utf-8") as f:
         )
 
 # Write the output Prowler compliance JSON file 'prowler_threatscore_aws.json' locally
-with open("prowler_threatscore_aws.json", "w", encoding="utf-8") as outfile:
+with open("prowler_threatscore_azure.json", "w", encoding="utf-8") as outfile:
     json.dump(output, outfile, indent=4, ensure_ascii=False)
