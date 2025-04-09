@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "#microsoft.graph.security.hostedOutboundSpamFilterPolicy",
+  "ResourceType": "Defender Anti-Spam Policy",
   "Description": "Ensure that outbound anti-spam policies are configured to notify administrators and copy suspicious outbound messages to designated recipients when a sender is blocked for sending spam emails.",
   "Risk": "Without outbound spam notifications and message copies, compromised accounts may go undetected, increasing the risk of reputation damage or data leakage through unauthorized email activity.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
