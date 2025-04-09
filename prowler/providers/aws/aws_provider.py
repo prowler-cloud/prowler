@@ -238,8 +238,6 @@ class AwsProvider(Provider):
             profile_region=profile_region,
         )
         ########
-        role_arn = ""
-        role_session_name = ""
         ######## AWS Session with Assume Role (if needed)
         if role_arn:
             # Validate the input role
@@ -533,7 +531,7 @@ class AwsProvider(Provider):
         """
         try:
             logger.debug("Creating original session ...")
-            print("lo que llega de mfa es: ", mfa)
+
             session_arguments = {}
             if profile:
                 session_arguments["profile_name"] = profile
