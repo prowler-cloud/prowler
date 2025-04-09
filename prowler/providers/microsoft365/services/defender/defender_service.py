@@ -10,6 +10,7 @@ class Defender(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.malware_policies = self._get_malware_filter_policy()
+        self.dkim_configurations = self._get_dkim_config()
 
     def _get_malware_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender malware filter policy...")
@@ -33,7 +34,32 @@ class Defender(Microsoft365Service):
             )
         return malware_policies
 
+    def _get_dkim_config(self):
+        logger.info("Microsoft365 - Getting DKIM settings...")
+        dkim_config = self.powershell.execute("Get-DkimSigningConfig | ConvertTo-Json")
+        if isinstance(dkim_config, dict):
+            dkim_config = [dkim_config]
+        dkim_configs = []
+        try:
+            for config in dkim_config:
+                dkim_configs.append(
+                    DkimConfig(
+                        dkim_signing_enabled=config.get("Enabled", False),
+                        id=config.get("Id", ""),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return dkim_configs
+
 
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
+
+
+class DkimConfig(BaseModel):
+    dkim_signing_enabled: bool
+    id: str
