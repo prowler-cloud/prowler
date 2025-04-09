@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.defender.defender_service import (
+    AntiphishingPolicy,
+    AntiphishingRule,
     Defender,
     DefenderMalwarePolicy,
 )
@@ -18,9 +20,55 @@ def mock_defender_get_malware_filter_policy(_):
     ]
 
 
+def mock_defender_get_antiphising_policy(_):
+    return {
+        "Policy1": AntiphishingPolicy(
+            spoof_intelligence=True,
+            spoof_intelligence_action="Quarantine",
+            dmarc_reject_action="Reject",
+            dmarc_quarantine_action="Quarantine",
+            safety_tips=True,
+            unauthenticated_sender_action=True,
+            show_tag=True,
+            honor_dmarc_policy=True,
+            default=False,
+        ),
+        "Policy2": AntiphishingPolicy(
+            spoof_intelligence=False,
+            spoof_intelligence_action="None",
+            dmarc_reject_action="None",
+            dmarc_quarantine_action="None",
+            safety_tips=False,
+            unauthenticated_sender_action=False,
+            show_tag=False,
+            honor_dmarc_policy=False,
+            default=True,
+        ),
+    }
+
+
+def mock_defender_get_antiphising_rules(_):
+    return {
+        "Policy1": AntiphishingRule(
+            state="Enabled",
+        ),
+        "Policy2": AntiphishingRule(
+            state="Disabled",
+        ),
+    }
+
+
 @patch(
     "prowler.providers.microsoft365.services.defender.defender_service.Defender._get_malware_filter_policy",
     new=mock_defender_get_malware_filter_policy,
+)
+@patch(
+    "prowler.providers.microsoft365.services.defender.defender_service.Defender._get_antiphising_policy",
+    new=mock_defender_get_antiphising_policy,
+)
+@patch(
+    "prowler.providers.microsoft365.services.defender.defender_service.Defender._get_antiphising_rules",
+    new=mock_defender_get_antiphising_rules,
 )
 class Test_Defender_Service:
     def test_get_client(self):
@@ -38,3 +86,34 @@ class Test_Defender_Service:
         assert malware_policies[0].identity == "Policy1"
         assert malware_policies[1].enable_file_filter is True
         assert malware_policies[1].identity == "Policy2"
+
+    def test__get_antiphising_policy(self):
+        defender_client = Defender(set_mocked_microsoft365_provider())
+        antiphishing_policies = defender_client.antiphishing_policies
+        assert antiphishing_policies["Policy1"].spoof_intelligence is True
+        assert (
+            antiphishing_policies["Policy1"].spoof_intelligence_action == "Quarantine"
+        )
+        assert antiphishing_policies["Policy1"].dmarc_reject_action == "Reject"
+        assert antiphishing_policies["Policy1"].dmarc_quarantine_action == "Quarantine"
+        assert antiphishing_policies["Policy1"].safety_tips is True
+        assert antiphishing_policies["Policy1"].unauthenticated_sender_action is True
+        assert antiphishing_policies["Policy1"].show_tag is True
+        assert antiphishing_policies["Policy1"].honor_dmarc_policy is True
+        assert not antiphishing_policies["Policy1"].default
+
+        assert antiphishing_policies["Policy2"].spoof_intelligence is False
+        assert antiphishing_policies["Policy2"].spoof_intelligence_action == "None"
+        assert antiphishing_policies["Policy2"].dmarc_reject_action == "None"
+        assert antiphishing_policies["Policy2"].dmarc_quarantine_action == "None"
+        assert antiphishing_policies["Policy2"].safety_tips is False
+        assert antiphishing_policies["Policy2"].unauthenticated_sender_action is False
+        assert antiphishing_policies["Policy2"].show_tag is False
+        assert antiphishing_policies["Policy2"].honor_dmarc_policy is False
+        assert antiphishing_policies["Policy2"].default
+
+    def test__get_antiphising_rules(self):
+        defender_client = Defender(set_mocked_microsoft365_provider())
+        antiphishing_rules = defender_client.antiphising_rules
+        assert antiphishing_rules["Policy1"].state == "Enabled"
+        assert antiphishing_rules["Policy2"].state == "Disabled"
