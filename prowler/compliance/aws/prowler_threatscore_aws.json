@@ -2,7 +2,7 @@
   "Framework": "Prowler-ThreatScore",
   "Version": "1.0",
   "Provider": "AWS",
-  "Description": "Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account three main pillars: Identity and Access Management, Resource Exposure and Logging",
+  "Description": "Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
   "Requirements": [
     {
       "Id": "1.1.1",
