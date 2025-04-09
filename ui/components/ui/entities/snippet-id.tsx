@@ -5,9 +5,14 @@ import { CopyIcon, DoneIcon, IdIcon } from "@/components/icons";
 
 interface SnippetIdProps {
   entityId: string;
+  hideCopyButton?: boolean;
   [key: string]: any;
 }
-export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
+export const SnippetId: React.FC<SnippetIdProps> = ({
+  entityId,
+  hideCopyButton = false,
+  ...props
+}) => {
   return (
     <Snippet
       className="flex h-6 items-center py-0"
@@ -18,6 +23,7 @@ export const SnippetId: React.FC<SnippetIdProps> = ({ entityId, ...props }) => {
       hideSymbol
       copyIcon={<CopyIcon size={16} />}
       checkIcon={<DoneIcon size={16} />}
+      hideCopyButton={hideCopyButton}
       {...props}
     >
       <p className="flex items-center space-x-2">

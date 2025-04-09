@@ -13,12 +13,15 @@ class Test_admincenter_users_between_two_and_four_global_admins:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins import (
                 admincenter_users_between_two_and_four_global_admins,
@@ -35,12 +38,15 @@ class Test_admincenter_users_between_two_and_four_global_admins:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 DirectoryRole,
@@ -70,20 +76,28 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "There are 2 global administrators."
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
 
     def test_admincenter_more_than_five_global_admins(self):
         admincenter_client = mock.MagicMock
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 DirectoryRole,
@@ -124,20 +138,28 @@ class Test_admincenter_users_between_two_and_four_global_admins:
                 result[0].status_extended
                 == "There are 6 global administrators. It should be more than one and less than five."
             )
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
 
     def test_admincenter_one_global_admin(self):
         admincenter_client = mock.MagicMock
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 DirectoryRole,
@@ -168,5 +190,10 @@ class Test_admincenter_users_between_two_and_four_global_admins:
                 result[0].status_extended
                 == "There are 1 global administrators. It should be more than one and less than five."
             )
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"

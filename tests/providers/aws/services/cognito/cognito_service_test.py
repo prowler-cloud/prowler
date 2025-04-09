@@ -116,12 +116,15 @@ class Test_Cognito_Service:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             for user_pool in cognito_client.user_pools.values():
                 assert user_pool.region == "eu-west-1"
@@ -163,12 +166,15 @@ class Test_Cognito_Service:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             for user_pool in cognito_client.user_pools.values():
                 assert user_pool.region == "eu-west-1"
@@ -250,12 +256,15 @@ class Test_Cognito_Service:
             ),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             for user_pool in cognito_client.user_pools.values():
                 assert user_pool.region == "eu-west-1"
@@ -381,12 +390,15 @@ class Test_Cognito_Service:
             unauthenticated="unauthenticated_role",
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
-            new=cognito_identity_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+                new=cognito_identity_client,
+            ),
         ):
             for identity_pool in cognito_identity_client.identity_pools.values():
                 assert identity_pool.region == "eu-west-1"

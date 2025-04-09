@@ -47,6 +47,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
 | `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
+| `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
@@ -85,7 +86,7 @@ The following list includes all the Azure checks with configurable variables tha
 ## Kubernetes
 
 ### Configurable Checks
-The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
@@ -94,6 +95,17 @@ The following list includes all the Azure checks with configurable variables tha
 | `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
 | `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
+
+
+## Microsoft365
+
+### Configurable Checks
+The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+
 
 ## Config YAML File Structure
 
@@ -491,5 +503,11 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+# Microsoft365 Configuration
+microsoft365:
+  # Conditional Access Policy
+  # policy.session_controls.sign_in_frequency.frequency in hours
+  sign_in_frequency: 4
 
 ```

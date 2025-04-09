@@ -16,6 +16,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
+    IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
     Membership,
@@ -34,11 +36,75 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializer_utils.integrations import (
+    AWSCredentialSerializer,
+    IntegrationConfigField,
+    IntegrationCredentialField,
+    S3ConfigSerializer,
+)
 
 # Tokens
 
 
-class TokenSerializer(TokenObtainPairSerializer):
+def generate_tokens(user: User, tenant_id: str) -> dict:
+    try:
+        refresh = RefreshToken.for_user(user)
+    except InvalidKeyError:
+        # Handle invalid key error
+        raise ValidationError(
+            {
+                "detail": "Token generation failed due to invalid key configuration. Provide valid "
+                "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
+            }
+        )
+    except Exception as e:
+        raise ValidationError({"detail": str(e)})
+
+    # Post-process the tokens
+    # Set the tenant_id
+    refresh["tenant_id"] = tenant_id
+
+    # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
+    # way to set the nbf claim
+    refresh.payload["nbf"] = refresh["iat"]
+
+    # Get the access token
+    access = refresh.access_token
+
+    if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
+        update_last_login(None, user)
+
+    return {"access": str(access), "refresh": str(refresh)}
+
+
+class BaseTokenSerializer(TokenObtainPairSerializer):
+    def custom_validate(self, attrs, social: bool = False):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        tenant_id = str(attrs.get("tenant_id", ""))
+
+        # Authenticate user
+        user = (
+            User.objects.get(email=email)
+            if social
+            else authenticate(username=email, password=password)
+        )
+        if user is None:
+            raise ValidationError("Invalid credentials")
+
+        if tenant_id:
+            if not user.is_member_of_tenant(tenant_id):
+                raise ValidationError("Tenant does not exist or user is not a member.")
+        else:
+            first_membership = user.memberships.order_by("date_joined").first()
+            if first_membership is None:
+                raise ValidationError("User has no memberships.")
+            tenant_id = str(first_membership.tenant_id)
+
+        return generate_tokens(user, tenant_id)
+
+
+class TokenSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
     tenant_id = serializers.UUIDField(
@@ -56,53 +122,25 @@ class TokenSerializer(TokenObtainPairSerializer):
         resource_name = "tokens"
 
     def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        tenant_id = str(attrs.get("tenant_id", ""))
+        return super().custom_validate(attrs)
 
-        # Authenticate user
-        user = authenticate(username=email, password=password)
-        if user is None:
-            raise ValidationError("Invalid credentials")
 
-        if tenant_id:
-            if not user.is_member_of_tenant(tenant_id):
-                raise ValidationError("Tenant does not exist or user is not a member.")
-        else:
-            first_membership = user.memberships.order_by("date_joined").first()
-            if first_membership is None:
-                raise ValidationError("User has no memberships.")
-            tenant_id = str(first_membership.tenant_id)
+class TokenSocialLoginSerializer(BaseTokenSerializer):
+    email = serializers.EmailField(write_only=True)
 
-        # Generate tokens
-        try:
-            refresh = RefreshToken.for_user(user)
-        except InvalidKeyError:
-            # Handle invalid key error
-            raise ValidationError(
-                {
-                    "detail": "Token generation failed due to invalid key configuration. Provide valid "
-                    "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
-                }
-            )
-        except Exception as e:
-            raise ValidationError({"detail": str(e)})
+    # Output tokens
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
 
-        # Post-process the tokens
-        # Set the tenant_id
-        refresh["tenant_id"] = tenant_id
+    class JSONAPIMeta:
+        resource_name = "tokens"
 
-        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
-        # way to set the nbf claim
-        refresh.payload["nbf"] = refresh["iat"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("password", None)
 
-        # Get the access token
-        access = refresh.access_token
-
-        if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
-            update_last_login(None, user)
-
-        return {"access": str(access), "refresh": str(refresh)}
+    def validate(self, attrs):
+        return super().custom_validate(attrs, social=True)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -138,6 +176,30 @@ class TokenRefreshSerializer(serializers.Serializer):
             return {"access": str(access_token), "refresh": str(refresh)}
         except TokenError:
             raise ValidationError({"refresh": "Invalid or expired token"})
+
+
+class TokenSwitchTenantSerializer(serializers.Serializer):
+    tenant_id = serializers.UUIDField(
+        write_only=True, help_text="The tenant ID for which to request a new token."
+    )
+    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "tokens-switch-tenant"
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        user = request.user
+
+        if not user.is_authenticated:
+            raise ValidationError("Invalid or expired token.")
+
+        tenant_id = str(attrs.get("tenant_id"))
+        if not user.is_member_of_tenant(tenant_id):
+            raise ValidationError("Tenant does not exist or user is not a member.")
+
+        return generate_tokens(user, tenant_id)
 
 
 # Base
@@ -691,6 +753,43 @@ class ProviderSerializer(RLSSerializer):
         }
 
 
+class ProviderIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Provider model.
+    """
+
+    provider = ProviderEnumSerializerField()
+    connection = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Provider
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider",
+            "uid",
+            "alias",
+            "connection",
+            # "scanner_args",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "connected": {"type": "boolean"},
+                "last_checked_at": {"type": "string", "format": "date-time"},
+            },
+        }
+    )
+    def get_connection(self, obj):
+        return {
+            "connected": obj.connected,
+            "last_checked_at": obj.connection_last_checked_at,
+        }
+
+
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
@@ -751,6 +850,39 @@ class ScanSerializer(RLSSerializer):
             "next_scan_at",
             "url",
         ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+
+class ScanIncludeSerializer(RLSSerializer):
+    trigger = serializers.ChoiceField(
+        choices=Scan.TriggerChoices.choices, read_only=True
+    )
+    state = StateEnumSerializerField(read_only=True)
+
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+            "name",
+            "trigger",
+            "state",
+            "unique_resource_count",
+            "progress",
+            # "scanner_args",
+            "duration",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "scheduled_at",
+            "provider",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
 
 
 class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
@@ -819,6 +951,14 @@ class ScanTaskSerializer(RLSSerializer):
         ]
 
 
+class ScanReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+
+    class Meta:
+        resource_name = "scan-reports"
+        fields = ["id"]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
@@ -884,6 +1024,51 @@ class ResourceSerializer(RLSSerializer):
         return fields
 
 
+class ResourceIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Resource model.
+    """
+
+    tags = serializers.SerializerMethodField()
+    type_ = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "uid",
+            "name",
+            "region",
+            "service",
+            "type_",
+            "tags",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "description": "Tags associated with the resource",
+            "example": {"env": "prod", "owner": "johndoe"},
+        }
+    )
+    def get_tags(self, obj):
+        return obj.get_tags(self.context.get("tenant_id"))
+
+    def get_fields(self):
+        """`type` is a Python reserved keyword."""
+        fields = super().get_fields()
+        type_ = fields.pop("type_")
+        fields["type"] = type_
+        return fields
+
+
 class FindingSerializer(RLSSerializer):
     """
     Serializer for the Finding model.
@@ -906,6 +1091,7 @@ class FindingSerializer(RLSSerializer):
             "inserted_at",
             "updated_at",
             "first_seen_at",
+            "muted",
             "url",
             # Relationships
             "scan",
@@ -913,8 +1099,8 @@ class FindingSerializer(RLSSerializer):
         ]
 
     included_serializers = {
-        "scan": ScanSerializer,
-        "resources": ResourceSerializer,
+        "scan": ScanIncludeSerializer,
+        "resources": ResourceIncludeSerializer,
     }
 
 
@@ -1433,8 +1619,8 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "manage_account",
             # Disable for the first release
             # "manage_billing",
-            # "manage_integrations",
             # /Disable for the first release
+            "manage_integrations",
             "manage_providers",
             "manage_scans",
             "permission_state",
@@ -1716,6 +1902,13 @@ class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
         return obj.requirements
 
 
+class ComplianceOverviewMetadataSerializer(serializers.Serializer):
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "compliance-overviews-metadata"
+
+
 # Overviews
 
 
@@ -1840,3 +2033,201 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
             if unknown_keys:
                 raise ValidationError(f"Invalid fields: {unknown_keys}")
         return data
+
+
+# Integrations
+
+
+class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    @staticmethod
+    def validate_integration_data(
+        integration_type: str,
+        providers: list[Provider],  # noqa
+        configuration: dict,
+        credentials: dict,
+    ):
+        if integration_type == Integration.IntegrationChoices.S3:
+            config_serializer = S3ConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
+            # TODO: This will be required for AWS Security Hub
+            # if providers and not all(
+            #     provider.provider == Provider.ProviderChoices.AWS
+            #     for provider in providers
+            # ):
+            #     raise serializers.ValidationError(
+            #         {"providers": "All providers must be AWS for the S3 integration."}
+            #     )
+        else:
+            raise serializers.ValidationError(
+                {
+                    "integration_type": f"Integration type not supported yet: {integration_type}"
+                }
+            )
+
+        config_serializer(data=configuration).is_valid(raise_exception=True)
+
+        for cred_serializer in credentials_serializers:
+            try:
+                cred_serializer(data=credentials).is_valid(raise_exception=True)
+                break
+            except ValidationError:
+                continue
+        else:
+            raise ValidationError(
+                {"credentials": "Invalid credentials for the integration type."}
+            )
+
+
+class IntegrationSerializer(RLSSerializer):
+    """
+    Serializer for the Integration model.
+    """
+
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "providers",
+            "url",
+        ]
+
+    included_serializers = {
+        "providers": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        allowed_providers = self.context.get("allowed_providers")
+        if allowed_providers:
+            allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
+            representation["providers"] = [
+                provider
+                for provider in representation["providers"]
+                if provider["id"] in allowed_provider_ids
+            ]
+        return representation
+
+
+class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
+    credentials = IntegrationCredentialField(write_only=True)
+    configuration = IntegrationConfigField()
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "credentials",
+            "providers",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "connected": {"read_only": True},
+            "enabled": {"read_only": True},
+            "connection_last_checked_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+        providers = attrs.get("providers")
+        configuration = attrs.get("configuration")
+        credentials = attrs.get("credentials")
+
+        validated_attrs = super().validate(attrs)
+        self.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+        return validated_attrs
+
+    def create(self, validated_data):
+        tenant_id = self.context.get("tenant_id")
+
+        providers = validated_data.pop("providers", [])
+        integration = Integration.objects.create(tenant_id=tenant_id, **validated_data)
+
+        through_model_instances = [
+            IntegrationProviderRelationship(
+                integration=integration,
+                provider=provider,
+                tenant_id=tenant_id,
+            )
+            for provider in providers
+        ]
+        IntegrationProviderRelationship.objects.bulk_create(through_model_instances)
+
+        return integration
+
+
+class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
+    credentials = IntegrationCredentialField(write_only=True, required=False)
+    configuration = IntegrationConfigField(required=False)
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "credentials",
+            "providers",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "connected": {"read_only": True},
+            "connection_last_checked_at": {"read_only": True},
+            "integration_type": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        integration_type = self.instance.integration_type
+        providers = attrs.get("providers")
+        configuration = attrs.get("configuration") or self.instance.configuration
+        credentials = attrs.get("credentials") or self.instance.credentials
+
+        validated_attrs = super().validate(attrs)
+        self.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+        return validated_attrs
+
+    def update(self, instance, validated_data):
+        tenant_id = self.context.get("tenant_id")
+        if validated_data.get("providers") is not None:
+            instance.providers.clear()
+            new_relationships = [
+                IntegrationProviderRelationship(
+                    integration=instance, provider=provider, tenant_id=tenant_id
+                )
+                for provider in validated_data["providers"]
+            ]
+            IntegrationProviderRelationship.objects.bulk_create(new_relationships)
+
+        return super().update(instance, validated_data)

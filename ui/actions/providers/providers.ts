@@ -3,8 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify, wait } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+  wait,
+} from "@/lib";
 
 export const getProviders = async ({
   page = 1,
@@ -12,12 +17,11 @@ export const getProviders = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers?include=provider_groups`);
+  const url = new URL(`${apiBaseUrl}/providers?include=provider_groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -32,10 +36,7 @@ export const getProviders = async ({
 
   try {
     const providers = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await providers.json();
     const parsedData = parseStringify(data);
@@ -49,18 +50,14 @@ export const getProviders = async ({
 };
 
 export const getProvider = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get("id");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers/${providerId}`);
+  const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
     const providers = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await providers.json();
     const parsedData = parseStringify(data);
@@ -73,22 +70,17 @@ export const getProvider = async (formData: FormData) => {
 };
 
 export const updateProvider = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: true });
 
   const providerId = formData.get("providerId");
   const providerAlias = formData.get("alias");
 
-  const url = new URL(`${keyServer}/providers/${providerId}`);
+  const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify({
         data: {
           type: "providers",
@@ -99,6 +91,7 @@ export const updateProvider = async (formData: FormData) => {
         },
       }),
     });
+
     const data = await response.json();
     revalidatePath("/providers");
     return parseStringify(data);
@@ -112,14 +105,13 @@ export const updateProvider = async (formData: FormData) => {
 };
 
 export const addProvider = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: true });
 
   const providerType = formData.get("providerType") as string;
   const providerUid = formData.get("providerUid") as string;
   const providerAlias = formData.get("providerAlias") as string;
 
-  const url = new URL(`${keyServer}/providers`);
+  const url = new URL(`${apiBaseUrl}/providers`);
 
   try {
     const bodyData = {
@@ -135,11 +127,7 @@ export const addProvider = async (formData: FormData) => {
 
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(bodyData),
     });
 
@@ -156,9 +144,8 @@ export const addProvider = async (formData: FormData) => {
 };
 
 export const addCredentialsProvider = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers/secrets`);
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/providers/secrets`);
 
   const secretName = formData.get("secretName");
   const providerId = formData.get("providerId");
@@ -235,11 +222,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(bodyData),
     });
     const data = await response.json();
@@ -258,9 +241,8 @@ export const updateCredentialsProvider = async (
   credentialsId: string,
   formData: FormData,
 ) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers/secrets/${credentialsId}`);
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/providers/secrets/${credentialsId}`);
 
   const secretName = formData.get("secretName");
   const providerType = formData.get("providerType");
@@ -326,11 +308,7 @@ export const updateCredentialsProvider = async (
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(bodyData),
     });
 
@@ -351,20 +329,16 @@ export const updateCredentialsProvider = async (
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: false });
 
   const providerId = formData.get("providerId");
 
-  const url = new URL(`${keyServer}/providers/${providerId}/connection`);
+  const url = new URL(`${apiBaseUrl}/providers/${providerId}/connection`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await response.json();
     await wait(2000);
@@ -378,48 +352,80 @@ export const checkConnectionProvider = async (formData: FormData) => {
 };
 
 export const deleteCredentials = async (secretId: string) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers/secrets/${secretId}`);
+  const headers = await getAuthHeaders({ contentType: false });
+
+  if (!secretId) {
+    return { error: "Secret ID is required" };
+  }
+
+  const url = new URL(`${apiBaseUrl}/providers/secrets/${secretId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
-    const data = await response.json();
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to delete the credentials",
+        );
+      } catch {
+        throw new Error("Failed to delete the credentials");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/providers");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting credentials:", error);
+    return { error: getErrorMessage(error) };
   }
 };
 
 export const deleteProvider = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-
+  const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get("id");
-  const url = new URL(`${keyServer}/providers/${providerId}`);
+
+  if (!providerId) {
+    return { error: "Provider ID is required" };
+  }
+
+  const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
-    const data = await response.json();
-    await wait(1000);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the provider");
+      } catch {
+        throw new Error("Failed to delete the provider");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/providers");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting provider:", error);
+    return { error: getErrorMessage(error) };
   }
 };

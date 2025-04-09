@@ -353,6 +353,11 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Elasticache Configuration
+  # aws.elasticache_redis_cluster_backup_enabled
+  # Minimum number of days that a Redis cluster must have backups retention period
+  minimum_snapshot_retention_period: 7
+
   # AWS Secrets Configuration
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
@@ -424,3 +429,9 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+# Microsoft365 Configuration
+microsoft365:
+  # Conditional Access Policy
+  # policy.session_controls.sign_in_frequency.frequency in hours
+  sign_in_frequency: 4

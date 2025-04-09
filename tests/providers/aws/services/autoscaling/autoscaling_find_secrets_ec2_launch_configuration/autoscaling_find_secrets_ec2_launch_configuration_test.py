@@ -23,12 +23,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
@@ -63,12 +66,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -110,12 +116,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -162,12 +171,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -208,12 +220,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -261,12 +276,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -306,12 +324,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,
@@ -343,12 +364,15 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
-            new=AutoScaling(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
+                new=AutoScaling(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration import (
                 autoscaling_find_secrets_ec2_launch_configuration,

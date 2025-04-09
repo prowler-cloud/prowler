@@ -40,12 +40,15 @@ class TestAzureProvider:
         )
         azure_region = "AzureCloud"
 
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+                return_value=AzureIdentityInfo(),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
         ):
             azure_provider = AzureProvider(
                 az_cli_auth,
@@ -97,12 +100,15 @@ class TestAzureProvider:
         fixer_config = default_fixer_config_file_path
         azure_region = "AzureCloud"
 
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+                return_value=AzureIdentityInfo(),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
         ):
 
             with pytest.raises(AzureNoAuthenticationMethodError) as exception:
@@ -135,12 +141,15 @@ class TestAzureProvider:
         fixer_config = default_fixer_config_file_path
         azure_region = "AzureCloud"
 
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+                return_value=AzureIdentityInfo(),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
         ):
 
             with pytest.raises(AzureBrowserAuthNoTenantIDError) as exception:
@@ -174,12 +183,15 @@ class TestAzureProvider:
         fixer_config = default_fixer_config_file_path
         azure_region = "AzureCloud"
 
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-            return_value=AzureIdentityInfo(),
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+                return_value=AzureIdentityInfo(),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
         ):
 
             with pytest.raises(AzureTenantIDNoBrowserAuthError) as exception:
@@ -201,13 +213,17 @@ class TestAzureProvider:
             )
 
     def test_test_connection_browser_auth(self):
-        with patch(
-            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
-        ) as mock_default_credential, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session, patch(
-            "prowler.providers.azure.azure_provider.SubscriptionClient"
-        ) as mock_resource_client:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+            ) as mock_default_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_resource_client,
+        ):
 
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
@@ -236,15 +252,20 @@ class TestAzureProvider:
             assert test_connection.error is None
 
     def test_test_connection_tenant_id_client_id_client_secret(self):
-        with patch(
-            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
-        ) as mock_default_credential, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session, patch(
-            "prowler.providers.azure.azure_provider.SubscriptionClient"
-        ) as mock_resource_client, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+            ) as mock_default_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_resource_client,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
 
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
@@ -282,15 +303,20 @@ class TestAzureProvider:
             assert test_connection.error is None
 
     def test_test_connection_provider_validation(self):
-        with patch(
-            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
-        ) as mock_default_credential, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session, patch(
-            "prowler.providers.azure.azure_provider.SubscriptionClient"
-        ) as mock_resource_client, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+            ) as mock_default_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_resource_client,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
 
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
@@ -328,15 +354,20 @@ class TestAzureProvider:
             assert test_connection.error is None
 
     def test_test_connection_provider_validation_error(self):
-        with patch(
-            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
-        ) as mock_default_credential, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session, patch(
-            "prowler.providers.azure.azure_provider.SubscriptionClient"
-        ) as mock_resource_client, patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+            ) as mock_default_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_resource_client,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
 
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
@@ -402,12 +433,15 @@ class TestAzureProvider:
         )
 
     def test_test_connection_with_httpresponseerror(self):
-        with patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-            return_value={},
-        ), patch(
-            "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
-        ) as mock_setup_session:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+        ):
 
             mock_setup_session.side_effect = AzureHTTPResponseError(
                 file="test_file", original_exception="Simulated HttpResponseError"

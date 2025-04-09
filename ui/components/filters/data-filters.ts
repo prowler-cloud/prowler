@@ -27,7 +27,7 @@ export const filterScans = [
   },
   {
     key: "trigger",
-    labelCheckboxGroup: "Schedule",
+    labelCheckboxGroup: "Trigger",
     values: ["scheduled", "manual"],
   },
   // Add more filter categories as needed
@@ -42,7 +42,7 @@ export const filterFindings = [
   {
     key: "status__in",
     labelCheckboxGroup: "Status",
-    values: ["PASS", "FAIL", "MANUAL", "MUTED"],
+    values: ["PASS", "FAIL", "MANUAL"],
   },
   {
     key: "delta__in",

@@ -18,7 +18,7 @@ This file should inside the *.vscode* folder and its name has to be *launch.json
             "name": "Debug AWS Check",
             "type": "debugpy",
             "request": "launch",
-            "program": "prowler.py",
+            "program": "prowler-cli.py",
             "args": [
                 "aws",
                 "--log-level",
@@ -33,7 +33,7 @@ This file should inside the *.vscode* folder and its name has to be *launch.json
             "name": "Debug Azure Check",
             "type": "debugpy",
             "request": "launch",
-            "program": "prowler.py",
+            "program": "prowler-cli.py",
             "args": [
                 "azure",
                 "--sp-env-auth",
@@ -49,7 +49,7 @@ This file should inside the *.vscode* folder and its name has to be *launch.json
             "name": "Debug GCP Check",
             "type": "debugpy",
             "request": "launch",
-            "program": "prowler.py",
+            "program": "prowler-cli.py",
             "args": [
                 "gcp",
                 "--log-level",
@@ -64,7 +64,7 @@ This file should inside the *.vscode* folder and its name has to be *launch.json
             "name": "Debug K8s Check",
             "type": "debugpy",
             "request": "launch",
-            "program": "prowler.py",
+            "program": "prowler-cli.py",
             "args": [
                 "kubernetes",
                 "--log-level",

@@ -142,7 +142,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           aws_access_key_id: z.string().optional(),
           aws_secret_access_key: z.string().optional(),
           aws_session_token: z.string().optional(),
-          session_duration: z.number().optional(),
+          session_duration: z.string().optional(),
           role_session_name: z.string().optional(),
           credentials_type: z.string().optional(),
         })
@@ -162,6 +162,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
 
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
+  runOnce: z.boolean().default(false),
 });
 
 export const launchScanFormSchema = () =>

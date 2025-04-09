@@ -76,7 +76,6 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
-                result = result[result.find("CIS_") :]
             results.append(result)
 
     unique_results = set(results)

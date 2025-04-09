@@ -1,15 +1,21 @@
 "use client";
 
+import { Tooltip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
+import { DownloadIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
+import { toast } from "@/components/ui";
+import { CustomButton } from "@/components/ui/custom";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
+import { downloadScanZip } from "@/lib/helper";
 import { ScanProps } from "@/types";
 
 import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
+import { TriggerIcon } from "../../trigger-icon";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -87,10 +93,12 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { state },
       } = getScanData(row);
       return (
-        <StatusBadge
-          status={state}
-          loadingProgress={row.original.attributes.progress}
-        />
+        <div className="flex items-center justify-center">
+          <StatusBadge
+            status={state}
+            loadingProgress={row.original.attributes.progress}
+          />
+        </div>
       );
     },
   },
@@ -99,9 +107,52 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     header: "Findings",
     cell: ({ row }) => {
       const { id } = getScanData(row);
-      return <LinkToFindingsFromScan scanId={id} />;
+      const scanState = row.original.attributes?.state;
+      return (
+        <LinkToFindingsFromScan
+          scanId={id}
+          isDisabled={!["completed", "executing"].includes(scanState)}
+        />
+      );
     },
   },
+  {
+    id: "download",
+    header: () => (
+      <div className="flex items-end gap-x-1">
+        <p className="w-fit text-xs">Download</p>
+        <Tooltip
+          className="text-xs"
+          content="Download a ZIP file containing the JSON (OCSF), CSV, and HTML reports."
+        >
+          <div className="flex items-center gap-2">
+            <InfoIcon className="mb-1 text-primary" size={12} />
+          </div>
+        </Tooltip>
+      </div>
+    ),
+    cell: ({ row }) => {
+      const scanId = row.original.id;
+      const scanState = row.original.attributes?.state;
+
+      return (
+        <div className="flex w-14 items-center justify-center">
+          <CustomButton
+            variant="ghost"
+            isDisabled={scanState !== "completed"}
+            onPress={() => downloadScanZip(scanId, toast)}
+            className="p-0 text-default-500 hover:text-primary disabled:opacity-30"
+            isIconOnly
+            ariaLabel="Download .zip"
+            size="sm"
+          >
+            <DownloadIcon size={16} />
+          </CustomButton>
+        </div>
+      );
+    },
+  },
+
   // {
   //   accessorKey: "scanner_args",
   //   header: "Scanner Args",
@@ -119,7 +170,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const {
         attributes: { unique_resource_count },
       } = getScanData(row);
-      return <p className="font-medium">{unique_resource_count}</p>;
+      return (
+        <div className="flex w-fit items-center justify-center">
+          <span className="text-xs font-medium">{unique_resource_count}</span>
+        </div>
+      );
     },
   },
   {
@@ -151,13 +206,21 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
     accessorKey: "trigger",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
+      <DataTableColumnHeader
+        column={column}
+        title={"Trigger"}
+        param="trigger"
+      />
     ),
     cell: ({ row }) => {
       const {
         attributes: { trigger },
       } = getScanData(row);
-      return <p className="text-tiny font-medium uppercase">{trigger}</p>;
+      return (
+        <div className="flex w-9 items-center justify-center">
+          <TriggerIcon trigger={trigger} iconSize={16} />
+        </div>
+      );
     },
   },
   {
@@ -173,8 +236,13 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       if (!name || name.length === 0) {
         return <span className="font-medium">-</span>;
       }
-
-      return <span className="text-xs font-medium">{name}</span>;
+      return (
+        <div className="flex w-fit items-center justify-center">
+          <span className="text-xs font-medium">
+            {name === "Daily scheduled scan" ? "scheduled scan" : name}
+          </span>
+        </div>
+      );
     },
   },
   {

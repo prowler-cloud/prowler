@@ -61,33 +61,40 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
       - name: Build and push container image (latest)
         # Comment the following line for testing
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           # Set push: false for testing
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.SHORT_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Build and push container image (release)
         if: github.event_name == 'release'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           push: true
@@ -96,3 +103,12 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger deployment
+        if: github.event_name == 'push'
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.CLOUD_DISPATCH }}
+          event-type: prowler-api-deploy
+          client-payload: '{"sha": "${{ github.sha }}", "short_sha": "${{ env.SHORT_SHA }}"}'

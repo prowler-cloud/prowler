@@ -76,7 +76,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     docker compose up postgres valkey -d \
@@ -84,6 +84,12 @@ Prowler App can be installed in different ways, depending on your environment:
     python manage.py migrate --database admin \
     gunicorn -c config/guniconf.py config.wsgi:application
     ```
+
+    ???+ important
+        Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+
+        If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+        In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
     > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
 
@@ -93,7 +99,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     cd src/backend \
@@ -106,7 +112,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     cd src/backend \
@@ -130,7 +136,7 @@ Prowler App can be installed in different ways, depending on your environment:
 
 ### Prowler CLI Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9, <= 3.12`:
 
 === "pipx"
 
@@ -138,7 +144,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
@@ -162,7 +168,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `Python pip >= 21.0.0`
     * AWS, GCP, Azure, Microsoft365 and/or Kubernetes credentials
 
@@ -213,7 +219,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
     poetry install
-    poetry run python prowler.py -v
+    poetry run python prowler-cli.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
@@ -222,7 +228,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -238,8 +244,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
-    * `Python >= 3.9`
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9, <= 3.12`.
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:

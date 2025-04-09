@@ -1,7 +1,10 @@
 from colorama import Fore, Style
 
 from prowler.config.config import orange_color
+from prowler.lib.check.models import Severity
 from prowler.lib.logger import logger
+from prowler.lib.outputs.common import Status
+from prowler.lib.outputs.finding import Finding
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -89,7 +92,7 @@ def set_report_color(status: str, muted: bool = False) -> str:
     return color
 
 
-def extract_findings_statistics(findings: list) -> dict:
+def extract_findings_statistics(findings: list[Finding]) -> dict:
     """
     extract_findings_statistics takes a list of findings and returns the following dict with the aggregated statistics
     {
@@ -121,38 +124,46 @@ def extract_findings_statistics(findings: list) -> dict:
     medium_severity_fail = 0
     low_severity_pass = 0
     low_severity_fail = 0
+    informational_severity_pass = 0
+    informational_severity_fail = 0
 
     for finding in findings:
-        # Save the resource_id
-        resources.add(finding.resource_id)
+        resources.add(finding.resource_uid)
 
-        if finding.status == "PASS":
-            if finding.check_metadata.Severity == "critical":
-                critical_severity_pass += 1
-            if finding.check_metadata.Severity == "high":
-                high_severity_pass += 1
-            if finding.check_metadata.Severity == "medium":
-                medium_severity_pass += 1
-            if finding.check_metadata.Severity == "low":
-                low_severity_pass += 1
-            total_pass += 1
+        if finding.status == Status.PASS:
             findings_count += 1
+            total_pass += 1
+            if finding.metadata.Severity == Severity.critical:
+                critical_severity_pass += 1
+            if finding.metadata.Severity == Severity.high:
+                high_severity_pass += 1
+            if finding.metadata.Severity == Severity.medium:
+                medium_severity_pass += 1
+            if finding.metadata.Severity == Severity.low:
+                low_severity_pass += 1
+            if finding.metadata.Severity == Severity.informational:
+                informational_severity_pass += 1
+
             if finding.muted is True:
                 muted_pass += 1
 
-        if finding.status == "FAIL":
-            if finding.check_metadata.Severity == "critical":
-                critical_severity_fail += 1
-            if finding.check_metadata.Severity == "high":
-                high_severity_fail += 1
-            if finding.check_metadata.Severity == "medium":
-                medium_severity_fail += 1
-            if finding.check_metadata.Severity == "low":
-                low_severity_fail += 1
-            total_fail += 1
+        if finding.status == Status.FAIL:
             findings_count += 1
+            total_fail += 1
+            if finding.metadata.Severity == Severity.critical:
+                critical_severity_fail += 1
+            if finding.metadata.Severity == Severity.high:
+                high_severity_fail += 1
+            if finding.metadata.Severity == Severity.medium:
+                medium_severity_fail += 1
+            if finding.metadata.Severity == Severity.low:
+                low_severity_fail += 1
+            if finding.metadata.Severity == Severity.informational:
+                informational_severity_fail += 1
+
             if finding.muted is True:
                 muted_fail += 1
+
             if not finding.muted and all_fails_are_muted:
                 all_fails_are_muted = False
 
@@ -168,8 +179,10 @@ def extract_findings_statistics(findings: list) -> dict:
     stats["total_high_severity_pass"] = high_severity_pass
     stats["total_medium_severity_fail"] = medium_severity_fail
     stats["total_medium_severity_pass"] = medium_severity_pass
-    stats["total_low_severity_fail"] = medium_severity_fail
-    stats["total_low_severity_pass"] = medium_severity_pass
+    stats["total_low_severity_fail"] = low_severity_fail
+    stats["total_low_severity_pass"] = low_severity_pass
+    stats["total_informational_severity_pass"] = informational_severity_pass
+    stats["total_informational_severity_fail"] = informational_severity_fail
     stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats

@@ -17,9 +17,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/iam-policies/iam_47#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_47#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
       "Terraform": "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
     },
     "Recommendation": {

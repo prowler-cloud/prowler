@@ -13,12 +13,15 @@ class Test_defender_ensure_defender_for_databases_is_on:
         defender_client = mock.MagicMock
         defender_client.pricings = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -35,18 +38,22 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -63,18 +70,22 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -91,18 +102,22 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -119,18 +134,22 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -147,33 +166,40 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
             },
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -188,7 +214,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
                 == f"Defender plan Defender for Databases from subscription {AZURE_SUBSCRIPTION_ID} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Databases"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id
 
     def test_defender_databases_cosmosdb_not_standard(self):
@@ -198,33 +224,40 @@ class Test_defender_ensure_defender_for_databases_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServers": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "SqlServerVirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "OpenSourceRelationalDatabases": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 ),
                 "CosmosDbs": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
                 ),
             },
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on import (
                 defender_ensure_defender_for_databases_is_on,
@@ -239,5 +272,5 @@ class Test_defender_ensure_defender_for_databases_is_on:
                 == f"Defender plan Defender for Databases from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Defender plan Databases"
+            assert result[0].resource_name == "Defender plan Servers"
             assert result[0].resource_id == resource_id

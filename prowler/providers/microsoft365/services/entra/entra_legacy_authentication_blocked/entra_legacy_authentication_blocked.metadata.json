@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "entra_legacy_authentication_blocked",
+  "CheckTitle": "Ensure that Conditional Access policy blocks legacy authentication",
+  "CheckType": [],
+  "ServiceName": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that Conditional Access policy blocks legacy authentication in Microsoft Entra ID to enforce modern authentication methods and protect against credential-stuffing and brute-force attacks.",
+  "Risk": "Legacy authentication protocols do not support MFA, making them vulnerable to credential-stuffing and brute-force attacks. Attackers commonly exploit these protocols to bypass security controls and gain unauthorized access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. Under Users include All users. Under Target resources include All cloud apps and do not create any exclusions. Under Conditions select Client apps and check the boxes for Exchange ActiveSync clients and Other clients. Under Grant select Block Access. Click Select. 4. Set the policy On and click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce Conditional Access policies to block legacy authentication across all users in Microsoft Entra ID. Ensure all applications and devices use modern authentication methods such as OAuth 2.0. For necessary exceptions (e.g., multifunction printers), configure secure alternatives following Microsoft's mail flow best practices.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
