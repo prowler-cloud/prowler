@@ -56,6 +56,7 @@ class Monitoring(GCPService):
 
     def _get_sa_keys_metrics(self, metric_type):
         try:
+            max_unused_days = int(self.audit_config.get("max_unused_account_days", 180))
             end_time = (
                 datetime.datetime.now(datetime.timezone.utc)
                 .replace(microsecond=0)
@@ -64,7 +65,7 @@ class Monitoring(GCPService):
             start_time = (
                 (
                     datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(days=180)
+                    - datetime.timedelta(days=max_unused_days)
                 )
                 .replace(microsecond=0)
                 .isoformat()
@@ -100,6 +101,7 @@ class Monitoring(GCPService):
 
     def _get_sa_api_metrics(self, metric_type):
         try:
+            max_unused_days = int(self.audit_config.get("max_unused_account_days", 180))
             end_time = (
                 datetime.datetime.now(datetime.timezone.utc)
                 .replace(microsecond=0)
@@ -108,7 +110,7 @@ class Monitoring(GCPService):
             start_time = (
                 (
                     datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(days=180)
+                    - datetime.timedelta(days=max_unused_days)
                 )
                 .replace(microsecond=0)
                 .isoformat()

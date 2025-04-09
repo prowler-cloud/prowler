@@ -8,7 +8,7 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_iam_sa_dormant_account:
+class Test_iam_service_account_unused:
     def test_iam_no_sa(self):
         iam_client = mock.MagicMock()
 
@@ -18,23 +18,23 @@ class Test_iam_sa_dormant_account:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account.iam_client",
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account import (
-                iam_sa_dormant_account,
+            from prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused import (
+                iam_service_account_unused,
             )
 
             iam_client.project_ids = [GCP_PROJECT_ID]
             iam_client.region = GCP_US_CENTER1_LOCATION
             iam_client.service_accounts = []
 
-            check = iam_sa_dormant_account()
+            check = iam_service_account_unused()
             result = check.execute()
             assert len(result) == 0
 
-    def test_iam_sa_dormant_account_single(self):
+    def test_iam_service_account_unused_single(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -44,20 +44,20 @@ class Test_iam_sa_dormant_account:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account.iam_client",
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.iam_client",
                 new=iam_client,
             ),
             mock.patch(
-                "prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account.monitoring_client",
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.monitoring_client",
                 new=monitoring_client,
             ),
         ):
-            from prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account import (
-                iam_sa_dormant_account,
-            )
             from prowler.providers.gcp.services.iam.iam_service import (
                 Key,
                 ServiceAccount,
+            )
+            from prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused import (
+                iam_service_account_unused,
             )
 
             iam_client.project_ids = [GCP_PROJECT_ID]
@@ -83,21 +83,22 @@ class Test_iam_sa_dormant_account:
             ]
 
             monitoring_client.sa_api_metrics = set(["111222233334444"])
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
 
-            check = iam_sa_dormant_account()
+            check = iam_service_account_unused()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Service Account {iam_client.service_accounts[0].email} was used over the last 180 days."
+                == f"Service Account {iam_client.service_accounts[0].email} was used over the last 30 days."
             )
             assert result[0].resource_id == iam_client.service_accounts[0].email
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].resource == iam_client.service_accounts[0]
 
-    def test_iam_sa_dormant_account_mix(self):
+    def test_iam_service_account_unused_mix(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -107,20 +108,20 @@ class Test_iam_sa_dormant_account:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account.iam_client",
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.iam_client",
                 new=iam_client,
             ),
             mock.patch(
-                "prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account.monitoring_client",
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.monitoring_client",
                 new=monitoring_client,
             ),
         ):
-            from prowler.providers.gcp.services.iam.iam_sa_dormant_account.iam_sa_dormant_account import (
-                iam_sa_dormant_account,
-            )
             from prowler.providers.gcp.services.iam.iam_service import (
                 Key,
                 ServiceAccount,
+            )
+            from prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused import (
+                iam_service_account_unused,
             )
 
             iam_client.project_ids = [GCP_PROJECT_ID]
@@ -154,14 +155,15 @@ class Test_iam_sa_dormant_account:
             ]
 
             monitoring_client.sa_api_metrics = set(["111222233334444"])
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
 
-            check = iam_sa_dormant_account()
+            check = iam_service_account_unused()
             result = check.execute()
             assert len(result) == 2
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Service Account {iam_client.service_accounts[0].email} was used over the last 180 days."
+                == f"Service Account {iam_client.service_accounts[0].email} was used over the last 30 days."
             )
             assert result[0].resource_id == iam_client.service_accounts[0].email
             assert result[0].project_id == GCP_PROJECT_ID
@@ -171,7 +173,7 @@ class Test_iam_sa_dormant_account:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"Service Account {iam_client.service_accounts[1].email} was not used over the last 180 days. Consider deleting or disabling it."
+                == f"Service Account {iam_client.service_accounts[1].email} was not used over the last 30 days. Consider deleting or disabling it."
             )
             assert result[1].resource_id == iam_client.service_accounts[1].email
             assert result[1].project_id == GCP_PROJECT_ID

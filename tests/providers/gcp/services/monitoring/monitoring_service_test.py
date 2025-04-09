@@ -56,6 +56,7 @@ class TestMonitoringService:
             monitoring_client = Monitoring(
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
             assert monitoring_client.service == "monitoring"
             assert monitoring_client.project_ids == [GCP_PROJECT_ID]
 

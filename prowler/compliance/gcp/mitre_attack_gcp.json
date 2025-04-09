@@ -142,10 +142,10 @@
         "iam_role_kms_enforce_separation_of_duties",
         "iam_role_sa_enforce_separation_of_duties",
         "iam_sa_user_managed_key_unused",
-        "iam_sa_dormant_account",
         "iam_sa_no_administrative_privileges",
         "iam_sa_no_user_managed_keys",
         "iam_sa_user_managed_key_rotate_90_days",
+        "iam_service_account_unused",
         "apikeys_key_rotated_in_90_days",
         "apikeys_api_restrictions_configured"
       ],

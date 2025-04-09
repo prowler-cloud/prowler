@@ -5,9 +5,12 @@ from prowler.providers.gcp.services.monitoring.monitoring_client import (
 )
 
 
-class iam_sa_dormant_account(Check):
+class iam_service_account_unused(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
+        max_unused_days = monitoring_client.audit_config.get(
+            "max_unused_account_days", 180
+        )
         sa_ids_used = monitoring_client.sa_api_metrics
         for account in iam_client.service_accounts:
             report = Check_Report_GCP(
@@ -18,12 +21,10 @@ class iam_sa_dormant_account(Check):
             )
             if account.uniqueId in sa_ids_used:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Service Account {account.email} was used over the last 180 days."
-                )
+                report.status_extended = f"Service Account {account.email} was used over the last {max_unused_days} days."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Service Account {account.email} was not used over the last 180 days. Consider deleting or disabling it."
+                report.status_extended = f"Service Account {account.email} was not used over the last {max_unused_days} days. Consider deleting or disabling it."
             findings.append(report)
 
         return findings
