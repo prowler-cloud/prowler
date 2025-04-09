@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -10,6 +12,8 @@ class Defender(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.malware_policies = self._get_malware_filter_policy()
+        self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
+        self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
 
     def _get_malware_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender malware filter policy...")
@@ -33,7 +37,69 @@ class Defender(Microsoft365Service):
             )
         return malware_policies
 
+    def _get_outbound_spam_filter_policy(self):
+        logger.info("Microsoft365 - Getting Defender outbound spam filter policy...")
+        outbound_spam_policy = self.powershell.execute(
+            "Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json"
+        )
+        if isinstance(outbound_spam_policy, dict):
+            outbound_spam_policy = [outbound_spam_policy]
+        outbound_spam_policies = {}
+        try:
+            for policy in outbound_spam_policy:
+                outbound_spam_policies[policy.get("Name", "")] = (
+                    DefenderOutboundSpamPolicy(
+                        notify_sender_blocked=policy.get("NotifyOutboundSpam", True),
+                        notify_limit_exceeded=policy.get(
+                            "BccSuspiciousOutboundMail", True
+                        ),
+                        notify_limit_exceeded_adresses=policy.get(
+                            "BccSuspiciousOutboundAdditionalRecipients", []
+                        ),
+                        notify_sender_blocked_adresses=policy.get(
+                            "NotifyOutboundSpamRecipients", []
+                        ),
+                        default=policy.get("IsDefault", False),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return outbound_spam_policies
+
+    def _get_outbound_spam_filter_rule(self):
+        logger.info("Microsoft365 - Getting Defender outbound spam filter rule...")
+        outbound_spam_rule = self.powershell.execute(
+            "Get-HostedOutboundSpamFilterRule | ConvertTo-Json"
+        )
+        if isinstance(outbound_spam_rule, dict):
+            outbound_spam_rule = [outbound_spam_rule]
+        outbound_spam_rules = {}
+        try:
+            for rule in outbound_spam_rule:
+                outbound_spam_rules[rule.get("Name", "")] = DefenderOutboundSpamRule(
+                    state=rule.get("State", "Disabled"),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return outbound_spam_rules
+
 
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
+
+
+class DefenderOutboundSpamPolicy(BaseModel):
+    notify_sender_blocked: bool
+    notify_limit_exceeded: bool
+    notify_limit_exceeded_adresses: List[str]
+    notify_sender_blocked_adresses: List[str]
+    default: bool
+
+
+class DefenderOutboundSpamRule(BaseModel):
+    state: str
