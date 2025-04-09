@@ -29,7 +29,7 @@ class ProwlerArgumentParser:
             usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,nhn,dashboard} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,microsoft365,nhn}
+  {aws,azure,gcp,kubernetes,m365,nhn}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -103,6 +103,11 @@ Detailed documentation at https://docs.prowler.com
             # a flag, starting by "-", is supplied
             if "-" in sys.argv[1]:
                 sys.argv = self.__set_default_provider__(sys.argv)
+
+            # Provider aliases mapping
+            # Microsoft 365
+            elif sys.argv[1] == "microsoft365":
+                sys.argv[1] = "m365"
 
         # Parse arguments
         args = self.parser.parse_args()
