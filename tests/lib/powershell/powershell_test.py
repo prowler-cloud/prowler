@@ -13,6 +13,7 @@ class TestPowerShellSession:
         mock_popen.assert_called_once()
         assert session.process == mock_process
         assert session.END == "<END>"
+        session.close()
 
     @patch("subprocess.Popen")
     def test_sanitize(self, _):
@@ -37,9 +38,10 @@ class TestPowerShellSession:
 
         for input_str, expected in test_cases:
             assert session.sanitize(input_str) == expected
+        session.close()
 
     @patch("subprocess.Popen")
-    def test_remove_ansi(self, text):
+    def test_remove_ansi(self, mock_popen):
         session = PowerShellSession()
 
         test_cases = [
@@ -52,6 +54,7 @@ class TestPowerShellSession:
 
         for input_str, expected in test_cases:
             assert session.remove_ansi(input_str) == expected
+        session.close()
 
     @patch("subprocess.Popen")
     def test_execute(self, mock_popen):
@@ -67,6 +70,7 @@ class TestPowerShellSession:
             mock_process.stdin.write.assert_any_call(f"{command}\n")
             mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
             assert result == {"Name": "Get-Command"}
+        session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
@@ -82,6 +86,7 @@ class TestPowerShellSession:
         mock_process.stdout.readline.return_value = "test output\n"
         with patch.object(session, "remove_ansi", return_value="test output"):
             assert session.read_output(timeout=0.1, default="") == ""
+        session.close()
 
     @patch("subprocess.Popen")
     def test_json_parse_output(self, mock_popen):
@@ -105,6 +110,7 @@ class TestPowerShellSession:
         for input_str, expected in test_cases:
             result = session.json_parse_output(input_str)
             assert result == expected
+        session.close()
 
     @patch("subprocess.Popen")
     def test_close(self, mock_popen):

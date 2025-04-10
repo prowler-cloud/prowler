@@ -27,6 +27,7 @@ class Test_Purview_Service:
             )
             assert purview_client.client.__class__.__name__ == "GraphServiceClient"
             assert purview_client.powershell.__class__.__name__ == "M365PowerShell"
+            purview_client.powershell.close()
 
     @patch(
         "prowler.providers.m365.services.purview.purview_service.Purview._get_audit_log_config",
@@ -46,3 +47,4 @@ class Test_Purview_Service:
             assert purview_client.audit_log_config == AuditLogConfig(
                 audit_log_search=True
             )
+            purview_client.powershell.close()

@@ -18,6 +18,7 @@ class Testm365PowerShell:
             mock_init_credential.assert_called_once_with(credentials)
             assert session.process == mock_process
             assert session.END == "<END>"
+            session.close()
 
     @patch("subprocess.Popen")
     def test_sanitize(self, _):
@@ -43,6 +44,7 @@ class Testm365PowerShell:
 
         for input_str, expected in test_cases:
             assert session.sanitize(input_str) == expected
+        session.close()
 
     @patch("subprocess.Popen")
     def test_init_credential(self, mock_popen):
@@ -60,6 +62,7 @@ class Testm365PowerShell:
         mock_process.stdin.write.assert_any_call(
             "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)\n"
         )
+        session.close()
 
     @patch("subprocess.Popen")
     def test_test_credentials(self, mock_popen):
@@ -70,6 +73,7 @@ class Testm365PowerShell:
 
         with patch.object(session, "read_output", return_value="test@example.com"):
             assert session.test_credentials(credentials) is True
+        session.close()
 
     @patch("subprocess.Popen")
     def test_remove_ansi(self, mock_popen):
@@ -86,6 +90,7 @@ class Testm365PowerShell:
 
         for input_str, expected in test_cases:
             assert session.remove_ansi(input_str) == expected
+        session.close()
 
     @patch("subprocess.Popen")
     def test_execute(self, mock_popen):
@@ -102,6 +107,7 @@ class Testm365PowerShell:
             mock_process.stdin.write.assert_any_call(f"{command}\n")
             mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
             assert result == {"Name": "Get-Command"}
+        session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
@@ -118,6 +124,7 @@ class Testm365PowerShell:
         mock_process.stdout.readline.return_value = "test output\n"
         with patch.object(session, "remove_ansi", return_value="test output"):
             assert session.read_output(timeout=0.1, default="") == ""
+        session.close()
 
     @patch("subprocess.Popen")
     def test_json_parse_output(self, mock_popen):
@@ -142,6 +149,7 @@ class Testm365PowerShell:
         for input_str, expected in test_cases:
             result = session.json_parse_output(input_str)
             assert result == expected
+        session.close()
 
     @patch("subprocess.Popen")
     def test_close(self, mock_popen):

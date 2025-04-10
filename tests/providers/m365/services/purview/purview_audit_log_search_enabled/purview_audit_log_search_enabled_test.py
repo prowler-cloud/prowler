@@ -42,6 +42,7 @@ class Test_purview_audit_log_search_enabled:
             assert result[0].resource_name == "Purview Settings"
             assert result[0].resource_id == "purviewSettings"
             assert result[0].location == "global"
+            purview_client.powershell.close()
 
     def test_audit_log_search_enabled(self):
         purview_client = mock.MagicMock()
@@ -80,3 +81,4 @@ class Test_purview_audit_log_search_enabled:
             assert result[0].resource_name == "Purview Settings"
             assert result[0].resource_id == "purviewSettings"
             assert result[0].location == "global"
+            purview_client.powershell.close()
