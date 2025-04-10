@@ -69,7 +69,6 @@ class Test_purview_audit_log_search_enabled:
                 AuditLogConfig,
             )
 
-            purview_client = mock.MagicMock
             purview_client.audit_log_config = AuditLogConfig(audit_log_search=True)
 
             check = purview_audit_log_search_enabled()
@@ -81,4 +80,3 @@ class Test_purview_audit_log_search_enabled:
             assert result[0].resource_name == "Purview Settings"
             assert result[0].resource_id == "purviewSettings"
             assert result[0].location == "global"
-            purview_client.powershell.close()

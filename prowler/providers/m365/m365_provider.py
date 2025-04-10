@@ -374,13 +374,17 @@ class M365Provider(Provider):
                 If env_auth is True, retrieves from environment variables.
                 If False, returns empty credentials.
         """
+        credentials = None
         if m365_credentials:
             credentials = M365Credentials(
-                user=m365_credentials["m365_user"],
-                passwd=m365_credentials["m365_user"],
+                user=m365_credentials.get("user", ""),
+                passwd=m365_credentials.get("encrypted_password", ""),
             )
-        if env_auth:
-            if not getenv("M365_USER") or not getenv("M365_ENCRYPTED_PASSWORD"):
+        elif env_auth:
+            m365_user = getenv("M365_USER")
+            m365_password = getenv("M365_ENCRYPTED_PASSWORD")
+
+            if not m365_user or not m365_password:
                 logger.critical(
                     "M365 provider: Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables needed for credentials authentication"
                 )
@@ -389,21 +393,21 @@ class M365Provider(Provider):
                     message="Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication.",
                 )
             credentials = M365Credentials(
-                user=getenv("M365_USER"),
-                passwd=getenv("M365_ENCRYPTED_PASSWORD"),
+                user=m365_user,
+                passwd=m365_password,
             )
 
-        test_session = M365PowerShell(credentials)
-
-        if test_session.test_credentials(credentials):
-            test_session.close()
-            return credentials
-        else:
-            test_session.close()
-            raise M365EnvironmentUserCredentialsError(
-                file=os.path.basename(__file__),
-                message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
-            )
+        if credentials:
+            test_session = M365PowerShell(credentials)
+            try:
+                if test_session.test_credentials(credentials):
+                    return credentials
+                raise M365EnvironmentUserCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
+                )
+            finally:
+                test_session.close()
 
     def print_credentials(self):
         """M365 credentials information.
