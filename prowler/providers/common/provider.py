@@ -222,6 +222,15 @@ class Provider(ABC):
                         tenant_id=arguments.tenant_id,
                         fixer_config=fixer_config,
                     )
+                elif "nhn" in provider_class_name.lower():
+                    provider_class(
+                        username=arguments.nhn_username,
+                        password=arguments.nhn_password,
+                        tenant_id=arguments.nhn_tenant_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

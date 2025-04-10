@@ -173,7 +173,7 @@ class Test_iam_service_account_unused:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"Service Account {iam_client.service_accounts[1].email} was not used over the last 30 days. Consider deleting or disabling it."
+                == f"Service Account {iam_client.service_accounts[1].email} was not used over the last 30 days."
             )
             assert result[1].resource_id == iam_client.service_accounts[1].email
             assert result[1].project_id == GCP_PROJECT_ID

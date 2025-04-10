@@ -24,7 +24,7 @@ class iam_service_account_unused(Check):
                 report.status_extended = f"Service Account {account.email} was used over the last {max_unused_days} days."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Service Account {account.email} was not used over the last {max_unused_days} days. Consider deleting or disabling it."
+                report.status_extended = f"Service Account {account.email} was not used over the last {max_unused_days} days."
             findings.append(report)
 
         return findings
