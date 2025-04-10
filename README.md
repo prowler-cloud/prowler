@@ -73,7 +73,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 |---|---|---|---|---|
 | AWS | 564 | 82 | 33 | 10 |
 | GCP | 78 | 13 | 7 | 3 |
-| Azure | 140 | 18 | 7 | 3 |
+| Azure | 140 | 18 | 8 | 3 |
 | Kubernetes | 83 | 7 | 4 | 7 |
 | Microsoft365 | 5 | 2 | 1 | 0 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
