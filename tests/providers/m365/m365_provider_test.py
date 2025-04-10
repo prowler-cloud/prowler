@@ -332,6 +332,38 @@ class TestM365Provider:
             assert test_connection.is_connected
             assert test_connection.error is None
 
+    def test_test_connection_tenant_id_client_id_client_secret_user_encrypted_password(
+        self,
+    ):
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ValidateStaticCredentials to avoid real API calls
+            mock_validate_static_credentials.return_value = None
+
+            test_connection = M365Provider.test_connection(
+                tenant_id=str(uuid4()),
+                region="M365Global",
+                raise_on_exception=False,
+                client_id=str(uuid4()),
+                client_secret=str(uuid4()),
+                user="user@user.com",
+                encrypted_password="AAAA1111",
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
     def test_test_connection_with_httpresponseerror(self):
         with patch(
             "prowler.providers.m365.m365_provider.M365Provider.setup_session"

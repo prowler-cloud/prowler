@@ -34,6 +34,18 @@ def init_parser(self):
         default=None,
         help="Microsoft 365 Tenant ID to be used with --browser-auth option",
     )
+    m365_parser.add_argument(
+        "--user",
+        nargs="?",
+        default=None,
+        help="Microsoft 365 user email",
+    )
+    m365_parser.add_argument(
+        "--encypted-password",
+        nargs="?",
+        default=None,
+        help="Microsoft 365 encrypted password",
+    )
     # Regions
     m365_regions_subparser = m365_parser.add_argument_group("Regions")
     m365_regions_subparser.add_argument(

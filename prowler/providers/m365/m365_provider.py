@@ -112,6 +112,8 @@ class M365Provider(Provider):
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
+        user: str = None,
+        encrypted_password: str = None,
         region: str = "M365Global",
         config_content: dict = None,
         config_path: str = None,
@@ -156,6 +158,8 @@ class M365Provider(Provider):
             tenant_id,
             client_id,
             client_secret,
+            user,
+            encrypted_password,
         )
 
         logger.info("Checking if region is different than default one")
@@ -163,9 +167,13 @@ class M365Provider(Provider):
 
         # Get the dict from the static credentials
         m365_credentials = None
-        if tenant_id and client_id and client_secret:
+        if tenant_id and client_id and client_secret and user and encrypted_password:
             m365_credentials = self.validate_static_credentials(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                user=user,
+                encrypted_password=encrypted_password,
             )
 
         # Set up the M365 session
@@ -180,7 +188,7 @@ class M365Provider(Provider):
         )
 
         # Set up PowerShell session credentials
-        self._credentials = self.setup_powershell(env_auth)
+        self._credentials = self.setup_powershell(env_auth, m365_credentials)
 
         # Set up the identity
         self._identity = self.setup_identity(
@@ -265,6 +273,8 @@ class M365Provider(Provider):
         tenant_id: str,
         client_id: str,
         client_secret: str,
+        user: str,
+        encrypted_password: str,
     ):
         """
         Validates the authentication arguments for the M365 provider.
@@ -277,12 +287,14 @@ class M365Provider(Provider):
             tenant_id (str): The M365 Tenant ID.
             client_id (str): The M365 Client ID.
             client_secret (str): The M365 Client Secret.
+            user (str): The M365 User Account.
+            encrpted_password (str): The M365 Encrypted Password.
 
         Raises:
             M365BrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
         """
 
-        if not client_id and not client_secret:
+        if not client_id and not client_secret and not user and not encrypted_password:
             if not browser_auth and tenant_id:
                 raise M365BrowserAuthNoFlagError(
                     file=os.path.basename(__file__),
@@ -349,7 +361,9 @@ class M365Provider(Provider):
             )
 
     @staticmethod
-    def setup_powershell(env_auth: bool = False) -> M365Credentials:
+    def setup_powershell(
+        env_auth: bool = False, m365_credentials: dict = {}
+    ) -> M365Credentials:
         """Gets the M365 credentials.
 
         Args:
@@ -360,6 +374,11 @@ class M365Provider(Provider):
                 If env_auth is True, retrieves from environment variables.
                 If False, returns empty credentials.
         """
+        if m365_credentials:
+            credentials = M365Credentials(
+                user=m365_credentials["m365_user"],
+                passwd=m365_credentials["m365_user"],
+            )
         if env_auth:
             if not getenv("M365_USER") or not getenv("M365_ENCRYPTED_PASSWORD"):
                 logger.critical(
@@ -373,16 +392,18 @@ class M365Provider(Provider):
                 user=getenv("M365_USER"),
                 passwd=getenv("M365_ENCRYPTED_PASSWORD"),
             )
-            test_session = M365PowerShell(credentials)
-            if test_session.test_credentials(credentials):
-                test_session.close()
-                return credentials
-            else:
-                test_session.close()
-                raise M365EnvironmentUserCredentialsError(
-                    file=os.path.basename(__file__),
-                    message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
-                )
+
+        test_session = M365PowerShell(credentials)
+
+        if test_session.test_credentials(credentials):
+            test_session.close()
+            return credentials
+        else:
+            test_session.close()
+            raise M365EnvironmentUserCredentialsError(
+                file=os.path.basename(__file__),
+                message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
+            )
 
     def print_credentials(self):
         """M365 credentials information.
@@ -555,6 +576,8 @@ class M365Provider(Provider):
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
+        user=None,
+        encrypted_password=None,
     ) -> Connection:
         """Test connection to M365 subscription.
 
@@ -571,6 +594,9 @@ class M365Provider(Provider):
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
+            user (str): The M365 user email.
+            encrypted_password (str): The M365 encrypted_password.
+
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -601,6 +627,8 @@ class M365Provider(Provider):
                 tenant_id,
                 client_id,
                 client_secret,
+                user,
+                encrypted_password,
             )
             region_config = M365Provider.setup_region_config(region)
 
