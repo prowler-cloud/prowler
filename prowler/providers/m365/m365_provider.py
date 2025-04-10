@@ -373,9 +373,12 @@ class M365Provider(Provider):
                 user=getenv("M365_USER"),
                 passwd=getenv("M365_ENCRYPTED_PASSWORD"),
             )
-            if M365PowerShell(credentials).test_credentials(credentials):
+            test_session = M365PowerShell(credentials)
+            if test_session.test_credentials(credentials):
+                test_session.close()
                 return credentials
             else:
+                test_session.close()
                 raise M365EnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
                     message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
