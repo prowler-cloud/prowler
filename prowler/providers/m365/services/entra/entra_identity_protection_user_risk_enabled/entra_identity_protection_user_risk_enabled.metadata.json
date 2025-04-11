@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_identity_protection_user_risk_enabled",
+  "CheckTitle": "Ensure that Identity Protection user risk policies are enabled",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that Identity Protection user risk policies are enabled to detect and respond to high risk potential account compromises.",
+  "Risk": "Without Identity Protection user risk policies enabled, compromised accounts may go undetected, allowing attackers to exploit breached credentials and gain unauthorized access. The absence of automated responses to user risk levels increases the likelihood of security incidents, such as data breaches or privilege escalation.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. 4. Set the following conditions within the policy: Under Users or workload identities choose All users. Under Cloud apps or actions choose All cloud apps. Under Conditions choose User risk then Yes and select the user risk level High. Under Access Controls select Grant then in the right pane click Grant access then select Require multifactor authentication and Require password change. Under Session ensure Sign-in frequency is set to Every time. Click Select. 5. Under Enable policy set it to Report Only until the organization is ready to enable it. 6. Click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Identity Protection user risk policies to detect and respond to potential account compromises. Configure Conditional Access policies to enforce MFA or password resets when a high user risk level is detected. Regularly review the Risky Users section to assess potential threats before enforcing strict access controls.",
+      "Url": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

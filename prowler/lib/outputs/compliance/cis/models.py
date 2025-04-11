@@ -69,9 +69,9 @@ class AzureCISModel(BaseModel):
     Muted: bool
 
 
-class Microsoft365CISModel(BaseModel):
+class M365CISModel(BaseModel):
     """
-    Microsoft365CISModel generates a finding's output in Microsoft365 CIS Compliance format.
+    M365CISModel generates a finding's output in Microsoft 365 CIS Compliance format.
     """
 
     Provider: str

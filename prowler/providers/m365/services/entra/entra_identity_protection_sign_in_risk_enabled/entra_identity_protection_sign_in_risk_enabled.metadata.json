@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_identity_protection_sign_in_risk_enabled",
+  "CheckTitle": "Ensure that Identity Protection sign-in risk policies are enabled",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that Identity Protection sign-in risk policies are enabled to detect and respond to suspicious high and medium risk login attempts in real time.",
+  "Risk": "Without Identity Protection sign-in risk policies enabled, suspicious sign-in attempts may go unnoticed, allowing attackers to access accounts using stolen or compromised credentials. This increases the risk of unauthorized access, data breaches, and privilege escalation.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. 4. Set the following conditions within the policy. Under Users or workload identities choose All users. Under Cloud apps or actions choose All cloud apps. Under Conditions choose Sign-in risk then Yes and check the risk level boxes High and Medium. Under Access Controls select Grant then in the right pane click Grant access then select Require multifactor authentication. Under Session select Sign-in Frequency and set to Every time. Click Select. 5. Under Enable policy set it to Report Only until the organization is ready to enable it. 6. Click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Identity Protection sign-in risk policies to detect and respond to suspicious login attempts in real time. Configure Conditional Access to require MFA for risky sign-ins and ensure all users are enrolled in MFA to prevent account lockouts. Regularly review sign-in risk reports to identify and mitigate potential security threats.",
+      "Url": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

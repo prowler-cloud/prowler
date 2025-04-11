@@ -1,3 +1,4 @@
+import sys
 import uuid
 from argparse import ArgumentTypeError
 
@@ -16,11 +17,13 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,nhn,dashboard} ..."
+prowler_default_usage_error = (
+    "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,nhn,dashboard} ..."
+)
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes", "microsoft365", "nhn"]
+    return ["aws", "azure", "gcp", "kubernetes", "m365", "nhn"]
 
 
 @pytest.mark.arg_parser
@@ -1363,3 +1366,13 @@ class Test_Parser:
         valid_role_names = ["prowler-role" "test@" "test=test+test,."]
         for role_name in valid_role_names:
             assert validate_role_session_name(role_name) == role_name
+
+    def test_microsoft365_alias_conversion(self):
+        original_argv = sys.argv.copy()
+        try:
+            sys.argv = ["prowler", "microsoft365"]
+            parser = ProwlerArgumentParser()
+            args = parser.parse()
+            assert args.provider == "m365"
+        finally:
+            sys.argv = original_argv

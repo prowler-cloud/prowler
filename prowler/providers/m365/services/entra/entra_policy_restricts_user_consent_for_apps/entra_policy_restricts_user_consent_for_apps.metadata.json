@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_restricts_user_consent_for_apps",
+  "CheckTitle": "Ensure 'User consent for applications' is set to 'Do not allow user consent'",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Authorization Policy",
+  "Description": "Require administrators to provide consent for applications before use.",
+  "Risk": "If Microsoft Entra ID is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
+  "RelatedUrl": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com/); 2. Click to expand Identity > Applications and select Enterprise applications; 3. Under Security select Consent and permissions > User consent settings; 4. Under User consent for applications select Do not allow user consent; 5. Click the Save option at the top of the window.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable user consent for applications in the Microsoft Entra admin center. This ensures that end users and group owners cannot grant consent to applications, requiring administrator approval for all future consent operations, thereby reducing the risk of unauthorized access to company data.",
+      "Url": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enforcing this setting may create additional requests that administrators need to review."
+}

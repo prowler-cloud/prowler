@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_guest_invite_only_for_admin_roles",
+  "CheckTitle": "Ensure that 'Guest invite restrictions' is set to 'Only users assigned to specific admin roles can invite guest users'",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Authorization Policy",
+  "Description": "Restrict invitations to users with specific administrative roles only.",
+  "Risk": "Restricting invitations to users with specific administrator roles ensures that only authorized accounts have access to cloud resources. This helps to maintain 'Need to Know' permissions and prevents inadvertent access to data. By default the setting Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins. This would allow anyone within the organization to invite guests and non-admins to the tenant, posing a security risk.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure",
+  "Remediation": {
+    "Code": {
+      "CLI": "Update-MgPolicyAuthorizationPolicy -AllowInvitesFrom 'adminsAndGuestInviters'",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Expand Identity > External Identities and select External collaboration settings. 3. Under Guest invite settings, set 'Guest invite restrictions' to 'Only users assigned to specific admin roles can invite guest users'. 4. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict guest user invitations to only designated administrators or the Guest Inviter role to enhance security.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#guest-inviter"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "A more restrictive setting is acceptable, but the minimum requirement is limiting invitations to admins and Guest Inviters."
+}
