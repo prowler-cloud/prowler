@@ -10,6 +10,7 @@ class Defender(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.malware_policies = self._get_malware_filter_policy()
+        self.connection_filter_policy = self._get_connection_filter_policy()
 
     def _get_malware_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender malware filter policy...")
@@ -33,7 +34,29 @@ class Defender(Microsoft365Service):
             )
         return malware_policies
 
+    def _get_connection_filter_policy(self):
+        logger.info("Microsoft365 - Getting connection filter policy...")
+        policy = self.powershell.execute(
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+        )
+        try:
+            connection_filter_policy = ConnectionFilterPolicy(
+                ip_allow_list=policy.get("IPAllowList", []),
+                identity=policy.get("Identity", ""),
+            )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return connection_filter_policy
+
 
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
+    identity: str
+
+
+class ConnectionFilterPolicy(BaseModel):
+    ip_allow_list: list
     identity: str

@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.defender.defender_service import (
+    ConnectionFilterPolicy,
     Defender,
     DefenderMalwarePolicy,
 )
@@ -18,9 +19,20 @@ def mock_defender_get_malware_filter_policy(_):
     ]
 
 
+def mock_defender_get_connection_filter_policy(_):
+    return ConnectionFilterPolicy(
+        ip_allow_list=[],
+        identity="Default",
+    )
+
+
 @patch(
     "prowler.providers.microsoft365.services.defender.defender_service.Defender._get_malware_filter_policy",
     new=mock_defender_get_malware_filter_policy,
+)
+@patch(
+    "prowler.providers.microsoft365.services.defender.defender_service.Defender._get_connection_filter_policy",
+    new=mock_defender_get_connection_filter_policy,
 )
 class Test_Defender_Service:
     def test_get_client(self):
@@ -38,3 +50,9 @@ class Test_Defender_Service:
         assert malware_policies[0].identity == "Policy1"
         assert malware_policies[1].enable_file_filter is True
         assert malware_policies[1].identity == "Policy2"
+
+    def test__get_connection_filter_policy(self):
+        defender_client = Defender(set_mocked_microsoft365_provider())
+        connection_filter_policy = defender_client.connection_filter_policy
+        assert connection_filter_policy.ip_allow_list == []
+        assert connection_filter_policy.identity == "Default"
