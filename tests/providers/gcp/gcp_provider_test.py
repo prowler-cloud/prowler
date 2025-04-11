@@ -320,6 +320,26 @@ class TestGCPProvider:
                 == "test-impersonate-service-account"
             )
 
+    def test_setup_session_with_access_token(self, monkeypatch):
+        from google.oauth2.credentials import Credentials as TokenCredentials
+
+        access_token = "fake-access-token"
+        default_project_id = "test-access-token-project"
+
+        monkeypatch.setenv("CLOUDSDK_AUTH_ACCESS_TOKEN", access_token)
+        monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", default_project_id)
+
+        session, project_id = GcpProvider.setup_session(
+            credentials_file=None,
+            service_account=None,
+            gcp_credentials=None,
+            service_account_key=None,
+        )
+
+        assert isinstance(session, TokenCredentials)
+        assert session.token == access_token
+        assert project_id == default_project_id
+
     def test_setup_session_with_organization_id(self):
         mocked_credentials = MagicMock()
 

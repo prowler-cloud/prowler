@@ -396,13 +396,18 @@ class GcpProvider(Provider):
                 client_secrets_path = os.path.abspath(credentials_file)
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
+            access_token = os.getenv("CLOUDSDK_AUTH_ACCESS_TOKEN")
+            if access_token:
+                logger.info("Using access token from CLOUDSDK_AUTH_ACCESS_TOKEN")
+                credentials = Credentials(token=access_token, scopes=scopes)
+                default_project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+                return credentials, default_project_id
+
             # Get default credentials
             credentials, default_project_id = default(scopes=scopes)
 
             # Refresh the credentials to ensure they are valid
             credentials.refresh(Request())
-
-            logger.info(f"Initial credentials: {credentials}")
 
             if service_account:
                 # Create the impersonated credentials
@@ -411,7 +416,7 @@ class GcpProvider(Provider):
                     target_principal=service_account,
                     target_scopes=scopes,
                 )
-                logger.info(f"Impersonated credentials: {credentials}")
+                logger.info(f"Impersonating service account: {service_account}")
 
             return credentials, default_project_id
         except Exception as error:
