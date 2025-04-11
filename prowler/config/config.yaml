@@ -447,6 +447,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # GCP Service Account and user-managed keys unused configuration
+  # gcp.iam_service_account_unused
+  # gcp.iam_sa_user_managed_key_unused
+  max_unused_account_days: 180
 
 # Kubernetes Configuration
 kubernetes:

@@ -8,6 +8,9 @@ from prowler.providers.gcp.services.monitoring.monitoring_client import (
 class iam_sa_user_managed_key_unused(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
+        max_unused_days = monitoring_client.audit_config.get(
+            "max_unused_account_days", 180
+        )
         keys_used = monitoring_client.sa_keys_metrics
         for account in iam_client.service_accounts:
             for key in account.keys:
@@ -21,10 +24,10 @@ class iam_sa_user_managed_key_unused(Check):
                     )
                     if key.name in keys_used:
                         report.status = "PASS"
-                        report.status_extended = f"User-managed key {key.name} for Service Account {account.email} was used over the last 180 days."
+                        report.status_extended = f"User-managed key {key.name} for Service Account {account.email} was used over the last {max_unused_days} days."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"User-managed key {key.name} for Service Account {account.email} was not used over the last 180 days."
+                        report.status_extended = f"User-managed key {key.name} for Service Account {account.email} was not used over the last {max_unused_days} days."
                     findings.append(report)
 
         return findings

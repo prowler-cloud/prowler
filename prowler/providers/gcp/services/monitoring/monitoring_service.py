@@ -12,10 +12,12 @@ class Monitoring(GCPService):
         super().__init__(__class__.__name__, provider, api_version="v3")
         self.alert_policies = []
         self.sa_keys_metrics = set()
+        self.sa_api_metrics = set()
         self._get_alert_policies()
         self._get_sa_keys_metrics(
             "iam.googleapis.com/service_account/key/authn_events_count"
         )
+        self._get_sa_api_metrics("serviceruntime.googleapis.com/api/request_count")
 
     def _get_alert_policies(self):
         for project_id in self.project_ids:
@@ -54,6 +56,7 @@ class Monitoring(GCPService):
 
     def _get_sa_keys_metrics(self, metric_type):
         try:
+            max_unused_days = int(self.audit_config.get("max_unused_account_days", 180))
             end_time = (
                 datetime.datetime.now(datetime.timezone.utc)
                 .replace(microsecond=0)
@@ -62,7 +65,7 @@ class Monitoring(GCPService):
             start_time = (
                 (
                     datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(days=180)
+                    - datetime.timedelta(days=max_unused_days)
                 )
                 .replace(microsecond=0)
                 .isoformat()
@@ -86,6 +89,53 @@ class Monitoring(GCPService):
                         key_id = metric["metric"]["labels"].get("key_id")
                         if key_id:
                             self.sa_keys_metrics.add(key_id)
+
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_sa_api_metrics(self, metric_type):
+        try:
+            max_unused_days = int(self.audit_config.get("max_unused_account_days", 180))
+            end_time = (
+                datetime.datetime.now(datetime.timezone.utc)
+                .replace(microsecond=0)
+                .isoformat()
+            )
+            start_time = (
+                (
+                    datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(days=max_unused_days)
+                )
+                .replace(microsecond=0)
+                .isoformat()
+            )
+            for project_id in self.project_ids:
+                try:
+                    request = (
+                        self.client.projects()
+                        .timeSeries()
+                        .list(
+                            name=f"projects/{project_id}",
+                            filter=f'metric.type = "{metric_type}"',
+                            interval_startTime=start_time,
+                            interval_endTime=end_time,
+                            view="HEADERS",
+                        )
+                    )
+                    response = request.execute()
+
+                    for metric in response.get("timeSeries", []):
+                        sa_id = metric["resource"]["labels"].get("credential_id")
+                        if sa_id and "serviceaccount:" in sa_id:
+                            self.sa_api_metrics.add(
+                                sa_id.replace("serviceaccount:", "")
+                            )
 
                 except Exception as error:
                     logger.error(

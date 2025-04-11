@@ -324,7 +324,7 @@ config_azure = {
     "recommended_minimal_tls_versions": ["1.2", "1.3"],
 }
 
-config_gcp = {"shodan_api_key": None}
+config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}
 
 config_kubernetes = {
     "audit_log_maxbackup": 10,
