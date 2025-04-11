@@ -122,3 +122,4 @@ class TestPowerShellSession:
 
         mock_process.stdin.flush.assert_called_once()
         mock_process.terminate.assert_called_once()
+        mock_process = None

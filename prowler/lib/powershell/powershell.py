@@ -200,6 +200,23 @@ class PowerShellSession:
             It's important to call this method when done with the session
             to prevent resource leaks.
         """
-        self.process.stdin.write("exit\n")
-        self.process.stdin.flush()
-        self.process.terminate()
+        if self.process:
+            try:
+                # Send exit command
+                self.process.stdin.write("exit\n")
+                self.process.stdin.flush()
+
+                # Terminate the process
+                self.process.terminate()
+
+                # Wait for the process to finish
+                self.process.wait(timeout=5)
+            except Exception:
+                # If process is still running, force kill it
+                self.process.kill()
+            finally:
+                # Close all pipes
+                self.process.stdin.close()
+                self.process.stdout.close()
+                self.process.stderr.close()
+                self.process = None

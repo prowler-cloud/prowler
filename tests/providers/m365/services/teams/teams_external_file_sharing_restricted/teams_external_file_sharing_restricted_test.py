@@ -57,7 +57,6 @@ class Test_teams_external_file_sharing_restricted:
             assert result[0].resource_name == "Cloud Storage Settings"
             assert result[0].resource_id == "cloudStorageSettings"
             assert result[0].location == "global"
-            teams_client.powershell.close()
 
     def test_file_sharing_restricted(self):
         teams_client = mock.MagicMock()
@@ -120,4 +119,3 @@ class Test_teams_external_file_sharing_restricted:
             assert result[0].resource_name == "Cloud Storage Settings"
             assert result[0].resource_id == "cloudStorageSettings"
             assert result[0].location == "global"
-            teams_client.powershell.close()
