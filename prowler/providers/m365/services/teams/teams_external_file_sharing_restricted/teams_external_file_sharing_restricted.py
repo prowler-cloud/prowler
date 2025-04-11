@@ -43,24 +43,24 @@ class teams_external_file_sharing_restricted(Check):
                 if type_hint is bool
             ]
 
-            if not allowed_services:
-                if all(
+            # Check if all services are disabled when no allowed services are specified
+            # or if all enabled services are in the allowed list
+            if (
+                not allowed_services
+                and all(
                     not getattr(cloud_storage_settings, service, True)
                     for service in storage_services
-                ):
-                    report.status = "PASS"
-                    report.status_extended = "External file sharing is restricted to only approved cloud storage services."
-            else:
-                unauthorized_services = [
-                    service
-                    for service in storage_services
-                    if getattr(cloud_storage_settings, service, True)
+                )
+            ) or (
+                allowed_services
+                and not any(
+                    getattr(cloud_storage_settings, service, True)
                     and service not in allowed_services
-                ]
-
-                if not unauthorized_services:
-                    report.status = "PASS"
-                    report.status_extended = "External file sharing is restricted to only approved cloud storage services."
+                    for service in storage_services
+                )
+            ):
+                report.status = "PASS"
+                report.status_extended = "External file sharing is restricted to only approved cloud storage services."
 
         findings.append(report)
 
