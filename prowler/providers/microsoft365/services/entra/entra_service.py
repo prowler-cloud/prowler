@@ -119,6 +119,14 @@ class Entra(Microsoft365Service):
                                     [],
                                 )
                             ],
+                            included_user_actions=[
+                                UserAction(user_action)
+                                for user_action in getattr(
+                                    policy.conditions.applications,
+                                    "include_user_actions",
+                                    [],
+                                )
+                            ],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[
@@ -261,31 +269,6 @@ class Entra(Microsoft365Service):
             )
         return conditional_access_policies
 
-    async def _get_organization(self):
-        logger.info("Entra - Getting organizations...")
-        organizations = []
-        try:
-            org_data = await self.client.organization.get()
-            for org in org_data.value:
-                sync_enabled = (
-                    org.on_premises_sync_enabled
-                    if org.on_premises_sync_enabled is not None
-                    else False
-                )
-
-                organization = Organization(
-                    id=org.id,
-                    name=org.display_name,
-                    on_premises_sync_enabled=sync_enabled,
-                )
-                organizations.append(organization)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-        return organizations
-
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
         admin_consent_policy = None
@@ -323,6 +306,31 @@ class Entra(Microsoft365Service):
             )
         return groups
 
+    async def _get_organization(self):
+        logger.info("Entra - Getting organizations...")
+        organizations = []
+        try:
+            org_data = await self.client.organization.get()
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
+
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return organizations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -330,9 +338,14 @@ class ConditionalAccessPolicyState(Enum):
     ENABLED_FOR_REPORTING = "enabledForReportingButNotEnforced"
 
 
+class UserAction(Enum):
+    REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+
+
 class ApplicationsConditions(BaseModel):
     included_applications: List[str]
     excluded_applications: List[str]
+    included_user_actions: List[UserAction]
 
 
 class UsersConditions(BaseModel):

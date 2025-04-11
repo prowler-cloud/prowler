@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Added `one-time scan` feature: Adds support for single scan execution. [(#7188)](https://github.com/prowler-cloud/prowler/pull/7188)
 - Accepted invitations can no longer be edited. [(#7198)](https://github.com/prowler-cloud/prowler/pull/7198)
 - Added download column in scans table to download reports for completed scans. [(#7353)](https://github.com/prowler-cloud/prowler/pull/7353)
+- Show muted icon when a finding is muted. [(#7378)](https://github.com/prowler-cloud/prowler/pull/7378)
 
 #### 🔄 Changed
 

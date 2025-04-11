@@ -37,7 +37,7 @@ export const FeedsClient: React.FC<FeedsClientProps> = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className={cn("relative", "rounded-full", "bg-transparent", "p-2")}
+            className={cn("relative", "rounded-full", "bg-transparent", "p-2", "h-8", "w-8")}
           >
             <Icon size={18} />
             <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-500"></span>

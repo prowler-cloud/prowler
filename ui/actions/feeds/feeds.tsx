@@ -2,12 +2,12 @@
 
 import Parser from "rss-parser";
 
-// TODO: Need to use the actual feed url
-const RSS_FEED_URL = "https://prowler.com/blog/rss";
+const RSS_FEED_URL = process.env.RSS_FEED_URL || "";
 
 export const fetchFeeds = async (): Promise<any | any[]> => {
   const parser = new Parser();
   try {
+    // TODO: Need to update return logic when actual URL is updated for RSS FEED
     const feed = await parser.parseURL(RSS_FEED_URL);
     return [
       {
