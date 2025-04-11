@@ -18,6 +18,7 @@ from prowler.config.config import (
 from prowler.providers.common.models import Connection
 from prowler.providers.m365.exceptions.exceptions import (
     M365HTTPResponseError,
+    M365MissingEnvironmentUserCredentialsError,
     M365NoAuthenticationMethodError,
 )
 from prowler.providers.m365.m365_provider import M365Provider
@@ -408,3 +409,44 @@ class TestM365Provider:
             "M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]"
             in exception.value.args[0]
         )
+
+    def test_setup_powershell_valid_credentials(self):
+        credentials_dict = {
+            "user": "test@example.com",
+            "encrypted_password": "test_password",
+            "client_id": "test_client_id",
+            "tenant_id": "test_tenant_id",
+            "client_secret": "test_client_secret",
+        }
+
+        with patch(
+            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
+            return_value=True,
+        ):
+            result = M365Provider.setup_powershell(
+                env_auth=False, m365_credentials=credentials_dict
+            )
+
+            assert result.user == credentials_dict["user"]
+            assert result.passwd == credentials_dict["encrypted_password"]
+
+    def test_setup_powershell_invalid_env_credentials(self):
+        credentials = None
+
+        with patch(
+            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell"
+        ) as mock_powershell:
+            mock_session = MagicMock()
+            mock_session.test_credentials.return_value = False
+            mock_powershell.return_value = mock_session
+
+            with pytest.raises(M365MissingEnvironmentUserCredentialsError) as exc_info:
+                M365Provider.setup_powershell(
+                    env_auth=True, m365_credentials=credentials
+                )
+
+            assert (
+                "Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication"
+                in str(exc_info.value)
+            )
+            mock_session.test_credentials.assert_not_called()
