@@ -17,13 +17,22 @@ prowler gcp --credentials-file path
     `prowler` will scan the GCP project associated with the credentials.
 
 
-Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+## Needed permissions
 
-1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
-3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+Prowler for Google Cloud needs the following permissions to be set:
 
-Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the `Viewer` role to the member associated with the credentials.
+- **Viewer (`roles/viewer`) IAM role**: granted at the project / folder / org level in order to scan the target projects
+
+- **Project level settings**: you need to have at least one project with the below settings:
+    - Identity and Access Management (IAM) API (`iam.googleapis.com`) enabled by either using the
+    [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics) or
+    by using the gcloud CLI `gcloud services enable iam.googleapis.com --project <your-project-id>` command
+    - Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) IAM role
+    - Set the quota project to be this project by either running `gcloud auth application-default set-quota-project <project-id>` or by setting an environment variable:
+    `export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>`
+
+
+The above settings must be associated to a user or service account.
 
 ???+ note
     Prowler will use the enabled Google Cloud APIs to get the information needed to perform the checks.
