@@ -43,6 +43,7 @@ class Defender(Microsoft365Service):
             connection_filter_policy = ConnectionFilterPolicy(
                 ip_allow_list=policy.get("IPAllowList", []),
                 identity=policy.get("Identity", ""),
+                enable_safe_list=policy.get("EnableSafeList", False),
             )
 
         except Exception as error:
@@ -60,3 +61,4 @@ class DefenderMalwarePolicy(BaseModel):
 class ConnectionFilterPolicy(BaseModel):
     ip_allow_list: list
     identity: str
+    enable_safe_list: bool

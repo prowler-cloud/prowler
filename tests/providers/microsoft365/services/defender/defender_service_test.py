@@ -23,6 +23,7 @@ def mock_defender_get_connection_filter_policy(_):
     return ConnectionFilterPolicy(
         ip_allow_list=[],
         identity="Default",
+        enable_safe_list=False,
     )
 
 
@@ -56,3 +57,4 @@ class Test_Defender_Service:
         connection_filter_policy = defender_client.connection_filter_policy
         assert connection_filter_policy.ip_allow_list == []
         assert connection_filter_policy.identity == "Default"
+        assert connection_filter_policy.enable_safe_list is False
