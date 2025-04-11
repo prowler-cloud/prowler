@@ -1,3 +1,4 @@
+import sys
 import uuid
 from argparse import ArgumentTypeError
 
@@ -1365,3 +1366,13 @@ class Test_Parser:
         valid_role_names = ["prowler-role" "test@" "test=test+test,."]
         for role_name in valid_role_names:
             assert validate_role_session_name(role_name) == role_name
+
+    def test_microsoft365_alias_conversion(self):
+        original_argv = sys.argv.copy()
+        try:
+            sys.argv = ["prowler", "microsoft365"]
+            parser = ProwlerArgumentParser()
+            args = parser.parse()
+            assert args.provider == "m365"
+        finally:
+            sys.argv = original_argv
