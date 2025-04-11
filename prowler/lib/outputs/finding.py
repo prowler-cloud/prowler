@@ -284,7 +284,7 @@ class Finding(BaseModel):
 
             if not output_data["resource_uid"]:
                 logger.error(
-                    f"Check {check_output.check_metadata.CheckID} has no resource_id."
+                    f"Check {check_output.check_metadata.CheckID} has no resource_uid."
                 )
             if not output_data["resource_name"]:
                 logger.error(
