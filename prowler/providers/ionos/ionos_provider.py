@@ -216,11 +216,9 @@ class IonosProvider(Provider):
         """
         datacenters = self.get_datacenters()
         
-        # If datacenter_name is empty or None, return the first datacenter ID
         if not datacenter_name:
             return datacenters[0].id if datacenters else ""
         
-        # Otherwise search for datacenter by name
         for datacenter in datacenters:
             if datacenter.properties.name == datacenter_name:
                 return datacenter.id

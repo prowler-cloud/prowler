@@ -232,6 +232,16 @@ class Finding(BaseModel):
                     provider, "identity.cluster"
                 )
                 output_data["region"] = f"namespace: {check_output.namespace}"
+            elif provider.type == "ionos":
+                output_data["auth_method"] = f"Token: {get_nested_attribute(provider, 'identity.token')}"
+                output_data["account_uid"] = get_nested_attribute(provider, "identity.email")
+                output_data["account_name"] = get_nested_attribute(provider, "identity.username")
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+                # Extract any available tags from the resource
+                if hasattr(check_output, "resource_tags") and check_output.resource_tags:
+                    output_data["resource_tags"] = check_output.resource_tags
 
             # check_output Unique ID
             # TODO: move this to a function

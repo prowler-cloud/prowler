@@ -1,7 +1,7 @@
 from typing import Optional, List
 import ionoscloud
 from ionoscloud import ApiClient, Configuration
-from ionoscloud.api import ServersApi
+from ionoscloud.api import ServersApi, NetworkInterfacesApi
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
 
@@ -21,6 +21,7 @@ class IonosServer(IonosService):
         self.service = "server"
         self.session = provider.session
         self.client = ServersApi(provider.session)
+        self.network_client = NetworkInterfacesApi(provider.session)
         self.datacenter_id = provider.identity.datacenter_id
         self.servers = []
         self.__threading_call__(self.__get_server_resources__)
@@ -31,7 +32,7 @@ class IonosServer(IonosService):
         """
         logger.info("Getting IONOS server resources...")
 
-        self.__get_servers_for_datacenter__(datacenter.id)
+        self.__get_servers_for_datacenter__(self.datacenter_id)
 
     def __get_servers_for_datacenter__(self, datacenter_id: str):
         """
@@ -89,6 +90,26 @@ class IonosServer(IonosService):
         try:
             server = self.client.get_server_details(datacenter_id, server_id)
             return server.properties.vm_state
+        except Exception as error:
+            logger.error(
+                f"{datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def get_nics_for_server(self, server_id: str) -> Optional[list]:
+        """
+        Get network interfaces (NICs) for a specific server
+        
+        Args:
+            datacenter_id: ID of the datacenter containing the server
+            server_id: ID of the server
+            
+        Returns:
+            list: List of NICs or None if not found
+        """
+        try:
+            nics = self.network_client.datacenters_servers_nics_get(self.datacenter_id, server_id, pretty=True, depth=1)
+            return nics.items if hasattr(nics, 'items') else None
         except Exception as error:
             logger.error(
                 f"{datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

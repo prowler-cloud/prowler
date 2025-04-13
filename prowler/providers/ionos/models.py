@@ -23,16 +23,15 @@ class IonosOutputOptions(ProviderOutputOptions):
     security_hub_enabled: bool
 
     def __init__(self, arguments, bulk_checks_metadata, identity):
-        # First call Provider_Output_Options init
         super().__init__(arguments, bulk_checks_metadata)
 
-        # Check if custom output filename was input, if not, set the default
         if (
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
+            token_prefix = identity.token[:12] if identity.token else ""
             self.output_filename = (
-                f"prowler-output-{identity}-{output_file_timestamp}"
+                f"prowler-output-{token_prefix}-{output_file_timestamp}"
             )
         else:
             self.output_filename = arguments.output_filename

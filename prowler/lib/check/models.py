@@ -493,6 +493,20 @@ class Check_Report_Kubernetes(Check_Report):
         self.resource_id = ""
         self.namespace = ""
 
+@dataclass
+class Check_Report_IONOS(Check_Report):
+    """Contains the IONOS Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    datacenter_id: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
+        self.resource_name = ""
+        self.resource_id = ""
+        self.datacenter_id = ""
+        self.location = "global"
 
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
