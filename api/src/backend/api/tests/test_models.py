@@ -1,6 +1,5 @@
 import pytest
 
-from api.db_utils import SeverityEnumField
 from api.models import Finding, Resource, ResourceTag, StatusChoices
 
 
@@ -111,8 +110,8 @@ class TestFindingModel:
             check_metadata={},
             status=StatusChoices.PASS,
             status_extended="",
-            severity=SeverityEnumField.HIGH,
-            impact=SeverityEnumField.HIGH,
+            severity="high",
+            impact="high",
             raw_result={},
             check_id="test_check",
             scan=scans_fixture[0],
