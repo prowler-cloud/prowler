@@ -5,11 +5,9 @@ import Link from "next/link";
 
 import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import {
-  getProviderLogo,
-  type ProviderType,
-} from "@/components/ui/entities/get-provider-logo";
+import { getProviderLogo } from "@/components/ui/entities/get-provider-logo";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { ProviderType } from "@/lib/helper";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
