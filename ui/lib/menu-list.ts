@@ -3,8 +3,10 @@
 import {
   AlertCircle,
   Bookmark,
+  Bot,
   Boxes,
   CloudCog,
+  Cog,
   Group,
   LayoutGrid,
   Mail,
@@ -133,6 +135,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/roles", label: "Roles", icon: UserCog },
+            { href: "/lighthouse/config", label: "Lighthouse", icon: Cog },
           ],
           defaultOpen: true,
         },
@@ -150,6 +153,16 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
+        },
+      ],
+    },
+    {
+      groupLabel: "Prowler Lighthouse",
+      menus: [
+        {
+          href: "/lighthouse",
+          label: "Lighthouse",
+          icon: Bot,
         },
       ],
     },

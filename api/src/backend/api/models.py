@@ -1274,7 +1274,6 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
             ),
         ]
 
-
 class ResourceScanSummary(RowLevelSecurityProtectedModel):
     scan_id = models.UUIDField(default=uuid7, db_index=True)
     resource_id = models.UUIDField(default=uuid4, db_index=True)
@@ -1322,3 +1321,63 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+class LighthouseConfig(RowLevelSecurityProtectedModel):
+    """
+    Stores configuration and API keys for LLM services.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
+    api_key = models.BinaryField(blank=False, null=False)
+    model = models.CharField(max_length=50, default="gpt-4o")
+    temperature = models.FloatField(default=0.7)
+    max_tokens = models.IntegerField(default=4000)
+    business_context = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Additional business context for this AI model configuration",
+    )
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def api_key_decoded(self):
+        """Return the decrypted API key."""
+        try:
+            return fernet.decrypt(self.api_key).decode()
+        except Exception:
+            return None
+
+    @api_key_decoded.setter
+    def api_key_decoded(self, value):
+        """Store the encrypted API key."""
+        self.api_key = fernet.encrypt(value.encode())
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_config"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            # Add unique constraint for name within a tenant
+            models.UniqueConstraint(
+                fields=["tenant_id"], name="unique_lighthouse_config_per_tenant"
+            ),
+        ]
+
+        indexes = [
+            models.Index(fields=["name"], name="lighthouse_config_name_idx"),
+            models.Index(fields=["is_active"], name="lighthouse_config_active_idx"),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-config"

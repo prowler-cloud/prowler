@@ -20,6 +20,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    LighthouseConfig,
     Membership,
     Provider,
     ProviderGroup,
@@ -2119,3 +2120,102 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
         return super().update(instance, validated_data)
+
+
+class LighthouseConfigSerializer(RLSSerializer):
+    """
+    Serializer for the LighthouseConfig model.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Add back the masked API key for display
+        ret["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return ret
+
+
+class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for creating LighthouseConfig instances.
+    """
+
+    api_key = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+
+    def create(self, validated_data):
+        api_key = validated_data.pop("api_key", None)
+        instance = super().create(validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save(update_fields=["api_key"])
+        return instance
+
+
+class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating LighthouseConfig instances.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "name": {"required": False},
+            "model": {"required": False},
+            "temperature": {"required": False},
+            "max_tokens": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop("api_key", None)
+        instance = super().update(instance, validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save(update_fields=["api_key"])
+        return instance
