@@ -10,6 +10,7 @@ class Defender(Microsoft365Service):
         super().__init__(provider)
         self.powershell.execute("Connect-ExchangeOnline -Credential $Credential")
         self.malware_policies = self._get_malware_filter_policy()
+        self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
 
     def _get_malware_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender malware filter policy...")
@@ -33,7 +34,34 @@ class Defender(Microsoft365Service):
             )
         return malware_policies
 
+    def _get_inbound_spam_filter_policy(self):
+        logger.info("Microsoft365 - Getting Defender inbound spam filter policy...")
+        inbound_spam_policy = self.powershell.execute(
+            "Get-HostedContentFilterPolicy | ConvertTo-Json"
+        )
+        if isinstance(inbound_spam_policy, dict):
+            inbound_spam_policy = [inbound_spam_policy]
+        inbound_spam_policies = []
+        try:
+            for policy in inbound_spam_policy:
+                inbound_spam_policies.append(
+                    DefenderInboundSpamPolicy(
+                        identity=policy.get("Identity", ""),
+                        allowed_sender_domains=policy.get("AllowedSenderDomains", []),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return inbound_spam_policies
+
 
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
+
+
+class DefenderInboundSpamPolicy(BaseModel):
+    identity: str
+    allowed_sender_domains: list[str] = []
