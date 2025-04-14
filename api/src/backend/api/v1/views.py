@@ -2,6 +2,7 @@ import glob
 import os
 from datetime import datetime, timedelta, timezone
 
+import openai
 import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -12,7 +13,9 @@ from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
 )
+from cryptography.fernet import Fernet
 from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -84,6 +87,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfig,
     Membership,
     Provider,
     ProviderGroup,
@@ -126,6 +130,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -2888,3 +2895,130 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing OpenAI API configuration.
+    """
+
+    filterset_fields = {
+        "name": ["exact", "icontains"],
+        "model": ["exact", "icontains"],
+        "is_active": ["exact"],
+        "inserted_at": ["gte", "lte"],
+    }
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfig.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action in ["update", "partial_update"]:
+            return LighthouseConfigUpdateSerializer
+        return LighthouseConfigSerializer
+
+    @action(detail=True, methods=["get"])
+    def check_connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API.
+        """
+        instance = self.get_object()
+        if not instance.api_key_decoded:
+            return Response(
+                {"detail": "API key is invalid or missing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            client = openai.OpenAI(
+                api_key=instance.api_key_decoded,
+            )
+            models = client.models.list()
+            return Response(
+                {
+                    "detail": "Connection successful!",
+                    "available_models": [model.id for model in models.data],
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Connection failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Create new AI configuration"""
+        if LighthouseConfig.objects.filter(tenant_id=request.tenant_id).exists():
+            return Response(
+                {"detail": "AI configuration already exists. Use PUT to update."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            LighthouseConfigSerializer(
+                instance, context=self.get_serializer_context()
+            ).data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+    def update(self, request, *args, **kwargs):
+        """Update existing AI configuration"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return Response(
+            LighthouseConfigSerializer(
+                instance, context=self.get_serializer_context()
+            ).data
+        )
+
+    @action(detail=True, methods=["get"], url_path="show_key")
+    def show_key(self, request, pk=None):
+        """
+        Return the decrypted API key for the specified AI configuration.
+        """
+        instance = self.get_object()
+
+        try:
+            # Handle different binary formats appropriately
+            if isinstance(instance.api_key, memoryview):
+                encrypted_bytes = instance.api_key.tobytes()
+            elif isinstance(instance.api_key, str):
+                encrypted_bytes = instance.api_key.encode()
+            else:
+                encrypted_bytes = instance.api_key
+
+            key = settings.SECRETS_ENCRYPTION_KEY.encode()
+            fernet_instance = Fernet(key)
+            decrypted_key = fernet_instance.decrypt(encrypted_bytes).decode()
+
+            return Response(
+                {"api_key": decrypted_key},
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            return Response(
+                {"detail": "API key is invalid or missing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete AI configuration"""
+        instance = self.get_object()
+
+        # Perform deletion
+        self.perform_destroy(instance)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
