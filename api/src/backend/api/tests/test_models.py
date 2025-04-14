@@ -1,6 +1,6 @@
 import pytest
 
-from api.models import Resource, ResourceTag
+from api.models import Finding, Resource, ResourceTag, StatusChoices
 
 
 @pytest.mark.django_db
@@ -92,3 +92,31 @@ class TestResourceModel:
 
         assert len(resource.tags.filter(tenant_id=tenant_id)) == 0
         assert resource.get_tags(tenant_id=tenant_id) == {}
+
+
+@pytest.mark.django_db
+class TestFindingModel:
+    def test_add_finding_with_long_uid(
+        self, providers_fixture, scans_fixture, resources_fixture
+    ):
+        provider, *_ = providers_fixture
+        tenant_id = provider.tenant_id
+
+        long_uid = "1" * 500
+        _ = Finding.objects.create(
+            tenant_id=tenant_id,
+            uid=long_uid,
+            delta=Finding.DeltaChoices.NEW,
+            check_metadata={},
+            status=StatusChoices.PASS,
+            status_extended="",
+            severity="high",
+            impact="high",
+            raw_result={},
+            check_id="test_check",
+            scan=scans_fixture[0],
+            first_seen_at=None,
+            muted=False,
+            compliance={},
+        )
+        assert Finding.objects.filter(uid=long_uid).exists()
