@@ -35,7 +35,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.6.1"
+version = "1.6.0"
 
 [project.scripts]
 celery = "src.backend.config.settings.celery"
