@@ -23,7 +23,8 @@ class Teams(M365Service):
                     allow_egnyte=settings.get("AllowEgnyte", True),
                     allow_google_drive=settings.get("AllowGoogleDrive", True),
                     allow_share_file=settings.get("AllowShareFile", True),
-                )
+                ),
+                allow_email_into_channel=settings.get("AllowEmailIntoChannel", True),
             )
 
         except Exception as error:
@@ -43,3 +44,4 @@ class CloudStorageSettings(BaseModel):
 
 class TeamsSettings(BaseModel):
     cloud_storage_settings: CloudStorageSettings
+    allow_email_into_channel: bool = True
