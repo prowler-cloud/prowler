@@ -1,3 +1,5 @@
+import msal
+
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.models import M365Credentials
 
@@ -59,44 +61,48 @@ class M365PowerShell(PowerShellSession):
         passwd = self.sanitize(credentials.passwd)
 
         # Securely convert encrypted password to SecureString
-        self.execute(f'$User = "{user}"')
-        self.execute(f'$SecureString = "{passwd}" | ConvertTo-SecureString')
+        self.execute(f'$user = "{user}"')
+        self.execute(f'$secureString = "{passwd}" | ConvertTo-SecureString')
         self.execute(
-            "$Credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
+            "$credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
         )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
-        Test Microsoft 365 credentials by attempting to connect to Microsoft Teams.
-
-        This method validates the provided credentials by:
-        1. Confirming the password is valid by retrieving it from the credential object
-        2. Attempting to connect to Microsoft Teams using the credentials
+        Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
 
         Args:
             credentials (M365Credentials): The credentials object containing
                 username and password to test.
 
         Returns:
-            bool: True if credentials are valid and connection succeeds, False otherwise.
-                Specifically returns True if the username appears in the connection output,
-                indicating successful authentication.
-
-        Note:
-            This method uses PowerShell commands to test the credentials and relies on
-            the PowerShell Microsoft Teams module being installed and available.
+            bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
-        # Confirm Password
-        self.process.stdin.write("$credential.GetNetworkCredential().Password\n")
+        self.execute(
+            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+        )
+        self.execute(
+            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+        )
+        self.process.stdin.write(
+            'Write-Output "$($credential.GetNetworkCredential().Password)"\n'
+        )
         self.process.stdin.write(f"Write-Output '{self.END}'\n")
+        decrypted_password = self.read_output()
 
-        if not self.read_output():
-            return False
+        app = msal.ConfidentialClientApplication(
+            client_id=credentials.client_id,
+            client_credential=credentials.client_secret,
+            authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
+        )
 
-        # Confirm User
-        self.process.stdin.write("Connect-MicrosoftTeams -Credential $Credential\n")
-        self.process.stdin.write(f"Write-Output '{self.END}'\n")
-        return credentials.user in self.read_output()
+        result = app.acquire_token_by_username_password(
+            username=credentials.user,
+            password=decrypted_password,  # Needs to be in plain text
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+
+        return "access_token" in result
 
     def connect_microsoft_teams(self) -> dict:
         """
@@ -110,7 +116,7 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
-        return self.execute("Connect-MicrosoftTeams -Credential $Credential")
+        return self.execute("Connect-MicrosoftTeams -Credential $credential")
 
     def get_teams_settings(self) -> dict:
         """
@@ -143,7 +149,7 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
-        return self.execute("Connect-ExchangeOnline -Credential $Credential")
+        return self.execute("Connect-ExchangeOnline -Credential $credential")
 
     def get_audit_log_config(self) -> dict:
         """

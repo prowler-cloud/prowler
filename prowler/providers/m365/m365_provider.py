@@ -379,10 +379,16 @@ class M365Provider(Provider):
             credentials = M365Credentials(
                 user=m365_credentials.get("user", ""),
                 passwd=m365_credentials.get("encrypted_password", ""),
+                client_id=m365_credentials.get("client_id", ""),
+                client_secret=m365_credentials.get("client_secret", ""),
+                tenant_id=m365_credentials.get("tenant_id", ""),
             )
         elif env_auth:
             m365_user = getenv("M365_USER")
             m365_password = getenv("M365_ENCRYPTED_PASSWORD")
+            client_id = getenv("AZURE_CLIENT_ID")
+            client_secret = getenv("AZURE_CLIENT_SECRET")
+            tenant_id = getenv("AZURE_TENANT_ID")
 
             if not m365_user or not m365_password:
                 logger.critical(
@@ -395,6 +401,9 @@ class M365Provider(Provider):
             credentials = M365Credentials(
                 user=m365_user,
                 passwd=m365_password,
+                client_id=client_id,
+                client_secret=client_secret,
+                tenant_id=tenant_id,
             )
 
         if credentials:
