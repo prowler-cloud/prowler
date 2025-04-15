@@ -64,7 +64,7 @@ class M365PowerShell(PowerShellSession):
         self.execute(f'$user = "{user}"')
         self.execute(f'$secureString = "{passwd}" | ConvertTo-SecureString')
         self.execute(
-            "$credential = New-Object System.Management.Automation.PSCredential ($User, $SecureString)"
+            "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
         )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
