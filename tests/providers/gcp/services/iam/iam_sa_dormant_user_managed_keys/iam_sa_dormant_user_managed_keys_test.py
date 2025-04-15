@@ -34,7 +34,7 @@ class Test_iam_sa_user_managed_key_unused:
             result = check.execute()
             assert len(result) == 0
 
-    def test_iam_sa_dormant_no_keys(self):
+    def test_iam_sa_unused_no_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -67,6 +67,7 @@ class Test_iam_sa_user_managed_key_unused:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -78,7 +79,7 @@ class Test_iam_sa_user_managed_key_unused:
             result = check.execute()
             assert len(result) == 0
 
-    def test_iam_sa_dormant_system_managed_keys(self):
+    def test_iam_sa_unused_system_managed_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -122,6 +123,7 @@ class Test_iam_sa_user_managed_key_unused:
                         )
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -177,12 +179,14 @@ class Test_iam_sa_user_managed_key_unused:
                         )
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
             monitoring_client.sa_keys_metrics = set(
                 ["90c48f61c65cd56224a12ab18e6ee9ca9c3aee7c"]
             )
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
 
             check = iam_sa_user_managed_key_unused()
             result = check.execute()
@@ -190,14 +194,14 @@ class Test_iam_sa_user_managed_key_unused:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"User-managed key {iam_client.service_accounts[0].keys[0].name} for Service Account {iam_client.service_accounts[0].email} was used over the last 180 days."
+                == f"User-managed key {iam_client.service_accounts[0].keys[0].name} for Service Account {iam_client.service_accounts[0].email} was used over the last 30 days."
             )
             assert result[0].resource_id == iam_client.service_accounts[0].keys[0].name
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].resource_name == iam_client.service_accounts[0].email
 
-    def test_iam_sa_dormant_mixed_keys(self):
+    def test_iam_sa_unused_mixed_keys(self):
         iam_client = mock.MagicMock()
         monitoring_client = mock.MagicMock()
 
@@ -255,12 +259,14 @@ class Test_iam_sa_user_managed_key_unused:
                         ),
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
             monitoring_client.sa_keys_metrics = set(
                 ["f8e4771561be5cda9b1267add7006c5143e3a220"]
             )
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
 
             check = iam_sa_user_managed_key_unused()
             result = check.execute()
@@ -268,7 +274,7 @@ class Test_iam_sa_user_managed_key_unused:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"User-managed key {iam_client.service_accounts[0].keys[1].name} for Service Account {iam_client.service_accounts[0].email} was not used over the last 180 days."
+                == f"User-managed key {iam_client.service_accounts[0].keys[1].name} for Service Account {iam_client.service_accounts[0].email} was not used over the last 30 days."
             )
             assert result[0].resource_id == iam_client.service_accounts[0].keys[1].name
             assert result[0].project_id == GCP_PROJECT_ID
@@ -278,7 +284,7 @@ class Test_iam_sa_user_managed_key_unused:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == f"User-managed key {iam_client.service_accounts[0].keys[2].name} for Service Account {iam_client.service_accounts[0].email} was used over the last 180 days."
+                == f"User-managed key {iam_client.service_accounts[0].keys[2].name} for Service Account {iam_client.service_accounts[0].email} was used over the last 30 days."
             )
             assert result[1].resource_id == iam_client.service_accounts[0].keys[2].name
             assert result[1].project_id == GCP_PROJECT_ID

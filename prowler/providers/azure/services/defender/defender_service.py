@@ -161,7 +161,7 @@ class Defender(AzureService):
                     {
                         security_contact_default.name: SecurityContacts(
                             resource_id=security_contact_default.id,
-                            name=security_contact_default.name,
+                            name=security_contact_default.get("name", "default"),
                             emails=security_contact_default.emails,
                             phone=security_contact_default.phone,
                             alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
