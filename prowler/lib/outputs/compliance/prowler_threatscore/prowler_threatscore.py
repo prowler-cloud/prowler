@@ -119,7 +119,10 @@ def get_prowler_threatscore_table(
                     )
                 )
                 print(
-                    f"{Style.BRIGHT}* Only sections containing results appear, {Fore.RED}The score is calculated as the sum of the level of risk of the failed findings divided by the number of failed findings.{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}{Fore.MAGENTA}\n=== Risk Score Guide ===\nScore ranges from 1 (lowest risk) to 5 (highest risk), indicating the severity of the potential impact.\n{Style.RESET_ALL}"
+                )
+                print(
+                    f"{Style.BRIGHT}* Only sections containing results appear, {orange_color}The score is calculated as the sum of the level of risk of the failed findings divided by the number of failed findings.{Style.RESET_ALL}"
                 )
                 print(f"\nDetailed results of {compliance_framework.upper()} are in:")
                 print(

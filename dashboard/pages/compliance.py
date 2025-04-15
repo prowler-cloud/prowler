@@ -430,6 +430,9 @@ def display_data(
         if "pci" in analytics_input:
             pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
             current_filter = "req_id"
+        elif "threatscore" in analytics_input:
+            pie_2 = get_table_prowler_threatscore(df)
+            current_filter = "threatscore"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
@@ -488,6 +491,13 @@ def display_data(
         pie_2, f"Top 5 failed {current_filter} by requirements"
     )
 
+    if "threatscore" in analytics_input:
+        security_level_graph = get_graph(
+            pie_2,
+            "Pillar and Sub-Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
+            margin_top=0,
+        )
+
     return (
         table_output,
         overall_status_result_graph,
@@ -501,7 +511,7 @@ def display_data(
     )
 
 
-def get_graph(pie, title):
+def get_graph(pie, title, margin_top=7):
     return [
         html.Span(
             title,
@@ -514,7 +524,7 @@ def get_graph(pie, title):
                 "display": "flex",
                 "justify-content": "center",
                 "align-items": "center",
-                "margin-top": "7%",
+                "margin-top": f"{margin_top}%",
             },
         ),
     ]
@@ -618,3 +628,46 @@ def get_table(current_compliance, table):
             className="relative flex flex-col bg-white shadow-provider rounded-xl px-4 py-3 flex-wrap w-full",
         ),
     ]
+
+
+def get_table_prowler_threatscore(df):
+    df = df[df["STATUS"] == "FAIL"]
+    df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
+        df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+    )
+    score_df = (
+        df.groupby(
+            ["REQUIREMENTS_ATTRIBUTES_SECTION", "REQUIREMENTS_ATTRIBUTES_SUBSECTION"]
+        )["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"]
+        .mean()
+        .reset_index()
+        .rename(
+            columns={
+                "REQUIREMENTS_ATTRIBUTES_SECTION": "Pillar",
+                "REQUIREMENTS_ATTRIBUTES_SUBSECTION": "SubPillar",
+                "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK": "Score",
+            }
+        )
+    )
+
+    fig = px.sunburst(
+        score_df,
+        path=["Pillar", "SubPillar"],
+        values="Score",
+        color="Score",
+    )
+
+    fig.update_traces(
+        hovertemplate=("<b>%{label}</b><br>" + "Score: %{value}<extra></extra>"),
+        insidetextorientation="radial",
+    )
+
+    fig.update_traces(
+        textinfo="label",
+        branchvalues="total",
+    )
+
+    return dcc.Graph(
+        figure=fig,
+        style={"height": "35rem", "width": "50rem"},
+    )
