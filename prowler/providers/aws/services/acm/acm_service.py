@@ -22,6 +22,8 @@ class ACM(AWSService):
     def _list_certificates(self, regional_client):
         logger.info("ACM - Listing Certificates...")
         try:
+            logger.info("Testing Sentry integration...")
+            raise Exception("error from Andoni")
             includes = {
                 "keyTypes": [
                     "RSA_1024",
@@ -67,7 +69,7 @@ class ACM(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
