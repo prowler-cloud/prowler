@@ -25,4 +25,4 @@ prowler m365 --az-cli-auth
 prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 ```
 
-To use Prowler you need to set up also the permissions required to access your resources in your Microsoft 365 account, to more details refer to [Requirements](../../getting-started/requirements.md)
+To use Prowler you need to set up also the permissions required to access your resources in your Microsoft 365 account, to more details refer to [Requirements](../../getting-started/requirements.md#microsoft-365)

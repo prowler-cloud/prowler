@@ -40,8 +40,8 @@ If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to 
 
 Prowler for Azure supports the following authentication types. To use each one you need to pass the proper flag to the execution:
 
-- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
-- Current az cli credentials stored.
+- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
+- Current AZ CLI credentials stored.
 - Interactive browser authentication.
 - [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication.
 
@@ -123,9 +123,9 @@ The above settings must be associated to a user or service account.
 
 Prowler for M365 currently supports the following authentication types:
 
-- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object).
--  Service principal application and Microsoft User Credentials (recommended).
-- Current az cli credentials stored.
+- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object).
+- Service Principal Application and Microsoft User Credentials (**recommended**).
+- Current AZ CLI credentials stored.
 - Interactive browser authentication.
 
 
