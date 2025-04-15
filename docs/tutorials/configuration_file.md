@@ -507,11 +507,11 @@ kubernetes:
 
 # M365 Configuration
 m365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
   # Teams Settings
-  # allowed_cloud_storage_services
+  # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:
     [
       #"allow_box",

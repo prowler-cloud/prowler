@@ -14,10 +14,11 @@ class Purview(M365Service):
 
     def _get_audit_log_config(self):
         logger.info("M365 - Getting Admin Audit Log settings...")
-        audit_log_config = self.powershell.get_audit_log_config()
+        audit_log_config = None
         try:
+            audit_log_config_response = self.powershell.get_audit_log_config()
             audit_log_config = AuditLogConfig(
-                audit_log_search=audit_log_config.get(
+                audit_log_search=audit_log_config_response.get(
                     "UnifiedAuditLogIngestionEnabled", False
                 )
             )

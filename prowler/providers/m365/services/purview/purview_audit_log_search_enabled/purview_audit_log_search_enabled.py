@@ -30,7 +30,9 @@ class purview_audit_log_search_enabled(Check):
         report.status = "FAIL"
         report.status_extended = "Purview audit log search is not enabled."
 
-        if purview_client.audit_log_config.audit_log_search:
+        if purview_client.audit_log_config and getattr(
+            purview_client.audit_log_config, "audit_log_search", False
+        ):
             report.status = "PASS"
             report.status_extended = "Purview audit log search is enabled."
 
