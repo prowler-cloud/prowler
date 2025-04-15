@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.6.1
+  version: 1.6.0
   description: |-
     Prowler API specification.
 
@@ -6228,7 +6228,7 @@ components:
           properties:
             uid:
               type: string
-              maxLength: 600
+              maxLength: 300
             delta:
               enum:
               - new
