@@ -14,7 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Remove cache in PyPI release action [(#7532)](https://github.com/prowler-cloud/prowler/pull/7532).
 ---
 
-## [v5.5.1] (Prowler v5.5.1)que
+## [v5.5.1] (Prowler v5.5.1)
 
 ### Fixed
 
