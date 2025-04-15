@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 
+- Fix package name location in pyproject.toml while replicating for prowler-cloud [(#7531)](https://github.com/prowler-cloud/prowler/pull/7531).
 - Remove cache in PyPI release action [(#7532)](https://github.com/prowler-cloud/prowler/pull/7532).
 ---
 
