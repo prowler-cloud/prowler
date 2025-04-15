@@ -51,7 +51,7 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
-from prowler.lib.outputs.compliance.cis.cis_microsoft365 import Microsoft365CIS
+from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -85,7 +85,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
-from prowler.providers.microsoft365.models import Microsoft365OutputOptions
+from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 
 
@@ -268,8 +268,8 @@ def prowler():
         output_options = KubernetesOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
-    elif provider == "microsoft365":
-        output_options = Microsoft365OutputOptions(
+    elif provider == "m365":
+        output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "nhn":
@@ -666,7 +666,7 @@ def prowler():
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
-    elif provider == "microsoft365":
+    elif provider == "m365":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
@@ -674,7 +674,7 @@ def prowler():
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis = Microsoft365CIS(
+                cis = M365CIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
