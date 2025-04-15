@@ -545,9 +545,9 @@ class HTML(Output):
             return ""
 
     @staticmethod
-    def get_microsoft365_assessment_summary(provider: Provider) -> str:
+    def get_m365_assessment_summary(provider: Provider) -> str:
         """
-        get_microsoft365_assessment_summary gets the HTML assessment summary for the provider
+        get_m365_assessment_summary gets the HTML assessment summary for the provider
 
         Args:
             provider (Provider): the provider object
@@ -560,11 +560,11 @@ class HTML(Output):
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
-                            Microsoft365 Assessment Summary
+                            M365 Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Microsoft365 Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>M365 Tenant Domain:</b> {provider.identity.tenant_domain}
                             </li>
                         </ul>
                     </div>
@@ -572,14 +572,14 @@ class HTML(Output):
                 <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        Microsoft365 Credentials
+                        M365 Credentials
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Microsoft365 Identity Type:</b> {provider.identity.identity_type}
+                            <b>M365 Identity Type:</b> {provider.identity.identity_type}
                             </li>
                             <li class="list-group-item">
-                                <b>Microsoft365 Identity ID:</b> {provider.identity.identity_id}
+                                <b>M365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
                         </ul>
                     </div>
