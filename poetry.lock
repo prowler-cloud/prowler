@@ -2599,7 +2599,7 @@ microsoft-kiota-abstractions = ">=1.9.1,<1.10.0"
 
 [[package]]
 name = "mkdocs"
-version = "1.6.0"
+version = "1.6.1"
 description = "Project documentation with Markdown."
 optional = false
 python-versions = ">=3.8"
