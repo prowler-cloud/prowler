@@ -9,6 +9,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add SOC2 compliance framework to Azure [(#7489)](https://github.com/prowler-cloud/prowler/pull/7489).
 - Add check for unused Service Accounts in GCP [(#7419)](https://github.com/prowler-cloud/prowler/pull/7419).
 
+### Fixed
+
+- Add the correct values for logger.info inside iam service [(#7526)](https://github.com/prowler-cloud/prowler/pull/7526).
+
 ---
 
 ## [v5.5.1] (Prowler v5.5.1)
