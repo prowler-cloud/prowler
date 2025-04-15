@@ -86,7 +86,10 @@ class TestGCPProvider:
             assert gcp_provider.projects == projects
             assert gcp_provider.default_project_id == "test-project"
             assert gcp_provider.identity == GCPIdentityInfo(profile="default")
-            assert gcp_provider.audit_config == {"shodan_api_key": None}
+            assert gcp_provider.audit_config == {
+                "shodan_api_key": None,
+                "max_unused_account_days": 180,
+            }
 
     @freeze_time(datetime.today())
     def test_is_project_matching(self):
