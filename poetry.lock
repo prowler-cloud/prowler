@@ -494,14 +494,14 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-keyvault"
-version = "10.3.1"
+version = "11.0.0"
 description = "Microsoft Azure Key Vault Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure-mgmt-keyvault-10.3.1.tar.gz", hash = "sha256:34b92956aefbdd571cae5a03f7078e037d8087b2c00cfa6748835dc73abb5a30"},
-    {file = "azure_mgmt_keyvault-10.3.1-py3-none-any.whl", hash = "sha256:a18a27a06551482d31f92bc43ac8b0846af02cd69511f80090865b4c5caa3c21"},
+    {file = "azure_mgmt_keyvault-11.0.0-py3-none-any.whl", hash = "sha256:abff0023a1c1b8033f3d4800cac996bf2b5470bd9c5ab71470c3184d7e8f0654"},
+    {file = "azure_mgmt_keyvault-11.0.0.tar.gz", hash = "sha256:fcfb1366852926f2a311e1bc6e6a786eb8a8a1fd46e6025d4c114ede2cb4642e"},
 ]
 
 [package.dependencies]
@@ -5328,4 +5328,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "1e96420737c2dfa8b18760585d61dd49c7064438ec095f66c1ba2786b26e7565"
+content-hash = "8964699fa2fc21500e2a33c7093814f17451a610a9b2c302ff82cf159eaf2447"
