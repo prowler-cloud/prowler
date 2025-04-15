@@ -9,13 +9,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add SOC2 compliance framework to Azure [(#7489)](https://github.com/prowler-cloud/prowler/pull/7489).
 - Add check for unused Service Accounts in GCP [(#7419)](https://github.com/prowler-cloud/prowler/pull/7419).
 
-<<<<<<< HEAD
-=======
 ### Fixed
 
 - Fix package name location in pyproject.toml while replicating for prowler-cloud [(#7531)](https://github.com/prowler-cloud/prowler/pull/7531).
 - Remove cache in PyPI release action [(#7532)](https://github.com/prowler-cloud/prowler/pull/7532).
->>>>>>> 24dfd4732 (fix(pypi): package name location in pyproject.toml while replicating for prowler-cloud (#7531))
+
 ---
 
 ## [v5.5.1] (Prowler v5.5.1)
