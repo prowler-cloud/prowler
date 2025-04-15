@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.6.1] (Prowler v5.5.1)
+
+### Changed
+- Changed `findings.uid` field length from `varchar(300)` to `varchar(600)` [(#7498)](https://github.com/prowler-cloud/prowler/pull/7498).
+
 ---
 
 ## [v1.6.0] (Prowler v5.5.0)
