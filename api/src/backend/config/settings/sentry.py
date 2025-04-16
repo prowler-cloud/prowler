@@ -1,8 +1,5 @@
-import logging
-
 import sentry_sdk
 from config.env import env
-from sentry_sdk.integrations.logging import LoggingIntegration
 
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
@@ -100,10 +97,4 @@ sentry_sdk.init(
         "continuous_profiling_auto_start": True,
     },
     ignore_errors=IGNORED_EXCEPTIONS,
-    integrations=[
-        LoggingIntegration(
-            level=logging.ERROR,  # Capture info and above as breadcrumbs
-            event_level=logging.ERROR,  # Send records as events
-        ),
-    ],
 )

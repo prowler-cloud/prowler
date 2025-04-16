@@ -74,7 +74,6 @@ class ACM(AWSService):
     def _describe_certificates(self, certificate):
         logger.info("ACM - Describing Certificates...")
         try:
-            raise Exception(f"No Shodan API Key for Andoni")
             regional_client = self.regional_clients[certificate.region]
             response = regional_client.describe_certificate(
                 CertificateArn=certificate.arn
