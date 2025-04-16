@@ -14,8 +14,9 @@ class Teams(M365Service):
 
     def _get_teams_client_configuration(self):
         logger.info("M365 - Getting Teams settings...")
-        settings = self.powershell.get_teams_settings()
+        teams_settings = None
         try:
+            settings = self.powershell.get_teams_settings()
             teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(
                     allow_box=settings.get("AllowBox", True),
@@ -23,7 +24,8 @@ class Teams(M365Service):
                     allow_egnyte=settings.get("AllowEgnyte", True),
                     allow_google_drive=settings.get("AllowGoogleDrive", True),
                     allow_share_file=settings.get("AllowShareFile", True),
-                )
+                ),
+                allow_email_into_channel=settings.get("AllowEmailIntoChannel", True),
             )
 
         except Exception as error:
@@ -43,3 +45,4 @@ class CloudStorageSettings(BaseModel):
 
 class TeamsSettings(BaseModel):
     cloud_storage_settings: CloudStorageSettings
+    allow_email_into_channel: bool = True
