@@ -22,46 +22,47 @@ class teams_external_file_sharing_restricted(Check):
             List[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
-        cloud_storage_settings = teams_client.teams_settings.cloud_storage_settings
-        report = CheckReportM365(
-            metadata=self.metadata(),
-            resource=cloud_storage_settings if cloud_storage_settings else {},
-            resource_name="Cloud Storage Settings",
-            resource_id="cloudStorageSettings",
-        )
-        report.status = "FAIL"
-        report.status_extended = "External file sharing is not restricted to only approved cloud storage services."
+        if teams_client.teams_settings:
+            cloud_storage_settings = teams_client.teams_settings.cloud_storage_settings
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=cloud_storage_settings if cloud_storage_settings else {},
+                resource_name="Cloud Storage Settings",
+                resource_id="cloudStorageSettings",
+            )
+            report.status = "FAIL"
+            report.status_extended = "External file sharing is not restricted to only approved cloud storage services."
 
-        allowed_services = teams_client.audit_config.get(
-            "allowed_cloud_storage_services", []
-        )
-        if cloud_storage_settings:
-            # Get storage services from CloudStorageSettings class items
-            storage_services = [
-                attr
-                for attr, type in CloudStorageSettings.__annotations__.items()
-                if type is bool
-            ]
+            allowed_services = teams_client.audit_config.get(
+                "allowed_cloud_storage_services", []
+            )
+            if cloud_storage_settings:
+                # Get storage services from CloudStorageSettings class items
+                storage_services = [
+                    attr
+                    for attr, type in CloudStorageSettings.__annotations__.items()
+                    if type is bool
+                ]
 
-            # Check if all services are disabled when no allowed services are specified
-            # or if all enabled services are in the allowed list
-            if (
-                not allowed_services
-                and all(
-                    not getattr(cloud_storage_settings, service, True)
-                    for service in storage_services
-                )
-            ) or (
-                allowed_services
-                and not any(
-                    getattr(cloud_storage_settings, service, True)
-                    and service not in allowed_services
-                    for service in storage_services
-                )
-            ):
-                report.status = "PASS"
-                report.status_extended = "External file sharing is restricted to only approved cloud storage services."
+                # Check if all services are disabled when no allowed services are specified
+                # or if all enabled services are in the allowed list
+                if (
+                    not allowed_services
+                    and all(
+                        not getattr(cloud_storage_settings, service, True)
+                        for service in storage_services
+                    )
+                ) or (
+                    allowed_services
+                    and not any(
+                        getattr(cloud_storage_settings, service, True)
+                        and service not in allowed_services
+                        for service in storage_services
+                    )
+                ):
+                    report.status = "PASS"
+                    report.status_extended = "External file sharing is restricted to only approved cloud storage services."
 
-        findings.append(report)
+            findings.append(report)
 
         return findings
