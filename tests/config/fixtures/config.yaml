@@ -399,6 +399,7 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  max_unused_account_days: 30
 
 # Kubernetes Configuration
 kubernetes:
@@ -430,8 +431,8 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# Microsoft365 Configuration
-microsoft365:
+# M365 Configuration
+m365:
   # Conditional Access Policy
   # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4

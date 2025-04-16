@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+} from "@/lib";
 
 export const getInvitations = async ({
   page = 1,
@@ -12,7 +16,7 @@ export const getInvitations = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/invitations");
 
@@ -31,10 +35,7 @@ export const getInvitations = async ({
 
   try {
     const invitations = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await invitations.json();
     const parsedData = parseStringify(data);
@@ -48,7 +49,7 @@ export const getInvitations = async ({
 };
 
 export const sendInvite = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const email = formData.get("email");
   const role = formData.get("role");
@@ -78,11 +79,7 @@ export const sendInvite = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
     const data = await response.json();
@@ -96,7 +93,7 @@ export const sendInvite = async (formData: FormData) => {
 };
 
 export const updateInvite = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const invitationId = formData.get("invitationId");
   const invitationEmail = formData.get("invitationEmail");
@@ -137,11 +134,7 @@ export const updateInvite = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
@@ -161,16 +154,13 @@ export const updateInvite = async (formData: FormData) => {
 };
 
 export const getInvitationInfoById = async (invitationId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/tenants/invitations/${invitationId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     const data = await response.json();
@@ -183,7 +173,7 @@ export const getInvitationInfoById = async (invitationId: string) => {
 };
 
 export const revokeInvite = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const invitationId = formData.get("invitationId");
 
   if (!invitationId) {
@@ -195,9 +185,7 @@ export const revokeInvite = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
