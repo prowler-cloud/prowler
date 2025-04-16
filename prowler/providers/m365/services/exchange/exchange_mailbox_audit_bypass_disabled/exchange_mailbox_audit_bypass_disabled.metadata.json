@@ -1,5 +1,5 @@
 {
-  "Provider": "microsoft365",
+  "Provider": "m365",
   "CheckID": "exchange_mailbox_audit_bypass_disabled",
   "CheckTitle": "Ensure 'AuditBypassEnabled' is not enabled on any mailbox in the organization.",
   "CheckType": [],
