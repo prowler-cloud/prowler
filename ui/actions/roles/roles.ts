@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+} from "@/lib";
 
 export const getRoles = async ({
   page = 1,
@@ -12,7 +16,7 @@ export const getRoles = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/roles");
 
@@ -30,13 +34,10 @@ export const getRoles = async ({
   });
 
   try {
-    const invitations = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+    const roles = await fetch(url.toString(), {
+      headers,
     });
-    const data = await invitations.json();
+    const data = await roles.json();
     const parsedData = parseStringify(data);
     revalidatePath("/roles");
     return parsedData;
@@ -48,16 +49,13 @@ export const getRoles = async ({
 };
 
 export const getRoleInfoById = async (roleId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -74,7 +72,7 @@ export const getRoleInfoById = async (roleId: string) => {
 };
 
 export const addRole = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -118,11 +116,7 @@ export const addRole = async (formData: FormData) => {
     const url = new URL(`${apiBaseUrl}/roles`);
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
 
@@ -139,7 +133,7 @@ export const addRole = async (formData: FormData) => {
 };
 
 export const updateRole = async (formData: FormData, roleId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -184,11 +178,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
     const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
 
@@ -205,15 +195,13 @@ export const updateRole = async (formData: FormData, roleId: string) => {
 };
 
 export const deleteRole = async (roleId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
