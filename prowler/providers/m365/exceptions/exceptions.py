@@ -94,13 +94,21 @@ class M365BaseException(ProwlerException):
             "message": "Tenant Id is required for Microsoft 365 static credentials. Make sure you are using the correct credentials.",
             "remediation": "Check the Microsoft 365 Tenant ID and ensure it is properly set up.",
         },
-        (6022, "M365MissingEnvironmentUserCredentialsError"): {
+        (6022, "M365MissingEnvironmentCredentialsError"): {
             "message": "User and Password environment variables are needed to use Credentials authentication method.",
             "remediation": "Ensure your environment variables are properly set up.",
         },
         (6023, "M365EnvironmentUserCredentialsError"): {
             "message": "User or Password environment variables are not correct.",
             "remediation": "Ensure you are using the right credentials.",
+        },
+        (6024, "M365NotValidUserError"): {
+            "message": "The provided M365 User is not valid.",
+            "remediation": "Check the M365 User and ensure it is a valid user.",
+        },
+        (6025, "M365NotValidEncryptedPasswordError"): {
+            "message": "The provided M365 Encrypted Password is not valid.",
+            "remediation": "Check the M365 Encrypted Password and ensure it is a valid password.",
         },
     }
 
@@ -279,7 +287,7 @@ class M365NotTenantIdButClientIdAndClientSecretError(M365CredentialsError):
         )
 
 
-class M365MissingEnvironmentUserCredentialsError(M365CredentialsError):
+class M365MissingEnvironmentCredentialsError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6022, file=file, original_exception=original_exception, message=message
@@ -290,4 +298,18 @@ class M365EnvironmentUserCredentialsError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6023, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365NotValidUserError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6024, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365NotValidEncryptedPasswordError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6025, file=file, original_exception=original_exception, message=message
         )
