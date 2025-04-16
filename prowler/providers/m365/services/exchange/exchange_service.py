@@ -10,6 +10,7 @@ class Exchange(M365Service):
         super().__init__(provider)
         self.powershell.connect_exchange_online()
         self.organization_config = self._get_organization_config()
+        self.mailboxes_config = self._get_mailbox_audit_config()
         self.powershell.close()
 
     def _get_organization_config(self):
@@ -17,19 +18,49 @@ class Exchange(M365Service):
         organization_config = None
         try:
             organization_configuration = self.powershell.get_organization_config()
-            organization_config = Organization(
-                name=organization_configuration.get("Name", ""),
-                guid=organization_configuration.get("Guid", ""),
-                audit_disabled=organization_configuration.get("AuditDisabled", False),
-            )
+            if organization_configuration:
+                organization_config = Organization(
+                    name=organization_configuration.get("Name", ""),
+                    guid=organization_configuration.get("Guid", ""),
+                    audit_disabled=organization_configuration.get(
+                        "AuditDisabled", False
+                    ),
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return organization_config
 
+    def _get_mailbox_audit_config(self):
+        logger.info("Microsoft365 - Getting mailbox audit configuration...")
+        mailboxes_config = []
+        try:
+            mailbox_audit_data = self.powershell.get_mailbox_audit_config()
+            for mailbox_audit_config in mailbox_audit_data:
+                mailboxes_config.append(
+                    MailboxAuditConfig(
+                        name=mailbox_audit_config.get("Name", ""),
+                        id=mailbox_audit_config.get("Id", ""),
+                        audit_bypass_enabled=mailbox_audit_config.get(
+                            "AuditBypassEnabled", True
+                        ),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return mailboxes_config
+
 
 class Organization(BaseModel):
     name: str
     guid: str
     audit_disabled: bool
+
+
+class MailboxAuditConfig(BaseModel):
+    name: str
+    id: str
+    audit_bypass_enabled: bool

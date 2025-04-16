@@ -17,11 +17,12 @@ class Purview(M365Service):
         audit_log_config = None
         try:
             audit_log_config_response = self.powershell.get_audit_log_config()
-            audit_log_config = AuditLogConfig(
-                audit_log_search=audit_log_config_response.get(
-                    "UnifiedAuditLogIngestionEnabled", False
+            if audit_log_config_response:
+                audit_log_config = AuditLogConfig(
+                    audit_log_search=audit_log_config_response.get(
+                        "UnifiedAuditLogIngestionEnabled", False
+                    )
                 )
-            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
