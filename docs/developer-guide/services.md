@@ -237,4 +237,4 @@ It is really important to check if the current Prowler's permissions for each pr
 - AWS: https://docs.prowler.cloud/en/latest/getting-started/requirements/#aws-authentication
 - Azure: https://docs.prowler.cloud/en/latest/getting-started/requirements/#permissions
 - GCP: https://docs.prowler.cloud/en/latest/getting-started/requirements/#gcp-authentication
-- Microsoft365: https://docs.prowler.cloud/en/latest/getting-started/requirements/#microsoft365-authentication
+- M365: https://docs.prowler.cloud/en/latest/getting-started/requirements/#m365-authentication

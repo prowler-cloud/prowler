@@ -286,7 +286,7 @@ class IAM(AWSService):
             return stored_password_policy
 
     def _get_users(self):
-        logger.info("IAM - List Users...")
+        logger.info("IAM - Get Users...")
         try:
             get_users_paginator = self.client.get_paginator("list_users")
             users = []
@@ -469,7 +469,7 @@ class IAM(AWSService):
             )
 
     def _list_attached_role_policies(self):
-        logger.info("IAM - List Attached User Policies...")
+        logger.info("IAM - List Attached Role Policies...")
         try:
             if self.roles:
                 for role in self.roles:
@@ -712,7 +712,7 @@ class IAM(AWSService):
             return roles
 
     def _list_entities_for_policy(self, policy_arn):
-        logger.info("IAM - List Entities Role For Policy...")
+        logger.info("IAM - List Entities For Policy...")
         try:
             entities = {
                 "Users": [],

@@ -628,11 +628,21 @@ class GcpProvider(Provider):
                                 .get("labels", {})
                                 .items()
                             }
-                            project_id = asset["resource"]["data"]["projectId"]
+                            project_number = asset["resource"]["data"]["projectNumber"]
+                            project_id = (
+                                asset["resource"]["data"].get("projectId")
+                                if asset["resource"]["data"].get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                asset["resource"]["data"].get("name")
+                                if asset["resource"]["data"].get("name")
+                                else project_id
+                            )
                             gcp_project = GCPProject(
-                                number=asset["resource"]["data"]["projectNumber"],
+                                number=project_number,
                                 id=project_id,
-                                name=asset["resource"]["data"].get("name", project_id),
+                                name=project_name,
                                 lifecycle_state=asset["resource"]["data"].get(
                                     "lifecycleState"
                                 ),
@@ -673,11 +683,22 @@ class GcpProvider(Provider):
                             labels = {
                                 k: v for k, v in project.get("labels", {}).items()
                             }
+                            project_number = project["projectNumber"]
+                            project_id = (
+                                project.get("projectId")
+                                if project.get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                project.get("name")
+                                if project.get("name")
+                                else project_id
+                            )
                             project_id = project["projectId"]
                             gcp_project = GCPProject(
-                                number=project["projectNumber"],
+                                number=project_number,
                                 id=project_id,
-                                name=project.get("name", project_id),
+                                name=project_name,
                                 lifecycle_state=project["lifecycleState"],
                                 labels=labels,
                             )
