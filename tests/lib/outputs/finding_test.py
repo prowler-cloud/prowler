@@ -53,7 +53,12 @@ def mock_check_metadata(provider):
 
 
 def mock_get_check_compliance(*_):
-    return {"mock_compliance_key": "mock_compliance_value"}
+    return {
+        "CIS-2.0": ["1.12"],
+        "CIS-3.0": ["1.12"],
+        "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+        "MITRE-ATTACK": ["T1098"],
+    }
 
 
 class DummyTag:
@@ -71,12 +76,25 @@ class DummyTags:
 
 
 class DummyResource:
-    def __init__(self, uid, name, resource_arn, region, tags):
+    def __init__(
+        self,
+        uid,
+        name,
+        resource_arn,
+        region,
+        tags,
+        details=None,
+        metadata=None,
+        partition=None,
+    ):
         self.uid = uid
         self.name = name
         self.resource_arn = resource_arn
         self.region = region
         self.tags = DummyTags(tags)
+        self.details = details or ""
+        self.metadata = metadata or "{}"
+        self.partition = partition
 
     def __iter__(self):
         yield "uid", self.uid
@@ -112,14 +130,8 @@ class DummyAPIFinding:
     Attributes will be added dynamically.
     """
 
-    pass
-
 
 class TestFinding:
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_aws(self):
         # Mock provider
         provider = MagicMock()
@@ -145,7 +157,13 @@ class TestFinding:
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="aws")
-        check_output.resource = {}
+        check_output.resource = {"metadata": "mock_metadata"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -160,9 +178,14 @@ class TestFinding:
         assert finding_output.resource_name == "test_resource_id"
         assert finding_output.resource_uid == "test_resource_arn"
         assert finding_output.resource_details == "test_resource_details"
+        assert finding_output.resource_metadata == {"metadata": "mock_metadata"}
+        assert finding_output.partition == "aws"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -211,10 +234,6 @@ class TestFinding:
         assert finding_output.service_name == "mock_service_name"
         assert finding_output.raw == {}
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_azure(self):
         # Mock provider
         provider = MagicMock()
@@ -243,6 +262,12 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="azure")
         check_output.resource = {}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -262,7 +287,10 @@ class TestFinding:
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -298,10 +326,6 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_gcp(self):
         # Mock provider
         provider = MagicMock()
@@ -332,6 +356,12 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="gcp")
         check_output.resource = {}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock output options
         output_options = MagicMock()
@@ -347,7 +377,10 @@ class TestFinding:
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -388,10 +421,6 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
-    @patch(
-        "prowler.lib.outputs.finding.get_check_compliance",
-        new=mock_get_check_compliance,
-    )
     def test_generate_output_kubernetes(self):
         # Mock provider
         provider = MagicMock()
@@ -411,6 +440,12 @@ class TestFinding:
         check_output.check_metadata = mock_check_metadata(provider="kubernetes")
         check_output.timestamp = datetime.now()
         check_output.resource = {}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
+        }
 
         # Mock Output Options
         output_options = MagicMock()
@@ -427,7 +462,10 @@ class TestFinding:
         assert finding_output.region == "namespace: test_namespace"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
@@ -586,6 +624,7 @@ class TestFinding:
         dummy_finding.status_extended = "extended"
         dummy_finding.check_metadata = check_metadata
         dummy_finding.resources = resources
+        dummy_finding.muted = True
 
         # Call the transform_api_finding classmethod
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
@@ -627,7 +666,10 @@ class TestFinding:
         assert finding_obj.resource_tags == {"env": "prod"}
         assert finding_obj.region == "us-east-1"
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
 
     @patch(
@@ -709,6 +751,7 @@ class TestFinding:
         )
         api_finding.resources = DummyResources(api_resource)
         api_finding.subscription = "default"
+        api_finding.muted = False
         finding_obj = Finding.transform_api_finding(api_finding, provider)
 
         assert finding_obj.account_organization_uid == "test-ing-432a-a828-d9c965196f87"
@@ -718,7 +761,10 @@ class TestFinding:
         assert finding_obj.region == api_resource.region
         assert finding_obj.resource_tags == {}
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
 
         assert finding_obj.status == Status("FAIL")
@@ -807,6 +853,7 @@ class TestFinding:
         dummy_finding.check_metadata = check_metadata
         dummy_finding.raw_result = {}
         dummy_finding.project_id = "project1"
+        dummy_finding.muted = True
 
         resource = DummyResource(
             uid="gcp-resource-uid",
@@ -831,7 +878,10 @@ class TestFinding:
             == dummy_project.organization.display_name
         )
         assert finding_obj.compliance == {
-            "mock_compliance_key": "mock_compliance_value"
+            "CIS-2.0": ["1.12"],
+            "CIS-3.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+            "MITRE-ATTACK": ["T1098"],
         }
         assert finding_obj.status == Status("PASS")
         assert finding_obj.status_extended == "GCP check extended"
@@ -893,6 +943,7 @@ class TestFinding:
         )
         resource.region = "namespace: default"
         api_finding.resources = DummyResources(resource)
+        api_finding.muted = True
         finding_obj = Finding.transform_api_finding(api_finding, provider)
         assert finding_obj.auth_method == "in-cluster"
         assert finding_obj.resource_name == "k8s-resource-name"
@@ -905,9 +956,9 @@ class TestFinding:
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
-    def test_transform_api_finding_microsoft365(self):
+    def test_transform_api_finding_m365(self):
         provider = MagicMock()
-        provider.type = "microsoft365"
+        provider.type = "m365"
         provider.identity.identity_type = "ms_identity_type"
         provider.identity.identity_id = "ms_identity_id"
         provider.identity.tenant_id = "ms-tenant-id"
@@ -919,7 +970,7 @@ class TestFinding:
         dummy_finding.status = "PASS"
         dummy_finding.status_extended = "M365 check extended"
         check_metadata = {
-            "provider": "microsoft365",
+            "provider": "m365",
             "checkid": "m365-check-001",
             "checktitle": "Test M365 Check",
             "checktype": [],
@@ -958,6 +1009,7 @@ class TestFinding:
             tags=[],
         )
         dummy_finding.resources = DummyResources(resource)
+        dummy_finding.muted = True
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
         assert finding_obj.auth_method == "ms_identity_type: ms_identity_id"
         assert finding_obj.account_uid == "ms-tenant-id"

@@ -1,0 +1,134 @@
+{
+  "Framework": "CIS",
+  "Version": "4.0",
+  "Provider": "M365",
+  "Description": "The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for establishing a secure configuration posture for Microsoft 365 Cloud offerings running on any OS.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure Administrative accounts are cloud-only",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Administrative accounts are special privileged accounts that could have varying levels of access to data, users, and settings. Regular user accounts should never be utilized for administrative tasks and care should be taken, in the case of a hybrid environment, to keep Administrative accounts separated from on-prem accounts. Administrative accounts should not have applications assigned so that they have no access to potentially vulnerable services (e.g., email, Teams, SharePoint, etc.) and only access to perform tasks as needed for administrative purposes. Ensure administrative accounts are not On-premises sync enabled.",
+          "RationaleStatement": "In a hybrid environment, having separate accounts will help ensure that in the event of a breach in the cloud, that the breach does not affect the on-prem environment and vice versa.",
+          "ImpactStatement": "Administrative users will have to switch accounts and utilize login/logout functionality when performing administrative tasks, as well as not benefiting from SSO. This will require a migration process from the 'daily driver' account to a dedicated admin account. When migrating permissions to the admin account, both M365 and Azure RBAC roles should be migrated as well. Once the new admin accounts are created, both of these permission sets should be moved from the daily driver account to the new admin account. Failure to migrate Azure RBAC roles can cause an admin to not be able to see their subscriptions/resources while using their admin accounts.",
+          "RemediationProcedure": "Review all administrative accounts and ensure they are configured as cloud-only. Remove any on-premises synchronization for these accounts. Assign necessary roles and permissions exclusively to the dedicated cloud administrative accounts.",
+          "AuditProcedure": "Log in to the Microsoft 365 Admin Center and review the list of administrative accounts. Verify that none of them are on-premises sync enabled.",
+          "AdditionalInformation": "This recommendation is particularly relevant for hybrid environments and is aimed at enhancing the security of administrative accounts by isolating them from on-prem infrastructure.",
+          "DefaultValue": "By default, administrative accounts may be either cloud-only or hybrid. This setting needs to be verified and adjusted according to the recommendation.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.1.1"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure two emergency access accounts have been defined",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Emergency access or 'break glass' accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. These emergencies could include technical failures of a cellular provider or Microsoft-related service such as MFA, or the last remaining Global Administrator account becoming inaccessible. Ensure two Emergency Access accounts have been defined.",
+          "RationaleStatement": "In various situations, an organization may require the use of a break glass account to gain emergency access. Losing access to administrative functions could result in a significant loss of support capability, reduced visibility into the security posture, and potential financial losses.",
+          "ImpactStatement": "Improper implementation of emergency access accounts could weaken the organization's security posture. To mitigate this, at least one account should be excluded from all conditional access rules, and strong authentication mechanisms (e.g., long, high-entropy passwords or FIDO2 security keys) must be used to secure the accounts.",
+          "RemediationProcedure": "Create two emergency access accounts and configure them according to Microsoft's recommendations. Ensure that these accounts are not assigned to specific users and are excluded from all conditional access rules. Secure the accounts with strong passwords or passwordless authentication methods, such as FIDO2 security keys. Regularly review and test these accounts to confirm their functionality.",
+          "AuditProcedure": "Log in to the Microsoft 365 Admin Center and verify the existence of at least two emergency access accounts. Check their configurations to ensure they comply with Microsoft's recommendations, including exclusion from conditional access rules and proper security settings.",
+          "AdditionalInformation": "Emergency access accounts are critical for maintaining administrative control during unexpected events. Regular audits and strict access controls are recommended to prevent misuse.",
+          "DefaultValue": "By default, emergency access accounts are not configured. Organizations must create and secure these accounts proactively.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.1.2; Microsoft documentation on emergency access accounts."
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Ensure that between two and four global admins are designated",
+      "Checks": [
+        "admincenter_users_between_two_and_four_global_admins"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "More than one global administrator should be designated so a single admin can be monitored and to provide redundancy should a single admin leave an organization. Additionally, there should be no more than four global admins set for any tenant. Ideally, global administrators will have no licenses assigned to them.",
+          "RationaleStatement": "If there is only one global tenant administrator, he or she can perform malicious activity without the possibility of being discovered by another admin. If there are numerous global tenant administrators, the more likely it is that one of their accounts will be successfully breached by an external attacker.",
+          "ImpactStatement": "If there is only one global administrator in a tenant, an additional global administrator will need to be identified and configured. If there are more than four global administrators, a review of role requirements for current global administrators will be required to identify which of the users require global administrator access.",
+          "RemediationProcedure": "Review the list of global administrators in the tenant and ensure there are at least two but no more than four accounts assigned this role. Remove excess global administrator accounts and create additional ones if necessary. Avoid assigning licenses to these accounts.",
+          "AuditProcedure": "Log in to the Microsoft 365 Admin Center and review the list of global administrators. Verify that there are at least two but no more than four global administrators configured.",
+          "AdditionalInformation": "Global administrators play a critical role in tenant management. Ensuring a proper number of global administrators improves redundancy and security.",
+          "DefaultValue": "By default, there may be a single global administrator configured for the tenant. Organizations need to manually adjust the count as per best practices.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.1.3"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.4",
+      "Description": "Ensure administrative accounts use licenses with a reduced application footprint",
+      "Checks": [
+        "admincenter_users_admins_reduced_license_footprint"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Administrative accounts are special privileged accounts with varying levels of access to data, users, and settings. It is recommended that privileged accounts either not be licensed or use Microsoft Entra ID P1 or Microsoft Entra ID P2 licenses to minimize application exposure.",
+          "RationaleStatement": "Ensuring administrative accounts do not use licenses with applications assigned to them reduces the attack surface of high-privileged identities. This minimizes the likelihood of these accounts being targeted by social engineering attacks or exposed to malicious content via licensed applications. Administrative activities should be restricted to dedicated accounts without access to collaborative tools like mailboxes.",
+          "ImpactStatement": "Administrative users will need to switch accounts to perform privileged actions, requiring login/logout functionality and potentially losing the convenience of SSO. Alerts sent to Global Administrators or TenantAdmins by default might not be received if these accounts lack application-based licenses. Proper alert routing must be configured to avoid missed notifications.",
+          "RemediationProcedure": "Review the licenses assigned to administrative accounts. Remove licenses granting access to collaborative applications and assign Microsoft Entra ID P1 or P2 licenses if participation in Microsoft 365 security services is required. Configure alerts to be sent to valid email addresses for monitoring.",
+          "AuditProcedure": "Log in to the Microsoft 365 Admin Center and review the licenses assigned to administrative accounts. Confirm that administrative accounts either have no licenses or are limited to Microsoft Entra ID P1 or P2 licenses without collaborative applications enabled.",
+          "AdditionalInformation": "Reducing the application footprint of administrative accounts improves security by minimizing potential attack vectors. Special care should be taken to configure alert routing properly to ensure critical notifications are not missed.",
+          "DefaultValue": "By default, administrative accounts may have licenses assigned based on organizational setup. Manual review and adjustment are necessary to comply with this recommendation.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.1.4; Microsoft documentation on Entra ID licenses and privileged account security."
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "Ensure that only organizationally managed/approved public groups exist",
+      "Checks": [
+        "admincenter_groups_not_public_visibility"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Microsoft 365 Groups enable shared resource access across Microsoft 365 services. The default privacy setting for groups is 'Public,' which allows users within the organization to access the group's resources. Ensure that only organizationally managed and approved public groups exist to prevent unauthorized access to sensitive information.",
+          "RationaleStatement": "Public groups can be accessed by any user within the organization via several methods, such as self-adding through the Azure portal, sending an access request, or directly using the SharePoint URL. Without control over group privacy, sensitive organizational data might be exposed to unintended users.",
+          "ImpactStatement": "Implementing this recommendation may result in an increased volume of access requests for group owners, particularly for groups previously intended to be public.",
+          "RemediationProcedure": "Audit all Microsoft 365 public groups and ensure they are organizationally managed and approved. Convert unnecessary public groups to private groups and enforce strict policies for creating and approving public groups. Group owners should be instructed to monitor and review access requests.",
+          "AuditProcedure": "Log in to the Microsoft 365 Admin Center and review the list of public groups. Verify that all public groups have been approved and are necessary for organizational purposes.",
+          "AdditionalInformation": "Public groups expose data to all users within the organization, increasing the risk of accidental or unauthorized access. Periodic reviews of group privacy settings are recommended.",
+          "DefaultValue": "By default, groups created in Microsoft 365 are set to 'Public' privacy.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.2.1; Microsoft documentation on managing group privacy."
+        }
+      ]
+    },
+    {
+      "Id": "1.2.2",
+      "Description": "Ensure sign-in to shared mailboxes is blocked",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manuel",
+          "Description": "Shared mailboxes are used when multiple people need access to the same mailbox for functions such as support or reception. These mailboxes are created with a corresponding user account that includes a system-generated password. To enhance security, sign-in should be blocked for these shared mailbox accounts, ensuring access is granted only through delegation.",
+          "RationaleStatement": "Blocking sign-in for shared mailbox accounts prevents unauthorized access or direct sign-in, ensuring that all interactions with the shared mailbox are through authorized delegation. This reduces the risk of attackers exploiting shared mailboxes for malicious purposes such as sending emails with spoofed identities.",
+          "ImpactStatement": "Blocking sign-in to shared mailboxes requires users to access these mailboxes only through delegation. Administrators will need to monitor and ensure proper access permissions are assigned.",
+          "RemediationProcedure": "Log in to the Microsoft 365 Admin Center and locate the shared mailboxes. For each shared mailbox, verify that sign-in is blocked by reviewing the associated user account settings. If sign-in is not blocked, adjust the account settings to enforce this configuration.",
+          "AuditProcedure": "Review all shared mailboxes in the Microsoft 365 Admin Center. Confirm that the user accounts associated with these mailboxes have sign-in blocked.",
+          "AdditionalInformation": "Shared mailboxes are often a target for exploitation due to their broad access and functional role. Blocking sign-in significantly reduces the attack surface.",
+          "DefaultValue": "By default, shared mailboxes may have sign-in enabled unless explicitly configured otherwise.",
+          "References": "CIS Microsoft 365 Foundations Benchmark v4.0, Section 1.2.2; Microsoft documentation on managing shared mailboxes."
+        }
+      ]
+    }
+  ]
+}
