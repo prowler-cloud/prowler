@@ -71,27 +71,27 @@ IGNORED_EXCEPTIONS = [
 ]
 
 
-# def before_send(event, hint):
-#     """
-#     before_send handles the Sentry events in order to sent them or not
-#     """
-#     # Ignore logs with the ignored_exceptions
-#     # https://docs.python.org/3/library/logging.html#logrecord-objects
-#     if "log_record" in hint:
-#         log_msg = hint["log_record"].msg
-#         log_lvl = hint["log_record"].levelno
+def before_send(event, hint):
+    """
+    before_send handles the Sentry events in order to sent them or not
+    """
+    # Ignore logs with the ignored_exceptions
+    # https://docs.python.org/3/library/logging.html#logrecord-objects
+    if "log_record" in hint:
+        log_msg = hint["log_record"].msg
+        log_lvl = hint["log_record"].levelno
 
-#         # Handle Error events and discard the rest
-#         if log_lvl == 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
-#             return
-#     return event
+        # Handle Error events and discard the rest
+        if log_lvl == 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
+            return
+    return event
 
 
 sentry_sdk.init(
     dsn=env.str("DJANGO_SENTRY_DSN", ""),
     # Add data like request headers and IP for users,
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    # before_send=before_send,
+    before_send=before_send,
     send_default_pii=True,
     _experiments={
         # Set continuous_profiling_auto_start to True
@@ -99,6 +99,7 @@ sentry_sdk.init(
         # possible.
         "continuous_profiling_auto_start": True,
     },
+    ignore_errors=IGNORED_EXCEPTIONS,
     integrations=[
         LoggingIntegration(
             level=logging.ERROR,  # Capture info and above as breadcrumbs
