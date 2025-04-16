@@ -41,6 +41,7 @@ class TestIAMService:
             )
             assert iam_client.service_accounts[0].email == "service-account1@gmail.com"
             assert iam_client.service_accounts[0].display_name == "Service Account 1"
+            assert iam_client.service_accounts[0].uniqueId == "111222233334444"
             assert len(iam_client.service_accounts[0].keys) == 2
             assert iam_client.service_accounts[0].keys[0].name == "key1"
             assert iam_client.service_accounts[0].keys[0].valid_after == datetime(
@@ -66,6 +67,7 @@ class TestIAMService:
             )
             assert iam_client.service_accounts[1].email == "service-account2@gmail.com"
             assert iam_client.service_accounts[1].display_name == "Service Account 2"
+            assert iam_client.service_accounts[1].uniqueId == "55566666777888999"
             assert len(iam_client.service_accounts[1].keys) == 1
             assert iam_client.service_accounts[1].keys[0].name == "key3"
             assert iam_client.service_accounts[1].keys[0].valid_after == datetime(
