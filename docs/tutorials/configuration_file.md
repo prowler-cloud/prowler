@@ -97,14 +97,15 @@ The following list includes all the Kubernetes checks with configurable variable
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
 
-## Microsoft365
+## M365
 
 ### Configurable Checks
-The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
 
 
 ## Config YAML File Structure
@@ -504,10 +505,20 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
 
 ```

@@ -447,6 +447,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # GCP Service Account and user-managed keys unused configuration
+  # gcp.iam_service_account_unused
+  # gcp.iam_sa_user_managed_key_unused
+  max_unused_account_days: 180
 
 # Kubernetes Configuration
 kubernetes:
@@ -479,8 +483,18 @@ kubernetes:
     ]
 
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]

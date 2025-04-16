@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_admin_users_phishing_resistant_mfa_enabled",
+  "CheckTitle": "Ensure phishing-resistant MFA strength is required for all administrator accounts",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure ",
+  "Risk": "Administrators using weaker MFA methods, such as SMS or push notifications, are vulnerable to phishing attacks and MFA fatigue attacks. Attackers can intercept codes or trick users into approving fraudulent authentication requests, leading to unauthorized access to critical systems.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Click New policy. Under Users include Select users and groups and check Directory roles. At a minimum, include the directory roles listed below in this section of the document. Under Target resources include All cloud apps and do not create any exclusions. Under Grant select Grant Access and check Require authentication strength and set Phishing-resistant MFA in the dropdown box. Click Select. 4. Under Enable policy set it to Report Only until the organization is ready to enable it. 5. Click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require phishing-resistant MFA strength for all administrator accounts through Conditional Access policies. Enforce the use of FIDO2 security keys, Windows Hello for Business, or certificate-based authentication. Ensure administrators are pre-registered for these methods before enforcement to prevent lockouts. Maintain a break-glass account exempt from this policy for emergency access.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa#create-a-conditional-access-policy"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

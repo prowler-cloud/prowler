@@ -1,10 +1,26 @@
 import { getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
+import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
 export const apiBaseUrl = process.env.API_BASE_URL;
+
+export const getAuthHeaders = async (options?: { contentType?: boolean }) => {
+  const session = await auth();
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.api+json",
+    Authorization: `Bearer ${session?.accessToken}`,
+  };
+
+  if (options?.contentType) {
+    headers["Content-Type"] = "application/vnd.api+json";
+  }
+
+  return headers;
+};
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {
