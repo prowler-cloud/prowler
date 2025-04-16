@@ -30,16 +30,16 @@ class Exchange(M365Service):
 
     def _get_mailbox_audit_config(self):
         logger.info("Microsoft365 - Getting mailbox audit configuration...")
-        mailbox_audit_data = self.powershell.get_mailbox_audit_config()
         mailboxes_config = []
         try:
+            mailbox_audit_data = self.powershell.get_mailbox_audit_config()
             for mailbox_audit_config in mailbox_audit_data:
                 mailboxes_config.append(
                     MailboxAuditConfig(
                         name=mailbox_audit_config.get("Name", ""),
                         id=mailbox_audit_config.get("Id", ""),
                         audit_bypass_enabled=mailbox_audit_config.get(
-                            "AuditBypassEnabled", False
+                            "AuditBypassEnabled", True
                         ),
                     )
                 )
