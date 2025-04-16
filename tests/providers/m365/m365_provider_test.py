@@ -23,6 +23,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NoAuthenticationMethodError,
     M365NotValidEncryptedPasswordError,
     M365NotValidUserError,
+    M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.m365.models import (
@@ -475,3 +476,31 @@ class TestM365Provider:
                 in str(exc_info.value)
             )
             mock_session.test_credentials.assert_not_called()
+
+    def test_test_connection_user_not_belonging_to_tenant(
+        self,
+    ):
+        with patch(
+            "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+        ) as mock_validate_static_credentials:
+            mock_validate_static_credentials.side_effect = M365UserNotBelongingToTenantError(
+                file=os.path.basename(__file__),
+                message="The provided M365 User does not belong to the specified tenant.",
+            )
+
+            with pytest.raises(M365UserNotBelongingToTenantError) as exception:
+                M365Provider.test_connection(
+                    tenant_id="contoso.onmicrosoft.com",
+                    region="M365Global",
+                    raise_on_exception=True,
+                    client_id=str(uuid4()),
+                    client_secret=str(uuid4()),
+                    user="user@otherdomain.com",
+                    encrypted_password="test_password",
+                )
+
+            assert exception.type == M365UserNotBelongingToTenantError
+            assert (
+                "The provided M365 User does not belong to the specified tenant."
+                in str(exception.value)
+            )
