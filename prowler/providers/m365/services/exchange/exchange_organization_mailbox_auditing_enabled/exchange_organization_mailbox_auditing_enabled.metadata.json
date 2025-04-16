@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_organization_mailbox_auditing_enabled",
+  "CheckTitle": "Ensure AuditDisabled organizationally is set to False.",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Organization Configuration",
+  "Description": "Ensure that the AuditDisabled property is set to False at the organizational level in Exchange Online. This enables mailbox auditing by default for all mailboxes and overrides individual mailbox settings.",
+  "Risk": "If mailbox auditing is disabled at the organization level, no mailbox actions are audited, limiting forensic investigation capabilities and exposing the organization to undetected malicious activity.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-OrganizationConfig -AuditDisabled $false",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set AuditDisabled to False at the organization level to ensure mailbox auditing is always enforced.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps#-auditdisabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
