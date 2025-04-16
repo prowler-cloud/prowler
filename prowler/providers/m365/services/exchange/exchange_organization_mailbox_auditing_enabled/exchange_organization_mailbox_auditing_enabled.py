@@ -33,7 +33,7 @@ class exchange_organization_mailbox_auditing_enabled(Check):
                 "Exchange mailbox auditing is not enabled on your organization."
             )
 
-            if not exchange_client.organization_config.audit_disabled:
+            if not organization_config.audit_disabled:
                 report.status = "PASS"
                 report.status_extended = (
                     "Exchange mailbox auditing is enabled on your organization."

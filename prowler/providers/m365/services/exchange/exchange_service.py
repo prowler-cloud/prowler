@@ -15,8 +15,9 @@ class Exchange(M365Service):
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
-        organization_configuration = self.powershell.get_organization_config()
+        organization_config = None
         try:
+            organization_configuration = self.powershell.get_organization_config()
             organization_config = Organization(
                 name=organization_configuration.get("Name", ""),
                 guid=organization_configuration.get("Guid", ""),
