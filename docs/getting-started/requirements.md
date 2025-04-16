@@ -40,8 +40,8 @@ If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to 
 
 Prowler for Azure supports the following authentication types. To use each one you need to pass the proper flag to the execution:
 
-- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
-- Current az cli credentials stored.
+- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
+- Current AZ CLI credentials stored.
 - Interactive browser authentication.
 - [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication.
 
@@ -119,12 +119,13 @@ The above settings must be associated to a user or service account.
 ???+ note
     By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
-## Microsoft365
+## Microsoft 365
 
-Prowler for Microsoft365 currently supports the following authentication types:
+Prowler for M365 currently supports the following authentication types:
 
-- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
-- Current az cli credentials stored.
+- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object).
+- Service Principal Application and Microsoft User Credentials (**recommended**).
+- Current AZ CLI credentials stored.
 - Interactive browser authentication.
 
 
@@ -143,6 +144,35 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
+
+### Service Principal and User Credentials authentication (recommended)
+This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_ENCRYPTED_PASSWORD`.
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXXX"
+export AZURE_CLIENT_SECRET="XXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXXX"
+export M365_USER="your_email@example.com"
+export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
+```
+
+These two new environment variables are required to execute the PowerShell modules needed to retrieve information from M365 services. Prowler will use service principal authentication to log into MS Graph and user credentials to authenticate to Microsoft PowerShell modules.
+
+The `M365_USER` should be your Microsoft account email, and `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString.
+To convert your password into a valid encrypted string, run the following commands in PowerShell:
+
+```console
+$securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
+$encryptedPassword = $securePassword | ConvertFrom-SecureString
+```
+
+If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
+```console
+Write-Output $encryptedPassword
+6500780061006d0070006c006500700061007300730077006f0072006400
+```
+
+
 
 ### Interactive Browser authentication
 

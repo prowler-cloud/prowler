@@ -40,7 +40,7 @@ def display_summary_table(
         elif provider.type == "kubernetes":
             entity_type = "Context"
             audited_entities = provider.identity.context
-        elif provider.type == "microsoft365":
+        elif provider.type == "m365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
         elif provider.type == "nhn":
