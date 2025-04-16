@@ -10,6 +10,7 @@ class Exchange(M365Service):
         super().__init__(provider)
         self.powershell.connect_exchange_online()
         self.organization_config = self._get_organization_config()
+        self.powershell.close()
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
