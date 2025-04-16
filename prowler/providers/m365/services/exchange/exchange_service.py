@@ -18,11 +18,14 @@ class Exchange(M365Service):
         organization_config = None
         try:
             organization_configuration = self.powershell.get_organization_config()
-            organization_config = Organization(
-                name=organization_configuration.get("Name", ""),
-                guid=organization_configuration.get("Guid", ""),
-                audit_disabled=organization_configuration.get("AuditDisabled", False),
-            )
+            if organization_configuration:
+                organization_config = Organization(
+                    name=organization_configuration.get("Name", ""),
+                    guid=organization_configuration.get("Guid", ""),
+                    audit_disabled=organization_configuration.get(
+                        "AuditDisabled", False
+                    ),
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
