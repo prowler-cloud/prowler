@@ -21,6 +21,6 @@ class APIServer(KubernetesService):
                     apiserver_pods.append(pod)
             return apiserver_pods
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

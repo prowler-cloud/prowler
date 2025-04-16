@@ -23,7 +23,7 @@ class Shield(AWSService):
                 else False
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -47,7 +47,7 @@ class Shield(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

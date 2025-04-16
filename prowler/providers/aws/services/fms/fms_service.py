@@ -54,12 +54,12 @@ class FMS(AWSService):
                         # FMS is not enabled in this account
                         self.fms_admin_account = False
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
                         self.fms_admin_account = None
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -90,7 +90,7 @@ class FMS(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 

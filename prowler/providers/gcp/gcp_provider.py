@@ -483,7 +483,7 @@ class GcpProvider(Provider):
         """
         try:
             if not provider_id:
-                logger.error("Provider ID is required.")
+                logger.exception("Provider ID is required.")
                 raise GCPInvalidProviderIdError(
                     file=__file__, message="Provider ID is required."
                 )
@@ -660,11 +660,11 @@ class GcpProvider(Provider):
                         )
                 except HttpError as http_error:
                     if "Cloud Asset API has not been used" in str(http_error):
-                        logger.error(
+                        logger.exception(
                             f"Projects cannot be retrieved from the Organization since Cloud Asset API has not been used before or it is disabled [{http_error.__traceback__.tb_lineno}]. Enable it by visiting https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                         )
             else:
@@ -723,11 +723,11 @@ class GcpProvider(Provider):
                     if "Cloud Resource Manager API has not been used" in str(
                         http_error
                     ):
-                        logger.error(
+                        logger.exception(
                             f"Project information cannot be retrieved since Cloud Resource Manager API has not been used before or it is disabled [{http_error.__traceback__.tb_lineno}]. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                         )
             if not projects:
@@ -790,15 +790,15 @@ class GcpProvider(Provider):
 
         except HttpError as http_error:
             if http_error.status_code == 403 and "organizations" in http_error.uri:
-                logger.error(
+                logger.exception(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error.error_details} to get Organizations display name."
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -908,13 +908,13 @@ class GcpProvider(Provider):
                     for region in response.get("items", []):
                         regions.add(region["name"])
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue
             return regions
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return set()

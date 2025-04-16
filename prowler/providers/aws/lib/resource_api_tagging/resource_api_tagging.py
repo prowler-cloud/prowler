@@ -25,7 +25,7 @@ def get_tagged_resources(input_resource_tags: list, provider):
                     for resource in page["ResourceTagMappingList"]:
                         tagged_resources.append(resource["ResourceARN"])
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
     except Exception as error:

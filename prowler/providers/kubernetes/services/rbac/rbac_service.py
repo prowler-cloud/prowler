@@ -47,7 +47,7 @@ class Rbac(KubernetesService):
                 bindings[binding.metadata.uid] = ClusterRoleBinding(**formatted_binding)
             return bindings
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
@@ -76,7 +76,7 @@ class Rbac(KubernetesService):
                 role_bindings[binding.metadata.uid] = RoleBinding(**formatted_binding)
             return role_bindings
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
@@ -101,7 +101,7 @@ class Rbac(KubernetesService):
                 roles[role.metadata.uid] = Role(**formatted_role)
             return roles
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
@@ -130,7 +130,7 @@ class Rbac(KubernetesService):
                 cluster_roles[role.metadata.uid] = ClusterRole(**formatted_role)
             return cluster_roles
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}

@@ -48,7 +48,7 @@ class Bedrock(AWSService):
                     LoggingConfiguration(enabled=False)
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -66,7 +66,7 @@ class Bedrock(AWSService):
                         region=regional_client.region,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -85,7 +85,7 @@ class Bedrock(AWSService):
                         "inputStrength", "NONE"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -98,7 +98,7 @@ class Bedrock(AWSService):
                 .get("tags", [])
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -145,7 +145,7 @@ class BedrockAgent(AWSService):
                         region=regional_client.region,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -160,7 +160,7 @@ class BedrockAgent(AWSService):
             if agent_tags:
                 resource.tags = [agent_tags]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

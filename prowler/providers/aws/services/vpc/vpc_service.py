@@ -58,11 +58,11 @@ class VPC(AWSService):
                                 tags=vpc.get("Tags"),
                             )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -97,11 +97,11 @@ class VPC(AWSService):
                                 )
                             )
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -140,11 +140,11 @@ class VPC(AWSService):
                             )
                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -167,11 +167,11 @@ class VPC(AWSService):
                     if flow_logs:
                         vpc.flow_log = True
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -207,11 +207,11 @@ class VPC(AWSService):
                         if enis:
                             subnet.in_use = True
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -247,11 +247,11 @@ class VPC(AWSService):
                                 )
                             )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -280,11 +280,11 @@ class VPC(AWSService):
                                     )
                                 )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -311,7 +311,7 @@ class VPC(AWSService):
                             f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -394,11 +394,11 @@ class VPC(AWSService):
                                 if vpc.id == subnet["VpcId"]:
                                     vpc.subnets.append(object)
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -428,7 +428,7 @@ class VPC(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

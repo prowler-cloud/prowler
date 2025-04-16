@@ -53,11 +53,11 @@ class TrustedAdvisor(AWSService):
                     f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -81,7 +81,7 @@ class TrustedAdvisor(AWSService):
                                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -105,21 +105,21 @@ class TrustedAdvisor(AWSService):
                     f" {error}"
                 )
             elif error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{self.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
                 )
                 self.premium_support = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"

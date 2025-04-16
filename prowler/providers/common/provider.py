@@ -264,6 +264,6 @@ class Provider(ABC):
 
             return audit_config
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )

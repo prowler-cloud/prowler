@@ -47,11 +47,11 @@ class ElastiCache(AWSService):
                             ),
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -74,11 +74,11 @@ class ElastiCache(AWSService):
 
                             cluster.subnets = subnets
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -126,11 +126,11 @@ class ElastiCache(AWSService):
                             engine_version=engine_version,
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -154,7 +154,7 @@ class ElastiCache(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             for repl_group in self.replication_groups.values():
@@ -176,11 +176,11 @@ class ElastiCache(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

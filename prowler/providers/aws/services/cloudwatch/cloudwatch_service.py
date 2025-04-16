@@ -49,17 +49,17 @@ class CloudWatch(AWSService):
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.metric_alarms:
                     self.metric_alarms = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -73,7 +73,7 @@ class CloudWatch(AWSService):
                 )["Tags"]
                 metric_alarm.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -135,17 +135,17 @@ class Logs(AWSService):
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.metric_filters:
                     self.metric_filters = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -178,17 +178,17 @@ class Logs(AWSService):
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.log_groups:
                     self.log_groups = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -217,7 +217,7 @@ class Logs(AWSService):
                         f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         logger.info(
@@ -243,16 +243,16 @@ class Logs(AWSService):
                     )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 self.resource_policies[regional_client.region] = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -270,7 +270,7 @@ class Logs(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

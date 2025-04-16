@@ -37,7 +37,7 @@ class ec2_launch_template_no_secrets(Check):
                     )
                     continue
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{template.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue

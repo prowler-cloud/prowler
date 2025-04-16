@@ -38,7 +38,7 @@ class Firehose(AWSService):
                         region=regional_client.region,
                     )
         except ClientError as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -51,7 +51,7 @@ class Firehose(AWSService):
                 .get("Tags", [])
             )
         except ClientError as error:
-            logger.error(
+            logger.exception(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -69,7 +69,7 @@ class Firehose(AWSService):
             )
             stream.kms_key_arn = encryption_config.get("KeyARN", "")
         except ClientError as error:
-            logger.error(
+            logger.exception(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

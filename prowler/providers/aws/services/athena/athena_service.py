@@ -35,11 +35,11 @@ class Athena(AWSService):
                             region=regional_client.region,
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -80,7 +80,7 @@ class Athena(AWSService):
                 "PublishCloudWatchMetricsEnabled", False
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -97,11 +97,11 @@ class Athena(AWSService):
                     if queries:
                         workgroup.queries = True
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -115,11 +115,11 @@ class Athena(AWSService):
                         ResourceARN=workgroup.arn
                     ).get("Tags", [])
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{workgroup.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

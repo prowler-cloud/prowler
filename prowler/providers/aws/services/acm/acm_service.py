@@ -22,8 +22,6 @@ class ACM(AWSService):
     def _list_certificates(self, regional_client):
         logger.info("ACM - Listing Certificates...")
         try:
-            logger.info("Testing Sentry integration...")
-            raise Exception("error from Andoni")
             includes = {
                 "keyTypes": [
                     "RSA_1024",
@@ -76,6 +74,7 @@ class ACM(AWSService):
     def _describe_certificates(self, certificate):
         logger.info("ACM - Describing Certificates...")
         try:
+            raise Exception(f"No Shodan API Key for Andoni")
             regional_client = self.regional_clients[certificate.region]
             response = regional_client.describe_certificate(
                 CertificateArn=certificate.arn
@@ -86,7 +85,7 @@ class ACM(AWSService):
             ):
                 certificate.transparency_logging = True
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -99,7 +98,7 @@ class ACM(AWSService):
             )["Tags"]
             certificate.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

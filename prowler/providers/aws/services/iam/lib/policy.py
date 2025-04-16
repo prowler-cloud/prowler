@@ -99,9 +99,9 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
                     is_from_private_ip = True
 
     except ValueError:
-        logger.error(f"Invalid IP: {ip}")
+        logger.exception(f"Invalid IP: {ip}")
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 

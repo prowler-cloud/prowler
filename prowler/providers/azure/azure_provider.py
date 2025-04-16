@@ -408,7 +408,7 @@ class AzureProvider(Provider):
                 credential_scopes=config["credential_scopes"],
             )
         except ArgumentTypeError as validation_error:
-            logger.error(
+            logger.exception(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             raise AzureArgumentTypeValidationError(
@@ -416,7 +416,7 @@ class AzureProvider(Provider):
                 original_exception=validation_error,
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise AzureSetUpRegionConfigError(
@@ -506,21 +506,21 @@ class AzureProvider(Provider):
                         )
                         return credentials
                     except ClientAuthenticationError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except CredentialUnavailableError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureCredentialsUnavailableError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureConfigCredentialsError(
@@ -544,14 +544,14 @@ class AzureProvider(Provider):
                             authority=region_config.authority,
                         )
                     except ClientAuthenticationError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except CredentialUnavailableError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureCredentialsUnavailableError(
@@ -691,33 +691,33 @@ class AzureProvider(Provider):
             return Connection(is_connected=True)
         # Exceptions from validate_arguments
         except AzureNoAuthenticationMethodError as no_auth_method_error:
-            logger.error(
+            logger.exception(
                 f"{no_auth_method_error.__class__.__name__}[{no_auth_method_error.__traceback__.tb_lineno}]: {no_auth_method_error}"
             )
             if raise_on_exception:
                 raise no_auth_method_error
             return Connection(error=no_auth_method_error)
         except AzureBrowserAuthNoTenantIDError as browser_no_tenant_error:
-            logger.error(
+            logger.exception(
                 f"{browser_no_tenant_error.__class__.__name__}[{browser_no_tenant_error.__traceback__.tb_lineno}]: {browser_no_tenant_error}"
             )
             if raise_on_exception:
                 raise browser_no_tenant_error
             return Connection(error=browser_no_tenant_error)
         except AzureTenantIDNoBrowserAuthError as tenant_no_browser_error:
-            logger.error(
+            logger.exception(
                 f"{tenant_no_browser_error.__class__.__name__}[{tenant_no_browser_error.__traceback__.tb_lineno}]: {tenant_no_browser_error}"
             )
         # Exceptions from setup_region_config
         except AzureArgumentTypeValidationError as type_validation_error:
-            logger.error(
+            logger.exception(
                 f"{type_validation_error.__class__.__name__}[{type_validation_error.__traceback__.tb_lineno}]: {type_validation_error}"
             )
             if raise_on_exception:
                 raise type_validation_error
             return Connection(error=type_validation_error)
         except AzureSetUpRegionConfigError as region_config_error:
-            logger.error(
+            logger.exception(
                 f"{region_config_error.__class__.__name__}[{region_config_error.__traceback__.tb_lineno}]: {region_config_error}"
             )
             if raise_on_exception:
@@ -725,49 +725,49 @@ class AzureProvider(Provider):
             return Connection(error=region_config_error)
         # Exceptions from setup_session
         except AzureEnvironmentVariableError as environment_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}]: {environment_credentials_error}"
             )
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
         except AzureDefaultAzureCredentialError as default_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
             )
             if raise_on_exception:
                 raise default_credentials_error
             return Connection(error=default_credentials_error)
         except AzureInteractiveBrowserCredentialError as interactive_browser_error:
-            logger.error(
+            logger.exception(
                 f"{interactive_browser_error.__class__.__name__}[{interactive_browser_error.__traceback__.tb_lineno}]: {interactive_browser_error}"
             )
             if raise_on_exception:
                 raise interactive_browser_error
             return Connection(error=interactive_browser_error)
         except AzureConfigCredentialsError as config_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
             )
             if raise_on_exception:
                 raise config_credentials_error
             return Connection(error=config_credentials_error)
         except AzureClientAuthenticationError as client_auth_error:
-            logger.error(
+            logger.exception(
                 f"{client_auth_error.__class__.__name__}[{client_auth_error.__traceback__.tb_lineno}]: {client_auth_error}"
             )
             if raise_on_exception:
                 raise client_auth_error
             return Connection(error=client_auth_error)
         except AzureCredentialsUnavailableError as credential_unavailable_error:
-            logger.error(
+            logger.exception(
                 f"{credential_unavailable_error.__class__.__name__}[{credential_unavailable_error.__traceback__.tb_lineno}]: {credential_unavailable_error}"
             )
             if raise_on_exception:
                 raise credential_unavailable_error
             return Connection(error=credential_unavailable_error)
         except AzureDefaultAzureCredentialError as default_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
             )
             if raise_on_exception:
@@ -776,7 +776,7 @@ class AzureProvider(Provider):
         except (
             AzureClientIdAndClientSecretNotBelongingToTenantIdError
         ) as tenant_id_error:
-            logger.error(
+            logger.exception(
                 f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
             )
             if raise_on_exception:
@@ -785,7 +785,7 @@ class AzureProvider(Provider):
         except (
             AzureTenantIdAndClientSecretNotBelongingToClientIdError
         ) as client_id_error:
-            logger.error(
+            logger.exception(
                 f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
             )
             if raise_on_exception:
@@ -794,7 +794,7 @@ class AzureProvider(Provider):
         except (
             AzureTenantIdAndClientIdNotBelongingToClientSecretError
         ) as client_secret_error:
-            logger.error(
+            logger.exception(
                 f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
             )
             if raise_on_exception:
@@ -802,7 +802,7 @@ class AzureProvider(Provider):
             return Connection(error=client_secret_error)
         # Exceptions from provider_id validation
         except AzureInvalidProviderIdError as invalid_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
             )
             if raise_on_exception:
@@ -810,7 +810,7 @@ class AzureProvider(Provider):
             return Connection(error=invalid_credentials_error)
         # Exceptions from SubscriptionClient
         except HttpResponseError as http_response_error:
-            logger.error(
+            logger.exception(
                 f"{http_response_error.__class__.__name__}[{http_response_error.__traceback__.tb_lineno}]: {http_response_error}"
             )
             if raise_on_exception:
@@ -899,7 +899,7 @@ class AzureProvider(Provider):
                             identity.tenant_domain = domain_result.value[0].id
 
                 except HttpResponseError as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                     raise AzureHTTPResponseError(
@@ -907,7 +907,7 @@ class AzureProvider(Provider):
                         original_exception=error,
                     )
                 except ClientAuthenticationError as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                     raise AzureGetTokenIdentityError(
@@ -915,7 +915,7 @@ class AzureProvider(Provider):
                         original_exception=error,
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
@@ -940,7 +940,7 @@ class AzureProvider(Provider):
                                 identity.identity_id = me.user_principal_name
 
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
 
@@ -1121,7 +1121,7 @@ class AzureProvider(Provider):
                 "client_secret": client_secret,
             }
         except AzureNotValidTenantIdError as tenant_id_error:
-            logger.error(
+            logger.exception(
                 f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
             )
             raise AzureClientIdAndClientSecretNotBelongingToTenantIdError(
@@ -1129,7 +1129,7 @@ class AzureProvider(Provider):
                 message="The provided Azure Client ID and Client Secret do not belong to the specified Tenant ID.",
             )
         except AzureNotValidClientIdError as client_id_error:
-            logger.error(
+            logger.exception(
                 f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
             )
             raise AzureTenantIdAndClientSecretNotBelongingToClientIdError(
@@ -1137,7 +1137,7 @@ class AzureProvider(Provider):
                 message="The provided Azure Tenant ID and Client Secret do not belong to the specified Client ID.",
             )
         except AzureNotValidClientSecretError as client_secret_error:
-            logger.error(
+            logger.exception(
                 f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
             )
             raise AzureTenantIdAndClientIdNotBelongingToClientSecretError(

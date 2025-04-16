@@ -42,7 +42,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -60,7 +60,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -76,7 +76,7 @@ class Compute(GCPService):
                     Project(id=project_id, enable_oslogin=enable_oslogin)
                 )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -135,7 +135,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -166,7 +166,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -196,7 +196,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -226,7 +226,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -253,7 +253,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -278,7 +278,7 @@ class Compute(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             try:
@@ -303,7 +303,7 @@ class Compute(GCPService):
                             previous_request=request, previous_response=response
                         )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -338,7 +338,7 @@ class Compute(GCPService):
                         "enable", False
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 

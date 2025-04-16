@@ -52,7 +52,7 @@ class ELB(AWSService):
                             availability_zones=set(elb.get("AvailabilityZones", [])),
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -77,7 +77,7 @@ class ELB(AWSService):
                     load_balancer.desync_mitigation_mode = attribute["Value"]
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{load_balancer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -93,7 +93,7 @@ class ELB(AWSService):
             load_balancer.tags = tags
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{load_balancer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

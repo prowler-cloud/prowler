@@ -50,7 +50,7 @@ class Organizations(AWSService):
                         master_id="",
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             else:
@@ -74,7 +74,7 @@ class Organizations(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -113,12 +113,12 @@ class Organizations(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -140,7 +140,7 @@ class Organizations(AWSService):
 
             return policy_content
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
@@ -158,7 +158,7 @@ class Organizations(AWSService):
             return targets_for_policy
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
@@ -188,7 +188,7 @@ class Organizations(AWSService):
                 self.delegated_administrators = None
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

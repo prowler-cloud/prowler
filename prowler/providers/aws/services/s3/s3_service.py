@@ -76,11 +76,11 @@ class S3(AWSService):
                             f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except ClientError as error:
@@ -89,11 +89,11 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -116,16 +116,16 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if bucket.region:
-                logger.error(
+                logger.exception(
                     f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -146,18 +146,18 @@ class S3(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if "ServerSideEncryptionConfigurationNotFoundError" in str(error):
                 bucket.encryption = None
             elif regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -177,16 +177,16 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -220,16 +220,16 @@ class S3(AWSService):
                     restrict_public_buckets=False,
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -257,16 +257,16 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -285,16 +285,16 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -313,16 +313,16 @@ class S3(AWSService):
             elif error.response["Error"]["Code"] == "OwnershipControlsNotFoundError":
                 bucket.ownership = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -348,11 +348,11 @@ class S3(AWSService):
                     )
             else:
                 if regional_client:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
@@ -372,16 +372,16 @@ class S3(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -434,16 +434,16 @@ class S3(AWSService):
             ):
                 bucket.replication = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             if regional_client:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -476,11 +476,11 @@ class S3(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -497,12 +497,12 @@ class S3(AWSService):
                 return False
             else:
                 # Bucket exists but we don't have access to it
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 return True
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -545,7 +545,7 @@ class S3Control(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -564,7 +564,7 @@ class S3Control(AWSService):
                     region=regional_client.region,
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -606,7 +606,7 @@ class S3Control(AWSService):
                     ),
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -631,7 +631,7 @@ class S3Control(AWSService):
                 ).get("RestrictPublicBuckets", False),
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

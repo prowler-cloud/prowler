@@ -55,7 +55,7 @@ class DMS(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -88,7 +88,7 @@ class DMS(AWSService):
                             engine_name=endpoint["EngineName"],
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -119,7 +119,7 @@ class DMS(AWSService):
                             ),
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -129,7 +129,7 @@ class DMS(AWSService):
                 resource.region
             ].list_tags_for_resource(ResourceArn=resource.arn)["TagList"]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

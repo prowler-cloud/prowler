@@ -32,7 +32,7 @@ class Transfer(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -48,7 +48,7 @@ class Transfer(AWSService):
                 server.protocols.append(Protocol(protocol))
             server.tags = server_description.get("Tags", [])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{server.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

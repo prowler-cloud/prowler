@@ -61,7 +61,7 @@ class PostgreSQL(AzureService):
                         )
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return flexible_servers

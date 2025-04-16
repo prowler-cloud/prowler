@@ -30,10 +30,10 @@ class ec2_elastic_ip_shodan(Check):
                             findings.append(report)
                             continue
                         else:
-                            logger.error(f"Unknown Shodan API Error: {error.value}")
+                            logger.exception(f"Unknown Shodan API Error: {error.value}")
 
         else:
-            logger.error(
+            logger.exception(
                 "No Shodan API Key -- Please input a Shodan API Key with -N/--shodan or in config.yaml"
             )
         return findings

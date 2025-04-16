@@ -53,7 +53,7 @@ class Network(AzureService):
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return security_groups
@@ -95,7 +95,7 @@ class Network(AzureService):
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return network_watchers
@@ -105,7 +105,7 @@ class Network(AzureService):
         client = self.clients[subscription]
         match = re.search(r"/resourceGroups/(?P<rg>[^/]+)/", network_watcher_id)
         if not match:
-            logger.error(
+            logger.exception(
                 f"Could not extract resource group from ID: {network_watcher_id}"
             )
             return []
@@ -119,7 +119,7 @@ class Network(AzureService):
             )
             return []
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
@@ -141,7 +141,7 @@ class Network(AzureService):
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return bastion_hosts
@@ -164,7 +164,7 @@ class Network(AzureService):
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return public_ip_addresses

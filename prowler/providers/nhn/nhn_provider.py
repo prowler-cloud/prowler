@@ -248,7 +248,7 @@ class NhnProvider(Provider):
                 error_msg = (
                     "NHN test_connection error: missing username/password/tenant_id"
                 )
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg)
 
             # 2) Request Keystone token
@@ -268,7 +268,7 @@ class NhnProvider(Provider):
             if resp.status_code != 200:
                 # Fail
                 error_msg = f"Failed to get token. Status: {resp.status_code}, Body: {resp.text}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 if raise_on_exception:
                     raise Exception(error_msg)
                 return Connection(error=Exception(error_msg))
@@ -296,7 +296,7 @@ class NhnProvider(Provider):
                 return Connection(is_connected=True)
             else:
                 error_msg = f"/servers call failed. Status: {servers_resp.status_code}, Body: {servers_resp.text}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 if raise_on_exception:
                     raise Exception(error_msg)
                 return Connection(error=Exception(error_msg))

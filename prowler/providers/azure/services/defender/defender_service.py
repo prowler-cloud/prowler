@@ -57,11 +57,11 @@ class Defender(AzureService):
                     )
             except ResourceNotFoundError as error:
                 if "Subscription Not Registered" in error.message:
-                    logger.error(
+                    logger.exception(
                         f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return pricings
@@ -86,11 +86,11 @@ class Defender(AzureService):
                     )
             except ClientAuthenticationError as error:
                 if "Subscription Not Registered" in error.message:
-                    logger.error(
+                    logger.exception(
                         f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return auto_provisioning
@@ -115,7 +115,7 @@ class Defender(AzureService):
                         }
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return assessments
@@ -140,11 +140,11 @@ class Defender(AzureService):
                     )
             except ClientAuthenticationError as error:
                 if "Subscription Not Registered" in error.message:
-                    logger.error(
+                    logger.exception(
                         f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return settings
@@ -188,11 +188,11 @@ class Defender(AzureService):
                         }
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return security_contacts
@@ -217,7 +217,7 @@ class Defender(AzureService):
                         }
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return iot_security_solutions

@@ -745,7 +745,7 @@ class AwsProvider(Provider):
 
             return regional_clients
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -914,7 +914,7 @@ class AwsProvider(Provider):
                         for resource in page["ResourceTagMappingList"]:
                             tagged_resources.append(resource["ResourceARN"])
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
@@ -1105,7 +1105,7 @@ class AwsProvider(Provider):
 
             return enabled_regions
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return set()
@@ -1161,7 +1161,7 @@ class AwsProvider(Provider):
                 region=aws_region,
             )
         except ClientError as client_error:
-            logger.error(
+            logger.exception(
                 f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
             )
             if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
@@ -1295,7 +1295,7 @@ class AwsProvider(Provider):
             )
 
         except AWSSetUpSessionError as setup_session_error:
-            logger.error(
+            logger.exception(
                 f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
             )
             if raise_on_exception:
@@ -1303,7 +1303,7 @@ class AwsProvider(Provider):
             return Connection(error=setup_session_error)
 
         except AWSArgumentTypeValidationError as validation_error:
-            logger.error(
+            logger.exception(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             if raise_on_exception:
@@ -1311,7 +1311,7 @@ class AwsProvider(Provider):
             return Connection(error=validation_error)
 
         except AWSIAMRoleARNRegionNotEmtpyError as arn_region_not_empty_error:
-            logger.error(
+            logger.exception(
                 f"{arn_region_not_empty_error.__class__.__name__}[{arn_region_not_empty_error.__traceback__.tb_lineno}]: {arn_region_not_empty_error}"
             )
             if raise_on_exception:
@@ -1319,7 +1319,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_region_not_empty_error)
 
         except AWSIAMRoleARNPartitionEmptyError as arn_partition_empty_error:
-            logger.error(
+            logger.exception(
                 f"{arn_partition_empty_error.__class__.__name__}[{arn_partition_empty_error.__traceback__.tb_lineno}]: {arn_partition_empty_error}"
             )
             if raise_on_exception:
@@ -1327,7 +1327,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_partition_empty_error)
 
         except AWSIAMRoleARNServiceNotIAMnorSTSError as arn_service_not_iam_sts_error:
-            logger.error(
+            logger.exception(
                 f"{arn_service_not_iam_sts_error.__class__.__name__}[{arn_service_not_iam_sts_error.__traceback__.tb_lineno}]: {arn_service_not_iam_sts_error}"
             )
             if raise_on_exception:
@@ -1335,7 +1335,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_service_not_iam_sts_error)
 
         except AWSIAMRoleARNInvalidAccountIDError as arn_invalid_account_id_error:
-            logger.error(
+            logger.exception(
                 f"{arn_invalid_account_id_error.__class__.__name__}[{arn_invalid_account_id_error.__traceback__.tb_lineno}]: {arn_invalid_account_id_error}"
             )
             if raise_on_exception:
@@ -1343,7 +1343,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_invalid_account_id_error)
 
         except AWSIAMRoleARNInvalidResourceTypeError as arn_invalid_resource_type_error:
-            logger.error(
+            logger.exception(
                 f"{arn_invalid_resource_type_error.__class__.__name__}[{arn_invalid_resource_type_error.__traceback__.tb_lineno}]: {arn_invalid_resource_type_error}"
             )
             if raise_on_exception:
@@ -1351,7 +1351,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_invalid_resource_type_error)
 
         except AWSIAMRoleARNEmptyResourceError as arn_empty_resource_error:
-            logger.error(
+            logger.exception(
                 f"{arn_empty_resource_error.__class__.__name__}[{arn_empty_resource_error.__traceback__.tb_lineno}]: {arn_empty_resource_error}"
             )
             if raise_on_exception:
@@ -1359,7 +1359,7 @@ class AwsProvider(Provider):
             return Connection(error=arn_empty_resource_error)
 
         except AWSAssumeRoleError as assume_role_error:
-            logger.error(
+            logger.exception(
                 f"{assume_role_error.__class__.__name__}[{assume_role_error.__traceback__.tb_lineno}]: {assume_role_error}"
             )
             if raise_on_exception:
@@ -1367,7 +1367,7 @@ class AwsProvider(Provider):
             return Connection(error=assume_role_error)
 
         except ClientError as client_error:
-            logger.error(
+            logger.exception(
                 f"AWSClientError[{client_error.__traceback__.tb_lineno}]: {client_error}"
             )
             if raise_on_exception:
@@ -1377,7 +1377,7 @@ class AwsProvider(Provider):
             return Connection(error=client_error)
 
         except ProfileNotFound as profile_not_found_error:
-            logger.error(
+            logger.exception(
                 f"AWSProfileNotFoundError[{profile_not_found_error.__traceback__.tb_lineno}]: {profile_not_found_error}"
             )
             if raise_on_exception:
@@ -1388,7 +1388,7 @@ class AwsProvider(Provider):
             return Connection(error=profile_not_found_error)
 
         except NoCredentialsError as no_credentials_error:
-            logger.error(
+            logger.exception(
                 f"AWSNoCredentialsError[{no_credentials_error.__traceback__.tb_lineno}]: {no_credentials_error}"
             )
             if raise_on_exception:
@@ -1399,7 +1399,7 @@ class AwsProvider(Provider):
             return Connection(error=no_credentials_error)
 
         except AWSAccessKeyIDInvalidError as access_key_id_invalid_error:
-            logger.error(
+            logger.exception(
                 f"{access_key_id_invalid_error.__class__.__name__}[{access_key_id_invalid_error.__traceback__.tb_lineno}]: {access_key_id_invalid_error}"
             )
             if raise_on_exception:
@@ -1407,7 +1407,7 @@ class AwsProvider(Provider):
             return Connection(error=access_key_id_invalid_error)
 
         except AWSSecretAccessKeyInvalidError as secret_access_key_invalid_error:
-            logger.error(
+            logger.exception(
                 f"{secret_access_key_invalid_error.__class__.__name__}[{secret_access_key_invalid_error.__traceback__.tb_lineno}]: {secret_access_key_invalid_error}"
             )
             if raise_on_exception:
@@ -1415,7 +1415,7 @@ class AwsProvider(Provider):
             return Connection(error=secret_access_key_invalid_error)
 
         except AWSInvalidProviderIdError as invalid_account_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{invalid_account_credentials_error.__class__.__name__}[{invalid_account_credentials_error.__traceback__.tb_lineno}]: {invalid_account_credentials_error}"
             )
             if raise_on_exception:
@@ -1423,7 +1423,7 @@ class AwsProvider(Provider):
             return Connection(error=invalid_account_credentials_error)
 
         except AWSSessionTokenExpiredError as session_token_expired:
-            logger.error(
+            logger.exception(
                 f"{session_token_expired.__class__.__name__}[{session_token_expired.__traceback__.tb_lineno}]: {session_token_expired}"
             )
             if raise_on_exception:
@@ -1503,7 +1503,7 @@ class AwsProvider(Provider):
 
             return regions
         except ValueError as value_error:
-            logger.error(
+            logger.exception(
                 f"{value_error.__class__.__name__}[{value_error.__traceback__.tb_lineno}]: {value_error}"
             )
             raise AWSInvalidPartitionError(
@@ -1511,7 +1511,7 @@ class AwsProvider(Provider):
                 file=os.path.basename(__file__),
             )
         except KeyError as key_error:
-            logger.error(
+            logger.exception(
                 f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
             )
             raise AWSInvalidPartitionError(
@@ -1519,7 +1519,7 @@ class AwsProvider(Provider):
                 file=os.path.basename(__file__),
             )
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.exception(f"{error.__class__.__name__}: {error}")
             raise error
 
 

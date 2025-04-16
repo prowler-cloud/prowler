@@ -63,7 +63,7 @@ class ECR(AWSService):
             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -91,7 +91,7 @@ class ECR(AWSService):
 
         except Exception as error:
             if "RepositoryPolicyNotFoundException" not in str(error):
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -119,7 +119,7 @@ class ECR(AWSService):
                             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -201,7 +201,7 @@ class ECR(AWSService):
                                                 )
                                                 continue
                                             except Exception as error:
-                                                logger.error(
+                                                logger.exception(
                                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                                 )
                                                 continue
@@ -247,7 +247,7 @@ class ECR(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -275,7 +275,7 @@ class ECR(AWSService):
                             )
                             continue
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -306,12 +306,12 @@ class ECR(AWSService):
                 self.registries[regional_client.region].scan_type = "BASIC"
                 self.registries[regional_client.region].rules = []
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -348,7 +348,7 @@ class ECR(AWSService):
 
             return artifact_media_type in scannable_artifact_media_types
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return False

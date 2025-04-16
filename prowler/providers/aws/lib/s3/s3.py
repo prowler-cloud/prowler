@@ -140,7 +140,7 @@ class S3:
                                 output.file_extension: [object_name]
                             }
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         if output.file_extension in uploaded_objects["failure"]:
@@ -153,7 +153,7 @@ class S3:
                             }
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
         return uploaded_objects

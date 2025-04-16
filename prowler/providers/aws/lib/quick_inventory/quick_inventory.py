@@ -90,7 +90,7 @@ def quick_inventory(provider: AwsProvider, args):
                                             }
                                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     bar()
@@ -99,7 +99,7 @@ def quick_inventory(provider: AwsProvider, args):
                     bar.text = f"-> Found {Fore.GREEN}{len(resources_in_region)}{Style.RESET_ALL} resources in {region}"
 
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     bar()
@@ -127,7 +127,7 @@ def quick_inventory(provider: AwsProvider, args):
 
         create_output(resources, provider, args)
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
@@ -221,7 +221,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
 
         return inventory_table
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
@@ -330,7 +330,7 @@ def create_output(resources: list, provider: AwsProvider, args):
                 f"{bucket_remote_dir}/{output_file + json_file_suffix}",
             )
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
@@ -356,7 +356,7 @@ def get_regional_buckets(provider: AwsProvider, region: str) -> list:
                 except ClientError as error:
                     bucket_tags = []
                     if error.response["Error"]["Code"] != "NoSuchTagSet":
-                        logger.error(
+                        logger.exception(
                             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 bucket_arn = (
@@ -364,7 +364,7 @@ def get_regional_buckets(provider: AwsProvider, region: str) -> list:
                 )
                 regional_buckets.append({"arn": bucket_arn, "tags": bucket_tags})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     return regional_buckets
@@ -381,7 +381,7 @@ def get_iam_resources(session) -> list:
                 if "aws-service-role" not in role["Arn"]:
                     iam_resources.append({"arn": role["Arn"], "tags": role.get("Tags")})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     try:
@@ -390,7 +390,7 @@ def get_iam_resources(session) -> list:
             for user in page["Users"]:
                 iam_resources.append({"arn": user["Arn"], "tags": user.get("Tags")})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     try:
@@ -399,7 +399,7 @@ def get_iam_resources(session) -> list:
             for group in page["Groups"]:
                 iam_resources.append({"arn": group["Arn"], "tags": []})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     try:
@@ -408,14 +408,14 @@ def get_iam_resources(session) -> list:
             for policy in page["Policies"]:
                 iam_resources.append({"arn": policy["Arn"], "tags": policy.get("Tags")})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     try:
         for saml_provider in iam_client.list_saml_providers()["SAMLProviderList"]:
             iam_resources.append({"arn": saml_provider["Arn"], "tags": []})
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 

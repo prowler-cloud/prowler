@@ -66,7 +66,7 @@ class AWSMutelist(Mutelist):
             )["Mutelist"]
             return mutelist
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
             return {}
@@ -83,7 +83,7 @@ class AWSMutelist(Mutelist):
 
             return mutelist
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
             return {}
@@ -131,7 +131,7 @@ class AWSMutelist(Mutelist):
                     ] = item["Exceptions"]
                 return mutelist
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
             return {}

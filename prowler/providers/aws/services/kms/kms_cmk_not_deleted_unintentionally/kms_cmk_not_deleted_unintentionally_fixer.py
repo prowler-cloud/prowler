@@ -28,7 +28,7 @@ def fixer(resource_id: str, region: str) -> bool:
         regional_client = kms_client.regional_clients[region]
         regional_client.cancel_key_deletion(KeyId=resource_id)
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False

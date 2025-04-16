@@ -56,8 +56,8 @@ class IAM(AzureService):
                             )
                         )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
-                logger.error(
+                logger.exception(f"Subscription name: {subscription}")
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return builtin_roles, custom_roles
@@ -84,8 +84,8 @@ class IAM(AzureService):
                         }
                     )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
-                logger.error(
+                logger.exception(f"Subscription name: {subscription}")
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return role_assignments

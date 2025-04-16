@@ -63,7 +63,7 @@ class ContainerRegistry(AzureService):
                         },
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return registries
@@ -86,7 +86,7 @@ class ContainerRegistry(AzureService):
                 monitor_client.clients[subscription],
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings

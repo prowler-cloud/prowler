@@ -44,7 +44,7 @@ class NetworkFirewall(AWSService):
                             name=network_firewall.get("FirewallName"),
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -74,7 +74,7 @@ class NetworkFirewall(AWSService):
                         )
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -101,7 +101,7 @@ class NetworkFirewall(AWSService):
                 "StatelessFragmentDefaultActions", []
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -134,7 +134,7 @@ class NetworkFirewall(AWSService):
                         )
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 

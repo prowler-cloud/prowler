@@ -43,7 +43,7 @@ class WAF(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -61,7 +61,7 @@ class WAF(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{rule.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -78,7 +78,7 @@ class WAF(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -94,7 +94,7 @@ class WAF(AWSService):
                 rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{rule_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -115,7 +115,7 @@ class WAF(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -133,7 +133,7 @@ class WAF(AWSService):
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -150,7 +150,7 @@ class WAF(AWSService):
             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -184,7 +184,7 @@ class WAFRegional(AWSService):
                     name=rule.get("Name", ""),
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -201,7 +201,7 @@ class WAFRegional(AWSService):
                     )
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{rule.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -218,7 +218,7 @@ class WAFRegional(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -236,7 +236,7 @@ class WAFRegional(AWSService):
                 rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{rule_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -257,7 +257,7 @@ class WAFRegional(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -275,7 +275,7 @@ class WAFRegional(AWSService):
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -290,7 +290,7 @@ class WAFRegional(AWSService):
                         acl.albs.append(resource)
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

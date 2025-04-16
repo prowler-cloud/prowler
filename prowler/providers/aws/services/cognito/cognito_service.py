@@ -42,11 +42,11 @@ class CognitoIDP(AWSService):
                                 user_pool_clients={},
                             )
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -105,11 +105,11 @@ class CognitoIDP(AWSService):
                         "UserPoolTags", []
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -134,11 +134,11 @@ class CognitoIDP(AWSService):
                             region=user_pool.region,
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -166,11 +166,11 @@ class CognitoIDP(AWSService):
                             "EnableTokenRevocation", False
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -193,11 +193,11 @@ class CognitoIDP(AWSService):
                             status=mfa_config["MfaConfiguration"],
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -251,11 +251,11 @@ class CognitoIDP(AWSService):
                             )
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -288,11 +288,11 @@ class CognitoIdentity(AWSService):
                                 region=regional_client.region,
                             )
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -316,11 +316,11 @@ class CognitoIdentity(AWSService):
                         "AllowUnauthenticatedIdentities", False
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -341,11 +341,11 @@ class CognitoIdentity(AWSService):
                         ),
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -511,13 +511,13 @@ class KubernetesProvider(Provider):
             logger.info("Context user roles retrieved successfully.")
             return roles
         except ApiException as api_error:
-            logger.error(
+            logger.exception(
                 f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
             )
         except KubernetesError as error:
             raise error
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -580,7 +580,7 @@ class KubernetesProvider(Provider):
             ) as f:
                 return f.read().strip()
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return "default"

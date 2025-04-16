@@ -51,7 +51,7 @@ def fixer(region):
             args["KmsKeyId"] = cloudtrail_fixer_config.get("KmsKeyId")
         regional_client.create_trail(**args)
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False

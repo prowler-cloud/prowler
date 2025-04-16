@@ -32,7 +32,7 @@ class MQ(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -62,7 +62,7 @@ class MQ(AWSService):
             broker.tags = [describe_broker.get("Tags", {})]
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

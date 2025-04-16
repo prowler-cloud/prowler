@@ -46,17 +46,17 @@ class SSMIncidents(AWSService):
                         ]
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.replication_set:
                     self.replication_set = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -90,12 +90,12 @@ class SSMIncidents(AWSService):
                         # The replication set is not in this region, we continue to the next region
                         continue
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -115,7 +115,7 @@ class SSMIncidents(AWSService):
                         )
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -130,7 +130,7 @@ class SSMIncidents(AWSService):
                 response_plan.tags = response
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 

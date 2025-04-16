@@ -70,7 +70,7 @@ class Storage(AzureService):
                         )
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return storage_accounts
@@ -113,12 +113,12 @@ class Storage(AzureService):
                                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                             continue
-                        logger.error(
+                        logger.exception(
                             f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
