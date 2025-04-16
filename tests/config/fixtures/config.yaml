@@ -399,6 +399,7 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  max_unused_account_days: 30
 
 # Kubernetes Configuration
 kubernetes:

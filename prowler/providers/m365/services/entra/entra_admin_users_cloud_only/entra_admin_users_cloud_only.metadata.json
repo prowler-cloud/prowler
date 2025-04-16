@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Identify on-premises synchronized administrative users using Microsoft Entra Connect or equivalent tools.\n2.  Create new cloud-only administrative user with appropriate permissions.\n3. Migrate administrative tasks from on-premises synchronized users to the new cloud-only user.\n4. Disable or remove the on-premises synchronized administrative users.",
+      "Other": "1. Identify on-premises synchronized administrative users using Microsoft Entra Connect or equivalent tools. 2.  Create new cloud-only administrative user with appropriate permissions. 3. Migrate administrative tasks from on-premises synchronized users to the new cloud-only user. 4. Disable or remove the on-premises synchronized administrative users.",
       "Terraform": ""
     },
     "Recommendation": {

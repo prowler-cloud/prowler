@@ -25,7 +25,7 @@ jobs:
 
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@6cb76d07bee4c9772c6882c06c37837bf82a04d3 # v46.0.4
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: ./**
           files_ignore: |
@@ -34,6 +34,7 @@ jobs:
             permissions/**
             api/**
             ui/**
+            prowler/CHANGELOG.md
             README.md
             mkdocs.yml
             .backportrc.json
@@ -113,7 +114,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
+        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:

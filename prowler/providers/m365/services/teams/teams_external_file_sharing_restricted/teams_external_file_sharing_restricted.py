@@ -39,8 +39,8 @@ class teams_external_file_sharing_restricted(Check):
             # Get storage services from CloudStorageSettings class items
             storage_services = [
                 attr
-                for attr, type_hint in CloudStorageSettings.__annotations__.items()
-                if type_hint is bool
+                for attr, type in CloudStorageSettings.__annotations__.items()
+                if type is bool
             ]
 
             # Check if all services are disabled when no allowed services are specified

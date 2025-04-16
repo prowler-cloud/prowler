@@ -505,20 +505,10 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# M365 Configuration
-m365:
+# Microsoft365 Configuration
+microsoft365:
   # Conditional Access Policy
   # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4
-  # Teams Settings
-  # allowed_cloud_storage_services
-  allowed_cloud_storage_services:
-    [
-      #"allow_box",
-      #"allow_drop_box",
-      #"allow_egnyte",
-      #"allow_google_drive",
-      #"allow_share_file",
-    ]
 
 ```
