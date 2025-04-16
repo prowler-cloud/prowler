@@ -905,7 +905,7 @@ class AzureProvider(Provider):
                     else:
                         auth_provider = AzureIdentityAuthenticationProvider(
                             credentials,
-                            scopes=[self.region_config.graph_credential_scopes],
+                            scopes=self.region_config.graph_credential_scopes,
                             allowed_hosts=[
                                 self.region_config.graph_base_url.replace(
                                     "http://", ""
@@ -970,7 +970,7 @@ class AzureProvider(Provider):
                         else:
                             auth_provider = AzureIdentityAuthenticationProvider(
                                 credentials,
-                                scopes=[self.region_config.graph_credential_scopes],
+                                scopes=self.region_config.graph_credential_scopes,
                                 allowed_hosts=[
                                     self.region_config.graph_base_url.replace(
                                         "http://", ""
