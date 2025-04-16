@@ -188,3 +188,22 @@ class M365PowerShell(PowerShellSession):
         return self.execute(
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
         )
+
+    def get_organization_config(self) -> dict:
+        """
+        Get Exchange Online Organization Configuration.
+
+        Retrieves the current Exchange Online organization configuration settings.
+
+        Returns:
+            dict: Organization configuration settings in JSON format.
+
+        Example:
+            >>> get_organization_config()
+            {
+                "Name": "MyOrganization",
+                "Guid": "12345678-1234-1234-1234-123456789012"
+                "AuditDisabled": false
+            }
+        """
+        return self.execute("Get-OrganizationConfig | ConvertTo-Json")
