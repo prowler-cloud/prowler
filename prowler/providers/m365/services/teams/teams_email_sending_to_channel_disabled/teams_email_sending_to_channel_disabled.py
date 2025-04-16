@@ -20,17 +20,17 @@ class teams_email_sending_to_channel_disabled(Check):
             List[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
-        cloud_storage_settings = teams_client.teams_settings.cloud_storage_settings
+        teams_settings = teams_client.teams_settings
         report = CheckReportM365(
             metadata=self.metadata(),
-            resource=cloud_storage_settings if cloud_storage_settings else {},
+            resource=teams_settings if teams_settings else {},
             resource_name="Teams Settings",
             resource_id="teamsSettings",
         )
         report.status = "FAIL"
         report.status_extended = "Users can send emails to channel email addresses."
 
-        if not teams_client.teams_settings.allow_email_into_channel:
+        if teams_settings and not teams_settings.allow_email_into_channel:
             report.status = "PASS"
             report.status_extended = (
                 "Users can not send emails to channel email addresses."

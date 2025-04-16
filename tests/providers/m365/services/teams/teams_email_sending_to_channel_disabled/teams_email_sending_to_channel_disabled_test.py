@@ -49,10 +49,7 @@ class Test_teams_email_sending_to_channel_disabled:
                 result[0].status_extended
                 == "Users can send emails to channel email addresses."
             )
-            assert (
-                result[0].resource
-                == teams_client.teams_settings.cloud_storage_settings.dict()
-            )
+            assert result[0].resource == teams_client.teams_settings.dict()
             assert result[0].resource_name == "Teams Settings"
             assert result[0].resource_id == "teamsSettings"
             assert result[0].location == "global"
@@ -102,10 +99,7 @@ class Test_teams_email_sending_to_channel_disabled:
                 result[0].status_extended
                 == "Users can not send emails to channel email addresses."
             )
-            assert (
-                result[0].resource
-                == teams_client.teams_settings.cloud_storage_settings.dict()
-            )
+            assert result[0].resource == teams_client.teams_settings.dict()
             assert result[0].resource_name == "Teams Settings"
             assert result[0].resource_id == "teamsSettings"
             assert result[0].location == "global"

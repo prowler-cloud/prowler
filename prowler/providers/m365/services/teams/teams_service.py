@@ -14,8 +14,9 @@ class Teams(M365Service):
 
     def _get_teams_client_configuration(self):
         logger.info("M365 - Getting Teams settings...")
-        settings = self.powershell.get_teams_settings()
+        teams_settings = None
         try:
+            settings = self.powershell.get_teams_settings()
             teams_settings = TeamsSettings(
                 cloud_storage_settings=CloudStorageSettings(
                     allow_box=settings.get("AllowBox", True),
