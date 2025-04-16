@@ -57,7 +57,7 @@ class DocumentDB(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -72,7 +72,7 @@ class DocumentDB(AWSService):
                     )["TagList"]
                     cluster.tags = response
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             for instance_arn, instance in self.db_instances.items():
@@ -83,11 +83,11 @@ class DocumentDB(AWSService):
                     )["TagList"]
                     instance.tags = response
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -133,7 +133,7 @@ class DocumentDB(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -164,7 +164,7 @@ class DocumentDB(AWSService):
                                 )
                             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -185,11 +185,11 @@ class DocumentDB(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

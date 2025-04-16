@@ -40,7 +40,7 @@ class KMS(GCPService):
                         .list_next(previous_request=request, previous_response=response)
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -67,7 +67,7 @@ class KMS(GCPService):
                     .list_next(previous_request=request, previous_response=response)
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -105,7 +105,7 @@ class KMS(GCPService):
                         .list_next(previous_request=request, previous_response=response)
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -124,7 +124,7 @@ class KMS(GCPService):
                 for binding in response.get("bindings", []):
                     key.members.extend(binding.get("members", []))
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 

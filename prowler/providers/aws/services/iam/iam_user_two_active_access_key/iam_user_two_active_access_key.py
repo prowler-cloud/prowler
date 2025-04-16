@@ -33,6 +33,6 @@ class iam_user_two_active_access_key(Check):
                     )
                 findings.append(report)
         except Exception as error:
-            logger.error(f"{error.__class__.__name__} -- {error}")
+            logger.exception(f"{error.__class__.__name__} -- {error}")
         finally:
             return findings

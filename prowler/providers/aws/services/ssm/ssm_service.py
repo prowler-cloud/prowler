@@ -55,7 +55,7 @@ class SSM(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -81,7 +81,7 @@ class SSM(AWSService):
                     continue
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
@@ -100,7 +100,7 @@ class SSM(AWSService):
                     ]
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -129,7 +129,7 @@ class SSM(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -156,7 +156,7 @@ class SSM(AWSService):
                 time.sleep(0.1)
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"

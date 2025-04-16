@@ -29,7 +29,7 @@ class GKE(GCPService):
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -65,7 +65,7 @@ class GKE(GCPService):
                     project_id=location.project_id,
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

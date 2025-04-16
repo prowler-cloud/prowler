@@ -44,7 +44,7 @@ class GlobalAccelerator(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -57,7 +57,7 @@ class GlobalAccelerator(AWSService):
             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

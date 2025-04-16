@@ -65,11 +65,11 @@ class GCPService:
                 if response.get("state") != "DISABLED":
                     project_ids.append(project_id)
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{self.service} API has not been used in project {project_id} before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return project_ids
@@ -83,6 +83,6 @@ class GCPService:
         try:
             return discovery.build(service, api_version, credentials=credentials)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

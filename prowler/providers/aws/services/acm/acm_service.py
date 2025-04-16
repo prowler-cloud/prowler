@@ -67,7 +67,7 @@ class ACM(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -84,7 +84,7 @@ class ACM(AWSService):
             ):
                 certificate.transparency_logging = True
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -97,7 +97,7 @@ class ACM(AWSService):
             )["Tags"]
             certificate.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

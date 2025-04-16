@@ -39,7 +39,7 @@ class DNS(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -68,7 +68,7 @@ class DNS(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 

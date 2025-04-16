@@ -41,7 +41,7 @@ def is_service_role(role):
                 ):
                     return True
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     return False
@@ -138,16 +138,16 @@ class IAM(AWSService):
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 roles = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -176,11 +176,11 @@ class IAM(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -199,7 +199,7 @@ class IAM(AWSService):
                         groups.append(Group(name=group["GroupName"], arn=group["Arn"]))
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -210,7 +210,7 @@ class IAM(AWSService):
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             account_summary = None
@@ -268,17 +268,17 @@ class IAM(AWSService):
                 )
             elif error.response["Error"]["Code"] == "AccessDenied":
                 # User does not have permission to get password policy
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 stored_password_policy = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -303,7 +303,7 @@ class IAM(AWSService):
                             user_login_profile = None
                         except Exception as error:
                             user_login_profile = None
-                            logger.error(
+                            logger.exception(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
 
@@ -316,7 +316,7 @@ class IAM(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -334,7 +334,7 @@ class IAM(AWSService):
                 for mfa_device in page["VirtualMFADevices"]:
                     mfa_devices.append(mfa_device)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -357,11 +357,11 @@ class IAM(AWSService):
 
                     group.attached_policies = attached_group_policies
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -387,7 +387,7 @@ class IAM(AWSService):
                             )
                 group.users = group_users
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -419,16 +419,16 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -455,16 +455,16 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -491,17 +491,17 @@ class IAM(AWSService):
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                         else:
-                            logger.error(
+                            logger.exception(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
 
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -541,11 +541,11 @@ class IAM(AWSService):
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                             else:
-                                logger.error(
+                                logger.exception(
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                 user.inline_policies = inline_user_policies
@@ -555,11 +555,11 @@ class IAM(AWSService):
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -599,12 +599,12 @@ class IAM(AWSService):
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                             else:
-                                logger.error(
+                                logger.exception(
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
 
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                 group.inline_policies = inline_group_policies
@@ -614,12 +614,12 @@ class IAM(AWSService):
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -660,12 +660,12 @@ class IAM(AWSService):
                                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                     )
                                 else:
-                                    logger.error(
+                                    logger.exception(
                                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                     )
 
                             except Exception as error:
-                                logger.error(
+                                logger.exception(
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
 
@@ -677,12 +677,12 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
@@ -696,16 +696,16 @@ class IAM(AWSService):
             return roles
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 roles = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -734,16 +734,16 @@ class IAM(AWSService):
             return entities
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 entities = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -774,7 +774,7 @@ class IAM(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -795,12 +795,12 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     continue
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -818,13 +818,13 @@ class IAM(AWSService):
                         name=provider["Arn"].split("/")[-1], arn=provider["Arn"]
                     )
         except ClientError as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if error.response["Error"]["Code"] == "AccessDenied":
                 saml_providers = None
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -849,7 +849,7 @@ class IAM(AWSService):
                         )
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
@@ -880,7 +880,7 @@ class IAM(AWSService):
                     SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -909,16 +909,16 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -939,15 +939,15 @@ class IAM(AWSService):
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -980,7 +980,7 @@ class IAM(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -1016,11 +1016,11 @@ class IAM(AWSService):
                 )
                 self.organization_features = None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

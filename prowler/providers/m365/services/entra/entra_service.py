@@ -91,7 +91,7 @@ class Entra(M365Service):
                 guest_user_role_id=auth_policy.guest_user_role_id,
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return authorization_policy
@@ -287,7 +287,7 @@ class Entra(M365Service):
                     ),
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return conditional_access_policies
@@ -304,7 +304,7 @@ class Entra(M365Service):
                 duration_in_days=policy.request_duration_in_days,
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return admin_consent_policy
@@ -324,7 +324,7 @@ class Entra(M365Service):
                     )
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return groups
@@ -348,7 +348,7 @@ class Entra(M365Service):
                 )
                 organizations.append(organization)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -387,7 +387,7 @@ class Entra(M365Service):
                     directory_roles_ids=user_roles_map.get(user.id, []),
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return users

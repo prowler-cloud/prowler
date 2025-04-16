@@ -40,7 +40,7 @@ class ElasticBeanstalk(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -72,7 +72,7 @@ class ElasticBeanstalk(AWSService):
                 ):
                     environment.cloudwatch_stream_logs = option.get("Value", "false")
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -85,11 +85,11 @@ class ElasticBeanstalk(AWSService):
             ]
             resource.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

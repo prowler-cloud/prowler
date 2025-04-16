@@ -40,7 +40,7 @@ class Codebuild(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -54,7 +54,7 @@ class Codebuild(AWSService):
             if len(build_ids) > 0:
                 project.last_build = Build(id=build_ids[0])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -69,7 +69,7 @@ class Codebuild(AWSService):
                 if len(builds_by_id) > 0:
                     project.last_invoked_time = builds_by_id[0].get("endTime")
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -121,7 +121,7 @@ class Codebuild(AWSService):
             )
             project.tags = project_info.get("tags", [])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -142,7 +142,7 @@ class Codebuild(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -175,7 +175,7 @@ class Codebuild(AWSService):
 
             report_group.tags = report_group_info.get("tags", [])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

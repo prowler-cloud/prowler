@@ -53,7 +53,7 @@ class SecretsManager(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -68,7 +68,7 @@ class SecretsManager(AWSService):
             if secret_policy.get("ResourcePolicy"):
                 secret.policy = json.loads(secret_policy["ResourcePolicy"])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"

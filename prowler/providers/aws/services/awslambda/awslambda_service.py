@@ -56,7 +56,7 @@ class Lambda(AWSService):
                             self.functions[lambda_arn].environment = lambda_environment
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -79,7 +79,7 @@ class Lambda(AWSService):
                 if function_code:
                     yield function, function_code
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -97,7 +97,7 @@ class Lambda(AWSService):
                     code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise
@@ -119,7 +119,7 @@ class Lambda(AWSService):
                             self.functions[function.arn].policy = {}
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -148,7 +148,7 @@ class Lambda(AWSService):
                             self.functions[function.arn].url_config = None
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -167,7 +167,7 @@ class Lambda(AWSService):
                         function.tags = []
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -47,7 +47,7 @@ class EMR(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -124,7 +124,7 @@ class EMR(AWSService):
                     cluster.tags = cluster_info["Cluster"].get("Tags")
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -146,7 +146,7 @@ class EMR(AWSService):
                 )
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"

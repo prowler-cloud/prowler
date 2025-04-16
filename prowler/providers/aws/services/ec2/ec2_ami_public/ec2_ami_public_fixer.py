@@ -32,7 +32,7 @@ def fixer(resource_id: str, region: str) -> bool:
             LaunchPermission={"Remove": [{"Group": "all"}]},
         )
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False

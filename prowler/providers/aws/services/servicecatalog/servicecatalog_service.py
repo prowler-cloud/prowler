@@ -41,7 +41,7 @@ class ServiceCatalog(AWSService):
                         region=regional_client.region,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -62,16 +62,16 @@ class ServiceCatalog(AWSService):
                         portfolio.shares.append(portfolio_share)
                 except Exception as error:
                     if error.response["Error"]["Code"] == "AccessDeniedException":
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         portfolio.shares = None
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -84,11 +84,11 @@ class ServiceCatalog(AWSService):
                     Id=portfolio.id,
                 )["Tags"]
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

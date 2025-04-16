@@ -122,7 +122,7 @@ class SecurityHub:
                 # Include that finding within their region
                 findings_per_region[region].append(finding)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
             )
         return findings_per_region
@@ -180,11 +180,11 @@ class SecurityHub:
                         f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
                     )
                 else:
-                    logger.error(
+                    logger.exception(
                         f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
                     )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
                 )
         return enabled_regions
@@ -215,7 +215,7 @@ class SecurityHub:
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
             )
         return success_count
@@ -269,7 +269,7 @@ class SecurityHub:
                     region,
                 )
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
                 )
         return success_count
@@ -299,13 +299,13 @@ class SecurityHub:
                 )
                 if batch_import["FailedCount"] > 0:
                     failed_import = batch_import["FailedFindings"][0]
-                    logger.error(
+                    logger.exception(
                         f"Failed to send findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
                     )
                 success_count += batch_import["SuccessCount"]
             return success_count
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
             )
             return success_count
@@ -406,7 +406,7 @@ class SecurityHub:
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise error

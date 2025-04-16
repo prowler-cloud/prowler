@@ -344,7 +344,7 @@ class M365Provider(Provider):
                 credential_scopes=config["credential_scopes"],
             )
         except ArgumentTypeError as validation_error:
-            logger.error(
+            logger.exception(
                 f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
             )
             raise M365ArgumentTypeValidationError(
@@ -352,7 +352,7 @@ class M365Provider(Provider):
                 original_exception=validation_error,
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise M365SetUpRegionConfigError(
@@ -494,21 +494,21 @@ class M365Provider(Provider):
                         )
                         return credentials
                     except ClientAuthenticationError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365ClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except CredentialUnavailableError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365CredentialsUnavailableError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365ConfigCredentialsError(
@@ -535,21 +535,21 @@ class M365Provider(Provider):
                             authority=region_config.authority,
                         )
                     except ClientAuthenticationError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365ClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except CredentialUnavailableError as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365CredentialsUnavailableError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise M365DefaultAzureCredentialError(
@@ -674,14 +674,14 @@ class M365Provider(Provider):
 
         # Exceptions from setup_region_config
         except M365ArgumentTypeValidationError as type_validation_error:
-            logger.error(
+            logger.exception(
                 f"{type_validation_error.__class__.__name__}[{type_validation_error.__traceback__.tb_lineno}]: {type_validation_error}"
             )
             if raise_on_exception:
                 raise type_validation_error
             return Connection(error=type_validation_error)
         except M365SetUpRegionConfigError as region_config_error:
-            logger.error(
+            logger.exception(
                 f"{region_config_error.__class__.__name__}[{region_config_error.__traceback__.tb_lineno}]: {region_config_error}"
             )
             if raise_on_exception:
@@ -689,28 +689,28 @@ class M365Provider(Provider):
             return Connection(error=region_config_error)
         # Exceptions from setup_session
         except M365EnvironmentVariableError as environment_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}]: {environment_credentials_error}"
             )
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
         except M365ConfigCredentialsError as config_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
             )
             if raise_on_exception:
                 raise config_credentials_error
             return Connection(error=config_credentials_error)
         except M365ClientAuthenticationError as client_auth_error:
-            logger.error(
+            logger.exception(
                 f"{client_auth_error.__class__.__name__}[{client_auth_error.__traceback__.tb_lineno}]: {client_auth_error}"
             )
             if raise_on_exception:
                 raise client_auth_error
             return Connection(error=client_auth_error)
         except M365CredentialsUnavailableError as credential_unavailable_error:
-            logger.error(
+            logger.exception(
                 f"{credential_unavailable_error.__class__.__name__}[{credential_unavailable_error.__traceback__.tb_lineno}]: {credential_unavailable_error}"
             )
             if raise_on_exception:
@@ -719,7 +719,7 @@ class M365Provider(Provider):
         except (
             M365ClientIdAndClientSecretNotBelongingToTenantIdError
         ) as tenant_id_error:
-            logger.error(
+            logger.exception(
                 f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
             )
             if raise_on_exception:
@@ -728,7 +728,7 @@ class M365Provider(Provider):
         except (
             M365TenantIdAndClientSecretNotBelongingToClientIdError
         ) as client_id_error:
-            logger.error(
+            logger.exception(
                 f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
             )
             if raise_on_exception:
@@ -737,7 +737,7 @@ class M365Provider(Provider):
         except (
             M365TenantIdAndClientIdNotBelongingToClientSecretError
         ) as client_secret_error:
-            logger.error(
+            logger.exception(
                 f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
             )
             if raise_on_exception:
@@ -745,7 +745,7 @@ class M365Provider(Provider):
             return Connection(error=client_secret_error)
         # Exceptions from provider_id validation
         except M365InvalidProviderIdError as invalid_credentials_error:
-            logger.error(
+            logger.exception(
                 f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
             )
             if raise_on_exception:
@@ -753,7 +753,7 @@ class M365Provider(Provider):
             return Connection(error=invalid_credentials_error)
         # Exceptions from SubscriptionClient
         except HttpResponseError as http_response_error:
-            logger.error(
+            logger.exception(
                 f"{http_response_error.__class__.__name__}[{http_response_error.__traceback__.tb_lineno}]: {http_response_error}"
             )
             if raise_on_exception:
@@ -841,7 +841,7 @@ class M365Provider(Provider):
                             identity.tenant_domain = domain_result.value[0].id
 
                 except HttpResponseError as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                     raise M365HTTPResponseError(
@@ -849,7 +849,7 @@ class M365Provider(Provider):
                         original_exception=error,
                     )
                 except ClientAuthenticationError as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                     raise M365GetTokenIdentityError(
@@ -857,7 +857,7 @@ class M365Provider(Provider):
                         original_exception=error,
                     )
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
@@ -882,7 +882,7 @@ class M365Provider(Provider):
                                 identity.identity_id = me.user_principal_name
 
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
 
@@ -949,7 +949,7 @@ class M365Provider(Provider):
                 "client_secret": client_secret,
             }
         except M365NotValidTenantIdError as tenant_id_error:
-            logger.error(
+            logger.exception(
                 f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
             )
             raise M365ClientIdAndClientSecretNotBelongingToTenantIdError(
@@ -957,7 +957,7 @@ class M365Provider(Provider):
                 message="The provided M365 Client ID and Client Secret do not belong to the specified Tenant ID.",
             )
         except M365NotValidClientIdError as client_id_error:
-            logger.error(
+            logger.exception(
                 f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
             )
             raise M365TenantIdAndClientSecretNotBelongingToClientIdError(
@@ -965,7 +965,7 @@ class M365Provider(Provider):
                 message="The provided M365 Tenant ID and Client Secret do not belong to the specified Client ID.",
             )
         except M365NotValidClientSecretError as client_secret_error:
-            logger.error(
+            logger.exception(
                 f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
             )
             raise M365TenantIdAndClientIdNotBelongingToClientSecretError(

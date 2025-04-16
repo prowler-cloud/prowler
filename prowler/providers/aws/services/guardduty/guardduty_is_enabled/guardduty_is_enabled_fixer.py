@@ -25,7 +25,7 @@ def fixer(region):
         regional_client = guardduty_client.regional_clients[region]
         regional_client.create_detector(Enable=True)
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False

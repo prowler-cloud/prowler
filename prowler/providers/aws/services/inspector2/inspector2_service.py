@@ -35,7 +35,7 @@ class Inspector2(AWSService):
                 )
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -55,7 +55,7 @@ class Inspector2(AWSService):
             inspector.active_findings = len(active_findings.get("findings")) > 0
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

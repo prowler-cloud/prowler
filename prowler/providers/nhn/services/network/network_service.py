@@ -33,7 +33,7 @@ class NHNNetworkService:
             data = response.json()
             return data.get("vpcs", [])
         except Exception as e:
-            logger.error(f"Error listing vpcs: {e}")
+            logger.exception(f"Error listing vpcs: {e}")
             return []
 
     def _get_vpc_detail(self, vpc_id: str) -> dict:
@@ -43,7 +43,7 @@ class NHNNetworkService:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(f"Error getting vpc detail {vpc_id}: {e}")
+            logger.exception(f"Error getting vpc detail {vpc_id}: {e}")
             return {}
 
     def _check_has_empty_routingtables(self, vpc_info: dict) -> bool:

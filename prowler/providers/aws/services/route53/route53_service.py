@@ -41,7 +41,7 @@ class Route53(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -73,7 +73,7 @@ class Route53(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -96,7 +96,7 @@ class Route53(AWSService):
                             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -109,7 +109,7 @@ class Route53(AWSService):
                 )["ResourceTagSet"]
                 hosted_zone.tags = response.get("Tags")
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -166,7 +166,7 @@ class Route53Domains(AWSService):
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -179,7 +179,7 @@ class Route53Domains(AWSService):
                 self.domains[domain.name].status_list = domain_detail.get("StatusList")
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -192,7 +192,7 @@ class Route53Domains(AWSService):
                 )["TagList"]
                 domain.tags = response
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 

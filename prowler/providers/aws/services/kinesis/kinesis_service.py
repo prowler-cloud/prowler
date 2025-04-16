@@ -34,7 +34,7 @@ class Kinesis(AWSService):
                             status=StreamStatus(stream.get("StreamStatus", "ACTIVE")),
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -51,7 +51,7 @@ class Kinesis(AWSService):
             )
             stream.retention_period = stream_description.get("RetentionPeriodHours", 24)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -64,7 +64,7 @@ class Kinesis(AWSService):
                 .get("Tags", [])
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

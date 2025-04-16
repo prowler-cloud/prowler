@@ -45,7 +45,7 @@ class CodeArtifact(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -162,7 +162,7 @@ class CodeArtifact(AWSService):
                     continue
 
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
@@ -178,7 +178,7 @@ class CodeArtifact(AWSService):
                 )["tags"]
                 repository.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

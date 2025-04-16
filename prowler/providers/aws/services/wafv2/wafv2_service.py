@@ -45,7 +45,7 @@ class WAFv2(AWSService):
                         region=self.region,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -67,7 +67,7 @@ class WAFv2(AWSService):
                         region=regional_client.region,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -88,11 +88,11 @@ class WAFv2(AWSService):
                     f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
-                logger.error(
+                logger.exception(
                     f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -119,7 +119,7 @@ class WAFv2(AWSService):
                     acl.user_pools.append(resource)
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -167,12 +167,12 @@ class WAFv2(AWSService):
                         )
 
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -190,7 +190,7 @@ class WAFv2(AWSService):
                     .get("TagList", [])
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -42,7 +42,7 @@ class ECS(AWSService):
                             environment_variables=[],
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -89,7 +89,7 @@ class ECS(AWSService):
                 "networkMode", "bridge"
             )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -144,7 +144,7 @@ class ECS(AWSService):
                     cluster.services[service_arn] = service_obj
                     self.services[service_arn] = service_obj
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -163,7 +163,7 @@ class ECS(AWSService):
                             region=regional_client.region,
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -180,7 +180,7 @@ class ECS(AWSService):
             cluster.settings = response["clusters"][0].get("settings", [])
             cluster.tags = response["clusters"][0].get("tags", [])
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

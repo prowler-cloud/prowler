@@ -54,12 +54,12 @@ class Account(AWSService):
             )
         except Exception as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 return None
             else:
-                logger.error(
+                logger.exception(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 return Contact(type="PRIMARY")
@@ -91,7 +91,7 @@ class Account(AWSService):
             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return Contact(

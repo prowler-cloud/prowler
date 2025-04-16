@@ -38,11 +38,11 @@ class KMS(AWSService):
                                 )
                             )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -59,11 +59,11 @@ class KMS(AWSService):
                     key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
                     key.multi_region = response["KeyMetadata"]["MultiRegion"]
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -83,11 +83,11 @@ class KMS(AWSService):
                             KeyId=key.id
                         )["KeyRotationEnabled"]
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -106,11 +106,11 @@ class KMS(AWSService):
                             )["Policy"]
                         )
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
@@ -128,11 +128,11 @@ class KMS(AWSService):
                         )["Tags"]
                         key.tags = response
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 

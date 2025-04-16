@@ -42,7 +42,7 @@ class CloudFormation(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -70,7 +70,7 @@ class CloudFormation(AWSService):
                     )
                     continue
             except Exception as error:
-                logger.error(
+                logger.exception(
                     f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 

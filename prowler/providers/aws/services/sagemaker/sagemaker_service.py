@@ -54,7 +54,7 @@ class SageMaker(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -75,7 +75,7 @@ class SageMaker(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -100,7 +100,7 @@ class SageMaker(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -132,7 +132,7 @@ class SageMaker(AWSService):
             if "KmsKeyId" in describe_notebook_instance:
                 notebook_instance.kms_key_id = describe_notebook_instance["KmsKeyId"]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -149,7 +149,7 @@ class SageMaker(AWSService):
             ):
                 model.vpc_config_subnets = describe_model["VpcConfig"]["Subnets"]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -183,7 +183,7 @@ class SageMaker(AWSService):
                     "Subnets"
                 ]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -195,7 +195,7 @@ class SageMaker(AWSService):
                 response = regional_client.list_tags(ResourceArn=model.arn)["Tags"]
                 model.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         try:
@@ -204,7 +204,7 @@ class SageMaker(AWSService):
                 response = regional_client.list_tags(ResourceArn=instance.arn)["Tags"]
                 instance.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         try:
@@ -213,7 +213,7 @@ class SageMaker(AWSService):
                 response = regional_client.list_tags(ResourceArn=job.arn)["Tags"]
                 job.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         try:
@@ -222,7 +222,7 @@ class SageMaker(AWSService):
                 response = regional_client.list_tags(ResourceArn=endpoint.arn)["Tags"]
                 endpoint.tags = response
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -247,7 +247,7 @@ class SageMaker(AWSService):
                             )
                         )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -270,7 +270,7 @@ class SageMaker(AWSService):
                 )
             endpoint_config.production_variants = production_variants
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -76,17 +76,17 @@ class Cloudtrail(AWSService):
                 )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.trails:
                     self.trails = None
             else:
-                logger.error(
+                logger.exception(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -104,7 +104,7 @@ class Cloudtrail(AWSService):
                             ]
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -137,7 +137,7 @@ class Cloudtrail(AWSService):
                                 trail.data_events.append(event_selector)
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -173,11 +173,11 @@ class Cloudtrail(AWSService):
                                     f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                             else:
-                                logger.error(
+                                logger.exception(
                                     f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                         except Exception as error:
-                            logger.error(
+                            logger.exception(
                                 f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                             continue
@@ -187,7 +187,7 @@ class Cloudtrail(AWSService):
                             )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -203,7 +203,7 @@ class Cloudtrail(AWSService):
             )
             return response.get("Events")
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -223,11 +223,11 @@ class Cloudtrail(AWSService):
                         )["ResourceTagList"][0]
                         trail.tags = response.get("TagsList")
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -60,7 +60,7 @@ class Redshift(AWSService):
                         )
                         self.clusters.append(cluster_to_append)
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -80,7 +80,7 @@ class Redshift(AWSService):
                 ]
                 cluster.subnets = subnets
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -100,7 +100,7 @@ class Redshift(AWSService):
                 cluster.bucket = cluster_attributes["BucketName"]
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -115,7 +115,7 @@ class Redshift(AWSService):
                 cluster.cluster_snapshots = True
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -132,7 +132,7 @@ class Redshift(AWSService):
                         cluster.require_ssl = True
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

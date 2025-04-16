@@ -96,4 +96,5 @@ sentry_sdk.init(
         # possible.
         "continuous_profiling_auto_start": True,
     },
+    ignore_errors=IGNORED_EXCEPTIONS,
 )

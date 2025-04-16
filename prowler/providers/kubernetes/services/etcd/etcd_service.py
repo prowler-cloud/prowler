@@ -19,6 +19,6 @@ class Etcd(KubernetesService):
                     etcd_pods.append(pod)
             return etcd_pods
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

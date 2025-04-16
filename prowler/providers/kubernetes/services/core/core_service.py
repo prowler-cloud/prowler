@@ -88,7 +88,7 @@ class Core(KubernetesService):
                         containers=pod_containers,
                     )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -105,7 +105,7 @@ class Core(KubernetesService):
                     annotations=cm.metadata.annotations,
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -132,7 +132,7 @@ class Core(KubernetesService):
                 )
                 self.nodes[node.metadata.uid] = node_model
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -144,7 +144,7 @@ class Core(KubernetesService):
                     node.inside = True
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

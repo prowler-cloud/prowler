@@ -82,7 +82,7 @@ class CloudFront(AWSService):
                             self.distributions[distribution_id] = distribution
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -136,7 +136,7 @@ class CloudFront(AWSService):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -149,7 +149,7 @@ class CloudFront(AWSService):
                 ]
                 distribution.tags = response.get("Items")
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

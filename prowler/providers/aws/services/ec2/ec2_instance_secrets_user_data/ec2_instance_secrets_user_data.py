@@ -32,7 +32,7 @@ class ec2_instance_secrets_user_data(Check):
                         )
                         continue
                     except Exception as error:
-                        logger.error(
+                        logger.exception(
                             f"{instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         continue

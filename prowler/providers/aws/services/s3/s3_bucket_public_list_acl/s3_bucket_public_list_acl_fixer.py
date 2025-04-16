@@ -32,7 +32,7 @@ def fixer(resource_id: str, region: str) -> bool:
         regional_client = s3_client.regional_clients[region]
         regional_client.put_bucket_acl(Bucket=resource_id, ACL="private")
     except Exception as error:
-        logger.error(
+        logger.exception(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False

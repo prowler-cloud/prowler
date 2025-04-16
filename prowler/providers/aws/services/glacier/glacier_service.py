@@ -37,7 +37,7 @@ class Glacier(AWSService):
                         )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -59,7 +59,7 @@ class Glacier(AWSService):
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
                             self.vaults[vault.arn].access_policy = {}
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
@@ -75,7 +75,7 @@ class Glacier(AWSService):
                 ]
                 vault.tags = [response]
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

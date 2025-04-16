@@ -51,7 +51,7 @@ class AdminCenter(M365Service):
                             f"MailboxNotEnabledForRESTAPI for user {user.id}"
                         )
                     else:
-                        logger.error(
+                        logger.exception(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 users.update(
@@ -68,7 +68,7 @@ class AdminCenter(M365Service):
                     }
                 )
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -104,7 +104,7 @@ class AdminCenter(M365Service):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return directory_roles_with_members
@@ -127,7 +127,7 @@ class AdminCenter(M365Service):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return groups
@@ -149,7 +149,7 @@ class AdminCenter(M365Service):
                 )
 
         except Exception as error:
-            logger.error(
+            logger.exception(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return domains

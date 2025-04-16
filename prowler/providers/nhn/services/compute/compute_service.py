@@ -21,7 +21,7 @@ class NHNComputeService:
             data = response.json()
             return data.get("servers", [])
         except Exception as e:
-            logger.error(f"Error listing servers: {e}")
+            logger.exception(f"Error listing servers: {e}")
             return []
 
     def _get_server_detail(self, server_id: str) -> dict:
@@ -31,7 +31,7 @@ class NHNComputeService:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(f"Error getting server detail {server_id}: {e}")
+            logger.exception(f"Error getting server detail {server_id}: {e}")
             return {}
 
     def _check_public_ip(self, server_info: dict) -> bool:
