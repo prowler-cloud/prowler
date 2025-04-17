@@ -6,8 +6,7 @@ import {
   GCPProviderBadge,
   KS8ProviderBadge,
 } from "@/components/icons/providers-badge";
-
-export type ProviderType = "aws" | "azure" | "gcp" | "kubernetes";
+import { ProviderType } from "@/lib/helper";
 
 export const getProviderLogo = (provider: ProviderType) => {
   switch (provider) {
