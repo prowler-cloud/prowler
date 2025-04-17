@@ -417,6 +417,12 @@ aws:
     {"name": "TwilioKeyDetector"},
   ]
 
+  # AWS CodeBuild Configuration
+  # aws.codebuild_backdoored_iam_roles_github_actions
+  codebuild_github_allowed_organizations:
+    [
+      "",
+    ]
 
 # Azure Configuration
 azure:

@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -120,6 +121,7 @@ class Codebuild(AWSService):
                 stream_name=cloudwatch_logs.get("streamName", ""),
             )
             project.tags = project_info.get("tags", [])
+            project.service_role_arn = project_info.get("serviceRole", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -220,6 +222,7 @@ class Project(BaseModel):
     s3_logs: Optional[s3Logs]
     cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
+    service_role_arn: Optional[str] = None
 
 
 class ExportConfig(BaseModel):
@@ -236,3 +239,4 @@ class ReportGroup(BaseModel):
     status: Optional[str]
     export_config: Optional[ExportConfig]
     tags: Optional[list]
+
