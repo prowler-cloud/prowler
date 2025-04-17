@@ -170,6 +170,24 @@ class M365PowerShell(PowerShellSession):
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
         )
 
+    def get_malware_filter_policy(self) -> dict:
+        """
+        Get Defender Malware Filter Policy.
+
+        Retrieves the current Defender anti-malware filter policy settings.
+
+        Returns:
+            dict: Malware filter policy settings in JSON format.
+
+        Example:
+            >>> get_malware_filter_policy()
+            {
+                "EnableFileFilter": true,
+                "Identity": "Default"
+            }
+        """
+        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
+
     def get_organization_config(self) -> dict:
         """
         Get Exchange Online Organization Configuration.
