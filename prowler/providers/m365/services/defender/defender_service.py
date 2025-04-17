@@ -14,11 +14,11 @@ class Defender(M365Service):
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
-        malware_policy = self.powershell.get_malware_filter_policy()
-        if isinstance(malware_policy, dict):
-            malware_policy = [malware_policy]
         malware_policies = []
         try:
+            malware_policy = self.powershell.get_malware_filter_policy()
+            if isinstance(malware_policy, dict):
+                malware_policy = [malware_policy]
             for policy in malware_policy:
                 malware_policies.append(
                     DefenderMalwarePolicy(
