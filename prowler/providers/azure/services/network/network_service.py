@@ -78,15 +78,18 @@ class Network(AzureService):
                                 FlowLog(
                                     id=flow_log.id,
                                     name=flow_log.name,
-                                    enabled=getattr(
-                                        getattr(flow_log, "properties", None),
-                                        "enabled",
-                                        False,
-                                    ),
-                                    retention_policy=getattr(
-                                        getattr(flow_log, "properties", None),
-                                        "retentionPolicy",
-                                        None,
+                                    enabled=flow_log.enabled,
+                                    retention_policy=RetentionPolicy(
+                                        enabled=(
+                                            flow_log.retention_policy.enabled
+                                            if flow_log.retention_policy
+                                            else False
+                                        ),
+                                        days=(
+                                            flow_log.retention_policy.days
+                                            if flow_log.retention_policy
+                                            else 0
+                                        ),
                                     ),
                                 )
                                 for flow_log in flow_logs
