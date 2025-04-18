@@ -207,6 +207,49 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
 
+    def get_antiphishing_policy(self) -> dict:
+        """
+        Get Defender Antiphishing Policy.
+
+        Retrieves the current Defender anti-phishing policy settings.
+
+        Returns:
+            dict: Antiphishing policy settings in JSON format.
+
+        Example:
+            >>> get_antiphishing_policy()
+            {
+                "EnableSpoofIntelligence": true,
+                "AuthenticationFailAction": "Quarantine",
+                "DmarcRejectAction": "Quarantine",
+                "DmarcQuarantineAction": "Quarantine",
+                "EnableFirstContactSafetyTips": true,
+                "EnableUnauthenticatedSender": true,
+                "EnableViaTag": true,
+                "HonorDmarcPolicy": true,
+                "IsDefault": false
+            }
+        """
+        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json")
+
+    def get_antiphishing_rules(self) -> dict:
+        """
+        Get Defender Antiphishing Rules.
+
+        Retrieves the current Defender anti-phishing rules.
+
+        Returns:
+            dict: Antiphishing rules in JSON format.
+
+        Example:
+            >>> get_antiphishing_rules()
+            {
+                "Name": "Rule1",
+                "State": Enabled,
+            }
+        """
+        return self.execute("Get-AntiPhishRule | ConvertTo-Json")
+
     def get_organization_config(self) -> dict:
         """
         Get Exchange Online Organization Configuration.
