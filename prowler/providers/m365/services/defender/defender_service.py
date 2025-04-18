@@ -43,27 +43,28 @@ class Defender(M365Service):
 
     def _get_antiphising_policy(self):
         logger.info("Microsoft365 - Getting Defender antiphishing policy...")
-        antiphishing_policy = self.powershell.get_antiphishing_policy()
-        if isinstance(antiphishing_policy, dict):
-            antiphishing_policy = [antiphishing_policy]
         antiphishing_policies = {}
         try:
+            antiphishing_policy = self.powershell.get_antiphishing_policy()
+            if isinstance(antiphishing_policy, dict):
+                antiphishing_policy = [antiphishing_policy]
             for policy in antiphishing_policy:
-                antiphishing_policies[policy.get("Name", "")] = AntiphishingPolicy(
-                    spoof_intelligence=policy.get("EnableSpoofIntelligence", True),
-                    spoof_intelligence_action=policy.get(
-                        "AuthenticationFailAction", ""
-                    ),
-                    dmarc_reject_action=policy.get("DmarcRejectAction", ""),
-                    dmarc_quarantine_action=policy.get("DmarcQuarantineAction", ""),
-                    safety_tips=policy.get("EnableFirstContactSafetyTips", True),
-                    unauthenticated_sender_action=policy.get(
-                        "EnableUnauthenticatedSender", True
-                    ),
-                    show_tag=policy.get("EnableViaTag", True),
-                    honor_dmarc_policy=policy.get("HonorDmarcPolicy", True),
-                    default=policy.get("IsDefault", False),
-                )
+                if policy:
+                    antiphishing_policies[policy.get("Name", "")] = AntiphishingPolicy(
+                        spoof_intelligence=policy.get("EnableSpoofIntelligence", True),
+                        spoof_intelligence_action=policy.get(
+                            "AuthenticationFailAction", ""
+                        ),
+                        dmarc_reject_action=policy.get("DmarcRejectAction", ""),
+                        dmarc_quarantine_action=policy.get("DmarcQuarantineAction", ""),
+                        safety_tips=policy.get("EnableFirstContactSafetyTips", True),
+                        unauthenticated_sender_action=policy.get(
+                            "EnableUnauthenticatedSender", True
+                        ),
+                        show_tag=policy.get("EnableViaTag", True),
+                        honor_dmarc_policy=policy.get("HonorDmarcPolicy", True),
+                        default=policy.get("IsDefault", False),
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -72,15 +73,16 @@ class Defender(M365Service):
 
     def _get_antiphising_rules(self):
         logger.info("Microsoft365 - Getting Defender antiphishing rules...")
-        antiphishing_rule = self.powershell.get_antiphishing_rules()
-        if isinstance(antiphishing_rule, dict):
-            antiphishing_rule = [antiphishing_rule]
         antiphishing_rules = {}
         try:
+            antiphishing_rule = self.powershell.get_antiphishing_rules()
+            if isinstance(antiphishing_rule, dict):
+                antiphishing_rule = [antiphishing_rule]
             for rule in antiphishing_rule:
-                antiphishing_rules[rule.get("Name", "")] = AntiphishingRule(
-                    state=rule.get("State", ""),
-                )
+                if rule:
+                    antiphishing_rules[rule.get("Name", "")] = AntiphishingRule(
+                        state=rule.get("State", ""),
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
