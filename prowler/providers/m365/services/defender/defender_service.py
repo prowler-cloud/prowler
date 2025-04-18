@@ -16,18 +16,25 @@ class Defender(M365Service):
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
-        malware_policy = self.powershell.get_malware_filter_policy()
-        if isinstance(malware_policy, dict):
-            malware_policy = [malware_policy]
         malware_policies = []
         try:
+            malware_policy = self.powershell.get_malware_filter_policy()
+            if isinstance(malware_policy, dict):
+                malware_policy = [malware_policy]
             for policy in malware_policy:
-                malware_policies.append(
-                    DefenderMalwarePolicy(
-                        enable_file_filter=policy.get("EnableFileFilter", True),
-                        identity=policy.get("Identity", ""),
+                if policy:
+                    malware_policies.append(
+                        DefenderMalwarePolicy(
+                            enable_file_filter=policy.get("EnableFileFilter", True),
+                            identity=policy.get("Identity", ""),
+                            enable_internal_sender_admin_notifications=policy.get(
+                                "EnableInternalSenderAdminNotifications", False
+                            ),
+                            internal_sender_admin_address=policy.get(
+                                "InternalSenderAdminAddress", ""
+                            ),
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -84,6 +91,8 @@ class Defender(M365Service):
 class DefenderMalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
+    enable_internal_sender_admin_notifications: bool
+    internal_sender_admin_address: str
 
 
 class AntiphishingPolicy(BaseModel):
