@@ -327,7 +327,6 @@ aws:
     [
       "RSA-1024",
       "P-192",
-      "SHA-1",
     ]
 
   # AWS EKS Configuration
