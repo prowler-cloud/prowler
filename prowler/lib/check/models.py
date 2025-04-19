@@ -573,7 +573,7 @@ class CheckReportMicrosoft365(Check_Report):
         self.location = resource_location
 
 @dataclass
-class CheckReportOpenNebula(Check_Report):
+class Check_Report_OpenNebula(Check_Report):
     """Contains the OpenNebula Check's finding information."""
 
     resource_name: str
