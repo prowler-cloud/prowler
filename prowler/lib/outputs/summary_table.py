@@ -43,6 +43,10 @@ def display_summary_table(
         elif provider.type == "microsoft365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "opennebula":
+            entity_type = "Prueba"
+            audited_entities = ""
+            
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
