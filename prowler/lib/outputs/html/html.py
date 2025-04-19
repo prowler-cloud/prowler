@@ -590,7 +590,7 @@ class HTML(Output):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             return ""
-    
+    #TODO : Implement OpenNebula summary
     def get_opennebula_assessment_summary(provider: Provider) -> str:
         """
         get_opennebula_assessment_summary gets the HTML assessment summary for the provider
