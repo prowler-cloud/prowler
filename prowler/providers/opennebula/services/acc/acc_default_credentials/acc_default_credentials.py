@@ -1,0 +1,25 @@
+from prowler.lib.logger import logger
+from prowler.lib.check.check import Check
+from prowler.providers.opennebula.services.acc.acc_client import acc_client
+
+
+class acc_default_credentials(Check):
+    def execute(self):
+        findings = []
+        logger.info("Acc - Verificando credenciales por defecto...")
+        for user in acc_client.users:
+            report = CheckReportOpenNebula(
+                metadata=self.metadata(),
+                resource=user,
+            )
+            report.status = "PASS"
+            report.status_extended = (
+                f"User {user.name} has a strong password."
+            )
+            if user.weak_password:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"User {user.name} has a weak password."
+                )
+            findings.append(report)
+        return findings
