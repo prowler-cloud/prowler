@@ -1,14 +1,14 @@
 from prowler.lib.logger import logger
-from prowler.lib.check.check import Check
+from prowler.lib.check.models import Check, Check_Report_OpenNebula
 from prowler.providers.opennebula.services.acc.acc_client import acc_client
 
 
 class acc_default_credentials(Check):
     def execute(self):
         findings = []
-        logger.info("Acc - Verificando credenciales por defecto...")
+        logger.info("Checking for weak passwords in OpenNebula users...")
         for user in acc_client.users:
-            report = CheckReportOpenNebula(
+            report = Check_Report_OpenNebula(
                 metadata=self.metadata(),
                 resource=user,
             )
