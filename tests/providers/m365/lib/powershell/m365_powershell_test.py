@@ -1,5 +1,10 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from prowler.providers.m365.exceptions.exceptions import (
+    M365UserNotBelongingToTenantError,
+)
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
 from prowler.providers.m365.models import M365Credentials
 
@@ -84,11 +89,12 @@ class Testm365PowerShell:
         }
 
         credentials = M365Credentials(
-            user="test@example.com",
+            user="test@contoso.onmicrosoft.com",
             passwd="test_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
+            provider_id="contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials)
 
@@ -115,7 +121,52 @@ class Testm365PowerShell:
             authority="https://login.microsoftonline.com/test_tenant_id",
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
-            username="test@example.com",
+            username="test@contoso.onmicrosoft.com",
+            password="decrypted_password",
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    @patch("msal.ConfidentialClientApplication")
+    def test_test_credentials_user_not_belonging_to_tenant(self, mock_msal, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_msal_instance = MagicMock()
+        mock_msal.return_value = mock_msal_instance
+        mock_msal_instance.acquire_token_by_username_password.return_value = {
+            "access_token": "test_token"
+        }
+
+        credentials = M365Credentials(
+            user="user@otherdomain.com",
+            passwd="test_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+            provider_id="contoso.onmicrosoft.com",
+        )
+        session = M365PowerShell(credentials)
+
+        session.execute = MagicMock()
+        session.process.stdin.write = MagicMock()
+        session.read_output = MagicMock(return_value="decrypted_password")
+
+        with pytest.raises(M365UserNotBelongingToTenantError) as exception:
+            session.test_credentials(credentials)
+
+        assert exception.type == M365UserNotBelongingToTenantError
+        assert "The provided M365 User does not belong to the specified tenant." in str(
+            exception.value
+        )
+
+        mock_msal.assert_called_once_with(
+            client_id="test_client_id",
+            client_credential="test_client_secret",
+            authority="https://login.microsoftonline.com/test_tenant_id",
+        )
+        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
+            username="user@otherdomain.com",
             password="decrypted_password",
             scopes=["https://graph.microsoft.com/.default"],
         )

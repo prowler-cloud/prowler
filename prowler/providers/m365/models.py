@@ -25,6 +25,7 @@ class M365Credentials(BaseModel):
     client_id: str = ""
     client_secret: str = ""
     tenant_id: str = ""
+    provider_id: str = ""
 
 
 class M365OutputOptions(ProviderOutputOptions):

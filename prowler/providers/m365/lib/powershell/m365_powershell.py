@@ -1,6 +1,11 @@
+import os
+
 import msal
 
 from prowler.lib.powershell.powershell import PowerShellSession
+from prowler.providers.m365.exceptions.exceptions import (
+    M365UserNotBelongingToTenantError,
+)
 from prowler.providers.m365.models import M365Credentials
 
 
@@ -102,7 +107,17 @@ class M365PowerShell(PowerShellSession):
             scopes=["https://graph.microsoft.com/.default"],
         )
 
-        return "access_token" in result
+        if "access_token" in result:
+            # Validate user credentials belong to tenant
+            user_domain = credentials.user.split("@")[1]
+            if not credentials.provider_id.endswith(user_domain):
+                raise M365UserNotBelongingToTenantError(
+                    file=os.path.basename(__file__),
+                    message="The provided M365 User does not belong to the specified tenant.",
+                )
+            return True
+        else:
+            return False
 
     def connect_microsoft_teams(self) -> dict:
         """
