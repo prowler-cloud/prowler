@@ -572,6 +572,27 @@ class CheckReportMicrosoft365(Check_Report):
         self.resource_id = resource_id
         self.location = resource_location
 
+@dataclass
+class CheckReportOpenNebula(Check_Report):
+    """Contains the OpenNebula Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the OpenNebula Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.location = getattr(resource, "location", "")
 
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
