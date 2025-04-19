@@ -590,6 +590,23 @@ class HTML(Output):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             return ""
+    
+    def get_opennebula_assessment_summary(provider: Provider) -> str:
+        """
+        get_opennebula_assessment_summary gets the HTML assessment summary for the provider
+        Args:
+            provider (Provider): the provider object
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f""""""
+        
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
 
     @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
