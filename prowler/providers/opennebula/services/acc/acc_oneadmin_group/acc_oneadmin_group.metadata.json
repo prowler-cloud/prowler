@@ -1,0 +1,30 @@
+{
+    "Provider": "opennebula",
+    "CheckID": "acc_oneadmin_group",
+    "CheckTitle": "Checks if the user is in oneadmin group",
+    "CheckType": [],
+    "ServiceName": "Authentication and Access Control",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "Account",
+    "Description": "Checks if users are in oneadmin group (root access).",
+    "Risk": "",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Remove the user from the oneadmin group and grant it the right permissions.",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "The users should not have root permissions according to the least privilege principle."
+  }
