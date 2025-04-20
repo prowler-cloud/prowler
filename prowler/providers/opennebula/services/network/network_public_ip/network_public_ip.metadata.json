@@ -1,0 +1,31 @@
+{
+    "Provider": "opennebula",
+    "CheckID": "network_public_ip",
+    "CheckTitle": "Check if virtual networks (VNets) use public IP addresses",
+    "CheckType": [],
+    "ServiceName": "Network and Secure Communications",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "VirtualNetwork",
+    "Description": "Detect virtual networks (VNets) that are using public IP addresses, which may increase the risk of external exposure.",
+    "Risk": "Using public IP addresses directly in virtual networks may lead to unintended external exposure, increasing the risk of attack.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Restrict the use of public IP addresses to necessary networks only and ensure additional security measures such as firewalls are in place.",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "VNets using public IP addresses should have controlled and monitored security measures."
+  }
+  
