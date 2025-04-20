@@ -20,7 +20,7 @@ class acc_oneadmin_group(Check):
                 report.status_extended = (
                     f"User {user.name} belongs to the oneadmin group and is the oneadmin or serveradmin user."
                 )
-            elif user.group == "oneadmin":
+            elif user.group == "oneadmin" or 0 in user.gid:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"User {user.name} belongs to the oneadmin group."

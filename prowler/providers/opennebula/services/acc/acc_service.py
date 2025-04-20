@@ -38,6 +38,7 @@ class ACCService(OpennebulaService):
             for user in userpool.USER:
                 self.users.append(User(
                     id=user.ID,
+                    gid=user.GROUPS.ID,
                     name=user.NAME,
                     password=user.PASSWORD,
                     group=user.GNAME,
@@ -50,6 +51,7 @@ class ACCService(OpennebulaService):
 
 class User(BaseModel):
     id: str
+    gid: list
     name: str
     password: str
     group: str
