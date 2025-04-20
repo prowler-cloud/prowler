@@ -3,7 +3,7 @@ from prowler.lib.check.models import Check, Check_Report_OpenNebula
 from prowler.providers.opennebula.services.acc.acc_client import acc_client
 
 
-class acc_default_credentials(Check):
+class acc_weak_credentials(Check):
     def execute(self):
         findings = []
         logger.info("Checking for weak passwords in OpenNebula users...")

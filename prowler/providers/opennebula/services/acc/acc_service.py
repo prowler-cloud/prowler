@@ -9,6 +9,7 @@ class ACCService(OpennebulaService):
         super().__init__(provider)
         self.users : list[User] = []
         self.__get_users__()
+        self.__check_weak_passwords__()
 
     def _load_common_password_hashes_(self, file):
         basedir = os.path.dirname(os.path.abspath(__file__))
@@ -19,11 +20,19 @@ class ACCService(OpennebulaService):
     def _is_weak_password_(self, user_hash, common_hashes):
         return user_hash in common_hashes
 
+    def __check_weak_passwords__(self):
+        """
+        Check if users have weak passwords by comparing against common password hashes.
+        Updates the weak_password field for each user.
+        """
+        common_hashes = self._load_common_password_hashes_('10-million-password-list-top-1000000.txt')
+        for user in self.users:
+            user.weak_password = self._is_weak_password_(user.password, common_hashes)
+
     def __get_users__(self):
         """
         Get users from OpenNebula
         """
-        common_hashes = self._load_common_password_hashes_('10-million-password-list-top-1000000.txt')
         try:
             userpool = self.client.userpool.info()
             for user in userpool.USER:
@@ -34,7 +43,7 @@ class ACCService(OpennebulaService):
                     group=user.GNAME,
                     auth_driver=user.AUTH_DRIVER,
                     enabled=user.ENABLED,
-                    weak_password=self._is_weak_password_(user.PASSWORD, common_hashes)
+                    weak_password=False  
                 ))
         except Exception as error:
             logger.error(f"Error al obtener usuarios: {error}")
