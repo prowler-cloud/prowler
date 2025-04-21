@@ -5,13 +5,6 @@ import { getFindingsSchema, getMetadataInfoSchema } from "@/types/ai/findings";
 
 export const getFindingsTool = tool(
   async ({ page, pageSize, query, sort, filters }) => {
-    console.log("=> Invoking getFindingsTool - ", {
-      page,
-      pageSize,
-      query,
-      sort,
-      filters,
-    });
     return await getFindings({ page, pageSize, query, sort, filters });
   },
   {
@@ -24,7 +17,6 @@ export const getFindingsTool = tool(
 
 export const getMetadataInfoTool = tool(
   async ({ query, sort, filters }) => {
-    console.log("=> Invoking getMetadataInfoTool - ", { query, sort, filters });
     return await getMetadataInfo({ query, sort, filters });
   },
   {

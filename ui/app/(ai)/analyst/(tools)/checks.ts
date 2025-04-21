@@ -5,7 +5,6 @@ import { checkSchema } from "@/types/ai/checks";
 
 export const getProviderChecksTool = tool(
   async ({ provider_type }) => {
-    console.log("=> Invoking getProviderChecksTool - ", provider_type);
     const checks = await aiGetProviderChecks(provider_type);
     return checks;
   },

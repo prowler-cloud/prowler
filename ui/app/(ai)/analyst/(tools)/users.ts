@@ -6,7 +6,6 @@ import { getUsersSchema } from "@/types/ai/users";
 
 export const getUsersTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getUsersTool - ", { page, query, sort, filters });
     return await getUsers({ page, query, sort, filters });
   },
   {
@@ -19,7 +18,6 @@ export const getUsersTool = tool(
 
 export const getMyProfileInfoTool = tool(
   async () => {
-    console.log("=> Invoking getMyProfileInfoTool()");
     return await getProfileInfo();
   },
   {
