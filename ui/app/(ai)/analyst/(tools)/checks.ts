@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 
 import { aiGetProviderChecks } from "@/lib/lighthouse/helperChecks";
-import { checkSchema } from "@/types/ai/checks";
+import { checkSchema } from "@/types/ai";
 
 export const getProviderChecksTool = tool(
   async ({ provider_type }) => {
