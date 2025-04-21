@@ -27,6 +27,7 @@ def mock_get_user_settings(_):
     return UserSettings(
         allow_external_access=False,
         allow_teams_consumer=False,
+        allow_teams_consumer_inbound=False,
     )
 
 
@@ -91,5 +92,6 @@ class Test_Teams_Service:
             assert teams_client.user_settings == UserSettings(
                 allow_external_access=False,
                 allow_teams_consumer=False,
+                allow_teams_consumer_inbound=False,
             )
             teams_client.powershell.close()

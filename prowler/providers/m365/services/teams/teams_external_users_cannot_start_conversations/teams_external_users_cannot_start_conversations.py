@@ -4,17 +4,17 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_unmanaged_communication_disabled(Check):
-    """Check if unmanaged communication is disabled in Teams admin center.
+class teams_external_users_cannot_start_conversations(Check):
+    """Check if external users cannot start conversations.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the check for
+        """Execute the check for external users cannot start conversations.
 
-        This method checks if unmanaged communication is disabled in Teams admin center.
+        This method checks if external users cannot start conversations.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -29,12 +29,12 @@ class teams_unmanaged_communication_disabled(Check):
                 resource_id="userSettings",
             )
             report.status = "FAIL"
-            report.status_extended = "Teams users can communicate with unmanaged users."
+            report.status_extended = "External Teams users can initiate conversations."
 
-            if user_settings and not user_settings.allow_teams_consumer:
+            if user_settings and not user_settings.allow_teams_consumer_inbound:
                 report.status = "PASS"
                 report.status_extended = (
-                    "Teams users cannot communicate with unmanaged users."
+                    "External Teams users cannot initiate conversations."
                 )
 
             findings.append(report)
