@@ -53,7 +53,7 @@ class Monitor(AzureService):
                                 category_group=log_settings.category_group,
                                 enabled=log_settings.enabled,
                             )
-                            for log_settings in getattr(setting, "logs", [])
+                            for log_settings in (getattr(setting, "logs", []) or [])
                         ],
                         storage_account_id=setting.storage_account_id,
                     )

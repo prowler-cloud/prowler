@@ -4,7 +4,7 @@ name: SDK - Refresh AWS services' regions
 
 on:
   schedule:
-    - cron: "0 9 * * *" #runs at 09:00 UTC everyday
+    - cron: "0 9 * * 1" # runs at 09:00 UTC every Monday
 
 env:
   GITHUB_BRANCH: "master"
