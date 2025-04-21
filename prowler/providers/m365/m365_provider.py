@@ -434,8 +434,11 @@ class M365Provider(Provider):
             f"M365 Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"M365 Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} M365 Tenant ID: {Fore.YELLOW}{self._identity.tenant_id}{Style.RESET_ALL}",
             f"M365 Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} M365 Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
-            f"M365 User: {Fore.YELLOW}{self.credentials.user}{Style.RESET_ALL}",
         ]
+        if self.credentials and self.credentials.user:
+            report_lines.append(
+                f"M365 User: {Fore.YELLOW}{self.credentials.user}{Style.RESET_ALL}"
+            )
         report_title = (
             f"{Style.BRIGHT}Using the M365 credentials below:{Style.RESET_ALL}"
         )
@@ -668,7 +671,18 @@ class M365Provider(Provider):
 
             GraphServiceClient(credentials=credentials)
 
-            logger.info("M365 provider: Connection to M365 successful")
+            logger.info("M365 provider: Connection to MSGraph successful")
+
+            # Set up PowerShell credentials
+            if user and encrypted_password:
+                M365Provider.setup_powershell(
+                    env_auth,
+                    m365_credentials,
+                )
+            else:
+                logger.info("M365 provider: PowerShell authentication not required")
+
+            logger.info("M365 provider: Connection to PowerShell successful")
 
             return Connection(is_connected=True)
 
