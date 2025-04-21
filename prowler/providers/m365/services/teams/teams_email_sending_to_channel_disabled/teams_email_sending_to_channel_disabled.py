@@ -5,7 +5,7 @@ from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
 class teams_email_sending_to_channel_disabled(Check):
-    """Check if
+    """Check if users can send emails to channel email addresses.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -14,7 +14,7 @@ class teams_email_sending_to_channel_disabled(Check):
     def execute(self) -> List[CheckReportM365]:
         """Execute the check for
 
-        This method checks if
+        This method checks if users can send emails to channel email addresses.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
