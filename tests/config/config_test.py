@@ -297,7 +297,6 @@ config_aws = {
     "insecure_key_algorithms": [
         "RSA-1024",
         "P-192",
-        "SHA-1",
     ],
     "eks_required_log_types": [
         "api",

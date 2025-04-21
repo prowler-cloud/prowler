@@ -49,7 +49,7 @@ class defender_antispam_outbound_policy_configured(Check):
                 ):
 
                     report.status = "PASS"
-                    report.status_extended = f"Outbound Spam Policy '{policy_name}' is not properly configured and enabled."
+                    report.status_extended = f"Outbound Spam Policy '{policy_name}' is properly configured and enabled."
 
             findings.append(report)
 

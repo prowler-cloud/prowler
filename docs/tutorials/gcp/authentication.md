@@ -4,8 +4,13 @@ Prowler will use by default your User Account credentials, you can configure it 
 
 - `gcloud init` to use a new account
 - `gcloud config set account <account>` to use an existing account
+- `gcloud auth application-default login`
 
-Then, obtain your access credentials using: `gcloud auth application-default login`
+This will generate Application Default Credentials (ADC) that Prowler will use automatically.
+
+---
+
+## Using a Service Account key file
 
 Otherwise, you can generate and download Service Account keys in JSON format (refer to https://cloud.google.com/iam/docs/creating-managing-service-account-keys) and provide the location of the file with the following argument:
 
@@ -15,6 +20,43 @@ prowler gcp --credentials-file path
 
 ???+ note
     `prowler` will scan the GCP project associated with the credentials.
+
+---
+
+## Using an access token
+
+If you already have an access token (e.g., generated with `gcloud auth print-access-token`), you can run Prowler with:
+
+```bash
+export CLOUDSDK_AUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
+prowler gcp --project-ids <project-id>
+```
+
+???+ note
+    If using this method, it's recommended to also set the default project explicitly:
+    ```bash
+    export GOOGLE_CLOUD_PROJECT=<project-id>
+    ```
+
+---
+
+## Credentials lookup order
+
+Prowler follows the same search order as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+
+1. [`GOOGLE_APPLICATION_CREDENTIALS` environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [`CLOUDSDK_AUTH_ACCESS_TOKEN` + optional `GOOGLE_CLOUD_PROJECT`](https://cloud.google.com/sdk/gcloud/reference/auth/print-access-token)
+3. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+4. [Attached service account (e.g., Cloud Run, GCE, Cloud Functions)](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+
+???+ note
+    The credentials must belong to a user or service account with the necessary permissions.
+    To ensure full access, assign the roles/viewer IAM role to the identity being used.
+
+???+ note
+    Prowler will use the enabled Google Cloud APIs to get the information needed to perform the checks.
+
+---
 
 
 ## Needed permissions

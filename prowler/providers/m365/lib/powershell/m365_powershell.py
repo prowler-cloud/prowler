@@ -224,3 +224,84 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+
+    def get_antiphishing_policy(self) -> dict:
+        """
+        Get Defender Antiphishing Policy.
+
+        Retrieves the current Defender anti-phishing policy settings.
+
+        Returns:
+            dict: Antiphishing policy settings in JSON format.
+
+        Example:
+            >>> get_antiphishing_policy()
+            {
+                "EnableSpoofIntelligence": true,
+                "AuthenticationFailAction": "Quarantine",
+                "DmarcRejectAction": "Quarantine",
+                "DmarcQuarantineAction": "Quarantine",
+                "EnableFirstContactSafetyTips": true,
+                "EnableUnauthenticatedSender": true,
+                "EnableViaTag": true,
+                "HonorDmarcPolicy": true,
+                "IsDefault": false
+            }
+        """
+        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json")
+
+    def get_antiphishing_rules(self) -> dict:
+        """
+        Get Defender Antiphishing Rules.
+
+        Retrieves the current Defender anti-phishing rules.
+
+        Returns:
+            dict: Antiphishing rules in JSON format.
+
+        Example:
+            >>> get_antiphishing_rules()
+            {
+                "Name": "Rule1",
+                "State": Enabled,
+            }
+        """
+        return self.execute("Get-AntiPhishRule | ConvertTo-Json")
+
+    def get_organization_config(self) -> dict:
+        """
+        Get Exchange Online Organization Configuration.
+
+        Retrieves the current Exchange Online organization configuration settings.
+
+        Returns:
+            dict: Organization configuration settings in JSON format.
+
+        Example:
+            >>> get_organization_config()
+            {
+                "Name": "MyOrganization",
+                "Guid": "12345678-1234-1234-1234-123456789012"
+                "AuditDisabled": false
+            }
+        """
+        return self.execute("Get-OrganizationConfig | ConvertTo-Json")
+
+    def get_mailbox_audit_config(self) -> dict:
+        """
+        Get Exchange Online Mailbox Audit Configuration.
+
+        Retrieves the current mailbox audit configuration settings for Exchange Online.
+
+        Returns:
+            dict: Mailbox audit configuration settings in JSON format.
+
+        Example:
+            >>> get_mailbox_audit_config()
+            {
+                "Name": "MyMailbox",
+                "Id": "12345678-1234-1234-1234-123456789012",
+                "AuditBypassEnabled": false
+            }
+        """
+        return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
