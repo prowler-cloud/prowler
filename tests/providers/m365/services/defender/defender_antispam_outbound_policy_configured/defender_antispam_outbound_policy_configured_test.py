@@ -49,7 +49,7 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy 'Policy1' is not properly configured and enabled."
+                == "Outbound Spam Policy 'Policy1' is properly configured and enabled."
             )
             assert (
                 result[0].resource
