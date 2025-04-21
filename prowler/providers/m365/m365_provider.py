@@ -606,12 +606,12 @@ class M365Provider(Provider):
         browser_auth: bool = False,
         tenant_id: str = None,
         region: str = "M365Global",
-        raise_on_exception=True,
-        client_id=None,
-        client_secret=None,
-        user=None,
-        encrypted_password=None,
-        provider_id=None,
+        raise_on_exception: bool = True,
+        client_id: str = None,
+        client_secret: str = None,
+        user: str = None,
+        encrypted_password: str = None,
+        provider_id: str = None,
     ) -> Connection:
         """Test connection to M365 subscription.
 
