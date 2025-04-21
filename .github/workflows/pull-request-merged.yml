@@ -8,7 +8,7 @@ on:
 jobs:
   trigger-cloud-pull-request:
     name: Trigger Cloud Pull Request
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && github.repository == "prowler-cloud/prowler"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
