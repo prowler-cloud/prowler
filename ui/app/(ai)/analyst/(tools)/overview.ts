@@ -13,12 +13,6 @@ import {
 
 export const getProvidersOverviewTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getProvidersOverviewTool - ", {
-      page,
-      query,
-      sort,
-      filters,
-    });
     return await getProvidersOverview({ page, query, sort, filters });
   },
   {
@@ -31,12 +25,6 @@ export const getProvidersOverviewTool = tool(
 
 export const getFindingsByStatusTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getFindingsByStatusTool - ", {
-      page,
-      query,
-      sort,
-      filters,
-    });
     return await getFindingsByStatus({ page, query, sort, filters });
   },
   {
@@ -49,13 +37,6 @@ export const getFindingsByStatusTool = tool(
 
 export const getFindingsBySeverityTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getFindingsBySeverityTool - ", {
-      page,
-      query,
-      sort,
-      filters,
-    });
-    // console.log("getFindingsBySeverityTool", { page, query, sort, filters });
     return await getFindingsBySeverity({ page, query, sort, filters });
   },
   {

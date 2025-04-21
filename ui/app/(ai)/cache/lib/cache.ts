@@ -41,8 +41,7 @@ interface CachedData {
 }
 
 // Function to fetch all required data from APIs
-const fetchDataFromAPIs = async (userId: string): Promise<CachedData> => {
-  console.log(`[Cache MISS] Fetching data from APIs for user: ${userId}`);
+const fetchDataFromAPIs = async (): Promise<CachedData> => {
   cacheMisses++;
 
   // Step 1: Get user profile data
@@ -128,7 +127,7 @@ export const getCurrentUserId = async (): Promise<string> => {
 
 // Create or update cache for a user - this will hit APIs
 export const createCache = async (userId: string): Promise<CachedData> => {
-  const data = await fetchDataFromAPIs(userId);
+  const data = await fetchDataFromAPIs();
 
   // Store in cache
   cacheStore[userId] = {
@@ -136,7 +135,6 @@ export const createCache = async (userId: string): Promise<CachedData> => {
     timestamp: Date.now(),
   };
 
-  console.log(`Cache created/updated for user: ${userId}`);
   return data;
 };
 
@@ -147,7 +145,6 @@ export const getUserCache = async (): Promise<CachedData> => {
   // Check if we have cached data for this user
   if (userId in cacheStore) {
     cacheHits++;
-    console.log(`[Cache HIT] Using cached data for user: ${userId}`);
     return cacheStore[userId].data;
   }
 
@@ -187,7 +184,6 @@ export const invalidateCache = async () => {
     delete cacheStore[userId];
     cacheVersion = Date.now();
     cacheCreatedAt = new Date().toISOString();
-    console.log(`Cache invalidated for user: ${userId}`);
   }
 
   return {
