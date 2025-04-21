@@ -115,7 +115,7 @@ class M365PowerShell(PowerShellSession):
 
         # Validate user credentials belong to tenant
         user_domain = credentials.user.split("@")[1]
-        if not credentials.provider_id.endswith(user_domain):
+        if not credentials.tenant_domain.endswith(user_domain):
             raise M365UserNotBelongingToTenantError(
                 file=os.path.basename(__file__),
                 message="The provided M365 User does not belong to the specified tenant.",

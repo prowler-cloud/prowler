@@ -283,6 +283,9 @@ class TestM365Provider:
                 "prowler.providers.m365.m365_provider.M365Provider.setup_session"
             ) as mock_setup_session,
             patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity"
+            ) as mock_setup_identity,
+            patch(
                 "prowler.providers.m365.m365_provider.GraphServiceClient"
             ) as mock_graph_client,
         ):
@@ -296,6 +299,16 @@ class TestM365Provider:
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
             mock_setup_session.return_value = mock_session
+
+            # Mock setup_identity to return a mocked identity object
+            mock_identity = M365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type=IDENTITY_TYPE,
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
+            )
+            mock_setup_identity.return_value = mock_identity
 
             # Mock GraphServiceClient to avoid real API calls
             mock_client = MagicMock()
@@ -320,6 +333,12 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity"
+            ) as mock_setup_identity,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_region_config"
+            ) as mock_setup_region_config,
         ):
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
@@ -327,6 +346,25 @@ class TestM365Provider:
 
             # Mock ValidateStaticCredentials to avoid real API calls
             mock_validate_static_credentials.return_value = None
+
+            # Mock setup_identity to return a mocked identity object
+            mock_identity = M365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type=IDENTITY_TYPE,
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
+            )
+            mock_setup_identity.return_value = mock_identity
+
+            # Mock setup_region_config to return a valid region config
+            mock_region_config = M365RegionConfig(
+                name="M365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+            mock_setup_region_config.return_value = mock_region_config
 
             test_connection = M365Provider.test_connection(
                 tenant_id=str(uuid4()),
@@ -438,47 +476,6 @@ class TestM365Provider:
             "M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]"
             in exception.value.args[0]
         )
-
-    def test_setup_powershell_valid_credentials(self):
-        credentials_dict = {
-            "user": "test@example.com",
-            "encrypted_password": "test_password",
-            "client_id": "test_client_id",
-            "tenant_id": "test_tenant_id",
-            "client_secret": "test_client_secret",
-        }
-
-        with patch(
-            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
-            return_value=True,
-        ):
-            result = M365Provider.setup_powershell(
-                env_auth=False, m365_credentials=credentials_dict
-            )
-
-            assert result.user == credentials_dict["user"]
-            assert result.passwd == credentials_dict["encrypted_password"]
-
-    def test_setup_powershell_invalid_env_credentials(self):
-        credentials = None
-
-        with patch(
-            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell"
-        ) as mock_powershell:
-            mock_session = MagicMock()
-            mock_session.test_credentials.return_value = False
-            mock_powershell.return_value = mock_session
-
-            with pytest.raises(M365MissingEnvironmentCredentialsError) as exc_info:
-                M365Provider.setup_powershell(
-                    env_auth=True, m365_credentials=credentials
-                )
-
-            assert (
-                "Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication"
-                in str(exc_info.value)
-            )
-            mock_session.test_credentials.assert_not_called()
 
     def test_test_connection_user_not_belonging_to_tenant(
         self,

@@ -38,7 +38,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365GetTokenIdentityError,
     M365HTTPResponseError,
     M365InteractiveBrowserCredentialError,
-    M365InvalidProviderIdError,
+    M365InvalidTenantDomainError,
     M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
     M365NotTenantIdButClientIdAndClientSecretError,
@@ -201,7 +201,7 @@ class M365Provider(Provider):
         self._credentials = self.setup_powershell(
             env_auth=env_auth,
             m365_credentials=m365_credentials,
-            provider_id=self.identity.tenant_domain,
+            tenant_domain=self._identity.tenant_domain,
         )
 
         # Audit Config
@@ -373,7 +373,7 @@ class M365Provider(Provider):
 
     @staticmethod
     def setup_powershell(
-        env_auth: bool = False, m365_credentials: dict = {}, provider_id: str = None
+        env_auth: bool = False, m365_credentials: dict = {}, tenant_domain: str = None
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
@@ -393,7 +393,7 @@ class M365Provider(Provider):
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
-                provider_id=m365_credentials.get("provider_id", ""),
+                tenant_domain=m365_credentials.get("tenant_domain", ""),
             )
         elif env_auth:
             m365_user = getenv("M365_USER")
@@ -416,7 +416,7 @@ class M365Provider(Provider):
                 client_id=client_id,
                 client_secret=client_secret,
                 tenant_id=tenant_id,
-                provider_id=provider_id,
+                tenant_domain=tenant_domain,
             )
 
         if credentials:
@@ -447,8 +447,11 @@ class M365Provider(Provider):
             f"M365 Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"M365 Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} M365 Tenant ID: {Fore.YELLOW}{self._identity.tenant_id}{Style.RESET_ALL}",
             f"M365 Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} M365 Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
-            f"M365 User: {Fore.YELLOW}{self.credentials.user}{Style.RESET_ALL}",
         ]
+        if self.credentials and self.credentials.user:
+            report_lines.append(
+                f"M365 User: {Fore.YELLOW}{self.credentials.user}{Style.RESET_ALL}"
+            )
         report_title = (
             f"{Style.BRIGHT}Using the M365 credentials below:{Style.RESET_ALL}"
         )
@@ -481,7 +484,6 @@ class M365Provider(Provider):
                 - client_secret: The M365 client secret
                 - user: The M365 user email
                 - encrypted_password: The M365 encrypted password
-                - provider_id: The M365 provider ID (in this case the Tenant ID).
             region_config (M365RegionConfig): The region configuration object.
 
         Returns:
@@ -608,7 +610,6 @@ class M365Provider(Provider):
         client_secret=None,
         user=None,
         encrypted_password=None,
-        provider_id=None,
     ) -> Connection:
         """Test connection to M365 subscription.
 
@@ -627,7 +628,7 @@ class M365Provider(Provider):
             client_secret (str): The M365 client secret.
             user (str): The M365 user email.
             encrypted_password (str): The M365 encrypted_password.
-            provider_id (str): The M365 provider ID (in this case the Tenant ID).
+            tenant_domain (str): The M365 tenant domain.
 
 
         Returns:
@@ -695,18 +696,30 @@ class M365Provider(Provider):
                 region_config,
             )
 
+            # Set up the M365 identity
+            M365Provider.setup_identity(
+                az_cli_auth,
+                sp_env_auth,
+                env_auth,
+                browser_auth,
+                client_id,
+            )
+
+            # Set up the M365 GraphServiceClient
             GraphServiceClient(credentials=credentials)
 
             logger.info("M365 provider: Connection to MSGraph successful")
 
             # Set up PowerShell credentials
-            M365Provider.setup_powershell(
-                env_auth,
-                m365_credentials,
-                provider_id,
-            )
-
-            logger.info("M365 provider: Connection to PowerShell successful")
+            if user and encrypted_password:
+                M365Provider.setup_powershell(
+                    env_auth,
+                    m365_credentials,
+                    M365Provider.identity.tenant_domain,
+                )
+                logger.info("M365 provider: Connection to PowerShell successful")
+            else:
+                logger.info("M365 provider: No PowerShell credentials provided")
 
             return Connection(is_connected=True)
 
@@ -781,14 +794,14 @@ class M365Provider(Provider):
             if raise_on_exception:
                 raise client_secret_error
             return Connection(error=client_secret_error)
-        # Exceptions from provider_id validation
-        except M365InvalidProviderIdError as invalid_credentials_error:
+        # Exceptions from tenant_domain validation
+        except M365InvalidTenantDomainError as invalid_tenant_domain_error:
             logger.error(
-                f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
+                f"{invalid_tenant_domain_error.__class__.__name__}[{invalid_tenant_domain_error.__traceback__.tb_lineno}]: {invalid_tenant_domain_error}"
             )
             if raise_on_exception:
-                raise invalid_credentials_error
-            return Connection(error=invalid_credentials_error)
+                raise invalid_tenant_domain_error
+            return Connection(error=invalid_tenant_domain_error)
         # Exceptions from SubscriptionClient
         except HttpResponseError as http_response_error:
             logger.error(
