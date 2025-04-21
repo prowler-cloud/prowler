@@ -30,4 +30,5 @@ jobs:
             "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
             "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
             "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }}
+            "PROWLER_PR_LABELS": ${{ github.event.pull_request.labels }},
           }'
