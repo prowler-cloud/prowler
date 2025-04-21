@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 
 import { getRoleInfoById, getRoles } from "@/actions/roles";
-import { getRoleSchema, getRolesSchema } from "@/types/ai";
+import { getRoleSchema, getRolesSchema } from "@/types/lighthouse";
 
 export const getRolesTool = tool(
   async ({ page, query, sort, filters }) => {
