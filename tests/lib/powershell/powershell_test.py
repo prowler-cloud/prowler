@@ -113,6 +113,53 @@ class TestPowerShellSession:
         session.close()
 
     @patch("subprocess.Popen")
+    def test_json_parse_output_logging(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test warning for non-JSON output
+        with patch("prowler.lib.logger.logger.warning") as mock_warning:
+            result = session.json_parse_output("some text without json")
+            assert result == {}
+            mock_warning.assert_called_once_with(
+                "Could not parse PowerShell output as JSON.\nOriginal output: some text without json"
+            )
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_json_parse_output_with_text_around_json(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test JSON extraction from text with surrounding content
+        result = session.json_parse_output('some text {"key": "value"} more text')
+        assert result == {"key": "value"}
+
+        result = session.json_parse_output('prefix [{"key": "value"}] suffix')
+        assert result == [{"key": "value"}]
+
+        # Test non-JSON text returns empty dict
+        result = session.json_parse_output("just some text")
+        assert result == {}
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_json_parse_output_empty(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test empty string
+        result = session.json_parse_output("")
+        assert result == {}
+
+        session.close()
+
+    @patch("subprocess.Popen")
     def test_close(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
