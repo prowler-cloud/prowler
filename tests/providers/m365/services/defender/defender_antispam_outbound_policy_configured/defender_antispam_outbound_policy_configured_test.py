@@ -26,12 +26,12 @@ class Test_defender_antispam_outbound_policy_configured:
                 defender_antispam_outbound_policy_configured,
             )
             from prowler.providers.m365.services.defender.defender_service import (
-                DefenderOutboundSpamPolicy,
+                OutboundSpamPolicy,
                 DefenderOutboundSpamRule,
             )
 
             defender_client.outbound_spam_policies = {
-                "Policy1": DefenderOutboundSpamPolicy(
+                "Policy1": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
                     notify_limit_exceeded_adresses=["test@correo.com"],
@@ -81,12 +81,12 @@ class Test_defender_antispam_outbound_policy_configured:
                 defender_antispam_outbound_policy_configured,
             )
             from prowler.providers.m365.services.defender.defender_service import (
-                DefenderOutboundSpamPolicy,
+                OutboundSpamPolicy,
                 DefenderOutboundSpamRule,
             )
 
             defender_client.outbound_spam_policies = {
-                "Policy2": DefenderOutboundSpamPolicy(
+                "Policy2": OutboundSpamPolicy(
                     notify_sender_blocked=False,
                     notify_limit_exceeded=False,
                     notify_limit_exceeded_adresses=[],
@@ -136,11 +136,11 @@ class Test_defender_antispam_outbound_policy_configured:
                 defender_antispam_outbound_policy_configured,
             )
             from prowler.providers.m365.services.defender.defender_service import (
-                DefenderOutboundSpamPolicy,
+                OutboundSpamPolicy,
             )
 
             defender_client.outbound_spam_policies = {
-                "Default": DefenderOutboundSpamPolicy(
+                "Default": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
                     notify_limit_exceeded_adresses=["test@correo.com"],
@@ -188,11 +188,11 @@ class Test_defender_antispam_outbound_policy_configured:
                 defender_antispam_outbound_policy_configured,
             )
             from prowler.providers.m365.services.defender.defender_service import (
-                DefenderOutboundSpamPolicy,
+                OutboundSpamPolicy,
             )
 
             defender_client.outbound_spam_policies = {
-                "PolicyX": DefenderOutboundSpamPolicy(
+                "PolicyX": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
                     notify_limit_exceeded_adresses=["admin@org.com"],
