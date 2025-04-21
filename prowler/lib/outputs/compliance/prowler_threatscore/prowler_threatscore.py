@@ -34,7 +34,7 @@ def get_prowler_threatscore_table(
                         if sub_pillar not in score_per_sub_pillar.keys():
                             score_per_sub_pillar[sub_pillar] = 0
                             number_findings_per_sub_pillar[sub_pillar] = 0
-                        if finding.status == "FAIL":
+                        if finding.status == "FAIL" and not finding.muted:
                             score_per_sub_pillar[sub_pillar] += attribute.LevelOfRisk
                             number_findings_per_sub_pillar[sub_pillar] += 1
                         if finding.muted and index not in muted_count:
