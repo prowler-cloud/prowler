@@ -21,6 +21,7 @@ on:
     paths-ignore:
       - 'ui/**'
       - 'api/**'
+      - '.github/**'
   pull_request:
     branches:
       - "master"
@@ -30,6 +31,7 @@ on:
     paths-ignore:
       - 'ui/**'
       - 'api/**'
+      - '.github/**'
   schedule:
     - cron: '00 12 * * *'
 
