@@ -1,6 +1,7 @@
 name: Prowler - Merged Pull Request
 
 on:
+  push:
   pull_request_target:
     branches: ['master']
     types: ['closed']
@@ -29,6 +30,6 @@ jobs:
             "PROWLER_COMMIT_SHA": "${{ github.sha }}",
             "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
             "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
-            "PROWLER_PR_LABELS": ${{ github.event.pull_request.labels }},
+            "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels) }},
             "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }}
           }'
