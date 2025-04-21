@@ -95,6 +95,11 @@ def get_prowler_provider_kwargs(provider: Provider) -> dict:
             **prowler_provider_kwargs,
             "subscription_ids": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.M365.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "domain_id": provider.uid,
+        }
     elif provider.provider == Provider.ProviderChoices.GCP.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,

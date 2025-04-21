@@ -42,7 +42,6 @@ COPY src/backend/ ./backend/
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
-# Add `--no-root` to avoid installing the current project as a package
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
