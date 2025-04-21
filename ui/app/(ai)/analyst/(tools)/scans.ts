@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 
 import { getScan, getScans } from "@/actions/scans";
-import { getScanSchema, getScansSchema } from "@/types/ai/scans";
+import { getScanSchema, getScansSchema } from "@/types/ai";
 
 export const getScansTool = tool(
   async ({ page, query, sort, filters }) => {

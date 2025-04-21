@@ -9,7 +9,7 @@ import {
   getFindingsBySeveritySchema,
   getFindingsByStatusSchema,
   getProvidersOverviewSchema,
-} from "@/types/ai/overviews";
+} from "@/types/ai";
 
 export const getProvidersOverviewTool = tool(
   async ({ page, query, sort, filters }) => {

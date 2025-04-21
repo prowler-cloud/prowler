@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 
 import { getProvider, getProviders } from "@/actions/providers";
-import { getProviderSchema, getProvidersSchema } from "@/types/ai/providers";
+import { getProviderSchema, getProvidersSchema } from "@/types/ai";
 
 export const getProvidersTool = tool(
   async ({ page, query, sort, filters }) => {

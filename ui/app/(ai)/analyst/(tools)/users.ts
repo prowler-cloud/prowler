@@ -2,7 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
 import { getProfileInfo, getUsers } from "@/actions/users/users";
-import { getUsersSchema } from "@/types/ai/users";
+import { getUsersSchema } from "@/types/ai";
 
 export const getUsersTool = tool(
   async ({ page, query, sort, filters }) => {
