@@ -9,7 +9,7 @@ import {
   getComplianceFrameworksSchema,
   getComplianceOverviewSchema,
   getCompliancesOverviewSchema,
-} from "@/types/ai";
+} from "@/types/lighthouse";
 
 export const getCompliancesOverviewTool = tool(
   async ({ scanId, fields, filters, page, page_size, sort }) => {

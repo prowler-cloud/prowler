@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 
 import { getFindings, getMetadataInfo } from "@/actions/findings";
-import { getFindingsSchema, getMetadataInfoSchema } from "@/types/ai";
+import { getFindingsSchema, getMetadataInfoSchema } from "@/types/lighthouse";
 
 export const getFindingsTool = tool(
   async ({ page, pageSize, query, sort, filters }) => {
