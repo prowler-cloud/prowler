@@ -62,9 +62,9 @@ class M365BaseException(ProwlerException):
             "message": "The provided tenant ID and client ID do not belong to the provided client secret",
             "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
         },
-        (6014, "M365InvalidTenantDomainError"): {
-            "message": "The provided tenant domain is not valid",
-            "remediation": "Check the tenant domain and ensure it is a valid domain.",
+        (6014, "M365InvalidProviderIdError"): {
+            "message": "The provided provider_id does not match with the available subscriptions",
+            "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },
         (6015, "M365NoAuthenticationMethodError"): {
             "message": "No Microsoft 365 authentication method found",
@@ -235,7 +235,7 @@ class M365TenantIdAndClientIdNotBelongingToClientSecretError(M365CredentialsErro
         )
 
 
-class M365InvalidTenantDomainError(M365BaseException):
+class M365InvalidProviderIdError(M365BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6014, file=file, original_exception=original_exception, message=message

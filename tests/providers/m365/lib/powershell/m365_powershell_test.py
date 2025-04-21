@@ -94,7 +94,7 @@ class Testm365PowerShell:
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
-            tenant_domain="contoso.onmicrosoft.com",
+            provider_id="contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials)
 
@@ -144,7 +144,7 @@ class Testm365PowerShell:
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
-            tenant_domain="contoso.onmicrosoft.com",
+            provider_id="contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials)
 
@@ -187,7 +187,7 @@ class Testm365PowerShell:
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
-            tenant_domain="contoso.onmicrosoft.com",
+            provider_id="contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials)
 
