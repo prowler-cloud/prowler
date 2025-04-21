@@ -11,7 +11,7 @@ jobs:
     if: github.event.pull_request.merged == true && github.repository == "prowler-cloud/prowler"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set short git commit SHA
         id: vars
@@ -20,7 +20,7 @@ jobs:
           echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
       - name: Trigger pull request
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.CLOUD_DISPATCH }}
