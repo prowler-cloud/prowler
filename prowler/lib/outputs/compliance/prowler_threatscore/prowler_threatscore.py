@@ -30,7 +30,7 @@ def get_prowler_threatscore_table(
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         sub_pillar = attribute.SubSection
-                        # Check if Sub-Pillar exists
+
                         if sub_pillar not in score_per_sub_pillar.keys():
                             score_per_sub_pillar[sub_pillar] = 0
                             number_findings_per_sub_pillar[sub_pillar] = 0
@@ -45,7 +45,6 @@ def get_prowler_threatscore_table(
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
 
-    # Fill the data on threatscore_compliance_table
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -74,23 +73,6 @@ def get_prowler_threatscore_table(
                                 threatscore_compliance_table["Score"].append(
                                     f"{orange_color}{score_per_sub_pillar[attribute.SubSection] / number_findings_per_sub_pillar[attribute.SubSection]:.2f}{Style.RESET_ALL}"
                                 )
-    # Sort the table
-    combined = list(
-        zip(
-            threatscore_compliance_table["Sub-Pillar"],
-            threatscore_compliance_table["Pillar"],
-            threatscore_compliance_table["Score"],
-        )
-    )
-
-    combined.sort(key=lambda x: x[0])
-
-    sub_pillars_sorted, pillars_sorted, scores_sorted = zip(*combined)
-    # Update the table with sorted values
-    threatscore_compliance_table["Sub-Pillar"] = list(sub_pillars_sorted)
-    threatscore_compliance_table["Pillar"] = list(pillars_sorted)
-    threatscore_compliance_table["Score"] = list(scores_sorted)
-
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
     ):  # If there are no resources, don't print the compliance table
@@ -107,7 +89,20 @@ def get_prowler_threatscore_table(
         ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))
         if not compliance_overview:
-            if len(threatscore_compliance_table["Pillar"]) > 0:
+            if len(threatscore_compliance_table["Pillar"]) > 0 and len(fail_count) > 0:
+                combined = list(
+                    zip(
+                        threatscore_compliance_table["Sub-Pillar"],
+                        threatscore_compliance_table["Pillar"],
+                        threatscore_compliance_table["Score"],
+                    )
+                )
+                combined.sort(key=lambda x: x[0])
+                sub_pillars_sorted, pillars_sorted, scores_sorted = zip(*combined)
+
+                threatscore_compliance_table["Sub-Pillar"] = list(sub_pillars_sorted)
+                threatscore_compliance_table["Pillar"] = list(pillars_sorted)
+                threatscore_compliance_table["Score"] = list(scores_sorted)
                 print(
                     f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                 )
