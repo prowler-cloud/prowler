@@ -137,6 +137,23 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
 
+    def get_user_settings(self) -> dict:
+        """
+        Get Teams User Settings.
+
+        Retrieves the current Microsoft Teams user settings.
+
+        Returns:
+            dict: Teams user settings in JSON format.
+
+        Example:
+            >>> get_user_settings()
+            {
+                "AllowExternalAccess": true
+            }
+        """
+        return self.execute("Get-CsTenantFederationConfiguration | ConvertTo-Json")
+
     def connect_exchange_online(self) -> dict:
         """
         Connect to Exchange Online PowerShell Module.
