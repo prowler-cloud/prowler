@@ -21,7 +21,10 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365HTTPResponseError,
     M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
+    M365NotValidClientIdError,
+    M365NotValidClientSecretError,
     M365NotValidEncryptedPasswordError,
+    M365NotValidTenantIdError,
     M365NotValidUserError,
     M365UserNotBelongingToTenantError,
 )
@@ -504,3 +507,78 @@ class TestM365Provider:
                 "The provided M365 User does not belong to the specified tenant."
                 in str(exception.value)
             )
+
+    def test_validate_static_credentials_invalid_tenant_id(self):
+        with pytest.raises(M365NotValidTenantIdError) as exception:
+            M365Provider.validate_static_credentials(
+                tenant_id="invalid-tenant-id",
+                client_id="12345678-1234-5678-1234-567812345678",
+                client_secret="test_secret",
+                user="test@example.com",
+                encrypted_password="test_password",
+            )
+        assert "The provided M365 Tenant ID is not valid." in str(exception.value)
+
+    def test_validate_static_credentials_missing_client_id(self):
+        with pytest.raises(M365NotValidClientIdError) as exception:
+            M365Provider.validate_static_credentials(
+                tenant_id="12345678-1234-5678-1234-567812345678",
+                client_id="",
+                client_secret="test_secret",
+                user="test@example.com",
+                encrypted_password="test_password",
+            )
+        assert "The provided M365 Client ID is not valid." in str(exception.value)
+
+    def test_validate_static_credentials_missing_client_secret(self):
+        with pytest.raises(M365NotValidClientSecretError) as exception:
+            M365Provider.validate_static_credentials(
+                tenant_id="12345678-1234-5678-1234-567812345678",
+                client_id="12345678-1234-5678-1234-567812345678",
+                client_secret="",
+                user="test@example.com",
+                encrypted_password="test_password",
+            )
+        assert "The provided M365 Client Secret is not valid." in str(exception.value)
+
+    def test_validate_static_credentials_missing_user(self):
+        with pytest.raises(M365NotValidUserError) as exception:
+            M365Provider.validate_static_credentials(
+                tenant_id="12345678-1234-5678-1234-567812345678",
+                client_id="12345678-1234-5678-1234-567812345678",
+                client_secret="test_secret",
+                user="",
+                encrypted_password="test_password",
+            )
+        assert "The provided M365 User is not valid." in str(exception.value)
+
+    def test_validate_static_credentials_missing_encrypted_password(self):
+        with pytest.raises(M365NotValidEncryptedPasswordError) as exception:
+            M365Provider.validate_static_credentials(
+                tenant_id="12345678-1234-5678-1234-567812345678",
+                client_id="12345678-1234-5678-1234-567812345678",
+                client_secret="test_secret",
+                user="test@example.com",
+                encrypted_password="",
+            )
+        assert "The provided M365 Encrypted Password is not valid." in str(
+            exception.value
+        )
+
+    def test_validate_arguments_missing_env_credentials(self):
+        with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
+            M365Provider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=True,
+                browser_auth=False,
+                tenant_id=None,
+                client_id="test_client_id",
+                client_secret="test_secret",
+                user=None,
+                encrypted_password=None,
+            )
+        assert (
+            "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth"
+            in str(exception.value)
+        )
