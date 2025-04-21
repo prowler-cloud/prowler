@@ -31,7 +31,6 @@ export const getAIKey = async (): Promise<string> => {
   const configId = await getAIConfigurationId();
 
   if (!configId) {
-    console.log("AI configuration ID not found");
     return "";
   }
 
@@ -83,7 +82,6 @@ export const getAIConfiguration = async () => {
   const configId = await getAIConfigurationId();
 
   if (!configId) {
-    console.log("AI configuration ID not found");
     return undefined;
   }
 
@@ -110,7 +108,6 @@ export const updateAIConfiguration = async (config: {
   const configId = await getAIConfigurationId();
 
   if (!configId) {
-    console.log("AI configuration ID not found");
     return undefined;
   }
 

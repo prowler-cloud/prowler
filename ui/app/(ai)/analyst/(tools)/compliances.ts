@@ -13,14 +13,6 @@ import {
 
 export const getCompliancesOverviewTool = tool(
   async ({ scanId, fields, filters, page, page_size, sort }) => {
-    console.log("=> Invoking getCompliancesOverviewTool - ", {
-      scanId,
-      fields,
-      filters,
-      page,
-      page_size,
-      sort,
-    });
     return await aiGetCompliancesOverview({
       scanId,
       fields,
@@ -40,7 +32,6 @@ export const getCompliancesOverviewTool = tool(
 
 export const getComplianceFrameworksTool = tool(
   async ({ provider }) => {
-    console.log("=> Invoking getComplianceFrameworksTool - ", { provider });
     return await aiGetComplianceFrameworks(provider);
   },
   {
@@ -53,10 +44,6 @@ export const getComplianceFrameworksTool = tool(
 
 export const getComplianceOverviewTool = tool(
   async ({ complianceId, fields }) => {
-    console.log("=> Invoking getComplianceOverviewTool - ", {
-      complianceId,
-      fields,
-    });
     return await aiGetComplianceOverview({ complianceId, fields });
   },
   {

@@ -5,7 +5,6 @@ import { getRoleSchema, getRolesSchema } from "@/types/ai/roles";
 
 export const getRolesTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getRolesTool - ", { page, query, sort, filters });
     return await getRoles({ page, query, sort, filters });
   },
   {
@@ -17,7 +16,6 @@ export const getRolesTool = tool(
 
 export const getRoleTool = tool(
   async ({ id }) => {
-    console.log("=> Invoking getRoleTool - ", { id });
     return await getRoleInfoById(id);
   },
   {

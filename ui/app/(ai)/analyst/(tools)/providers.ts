@@ -5,12 +5,6 @@ import { getProviderSchema, getProvidersSchema } from "@/types/ai/providers";
 
 export const getProvidersTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getProvidersTool - ", {
-      page,
-      query,
-      sort,
-      filters,
-    });
     return await getProviders({
       page: page,
       query: query,
@@ -28,7 +22,6 @@ export const getProvidersTool = tool(
 
 export const getProviderTool = tool(
   async ({ id }) => {
-    console.log("=> Invoking getProviderTool - ", { id });
     const formData = new FormData();
     formData.append("id", id);
     return await getProvider(formData);

@@ -5,7 +5,6 @@ import { getScanSchema, getScansSchema } from "@/types/ai/scans";
 
 export const getScansTool = tool(
   async ({ page, query, sort, filters }) => {
-    console.log("=> Invoking getScansTool - ", { page, query, sort, filters });
     const scans = await getScans({ page, query, sort, filters });
 
     return scans;
@@ -20,7 +19,6 @@ export const getScansTool = tool(
 
 export const getScanTool = tool(
   async ({ id }) => {
-    console.log("=> Invoking getScanTool - ", { id });
     return await getScan(id);
   },
   {

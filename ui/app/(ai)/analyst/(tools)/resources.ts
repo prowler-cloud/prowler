@@ -5,13 +5,6 @@ import { getResourceSchema, getResourcesSchema } from "@/types/ai/resources";
 
 export const getResourcesTool = tool(
   async ({ page, query, sort, filters, fields }) => {
-    console.log("=> Invoking getResourcesTool - ", {
-      page,
-      query,
-      sort,
-      filters,
-      fields,
-    });
     return await aiGetResources(page, query, sort, filters, fields);
   },
   {
@@ -23,7 +16,6 @@ export const getResourcesTool = tool(
 
 export const getResourceTool = tool(
   async ({ id, fields, include }) => {
-    console.log("=> Invoking getResourceTool - ", { id, fields, include });
     return await aiGetResource(id, fields, include);
   },
   {
