@@ -608,6 +608,7 @@ class M365Provider(Provider):
         client_secret=None,
         user=None,
         encrypted_password=None,
+        provider_id=None,
     ) -> Connection:
         """Test connection to M365 subscription.
 
@@ -702,6 +703,7 @@ class M365Provider(Provider):
             M365Provider.setup_powershell(
                 env_auth,
                 m365_credentials,
+                provider_id,
             )
 
             logger.info("M365 provider: Connection to PowerShell successful")
