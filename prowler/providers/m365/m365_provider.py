@@ -51,7 +51,6 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365SetUpSessionError,
     M365TenantIdAndClientIdNotBelongingToClientSecretError,
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
-    M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
@@ -176,7 +175,6 @@ class M365Provider(Provider):
                 client_secret=client_secret,
                 user=user,
                 encrypted_password=encrypted_password,
-                provider_id=self.identity.tenant_domain,
             )
 
         # Set up the M365 session
@@ -326,7 +324,7 @@ class M365Provider(Provider):
             if not user or not encrypted_password or not tenant_id:
                 raise M365MissingEnvironmentCredentialsError(
                     file=os.path.basename(__file__),
-                    message="M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_IDM365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth",
+                    message="M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth",
                 )
         else:
             if not tenant_id:
@@ -610,7 +608,6 @@ class M365Provider(Provider):
         client_secret=None,
         user=None,
         encrypted_password=None,
-        provider_id=None,
     ) -> Connection:
         """Test connection to M365 subscription.
 
@@ -676,7 +673,6 @@ class M365Provider(Provider):
                         client_secret=client_secret,
                         user="user",
                         encrypted_password="encrypted_password",
-                        provider_id=provider_id,
                     )
                 else:
                     m365_credentials = M365Provider.validate_static_credentials(
@@ -685,7 +681,6 @@ class M365Provider(Provider):
                         client_secret=client_secret,
                         user=user,
                         encrypted_password=encrypted_password,
-                        provider_id=provider_id,
                     )
 
             # Set up the M365 session
@@ -702,15 +697,6 @@ class M365Provider(Provider):
             GraphServiceClient(credentials=credentials)
 
             logger.info("M365 provider: Connection to MSGraph successful")
-
-            # Validate user domain belongs to tenant
-            if user and provider_id:
-                user_domain = user.split("@")[1]
-                if provider_id != user_domain:
-                    raise M365UserNotBelongingToTenantError(
-                        file=os.path.basename(__file__),
-                        message="The provided M365 User does not belong to the specified tenant.",
-                    )
 
             # Set up PowerShell credentials
             M365Provider.setup_powershell(
