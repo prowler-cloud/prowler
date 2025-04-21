@@ -1141,6 +1141,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.M365.value:
+                serializer = M365ProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1178,6 +1180,13 @@ class AzureProviderSecret(serializers.Serializer):
 
     class Meta:
         resource_name = "provider-secrets"
+
+
+class M365ProviderSecret(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
+    user = serializers.EmailField()
+    encrypted_password = serializers.CharField()
 
 
 class GCPProviderSecret(serializers.Serializer):
@@ -1305,6 +1314,35 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                     },
                 },
                 "required": ["client_id", "client_secret", "tenant_id"],
+            },
+            {
+                "type": "object",
+                "title": "M365 Static Credentials",
+                "properties": {
+                    "client_id": {
+                        "type": "string",
+                        "description": "The Azure application (client) ID for authentication in Azure AD.",
+                    },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret associated with the application (client) ID, providing "
+                        "secure access.",
+                    },
+                    "user": {
+                        "type": "email",
+                        "description": "User microsoft email address.",
+                    },
+                    "encrypted_password": {
+                        "type": "string",
+                        "description": "User password.",
+                    },
+                },
+                "required": [
+                    "client_id",
+                    "client_secret",
+                    "user",
+                    "encrypted_password",
+                ],
             },
             {
                 "type": "object",

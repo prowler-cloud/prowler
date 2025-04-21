@@ -191,6 +191,7 @@ class Provider(RowLevelSecurityProtectedModel):
         AZURE = "azure", _("Azure")
         GCP = "gcp", _("GCP")
         KUBERNETES = "kubernetes", _("Kubernetes")
+        M365 = "m365", _("M365")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -211,6 +212,19 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Azure provider ID must be a valid UUID.",
                 code="azure-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_m365_uid(value):
+        try:
+            val = UUID(value, version=4)
+            if str(val) != value:
+                raise ValueError
+        except ValueError:
+            raise ModelValidationError(
+                detail="M365 tenant ID must be a valid UUID.",
+                code="m365-uid",
                 pointer="/data/attributes/uid",
             )
 
