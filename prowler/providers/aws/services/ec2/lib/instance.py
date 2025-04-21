@@ -21,7 +21,9 @@ def get_instance_public_status(
     if instance.public_ip:
         status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 on public IP address {instance.public_ip} but it is placed in a private subnet {instance.subnet_id}."
         severity = Severity.high
-        if vpc_subnets[instance.subnet_id].public:
+        if instance.subnet_id not in vpc_subnets:
+            status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 on public IP address {instance.public_ip} and it is placed in an unknown subnet {instance.subnet_id}."
+        elif vpc_subnets[instance.subnet_id].public:
             status = f"Instance {instance.id} has {service} exposed to 0.0.0.0/0 on public IP address {instance.public_ip} in public subnet {instance.subnet_id}."
             severity = Severity.critical
 
