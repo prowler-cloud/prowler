@@ -1371,6 +1371,10 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     @api_key_decoded.setter
     def api_key_decoded(self, value):
         """Store the encrypted API key."""
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, value):
+            raise ValueError("Invalid OpenAI API key format. Must start with 'sk-'.")
         self.api_key = fernet.encrypt(value.encode())
 
     class Meta(RowLevelSecurityProtectedModel.Meta):

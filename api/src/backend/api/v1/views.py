@@ -2953,12 +2953,6 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create new AI configuration"""
-        if LighthouseConfig.objects.filter(tenant_id=request.tenant_id).exists():
-            return Response(
-                {"detail": "AI configuration already exists. Use PUT to update."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -2992,17 +2986,12 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
         instance = self.get_object()
 
         try:
-            # Handle different binary formats appropriately
-            if isinstance(instance.api_key, memoryview):
-                encrypted_bytes = instance.api_key.tobytes()
-            elif isinstance(instance.api_key, str):
-                encrypted_bytes = instance.api_key.encode()
-            else:
-                encrypted_bytes = instance.api_key
-
-            key = settings.SECRETS_ENCRYPTION_KEY.encode()
-            fernet_instance = Fernet(key)
-            decrypted_key = fernet_instance.decrypt(encrypted_bytes).decode()
+            decrypted_key = instance.api_key_decoded
+            if decrypted_key is None:
+                return Response(
+                    {"detail": "API key is invalid or missing."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             return Response(
                 {"api_key": decrypted_key},
