@@ -6,7 +6,7 @@ from prowler.providers.m365.services.defender.defender_client import defender_cl
 
 class defender_antispam_connection_filter_policy_safe_list_off(Check):
     """
-    Check if the Safe List is off in the Defender connection filter policy.
+    Check if the Safe List is off in the Antispam Connection Filter Policy.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -16,7 +16,7 @@ class defender_antispam_connection_filter_policy_safe_list_off(Check):
         """
         Execute the check to verify if the Safe List is off.
 
-        This method checks the Defender connection filter policy to determine if the
+        This method checks the Antispam Connection Filter Policy to determine if the
         Safe List is disabled.
 
         Returns:
@@ -28,15 +28,15 @@ class defender_antispam_connection_filter_policy_safe_list_off(Check):
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=policy,
-                resource_name="Defender Connection Filter Policy",
+                resource_name="Defender Antispam Connection Filter Policy",
                 resource_id=policy.identity,
             )
             report.status = "PASS"
-            report.status_extended = f"Safe List is off in the Defender connection filter policy {policy.identity}."
+            report.status_extended = f"Safe List is disabled in the Antispam Connection Filter Policy {policy.identity}."
 
             if policy.enable_safe_list:
                 report.status = "FAIL"
-                report.status_extended = f"Safe List is on in the Defender connection filter policy {policy.identity}."
+                report.status_extended = f"Safe List is not disabled in the Antispam Connection Filter Policy {policy.identity}."
 
             findings.append(report)
 

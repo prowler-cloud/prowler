@@ -42,10 +42,12 @@ class Test_defender_antispam_connection_filter_policy_safe_list_off:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Safe List is off in the Defender connection filter policy Default."
+                == "Safe List is disabled in the Antispam Connection Filter Policy Default."
             )
             assert result[0].resource == defender_client.connection_filter_policy.dict()
-            assert result[0].resource_name == "Defender Connection Filter Policy"
+            assert (
+                result[0].resource_name == "Defender Antispam Connection Filter Policy"
+            )
             assert result[0].resource_id == "Default"
             assert result[0].location == "global"
 
@@ -87,10 +89,12 @@ class Test_defender_antispam_connection_filter_policy_safe_list_off:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Safe List is on in the Defender connection filter policy Default."
+                == "Safe List is not disabled in the Antispam Connection Filter Policy Default."
             )
             assert result[0].resource == defender_client.connection_filter_policy.dict()
-            assert result[0].resource_name == "Defender Connection Filter Policy"
+            assert (
+                result[0].resource_name == "Defender Antispam Connection Filter Policy"
+            )
             assert result[0].resource_id == "Default"
             assert result[0].location == "global"
 

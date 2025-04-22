@@ -32,6 +32,7 @@ class Test_defender_antispam_connection_filter_policy_empty_ip_allowlist:
             defender_client.connection_filter_policy = ConnectionFilterPolicy(
                 ip_allow_list=[],
                 identity="Default",
+                enable_safe_list=False,
             )
 
             check = defender_antispam_connection_filter_policy_empty_ip_allowlist()
@@ -78,6 +79,7 @@ class Test_defender_antispam_connection_filter_policy_empty_ip_allowlist:
             defender_client.connection_filter_policy = ConnectionFilterPolicy(
                 ip_allow_list=["192.168.0.1", "10.0.0.5"],
                 identity="Default",
+                enable_safe_list=False,
             )
 
             check = defender_antispam_connection_filter_policy_empty_ip_allowlist()

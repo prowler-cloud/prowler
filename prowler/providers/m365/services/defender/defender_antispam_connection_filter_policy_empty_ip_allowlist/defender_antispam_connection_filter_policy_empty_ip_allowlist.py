@@ -6,7 +6,7 @@ from prowler.providers.m365.services.defender.defender_client import defender_cl
 
 class defender_antispam_connection_filter_policy_empty_ip_allowlist(Check):
     """
-    Check if the IP Allowlist is not used in the Defender connection filter policy.
+    Check if the IP Allowlist is not used in the Antispam Connection Filter Policy.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -16,7 +16,7 @@ class defender_antispam_connection_filter_policy_empty_ip_allowlist(Check):
         """
         Execute the check to verify if the IP Allowlist is not used.
 
-        This method checks the Defender connection filter policy to determine if the
+        This method checks the Antispam Connection Filter Policy to determine if the
         IP Allowlist is empty or undefined.
 
         Returns:

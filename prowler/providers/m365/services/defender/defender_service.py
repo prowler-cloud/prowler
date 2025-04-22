@@ -206,6 +206,7 @@ class AntiphishingRule(BaseModel):
 class ConnectionFilterPolicy(BaseModel):
     ip_allow_list: list
     identity: str
+    enable_safe_list: bool
 
 
 class DkimConfig(BaseModel):

@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_connection_filter_policy_safe_list_off",
-  "CheckTitle": "Ensure the connection filter safe list is off",
+  "CheckTitle": "Ensure the default connection filter policy has the SafeList setting disabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
