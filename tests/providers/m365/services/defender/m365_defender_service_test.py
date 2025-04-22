@@ -6,6 +6,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     AntiphishingPolicy,
     AntiphishingRule,
     Defender,
+    DkimConfig,
     MalwarePolicy,
     OutboundSpamPolicy,
     OutboundSpamRule,
@@ -66,6 +67,13 @@ def mock_defender_get_antiphising_rules(_):
             state="Disabled",
         ),
     }
+
+
+def mock_defender_get_dkim_config(_):
+    return [
+        DkimConfig(dkim_signing_enabled=True, id="domain1"),
+        DkimConfig(dkim_signing_enabled=False, id="domain2"),
+    ]
 
 
 def mock_defender_get_outbound_spam_filter_policy(_):
@@ -208,6 +216,28 @@ class Test_Defender_Service:
             antiphishing_rules = defender_client.antiphising_rules
             assert antiphishing_rules["Policy1"].state == "Enabled"
             assert antiphishing_rules["Policy2"].state == "Disabled"
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_dkim_config",
+        new=mock_defender_get_dkim_config,
+    )
+    def test_get_dkim_config(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            dkim_configs = defender_client.dkim_configurations
+            assert dkim_configs[0].dkim_signing_enabled is True
+            assert dkim_configs[0].id == "domain1"
+            assert dkim_configs[1].dkim_signing_enabled is False
+            assert dkim_configs[1].id == "domain2"
             defender_client.powershell.close()
 
     @patch(

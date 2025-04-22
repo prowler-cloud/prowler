@@ -305,3 +305,21 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
+
+    def get_dkim_config(self) -> dict:
+        """
+        Get DKIM Signing Configuration.
+
+        Retrieves the current DKIM signing configuration settings for Exchange Online.
+
+        Returns:
+            dict: DKIM signing configuration settings in JSON format.
+
+        Example:
+            >>> get_dkim_config()
+            {
+                "Id": "12345678-1234-1234-1234-123456789012",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-DkimSigningConfig | ConvertTo-Json")

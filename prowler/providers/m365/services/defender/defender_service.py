@@ -16,6 +16,7 @@ class Defender(M365Service):
         self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
         self.antiphishing_policies = self._get_antiphising_policy()
         self.antiphising_rules = self._get_antiphising_rules()
+        self.dkim_configurations = self._get_dkim_config()
         self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -93,6 +94,27 @@ class Defender(M365Service):
             )
         return antiphishing_rules
 
+    def _get_dkim_config(self):
+        logger.info("Microsoft365 - Getting DKIM settings...")
+        dkim_configs = []
+        try:
+            dkim_config = self.powershell.get_dkim_config()
+            if isinstance(dkim_config, dict):
+                dkim_config = [dkim_config]
+            for config in dkim_config:
+                if config:
+                    dkim_configs.append(
+                        DkimConfig(
+                            dkim_signing_enabled=config.get("Enabled", False),
+                            id=config.get("Id", ""),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return dkim_configs
+
     def _get_outbound_spam_filter_policy(self):
         logger.info("Microsoft365 - Getting Defender outbound spam filter policy...")
         outbound_spam_policies = {}
@@ -161,6 +183,11 @@ class AntiphishingPolicy(BaseModel):
 
 class AntiphishingRule(BaseModel):
     state: str
+
+
+class DkimConfig(BaseModel):
+    dkim_signing_enabled: bool
+    id: str
 
 
 class OutboundSpamPolicy(BaseModel):
