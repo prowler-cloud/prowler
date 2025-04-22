@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "Teams Settings",
+  "ResourceType": "Teams Global Meeting Policy",
   "Description": "Ensure individuals who are not sent or forwarded a meeting invite will not be able to join the meeting automatically.",
   "Risk": "Allowing anonymous users to join meetings can lead to unauthorized access, information leakage, and potential disruptions, especially in meetings involving sensitive data.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
