@@ -37,6 +37,7 @@ class cloudtrail_multi_region_enabled(Check):
                     report.status_extended = (
                         "No CloudTrail trails enabled with logging were found."
                     )
+                    report.region = region
                     report.resource_arn = cloudtrail_client._get_trail_arn_template(
                         region
                     )
