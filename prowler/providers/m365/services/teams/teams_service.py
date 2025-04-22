@@ -46,6 +46,7 @@ class Teams(M365Service):
             if settings:
                 user_settings = UserSettings(
                     allow_external_access=settings.get("AllowFederatedUsers", True),
+                    allow_teams_consumer=settings.get("AllowTeamsConsumer", True),
                 )
         except Exception as error:
             logger.error(
@@ -69,3 +70,4 @@ class TeamsSettings(BaseModel):
 
 class UserSettings(BaseModel):
     allow_external_access: bool = True
+    allow_teams_consumer: bool = True
