@@ -52,10 +52,13 @@ class Teams(M365Service):
                         "AllowAnonymousUsersToStartMeeting", True
                     ),
                     allow_external_users_to_bypass_lobby=global_meeting_policy.get(
-                        "AutoAdmittedUsers", "Everyone"
+                        "AutoAdmittedUsers", "EnabledForEveryone"
                     ),
                     allow_pstn_users_to_bypass_lobby=global_meeting_policy.get(
                         "AllowPSTNUsersToBypassLobby", True
+                    ),
+                    meeting_chat_enabled_type=global_meeting_policy.get(
+                        "MeetingChatEnabledType", "EnabledForEveryone"
                     ),
                 )
         except Exception as error:
@@ -83,3 +86,4 @@ class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_start_meeting: bool = True
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
+    meeting_chat_enabled_type: str = "EnabledForEveryone"
