@@ -2802,7 +2802,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return LighthouseConfigCreateSerializer
-        elif self.action in ["update", "partial_update"]:
+        elif self.action == "partial_update":
             return LighthouseConfigUpdateSerializer
         return LighthouseConfigSerializer
 
