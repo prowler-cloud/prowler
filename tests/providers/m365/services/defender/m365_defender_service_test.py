@@ -5,6 +5,7 @@ from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.defender.defender_service import (
     AntiphishingPolicy,
     AntiphishingRule,
+    ConnectionFilterPolicy,
     Defender,
     DkimConfig,
     MalwarePolicy,
@@ -67,6 +68,13 @@ def mock_defender_get_antiphising_rules(_):
             state="Disabled",
         ),
     }
+
+
+def mock_defender_get_connection_filter_policy(_):
+    return ConnectionFilterPolicy(
+        ip_allow_list=[],
+        identity="Default",
+    )
 
 
 def mock_defender_get_dkim_config(_):
@@ -216,6 +224,26 @@ class Test_Defender_Service:
             antiphishing_rules = defender_client.antiphising_rules
             assert antiphishing_rules["Policy1"].state == "Enabled"
             assert antiphishing_rules["Policy2"].state == "Disabled"
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_connection_filter_policy",
+        new=mock_defender_get_connection_filter_policy,
+    )
+    def test__get_connection_filter_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            connection_filter_policy = defender_client.connection_filter_policy
+            assert connection_filter_policy.ip_allow_list == []
+            assert connection_filter_policy.identity == "Default"
             defender_client.powershell.close()
 
     @patch(
