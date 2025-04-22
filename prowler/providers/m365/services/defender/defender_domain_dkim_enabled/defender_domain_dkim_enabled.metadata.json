@@ -1,5 +1,5 @@
 {
-  "Provider": "microsoft365",
+  "Provider": "m365",
   "CheckID": "defender_domain_dkim_enabled",
   "CheckTitle": "Ensure that DKIM is enabled for all Exchange Online Domains",
   "CheckType": [],
