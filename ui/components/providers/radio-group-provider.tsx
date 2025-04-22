@@ -7,9 +7,12 @@ import { z } from "zod";
 
 import { addProviderFormSchema } from "@/types";
 
-import { AWSProviderBadge, AzureProviderBadge } from "../icons/providers-badge";
-import { GCPProviderBadge } from "../icons/providers-badge/GCPProviderBadge";
-import { KS8ProviderBadge } from "../icons/providers-badge/KS8ProviderBadge";
+import {
+  AWSProviderBadge,
+  AzureProviderBadge,
+  GCPProviderBadge,
+  KS8ProviderBadge,
+} from "../icons/providers-badge";
 import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
 
