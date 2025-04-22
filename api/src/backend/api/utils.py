@@ -95,11 +95,6 @@ def get_prowler_provider_kwargs(provider: Provider) -> dict:
             **prowler_provider_kwargs,
             "subscription_ids": [provider.uid],
         }
-    elif provider.provider == Provider.ProviderChoices.M365.value:
-        prowler_provider_kwargs = {
-            **prowler_provider_kwargs,
-            "domain_id": provider.uid,
-        }
     elif provider.provider == Provider.ProviderChoices.GCP.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
@@ -143,11 +138,6 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
-
-    if provider.provider == Provider.ProviderChoices.M365.value:
-        return prowler_provider.test_connection(
-            **prowler_provider_kwargs, domain_id=provider.uid, raise_on_exception=False
-        )
 
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
