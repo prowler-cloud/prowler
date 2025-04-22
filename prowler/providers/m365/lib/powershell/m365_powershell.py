@@ -188,6 +188,43 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
 
+    def get_outbound_spam_filter_policy(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Policy.
+
+        Retrieves the current Defender outbound spam filter policy settings.
+
+        Returns:
+            dict: Outbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_policy()
+            {
+                "NotifyOutboundSpam": true,
+                "BccSuspiciousOutboundMail": true,
+                "BccSuspiciousOutboundAdditionalRecipients": [],
+                "NotifyOutboundSpamRecipients": []
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json")
+
+    def get_outbound_spam_filter_rule(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Rule.
+
+        Retrieves the current Defender outbound spam filter rule settings.
+
+        Returns:
+            dict: Outbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_rule()
+            {
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+
     def get_antiphishing_policy(self) -> dict:
         """
         Get Defender Antiphishing Policy.
