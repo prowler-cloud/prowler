@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 389 or 636 (LDAP).",
+      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 139 or 445 (CIFS).",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
     }
   },

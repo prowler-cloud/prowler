@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -10,9 +12,12 @@ class Defender(M365Service):
         super().__init__(provider)
         self.powershell.connect_exchange_online()
         self.malware_policies = self._get_malware_filter_policy()
+        self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
+        self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
         self.antiphishing_policies = self._get_antiphising_policy()
         self.antiphising_rules = self._get_antiphising_rules()
         self.connection_filter_policy = self._get_connection_filter_policy()
+        self.dkim_configurations = self._get_dkim_config()
         self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -25,7 +30,7 @@ class Defender(M365Service):
             for policy in malware_policy:
                 if policy:
                     malware_policies.append(
-                        DefenderMalwarePolicy(
+                        MalwarePolicy(
                             enable_file_filter=policy.get("EnableFileFilter", True),
                             identity=policy.get("Identity", ""),
                             enable_internal_sender_admin_notifications=policy.get(
@@ -101,15 +106,81 @@ class Defender(M365Service):
                     identity=policy.get("Identity", ""),
                     enable_safe_list=policy.get("EnableSafeList", False),
                 )
-
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return connection_filter_policy
 
+    def _get_dkim_config(self):
+        logger.info("Microsoft365 - Getting DKIM settings...")
+        dkim_configs = []
+        try:
+            dkim_config = self.powershell.get_dkim_config()
+            if isinstance(dkim_config, dict):
+                dkim_config = [dkim_config]
+            for config in dkim_config:
+                if config:
+                    dkim_configs.append(
+                        DkimConfig(
+                            dkim_signing_enabled=config.get("Enabled", False),
+                            id=config.get("Id", ""),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return dkim_configs
 
-class DefenderMalwarePolicy(BaseModel):
+    def _get_outbound_spam_filter_policy(self):
+        logger.info("Microsoft365 - Getting Defender outbound spam filter policy...")
+        outbound_spam_policies = {}
+        try:
+            outbound_spam_policy = self.powershell.get_outbound_spam_filter_policy()
+            if isinstance(outbound_spam_policy, dict):
+                outbound_spam_policy = [outbound_spam_policy]
+            for policy in outbound_spam_policy:
+                if policy:
+                    outbound_spam_policies[policy.get("Name", "")] = OutboundSpamPolicy(
+                        notify_sender_blocked=policy.get("NotifyOutboundSpam", True),
+                        notify_limit_exceeded=policy.get(
+                            "BccSuspiciousOutboundMail", True
+                        ),
+                        notify_limit_exceeded_addresses=policy.get(
+                            "BccSuspiciousOutboundAdditionalRecipients", []
+                        ),
+                        notify_sender_blocked_addresses=policy.get(
+                            "NotifyOutboundSpamRecipients", []
+                        ),
+                        default=policy.get("IsDefault", False),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return outbound_spam_policies
+
+    def _get_outbound_spam_filter_rule(self):
+        logger.info("Microsoft365 - Getting Defender outbound spam filter rule...")
+        outbound_spam_rules = {}
+        try:
+            outbound_spam_rule = self.powershell.get_outbound_spam_filter_rule()
+            if isinstance(outbound_spam_rule, dict):
+                outbound_spam_rule = [outbound_spam_rule]
+            for rule in outbound_spam_rule:
+                if rule:
+                    outbound_spam_rules[rule.get("Name", "")] = OutboundSpamRule(
+                        state=rule.get("State", "Disabled"),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return outbound_spam_rules
+
+
+class MalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
     enable_internal_sender_admin_notifications: bool
@@ -135,4 +206,20 @@ class AntiphishingRule(BaseModel):
 class ConnectionFilterPolicy(BaseModel):
     ip_allow_list: list
     identity: str
-    enable_safe_list: bool
+
+
+class DkimConfig(BaseModel):
+    dkim_signing_enabled: bool
+    id: str
+
+
+class OutboundSpamPolicy(BaseModel):
+    notify_sender_blocked: bool
+    notify_limit_exceeded: bool
+    notify_limit_exceeded_addresses: List[str]
+    notify_sender_blocked_addresses: List[str]
+    default: bool
+
+
+class OutboundSpamRule(BaseModel):
+    state: str
