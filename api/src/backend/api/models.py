@@ -1350,8 +1350,13 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     def api_key_decoded(self):
         """Return the decrypted API key."""
         try:
-            return fernet.decrypt(self.api_key).decode()
-        except Exception:
+            decrypted_key = fernet.decrypt(self.api_key)
+            return decrypted_key.decode()
+        except InvalidToken:
+            logger.warning("Failed to decrypt API key: invalid token.")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error while decrypting API key: {e}")
             return None
 
     @api_key_decoded.setter
