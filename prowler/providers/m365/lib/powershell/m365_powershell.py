@@ -205,6 +205,43 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
 
+    def get_outbound_spam_filter_policy(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Policy.
+
+        Retrieves the current Defender outbound spam filter policy settings.
+
+        Returns:
+            dict: Outbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_policy()
+            {
+                "NotifyOutboundSpam": true,
+                "BccSuspiciousOutboundMail": true,
+                "BccSuspiciousOutboundAdditionalRecipients": [],
+                "NotifyOutboundSpamRecipients": []
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json")
+
+    def get_outbound_spam_filter_rule(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Rule.
+
+        Retrieves the current Defender outbound spam filter rule settings.
+
+        Returns:
+            dict: Outbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_rule()
+            {
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+
     def get_antiphishing_policy(self) -> dict:
         """
         Get Defender Antiphishing Policy.
@@ -285,3 +322,41 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
+
+    def get_connection_filter_policy(self) -> dict:
+        """
+        Get Exchange Online Connection Filter Policy.
+
+        Retrieves the current connection filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Connection filter policy settings in JSON format.
+
+        Example:
+            >>> get_connection_filter_policy()
+            {
+                "Identity": "Default",
+                "IPAllowList": []"
+            }
+        """
+        return self.execute(
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+        )
+
+    def get_dkim_config(self) -> dict:
+        """
+        Get DKIM Signing Configuration.
+
+        Retrieves the current DKIM signing configuration settings for Exchange Online.
+
+        Returns:
+            dict: DKIM signing configuration settings in JSON format.
+
+        Example:
+            >>> get_dkim_config()
+            {
+                "Id": "12345678-1234-1234-1234-123456789012",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-DkimSigningConfig | ConvertTo-Json")

@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_domain_dkim_enabled",
+  "CheckTitle": "Ensure that DKIM is enabled for all Exchange Online Domains",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Online Domain",
+  "Description": "This check ensures that DomainKeys Identified Mail (DKIM) is enabled for all Exchange Online domains. DKIM is a crucial authentication method that, along with SPF and DMARC, helps prevent attackers from sending spoofed emails that appear to originate from your domain. By adding a digital signature to outbound emails, DKIM allows receiving email systems to verify the legitimacy of incoming messages.",
+  "Risk": "If DKIM is not enabled, attackers may send spoofed emails that appear to originate from your domain, potentially leading to phishing attacks and damage to your domain's reputation.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/use-dkim-to-validate-outbound-email?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-DkimSigningConfig -Identity <domainName> -Enabled $True",
+      "NativeIaC": "",
+      "Other": "1. After DNS records are created, enable DKIM signing in Microsoft 365 Defender. 2. Navigate to Microsoft 365 Defender at https://security.microsoft.com/. 3. Go to Email & collaboration > Policies & rules > Threat policies. 4. Under Rules, select Email authentication settings. 5. Choose DKIM, click on each domain, and enable 'Sign messages for this domain with DKIM signature'.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable DKIM for all your Exchange Online domains to ensure emails are cryptographically signed and to protect against email spoofing.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-dkimsigningconfig?view=exchange-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
