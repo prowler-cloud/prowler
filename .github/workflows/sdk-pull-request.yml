@@ -107,11 +107,102 @@ jobs:
         run: |
           /tmp/hadolint Dockerfile --ignore=DL3013
 
-      - name: Test with pytest
+      # Test AWS
+      - name: AWS - Check if any file has changed
+        id: aws-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/aws
+            ./tests/providers/aws
+
+      - name: AWS - Test
+        if: steps.aws-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+
+      # Test Azure
+      - name: Azure - Check if any file has changed
+        id: azure-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/azure
+            ./tests/providers/azure
+
+      - name: Azure - Test
+        if: steps.azure-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/azure --cov-report=xml:azure_coverage.xml tests/providers/azure
+
+      # Test GCP
+      - name: GCP - Check if any file has changed
+        id: gcp-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/gcp
+            ./tests/providers/gcp
+
+      - name: GCP - Test
+        if: steps.gcp-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/gcp --cov-report=xml:gcp_coverage.xml tests/providers/gcp
+
+      # Test Kubernetes
+      - name: Kubernetes - Check if any file has changed
+        id: kubernetes-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/kubernetes
+            ./tests/providers/kubernetes
+
+      - name: Kubernetes - Test
+        if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml:kubernetes_coverage.xml tests/providers/kubernetes
+
+      # Test NHN
+      - name: NHN - Check if any file has changed
+        id: nhn-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/nhn
+            ./tests/providers/nhn
+
+      - name: NHN - Test
+        if: steps.nhn-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/nhn --cov-report=xml:nhn_coverage.xml tests/providers/nhn
+
+      # Test M365
+      - name: M365 - Check if any file has changed
+        id: m365-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/m365
+            ./tests/providers/m365
+
+      - name: M365 - Test
+        if: steps.m365-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml:m365_coverage.xml tests/providers/m365
+
+      # Common Tests
+      - name: Lib - Test
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
+          poetry run pytest -n auto --cov=./prowler/lib --cov-report=xml:lib_coverage.xml tests/lib
 
+      - name: Config - Test
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/config --cov-report=xml:config_coverage.xml tests/config
+
+      # Codecov
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
@@ -119,3 +210,4 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: prowler
+          files: ./aws_coverage.xml,./azure_coverage.xml,./gcp_coverage.xml,./kubernetes_coverage.xml,./nhn_coverage.xml,./m365_coverage.xml,./lib_coverage.xml,./config_coverage.xml
