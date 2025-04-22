@@ -79,7 +79,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         grant_queries = ""
         for statement in self.statements:
             # SELECT and DELETE uses USING since applies to rows selected
-            # INSERT uses WITH CHECK becauseonly applies in cases where records are being added
+            # INSERT uses WITH CHECK because only applies in cases where records are being added
             # UPDATE requires USING and WITH CHECK but if only a USING clause is specified, then that clause will be used for both USING and WITH CHECK cases.
             # https://www.postgresql.org/docs/current/sql-createpolicy.html
             clause = f"{'WITH CHECK' if statement == 'INSERT' else 'USING'}"
