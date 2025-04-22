@@ -4,6 +4,7 @@ from unittest.mock import patch
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.exchange.exchange_service import (
     Exchange,
+    ExternalMailConfig,
     MailboxAuditConfig,
     Organization,
 )
@@ -18,6 +19,19 @@ def mock_exchange_get_mailbox_audit_config(_):
     return [
         MailboxAuditConfig(name="test", id="test", audit_bypass_enabled=False),
         MailboxAuditConfig(name="test2", id="test2", audit_bypass_enabled=True),
+    ]
+
+
+def mock_exchange_get_external_mail_config(_):
+    return [
+        ExternalMailConfig(
+            identity="test",
+            external_mail_tag_enabled=True,
+        ),
+        ExternalMailConfig(
+            identity="test2",
+            external_mail_tag_enabled=False,
+        ),
     ]
 
 
@@ -82,5 +96,29 @@ class Test_Exchange_Service:
             assert mailbox_audit_config[1].name == "test2"
             assert mailbox_audit_config[1].id == "test2"
             assert mailbox_audit_config[1].audit_bypass_enabled is True
+
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_external_mail_config",
+        new=mock_exchange_get_external_mail_config,
+    )
+    def test_get_external_mail_config(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            external_mail_config = exchange_client.external_mail_config
+            assert len(external_mail_config) == 2
+            assert external_mail_config[0].identity == "test"
+            assert external_mail_config[0].external_mail_tag_enabled is True
+            assert external_mail_config[1].identity == "test2"
+            assert external_mail_config[1].external_mail_tag_enabled is False
 
             exchange_client.powershell.close()
