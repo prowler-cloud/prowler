@@ -19,6 +19,7 @@ from prowler.config.config import (
 from prowler.providers.common.models import Connection
 from prowler.providers.m365.exceptions.exceptions import (
     M365HTTPResponseError,
+    M365InvalidProviderIdError,
     M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
     M365NotValidClientIdError,
@@ -453,7 +454,9 @@ class TestM365Provider:
             return_value=True,
         ):
             result = M365Provider.setup_powershell(
-                env_auth=False, m365_credentials=credentials_dict
+                env_auth=False,
+                m365_credentials=credentials_dict,
+                provider_id="test_provider_id",
             )
 
             assert result.user == credentials_dict["user"]
@@ -582,3 +585,40 @@ class TestM365Provider:
             "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth"
             in str(exception.value)
         )
+
+    def test_test_connection_invalid_provider_id(self):
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ValidateStaticCredentials to avoid real API calls
+            mock_validate_static_credentials.return_value = None
+
+            user_domain = "contoso.com"
+            provider_id = "Test.com"
+
+            with pytest.raises(M365InvalidProviderIdError) as exception:
+                M365Provider.test_connection(
+                    tenant_id=str(uuid4()),
+                    region="M365Global",
+                    raise_on_exception=True,
+                    client_id=str(uuid4()),
+                    client_secret=str(uuid4()),
+                    user=f"user@{user_domain}",
+                    encrypted_password="test_password",
+                    provider_id=provider_id,
+                )
+
+            assert exception.type == M365InvalidProviderIdError
+            assert (
+                f"Provider ID {provider_id} does not match Application tenant domain {user_domain}"
+                in str(exception.value)
+            )

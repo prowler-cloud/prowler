@@ -613,9 +613,9 @@ class M365Provider(Provider):
         encrypted_password=None,
         provider_id=None,
     ) -> Connection:
-        """Test connection to M365 subscription.
+        """Test connection to M365 tenant and PowerShell modules.
 
-        Test the connection to an M365 subscription using the provided credentials.
+        Test the connection to an M365 tenant and PowerShell modules using the provided credentials.
 
         Args:
 
@@ -643,7 +643,7 @@ class M365Provider(Provider):
             M365InteractiveBrowserCredentialError: If there is an error in retrieving the M365 credentials using browser authentication.
             M365HTTPResponseError: If there is an HTTP response error.
             M365ConfigCredentialsError: If there is an error in configuring the M365 credentials from a dictionary.
-
+            M365InvalidProviderIdError: If the provider ID does not match the application tenant domain.
 
         Examples:
             >>> M365Provider.test_connection(az_cli_auth=True)
@@ -713,6 +713,15 @@ class M365Provider(Provider):
                 logger.info("M365 provider: PowerShell authentication not required")
 
             logger.info("M365 provider: Connection to PowerShell successful")
+
+            # Check that user domain, provider_id and Graph client tenant_domain are the same
+            if user and encrypted_password:
+                user_domain = user.split("@")[1]
+                if provider_id and user_domain != provider_id:
+                    raise M365InvalidProviderIdError(
+                        file=os.path.basename(__file__),
+                        message=f"Provider ID {provider_id} does not match Application tenant domain {user_domain}",
+                    )
 
             return Connection(is_connected=True)
 
