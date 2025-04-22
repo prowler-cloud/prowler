@@ -170,6 +170,104 @@ class M365PowerShell(PowerShellSession):
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
         )
 
+    def get_malware_filter_policy(self) -> dict:
+        """
+        Get Defender Malware Filter Policy.
+
+        Retrieves the current Defender anti-malware filter policy settings.
+
+        Returns:
+            dict: Malware filter policy settings in JSON format.
+
+        Example:
+            >>> get_malware_filter_policy()
+            {
+                "EnableFileFilter": true,
+                "Identity": "Default"
+            }
+        """
+        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
+
+    def get_outbound_spam_filter_policy(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Policy.
+
+        Retrieves the current Defender outbound spam filter policy settings.
+
+        Returns:
+            dict: Outbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_policy()
+            {
+                "NotifyOutboundSpam": true,
+                "BccSuspiciousOutboundMail": true,
+                "BccSuspiciousOutboundAdditionalRecipients": [],
+                "NotifyOutboundSpamRecipients": []
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json")
+
+    def get_outbound_spam_filter_rule(self) -> dict:
+        """
+        Get Defender Outbound Spam Filter Rule.
+
+        Retrieves the current Defender outbound spam filter rule settings.
+
+        Returns:
+            dict: Outbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_outbound_spam_filter_rule()
+            {
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+
+    def get_antiphishing_policy(self) -> dict:
+        """
+        Get Defender Antiphishing Policy.
+
+        Retrieves the current Defender anti-phishing policy settings.
+
+        Returns:
+            dict: Antiphishing policy settings in JSON format.
+
+        Example:
+            >>> get_antiphishing_policy()
+            {
+                "EnableSpoofIntelligence": true,
+                "AuthenticationFailAction": "Quarantine",
+                "DmarcRejectAction": "Quarantine",
+                "DmarcQuarantineAction": "Quarantine",
+                "EnableFirstContactSafetyTips": true,
+                "EnableUnauthenticatedSender": true,
+                "EnableViaTag": true,
+                "HonorDmarcPolicy": true,
+                "IsDefault": false
+            }
+        """
+        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json")
+
+    def get_antiphishing_rules(self) -> dict:
+        """
+        Get Defender Antiphishing Rules.
+
+        Retrieves the current Defender anti-phishing rules.
+
+        Returns:
+            dict: Antiphishing rules in JSON format.
+
+        Example:
+            >>> get_antiphishing_rules()
+            {
+                "Name": "Rule1",
+                "State": Enabled,
+            }
+        """
+        return self.execute("Get-AntiPhishRule | ConvertTo-Json")
+
     def get_organization_config(self) -> dict:
         """
         Get Exchange Online Organization Configuration.
