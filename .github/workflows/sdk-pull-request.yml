@@ -119,6 +119,13 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml tests/providers/aws
 
+      - name: AWS - Upload coverage to Codecov
+        if: steps.aws-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
+
       # Test Azure
       - name: Azure - Check if any file has changed
         id: azure-changed-files
@@ -130,6 +137,13 @@ jobs:
         if: steps.azure-changed-files.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/azure --cov-report=xml tests/providers/azure
+
+      - name: Azure - Upload coverage to Codecov
+        if: steps.azure-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
 
       # Test GCP
       - name: GCP - Check if any file has changed
@@ -143,6 +157,13 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/gcp --cov-report=xml tests/providers/gcp
 
+      - name: GCP - Upload coverage to Codecov
+        if: steps.gcp-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
+
       # Test Kubernetes
       - name: Kubernetes - Check if any file has changed
         id: kubernetes-changed-files
@@ -154,6 +175,13 @@ jobs:
         if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml tests/providers/kubernetes
+
+      - name: Kubernetes - Upload coverage to Codecov
+        if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
 
       # Test NHN
       - name: NHN - Check if any file has changed
@@ -167,6 +195,12 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/nhn --cov-report=xml tests/providers/nhn
 
+      - name: NHN - Upload coverage to Codecov
+        if: steps.nhn-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
 
       # Test M365
       - name: M365 - Check if any file has changed
@@ -180,14 +214,37 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml tests/providers/m365
 
+      - name: M365 - Upload coverage to Codecov
+        if: steps.m365-changed-files.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
+
       # Common Tests
       - name: Lib - Test
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./prowler/lib --cov-report=xml tests/lib
 
+      - name: Lib - Upload coverage to Codecov
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
+
       - name: Config - Test
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./prowler/config --cov-report=xml tests/config
+
+      - name: Config - Upload coverage to Codecov
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: prowler
 
       # Codecov
       - name: Upload coverage reports to Codecov
@@ -197,5 +254,3 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: prowler
-
-
