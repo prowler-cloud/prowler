@@ -71,7 +71,7 @@ def get_prowler_threatscore_table(
                                 )
                             else:
                                 threatscore_compliance_table["Score"].append(
-                                    f"{orange_color}{score_per_sub_pillar[attribute.SubSection] / number_findings_per_sub_pillar[attribute.SubSection]:.2f}{Style.RESET_ALL}"
+                                    f"{orange_color}{score_per_sub_pillar[attribute.SubSection] / number_findings_per_sub_pillar[attribute.SubSection]:.2f}/5{Style.RESET_ALL}"
                                 )
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
@@ -103,6 +103,7 @@ def get_prowler_threatscore_table(
                 threatscore_compliance_table["Sub-Pillar"] = list(sub_pillars_sorted)
                 threatscore_compliance_table["Pillar"] = list(pillars_sorted)
                 threatscore_compliance_table["Score"] = list(scores_sorted)
+
                 print(
                     f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                 )
