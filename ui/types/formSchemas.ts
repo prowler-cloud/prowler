@@ -81,6 +81,12 @@ export const addProviderFormSchema = z
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
+        providerType: z.literal("m365"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
         providerType: z.literal("gcp"),
         providerAlias: z.string(),
         providerUid: z.string(),
@@ -128,7 +134,19 @@ export const addCredentialsFormSchema = (providerType: string) =>
                   .string()
                   .nonempty("Kubeconfig Content is required"),
               }
-            : {}),
+            : providerType === "m365"
+              ? {
+                  client_id: z.string().nonempty("Client ID is required"),
+                  client_secret: z
+                    .string()
+                    .nonempty("Client Secret is required"),
+                  tenant_id: z.string().nonempty("Tenant ID is required"),
+                  user: z.string().nonempty("User is required"),
+                  encrypted_password: z
+                    .string()
+                    .nonempty("Encrypted Password is required"),
+                }
+              : {}),
   });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
