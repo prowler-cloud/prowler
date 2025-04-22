@@ -393,7 +393,7 @@ class M365Provider(Provider):
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
-                provider_id=m365_credentials.get("provider_id", ""),
+                provider_id=provider_id,
             )
         elif env_auth:
             m365_user = getenv("M365_USER")
