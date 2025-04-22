@@ -1343,7 +1343,9 @@ class Test_Parser:
             )
 
     def test_validate_bucket_valid_bucket_names(self):
-        valid_bucket_names = ["bucket-name" "test" "test-test-test" "test.test.test"]
+        valid_bucket_names = [
+            "bucket-name" "test" "test-test-test" "test.test.test" "abc"
+        ]
         for bucket_name in valid_bucket_names:
             assert validate_bucket(bucket_name) == bucket_name
 
