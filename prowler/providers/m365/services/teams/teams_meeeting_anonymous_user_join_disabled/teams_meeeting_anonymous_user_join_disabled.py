@@ -31,10 +31,7 @@ class teams_meeeting_anonymous_user_join_disabled(Check):
             report.status = "FAIL"
             report.status_extended = "Anonymous Teams users can join meetings."
 
-            if (
-                global_meeting_policy
-                and not global_meeting_policy.allow_anonymous_users_to_join_meeting
-            ):
+            if not global_meeting_policy.allow_anonymous_users_to_join_meeting:
                 report.status = "PASS"
                 report.status_extended = "Anonymous Teams users can not join meetings."
 
