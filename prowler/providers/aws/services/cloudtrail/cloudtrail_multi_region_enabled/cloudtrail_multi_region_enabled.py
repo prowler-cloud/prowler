@@ -29,6 +29,10 @@ class cloudtrail_multi_region_enabled(Check):
                             break
                 # If there are no trails logging it is needed to store the FAIL once all the trails have been checked
                 if not trail_is_logging:
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(),
+                        resource={},
+                    )
                     report.status = "FAIL"
                     report.status_extended = (
                         "No CloudTrail trails enabled with logging were found."
