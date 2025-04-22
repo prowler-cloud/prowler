@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_external_users_cannot_start_conversations",
+  "CheckTitle": "Ensure external users cannot start conversations.",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Teams Settings",
+  "Description": "Ensure external users cannot initiate conversations.",
+  "Risk": "Allowing unmanaged external Teams users to initiate conversations increases the risk of phishing, malware distribution such as DarkGate, social engineering attacks like those by Midnight Blizzard, GIFShell exploitation, and username enumeration.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTenantFederationConfiguration -AllowTeamsConsumerInbound $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com/. 2. Click to expand Users select External access. 3. Scroll to Teams accounts not managed by an organization. 4. Uncheck External users with Teams accounts not managed by an organization can contact users in my organization. 5. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the ability for external Teams users not managed by an organization to initiate conversations by unchecking the option that permits them to contact users in your organization. This provides an added layer of protection, especially if exceptions are made to allow limited communication with unmanaged users.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

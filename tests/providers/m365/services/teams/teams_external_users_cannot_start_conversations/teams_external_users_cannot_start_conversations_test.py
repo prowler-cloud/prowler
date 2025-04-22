@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_teams_unmanaged_communication_disabled:
+class Test_teams_external_users_cannot_start_conversations:
     def test_no_user_settings(self):
         teams_client = mock.MagicMock()
         teams_client.audited_tenant = "audited_tenant"
@@ -19,15 +19,15 @@ class Test_teams_unmanaged_communication_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled import (
-                teams_unmanaged_communication_disabled,
+            from prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations import (
+                teams_external_users_cannot_start_conversations,
             )
 
-            check = teams_unmanaged_communication_disabled()
+            check = teams_external_users_cannot_start_conversations()
             result = check.execute()
             assert len(result) == 0
 
@@ -45,26 +45,26 @@ class Test_teams_unmanaged_communication_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_service import UserSettings
-            from prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled import (
-                teams_unmanaged_communication_disabled,
+            from prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations import (
+                teams_external_users_cannot_start_conversations,
             )
+            from prowler.providers.m365.services.teams.teams_service import UserSettings
 
             teams_client.user_settings = UserSettings(
-                allow_teams_consumer=True,
+                allow_teams_consumer_inbound=True,
             )
 
-            check = teams_unmanaged_communication_disabled()
+            check = teams_external_users_cannot_start_conversations()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Teams users can communicate with unmanaged users."
+                == "External Teams users can initiate conversations."
             )
             assert result[0].resource == teams_client.user_settings.dict()
             assert result[0].resource_name == "Teams User Settings"
@@ -85,26 +85,26 @@ class Test_teams_unmanaged_communication_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_service import UserSettings
-            from prowler.providers.m365.services.teams.teams_unmanaged_communication_disabled.teams_unmanaged_communication_disabled import (
-                teams_unmanaged_communication_disabled,
+            from prowler.providers.m365.services.teams.teams_external_users_cannot_start_conversations.teams_external_users_cannot_start_conversations import (
+                teams_external_users_cannot_start_conversations,
             )
+            from prowler.providers.m365.services.teams.teams_service import UserSettings
 
             teams_client.user_settings = UserSettings(
-                allow_teams_consumer=False,
+                allow_teams_consumer_inbound=False,
             )
 
-            check = teams_unmanaged_communication_disabled()
+            check = teams_external_users_cannot_start_conversations()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Teams users cannot communicate with unmanaged users."
+                == "External Teams users cannot initiate conversations."
             )
             assert result[0].resource == teams_client.user_settings.dict()
             assert result[0].resource_name == "Teams User Settings"
