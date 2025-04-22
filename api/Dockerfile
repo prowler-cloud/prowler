@@ -4,7 +4,7 @@ LABEL maintainer="https://github.com/prowler-cloud/api"
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc python3-dev \
+    gcc python3-dev bash \
     libcurl4-openssl-dev ca-certificates less ncurses-base \
     krb5-multidev libgcc-s1 gettext libssl3 \
     libstdc++6 tzdata liburcu8 zlib1g libicu72 curl openssh-client \
