@@ -16,6 +16,7 @@ class Defender(M365Service):
         self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
         self.antiphishing_policies = self._get_antiphising_policy()
         self.antiphising_rules = self._get_antiphising_rules()
+        self.connection_filter_policy = self._get_connection_filter_policy()
         self.dkim_configurations = self._get_dkim_config()
         self.powershell.close()
 
@@ -93,6 +94,22 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return antiphishing_rules
+
+    def _get_connection_filter_policy(self):
+        logger.info("Microsoft365 - Getting connection filter policy...")
+        connection_filter_policy = None
+        try:
+            policy = self.powershell.get_connection_filter_policy()
+            if policy:
+                connection_filter_policy = ConnectionFilterPolicy(
+                    ip_allow_list=policy.get("IPAllowList", []),
+                    identity=policy.get("Identity", ""),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return connection_filter_policy
 
     def _get_dkim_config(self):
         logger.info("Microsoft365 - Getting DKIM settings...")
@@ -183,6 +200,11 @@ class AntiphishingPolicy(BaseModel):
 
 class AntiphishingRule(BaseModel):
     state: str
+
+
+class ConnectionFilterPolicy(BaseModel):
+    ip_allow_list: list
+    identity: str
 
 
 class DkimConfig(BaseModel):

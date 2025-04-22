@@ -306,6 +306,26 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
 
+    def get_connection_filter_policy(self) -> dict:
+        """
+        Get Exchange Online Connection Filter Policy.
+
+        Retrieves the current connection filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Connection filter policy settings in JSON format.
+
+        Example:
+            >>> get_connection_filter_policy()
+            {
+                "Identity": "Default",
+                "IPAllowList": []"
+            }
+        """
+        return self.execute(
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+        )
+
     def get_dkim_config(self) -> dict:
         """
         Get DKIM Signing Configuration.
