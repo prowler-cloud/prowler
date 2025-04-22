@@ -113,8 +113,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/aws
-            ./tests/providers/aws
+            ./prowler/providers/aws/**
+            ./tests/providers/aws/**
 
       - name: AWS - Test
         if: steps.aws-changed-files.outputs.any_changed == 'true'
@@ -127,8 +127,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/azure
-            ./tests/providers/azure
+            ./prowler/providers/azure/**
+            ./tests/providers/azure/**
 
       - name: Azure - Test
         if: steps.azure-changed-files.outputs.any_changed == 'true'
@@ -141,8 +141,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/gcp
-            ./tests/providers/gcp
+            ./prowler/providers/gcp/**
+            ./tests/providers/gcp/**
 
       - name: GCP - Test
         if: steps.gcp-changed-files.outputs.any_changed == 'true'
@@ -155,8 +155,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/kubernetes
-            ./tests/providers/kubernetes
+            ./prowler/providers/kubernetes/**
+            ./tests/providers/kubernetes/**
 
       - name: Kubernetes - Test
         if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
@@ -169,8 +169,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/nhn
-            ./tests/providers/nhn
+            ./prowler/providers/nhn/**
+            ./tests/providers/nhn/**
 
       - name: NHN - Test
         if: steps.nhn-changed-files.outputs.any_changed == 'true'
@@ -183,8 +183,8 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: |
-            ./prowler/providers/m365
-            ./tests/providers/m365
+            ./prowler/providers/m365/**
+            ./tests/providers/m365/**
 
       - name: M365 - Test
         if: steps.m365-changed-files.outputs.any_changed == 'true'
