@@ -12,7 +12,7 @@ class teams_unmanaged_communication_disabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the check for
+        """Execute the check for unmanaged communication disabled.
 
         This method checks if unmanaged communication is disabled in Teams admin center.
 
