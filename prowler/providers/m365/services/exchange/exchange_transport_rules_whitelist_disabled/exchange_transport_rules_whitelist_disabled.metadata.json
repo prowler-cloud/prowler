@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_transport_rules_whitelist_disabled",
+  "CheckTitle": "Ensure mail transport rules do not whitelist specific domains",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Transport Rules",
+  "Description": "Mail flow rules (transport rules) in Exchange Online are used to identify and take action on messages that flow through the organization.",
+  "Risk": "Whitelisting domains in transport rules bypasses regular malware and phishing scanning, which can enable an attacker to launch attacks against your users from a safe haven domain.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
+  "Remediation": {
+    "Code": {
+      "CLI": "Remove-TransportRule -Identity <RuleName>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com.. 2. 3. Click to expand Mail Flow and then select Rules. For each rule that whitelists specific domains, select the rule and click the 'Delete' icon.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove transport rules that whitelist specific domains to ensure proper scanning.",
+      "Url": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

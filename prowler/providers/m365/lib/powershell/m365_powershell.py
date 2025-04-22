@@ -268,3 +268,22 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
+
+    def get_transport_rules(self) -> dict:
+        """
+        Get Exchange Online Transport Rules.
+
+        Retrieves the current transport rules configured in Exchange Online.
+
+        Returns:
+            dict: Transport rules in JSON format.
+
+        Example:
+            >>> get_transport_rules()
+            {
+                "Name": "Rule1",
+                "SetSCL": -1,
+                "SenderDomainIs": ["example.com"]
+            }
+        """
+        return self.execute("Get-TransportRule | ConvertTo-Json")
