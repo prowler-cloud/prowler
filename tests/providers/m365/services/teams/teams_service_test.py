@@ -24,7 +24,10 @@ def mock_get_teams_client_configuration(_):
 
 
 def mock_get_global_meeting_policy(_):
-    return GlobalMeetingPolicy(allow_anonymous_users_to_join_meeting=False)
+    return GlobalMeetingPolicy(
+        allow_anonymous_users_to_join_meeting=False,
+        allow_anonymous_users_to_start_meeting=False,
+    )
 
 
 class Test_Teams_Service:
@@ -85,6 +88,7 @@ class Test_Teams_Service:
                 )
             )
             assert teams_client.global_meeting_policy == GlobalMeetingPolicy(
-                allow_anonymous_users_to_join_meeting=False
+                allow_anonymous_users_to_join_meeting=False,
+                allow_anonymous_users_to_start_meeting=False,
             )
             teams_client.powershell.close()

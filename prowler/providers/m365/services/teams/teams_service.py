@@ -47,7 +47,10 @@ class Teams(M365Service):
                 global_meeting_policy = GlobalMeetingPolicy(
                     allow_anonymous_users_to_join_meeting=global_meeting_policy.get(
                         "AllowAnonymousUsersToJoinMeeting", True
-                    )
+                    ),
+                    allow_anonymous_users_to_start_meeting=global_meeting_policy.get(
+                        "AllowAnonymousUsersToStartMeeting", True
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -71,3 +74,4 @@ class TeamsSettings(BaseModel):
 
 class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_join_meeting: bool = True
+    allow_anonymous_users_to_start_meeting: bool = True
