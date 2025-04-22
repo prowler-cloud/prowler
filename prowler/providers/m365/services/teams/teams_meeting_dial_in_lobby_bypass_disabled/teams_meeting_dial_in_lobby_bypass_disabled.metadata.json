@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_meeting_dial_in_lobby_bypass_disabled",
+  "CheckTitle": "Ensure users dialing in can't bypass the lobby",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Teams Global Meeting Policy",
+  "Description": "Ensure users dialing in can't bypass the lobby.",
+  "Risk": "Allowing dial-in users to bypass the lobby may result in unauthorized or unauthenticated individuals joining sensitive meetings without prior validation, increasing the risk of information leakage or meeting disruptions.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowPSTNUsersToBypassLobby $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting join & lobby set People dialing in can bypass the lobby to Off.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require all users dialing in by phone to wait in the lobby until admitted by the meeting organizer, co-organizer, or presenter. This ensures proper vetting before granting access to potentially sensitive discussions.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

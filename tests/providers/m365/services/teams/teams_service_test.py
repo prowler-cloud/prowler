@@ -28,6 +28,7 @@ def mock_get_global_meeting_policy(_):
         allow_anonymous_users_to_join_meeting=False,
         allow_anonymous_users_to_start_meeting=False,
         allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
+        allow_pstn_users_to_bypass_lobby=False,
     )
 
 
@@ -92,5 +93,6 @@ class Test_Teams_Service:
                 allow_anonymous_users_to_join_meeting=False,
                 allow_anonymous_users_to_start_meeting=False,
                 allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
+                allow_pstn_users_to_bypass_lobby=False,
             )
             teams_client.powershell.close()
