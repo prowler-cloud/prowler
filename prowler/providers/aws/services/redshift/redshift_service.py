@@ -124,7 +124,7 @@ class Redshift(AWSService):
         try:
             regional_client = self.regional_clients[cluster.region]
             cluster_parameter_groups = regional_client.describe_cluster_parameters(
-                ClusterParameterGroupName=cluster.parameter_group_name
+                ParameterGroupName=cluster.parameter_group_name
             )
             for parameter_group in cluster_parameter_groups["Parameters"]:
                 if parameter_group["ParameterName"].lower() == "require_ssl":
