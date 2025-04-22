@@ -1,7 +1,6 @@
 from asyncio import gather, get_event_loop
 from typing import List, Optional
 
-from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -40,20 +39,6 @@ class AdminCenter(M365Service):
                 license_details = await self.client.users.by_user_id(
                     user.id
                 ).license_details.get()
-                try:
-                    mailbox_settings = await self.client.users.by_user_id(
-                        user.id
-                    ).mailbox_settings.get()
-                    mailbox_settings.user_purpose
-                except ODataError as error:
-                    if error.error.code == "MailboxNotEnabledForRESTAPI":
-                        logger.warning(
-                            f"MailboxNotEnabledForRESTAPI for user {user.id}"
-                        )
-                    else:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
                 users.update(
                     {
                         user.id: User(
