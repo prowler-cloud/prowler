@@ -1320,9 +1320,11 @@ class Test_Parser:
     def test_validate_bucket_invalid_bucket_names(self):
         bad_bucket_names = [
             "xn--bucket-name",
+            "sthree-bucket-name",
+            "amzn-s3-demo-bucket-name",
             "mrryadfpcwlscicvnrchmtmyhwrvzkgfgdxnlnvaaummnywciixnzvycnzmhhpwb",
             "192.168.5.4",
-            "bucket-name-s3alias",
+            "bucket-name--table-s3",
             "bucket-name-s3alias-",
             "bucket-n$ame",
             "bu",
@@ -1338,7 +1340,9 @@ class Test_Parser:
             )
 
     def test_validate_bucket_valid_bucket_names(self):
-        valid_bucket_names = ["bucket-name" "test" "test-test-test"]
+        valid_bucket_names = [
+            "bucket-name" "test" "test-test-test" "test.test.test" "abc"
+        ]
         for bucket_name in valid_bucket_names:
             assert validate_bucket(bucket_name) == bucket_name
 
