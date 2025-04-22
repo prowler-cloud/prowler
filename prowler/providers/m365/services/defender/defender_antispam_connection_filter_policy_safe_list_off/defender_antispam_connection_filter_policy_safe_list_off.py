@@ -4,9 +4,9 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
 
-class defender_antispam_connection_filter_policy_empty_ip_allowlist(Check):
+class defender_antispam_connection_filter_policy_safe_list_off(Check):
     """
-    Check if the IP Allowlist is not used in the Antispam Connection Filter Policy.
+    Check if the Safe List is off in the Antispam Connection Filter Policy.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -14,10 +14,10 @@ class defender_antispam_connection_filter_policy_empty_ip_allowlist(Check):
 
     def execute(self) -> List[CheckReportM365]:
         """
-        Execute the check to verify if the IP Allowlist is not used.
+        Execute the check to verify if the Safe List is off.
 
         This method checks the Antispam Connection Filter Policy to determine if the
-        IP Allowlist is empty or undefined.
+        Safe List is disabled.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -32,11 +32,11 @@ class defender_antispam_connection_filter_policy_empty_ip_allowlist(Check):
                 resource_id=policy.identity,
             )
             report.status = "PASS"
-            report.status_extended = f"IP Allowlist is not used in the Antispam Connection Filter Policy {policy.identity}."
+            report.status_extended = f"Safe List is disabled in the Antispam Connection Filter Policy {policy.identity}."
 
-            if policy.ip_allow_list:
+            if policy.enable_safe_list:
                 report.status = "FAIL"
-                report.status_extended = f"IP Allowlist is used in the Antispam Connection Filter Policy {policy.identity} with IPs: {policy.ip_allow_list}."
+                report.status_extended = f"Safe List is not disabled in the Antispam Connection Filter Policy {policy.identity}."
 
             findings.append(report)
 
