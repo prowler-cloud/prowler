@@ -29,7 +29,7 @@ jobs:
         with:
           files: ./**
           files_ignore: |
-            # .github/**
+            .github/**
             docs/**
             permissions/**
             api/**
