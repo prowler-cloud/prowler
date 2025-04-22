@@ -61,7 +61,6 @@ from prowler.providers.m365.models import (
 )
 
 
-# TEST
 class M365Provider(Provider):
     """
     Represents an M365 provider.
