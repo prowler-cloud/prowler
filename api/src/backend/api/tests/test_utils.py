@@ -180,7 +180,7 @@ class TestGetProwlerProviderKwargs:
             ),
             (
                 Provider.ProviderChoices.M365.value,
-                {"context": "provider_uid"},
+                {},
             ),
         ],
     )
