@@ -4,6 +4,7 @@ from unittest.mock import patch
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.teams.teams_service import (
     CloudStorageSettings,
+    GlobalMeetingPolicy,
     Teams,
     TeamsSettings,
     UserSettings,
@@ -21,6 +22,10 @@ def mock_get_teams_client_configuration(_):
             allow_share_file=False,
         )
     )
+
+
+def mock_get_global_meeting_policy(_):
+    return GlobalMeetingPolicy(allow_anonymous_users_to_join_meeting=False)
 
 
 def mock_get_user_settings(_):
@@ -93,5 +98,25 @@ class Test_Teams_Service:
                 allow_external_access=False,
                 allow_teams_consumer=False,
                 allow_teams_consumer_inbound=False,
+            )
+            teams_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.teams.teams_service.Teams._get_global_meeting_policy",
+        new=mock_get_global_meeting_policy,
+    )
+    def test_get_global_meeting_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
+            ),
+        ):
+            teams_client = Teams(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert teams_client.global_meeting_policy == GlobalMeetingPolicy(
+                allow_anonymous_users_to_join_meeting=False
             )
             teams_client.powershell.close()

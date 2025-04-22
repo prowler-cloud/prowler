@@ -10,6 +10,7 @@ class Teams(M365Service):
         super().__init__(provider)
         self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
+        self.global_meeting_policy = self._get_global_meeting_policy()
         self.user_settings = self._get_user_settings()
         self.powershell.close()
 
@@ -37,6 +38,23 @@ class Teams(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return teams_settings
+
+    def _get_global_meeting_policy(self):
+        logger.info("M365 - Getting Teams global (org-wide default) meeting policy...")
+        global_meeting_policy = None
+        try:
+            global_meeting_policy = self.powershell.get_global_meeting_policy()
+            if global_meeting_policy:
+                global_meeting_policy = GlobalMeetingPolicy(
+                    allow_anonymous_users_to_join_meeting=global_meeting_policy.get(
+                        "AllowAnonymousUsersToJoinMeeting", True
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return global_meeting_policy
 
     def _get_user_settings(self):
         logger.info("M365 - Getting Teams user settings...")
@@ -69,6 +87,10 @@ class CloudStorageSettings(BaseModel):
 class TeamsSettings(BaseModel):
     cloud_storage_settings: CloudStorageSettings
     allow_email_into_channel: bool = True
+
+
+class GlobalMeetingPolicy(BaseModel):
+    allow_anonymous_users_to_join_meeting: bool = True
 
 
 class UserSettings(BaseModel):
