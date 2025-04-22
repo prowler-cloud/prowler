@@ -2158,11 +2158,7 @@ class LighthouseConfigSerializer(RLSSerializer):
 
 
 class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
-    """
-    Serializer for creating LighthouseConfig instances.
-    """
-
-    api_key = serializers.CharField(write_only=True)
+    """Serializer for creating new AI configurations."""
 
     class Meta:
         model = LighthouseConfig
@@ -2176,12 +2172,20 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "is_active",
         ]
 
+    def validate(self, attrs):
+        tenant_id = self.context.get("request").tenant_id
+        if LighthouseConfig.objects.filter(tenant_id=tenant_id).exists():
+            raise serializers.ValidationError(
+                {
+                    "tenant_id": "AI configuration already exists for this tenant. Use PUT to update."
+                }
+            )
+        return super().validate(attrs)
+
     def create(self, validated_data):
-        api_key = validated_data.pop("api_key", None)
         instance = super().create(validated_data)
-        if api_key:
-            instance.api_key_decoded = api_key
-            instance.save(update_fields=["api_key"])
+        if "api_key" in validated_data:
+            instance.save_api_key(validated_data["api_key"])
         return instance
 
 
@@ -2216,6 +2220,5 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
         api_key = validated_data.pop("api_key", None)
         instance = super().update(instance, validated_data)
         if api_key:
-            instance.api_key_decoded = api_key
-            instance.save(update_fields=["api_key"])
+            instance.save_api_key(api_key)
         return instance
