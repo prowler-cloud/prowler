@@ -6,21 +6,23 @@ from prowler.providers.m365.services.defender.defender_service import (
     AntiphishingPolicy,
     AntiphishingRule,
     Defender,
-    DefenderMalwarePolicy,
     DkimConfig,
+    MalwarePolicy,
+    OutboundSpamPolicy,
+    OutboundSpamRule,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
 def mock_defender_get_malware_filter_policy(_):
     return [
-        DefenderMalwarePolicy(
+        MalwarePolicy(
             enable_file_filter=False,
             identity="Policy1",
             enable_internal_sender_admin_notifications=False,
             internal_sender_admin_address="",
         ),
-        DefenderMalwarePolicy(
+        MalwarePolicy(
             enable_file_filter=True,
             identity="Policy2",
             enable_internal_sender_admin_notifications=True,
@@ -72,6 +74,36 @@ def mock_defender_get_dkim_config(_):
         DkimConfig(dkim_signing_enabled=True, id="domain1"),
         DkimConfig(dkim_signing_enabled=False, id="domain2"),
     ]
+
+
+def mock_defender_get_outbound_spam_filter_policy(_):
+    return {
+        "Policy1": OutboundSpamPolicy(
+            notify_sender_blocked=True,
+            notify_limit_exceeded=True,
+            notify_limit_exceeded_addresses=["security@example.com"],
+            notify_sender_blocked_addresses=["security@example.com"],
+            default=False,
+        ),
+        "Policy2": OutboundSpamPolicy(
+            notify_sender_blocked=False,
+            notify_limit_exceeded=False,
+            notify_limit_exceeded_addresses=[],
+            notify_sender_blocked_addresses=[],
+            default=True,
+        ),
+    }
+
+
+def mock_defender_get_outbound_spam_filter_rule(_):
+    return {
+        "Policy1": OutboundSpamRule(
+            state="Enabled",
+        ),
+        "Policy2": OutboundSpamRule(
+            state="Disabled",
+        ),
+    }
 
 
 class Test_Defender_Service:
@@ -207,3 +239,57 @@ class Test_Defender_Service:
             assert dkim_configs[1].dkim_signing_enabled is False
             assert dkim_configs[1].id == "domain2"
             defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_outbound_spam_filter_policy",
+        new=mock_defender_get_outbound_spam_filter_policy,
+    )
+    def test_get_outbound_spam_filter_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            outbound_spam_policies = defender_client.outbound_spam_policies
+            assert outbound_spam_policies["Policy1"].notify_sender_blocked is True
+            assert outbound_spam_policies["Policy1"].notify_limit_exceeded is True
+            assert outbound_spam_policies[
+                "Policy1"
+            ].notify_limit_exceeded_addresses == ["security@example.com"]
+            assert outbound_spam_policies[
+                "Policy1"
+            ].notify_sender_blocked_addresses == ["security@example.com"]
+            assert outbound_spam_policies["Policy1"].default is False
+            assert outbound_spam_policies["Policy2"].notify_sender_blocked is False
+            assert outbound_spam_policies["Policy2"].notify_limit_exceeded is False
+            assert (
+                outbound_spam_policies["Policy2"].notify_limit_exceeded_addresses == []
+            )
+            assert (
+                outbound_spam_policies["Policy2"].notify_sender_blocked_addresses == []
+            )
+            assert outbound_spam_policies["Policy2"].default is True
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_outbound_spam_filter_rule",
+        new=mock_defender_get_outbound_spam_filter_rule,
+    )
+    def test_get_outbound_spam_filter_rule(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            outbound_spam_rules = defender_client.outbound_spam_rules
+            assert outbound_spam_rules["Policy1"].state == "Enabled"
+            assert outbound_spam_rules["Policy2"].state == "Disabled"
