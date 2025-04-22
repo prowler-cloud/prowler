@@ -1327,7 +1327,7 @@ class Test_Parser:
             "amzn-s3-demo-bucket-name",
             "mrryadfpcwlscicvnrchmtmyhwrvzkgfgdxnlnvaaummnywciixnzvycnzmhhpwb",
             "192.168.5.4",
-            "bucket-name-s3alias",
+            "bucket-name--table-s3",
             "bucket-name-s3alias-",
             "bucket-n$ame",
             "bu",

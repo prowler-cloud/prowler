@@ -225,7 +225,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
 def validate_bucket(bucket_name: str) -> str:
     """validate_bucket validates that the input bucket_name is valid"""
     if search(
-        "^(?!^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$)(?!.*\.{2})(?!.*\.-)(?!.*-\.)(?!^xn--)(?!.*-s3alias$)(?!^sthree-)(?!^amzn-s3-demo-)(?!.*--ol-s3$)[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$",
+        "^(?!^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$)(?!.*\.{2})(?!.*\.-)(?!.*-\.)(?!^xn--)(?!^sthree-)(?!^amzn-s3-demo-)(?!.*--table-s3$)[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$",
         bucket_name,
     ):
         return bucket_name
