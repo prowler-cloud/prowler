@@ -27,20 +27,20 @@ class Test_defender_antispam_outbound_policy_configured:
             )
             from prowler.providers.m365.services.defender.defender_service import (
                 OutboundSpamPolicy,
-                DefenderOutboundSpamRule,
+                OutboundSpamRule,
             )
 
             defender_client.outbound_spam_policies = {
                 "Policy1": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
-                    notify_limit_exceeded_adresses=["test@correo.com"],
-                    notify_sender_blocked_adresses=["test@correo.com"],
+                    notify_limit_exceeded_addresses=["test@correo.com"],
+                    notify_sender_blocked_addresses=["test@correo.com"],
                     default=False,
                 )
             }
             defender_client.outbound_spam_rules = {
-                "Policy1": DefenderOutboundSpamRule(state="Enabled")
+                "Policy1": OutboundSpamRule(state="Enabled")
             }
 
             check = defender_antispam_outbound_policy_configured()
@@ -49,7 +49,7 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy 'Policy1' is properly configured and enabled."
+                == "Outbound Spam Policy Policy1 is properly configured and enabled."
             )
             assert (
                 result[0].resource
@@ -82,20 +82,20 @@ class Test_defender_antispam_outbound_policy_configured:
             )
             from prowler.providers.m365.services.defender.defender_service import (
                 OutboundSpamPolicy,
-                DefenderOutboundSpamRule,
+                OutboundSpamRule,
             )
 
             defender_client.outbound_spam_policies = {
                 "Policy2": OutboundSpamPolicy(
                     notify_sender_blocked=False,
                     notify_limit_exceeded=False,
-                    notify_limit_exceeded_adresses=[],
-                    notify_sender_blocked_adresses=[],
+                    notify_limit_exceeded_addresses=[],
+                    notify_sender_blocked_addresses=[],
                     default=False,
                 )
             }
             defender_client.outbound_spam_rules = {
-                "Policy2": DefenderOutboundSpamRule(state="Enabled")
+                "Policy2": OutboundSpamRule(state="Enabled")
             }
 
             check = defender_antispam_outbound_policy_configured()
@@ -104,7 +104,7 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy 'Policy2' is not properly configured."
+                == "Outbound Spam Policy Policy2 is not properly configured."
             )
             assert (
                 result[0].resource
@@ -143,8 +143,8 @@ class Test_defender_antispam_outbound_policy_configured:
                 "Default": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
-                    notify_limit_exceeded_adresses=["test@correo.com"],
-                    notify_sender_blocked_adresses=["test@correo.com"],
+                    notify_limit_exceeded_addresses=["test@correo.com"],
+                    notify_sender_blocked_addresses=["test@correo.com"],
                     default=True,
                 )
             }
@@ -156,7 +156,7 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy 'Default' is properly configured and enabled."
+                == "Outbound Spam Policy Default is properly configured and enabled."
             )
             assert (
                 result[0].resource
@@ -195,8 +195,8 @@ class Test_defender_antispam_outbound_policy_configured:
                 "PolicyX": OutboundSpamPolicy(
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
-                    notify_limit_exceeded_adresses=["admin@org.com"],
-                    notify_sender_blocked_adresses=["admin@org.com"],
+                    notify_limit_exceeded_addresses=["admin@org.com"],
+                    notify_sender_blocked_addresses=["admin@org.com"],
                     default=False,
                 )
             }
@@ -208,7 +208,7 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy 'PolicyX' is not properly configured."
+                == "Outbound Spam Policy PolicyX is not properly configured."
             )
             assert (
                 result[0].resource

@@ -28,7 +28,7 @@ class Defender(M365Service):
             for policy in malware_policy:
                 if policy:
                     malware_policies.append(
-                        DefenderMalwarePolicy(
+                        MalwarePolicy(
                             enable_file_filter=policy.get("EnableFileFilter", True),
                             identity=policy.get("Identity", ""),
                             enable_internal_sender_admin_notifications=policy.get(
@@ -107,10 +107,10 @@ class Defender(M365Service):
                         notify_limit_exceeded=policy.get(
                             "BccSuspiciousOutboundMail", True
                         ),
-                        notify_limit_exceeded_adresses=policy.get(
+                        notify_limit_exceeded_addresses=policy.get(
                             "BccSuspiciousOutboundAdditionalRecipients", []
                         ),
-                        notify_sender_blocked_adresses=policy.get(
+                        notify_sender_blocked_addresses=policy.get(
                             "NotifyOutboundSpamRecipients", []
                         ),
                         default=policy.get("IsDefault", False),
@@ -130,10 +130,8 @@ class Defender(M365Service):
                 outbound_spam_rule = [outbound_spam_rule]
             for rule in outbound_spam_rule:
                 if rule:
-                    outbound_spam_rules[rule.get("Name", "")] = (
-                        DefenderOutboundSpamRule(
-                            state=rule.get("State", "Disabled"),
-                        )
+                    outbound_spam_rules[rule.get("Name", "")] = OutboundSpamRule(
+                        state=rule.get("State", "Disabled"),
                     )
         except Exception as error:
             logger.error(
@@ -142,7 +140,7 @@ class Defender(M365Service):
         return outbound_spam_rules
 
 
-class DefenderMalwarePolicy(BaseModel):
+class MalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
     enable_internal_sender_admin_notifications: bool
@@ -168,10 +166,10 @@ class AntiphishingRule(BaseModel):
 class OutboundSpamPolicy(BaseModel):
     notify_sender_blocked: bool
     notify_limit_exceeded: bool
-    notify_limit_exceeded_adresses: List[str]
-    notify_sender_blocked_adresses: List[str]
+    notify_limit_exceeded_addresses: List[str]
+    notify_sender_blocked_addresses: List[str]
     default: bool
 
 
-class DefenderOutboundSpamRule(BaseModel):
+class OutboundSpamRule(BaseModel):
     state: str

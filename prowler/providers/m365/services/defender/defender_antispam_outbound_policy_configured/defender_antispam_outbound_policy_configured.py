@@ -31,7 +31,7 @@ class defender_antispam_outbound_policy_configured(Check):
             )
             report.status = "FAIL"
             report.status_extended = (
-                f"Outbound Spam Policy '{policy_name}' is not properly configured."
+                f"Outbound Spam Policy {policy_name} is not properly configured."
             )
 
             if (
@@ -40,16 +40,14 @@ class defender_antispam_outbound_policy_configured(Check):
                 and defender_client.outbound_spam_rules[policy_name].state.lower()
                 == "enabled"
             ) or policy.default:
-
                 if (
                     policy.notify_limit_exceeded
                     and policy.notify_sender_blocked
-                    and policy.notify_limit_exceeded_adresses
-                    and policy.notify_sender_blocked_adresses
+                    and policy.notify_limit_exceeded_addresses
+                    and policy.notify_sender_blocked_addresses
                 ):
-
                     report.status = "PASS"
-                    report.status_extended = f"Outbound Spam Policy '{policy_name}' is properly configured and enabled."
+                    report.status_extended = f"Outbound Spam Policy {policy_name} is properly configured and enabled."
 
             findings.append(report)
 
