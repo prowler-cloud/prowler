@@ -6,6 +6,7 @@ from prowler.providers.m365.services.teams.teams_service import (
     CloudStorageSettings,
     Teams,
     TeamsSettings,
+    UserSettings,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -19,6 +20,12 @@ def mock_get_teams_client_configuration(_):
             allow_google_drive=False,
             allow_share_file=False,
         )
+    )
+
+
+def mock_get_user_settings(_):
+    return UserSettings(
+        allow_external_access=False,
     )
 
 
@@ -61,5 +68,25 @@ class Test_Teams_Service:
                     allow_google_drive=False,
                     allow_share_file=False,
                 )
+            )
+            teams_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.teams.teams_service.Teams._get_user_settings",
+        new=mock_get_user_settings,
+    )
+    def test_get_user_settings(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
+            ),
+        ):
+            teams_client = Teams(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert teams_client.user_settings == UserSettings(
+                allow_external_access=False,
             )
             teams_client.powershell.close()

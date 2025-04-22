@@ -10,6 +10,7 @@ class Teams(M365Service):
         super().__init__(provider)
         self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
+        self.user_settings = self._get_user_settings()
         self.powershell.close()
 
     def _get_teams_client_configuration(self):
@@ -37,6 +38,21 @@ class Teams(M365Service):
             )
         return teams_settings
 
+    def _get_user_settings(self):
+        logger.info("M365 - Getting Teams user settings...")
+        user_settings = None
+        try:
+            settings = self.powershell.get_user_settings()
+            if settings:
+                user_settings = UserSettings(
+                    allow_external_access=settings.get("AllowFederatedUsers", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return user_settings
+
 
 class CloudStorageSettings(BaseModel):
     allow_box: bool
@@ -49,3 +65,7 @@ class CloudStorageSettings(BaseModel):
 class TeamsSettings(BaseModel):
     cloud_storage_settings: CloudStorageSettings
     allow_email_into_channel: bool = True
+
+
+class UserSettings(BaseModel):
+    allow_external_access: bool = True
