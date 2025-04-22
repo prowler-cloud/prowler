@@ -6,7 +6,6 @@ import api.db_utils
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0016_finding_compliance_resource_details_and_more"),
     ]
