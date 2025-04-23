@@ -700,11 +700,16 @@ class M365Provider(Provider):
             logger.info("M365 provider: Connection to MSGraph successful")
 
             # Set up PowerShell credentials
-            M365Provider.setup_powershell(
-                env_auth,
-                m365_credentials,
-                provider_id,
-            )
+            if user and encrypted_password:
+                M365Provider.setup_powershell(
+                    env_auth,
+                    m365_credentials,
+                    provider_id,
+                )
+            else:
+                logger.info(
+                    "M365 provider: Connection to PowerShell has not been requested"
+                )
 
             logger.info("M365 provider: Connection to PowerShell successful")
 
