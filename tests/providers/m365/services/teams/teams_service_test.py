@@ -7,6 +7,7 @@ from prowler.providers.m365.services.teams.teams_service import (
     GlobalMeetingPolicy,
     Teams,
     TeamsSettings,
+    UserSettings,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -28,6 +29,14 @@ def mock_get_global_meeting_policy(_):
         allow_anonymous_users_to_join_meeting=False,
         allow_anonymous_users_to_start_meeting=False,
         allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
+    )
+
+
+def mock_get_user_settings(_):
+    return UserSettings(
+        allow_external_access=False,
+        allow_teams_consumer=False,
+        allow_teams_consumer_inbound=False,
     )
 
 
@@ -69,7 +78,30 @@ class Test_Teams_Service:
                     allow_egnyte=False,
                     allow_google_drive=False,
                     allow_share_file=False,
+                ),
+                allow_email_into_channel=True,
+            )
+            teams_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.teams.teams_service.Teams._get_user_settings",
+        new=mock_get_user_settings,
+    )
+    def test_get_user_settings(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
+            ),
+        ):
+            teams_client = Teams(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
                 )
+            )
+            assert teams_client.user_settings == UserSettings(
+                allow_external_access=False,
+                allow_teams_consumer=False,
+                allow_teams_consumer_inbound=False,
             )
             teams_client.powershell.close()
 

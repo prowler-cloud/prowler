@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeeting_anonymous_user_start_disabled(Check):
+class teams_meeting_anonymous_user_start_disabled(Check):
     """Check if anonymous users are not able to start meetings.
 
     Attributes:

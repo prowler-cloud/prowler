@@ -47,7 +47,7 @@ class Test_teams_email_sending_to_channel_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Users can send emails to channel email addresses."
+                == "Teams users can send emails to channel email addresses."
             )
             assert result[0].resource == teams_client.teams_settings.dict()
             assert result[0].resource_name == "Teams Settings"
@@ -97,7 +97,7 @@ class Test_teams_email_sending_to_channel_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Users can not send emails to channel email addresses."
+                == "Teams users cannot send emails to channel email addresses."
             )
             assert result[0].resource == teams_client.teams_settings.dict()
             assert result[0].resource_name == "Teams Settings"

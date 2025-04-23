@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "teams_meeeting_anonymous_user_join_disabled",
+  "CheckID": "teams_meeting_anonymous_user_join_disabled",
   "CheckTitle": "Ensure anonymous users are not able to join meetings.",
   "CheckType": [],
   "ServiceName": "teams",

@@ -16,7 +16,6 @@ spec:
           containers:
           - name: prowler
             image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-            command: ["prowler"]
             args: ["kubernetes", "-z", "-b"]
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             volumeMounts:
