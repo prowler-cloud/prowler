@@ -18,12 +18,12 @@ import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
+import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
-import { ProviderType } from "@/components/ui/entities";
 
 type FormValues = z.infer<typeof testConnectionFormSchema>;
 
