@@ -30,11 +30,11 @@ class exchange_external_mail_tagged(Check):
                 resource_id=mail_config.identity,
             )
             report.status = "FAIL"
-            report.status_extended = f"External sender tagging is disabled for Exchange identity '{mail_config.identity}'."
+            report.status_extended = f"External sender tagging is disabled for Exchange identity {mail_config.identity}."
 
             if mail_config.external_mail_tag_enabled:
                 report.status = "PASS"
-                report.status_extended = f"External sender tagging is enabled for Exchange identity '{mail_config.identity}'."
+                report.status_extended = f"External sender tagging is enabled for Exchange identity {mail_config.identity}."
 
             findings.append(report)
 

@@ -35,12 +35,12 @@ class exchange_transport_rules_whitelist_disabled(Check):
 
             report.status = "PASS"
             report.status_extended = (
-                f"Transport rule '{rule.name}' does not whitelist any domains."
+                f"Transport rule {rule.name} does not whitelist any domains."
             )
 
             if rule.sender_domain_is and rule.scl == -1:
                 report.status = "FAIL"
-                report.status_extended = f"Transport rule '{rule.name}' whitelists domains: {', '.join(rule.sender_domain_is)}."
+                report.status_extended = f"Transport rule {rule.name} whitelists domains: {', '.join(rule.sender_domain_is)}."
 
             findings.append(report)
 

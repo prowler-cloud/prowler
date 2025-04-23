@@ -40,7 +40,7 @@ class Test_exchange_external_mail_tagged:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "External sender tagging is enabled for Exchange identity 'Org1'."
+                == "External sender tagging is enabled for Exchange identity Org1."
             )
             assert result[0].resource == exchange_client.external_mail_config[0].dict()
             assert result[0].resource_name == "Org1"
@@ -83,7 +83,7 @@ class Test_exchange_external_mail_tagged:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "External sender tagging is disabled for Exchange identity 'Org2'."
+                == "External sender tagging is disabled for Exchange identity Org2."
             )
             assert result[0].resource == exchange_client.external_mail_config[0].dict()
             assert result[0].resource_name == "Org2"
@@ -133,14 +133,14 @@ class Test_exchange_external_mail_tagged:
             assert result[0].resource_name == "OrgEnabled"
             assert (
                 result[0].status_extended
-                == "External sender tagging is enabled for Exchange identity 'OrgEnabled'."
+                == "External sender tagging is enabled for Exchange identity OrgEnabled."
             )
 
             assert result[1].status == "FAIL"
             assert result[1].resource_name == "OrgDisabled"
             assert (
                 result[1].status_extended
-                == "External sender tagging is disabled for Exchange identity 'OrgDisabled'."
+                == "External sender tagging is disabled for Exchange identity OrgDisabled."
             )
 
     def test_no_mail_configs(self):
