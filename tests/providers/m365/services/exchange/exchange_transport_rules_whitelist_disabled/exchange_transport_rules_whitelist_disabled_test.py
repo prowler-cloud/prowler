@@ -81,9 +81,7 @@ class Test_exchange_transport_rules_whitelist_disabled:
                 TransportRule(
                     name="WhitelistRule", scl=-1, sender_domain_is=["whitelist.com"]
                 ),
-                TransportRule(
-                    name="NoWhitelistRule", scl=-1, sender_domain_is=[]
-                ),
+                TransportRule(name="NoWhitelistRule", scl=-1, sender_domain_is=[]),
             ]
 
             check = exchange_transport_rules_whitelist_disabled()

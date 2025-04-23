@@ -61,17 +61,18 @@ class Exchange(M365Service):
         transport_rules = []
         try:
             rules_data = self.powershell.get_transport_rules()
+            if not rules_data:
+                return transport_rules
             if isinstance(rules_data, dict):
                 rules_data = [rules_data]
             for rule in rules_data:
-                if rule:
-                    transport_rules.append(
-                        TransportRule(
-                            name=rule.get("Name", ""),
-                            scl=rule.get("SetSCL", None),
-                            sender_domain_is=rule.get("SenderDomainIs", []),
-                        )
+                transport_rules.append(
+                    TransportRule(
+                        name=rule.get("Name", ""),
+                        scl=rule.get("SetSCL", None),
+                        sender_domain_is=rule.get("SenderDomainIs", []),
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
