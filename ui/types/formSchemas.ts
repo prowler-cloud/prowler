@@ -63,7 +63,7 @@ export const awsCredentialsTypeSchema = z.object({
 
 export const addProviderFormSchema = z
   .object({
-    providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
+    providerType: z.enum(["aws", "azure", "gcp", "kubernetes", "m365"], {
       required_error: "Please select a provider type",
     }),
   })
