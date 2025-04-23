@@ -379,3 +379,21 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-DkimSigningConfig | ConvertTo-Json")
+
+    def get_inbound_spam_filter_policy(self) -> dict:
+        """
+        Get Inbound Spam Filter Policy.
+
+        Retrieves the current inbound spam filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_policy()
+            {
+                "Identity": "Default",
+                "AllowedSenderDomains": "[]"
+            }
+        """
+        return self.execute("Get-HostedContentFilterPolicy | ConvertTo-Json")

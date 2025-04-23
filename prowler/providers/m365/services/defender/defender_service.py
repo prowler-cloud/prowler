@@ -184,21 +184,18 @@ class Defender(M365Service):
         logger.info("Microsoft365 - Getting Defender inbound spam filter policy...")
         inbound_spam_policies = []
         try:
-            inbound_spam_policy = self.powershell.execute(
-                "Get-HostedContentFilterPolicy | ConvertTo-Json"
-            )
+            inbound_spam_policy = self.powershell.get_inbound_spam_filter_policy()
+            if not inbound_spam_policy:
+                return inbound_spam_policies
             if isinstance(inbound_spam_policy, dict):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
-                if policy:
-                    inbound_spam_policies.append(
-                        DefenderInboundSpamPolicy(
-                            identity=policy.get("Identity", ""),
-                            allowed_sender_domains=policy.get(
-                                "AllowedSenderDomains", []
-                            ),
-                        )
+                inbound_spam_policies.append(
+                    DefenderInboundSpamPolicy(
+                        identity=policy.get("Identity", ""),
+                        allowed_sender_domains=policy.get("AllowedSenderDomains", []),
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
