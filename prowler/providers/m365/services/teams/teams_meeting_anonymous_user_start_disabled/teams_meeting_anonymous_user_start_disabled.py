@@ -4,17 +4,17 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeeting_anonymous_user_join_disabled(Check):
-    """Check if anonymous users are not able to join meetings.
+class teams_meeting_anonymous_user_start_disabled(Check):
+    """Check if anonymous users are not able to start meetings.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the check for anonymous users are not able to join meetings.
+        """Execute the check for anonymous users are not able to start meetings.
 
-        This method checks if anonymous users are not able to join meetings.
+        This method checks if anonymous users and dial-in callers are not able to start meetings.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -29,11 +29,11 @@ class teams_meeeting_anonymous_user_join_disabled(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = "Anonymous Teams users can join meetings."
+            report.status_extended = "Anonymous Teams users can start meetings."
 
-            if not global_meeting_policy.allow_anonymous_users_to_join_meeting:
+            if not global_meeting_policy.allow_anonymous_users_to_start_meeting:
                 report.status = "PASS"
-                report.status_extended = "Anonymous Teams users can not join meetings."
+                report.status_extended = "Anonymous Teams users can not start meetings."
 
             findings.append(report)
 
