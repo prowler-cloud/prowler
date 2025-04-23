@@ -342,6 +342,24 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
 
+    def get_external_mail_config(self) -> dict:
+        """
+        Get Exchange Online External Mail Configuration.
+
+        Retrieves the current external mail configuration settings for Exchange Online.
+
+        Returns:
+            dict: External mail configuration settings in JSON format.
+
+        Example:
+            >>> get_external_mail_config()
+            {
+                "Identity": "MyExternalMail",
+                "ExternalMailTagEnabled": true
+            }
+        """
+        return self.execute("Get-ExternalInOutlook | ConvertTo-Json")
+
     def get_transport_rules(self) -> dict:
         """
         Get Exchange Online Transport Rules.

@@ -13,6 +13,7 @@ class Exchange(M365Service):
         self.powershell.connect_exchange_online()
         self.organization_config = self._get_organization_config()
         self.mailboxes_config = self._get_mailbox_audit_config()
+        self.external_mail_config = self._get_external_mail_config()
         self.transport_rules = self._get_transport_rules()
         self.powershell.close()
 
@@ -56,6 +57,31 @@ class Exchange(M365Service):
             )
         return mailboxes_config
 
+    def _get_external_mail_config(self):
+        logger.info("Microsoft365 - Getting external mail configuration...")
+        external_mail_config = []
+        try:
+            external_mail_configuration = self.powershell.get_external_mail_config()
+            if not external_mail_configuration:
+                return external_mail_config
+            if isinstance(external_mail_configuration, dict):
+                external_mail_configuration = [external_mail_configuration]
+            for external_mail in external_mail_configuration:
+                if external_mail:
+                    external_mail_config.append(
+                        ExternalMailConfig(
+                            identity=external_mail.get("Identity", ""),
+                            external_mail_tag_enabled=external_mail.get(
+                                "Enabled", False
+                            ),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return external_mail_config
+
     def _get_transport_rules(self):
         logger.info("Microsoft365 - Getting transport rules configuration...")
         transport_rules = []
@@ -91,6 +117,11 @@ class MailboxAuditConfig(BaseModel):
     name: str
     id: str
     audit_bypass_enabled: bool
+
+
+class ExternalMailConfig(BaseModel):
+    identity: str
+    external_mail_tag_enabled: bool
 
 
 class TransportRule(BaseModel):
