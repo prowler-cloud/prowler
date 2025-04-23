@@ -360,6 +360,25 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-ExternalInOutlook | ConvertTo-Json")
 
+    def get_transport_rules(self) -> dict:
+        """
+        Get Exchange Online Transport Rules.
+
+        Retrieves the current transport rules configured in Exchange Online.
+
+        Returns:
+            dict: Transport rules in JSON format.
+
+        Example:
+            >>> get_transport_rules()
+            {
+                "Name": "Rule1",
+                "SetSCL": -1,
+                "SenderDomainIs": ["example.com"]
+            }
+        """
+        return self.execute("Get-TransportRule | ConvertTo-Json")
+
     def get_connection_filter_policy(self) -> dict:
         """
         Get Exchange Online Connection Filter Policy.
@@ -397,3 +416,21 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-DkimSigningConfig | ConvertTo-Json")
+
+    def get_inbound_spam_filter_policy(self) -> dict:
+        """
+        Get Inbound Spam Filter Policy.
+
+        Retrieves the current inbound spam filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_policy()
+            {
+                "Identity": "Default",
+                "AllowedSenderDomains": "[]"
+            }
+        """
+        return self.execute("Get-HostedContentFilterPolicy | ConvertTo-Json")

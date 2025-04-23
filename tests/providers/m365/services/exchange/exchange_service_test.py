@@ -7,6 +7,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     ExternalMailConfig,
     MailboxAuditConfig,
     Organization,
+    TransportRule,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -31,6 +32,21 @@ def mock_exchange_get_external_mail_config(_):
         ExternalMailConfig(
             identity="test2",
             external_mail_tag_enabled=False,
+        ),
+    ]
+
+
+def mock_exchange_get_transport_rules(_):
+    return [
+        TransportRule(
+            name="test",
+            scl=-1,
+            sender_domain_is=["example.com"],
+        ),
+        TransportRule(
+            name="test2",
+            scl=0,
+            sender_domain_is=["example.com"],
         ),
     ]
 
@@ -120,5 +136,30 @@ class Test_Exchange_Service:
             assert external_mail_config[0].external_mail_tag_enabled is True
             assert external_mail_config[1].identity == "test2"
             assert external_mail_config[1].external_mail_tag_enabled is False
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_transport_rules",
+        new=mock_exchange_get_transport_rules,
+    )
+    def test_get_transport_rules(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            transport_rules = exchange_client.transport_rules
+            assert len(transport_rules) == 2
+            assert transport_rules[0].name == "test"
+            assert transport_rules[0].scl == -1
+            assert transport_rules[0].sender_domain_is == ["example.com"]
+            assert transport_rules[1].name == "test2"
+            assert transport_rules[1].scl == 0
+            assert transport_rules[1].sender_domain_is == ["example.com"]
 
             exchange_client.powershell.close()

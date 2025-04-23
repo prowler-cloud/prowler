@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -12,6 +14,7 @@ class Exchange(M365Service):
         self.organization_config = self._get_organization_config()
         self.mailboxes_config = self._get_mailbox_audit_config()
         self.external_mail_config = self._get_external_mail_config()
+        self.transport_rules = self._get_transport_rules()
         self.powershell.close()
 
     def _get_organization_config(self):
@@ -79,6 +82,30 @@ class Exchange(M365Service):
             )
         return external_mail_config
 
+    def _get_transport_rules(self):
+        logger.info("Microsoft365 - Getting transport rules configuration...")
+        transport_rules = []
+        try:
+            rules_data = self.powershell.get_transport_rules()
+            if not rules_data:
+                return transport_rules
+            if isinstance(rules_data, dict):
+                rules_data = [rules_data]
+            for rule in rules_data:
+                if rule:
+                    transport_rules.append(
+                        TransportRule(
+                            name=rule.get("Name", ""),
+                            scl=rule.get("SetSCL", None),
+                            sender_domain_is=rule.get("SenderDomainIs", []),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return transport_rules
+
 
 class Organization(BaseModel):
     name: str
@@ -95,3 +122,9 @@ class MailboxAuditConfig(BaseModel):
 class ExternalMailConfig(BaseModel):
     identity: str
     external_mail_tag_enabled: bool
+
+
+class TransportRule(BaseModel):
+    name: str
+    scl: Optional[int]
+    sender_domain_is: list[str]
