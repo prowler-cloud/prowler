@@ -2985,6 +2985,12 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
         """
         instance = self.get_object()
 
+        if not instance.api_key:
+            return Response(
+                {"detail": "API key is missing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             decrypted_key = instance.api_key_decoded
             if decrypted_key is None:
@@ -2992,15 +2998,16 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                     {"detail": "API key is invalid or missing."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             return Response(
                 {"api_key": decrypted_key},
                 status=status.HTTP_200_OK,
             )
-        except Exception:
+        except Exception as e:
             return Response(
-                {"detail": "API key is invalid or missing."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "detail": f"An unexpected error occurred while retrieving the API key. {str(e)}"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     def destroy(self, request, *args, **kwargs):

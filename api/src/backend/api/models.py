@@ -1,8 +1,8 @@
 import json
 import re
 from uuid import UUID, uuid4
-
-from cryptography.fernet import Fernet
+import logging
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
@@ -48,6 +48,8 @@ fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
+
+logger = logging.getLogger(__name__)
 
 
 class StatusChoices(models.TextChoices):
@@ -1358,9 +1360,14 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     @property
     def api_key_decoded(self):
         """Return the decrypted API key."""
+        if not self.api_key:
+            return None
+
         try:
-            decrypted_key = fernet.decrypt(self.api_key)
+            api_key_bytes = bytes(self.api_key)
+            decrypted_key = fernet.decrypt(api_key_bytes)
             return decrypted_key.decode()
+
         except InvalidToken:
             logger.warning("Failed to decrypt API key: invalid token.")
             return None
