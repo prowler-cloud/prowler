@@ -105,6 +105,7 @@ class Defender(M365Service):
                 connection_filter_policy = ConnectionFilterPolicy(
                     ip_allow_list=policy.get("IPAllowList", []),
                     identity=policy.get("Identity", ""),
+                    enable_safe_list=policy.get("EnableSafeList", False),
                 )
         except Exception as error:
             logger.error(
@@ -231,6 +232,7 @@ class AntiphishingRule(BaseModel):
 class ConnectionFilterPolicy(BaseModel):
     ip_allow_list: list
     identity: str
+    enable_safe_list: bool
 
 
 class DkimConfig(BaseModel):
