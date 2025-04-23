@@ -66,13 +66,14 @@ class Exchange(M365Service):
             if isinstance(rules_data, dict):
                 rules_data = [rules_data]
             for rule in rules_data:
-                transport_rules.append(
-                    TransportRule(
-                        name=rule.get("Name", ""),
-                        scl=rule.get("SetSCL", None),
-                        sender_domain_is=rule.get("SenderDomainIs", []),
+                if rule:
+                    transport_rules.append(
+                        TransportRule(
+                            name=rule.get("Name", ""),
+                            scl=rule.get("SetSCL", None),
+                            sender_domain_is=rule.get("SenderDomainIs", []),
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
