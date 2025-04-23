@@ -99,7 +99,7 @@ class M365Provider(Provider):
     _audit_config: dict
     _region_config: M365RegionConfig
     _mutelist: M365Mutelist
-    _credentials: M365Credentials
+    _credentials: M365Credentials = {}
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -187,9 +187,6 @@ class M365Provider(Provider):
             self._region_config,
         )
 
-        # Set up PowerShell session credentials
-        self._credentials = self.setup_powershell(env_auth, m365_credentials)
-
         # Set up the identity
         self._identity = self.setup_identity(
             az_cli_auth,
@@ -198,6 +195,9 @@ class M365Provider(Provider):
             browser_auth,
             client_id,
         )
+
+        # Set up PowerShell session credentials
+        self._credentials = self.setup_powershell(env_auth, m365_credentials) or None
 
         # Audit Config
         if config_content:
@@ -680,7 +680,9 @@ class M365Provider(Provider):
                     m365_credentials,
                 )
             else:
-                logger.info("M365 provider: PowerShell authentication not required")
+                logger.info(
+                    "M365 provider: Connection to PowerShell has not been requested"
+                )
 
             logger.info("M365 provider: Connection to PowerShell successful")
 
