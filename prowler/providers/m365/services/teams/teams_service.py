@@ -10,6 +10,8 @@ class Teams(M365Service):
         super().__init__(provider)
         self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
+        self.global_meeting_policy = self._get_global_meeting_policy()
+        self.user_settings = self._get_user_settings()
         self.powershell.close()
 
     def _get_teams_client_configuration(self):
@@ -37,6 +39,45 @@ class Teams(M365Service):
             )
         return teams_settings
 
+    def _get_global_meeting_policy(self):
+        logger.info("M365 - Getting Teams global (org-wide default) meeting policy...")
+        global_meeting_policy = None
+        try:
+            global_meeting_policy = self.powershell.get_global_meeting_policy()
+            if global_meeting_policy:
+                global_meeting_policy = GlobalMeetingPolicy(
+                    allow_anonymous_users_to_join_meeting=global_meeting_policy.get(
+                        "AllowAnonymousUsersToJoinMeeting", True
+                    ),
+                    allow_anonymous_users_to_start_meeting=global_meeting_policy.get(
+                        "AllowAnonymousUsersToStartMeeting", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return global_meeting_policy
+
+    def _get_user_settings(self):
+        logger.info("M365 - Getting Teams user settings...")
+        user_settings = None
+        try:
+            settings = self.powershell.get_user_settings()
+            if settings:
+                user_settings = UserSettings(
+                    allow_external_access=settings.get("AllowFederatedUsers", True),
+                    allow_teams_consumer=settings.get("AllowTeamsConsumer", True),
+                    allow_teams_consumer_inbound=settings.get(
+                        "AllowTeamsConsumerInbound", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return user_settings
+
 
 class CloudStorageSettings(BaseModel):
     allow_box: bool
@@ -49,3 +90,14 @@ class CloudStorageSettings(BaseModel):
 class TeamsSettings(BaseModel):
     cloud_storage_settings: CloudStorageSettings
     allow_email_into_channel: bool = True
+
+
+class GlobalMeetingPolicy(BaseModel):
+    allow_anonymous_users_to_join_meeting: bool = True
+    allow_anonymous_users_to_start_meeting: bool = True
+
+
+class UserSettings(BaseModel):
+    allow_external_access: bool = True
+    allow_teams_consumer: bool = True
+    allow_teams_consumer_inbound: bool = True

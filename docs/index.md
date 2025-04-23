@@ -570,6 +570,10 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 With M365 you need to specify which auth method is going to be used:
 
 ```console
+
+# To use both service principal (for MSGraph) and user credentials (for PowerShell modules)
+prowler m365 --env-auth
+
 # To use service principal authentication
 prowler m365 --sp-env-auth
 
