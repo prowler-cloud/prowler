@@ -41,14 +41,14 @@ class Test_exchange_transport_rules_whitelist_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Transport rule 'Rule1' does not whitelist any domains."
+                == "Transport rule Rule1 does not whitelist any domains."
             )
             assert result[0].resource_name == "Rule1"
             assert result[0].resource_id == "ExchangeTransportRule"
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Transport rule 'Rule2' does not whitelist any domains."
+                == "Transport rule Rule2 does not whitelist any domains."
             )
             assert result[1].resource_name == "Rule2"
 
@@ -91,7 +91,7 @@ class Test_exchange_transport_rules_whitelist_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Transport rule 'WhitelistRule' whitelists domains: whitelist.com."
+                == "Transport rule WhitelistRule whitelists domains: whitelist.com."
             )
             assert result[0].resource_name == "WhitelistRule"
             assert result[0].resource_id == "ExchangeTransportRule"
@@ -99,7 +99,7 @@ class Test_exchange_transport_rules_whitelist_disabled:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Transport rule 'NoWhitelistRule' does not whitelist any domains."
+                == "Transport rule NoWhitelistRule does not whitelist any domains."
             )
             assert result[1].resource_name == "NoWhitelistRule"
             assert result[1].resource_id == "ExchangeTransportRule"
