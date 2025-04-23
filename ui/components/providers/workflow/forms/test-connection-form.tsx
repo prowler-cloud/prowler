@@ -18,6 +18,7 @@ import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
+import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
 import { ApiError, testConnectionFormSchema } from "@/types";
@@ -41,7 +42,7 @@ export const TestConnectionForm = ({
           connected: boolean | null;
           last_checked_at: string | null;
         };
-        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        provider: ProviderType;
         alias: string;
         scanner_args: Record<string, any>;
       };
