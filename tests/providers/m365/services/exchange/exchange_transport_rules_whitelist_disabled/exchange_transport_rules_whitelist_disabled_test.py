@@ -30,8 +30,8 @@ class Test_exchange_transport_rules_whitelist_disabled:
             )
 
             exchange_client.transport_rules = [
-                TransportRule(name="Rule1", scl=-1, sender_domain_is=[]),
-                TransportRule(name="Rule2", scl=-1, sender_domain_is=["example.com"]),
+                TransportRule(name="Rule1", scl=0, sender_domain_is=[]),
+                TransportRule(name="Rule2", scl=0, sender_domain_is=["example.com"]),
             ]
 
             check = exchange_transport_rules_whitelist_disabled()
@@ -79,14 +79,17 @@ class Test_exchange_transport_rules_whitelist_disabled:
 
             exchange_client.transport_rules = [
                 TransportRule(
-                    name="WhitelistRule", scl=0, sender_domain_is=["whitelist.com"]
-                )
+                    name="WhitelistRule", scl=-1, sender_domain_is=["whitelist.com"]
+                ),
+                TransportRule(
+                    name="NoWhitelistRule", scl=-1, sender_domain_is=[]
+                ),
             ]
 
             check = exchange_transport_rules_whitelist_disabled()
             result = check.execute()
 
-            assert len(result) == 1
+            assert len(result) == 2
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
@@ -95,6 +98,14 @@ class Test_exchange_transport_rules_whitelist_disabled:
             assert result[0].resource_name == "WhitelistRule"
             assert result[0].resource_id == "ExchangeTransportRule"
             assert result[0].location == "global"
+            assert result[1].status == "PASS"
+            assert (
+                result[1].status_extended
+                == "Transport rule 'NoWhitelistRule' does not whitelist any domains."
+            )
+            assert result[1].resource_name == "NoWhitelistRule"
+            assert result[1].resource_id == "ExchangeTransportRule"
+            assert result[1].location == "global"
 
     def test_empty_rule_list(self):
         exchange_client = mock.MagicMock()
