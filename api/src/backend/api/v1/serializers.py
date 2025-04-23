@@ -1281,7 +1281,6 @@ class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSeria
         return validated_attrs
 
 
-
 class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
     secret = ProviderSecretField(write_only=True)
 
