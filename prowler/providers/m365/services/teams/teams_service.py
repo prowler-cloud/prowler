@@ -11,6 +11,7 @@ class Teams(M365Service):
         self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
         self.global_meeting_policy = self._get_global_meeting_policy()
+        self.user_settings = self._get_user_settings()
         self.powershell.close()
 
     def _get_teams_client_configuration(self):
@@ -64,6 +65,25 @@ class Teams(M365Service):
             )
         return global_meeting_policy
 
+    def _get_user_settings(self):
+        logger.info("M365 - Getting Teams user settings...")
+        user_settings = None
+        try:
+            settings = self.powershell.get_user_settings()
+            if settings:
+                user_settings = UserSettings(
+                    allow_external_access=settings.get("AllowFederatedUsers", True),
+                    allow_teams_consumer=settings.get("AllowTeamsConsumer", True),
+                    allow_teams_consumer_inbound=settings.get(
+                        "AllowTeamsConsumerInbound", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return user_settings
+
 
 class CloudStorageSettings(BaseModel):
     allow_box: bool
@@ -83,3 +103,9 @@ class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_start_meeting: bool = True
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
+
+
+class UserSettings(BaseModel):
+    allow_external_access: bool = True
+    allow_teams_consumer: bool = True
+    allow_teams_consumer_inbound: bool = True
