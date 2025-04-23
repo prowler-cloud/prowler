@@ -1,7 +1,6 @@
 import datetime
 from typing import List, Optional
 
-from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -239,4 +238,3 @@ class ReportGroup(BaseModel):
     status: Optional[str]
     export_config: Optional[ExportConfig]
     tags: Optional[list]
-

@@ -418,7 +418,7 @@ aws:
   ]
 
   # AWS CodeBuild Configuration
-  # aws.codebuild_backdoored_iam_roles_github_actions
+  # aws.codebuild_project_uses_allowed_github_organizations
   codebuild_github_allowed_organizations:
     [
       "",

@@ -2,9 +2,8 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
-# Inspired by https://medium.com/@adan.alvarez/gaining-long-term-aws-access-with-codebuild-and-github-873324638784
 
-class codebuild_backdoored_iam_roles_github_actions(Check):
+class codebuild_project_uses_allowed_github_organizations(Check):
     def execute(self):
         findings = []
         allowed_organizations = codebuild_client.audit_config.get(
@@ -17,7 +16,14 @@ class codebuild_backdoored_iam_roles_github_actions(Check):
 
             if project.source.type == "GITHUB":
                 project_github_repo_url = project.source.location
-                project_role = next((role for role in iam_client.roles if role.arn == project.service_role_arn), None)
+                project_role = next(
+                    (
+                        role
+                        for role in iam_client.roles
+                        if role.arn == project.service_role_arn
+                    ),
+                    None,
+                )
                 project_iam_trust_policy = project_role.assume_role_policy
 
                 if project_iam_trust_policy:
@@ -25,7 +31,8 @@ class codebuild_backdoored_iam_roles_github_actions(Check):
                         for statement in project_iam_trust_policy["Statement"]:
                             if (
                                 statement["Effect"] == "Allow"
-                                and "codebuild.amazonaws.com" in statement["Principal"]["Service"]
+                                and "codebuild.amazonaws.com"
+                                in statement["Principal"]["Service"]
                             ):
                                 if project_github_repo_url:
                                     org_name = project_github_repo_url.split("/")[3]

@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "codebuild_backdoored_iam_roles_github_actions",
-  "CheckTitle": "Ensure AWS CodeBuild projects using GitHub connect only to whitelisted organizations",
+  "CheckID": "codebuild_project_uses_allowed_github_organizations",
+  "CheckTitle": "Ensure AWS CodeBuild projects using GitHub connect only to allowed organizations",
   "CheckType": [],
   "ServiceName": "codebuild",
   "SubServiceName": "",
