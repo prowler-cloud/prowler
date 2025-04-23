@@ -1281,6 +1281,7 @@ class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSeria
         return validated_attrs
 
 
+
 class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
     secret = ProviderSecretField(write_only=True)
 
@@ -1310,6 +1311,14 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_attrs = super().validate(attrs)
         self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
         return validated_attrs
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop("secret", {}).get("api_key", None)
+        instance = super().update(instance, validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save()
+        return instance
 
 
 # Invitations
@@ -2160,6 +2169,8 @@ class LighthouseConfigSerializer(RLSSerializer):
 class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
     """Serializer for creating new AI configurations."""
 
+    api_key = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = LighthouseConfig
         fields = [
@@ -2183,9 +2194,10 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
+        api_key = validated_data.pop("api_key")
         instance = super().create(validated_data)
-        if "api_key" in validated_data:
-            instance.save_api_key(validated_data["api_key"])
+        instance.api_key_decoded = api_key
+        instance.save()
         return instance
 
 
@@ -2220,5 +2232,6 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
         api_key = validated_data.pop("api_key", None)
         instance = super().update(instance, validated_data)
         if api_key:
-            instance.save_api_key(api_key)
+            instance.api_key_decoded = api_key
+            instance.save()
         return instance
