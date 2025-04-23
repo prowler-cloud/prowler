@@ -23,6 +23,7 @@ import { checkTaskStatus } from "@/lib/helper";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
+import { ProviderType } from "@/components/ui/entities";
 
 type FormValues = z.infer<typeof testConnectionFormSchema>;
 
@@ -41,7 +42,7 @@ export const TestConnectionForm = ({
           connected: boolean | null;
           last_checked_at: string | null;
         };
-        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        provider: ProviderType;
         alias: string;
         scanner_args: Record<string, any>;
       };
