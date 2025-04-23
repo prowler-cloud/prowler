@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "exchange_external_mail_tagged",
+  "CheckID": "exchange_external_email_tagging_enabled",
   "CheckTitle": "Ensure email from external senders is identified.",
   "CheckType": [],
   "ServiceName": "exchange",

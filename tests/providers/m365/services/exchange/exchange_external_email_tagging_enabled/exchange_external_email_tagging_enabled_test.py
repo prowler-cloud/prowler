@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_exchange_external_mail_tagged:
+class Test_exchange_external_email_tagging_enabled:
     def test_external_tagging_enabled(self):
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
@@ -18,12 +18,12 @@ class Test_exchange_external_mail_tagged:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged import (
-                exchange_external_mail_tagged,
+            from prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled import (
+                exchange_external_email_tagging_enabled,
             )
             from prowler.providers.m365.services.exchange.exchange_service import (
                 ExternalMailConfig,
@@ -33,7 +33,7 @@ class Test_exchange_external_mail_tagged:
                 ExternalMailConfig(identity="Org1", external_mail_tag_enabled=True)
             ]
 
-            check = exchange_external_mail_tagged()
+            check = exchange_external_email_tagging_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -61,12 +61,12 @@ class Test_exchange_external_mail_tagged:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged import (
-                exchange_external_mail_tagged,
+            from prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled import (
+                exchange_external_email_tagging_enabled,
             )
             from prowler.providers.m365.services.exchange.exchange_service import (
                 ExternalMailConfig,
@@ -76,7 +76,7 @@ class Test_exchange_external_mail_tagged:
                 ExternalMailConfig(identity="Org2", external_mail_tag_enabled=False)
             ]
 
-            check = exchange_external_mail_tagged()
+            check = exchange_external_email_tagging_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -104,12 +104,12 @@ class Test_exchange_external_mail_tagged:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged import (
-                exchange_external_mail_tagged,
+            from prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled import (
+                exchange_external_email_tagging_enabled,
             )
             from prowler.providers.m365.services.exchange.exchange_service import (
                 ExternalMailConfig,
@@ -124,7 +124,7 @@ class Test_exchange_external_mail_tagged:
                 ),
             ]
 
-            check = exchange_external_mail_tagged()
+            check = exchange_external_email_tagging_enabled()
             result = check.execute()
 
             assert len(result) == 2
@@ -157,17 +157,17 @@ class Test_exchange_external_mail_tagged:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_external_mail_tagged.exchange_external_mail_tagged import (
-                exchange_external_mail_tagged,
+            from prowler.providers.m365.services.exchange.exchange_external_email_tagging_enabled.exchange_external_email_tagging_enabled import (
+                exchange_external_email_tagging_enabled,
             )
 
             exchange_client.external_mail_config = []
 
-            check = exchange_external_mail_tagged()
+            check = exchange_external_email_tagging_enabled()
             result = check.execute()
 
             assert len(result) == 0

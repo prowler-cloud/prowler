@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.exchange.exchange_client import exchange_client
 
 
-class exchange_external_mail_tagged(Check):
+class exchange_external_email_tagging_enabled(Check):
     """Ensure email from external senders is identified.
 
     This check verifies that the native "External" sender tag feature is enabled
