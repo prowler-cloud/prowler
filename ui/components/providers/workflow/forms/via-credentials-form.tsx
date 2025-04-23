@@ -38,7 +38,8 @@ type FormType = CredentialsFormSchema &
   AWSCredentials &
   AzureCredentials &
   GCPCredentials &
-  KubernetesCredentials;
+  KubernetesCredentials &
+  M365Credentials;
 
 export const ViaCredentialsForm = ({
   searchParams,
@@ -141,6 +142,18 @@ export const ViaCredentialsForm = ({
             break;
           case "/data/attributes/secret/client_secret":
             form.setError("client_secret", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/secret/user":
+            form.setError("user", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/secret/encrypted_password":
+            form.setError("encrypted_password", {
               type: "server",
               message: errorMessage,
             });
