@@ -5,8 +5,6 @@ import re
 import subprocess
 import threading
 
-from prowler.lib.logger import logger
-
 
 class PowerShellSession:
     """
@@ -181,30 +179,14 @@ class PowerShellSession:
         Returns:
             dict: Parsed JSON object if found, otherwise an empty dictionary.
 
-        Raises:
-            JSONDecodeError: If the JSON parsing fails.
-
         Example:
             >>> json_parse_output('Some text {"key": "value"} more text')
             {"key": "value"}
         """
-        if output == "":
-            return {}
-
         json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
-        if not json_match:
-            logger.warning(
-                f"Could not parse PowerShell output as JSON.\nOriginal output: {output}",
-            )
-            return {}
-        else:
-            try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError as error:
-                logger.error(
-                    f"Error parsing PowerShell output as JSON: {str(error)}\nOriginal output: {output}",
-                )
-                return {}
+        if json_match:
+            return json.loads(json_match.group(1))
+        return {}
 
     def close(self) -> None:
         """
