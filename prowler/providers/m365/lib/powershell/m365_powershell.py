@@ -137,6 +137,42 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
 
+    def get_global_meeting_policy(self) -> dict:
+        """
+        Get Teams Global Meeting Policy.
+
+        Retrieves the current Microsoft Teams global meeting policy settings.
+
+        Returns:
+            dict: Teams global meeting policy settings in JSON format.
+
+        Example:
+            >>> get_global_meeting_policy()
+            {
+                "AllowAnonymousUsersToJoinMeeting": true
+            }
+        """
+        return self.execute(
+            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json"
+        )
+
+    def get_user_settings(self) -> dict:
+        """
+        Get Teams User Settings.
+
+        Retrieves the current Microsoft Teams user settings.
+
+        Returns:
+            dict: Teams user settings in JSON format.
+
+        Example:
+            >>> get_user_settings()
+            {
+                "AllowExternalAccess": true
+            }
+        """
+        return self.execute("Get-CsTenantFederationConfiguration | ConvertTo-Json")
+
     def connect_exchange_online(self) -> dict:
         """
         Connect to Exchange Online PowerShell Module.
@@ -323,3 +359,41 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-ExternalInOutlook | ConvertTo-Json")
+
+    def get_connection_filter_policy(self) -> dict:
+        """
+        Get Exchange Online Connection Filter Policy.
+
+        Retrieves the current connection filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Connection filter policy settings in JSON format.
+
+        Example:
+            >>> get_connection_filter_policy()
+            {
+                "Identity": "Default",
+                "IPAllowList": []"
+            }
+        """
+        return self.execute(
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+        )
+
+    def get_dkim_config(self) -> dict:
+        """
+        Get DKIM Signing Configuration.
+
+        Retrieves the current DKIM signing configuration settings for Exchange Online.
+
+        Returns:
+            dict: DKIM signing configuration settings in JSON format.
+
+        Example:
+            >>> get_dkim_config()
+            {
+                "Id": "12345678-1234-1234-1234-123456789012",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-DkimSigningConfig | ConvertTo-Json")
