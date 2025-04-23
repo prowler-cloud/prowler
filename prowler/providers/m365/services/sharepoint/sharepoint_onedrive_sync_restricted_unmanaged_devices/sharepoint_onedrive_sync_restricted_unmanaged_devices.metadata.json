@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "sharepoint_onedrive_sync_restricted_unmanaged_devices",
+  "CheckTitle": "Ensure OneDrive sync is restricted for unmanaged devices.",
+  "CheckType": [],
+  "ServiceName": "sharepoint",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Sharepoint Settings",
+  "Description": "Microsoft OneDrive allows users to sign in their cloud tenant account and begin syncing select folders or the entire contents of OneDrive to a local computer. By default, this includes any computer with OneDrive already installed, whether it is Entra Joined, Entra Hybrid Joined or Active Directory Domain joined. The recommended state for this setting is Allow syncing only on computers joined to specific domains Enabled: Specify the AD domain GUID(s).",
+  "Risk": "Unmanaged devices can pose a security risk by allowing users to sync sensitive data to unauthorized devices, potentially leading to data leakage or unauthorized access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-SPOTenantSyncClientRestriction -Enable -DomainGuids '786548DD-877B-4760-A749-6B1EFBC1190A; 877564FF-877B-4760-A749-6B1EFBC1190A'",
+      "NativeIaC": "",
+      "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint 2. Click Settings then select OneDrive - Sync. 3. Check the Allow syncing only on computers joined to specific domains. 4. Use the Get-ADDomain PowerShell command on the on-premises server to obtain the GUID for each on-premises domain. 5. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict OneDrive sync to managed devices to prevent unauthorized access to sensitive data.",
+      "Url": "https://learn.microsoft.com/en-us/sharepoint/allow-syncing-only-on-specific-domains"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
