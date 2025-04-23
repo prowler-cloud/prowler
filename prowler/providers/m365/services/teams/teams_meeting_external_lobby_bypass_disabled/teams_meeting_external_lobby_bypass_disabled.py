@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeeting_external_lobby_bypass_disabled(Check):
+class teams_meeting_external_lobby_bypass_disabled(Check):
     """Check if only people in the organization can bypass the lobby.
 
     Attributes:

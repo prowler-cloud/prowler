@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeeting_dial_in_lobby_bypass_disabled(Check):
+class teams_meeting_dial_in_lobby_bypass_disabled(Check):
     """Check if users dialing in can't bypass the lobby.
 
     Attributes:
