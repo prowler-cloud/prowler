@@ -64,12 +64,15 @@ class Exchange(M365Service):
             if isinstance(external_mail_configuration, dict):
                 external_mail_configuration = [external_mail_configuration]
             for external_mail in external_mail_configuration:
-                external_mail_config.append(
-                    ExternalMailConfig(
-                        identity=external_mail.get("Identity", ""),
-                        external_mail_tag_enabled=external_mail.get("Enabled", False),
+                if external_mail:
+                    external_mail_config.append(
+                        ExternalMailConfig(
+                            identity=external_mail.get("Identity", ""),
+                            external_mail_tag_enabled=external_mail.get(
+                                "Enabled", False
+                            ),
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
