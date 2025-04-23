@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "teams_meeting_external_lobby_bypass_disabled",
+  "CheckID": "teams_meeeting_external_lobby_bypass_disabled",
   "CheckTitle": "Ensure only people in the organization can bypass the lobby.",
   "CheckType": [],
   "ServiceName": "teams",

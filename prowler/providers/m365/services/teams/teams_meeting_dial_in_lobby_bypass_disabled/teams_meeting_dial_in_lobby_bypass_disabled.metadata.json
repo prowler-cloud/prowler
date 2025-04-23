@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "teams_meeting_dial_in_lobby_bypass_disabled",
+  "CheckID": "teams_meeeting_dial_in_lobby_bypass_disabled",
   "CheckTitle": "Ensure users dialing in can't bypass the lobby",
   "CheckType": [],
   "ServiceName": "teams",

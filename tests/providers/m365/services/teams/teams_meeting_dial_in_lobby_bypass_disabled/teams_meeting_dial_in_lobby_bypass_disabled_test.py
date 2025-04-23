@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_teams_meeting_dial_in_lobby_bypass_disabled:
+class Test_teams_meeeting_dial_in_lobby_bypass_disabled:
     def test_no_global_meeting_policy(self):
         teams_client = mock.MagicMock()
         teams_client.global_meeting_policy = None
@@ -17,15 +17,15 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled import (
-                teams_meeting_dial_in_lobby_bypass_disabled,
+            from prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled import (
+                teams_meeeting_dial_in_lobby_bypass_disabled,
             )
 
-            check = teams_meeting_dial_in_lobby_bypass_disabled()
+            check = teams_meeeting_dial_in_lobby_bypass_disabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -43,12 +43,12 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled import (
-                teams_meeting_dial_in_lobby_bypass_disabled,
+            from prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled import (
+                teams_meeeting_dial_in_lobby_bypass_disabled,
             )
             from prowler.providers.m365.services.teams.teams_service import (
                 GlobalMeetingPolicy,
@@ -58,7 +58,7 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
                 allow_pstn_users_to_bypass_lobby=True
             )
 
-            check = teams_meeting_dial_in_lobby_bypass_disabled()
+            check = teams_meeeting_dial_in_lobby_bypass_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -84,12 +84,12 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
             ),
             mock.patch(
-                "prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled.teams_client",
+                "prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled.teams_client",
                 new=teams_client,
             ),
         ):
-            from prowler.providers.m365.services.teams.teams_meeting_dial_in_lobby_bypass_disabled.teams_meeting_dial_in_lobby_bypass_disabled import (
-                teams_meeting_dial_in_lobby_bypass_disabled,
+            from prowler.providers.m365.services.teams.teams_meeeting_dial_in_lobby_bypass_disabled.teams_meeeting_dial_in_lobby_bypass_disabled import (
+                teams_meeeting_dial_in_lobby_bypass_disabled,
             )
             from prowler.providers.m365.services.teams.teams_service import (
                 GlobalMeetingPolicy,
@@ -99,7 +99,7 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
                 allow_pstn_users_to_bypass_lobby=False
             )
 
-            check = teams_meeting_dial_in_lobby_bypass_disabled()
+            check = teams_meeeting_dial_in_lobby_bypass_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
