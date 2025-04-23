@@ -190,12 +190,15 @@ class Defender(M365Service):
             if isinstance(inbound_spam_policy, dict):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
-                inbound_spam_policies.append(
-                    DefenderInboundSpamPolicy(
-                        identity=policy.get("Identity", ""),
-                        allowed_sender_domains=policy.get("AllowedSenderDomains", []),
+                if policy:
+                    inbound_spam_policies.append(
+                        DefenderInboundSpamPolicy(
+                            identity=policy.get("Identity", ""),
+                            allowed_sender_domains=policy.get(
+                                "AllowedSenderDomains", []
+                            ),
+                        )
                     )
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
