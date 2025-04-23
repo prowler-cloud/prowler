@@ -2239,7 +2239,7 @@ def get_section_containers_3_levels(data, section_1, section_2, section_3):
     data[section_3] = data[section_3].astype(str)
 
     data.sort_values(
-        by=section_1,
+        by=section_3,
         key=lambda x: x.map(extract_numeric_values),
         ascending=True,
         inplace=True,
@@ -2326,12 +2326,6 @@ def get_section_containers_3_levels(data, section_1, section_2, section_3):
             specific_data = data[
                 (data[section_1] == marco) & (data[section_2] == categoria)
             ]
-            specific_data.sort_values(
-                by=section_2,
-                key=lambda x: x.map(extract_numeric_values),
-                ascending=True,
-                inplace=True,
-            )
             findings_counts_categoria = (
                 specific_data.groupby([section_2, "STATUS"])
                 .size()
@@ -2423,12 +2417,6 @@ def get_section_containers_3_levels(data, section_1, section_2, section_3):
                 specific_data2 = specific_data[
                     specific_data[section_3] == idgrupocontrol
                 ]
-                specific_data2.sort_values(
-                    by=section_3,
-                    key=lambda x: x.map(extract_numeric_values),
-                    ascending=True,
-                    inplace=True,
-                )
                 findings_counts_idgrupocontrol = (
                     specific_data2.groupby([section_3, "STATUS"])
                     .size()

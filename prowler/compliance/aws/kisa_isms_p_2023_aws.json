@@ -508,7 +508,7 @@
       "Attributes": [
         {
           "Domain": "1. Establishment and Operation of the Management System",
-          "Subdomain": "1.4. Management System Inspection and Improvement",
+          "Subdomain": "1.4 Management System Inspection and Improvement",
           "Section": "1.4.3 Management System Improvement",
           "AuditChecklist": [
             "Are the root causes of the issues identified during legal compliance reviews and management system inspections analyzed, and are preventive and improvement measures established and implemented?",
@@ -541,7 +541,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.1 Policies, Organization, and Asset Management",
+          "Subdomain": "2.1 Policy, Organization, Asset Management",
           "Section": "2.1.1 Policy Maintenance",
           "AuditChecklist": [
             "Has the organization established and implemented a procedure for regularly reviewing the validity of information protection and personal information protection policies and implementation documents?",
@@ -577,7 +577,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.1 Policies, Organization, and Asset Management",
+          "Subdomain": "2.1 Policy, Organization, Asset Management",
           "Section": "2.1.2 Organization Maintenance",
           "AuditChecklist": [
             "Are the roles and responsibilities of those responsible for and involved in information protection and personal information protection clearly defined?",
@@ -658,7 +658,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.2 Personnel Security",
+          "Subdomain": "2.2 Human Security",
           "Section": "2.2.1 Designation and Management of Key Personnel",
           "AuditChecklist": [
             "Are the criteria for key duties, such as handling personal information and important information or accessing key systems, clearly defined?",
@@ -694,7 +694,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.2 Personnel Security",
+          "Subdomain": "2.2 Human Security",
           "Section": "2.2.2 Separation of Duties",
           "AuditChecklist": [
             "Are criteria for the separation of duties established and applied to prevent potential harm from the misuse or abuse of authority?",
@@ -911,7 +911,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.3 External Party Security",
+          "Subdomain": "2.3 External Security",
           "Section": "2.3.3 External Party Security Implementation Management",
           "AuditChecklist": [
             "Are periodic inspections or audits conducted to ensure external parties comply with information protection and personal information protection requirements specified in contracts, agreements, and internal policies?",
@@ -946,7 +946,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.3 External Party Security",
+          "Subdomain": "2.3 External Security",
           "Section": "2.3.4 Security for External Party Contract Changes and Expiry",
           "AuditChecklist": [
             "Has the organization established and implemented security measures to ensure the return of information assets, deletion of information system access accounts, and the acquisition of confidentiality agreements in accordance with official procedures when an external party contract expires, a task is completed, or there is a personnel change?",
@@ -1398,7 +1398,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.5 Authentication and Privilege Management",
+          "Subdomain": "2.5 Authentication and Access Management",
           "Section": "2.5.5 Management of Special Accounts and Privileges",
           "AuditChecklist": [
             "Is there a formal privilege request and approval process established and implemented to ensure that special privileges, such as administrative privileges, are only granted to a minimal number of people?",
@@ -1446,7 +1446,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.5 Authentication and Privilege Management",
+          "Subdomain": "2.5 Authentication and Access Management",
           "Section": "2.5.6 Review of Access Rights",
           "AuditChecklist": [
             "Are the histories of account and access right creation, registration, granting, use, modification, and deletion for information systems, personal information, and important information being recorded?",
@@ -2117,7 +2117,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.8 Security for Information System Introduction and Development",
+          "Subdomain": "2.8 Security in Information System Introduction and Development",
           "Section": "2.8.1 Definition of Security Requirements",
           "AuditChecklist": [
             "When introducing, developing, or modifying an information system, are procedures for reviewing the validity of information protection and personal information protection aspects and for acquisition established and implemented?",
@@ -2168,7 +2168,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.8 Security for Information System Introduction and Development",
+          "Subdomain": "2.8 Security in Information System Introduction and Development",
           "Section": "2.8.2 Review and Testing of Security Requirements",
           "AuditChecklist": [
             "When introducing, developing, or modifying an information system, are tests conducted to verify whether the security requirements defined during the analysis and design stages have been effectively applied?",
@@ -2209,7 +2209,7 @@
       "Attributes": [
         {
           "Domain": "2. Security Requirements for Protection Measures",
-          "Subdomain": "2.8 Security for Information System Introduction and Development",
+          "Subdomain": "2.8 Security in Information System Introduction and Development",
           "Section": "2.8.3 Separation of Test and Production Environments",
           "AuditChecklist": [
             "Are development and test systems separated from the production system?",
@@ -2342,7 +2342,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.9 System and Service Operations Management",
+          "Subdomain": "2.9 System and Service Operation Management",
           "Section": "2.9.1 Change Management",
           "AuditChecklist": [
             "Have procedures been established and implemented for changes to assets related to information systems (hardware, operating systems, commercial software packages, etc.)?",
@@ -2410,7 +2410,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.9 System and Service Operations Management",
+          "Subdomain": "2.9 System and Service Operation Management",
           "Section": "2.9.2 Performance and Fault Management",
           "AuditChecklist": [
             "Have procedures been established and implemented to continuously monitor performance and capacity to ensure the availability of information systems?",
@@ -3502,7 +3502,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.12. Disaster Recovery",
+          "Subdomain": "2.12 Disaster Recovery",
           "Section": "2.12.1 Safety Measures for Disaster Preparedness",
           "AuditChecklist": [
             "Has the organization identified IT disaster types that could threaten the continuity of core services (businesses) and analyzed the expected scale of damage and impact on operations to identify core IT services (businesses) and systems?",
@@ -3599,7 +3599,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.1 Protection Measures during Personal Information Collection",
+          "Subdomain": "3.1 Protection Measures for Personal Information Collection",
           "Section": "3.1.1 Collection and Use of Personal Information",
           "AuditChecklist": [
             "When collecting personal information, is it collected in accordance with lawful requirements such as obtaining the data subject’s consent, complying with legal obligations, or concluding and fulfilling contracts?",
@@ -3645,7 +3645,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.1 Protection Measures during Personal Information Collection",
+          "Subdomain": "3.1 Protection Measures for Personal Information Collection",
           "Section": "3.1.2 Restrictions on the Collection of Personal Information",
           "AuditChecklist": [
             "When collecting personal information, is only the minimum amount of information necessary for the intended purpose being collected?",
@@ -3678,7 +3678,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.1 Protection Measures during Personal Information Collection",
+          "Subdomain": "3.1 Protection Measures for Personal Information Collection",
           "Section": "3.1.3 Restrictions on the Processing of Resident Registration Numbers",
           "AuditChecklist": [
             "Are resident registration numbers only processed when there is a clear legal basis?",
@@ -3819,7 +3819,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.1 Protection Measures When Collecting Personal Information",
+          "Subdomain": "3.1 Protection Measures for Personal Information Collection",
           "Section": "3.1.7 Collection and Use of Personal Information for Marketing Purposes",
           "AuditChecklist": [
             "When obtaining consent from data subjects to process personal information for the purpose of promoting or recommending goods or services, is the data subject clearly informed, and is separate consent obtained?",
