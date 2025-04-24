@@ -16,8 +16,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add the correct values for logger.info inside iam service [(#7526)](https://github.com/prowler-cloud/prowler/pull/7526).
 - Update S3 bucket naming validation to accept dots [(#7545)](https://github.com/prowler-cloud/prowler/pull/7545).
 - Handle new FlowLog model properties in Azure [(#7546)](https://github.com/prowler-cloud/prowler/pull/7546).
+- Improve compliance and dashboard [(#7596)](https://github.com/prowler-cloud/prowler/pull/7596)
+- Remove invalid parameter `create_file_descriptor` [(#7600)](https://github.com/prowler-cloud/prowler/pull/7600)
 - Remove first empty line in HTML output [(#7606)](https://github.com/prowler-cloud/prowler/pull/7606)
-- Remove invalid parameter `create_file_descriptor` in NHN provider [(#7600)](https://github.com/prowler-cloud/prowler/pull/7600)
 
 ---
 
