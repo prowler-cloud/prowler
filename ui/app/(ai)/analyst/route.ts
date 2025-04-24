@@ -85,17 +85,17 @@ const initializeModels = async () => {
 
   // Initialize models without API keys
   const llm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4",
+    model: modelConfig?.model || "gpt-4o",
     temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 5000,
+    maxTokens: modelConfig?.max_tokens || 4000,
     apiKey: apiKey,
     tags: ["agent"],
   });
 
   const supervisorllm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4",
+    model: modelConfig?.model || "gpt-4o",
     temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 5000,
+    maxTokens: modelConfig?.max_tokens || 4000,
     apiKey: apiKey,
     streaming: true,
     tags: ["supervisor"],
