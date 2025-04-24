@@ -883,7 +883,7 @@ const checksByProvider = async (provider_type: string) => {
       "scheduler_bind_address",
       "scheduler_profiling",
     ],
-    microsoft365: [
+    m365: [
       "admincenter_groups_not_public_visibility",
       "admincenter_settings_password_never_expire",
       "admincenter_users_admins_reduced_license_footprint",

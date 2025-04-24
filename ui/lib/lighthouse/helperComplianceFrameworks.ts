@@ -62,7 +62,7 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
       "iso27001_2022_kubernetes",
       "pci_4.0_kubernetes",
     ],
-    microsoft365: ["cis_4.0_microsoft365"],
+    m365: ["cis_4.0_microsoft365"],
   };
   return complianceFrameworks[provider_type as ProviderType] || [];
 };
