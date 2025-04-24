@@ -398,6 +398,10 @@ def display_data(
                 f"dashboard.compliance.{current}"
             )
             data.drop_duplicates(keep="first", inplace=True)
+
+            if "threatscore" in analytics_input:
+                data = get_threatscore_mean_by_pillar(data)
+
             table = compliance_module.get_table(data)
         except ModuleNotFoundError:
             table = html.Div(
@@ -494,7 +498,7 @@ def display_data(
     if "threatscore" in analytics_input:
         security_level_graph = get_graph(
             pie_2,
-            "Pillar and Sub-Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
+            "Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
             margin_top=0,
         )
 
@@ -630,44 +634,85 @@ def get_table(current_compliance, table):
     ]
 
 
+def get_threatscore_mean_by_pillar(df):
+    modified_df = df[df["STATUS"] == "FAIL"]
+
+    modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
+        modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+    )
+
+    pillar_means = (
+        modified_df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
+            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
+        ]
+        .mean()
+        .round(2)
+    )
+
+    output = []
+    for pillar, mean in pillar_means.items():
+        output.append(f"{pillar} - [{mean}]")
+
+    for value in output:
+        if value.split(" - ")[0] in df["REQUIREMENTS_ATTRIBUTES_SECTION"].values:
+            df.loc[
+                df["REQUIREMENTS_ATTRIBUTES_SECTION"] == value.split(" - ")[0],
+                "REQUIREMENTS_ATTRIBUTES_SECTION",
+            ] = value
+    return df
+
+
 def get_table_prowler_threatscore(df):
     df = df[df["STATUS"] == "FAIL"]
+
+    # Delete " - " from the column REQUIREMENTS_ATTRIBUTES_SECTION
+    df["REQUIREMENTS_ATTRIBUTES_SECTION"] = (
+        df["REQUIREMENTS_ATTRIBUTES_SECTION"].str.split(" - ").str[0]
+    )
+
     df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
         df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
     )
+
     score_df = (
-        df.groupby(
-            ["REQUIREMENTS_ATTRIBUTES_SECTION", "REQUIREMENTS_ATTRIBUTES_SUBSECTION"]
-        )["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"]
+        df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
+            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
+        ]
         .mean()
         .reset_index()
         .rename(
             columns={
                 "REQUIREMENTS_ATTRIBUTES_SECTION": "Pillar",
-                "REQUIREMENTS_ATTRIBUTES_SUBSECTION": "SubPillar",
                 "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK": "Score",
             }
         )
     )
 
-    fig = px.sunburst(
+    fig = px.bar(
         score_df,
-        path=["Pillar", "SubPillar"],
-        values="Score",
+        x="Pillar",
+        y="Score",
         color="Score",
+        color_continuous_scale=[
+            "#45cc6e",
+            "#f4d44d",
+            "#e77676",
+        ],  # verde → amarillo → rojo
+        hover_data={"Score": True, "Pillar": True},
+        labels={"Score": "Average Risk Score", "Pillar": "Section"},
+        height=400,
     )
 
-    fig.update_traces(
-        hovertemplate=("<b>%{label}</b><br>" + "Score: %{value}<extra></extra>"),
-        insidetextorientation="radial",
-    )
-
-    fig.update_traces(
-        textinfo="label",
-        branchvalues="total",
+    fig.update_layout(
+        xaxis_title="Pillar",
+        yaxis_title="Level of Risk",
+        margin=dict(l=20, r=20, t=30, b=20),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        coloraxis_colorbar=dict(title="Risk"),
     )
 
     return dcc.Graph(
         figure=fig,
-        style={"height": "35rem", "width": "50rem"},
+        style={"height": "25rem", "width": "40rem"},
     )
