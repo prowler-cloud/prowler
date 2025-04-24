@@ -20,8 +20,6 @@ class AccessAnalyzer(AWSService):
     def _list_analyzers(self, regional_client):
         logger.info("AccessAnalyzer - Listing Analyzers...")
         try:
-            logger.error("This is a fake logger error.")
-            logger.info("And this is a fake logger info.")
             list_analyzers_paginator = regional_client.get_paginator("list_analyzers")
             analyzer_count = 0
             for page in list_analyzers_paginator.paginate():
