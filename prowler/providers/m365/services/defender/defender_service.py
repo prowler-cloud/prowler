@@ -17,6 +17,7 @@ class Defender(M365Service):
         self.antiphising_rules = None
         self.connection_filter_policy = None
         self.dkim_configurations = None
+        self.inbound_spam_policies = None
 
         if self.powershell:
             self.powershell.connect_exchange_online()
@@ -27,6 +28,7 @@ class Defender(M365Service):
             self.antiphising_rules = self._get_antiphising_rules()
             self.connection_filter_policy = self._get_connection_filter_policy()
             self.dkim_configurations = self._get_dkim_config()
+            self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -188,6 +190,31 @@ class Defender(M365Service):
             )
         return outbound_spam_rules
 
+    def _get_inbound_spam_filter_policy(self):
+        logger.info("Microsoft365 - Getting Defender inbound spam filter policy...")
+        inbound_spam_policies = []
+        try:
+            inbound_spam_policy = self.powershell.get_inbound_spam_filter_policy()
+            if not inbound_spam_policy:
+                return inbound_spam_policies
+            if isinstance(inbound_spam_policy, dict):
+                inbound_spam_policy = [inbound_spam_policy]
+            for policy in inbound_spam_policy:
+                if policy:
+                    inbound_spam_policies.append(
+                        DefenderInboundSpamPolicy(
+                            identity=policy.get("Identity", ""),
+                            allowed_sender_domains=policy.get(
+                                "AllowedSenderDomains", []
+                            ),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return inbound_spam_policies
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -233,3 +260,8 @@ class OutboundSpamPolicy(BaseModel):
 
 class OutboundSpamRule(BaseModel):
     state: str
+
+
+class DefenderInboundSpamPolicy(BaseModel):
+    identity: str
+    allowed_sender_domains: list[str] = []

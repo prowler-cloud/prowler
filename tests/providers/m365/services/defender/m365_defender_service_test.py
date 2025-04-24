@@ -7,6 +7,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     AntiphishingRule,
     ConnectionFilterPolicy,
     Defender,
+    DefenderInboundSpamPolicy,
     DkimConfig,
     MalwarePolicy,
     OutboundSpamPolicy,
@@ -68,6 +69,19 @@ def mock_defender_get_antiphising_rules(_):
             state="Disabled",
         ),
     }
+
+
+def mock_defender_get_inbound_spam_policy(_):
+    return [
+        DefenderInboundSpamPolicy(
+            identity="Policy1",
+            allowed_sender_domains=[],
+        ),
+        DefenderInboundSpamPolicy(
+            identity="Policy2",
+            allowed_sender_domains=["example.com"],
+        ),
+    ]
 
 
 def mock_defender_get_connection_filter_policy(_):
@@ -323,3 +337,23 @@ class Test_Defender_Service:
             outbound_spam_rules = defender_client.outbound_spam_rules
             assert outbound_spam_rules["Policy1"].state == "Enabled"
             assert outbound_spam_rules["Policy2"].state == "Disabled"
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_inbound_spam_filter_policy",
+        new=mock_defender_get_inbound_spam_policy,
+    )
+    def test__get_inbound_spam_filter_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            inbound_spam_policies = defender_client.inbound_spam_policies
+            assert inbound_spam_policies[0].allowed_sender_domains == []
+            assert inbound_spam_policies[1].allowed_sender_domains == ["example.com"]
+            defender_client.powershell.close()
