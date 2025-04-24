@@ -8,10 +8,14 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Exchange(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.powershell.connect_exchange_online()
-        self.organization_config = self._get_organization_config()
-        self.mailboxes_config = self._get_mailbox_audit_config()
-        self.powershell.close()
+        self.organization_config = None
+        self.mailboxes_config = None
+
+        if self.powershell:
+            self.powershell.connect_exchange_online()
+            self.organization_config = self._get_organization_config()
+            self.mailboxes_config = self._get_mailbox_audit_config()
+            self.powershell.close()
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")

@@ -10,15 +10,24 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Defender(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.powershell.connect_exchange_online()
-        self.malware_policies = self._get_malware_filter_policy()
-        self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
-        self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
-        self.antiphishing_policies = self._get_antiphising_policy()
-        self.antiphising_rules = self._get_antiphising_rules()
-        self.connection_filter_policy = self._get_connection_filter_policy()
-        self.dkim_configurations = self._get_dkim_config()
-        self.powershell.close()
+        self.malware_policies = None
+        self.outbound_spam_policies = None
+        self.outbound_spam_rules = None
+        self.antiphishing_policies = None
+        self.antiphising_rules = None
+        self.connection_filter_policy = None
+        self.dkim_configurations = None
+
+        if self.powershell:
+            self.powershell.connect_exchange_online()
+            self.malware_policies = self._get_malware_filter_policy()
+            self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
+            self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
+            self.antiphishing_policies = self._get_antiphising_policy()
+            self.antiphising_rules = self._get_antiphising_rules()
+            self.connection_filter_policy = self._get_connection_filter_policy()
+            self.dkim_configurations = self._get_dkim_config()
+            self.powershell.close()
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
