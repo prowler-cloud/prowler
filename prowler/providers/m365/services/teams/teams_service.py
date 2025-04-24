@@ -58,6 +58,9 @@ class Teams(M365Service):
                     allow_external_non_trusted_meeting_chat=global_meeting_policy.get(
                         "AllowExternalNonTrustedMeetingChat", True
                     ),
+                    allow_cloud_recording=global_meeting_policy.get(
+                        "AllowCloudRecording", True
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -103,6 +106,7 @@ class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_start_meeting: bool = True
     allow_external_participant_give_request_control: bool = True
     allow_external_non_trusted_meeting_chat: bool = True
+    allow_cloud_recording: bool = True
 
 
 class UserSettings(BaseModel):
