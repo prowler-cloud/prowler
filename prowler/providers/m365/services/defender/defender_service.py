@@ -10,14 +10,14 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Defender(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.malware_policies = None
-        self.outbound_spam_policies = None
-        self.outbound_spam_rules = None
-        self.antiphishing_policies = None
-        self.antiphising_rules = None
+        self.malware_policies = []
+        self.outbound_spam_policies = {}
+        self.outbound_spam_rules = {}
+        self.antiphishing_policies = {}
+        self.antiphising_rules = {}
         self.connection_filter_policy = None
-        self.dkim_configurations = None
-        self.inbound_spam_policies = None
+        self.dkim_configurations = []
+        self.inbound_spam_policies = []
 
         if self.powershell:
             self.powershell.connect_exchange_online()

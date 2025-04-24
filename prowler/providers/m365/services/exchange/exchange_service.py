@@ -11,9 +11,9 @@ class Exchange(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
         self.organization_config = None
-        self.mailboxes_config = None
-        self.external_mail_config = None
-        self.transport_rules = None
+        self.mailboxes_config = []
+        self.external_mail_config = []
+        self.transport_rules = []
 
         if self.powershell:
             self.powershell.connect_exchange_online()
