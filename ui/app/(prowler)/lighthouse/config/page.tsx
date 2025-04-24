@@ -207,10 +207,13 @@ export default function ChatbotConfig() {
                 size="md"
                 isRequired
               >
-                <SelectItem key="gpt-4o" value="gpt-4o">
+                <SelectItem key="gpt-4o-2024-08-06" value="gpt-4o-2024-08-06">
                   GPT-4o (Recommended)
                 </SelectItem>
-                <SelectItem key="gpt-4o-mini" value="gpt-4o-mini">
+                <SelectItem
+                  key="gpt-4o-mini-2024-07-18"
+                  value="gpt-4o-mini-2024-07-18"
+                >
                   GPT-4o Mini
                 </SelectItem>
               </Select>
