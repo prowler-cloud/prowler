@@ -33,9 +33,14 @@ class teams_meeting_external_lobby_bypass_disabled(Check):
                 "People outside the organization can bypass the lobby."
             )
 
+            allowed_bypass_settings = {
+                "EveryoneInCompanyExcludingGuests",
+                "OrganizerOnly",
+                "InvitedUsers",
+            }
             if (
                 global_meeting_policy.allow_external_users_to_bypass_lobby
-                == "EveryoneInCompanyExcludingGuests"
+                in allowed_bypass_settings
             ):
                 report.status = "PASS"
                 report.status_extended = (
