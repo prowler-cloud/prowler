@@ -79,7 +79,7 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         self.execute(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
         )
         self.execute(
             f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'

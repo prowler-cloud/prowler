@@ -65,27 +65,60 @@ class TestPowerShellSession:
         expected_output = '{"Name": "Get-Command"}'
 
         with patch.object(session, "read_output", return_value=expected_output):
-            result = session.execute(command)
+            with patch.object(
+                session, "json_parse_output", return_value={"Name": "Get-Command"}
+            ):
+                result = session.execute(command, json_parse=True)
 
-            mock_process.stdin.write.assert_any_call(f"{command}\n")
-            mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
-            assert result == {"Name": "Get-Command"}
+                mock_process.stdin.write.assert_any_call(f"{command}\n")
+                mock_process.stdin.write.assert_any_call(
+                    f"Write-Output '{session.END}'\n"
+                )
+                assert result == {"Name": "Get-Command"}
         session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
+
+        # Mock fileno() for stdout and stderr
+        mock_process.stdout.fileno.return_value = 1
+        mock_process.stderr.fileno.return_value = 2
+
         session = PowerShellSession()
 
-        # Test normal output
-        with patch.object(session, "read_output", return_value="test@example.com"):
-            assert session.read_output() == "test@example.com"
+        # Test normal output with Write-Output
+        mock_process.stdout.readline.side_effect = ["Hello World\n", f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = ""
+        with patch("select.select", return_value=([mock_process.stdout], [], [])):
+            with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+                result = session.read_output()
+                assert result == "Hello World"
 
-        # Test timeout
-        mock_process.stdout.readline.return_value = "test output\n"
-        with patch.object(session, "remove_ansi", return_value="test output"):
-            assert session.read_output(timeout=0.1, default="") == ""
+        # Test error output with Write-Error
+        mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = [
+            "Write-Error: This is an error\n",
+            "",
+        ]
+        with patch(
+            "select.select",
+            side_effect=[
+                (
+                    [mock_process.stdout],
+                    [],
+                    [],
+                ),  # First select: stdout ready (empty line)
+                ([mock_process.stdout], [], []),  # Second select: stdout ready (END)
+                ([mock_process.stderr], [], []),  # Third select: stderr ready (error)
+                ([], [], []),  # Fourth select: nothing ready (end loop)
+            ],
+        ):
+            with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+                result = session.read_output()
+                assert result == "Write-Error: This is an error"
+
         session.close()
 
     @patch("subprocess.Popen")

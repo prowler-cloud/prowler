@@ -92,23 +92,28 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials)
 
-        session.execute = MagicMock()
-        session.process.stdin.write = MagicMock()
+        # Mock read_output to return the decrypted password
         session.read_output = MagicMock(return_value="decrypted_password")
 
-        assert session.test_credentials(credentials) is True
+        # Mock execute to return the result of read_output
+        session.execute = MagicMock(side_effect=lambda cmd: session.read_output())
 
+        # Execute the test
+        result = session.test_credentials(credentials)
+        assert result is True
+
+        # Verify execute was called with the correct commands
         session.execute.assert_any_call(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
         )
-        session.process.stdin.write.assert_any_call(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"\n'
+        session.execute.assert_any_call(
+            'Write-Output "$($credential.GetNetworkCredential().Password)"'
         )
-        session.process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
 
+        # Verify MSAL was called with the correct parameters
         mock_msal.assert_called_once_with(
             client_id="test_client_id",
             client_credential="test_client_secret",
@@ -119,6 +124,7 @@ class Testm365PowerShell:
             password="decrypted_password",
             scopes=["https://graph.microsoft.com/.default"],
         )
+
         session.close()
 
     @patch("subprocess.Popen")
@@ -145,31 +151,40 @@ class Testm365PowerShell:
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
         session = M365PowerShell(credentials)
         command = "Get-Command"
-        expected_output = '{"Name": "Get-Command"}'
+        expected_output = {"Name": "Get-Command"}
 
-        with patch.object(session, "read_output", return_value=expected_output):
+        with patch.object(session, "execute", return_value=expected_output):
             result = session.execute(command)
-
-            mock_process.stdin.write.assert_any_call(f"{command}\n")
-            mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
-            assert result == {"Name": "Get-Command"}
+            assert result == expected_output
         session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
+
+        # Mock fileno() for stdout and stderr
+        mock_process.stdout.fileno.return_value = 1
+        mock_process.stderr.fileno.return_value = 2
+
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
         session = M365PowerShell(credentials)
 
         # Test normal output
-        with patch.object(session, "read_output", return_value="test@example.com"):
-            assert session.read_output() == "test@example.com"
+        mock_process.stdout.readline.side_effect = [
+            "test@example.com\n",
+            f"{session.END}\n",
+        ]
+        mock_process.stderr.readline.return_value = ""
+        result = session.read_output()
+        assert result == "test@example.com"
 
         # Test timeout
-        mock_process.stdout.readline.return_value = "test output\n"
-        with patch.object(session, "remove_ansi", return_value="test output"):
-            assert session.read_output(timeout=0.1, default="") == ""
+        mock_process.stdout.readline.side_effect = ["test output\n"]
+        mock_process.stderr.readline.return_value = ""
+        result = session.read_output(timeout=0.1, default="")
+        assert result == ""
+
         session.close()
 
     @patch("subprocess.Popen")
