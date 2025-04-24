@@ -17,9 +17,15 @@ def get_prowler_threatscore_table(
         "Sub-Pillar": [],
         "Score": [],
     }
+    pillar_table = {
+        "Pillar": [],
+        "Score": [],
+    }
     pass_count = []
     fail_count = []
     muted_count = []
+    score_per_pillar = {}
+    number_findings_per_pillar = {}
     score_per_sub_pillar = {}
     number_findings_per_sub_pillar = {}
     for index, finding in enumerate(findings):
@@ -45,6 +51,40 @@ def get_prowler_threatscore_table(
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
 
+                        pillar = attribute.Section
+
+                        if pillar not in score_per_pillar.keys():
+                            score_per_pillar[pillar] = 0
+                            number_findings_per_pillar[pillar] = 0
+                        if finding.status == "FAIL" and not finding.muted:
+                            score_per_pillar[pillar] += attribute.LevelOfRisk
+                            number_findings_per_pillar[pillar] += 1
+
+    # Create Pillar Table
+    for index, finding in enumerate(findings):
+        check = bulk_checks_metadata[finding.check_metadata.CheckID]
+        check_compliances = check.Compliance
+        for compliance in check_compliances:
+            if compliance.Framework == "ProwlerThreatScore":
+                for requirement in compliance.Requirements:
+                    for attribute in requirement.Attributes:
+                        if (
+                            f"{Fore.YELLOW}{attribute.Section}{Style.RESET_ALL}"
+                            not in pillar_table["Pillar"]
+                        ):
+                            pillar_table["Pillar"].append(
+                                f"{Fore.YELLOW}{attribute.Section}{Style.RESET_ALL}"
+                            )
+                            if number_findings_per_pillar[attribute.Section] == 0:
+                                pillar_table["Score"].append(
+                                    f"{orange_color}0{Style.RESET_ALL}"
+                                )
+                            else:
+                                pillar_table["Score"].append(
+                                    f"{orange_color}{score_per_pillar[attribute.Section] / number_findings_per_pillar[attribute.Section]:.2f}/5{Style.RESET_ALL}"
+                                )
+
+    # Create Sub-Pillar Table
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -89,31 +129,62 @@ def get_prowler_threatscore_table(
         ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))
         if not compliance_overview:
-            if len(threatscore_compliance_table["Pillar"]) > 0 and len(fail_count) > 0:
-                combined = list(
-                    zip(
-                        threatscore_compliance_table["Sub-Pillar"],
-                        threatscore_compliance_table["Pillar"],
-                        threatscore_compliance_table["Score"],
-                    )
-                )
-                combined.sort(key=lambda x: x[0])
-                sub_pillars_sorted, pillars_sorted, scores_sorted = zip(*combined)
-
-                threatscore_compliance_table["Sub-Pillar"] = list(sub_pillars_sorted)
-                threatscore_compliance_table["Pillar"] = list(pillars_sorted)
-                threatscore_compliance_table["Score"] = list(scores_sorted)
-
+            if len(fail_count) > 0 and any(
+                [
+                    len(threatscore_compliance_table["Pillar"]) > 0,
+                    len(pillar_table["Pillar"]) > 0,
+                ]
+            ):
                 print(
                     f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                 )
-                print(
-                    tabulate(
-                        threatscore_compliance_table,
-                        tablefmt="rounded_grid",
-                        headers="keys",
+
+                if len(threatscore_compliance_table["Pillar"]) > 0:
+                    combined = list(
+                        zip(
+                            threatscore_compliance_table["Sub-Pillar"],
+                            threatscore_compliance_table["Pillar"],
+                            threatscore_compliance_table["Score"],
+                        )
                     )
-                )
+                    combined.sort(key=lambda x: x[0])
+                    sub_pillars_sorted, pillars_sorted, scores_sorted = zip(*combined)
+
+                    threatscore_compliance_table["Sub-Pillar"] = list(
+                        sub_pillars_sorted
+                    )
+                    threatscore_compliance_table["Pillar"] = list(pillars_sorted)
+                    threatscore_compliance_table["Score"] = list(scores_sorted)
+
+                    print(
+                        tabulate(
+                            threatscore_compliance_table,
+                            tablefmt="rounded_grid",
+                            headers="keys",
+                        )
+                    )
+
+                if len(pillar_table["Pillar"]) > 0:
+                    combined = list(
+                        zip(
+                            pillar_table["Pillar"],
+                            pillar_table["Score"],
+                        )
+                    )
+                    combined.sort(key=lambda x: x[0])
+                    pillars_sorted, scores_sorted = zip(*combined)
+
+                    pillar_table["Pillar"] = list(pillars_sorted)
+                    pillar_table["Score"] = list(scores_sorted)
+
+                    print(
+                        tabulate(
+                            pillar_table,
+                            tablefmt="rounded_grid",
+                            headers="keys",
+                        )
+                    )
+
                 print(
                     f"{Style.BRIGHT}{Fore.MAGENTA}\n=== Risk Score Guide ===\nScore ranges from 1 (lowest risk) to 5 (highest risk), indicating the severity of the potential impact.\n{Style.RESET_ALL}"
                 )
