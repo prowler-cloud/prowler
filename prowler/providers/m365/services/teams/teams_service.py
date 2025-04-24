@@ -52,6 +52,12 @@ class Teams(M365Service):
                     allow_anonymous_users_to_start_meeting=global_meeting_policy.get(
                         "AllowAnonymousUsersToStartMeeting", True
                     ),
+                    allow_external_users_to_bypass_lobby=global_meeting_policy.get(
+                        "AutoAdmittedUsers", "Everyone"
+                    ),
+                    allow_pstn_users_to_bypass_lobby=global_meeting_policy.get(
+                        "AllowPSTNUsersToBypassLobby", True
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -95,6 +101,8 @@ class TeamsSettings(BaseModel):
 class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_join_meeting: bool = True
     allow_anonymous_users_to_start_meeting: bool = True
+    allow_external_users_to_bypass_lobby: str = "Everyone"
+    allow_pstn_users_to_bypass_lobby: bool = True
 
 
 class UserSettings(BaseModel):
