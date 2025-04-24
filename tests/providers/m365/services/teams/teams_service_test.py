@@ -28,6 +28,7 @@ def mock_get_global_meeting_policy(_):
     return GlobalMeetingPolicy(
         allow_anonymous_users_to_join_meeting=False,
         allow_anonymous_users_to_start_meeting=False,
+        allow_external_participant_give_request_control=False,
     )
 
 
