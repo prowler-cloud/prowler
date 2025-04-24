@@ -94,7 +94,7 @@ class Testm365PowerShell:
 
         # Mock read_output to return the decrypted password
         session.read_output = MagicMock(return_value="decrypted_password")
-        
+
         # Mock execute to return the result of read_output
         session.execute = MagicMock(side_effect=lambda _: session.read_output())
 
@@ -124,7 +124,7 @@ class Testm365PowerShell:
             password="decrypted_password",
             scopes=["https://graph.microsoft.com/.default"],
         )
-        
+
         session.close()
 
     @patch("subprocess.Popen")
