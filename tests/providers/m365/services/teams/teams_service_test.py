@@ -123,5 +123,6 @@ class Test_Teams_Service:
             assert teams_client.global_meeting_policy == GlobalMeetingPolicy(
                 allow_anonymous_users_to_join_meeting=False,
                 allow_anonymous_users_to_start_meeting=False,
+                allow_external_participant_give_request_control=False,
             )
             teams_client.powershell.close()
