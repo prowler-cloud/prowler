@@ -233,15 +233,15 @@ class PowerShellSession:
 
         json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
         if not json_match:
-            logger.warning(
-                f"Could not parse PowerShell output as JSON.\nOriginal output: {output}",
+            logger.error(
+                f"Unexpected PowerShell output: {output}\n",
             )
         else:
             try:
                 return json.loads(json_match.group(1))
             except json.JSONDecodeError as error:
                 logger.error(
-                    f"Error parsing PowerShell output as JSON: {str(error)}\nOriginal output: {output}",
+                    f"Error parsing PowerShell output as JSON: {str(error)}\n",
                 )
 
         return {}
