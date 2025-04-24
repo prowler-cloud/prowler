@@ -1344,8 +1344,8 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
 
     name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
     api_key = models.BinaryField(blank=False, null=False)
-    model = models.CharField(max_length=50, default="gpt-4o")
-    temperature = models.FloatField(default=0.7)
+    model = models.CharField(max_length=50, default="gpt-4o-2024-08-06")
+    temperature = models.FloatField(default=0)
     max_tokens = models.IntegerField(default=4000)
     business_context = models.TextField(
         blank=True,
