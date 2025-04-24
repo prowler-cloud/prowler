@@ -10,6 +10,7 @@ class ACCService(OpennebulaService):
         self.users : list[User] = []
         self.__get_users__()
         self.__check_weak_passwords__()
+        self.__get_user_tokens__()
 
     def _load_common_password_hashes_(self, file):
         basedir = os.path.dirname(os.path.abspath(__file__))
@@ -44,10 +45,36 @@ class ACCService(OpennebulaService):
                     group=user.GNAME,
                     auth_driver=user.AUTH_DRIVER,
                     enabled=user.ENABLED,
-                    weak_password=False  
+                    weak_password=False,
+                    tokens=[]
                 ))
         except Exception as error:
             logger.error(f"Error al obtener usuarios: {error}")
+
+    def __get_user_tokens__(self):
+        """
+        Retrieve login tokens for each user
+        """
+        for user in self.users:
+            try:
+                user_info = self.client.user.info(int(user.id))
+                tokens = []
+                if hasattr(user_info, "LOGIN_TOKEN"):
+                    login_tokens = user_info.LOGIN_TOKEN
+                    if isinstance(login_tokens, list):
+                        for token in login_tokens:
+                            tokens.append({
+                                "value": token.TOKEN,
+                                "expiration": int(token.EXPIRATION_TIME)
+                            })
+                    else:
+                        tokens.append({
+                            "value": login_tokens.TOKEN,
+                            "expiration": login_tokens.EXPIRATION_TIME
+                        })
+                user.tokens = tokens
+            except Exception as error:
+                logger.error(f"Error obteniendo tokens del usuario {user.name}: {error}")
 
 class User(BaseModel):
     id: str
@@ -57,5 +84,5 @@ class User(BaseModel):
     group: str
     auth_driver: str
     enabled: bool
-    weak_password: bool        
-        
+    weak_password: bool
+    tokens: list[dict]

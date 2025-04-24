@@ -1,0 +1,30 @@
+{
+  "Provider": "opennebula",
+  "CheckID": "acc_token_rotation",
+  "CheckTitle": "Checks for non-expiring OpenNebula API tokens",
+  "CheckType": [],
+  "ServiceName": "Authentication and Access Control",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Account",
+  "Description": "This check identifies API tokens that do not expire, which increases the risk of unauthorized long-term access in case of token leakage.",
+  "Risk": "Tokens without expiration can be used indefinitely if leaked, leading to unauthorized access.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Revoke non-expiring tokens and configure all new tokens with an appropriate expiration time.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Tokens should always be time-limited to reduce the window of opportunity for an attacker in case of compromise."
+}
