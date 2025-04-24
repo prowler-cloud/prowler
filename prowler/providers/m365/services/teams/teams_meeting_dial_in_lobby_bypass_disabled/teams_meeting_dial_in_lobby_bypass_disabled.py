@@ -29,11 +29,11 @@ class teams_meeting_dial_in_lobby_bypass_disabled(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = "Users dialing in can bypass the lobby."
+            report.status_extended = "Dial-in users can bypass the lobby."
 
             if not global_meeting_policy.allow_pstn_users_to_bypass_lobby:
                 report.status = "PASS"
-                report.status_extended = "Users dialing in can't bypass the lobby."
+                report.status_extended = "Dial-in users cannot bypass the lobby."
 
             findings.append(report)
 

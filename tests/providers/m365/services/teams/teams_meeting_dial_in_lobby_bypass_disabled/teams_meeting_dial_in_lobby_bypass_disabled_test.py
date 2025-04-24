@@ -62,7 +62,7 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Users dialing in can bypass the lobby."
+            assert result[0].status_extended == "Dial-in users can bypass the lobby."
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
                 result[0].resource_name
@@ -103,9 +103,7 @@ class Test_teams_meeting_dial_in_lobby_bypass_disabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended == "Users dialing in can't bypass the lobby."
-            )
+            assert result[0].status_extended == "Dial-in users cannot bypass the lobby."
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
                 result[0].resource_name
