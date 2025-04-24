@@ -508,7 +508,7 @@
       "Attributes": [
         {
           "Domain": "1. Establishment and Operation of the Management System",
-          "Subdomain": "1.4 Management System Inspection and Improvement",
+          "Subdomain": "1.4 Inspection and Improvement of the Management System",
           "Section": "1.4.3 Management System Improvement",
           "AuditChecklist": [
             "Are the root causes of the issues identified during legal compliance reviews and management system inspections analyzed, and are preventive and improvement measures established and implemented?",
@@ -1310,7 +1310,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.5 Authentication and Authorization Management",
+          "Subdomain": "2.5 Authentication and Access Management",
           "Section": "2.5.3 User Authentication",
           "AuditChecklist": [
             "Is access to information systems and personal information processing systems controlled through secure user authentication procedures, login attempt limitations, and warnings for illegal login attempts?",
@@ -1355,7 +1355,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.5 Authentication and Authorization Management",
+          "Subdomain": "2.5 Authentication and Access Management",
           "Section": "2.5.4 Password Management",
           "AuditChecklist": [
             "Are procedures for managing and creating secure user passwords for information systems established and implemented?",
@@ -2208,7 +2208,7 @@
       ],
       "Attributes": [
         {
-          "Domain": "2. Security Requirements for Protection Measures",
+          "Domain": "2. Control Measures Requirements",
           "Subdomain": "2.8 Security in Information System Introduction and Development",
           "Section": "2.8.3 Separation of Test and Production Environments",
           "AuditChecklist": [
@@ -3571,7 +3571,7 @@
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
-          "Subdomain": "2.12. Disaster Recovery",
+          "Subdomain": "2.12 Disaster Recovery",
           "Section": "2.12.2 Disaster Recovery Testing and Improvement",
           "AuditChecklist": [
             "Has the organization established and implemented disaster recovery test plans to evaluate the effectiveness of the established IT disaster recovery system?",
@@ -3904,7 +3904,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.2 Protection Measures for Retention and Use of Personal Information",
+          "Subdomain": "3.2 Protection Measures When Retaining and Using Personal Information",
           "Section": "3.2.2 Personal Information Quality Assurance",
           "AuditChecklist": [
             "Are procedures and methods in place to maintain personal information in an accurate and up-to-date state?",
@@ -3932,7 +3932,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.2 Protection Measures for Retention and Use of Personal Information",
+          "Subdomain": "3.2 Protection Measures When Retaining and Using Personal Information",
           "Section": "3.2.3 Protection of User Device Access",
           "AuditChecklist": [
             "When accessing information stored on the user's mobile device or functions installed on the device, are users clearly informed and their consent obtained?",
@@ -3963,7 +3963,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.2 Protection Measures for Retention and Use of Personal Information",
+          "Subdomain": "3.2 Protection Measures When Retaining and Using Personal Information",
           "Section": "3.2.4 Use and Provision of Personal Information Beyond Purpose",
           "AuditChecklist": [
             "Is personal information used or provided only within the scope of the purpose consented to by the data subject at the time of collection or as permitted by law?",
@@ -4000,7 +4000,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.2 Protection Measures for Retention and Use of Personal Information",
+          "Subdomain": "3.2 Protection Measures When Retaining and Using Personal Information",
           "Section": "3.2.5 Processing of Pseudonymized Information",
           "AuditChecklist": [
             "When processing pseudonymized information, are procedures established for purpose limitation, pseudonymization methods and standards, adequacy review, prohibition of re-identification, and actions in case of re-identification?",
@@ -4035,7 +4035,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.3 Protective Measures When Providing Personal Information",
+          "Subdomain": "3.3 Protection Measures When Providing Personal Information",
           "Section": "3.3.1 Provision of Personal Information to Third Parties",
           "AuditChecklist": [
             "When providing personal information to third parties, are legal requirements such as consent from the data subject or compliance with legal obligations clearly identified and followed?",
@@ -4074,7 +4074,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.3 Protective Measures When Providing Personal Information",
+          "Subdomain": "3.3 Protection Measures When Providing Personal Information",
           "Section": "3.3.2 Outsourcing of Personal Information Processing",
           "AuditChecklist": [
             "When outsourcing personal information processing tasks (including sub-outsourcing) to third parties, are the details of the outsourced tasks and the trustees regularly updated and disclosed on the website?",
@@ -4106,7 +4106,7 @@
       "Attributes": [
         {
           "Domain": "3. Requirements for Each Stage of Personal Information Processing",
-          "Subdomain": "3.3 Protective Measures When Providing Personal Information",
+          "Subdomain": "3.3 Protection Measures When Providing Personal Information",
           "Section": "3.3.3 Transfer of Personal Information Due to Business Transfers",
           "AuditChecklist": [
             "When transferring personal information to another party due to the transfer or merger of all or part of the business, are the necessary matters communicated to the data subjects in advance?",
