@@ -31,8 +31,8 @@ class codebuild_project_uses_allowed_github_organizations(Check):
                         for statement in project_iam_trust_policy["Statement"]:
                             if (
                                 statement["Effect"] == "Allow"
-                                and "codebuild.amazonaws.com"
-                                in statement["Principal"]["Service"]
+                                and statement["Principal"]["Service"]
+                                == "codebuild.amazonaws.com"
                             ):
                                 if project_github_repo_url:
                                     org_name = project_github_repo_url.split("/")[3]
