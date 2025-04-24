@@ -10,8 +10,10 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
+    COMPLIANCE_CLASS_MAP,
     OUTPUT_FORMATS_MAPPING,
     _compress_output_files,
+    _generate_compliance_output_directory,
     _generate_output_directory,
     _upload_to_s3,
 )
@@ -23,6 +25,9 @@ from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from prowler.config.config import get_available_compliance_frameworks
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -256,9 +261,19 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
     # Get the provider UID
     provider_uid = Provider.objects.get(id=provider_id).uid
+    provider_type = Provider.objects.get(id=provider_id).provider
+
+    # Get the compliance frameworks for the provider
+    bulk_compliance_frameworks = Compliance.get_bulk(provider_type)
+    available_compliance_frameworks = get_available_compliance_frameworks(provider_type)
 
     # Generate and ensure the output directory exists
     output_directory = _generate_output_directory(
+        DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
+    )
+
+    # Generate compliance and ensure the output directory exists
+    compliance_output_directory = _generate_compliance_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -307,6 +322,24 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
             # TODO: Refactor the output classes to avoid this manual reset
             writer._data = []
+
+        for compliance_name in available_compliance_frameworks:
+            filename = f"{compliance_output_directory}_{compliance_name}.csv"
+            compliance = bulk_compliance_frameworks[compliance_name]
+            writer_class = GenericCompliance  # Default
+
+            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                if condition(compliance_name):
+                    writer_class = cls
+                    break
+
+            writer = writer_class(
+                findings=finding_outputs,
+                compliance=compliance,
+                file_path=filename,
+            )
+            writer.batch_write_data_to_file()
+            writer.close_file = is_last_batch
 
     # Compress output files
     output_directory = _compress_output_files(output_directory)
