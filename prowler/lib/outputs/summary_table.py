@@ -44,8 +44,8 @@ def display_summary_table(
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
         elif provider.type == "opennebula":
-            entity_type = "Prueba"
-            audited_entities = ""
+            entity_type = "OpenNebula"
+            audited_entities = "Cluster"
             
 
         # Check if there are findings and that they are not all MANUAL
