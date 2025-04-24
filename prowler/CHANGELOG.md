@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add the correct values for logger.info inside iam service [(#7526)](https://github.com/prowler-cloud/prowler/pull/7526).
 - Update S3 bucket naming validation to accept dots [(#7545)](https://github.com/prowler-cloud/prowler/pull/7545).
 - Handle new FlowLog model properties in Azure [(#7546)](https://github.com/prowler-cloud/prowler/pull/7546).
+- Improve compliance and dashboard [(#7596)](https://github.com/prowler-cloud/prowler/pull/7596)
 
 ---
 
