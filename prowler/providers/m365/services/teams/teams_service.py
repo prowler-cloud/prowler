@@ -53,7 +53,7 @@ class Teams(M365Service):
                         "AllowAnonymousUsersToStartMeeting", True
                     ),
                     allow_external_users_to_bypass_lobby=global_meeting_policy.get(
-                        "AutoAdmittedUsers", "EnabledForEveryone"
+                        "AutoAdmittedUsers", "Everyone"
                     ),
                     allow_pstn_users_to_bypass_lobby=global_meeting_policy.get(
                         "AllowPSTNUsersToBypassLobby", True
