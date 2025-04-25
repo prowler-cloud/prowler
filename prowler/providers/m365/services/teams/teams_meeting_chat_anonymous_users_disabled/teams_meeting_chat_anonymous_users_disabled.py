@@ -4,17 +4,17 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeting_recording_disabled(Check):
-    """Check if meeting recording is disabled by default.
+class teams_meeting_chat_anonymous_users_disabled(Check):
+    """Check if meeting chat does not allow anonymous users.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the check for meeting recording settings.
+        """Execute the check for meeting chat does not allow anonymous users.
 
-        This method checks if meeting recording is disabled in the Global meeting policy.
+        This method checks if meeting chat does not allow anonymous users.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -29,11 +29,19 @@ class teams_meeting_recording_disabled(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = "Meeting recording is enabled by default."
+            report.status_extended = "Meeting chat allows anonymous users."
 
-            if not global_meeting_policy.allow_cloud_recording:
+            allowed_meeting_chat_settings = {
+                "EnabledExceptAnonymous",
+                "EnabledInMeetingOnlyForAllExceptAnonymous",
+            }
+
+            if (
+                global_meeting_policy.meeting_chat_enabled_type
+                in allowed_meeting_chat_settings
+            ):
                 report.status = "PASS"
-                report.status_extended = "Meeting recording is disabled by default."
+                report.status_extended = "Meeting chat does not allow anonymous users."
 
             findings.append(report)
 

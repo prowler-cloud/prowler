@@ -30,14 +30,16 @@ class teams_meeting_external_control_disabled(Check):
             )
             report.status = "FAIL"
             report.status_extended = (
-                "External participants can give or request control in Teams meetings."
+                "External participants can give or request control."
             )
 
             if (
                 not global_meeting_policy.allow_external_participant_give_request_control
             ):
                 report.status = "PASS"
-                report.status_extended = "External participants cannot give or request control in Teams meetings."
+                report.status_extended = (
+                    "External participants cannot give or request control."
+                )
 
             findings.append(report)
 

@@ -65,8 +65,7 @@ class Test_teams_meeting_recording_disabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended
-                == "Meeting recording is enabled by default in the Global meeting policy."
+                result[0].status_extended == "Meeting recording is enabled by default."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
@@ -109,8 +108,7 @@ class Test_teams_meeting_recording_disabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                result[0].status_extended
-                == "Meeting recording is disabled by default in the Global meeting policy."
+                result[0].status_extended == "Meeting recording is disabled by default."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
