@@ -32,6 +32,7 @@ def mock_get_global_meeting_policy(_):
         allow_external_non_trusted_meeting_chat=False,
         allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
         allow_pstn_users_to_bypass_lobby=False,
+        meeting_chat_enabled_type="EnabledExceptAnonymous",
     )
 
 
@@ -130,5 +131,6 @@ class Test_Teams_Service:
                 allow_external_non_trusted_meeting_chat=False,
                 allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
                 allow_pstn_users_to_bypass_lobby=False,
+                meeting_chat_enabled_type="EnabledExceptAnonymous",
             )
             teams_client.powershell.close()
