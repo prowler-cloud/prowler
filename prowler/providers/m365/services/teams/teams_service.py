@@ -8,11 +8,16 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Teams(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.powershell.connect_microsoft_teams()
-        self.teams_settings = self._get_teams_client_configuration()
-        self.global_meeting_policy = self._get_global_meeting_policy()
-        self.user_settings = self._get_user_settings()
-        self.powershell.close()
+        self.teams_settings = None
+        self.global_meeting_policy = None
+        self.user_settings = None
+
+        if self.powershell:
+            self.powershell.connect_microsoft_teams()
+            self.teams_settings = self._get_teams_client_configuration()
+            self.global_meeting_policy = self._get_global_meeting_policy()
+            self.user_settings = self._get_user_settings()
+            self.powershell.close()
 
     def _get_teams_client_configuration(self):
         logger.info("M365 - Getting Teams settings...")
