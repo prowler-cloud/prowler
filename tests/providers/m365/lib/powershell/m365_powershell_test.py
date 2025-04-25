@@ -153,7 +153,13 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials)
 
-        session.execute = MagicMock()
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
         session.process.stdin.write = MagicMock()
         session.read_output = MagicMock(return_value="decrypted_password")
 
@@ -196,7 +202,13 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials)
 
-        session.execute = MagicMock()
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
         session.process.stdin.write = MagicMock()
         session.read_output = MagicMock(return_value="decrypted_password")
 
