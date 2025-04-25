@@ -4,6 +4,9 @@ import queue
 import re
 import subprocess
 import threading
+from typing import Union
+
+from prowler.lib.logger import logger
 
 
 class PowerShellSession:
@@ -100,7 +103,9 @@ class PowerShellSession:
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         return ansi_escape.sub("", text)
 
-    def execute(self, command: str) -> dict:
+    def execute(
+        self, command: str, json_parse: bool = False, timeout: int = 10
+    ) -> Union[str, dict]:
         """
         Send a command to PowerShell and retrieve its output.
 
@@ -120,31 +125,41 @@ class PowerShellSession:
         """
         self.process.stdin.write(f"{command}\n")
         self.process.stdin.write(f"Write-Output '{self.END}'\n")
-        return self.json_parse_output(self.read_output())
+        self.process.stdin.write(f"Write-Error '{self.END}'\n")
+        return (
+            self.json_parse_output(self.read_output(timeout=timeout))
+            if json_parse
+            else self.read_output(timeout=timeout)
+        )
 
     def read_output(self, timeout: int = 10, default: str = "") -> str:
         """
         Read output from a process with timeout functionality.
 
-        This method reads lines from process stdout until it encounters the END marker
-        or the stream ends. If reading takes longer than the timeout period, the method
-        returns a default value while allowing the reading to continue in the background.
+        This method reads lines from process stdout and stderr in separate threads until it encounters
+        the END marker for each stream. If reading stdout takes longer than the timeout period,
+        the method returns a default value while allowing the reading to continue in the background.
+
+        Any errors from stderr are logged but do not affect the return value.
 
         Args:
-            timeout (int, optional): Maximum time in seconds to wait for output.
+            timeout (int, optional): Maximum time in seconds to wait for stdout output.
                 Defaults to 10.
-            default (str, optional): Value to return if timeout occurs.
+            default (str, optional): Value to return if stdout timeout occurs.
                 Defaults to empty string.
 
         Returns:
-            str: Concatenated output lines or default value if timeout occurs.
+            str: The stdout output if available, otherwise the default value.
+                Errors from stderr are logged but not returned.
 
         Note:
-            This method uses a daemon thread to read the output asynchronously,
+            This method uses daemon threads to read stdout and stderr asynchronously,
             ensuring that the main thread is not blocked.
         """
         output_lines = []
         result_queue = queue.Queue()
+        error_lines = []
+        error_queue = queue.Queue()
 
         def reader_thread():
             try:
@@ -154,17 +169,35 @@ class PowerShellSession:
                         break
                     output_lines.append(line)
                 result_queue.put("\n".join(output_lines))
-            except Exception as e:
-                result_queue.put(str(e))
+            except Exception as error:
+                result_queue.put(str(error))
+
+        def error_reader_thread():
+            try:
+                while True:
+                    line = self.remove_ansi(self.process.stderr.readline().strip())
+                    if line == f"Write-Error: {self.END}":
+                        break
+                    error_lines.append(line)
+                error_queue.put("\n".join(error_lines))
+            except Exception as error:
+                error_queue.put(str(error))
 
         thread = threading.Thread(target=reader_thread)
         thread.daemon = True
         thread.start()
 
-        try:
-            return result_queue.get(timeout=timeout)
-        except queue.Empty:
-            return default
+        error_thread = threading.Thread(target=error_reader_thread)
+        error_thread.daemon = True
+        error_thread.start()
+
+        result = result_queue.get(timeout=timeout) or default
+        error_result = error_queue.get(timeout=1)
+
+        if error_result:
+            logger.error(f"PowerShell error output: {error_result}")
+
+        return result
 
     def json_parse_output(self, output: str) -> dict:
         """
@@ -179,13 +212,29 @@ class PowerShellSession:
         Returns:
             dict: Parsed JSON object if found, otherwise an empty dictionary.
 
+        Raises:
+            JSONDecodeError: If the JSON parsing fails.
+
         Example:
             >>> json_parse_output('Some text {"key": "value"} more text')
             {"key": "value"}
         """
+        if output == "":
+            return {}
+
         json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group(1))
+        if not json_match:
+            logger.error(
+                f"Unexpected PowerShell output: {output}\n",
+            )
+        else:
+            try:
+                return json.loads(json_match.group(1))
+            except json.JSONDecodeError as error:
+                logger.error(
+                    f"Error parsing PowerShell output as JSON: {str(error)}\n",
+                )
+
         return {}
 
     def close(self) -> None:

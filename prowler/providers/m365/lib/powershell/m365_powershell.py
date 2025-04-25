@@ -84,16 +84,14 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         self.execute(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
         )
         self.execute(
             f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
         )
-        self.process.stdin.write(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"\n'
+        decrypted_password = self.execute(
+            'Write-Output "$($credential.GetNetworkCredential().Password)"'
         )
-        self.process.stdin.write(f"Write-Output '{self.END}'\n")
-        decrypted_password = self.read_output()
 
         app = msal.ConfidentialClientApplication(
             client_id=credentials.client_id,
@@ -154,7 +152,9 @@ class M365PowerShell(PowerShellSession):
                 "AllowGoogleDrive": true
             }
         """
-        return self.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
+        return self.execute(
+            "Get-CsTeamsClientConfiguration | ConvertTo-Json", json_parse=True
+        )
 
     def get_global_meeting_policy(self) -> dict:
         """
@@ -172,7 +172,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json"
+            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_user_settings(self) -> dict:
@@ -190,7 +191,9 @@ class M365PowerShell(PowerShellSession):
                 "AllowExternalAccess": true
             }
         """
-        return self.execute("Get-CsTenantFederationConfiguration | ConvertTo-Json")
+        return self.execute(
+            "Get-CsTenantFederationConfiguration | ConvertTo-Json", json_parse=True
+        )
 
     def connect_exchange_online(self) -> dict:
         """
@@ -222,7 +225,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
+            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_malware_filter_policy(self) -> dict:
@@ -241,7 +245,7 @@ class M365PowerShell(PowerShellSession):
                 "Identity": "Default"
             }
         """
-        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
+        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json", json_parse=True)
 
     def get_outbound_spam_filter_policy(self) -> dict:
         """
@@ -261,7 +265,9 @@ class M365PowerShell(PowerShellSession):
                 "NotifyOutboundSpamRecipients": []
             }
         """
-        return self.execute("Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json")
+        return self.execute(
+            "Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json", json_parse=True
+        )
 
     def get_outbound_spam_filter_rule(self) -> dict:
         """
@@ -278,7 +284,9 @@ class M365PowerShell(PowerShellSession):
                 "State": "Enabled"
             }
         """
-        return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+        return self.execute(
+            "Get-HostedOutboundSpamFilterRule | ConvertTo-Json", json_parse=True
+        )
 
     def get_antiphishing_policy(self) -> dict:
         """
@@ -303,7 +311,7 @@ class M365PowerShell(PowerShellSession):
                 "IsDefault": false
             }
         """
-        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json")
+        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json", json_parse=True)
 
     def get_antiphishing_rules(self) -> dict:
         """
@@ -321,7 +329,7 @@ class M365PowerShell(PowerShellSession):
                 "State": Enabled,
             }
         """
-        return self.execute("Get-AntiPhishRule | ConvertTo-Json")
+        return self.execute("Get-AntiPhishRule | ConvertTo-Json", json_parse=True)
 
     def get_organization_config(self) -> dict:
         """
@@ -340,7 +348,7 @@ class M365PowerShell(PowerShellSession):
                 "AuditDisabled": false
             }
         """
-        return self.execute("Get-OrganizationConfig | ConvertTo-Json")
+        return self.execute("Get-OrganizationConfig | ConvertTo-Json", json_parse=True)
 
     def get_mailbox_audit_config(self) -> dict:
         """
@@ -359,7 +367,9 @@ class M365PowerShell(PowerShellSession):
                 "AuditBypassEnabled": false
             }
         """
-        return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
+        return self.execute(
+            "Get-MailboxAuditBypassAssociation | ConvertTo-Json", json_parse=True
+        )
 
     def get_external_mail_config(self) -> dict:
         """
@@ -377,7 +387,7 @@ class M365PowerShell(PowerShellSession):
                 "ExternalMailTagEnabled": true
             }
         """
-        return self.execute("Get-ExternalInOutlook | ConvertTo-Json")
+        return self.execute("Get-ExternalInOutlook | ConvertTo-Json", json_parse=True)
 
     def get_transport_rules(self) -> dict:
         """
@@ -396,7 +406,7 @@ class M365PowerShell(PowerShellSession):
                 "SenderDomainIs": ["example.com"]
             }
         """
-        return self.execute("Get-TransportRule | ConvertTo-Json")
+        return self.execute("Get-TransportRule | ConvertTo-Json", json_parse=True)
 
     def get_connection_filter_policy(self) -> dict:
         """
@@ -415,7 +425,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_dkim_config(self) -> dict:
@@ -434,7 +445,7 @@ class M365PowerShell(PowerShellSession):
                 "Enabled": true
             }
         """
-        return self.execute("Get-DkimSigningConfig | ConvertTo-Json")
+        return self.execute("Get-DkimSigningConfig | ConvertTo-Json", json_parse=True)
 
     def get_inbound_spam_filter_policy(self) -> dict:
         """
@@ -452,4 +463,6 @@ class M365PowerShell(PowerShellSession):
                 "AllowedSenderDomains": "[]"
             }
         """
-        return self.execute("Get-HostedContentFilterPolicy | ConvertTo-Json")
+        return self.execute(
+            "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
+        )

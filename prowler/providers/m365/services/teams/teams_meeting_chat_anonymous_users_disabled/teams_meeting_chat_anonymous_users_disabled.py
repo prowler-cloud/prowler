@@ -4,17 +4,17 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
-class teams_meeting_external_control_disabled(Check):
-    """Check if external participants can't give or request control in meetings.
+class teams_meeting_chat_anonymous_users_disabled(Check):
+    """Check if meeting chat does not allow anonymous users.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the check for external participants' control permissions in meetings.
+        """Execute the check for meeting chat does not allow anonymous users.
 
-        This method checks if external participants are prevented from giving or requesting control in meetings.
+        This method checks if meeting chat does not allow anonymous users.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -29,17 +29,19 @@ class teams_meeting_external_control_disabled(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = (
-                "External participants can give or request control."
-            )
+            report.status_extended = "Meeting chat allows anonymous users."
+
+            allowed_meeting_chat_settings = {
+                "EnabledExceptAnonymous",
+                "EnabledInMeetingOnlyForAllExceptAnonymous",
+            }
 
             if (
-                not global_meeting_policy.allow_external_participant_give_request_control
+                global_meeting_policy.meeting_chat_enabled_type
+                in allowed_meeting_chat_settings
             ):
                 report.status = "PASS"
-                report.status_extended = (
-                    "External participants cannot give or request control."
-                )
+                report.status_extended = "Meeting chat does not allow anonymous users."
 
             findings.append(report)
 
