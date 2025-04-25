@@ -67,6 +67,9 @@ class Teams(M365Service):
                     allow_cloud_recording=global_meeting_policy.get(
                         "AllowCloudRecording", True
                     ),
+                    designated_presenter_role_mode=global_meeting_policy.get(
+                        "DesignatedPresenterRoleMode", "EveryoneUserOverride"
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -113,6 +116,7 @@ class GlobalMeetingPolicy(BaseModel):
     allow_external_participant_give_request_control: bool = True
     allow_external_non_trusted_meeting_chat: bool = True
     allow_cloud_recording: bool = True
+    designated_presenter_role_mode: str = "EveryoneUserOverride"
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
 
