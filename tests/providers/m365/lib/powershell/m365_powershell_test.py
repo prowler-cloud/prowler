@@ -160,29 +160,52 @@ class Testm365PowerShell:
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
+        """Test the read_output method with various scenarios:
+        - Normal stdout output
+        - Error in stderr
+        - Timeout in stdout
+        - Empty output
+        """
+        # Setup
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-
-        # Mock fileno() for stdout and stderr
-        mock_process.stdout.fileno.return_value = 1
-        mock_process.stderr.fileno.return_value = 2
-
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
         session = M365PowerShell(credentials)
 
-        # Test normal output
+        # Test 1: Normal stdout output
         mock_process.stdout.readline.side_effect = [
             "test@example.com\n",
             f"{session.END}\n",
         ]
-        mock_process.stderr.readline.return_value = ""
-        result = session.read_output()
-        assert result == "test@example.com"
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            result = session.read_output()
+            assert result == "test@example.com"
 
-        # Test timeout
-        mock_process.stdout.readline.side_effect = ["test output\n"]
-        mock_process.stderr.readline.return_value = ""
-        result = session.read_output(timeout=0.1, default="")
+        # Test 2: Error in stderr
+        mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = [
+            "Write-Error: Authentication failed\n",
+            f"Write-Error: {session.END}\n",
+        ]
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            with patch("prowler.lib.logger.logger.error") as mock_error:
+                result = session.read_output()
+                assert result == ""
+                mock_error.assert_called_once_with(
+                    "PowerShell error output: Write-Error: Authentication failed"
+                )
+
+        # Test 3: Timeout in stdout
+        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output(timeout=0.1, default="timeout")
+        assert result == "timeout"
+
+        # Test 4: Empty output
+        mock_process.stdout.readline.side_effect = [f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output()
         assert result == ""
 
         session.close()

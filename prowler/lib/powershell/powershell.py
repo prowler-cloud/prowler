@@ -2,10 +2,8 @@ import json
 import platform
 import queue
 import re
-import select
 import subprocess
 import threading
-import time
 
 from prowler.lib.logger import logger
 
@@ -104,7 +102,9 @@ class PowerShellSession:
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         return ansi_escape.sub("", text)
 
-    def execute(self, command: str, json_parse: bool = False) -> str | dict:
+    def execute(
+        self, command: str, json_parse: bool = False, timeout: int = 10
+    ) -> str | dict:
         """
         Send a command to PowerShell and retrieve its output.
 
@@ -124,89 +124,79 @@ class PowerShellSession:
         """
         self.process.stdin.write(f"{command}\n")
         self.process.stdin.write(f"Write-Output '{self.END}'\n")
+        self.process.stdin.write(f"Write-Error '{self.END}'\n")
         return (
-            self.json_parse_output(self.read_output())
+            self.json_parse_output(self.read_output(timeout=timeout))
             if json_parse
-            else self.read_output()
+            else self.read_output(timeout=timeout)
         )
 
     def read_output(self, timeout: int = 10, default: str = "") -> str:
         """
         Read output from a process with timeout functionality.
 
-        This method reads lines from process stdout and stderr until it encounters the END marker
-        or the stream ends. If reading takes longer than the timeout period, the method
-        returns a default value while allowing the reading to continue in the background.
+        This method reads lines from process stdout and stderr in separate threads until it encounters
+        the END marker for each stream. If reading stdout takes longer than the timeout period,
+        the method returns a default value while allowing the reading to continue in the background.
+
+        Any errors from stderr are logged but do not affect the return value.
 
         Args:
-            timeout (int, optional): Maximum time in seconds to wait for output.
+            timeout (int, optional): Maximum time in seconds to wait for stdout output.
                 Defaults to 10.
-            default (str, optional): Value to return if timeout occurs.
+            default (str, optional): Value to return if stdout timeout occurs.
                 Defaults to empty string.
 
         Returns:
-            str: Error message if errors are present, otherwise normal output.
+            str: The stdout output if available, otherwise the default value.
+                Errors from stderr are logged but not returned.
 
         Note:
-            This method uses a daemon thread to read the output asynchronously,
+            This method uses daemon threads to read stdout and stderr asynchronously,
             ensuring that the main thread is not blocked.
         """
         output_lines = []
-        error_lines = []
         result_queue = queue.Queue()
+        error_lines = []
         error_queue = queue.Queue()
-        thread_completed = threading.Event()
 
         def reader_thread():
             try:
-                # First, read stdout until END marker
                 while True:
-                    rlist, _, _ = select.select([self.process.stdout], [], [], 0.1)
-                    if rlist:
-                        line = self.remove_ansi(self.process.stdout.readline().strip())
-                        if line == self.END:
-                            break
-                        if line:
-                            output_lines.append(line)
-
-                # Then, read stderr for a short time
-                stderr_timeout = 1.0
-                start_time = time.time()
-                while time.time() - start_time < stderr_timeout:
-                    rlist, _, _ = select.select([self.process.stderr], [], [], 0.1)
-                    if rlist:
-                        line = self.remove_ansi(self.process.stderr.readline().strip())
-                        if line:
-                            error_lines.append(line)
-                    else:
+                    line = self.remove_ansi(self.process.stdout.readline().strip())
+                    if line == self.END:
                         break
+                    output_lines.append(line)
+                result_queue.put("\n".join(output_lines))
+            except Exception as error:
+                result_queue.put(str(error))
 
-                # Put results in appropriate queues
-                if error_lines:
-                    error_queue.put("\n".join(error_lines))
-                else:
-                    result_queue.put("\n".join(output_lines))
+        def error_reader_thread():
+            try:
+                while True:
+                    line = self.remove_ansi(self.process.stderr.readline().strip())
+                    if line == f"Write-Error: {self.END}":
+                        break
+                    error_lines.append(line)
+                error_queue.put("\n".join(error_lines))
             except Exception as error:
                 error_queue.put(str(error))
-            finally:
-                thread_completed.set()
 
         thread = threading.Thread(target=reader_thread)
         thread.daemon = True
         thread.start()
 
-        # Wait for thread to complete or timeout
-        thread_completed.wait(timeout=timeout)
+        error_thread = threading.Thread(target=error_reader_thread)
+        error_thread.daemon = True
+        error_thread.start()
 
-        # Check for errors first
-        if not error_queue.empty():
-            return error_queue.get(timeout=0)
+        result = result_queue.get(timeout=timeout) or default
+        error_result = error_queue.get(timeout=1)
 
-        # If no errors, return normal output
-        try:
-            return result_queue.get(timeout=0)
-        except queue.Empty:
-            return default
+        if error_result:
+            logger.error(f"PowerShell error output: {error_result}")
+
+        return result
 
     def json_parse_output(self, output: str) -> dict:
         """
