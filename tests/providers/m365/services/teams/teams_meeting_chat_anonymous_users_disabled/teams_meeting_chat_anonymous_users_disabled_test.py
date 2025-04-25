@@ -70,7 +70,7 @@ class Test_teams_meeting_chat_anonymous_users_disabled:
             )
             assert result[0].resource_id == "teamsMeetingsGlobalPolicy"
 
-    def test_meeting_chat_does_not_allow_anonymous_users(self):
+    def test_meeting_chat_does_not_allow_anonymous_users_enabled_except_anonymous(self):
         teams_client = mock.MagicMock()
         teams_client.audited_tenant = "audited_tenant"
         teams_client.audited_domain = DOMAIN
@@ -97,6 +97,50 @@ class Test_teams_meeting_chat_anonymous_users_disabled:
 
             teams_client.global_meeting_policy = GlobalMeetingPolicy(
                 meeting_chat_enabled_type="EnabledExceptAnonymous"
+            )
+
+            check = teams_meeting_chat_anonymous_users_disabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Meeting chat does not allow anonymous users."
+            )
+            assert result[0].resource == teams_client.global_meeting_policy.dict()
+            assert (
+                result[0].resource_name
+                == "Teams Meetings Global (Org-wide default) Policy"
+            )
+            assert result[0].resource_id == "teamsMeetingsGlobalPolicy"
+
+    def test_meeting_chat_does_not_allow_anonymous_users_enabled_in_meeting_only(self):
+        teams_client = mock.MagicMock()
+        teams_client.audited_tenant = "audited_tenant"
+        teams_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.teams.teams_meeting_chat_anonymous_users_disabled.teams_meeting_chat_anonymous_users_disabled.teams_client",
+                new=teams_client,
+            ),
+        ):
+            from prowler.providers.m365.services.teams.teams_meeting_chat_anonymous_users_disabled.teams_meeting_chat_anonymous_users_disabled import (
+                teams_meeting_chat_anonymous_users_disabled,
+            )
+            from prowler.providers.m365.services.teams.teams_service import (
+                GlobalMeetingPolicy,
+            )
+
+            teams_client.global_meeting_policy = GlobalMeetingPolicy(
+                meeting_chat_enabled_type="EnabledInMeetingOnlyForAllExceptAnonymous"
             )
 
             check = teams_meeting_chat_anonymous_users_disabled()

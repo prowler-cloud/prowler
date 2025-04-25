@@ -31,9 +31,14 @@ class teams_meeting_chat_anonymous_users_disabled(Check):
             report.status = "FAIL"
             report.status_extended = "Meeting chat allows anonymous users."
 
+            allowed_meeting_chat_settings = {
+                "EnabledExceptAnonymous",
+                "EnabledInMeetingOnlyForAllExceptAnonymous",
+            }
+
             if (
                 global_meeting_policy.meeting_chat_enabled_type
-                == "EnabledExceptAnonymous"
+                in allowed_meeting_chat_settings
             ):
                 report.status = "PASS"
                 report.status_extended = "Meeting chat does not allow anonymous users."
