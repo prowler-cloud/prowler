@@ -72,19 +72,19 @@ prowler dashboard
 Prowler CLI Features
 Prowler CLI includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
-Industry standards: CIS, NIST 800, NIST CSF, and CISA
+- Industry standards: CIS, NIST 800, NIST CSF, and CISA
 
-Regulatory compliance and governance: RBI, FedRAMP, and PCI-DSS
+- Regulatory compliance and governance: RBI, FedRAMP, and PCI-DSS
 
-Frameworks for sensitive data and privacy: GDPR, HIPAA, and FFIEC
+- Frameworks for sensitive data and privacy: GDPR, HIPAA, and FFIEC
 
-Frameworks for organizational governance and quality control: SOC2 and GXP
+- Frameworks for organizational governance and quality control: SOC2 and GXP
 
-AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
+- AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
 
-ENS (Spanish National Security Scheme)
+- ENS (Spanish National Security Scheme)
 
-Custom security frameworks tailored to your needs
+- Custom security frameworks tailored to your needs
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
@@ -262,19 +262,19 @@ Cloning Prowler on Windows
 Running Prowler
 Prowler can be executed across various environments, offering flexibility to meet your needs. It can be rum from:
 
-Your own workstation
+- Your own workstation
 
-A Kubernetes Job
+- A Kubernetes Job
 
-Google Compute Engine
+- Google Compute Engine
 
-Azure Virtual Machines (VMs)
+- Azure Virtual Machines (VMs)
 
-Amazon EC2 instances
+- Amazon EC2 instances
 
-AWS Fargate or other container platforms
+- AWS Fargate or other container platforms
 
-CloudShell
+- CloudShell
 
 And many more environments.
 
