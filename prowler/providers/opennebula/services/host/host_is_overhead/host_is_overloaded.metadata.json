@@ -1,0 +1,30 @@
+{
+  "Provider": "opennebula",
+  "CheckID": "host_is_overloaded",
+  "CheckTitle": "Checks for OpenNebula hosts under heavy resource usage (CPU or memory)",
+  "CheckType": [],
+  "ServiceName": "Host",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Host",
+  "Description": "This check identifies OpenNebula hosts whose CPU or memory usage exceeds safe thresholds, indicating potential overload or poor resource distribution.",
+  "Risk": "Hosts with high resource consumption may experience degraded performance or failures that affect the stability and availability of VMs.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "onehost show <host_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Reallocate or reduce workloads on overloaded hosts. Consider adjusting the scheduler or increasing resource capacity.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Thresholds are conservative (>90%) and should be adjusted based on specific SLAs and workload profiles."
+}
