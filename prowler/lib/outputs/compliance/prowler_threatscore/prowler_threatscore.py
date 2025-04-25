@@ -16,8 +16,8 @@ def get_prowler_threatscore_table(
         "Provider": [],
         "Pillar": [],
         "Status": [],
-        "Muted": [],
         "Score": [],
+        "Muted": [],
     }
     pass_count = []
     fail_count = []
@@ -61,10 +61,12 @@ def get_prowler_threatscore_table(
         pillar_table["Provider"].append(compliance.Provider)
         pillar_table["Pillar"].append(pillar)
         if number_findings_per_pillar[pillar] == 0:
-            pillar_table["Score"].append(f"{Fore.MAGENTA}0{Style.RESET_ALL}")
+            pillar_table["Score"].append(
+                f"{Style.BRIGHT}{Fore.GREEN}0{Style.RESET_ALL}"
+            )
         else:
             pillar_table["Score"].append(
-                f"{Fore.MAGENTA}{score_per_pillar[pillar] / number_findings_per_pillar[pillar]:.2f}/5{Style.RESET_ALL}"
+                f"{Style.BRIGHT}{Fore.RED}{score_per_pillar[pillar] / number_findings_per_pillar[pillar]:.2f}/5{Style.RESET_ALL}"
             )
         if pillars[pillar]["FAIL"] > 0:
             pillar_table["Status"].append(
@@ -108,10 +110,10 @@ def get_prowler_threatscore_table(
                 )
 
                 print(
-                    f"{Style.BRIGHT}{Fore.MAGENTA}\n=== Risk Score Guide ===\nScore ranges from 1 (lowest risk) to 5 (highest risk), indicating the severity of the potential impact.\n{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}\n=== Risk Score Guide ===\nScore ranges from 1 (lowest risk) to 5 (highest risk), indicating the severity of the potential impact.{Style.RESET_ALL}"
                 )
                 print(
-                    f"{Style.BRIGHT}* Only sections containing results appear, {orange_color}The score is calculated as the sum of the level of risk of the failed findings divided by the number of failed findings.{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}(Only sections containing results appear, the score is calculated as the sum of the level of risk of the failed findings divided by the number of failed findings){Style.RESET_ALL}"
                 )
                 print(f"\nDetailed results of {compliance_framework.upper()} are in:")
                 print(
