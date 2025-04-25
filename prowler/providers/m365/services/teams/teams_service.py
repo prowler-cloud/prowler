@@ -54,6 +54,7 @@ class Teams(M365Service):
                     ),
                     allow_external_participant_give_request_control=global_meeting_policy.get(
                         "AllowExternalParticipantGiveRequestControl", True
+                    ),
                     allow_external_users_to_bypass_lobby=global_meeting_policy.get(
                         "AutoAdmittedUsers", "Everyone"
                     ),
