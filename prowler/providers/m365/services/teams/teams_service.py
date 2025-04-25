@@ -68,6 +68,7 @@ class Teams(M365Service):
                     ),
                     allow_external_non_trusted_meeting_chat=global_meeting_policy.get(
                         "AllowExternalNonTrustedMeetingChat", True
+                    ),
                     meeting_chat_enabled_type=global_meeting_policy.get(
                         "MeetingChatEnabledType", "EnabledForEveryone"
                     ),
