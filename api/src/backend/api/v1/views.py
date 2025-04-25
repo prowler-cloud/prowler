@@ -134,6 +134,7 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
+    ScanComplianceReportSerializer,
     ScanCreateSerializer,
     ScanReportSerializer,
     ScanSerializer,
@@ -150,6 +151,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.config.config import get_available_compliance_frameworks
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -1150,6 +1152,28 @@ class ProviderViewSet(BaseRLSViewSet):
             404: OpenApiResponse(description="The scan has no reports"),
         },
     ),
+    compliance=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve compliance report as CSV",
+        description="Download a specific compliance report (e.g., 'cis_1.4_aws') as a CSV file.",
+        operation_id="scan_compliance_download",
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="The compliance report name, like 'cis_1.4_aws'",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="CSV file containing the compliance report"
+            ),
+            404: OpenApiResponse(description="Compliance report not found"),
+        },
+        request=None,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1199,9 +1223,9 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ScanUpdateSerializer
         elif self.action == "report":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
             return ScanReportSerializer
+        elif self.action == "compliance":
+            return ScanComplianceReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1311,6 +1335,89 @@ class ScanViewSet(BaseRLSViewSet):
             file_content, content_type="application/x-zip-compressed"
         )
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/.]+)",
+        url_name="compliance",
+    )
+    def compliance(self, request, pk=None, name=None):
+        scan_instance = self.get_object()
+        if name not in get_available_compliance_frameworks(
+            scan_instance.provider.provider
+        ):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan_instance.output_location.startswith("s3://"):
+            try:
+                s3 = get_s3_client()
+                bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET")
+            except (ClientError, NoCredentialsError, ParamValidationError):
+                return Response(
+                    {"detail": "Problem with S3 credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            key_prefix = scan_instance.output_location[len(f"s3://{bucket}/") :]
+            compliance_prefix = f"{os.path.dirname(key_prefix)}/compliance/"
+            try:
+                resp = s3.list_objects_v2(Bucket=bucket, Prefix=compliance_prefix)
+            except ClientError:
+                return Response(
+                    {"detail": "Failed to list compliance files in S3."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            contents = resp.get("Contents", [])
+            matches = [
+                obj["Key"] for obj in contents if obj["Key"].endswith(f"_{name}.csv")
+            ]
+            if not matches:
+                return Response(
+                    {"detail": f"No compliance file found for '{name}' in S3."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            file_path = matches[0]
+            try:
+                s3_obj = s3.get_object(Bucket=bucket, Key=file_path)
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code")
+                if error_code == "NoSuchKey":
+                    return Response(
+                        {"detail": "The compliance file does not exist in S3."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                return Response(
+                    {"detail": "Error downloading the compliance file from S3."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+            file_content = s3_obj["Body"].read()
+        else:
+            output_location = os.path.join(
+                os.path.dirname(scan_instance.output_location), "compliance"
+            )
+            search_pattern = os.path.join(output_location, f"*_{name}.csv")
+            matching_files = glob.glob(search_pattern)
+            if not matching_files:
+                return Response(
+                    {"detail": f"No compliance file found for name '{name}'."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            file_path = matching_files[0]
+            with open(file_path, "rb") as f:
+                file_content = f.read()
+
+        filename = os.path.basename(file_path)
+        response = HttpResponse(file_content, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
         return response
 
     def create(self, request, *args, **kwargs):

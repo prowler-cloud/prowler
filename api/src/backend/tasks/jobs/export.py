@@ -167,18 +167,31 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
-    if not base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET:
-        return
+    bucket = base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET
+    if not bucket:
+        return None
 
     try:
         s3 = get_s3_client()
-        s3_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
+
+        # Upload the ZIP file (outputs) to the S3 bucket
+        zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
         s3.upload_file(
             Filename=zip_path,
-            Bucket=base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET,
-            Key=s3_key,
+            Bucket=bucket,
+            Key=zip_key,
         )
-        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
+
+        # Upload the compliance directory to the S3 bucket
+        compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
+        for filename in os.listdir(compliance_dir):
+            local_path = os.path.join(compliance_dir, filename)
+            if not os.path.isfile(local_path):
+                continue
+            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
+            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
+
+        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
         logger.error(f"S3 upload failed: {str(e)}")
 
