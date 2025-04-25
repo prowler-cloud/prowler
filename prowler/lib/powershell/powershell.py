@@ -4,6 +4,7 @@ import queue
 import re
 import subprocess
 import threading
+from typing import Union
 
 from prowler.lib.logger import logger
 
@@ -104,7 +105,7 @@ class PowerShellSession:
 
     def execute(
         self, command: str, json_parse: bool = False, timeout: int = 10
-    ) -> str | dict:
+    ) -> Union[str, dict]:
         """
         Send a command to PowerShell and retrieve its output.
 
