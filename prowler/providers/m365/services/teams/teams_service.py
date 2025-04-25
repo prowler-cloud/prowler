@@ -8,11 +8,16 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Teams(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.powershell.connect_microsoft_teams()
-        self.teams_settings = self._get_teams_client_configuration()
-        self.global_meeting_policy = self._get_global_meeting_policy()
-        self.user_settings = self._get_user_settings()
-        self.powershell.close()
+        self.teams_settings = None
+        self.global_meeting_policy = None
+        self.user_settings = None
+
+        if self.powershell:
+            self.powershell.connect_microsoft_teams()
+            self.teams_settings = self._get_teams_client_configuration()
+            self.global_meeting_policy = self._get_global_meeting_policy()
+            self.user_settings = self._get_user_settings()
+            self.powershell.close()
 
     def _get_teams_client_configuration(self):
         logger.info("M365 - Getting Teams settings...")
@@ -61,6 +66,9 @@ class Teams(M365Service):
                     allow_pstn_users_to_bypass_lobby=global_meeting_policy.get(
                         "AllowPSTNUsersToBypassLobby", True
                     ),
+                    meeting_chat_enabled_type=global_meeting_policy.get(
+                        "MeetingChatEnabledType", "EnabledForEveryone"
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -107,6 +115,7 @@ class GlobalMeetingPolicy(BaseModel):
     allow_external_participant_give_request_control: bool = True
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
+    meeting_chat_enabled_type: str = "EnabledForEveryone"
 
 
 class UserSettings(BaseModel):
