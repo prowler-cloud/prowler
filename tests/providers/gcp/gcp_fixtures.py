@@ -358,35 +358,73 @@ def mock_api_projects_calls(client: MagicMock):
                 "metric": {
                     "labels": {
                         "key_id": "key1",
-                        "type": "iam.googleapis.com/service_account/key/authn_events_count",
                     },
-                    "resource": {
-                        "type": "iam_service_account",
-                        "labels": {
-                            "project_id": "{GCP_PROJECT_ID}",
-                            "unique_id": "111222233334444",
-                        },
+                    "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                },
+                "resource": {
+                    "type": "iam_service_account",
+                    "labels": {
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "unique_id": "111222233334444",
                     },
-                    "metricKind": "DELTA",
-                    "valueType": "INT64",
-                }
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
             },
             {
                 "metric": {
                     "labels": {
                         "key_id": "key2",
-                        "type": "iam.googleapis.com/service_account/key/authn_events_count",
                     },
-                    "resource": {
-                        "type": "iam_service_account",
-                        "labels": {
-                            "project_id": "{GCP_PROJECT_ID}",
-                            "unique_id": "111222233334444",
-                        },
+                    "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                },
+                "resource": {
+                    "type": "iam_service_account",
+                    "labels": {
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "unique_id": "111222233334444",
                     },
-                    "metricKind": "DELTA",
-                    "valueType": "INT64",
-                }
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "response_code": "200",
+                        "protocol": "https",
+                    },
+                    "type": "serviceruntime.googleapis.com/api/request_count",
+                },
+                "resource": {
+                    "type": "consumed_api",
+                    "labels": {
+                        "service": "securitycenter.googleapis.com",
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "credential_id": "serviceaccount:111222233334444",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "response_code": "200",
+                        "protocol": "https",
+                    },
+                    "type": "serviceruntime.googleapis.com/api/request_count",
+                },
+                "resource": {
+                    "type": "consumed_api",
+                    "labels": {
+                        "service": "securitycenter.googleapis.com",
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "credential_id": "serviceaccount:55566666777888999",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
             },
         ]
     }
@@ -398,11 +436,13 @@ def mock_api_projects_calls(client: MagicMock):
                 "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
                 "email": "service-account1@gmail.com",
                 "displayName": "Service Account 1",
+                "uniqueId": "111222233334444",
             },
             {
                 "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account2@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
                 "email": "service-account2@gmail.com",
                 "displayName": "Service Account 2",
+                "uniqueId": "55566666777888999",
             },
         ]
     }

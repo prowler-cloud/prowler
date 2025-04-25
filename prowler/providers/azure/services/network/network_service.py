@@ -78,8 +78,19 @@ class Network(AzureService):
                                 FlowLog(
                                     id=flow_log.id,
                                     name=flow_log.name,
-                                    enabled=flow_log.properties.enabled,
-                                    retention_policy=flow_log.properties.retentionPolicy,
+                                    enabled=flow_log.enabled,
+                                    retention_policy=RetentionPolicy(
+                                        enabled=(
+                                            flow_log.retention_policy.enabled
+                                            if flow_log.retention_policy
+                                            else False
+                                        ),
+                                        days=(
+                                            flow_log.retention_policy.days
+                                            if flow_log.retention_policy
+                                            else 0
+                                        ),
+                                    ),
                                 )
                                 for flow_log in flow_logs
                             ],

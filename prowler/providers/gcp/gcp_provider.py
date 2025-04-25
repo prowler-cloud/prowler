@@ -396,13 +396,18 @@ class GcpProvider(Provider):
                 client_secrets_path = os.path.abspath(credentials_file)
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
+            access_token = os.getenv("CLOUDSDK_AUTH_ACCESS_TOKEN")
+            if access_token:
+                logger.info("Using access token from CLOUDSDK_AUTH_ACCESS_TOKEN")
+                credentials = Credentials(token=access_token, scopes=scopes)
+                default_project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+                return credentials, default_project_id
+
             # Get default credentials
             credentials, default_project_id = default(scopes=scopes)
 
             # Refresh the credentials to ensure they are valid
             credentials.refresh(Request())
-
-            logger.info(f"Initial credentials: {credentials}")
 
             if service_account:
                 # Create the impersonated credentials
@@ -411,7 +416,7 @@ class GcpProvider(Provider):
                     target_principal=service_account,
                     target_scopes=scopes,
                 )
-                logger.info(f"Impersonated credentials: {credentials}")
+                logger.info(f"Impersonating service account: {service_account}")
 
             return credentials, default_project_id
         except Exception as error:
@@ -628,15 +633,21 @@ class GcpProvider(Provider):
                                 .get("labels", {})
                                 .items()
                             }
-                            project_id = asset["resource"]["data"]["projectId"]
+                            project_number = asset["resource"]["data"]["projectNumber"]
+                            project_id = (
+                                asset["resource"]["data"].get("projectId")
+                                if asset["resource"]["data"].get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                asset["resource"]["data"].get("name")
+                                if asset["resource"]["data"].get("name")
+                                else project_id
+                            )
                             gcp_project = GCPProject(
-                                number=asset["resource"]["data"]["projectNumber"],
+                                number=project_number,
                                 id=project_id,
-                                name=(
-                                    asset["resource"]["data"].get("name")
-                                    if asset["resource"]["data"].get("name")
-                                    else project_id
-                                ),
+                                name=project_name,
                                 lifecycle_state=asset["resource"]["data"].get(
                                     "lifecycleState"
                                 ),
@@ -677,15 +688,22 @@ class GcpProvider(Provider):
                             labels = {
                                 k: v for k, v in project.get("labels", {}).items()
                             }
+                            project_number = project["projectNumber"]
+                            project_id = (
+                                project.get("projectId")
+                                if project.get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                project.get("name")
+                                if project.get("name")
+                                else project_id
+                            )
                             project_id = project["projectId"]
                             gcp_project = GCPProject(
-                                number=project["projectNumber"],
+                                number=project_number,
                                 id=project_id,
-                                name=(
-                                    project.get("name")
-                                    if project.get("name")
-                                    else project_id
-                                ),
+                                name=project_name,
                                 lifecycle_state=project["lifecycleState"],
                                 labels=labels,
                             )

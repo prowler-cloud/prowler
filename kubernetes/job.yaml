@@ -13,7 +13,6 @@ spec:
       containers:
       - name: prowler
         image: toniblyx/prowler:stable
-        command: ["prowler"]
         args: ["kubernetes", "-z"]
         imagePullPolicy: Always
         volumeMounts:
