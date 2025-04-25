@@ -11,6 +11,7 @@ class Teams(M365Service):
         self.powershell.connect_microsoft_teams()
         self.teams_settings = self._get_teams_client_configuration()
         self.global_meeting_policy = self._get_global_meeting_policy()
+        self.global_messaging_policy = self._get_global_messaging_policy()
         self.user_settings = self._get_user_settings()
         self.powershell.close()
 
@@ -70,12 +71,32 @@ class Teams(M365Service):
                     designated_presenter_role_mode=global_meeting_policy.get(
                         "DesignatedPresenterRoleMode", "EveryoneUserOverride"
                     ),
+                    allow_security_end_user_reporting=global_meeting_policy.get(
+                        "AllowSecurityEndUserReporting", True
+                    ),
                 )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return global_meeting_policy
+
+    def _get_global_messaging_policy(self):
+        logger.info("M365 - Getting Teams global messaging policy...")
+        global_messaging_policy = None
+        try:
+            global_messaging_policy = self.powershell.get_global_messaging_policy()
+            if global_messaging_policy:
+                global_messaging_policy = GlobalMessagingPolicy(
+                    allow_security_end_user_reporting=global_messaging_policy.get(
+                        "AllowSecurityEndUserReporting", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return global_messaging_policy
 
     def _get_user_settings(self):
         logger.info("M365 - Getting Teams user settings...")
@@ -119,6 +140,11 @@ class GlobalMeetingPolicy(BaseModel):
     designated_presenter_role_mode: str = "EveryoneUserOverride"
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
+    allow_security_end_user_reporting: bool = True
+
+
+class GlobalMessagingPolicy(BaseModel):
+    allow_security_end_user_reporting: bool = True
 
 
 class UserSettings(BaseModel):

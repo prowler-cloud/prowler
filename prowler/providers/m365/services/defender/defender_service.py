@@ -213,9 +213,6 @@ class Defender(M365Service):
             report_submission_policy = self.powershell.get_report_submission_policy()
             if report_submission_policy:
                 report_submission_policy = ReportSubmissionPolicy(
-                    id=report_submission_policy.get("Id", ""),
-                    identity=report_submission_policy.get("Identity", ""),
-                    name=report_submission_policy.get("Name", ""),
                     report_junk_to_customized_address=report_submission_policy.get(
                         "ReportJunkToCustomizedAddress", True
                     ),
@@ -300,9 +297,6 @@ class DefenderInboundSpamPolicy(BaseModel):
 
 
 class ReportSubmissionPolicy(BaseModel):
-    id: str
-    identity: str
-    name: str
     report_junk_to_customized_address: bool
     report_not_junk_to_customized_address: bool
     report_phish_to_customized_address: bool
