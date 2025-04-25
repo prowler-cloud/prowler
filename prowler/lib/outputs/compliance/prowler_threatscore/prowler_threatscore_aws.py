@@ -37,8 +37,6 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
         """
         for finding in findings:
             # Get the compliance requirements for the finding
-            print(finding.compliance)
-            print(compliance_name)
             finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
