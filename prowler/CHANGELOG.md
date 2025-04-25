@@ -31,6 +31,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check `teams_meeting_external_lobby_bypass_disabled` [(#7568)](https://github.com/prowler-cloud/prowler/pull/7568)
 - Add new check `teams_meeting_dial_in_lobby_bypass_disabled` [(#7571)](https://github.com/prowler-cloud/prowler/pull/7571)
 - Add new check `teams_meeting_chat_anonymous_users_disabled` [(#7579)](https://github.com/prowler-cloud/prowler/pull/7579)
+- Add Prowler Threat Score Compliance Framework [(#7603)](https://github.com/prowler-cloud/prowler/pull/7603)
 
 ### Fixed
 
