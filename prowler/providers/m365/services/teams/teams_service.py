@@ -55,6 +55,12 @@ class Teams(M365Service):
                     allow_external_participant_give_request_control=global_meeting_policy.get(
                         "AllowExternalParticipantGiveRequestControl", True
                     ),
+                    allow_external_users_to_bypass_lobby=global_meeting_policy.get(
+                        "AutoAdmittedUsers", "Everyone"
+                    ),
+                    allow_pstn_users_to_bypass_lobby=global_meeting_policy.get(
+                        "AllowPSTNUsersToBypassLobby", True
+                    ),
                     allow_external_non_trusted_meeting_chat=global_meeting_policy.get(
                         "AllowExternalNonTrustedMeetingChat", True
                     ),
@@ -107,6 +113,8 @@ class GlobalMeetingPolicy(BaseModel):
     allow_external_participant_give_request_control: bool = True
     allow_external_non_trusted_meeting_chat: bool = True
     allow_cloud_recording: bool = True
+    allow_external_users_to_bypass_lobby: str = "Everyone"
+    allow_pstn_users_to_bypass_lobby: bool = True
 
 
 class UserSettings(BaseModel):
