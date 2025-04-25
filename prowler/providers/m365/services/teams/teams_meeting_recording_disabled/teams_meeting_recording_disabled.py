@@ -29,13 +29,11 @@ class teams_meeting_recording_disabled(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = (
-                "Meeting recording is enabled by default in the Global meeting policy."
-            )
+            report.status_extended = "Meeting recording is enabled by default."
 
             if not global_meeting_policy.allow_cloud_recording:
                 report.status = "PASS"
-                report.status_extended = "Meeting recording is disabled by default in the Global meeting policy."
+                report.status_extended = "Meeting recording is disabled by default."
 
             findings.append(report)
 
