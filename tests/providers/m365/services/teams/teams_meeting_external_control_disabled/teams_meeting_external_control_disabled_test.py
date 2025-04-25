@@ -64,7 +64,7 @@ class Test_teams_meeting_external_control_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "External participants can give or request control in Teams meetings."
+                == "External participants can give or request control."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
@@ -108,7 +108,7 @@ class Test_teams_meeting_external_control_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "External participants cannot give or request control in Teams meetings."
+                == "External participants cannot give or request control."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
