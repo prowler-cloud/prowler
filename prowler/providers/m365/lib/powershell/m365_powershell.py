@@ -453,3 +453,32 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-HostedContentFilterPolicy | ConvertTo-Json")
+
+    def get_report_submission_policy(self) -> dict:
+        """
+        Get Exchange Online Report Submission Policy.
+
+        Retrieves the current Exchange Online report submission policy settings.
+
+        Returns:
+            dict: Report submission policy settings in JSON format.
+
+        Example:
+            >>> get_report_submission_policy()
+            {
+                "Id": "DefaultReportSubmissionPolicy",
+                "Identity": "DefaultReportSubmissionPolicy",
+                "Name": "DefaultReportSubmissionPolicy",
+                "ReportChatMessageEnabled": true,
+                "ReportChatMessageToCustomizedAddressEnabled": true,
+                "ReportJunkAddresses": [],
+                "ReportJunkToCustomizedAddress": true,
+                "ReportNotJunkAddresses": [],
+                "ReportNotJunkToCustomizedAddress": true,
+                "ReportPhishAddresses": [],
+                "ReportPhishToCustomizedAddress": true,
+                "ThirdPartyReportAddresses": [],
+                ...
+            }
+        """
+        return self.execute("Get-ReportSubmissionPolicy | ConvertTo-Json")
