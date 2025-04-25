@@ -5,7 +5,7 @@ from prowler.providers.m365.services.teams.teams_client import teams_client
 
 
 class teams_meeting_presenters_restricted(Check):
-    """Check if only organizers and co-organizers can present in Teams meetings.
+    """Check if only organizers and co-organizers can present.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -14,7 +14,7 @@ class teams_meeting_presenters_restricted(Check):
     def execute(self) -> List[CheckReportM365]:
         """Execute the check for meeting presenter settings.
 
-        This method checks if only organizers and co-organizers can present in Teams meetings.
+        This method checks if only organizers and co-organizers can present.
 
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
@@ -29,7 +29,9 @@ class teams_meeting_presenters_restricted(Check):
                 resource_id="teamsMeetingsGlobalPolicy",
             )
             report.status = "FAIL"
-            report.status_extended = "Everyone can present in Teams meetings."
+            report.status_extended = (
+                "Not only organizers and co-organizers can present."
+            )
 
             if (
                 global_meeting_policy.designated_presenter_role_mode
@@ -37,7 +39,7 @@ class teams_meeting_presenters_restricted(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    "Only organizers and co-organizers can present in Teams meetings."
+                    "Only organizers and co-organizers can present."
                 )
 
             findings.append(report)

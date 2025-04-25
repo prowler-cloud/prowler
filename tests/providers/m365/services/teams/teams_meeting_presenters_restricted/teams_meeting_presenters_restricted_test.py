@@ -63,7 +63,8 @@ class Test_teams_meeting_presenters_restricted:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended == "Everyone can present in Teams meetings."
+                result[0].status_extended
+                == "Not only organizers and co-organizers can present."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
@@ -107,7 +108,7 @@ class Test_teams_meeting_presenters_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Only organizers and co-organizers can present in Teams meetings."
+                == "Only organizers and co-organizers can present."
             )
             assert result[0].resource == teams_client.global_meeting_policy.dict()
             assert (
