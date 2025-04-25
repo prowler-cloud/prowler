@@ -1,0 +1,31 @@
+{
+    "Provider": "opennebula",
+    "CheckID": "template_image_outdated",
+    "CheckTitle": "Checks for OpenNebula templates based on outdated operating systems or images",
+    "CheckType": [],
+    "ServiceName": "Template",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "Template",
+    "Description": "This check identifies OpenNebula VM templates that are based on operating systems or images that are no longer supported or maintained.",
+    "Risk": "Using outdated operating systems exposes instances to known vulnerabilities and lack of security patches, increasing the risk of compromise.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "onetemplate update <template_id>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Update templates to use supported and maintained operating systems and images. Replace legacy templates with newer versions.",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Operating system end-of-life (EOL) means no security updates are available, critically affecting the security posture of the environment."
+  }
+  
