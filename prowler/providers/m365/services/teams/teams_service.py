@@ -69,6 +69,9 @@ class Teams(M365Service):
                     allow_external_non_trusted_meeting_chat=global_meeting_policy.get(
                         "AllowExternalNonTrustedMeetingChat", True
                     ),
+                    allow_cloud_recording=global_meeting_policy.get(
+                        "AllowCloudRecording", True
+                    ),
                     meeting_chat_enabled_type=global_meeting_policy.get(
                         "MeetingChatEnabledType", "EnabledForEveryone"
                     ),
@@ -117,6 +120,7 @@ class GlobalMeetingPolicy(BaseModel):
     allow_anonymous_users_to_start_meeting: bool = True
     allow_external_participant_give_request_control: bool = True
     allow_external_non_trusted_meeting_chat: bool = True
+    allow_cloud_recording: bool = True
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
     meeting_chat_enabled_type: str = "EnabledForEveryone"
