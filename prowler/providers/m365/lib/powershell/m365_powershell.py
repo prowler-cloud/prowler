@@ -81,7 +81,7 @@ class M365PowerShell(PowerShellSession):
                             f"Unexpected output while installing module {module}: {install_result}"
                         )
                     else:
-                        logger.critical(f"Successfully installed module {module}")
+                        logger.info(f"Successfully installed module {module}")
 
                 # Import module
                 self.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
