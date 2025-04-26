@@ -367,3 +367,134 @@ class Testm365PowerShell:
 
         mock_process.stdin.flush.assert_called_once()
         mock_process.terminate.assert_called_once()
+
+    @patch("subprocess.Popen")
+    def test_init_modules_success(self, mock_popen):
+        """Test successful module initialization"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock execute to simulate module check and installation
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                return None  # Successful installation
+            elif "Import-Module" in command:
+                return None  # Successful import
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        # Execute init_modules
+        session.init_modules()
+
+        # Verify module operations
+        for module in session.REQUIRED_MODULES:
+            session.execute.assert_any_call(
+                f"Get-Module -ListAvailable -Name {module}", timeout=5
+            )
+            session.execute.assert_any_call(
+                f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                timeout=30,
+            )
+            session.execute.assert_any_call(
+                f'Import-Module -Name "{module}" -Force', timeout=1
+            )
+
+    @patch("subprocess.Popen")
+    def test_init_modules_already_installed(self, mock_popen):
+        """Test module initialization when modules are already installed"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock execute to simulate modules already installed
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return "Module already installed"  # Module is installed
+            elif "Import-Module" in command:
+                return None  # Successful import
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        # Execute init_modules
+        session.init_modules()
+
+        # Verify module operations
+        for module in session.REQUIRED_MODULES:
+            session.execute.assert_any_call(
+                f"Get-Module -ListAvailable -Name {module}", timeout=5
+            )
+            session.execute.assert_any_call(
+                f'Import-Module -Name "{module}" -Force', timeout=1
+            )
+            # Verify Install-Module was not called
+            assert not any(
+                "Install-Module" in call[0][0]
+                for call in session.execute.call_args_list
+            )
+
+    @patch("subprocess.Popen")
+    def test_init_modules_installation_error(self, mock_popen):
+        """Test module initialization with installation error"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock execute to simulate installation error
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                raise Exception("Installation failed")
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        # Execute init_modules and expect exception
+        with pytest.raises(Exception) as exc_info:
+            session.init_modules()
+
+        assert "Installation failed" in str(exc_info.value)
+
+    @patch("subprocess.Popen")
+    def test_init_modules_unexpected_output(self, mock_popen):
+        """Test module initialization with unexpected output during installation"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock execute to simulate unexpected output during installation
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                return "Unexpected output"  # Unexpected output during installation
+            elif "Import-Module" in command:
+                return None  # Successful import
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        # Execute init_modules
+        session.init_modules()
+
+        # Verify module operations
+        for module in session.REQUIRED_MODULES:
+            session.execute.assert_any_call(
+                f"Get-Module -ListAvailable -Name {module}", timeout=5
+            )
+            session.execute.assert_any_call(
+                f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                timeout=30,
+            )
+            session.execute.assert_any_call(
+                f'Import-Module -Name "{module}" -Force', timeout=1
+            )
