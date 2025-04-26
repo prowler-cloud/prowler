@@ -265,6 +265,7 @@ class Testm365PowerShell:
         - Error in stderr
         - Timeout in stdout
         - Empty output
+        - Empty queue handling
         """
         # Setup
         mock_process = MagicMock()
@@ -307,6 +308,26 @@ class Testm365PowerShell:
         mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
         result = session.read_output()
         assert result == ""
+
+        # Test 5: Empty queue handling
+        mock_process.stdout.readline.side_effect = []  # No output at all
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output(timeout=0.1, default="empty_queue")
+        assert result == "empty_queue"
+
+        # Test 6: Empty error queue handling
+        mock_process.stdout.readline.side_effect = ["test output\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = []  # No error output
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output()
+            assert result == "test output"
+            mock_error.assert_not_called()
+
+        # Test 7: Both queues empty
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = []  # No error output
+        result = session.read_output(timeout=0.1, default="both_empty")
+        assert result == "both_empty"
 
         session.close()
 

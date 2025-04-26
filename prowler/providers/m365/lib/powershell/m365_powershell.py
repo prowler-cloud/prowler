@@ -2,6 +2,7 @@ import os
 
 import msal
 
+from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365UserNotBelongingToTenantError,
@@ -26,11 +27,17 @@ class M365PowerShell(PowerShellSession):
 
     Attributes:
         credentials (M365Credentials): The Microsoft 365 credentials used for authentication.
+        required_modules (list): List of required PowerShell modules for M365 operations.
 
     Note:
         This class requires the Microsoft Teams and Exchange Online PowerShell modules
         to be installed and available in the PowerShell environment.
     """
+
+    REQUIRED_MODULES = [
+        "ExchangeOnlineManagement",
+        "MicrosoftTeams",
+    ]
 
     def __init__(self, credentials: M365Credentials):
         """
@@ -45,6 +52,42 @@ class M365PowerShell(PowerShellSession):
         """
         super().__init__()
         self.init_credential(credentials)
+
+    def init_modules(self) -> None:
+        """
+        Initialize required PowerShell modules.
+
+        Checks if the required PowerShell modules are installed and installs them if necessary.
+        This method ensures that all required modules for M365 operations are available.
+
+        Note:
+            This method requires administrative privileges to install modules.
+        """
+        for module in self.REQUIRED_MODULES:
+            try:
+                # Check if module is already installed
+                result = self.execute(
+                    f"Get-Module -ListAvailable -Name {module}", timeout=5
+                )
+
+                if not result:
+                    # Install module with a longer timeout
+                    install_result = self.execute(
+                        f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        timeout=30,
+                    )
+                    if install_result:
+                        logger.warning(
+                            f"Unexpected output while installing module {module}: {install_result}"
+                        )
+                    else:
+                        logger.critical(f"Successfully installed module {module}")
+
+                # Import module
+                self.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
+            except Exception as error:
+                logger.error(f"Failed to initialize module {module}: {str(error)}")
+                raise
 
     def init_credential(self, credentials: M365Credentials) -> None:
         """

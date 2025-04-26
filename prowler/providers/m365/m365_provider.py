@@ -423,6 +423,7 @@ class M365Provider(Provider):
             test_session = M365PowerShell(credentials)
             try:
                 if test_session.test_credentials(credentials):
+                    test_session.init_modules()
                     return credentials
                 raise M365EnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
