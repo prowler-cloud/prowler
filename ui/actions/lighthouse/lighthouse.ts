@@ -2,7 +2,7 @@
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 
-const getAIConfigurationId = async (): Promise<string> => {
+const getLighthouseConfigId = async (): Promise<string> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/lighthouse-config?filter[name]=OpenAI`);
   try {
@@ -28,7 +28,7 @@ const getAIConfigurationId = async (): Promise<string> => {
 
 export const getAIKey = async (): Promise<string> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const configId = await getAIConfigurationId();
+  const configId = await getLighthouseConfigId();
 
   if (!configId) {
     return "";
@@ -44,7 +44,7 @@ export const getAIKey = async (): Promise<string> => {
   return data.data.api_key;
 };
 
-export const createAIConfiguration = async (config: {
+export const createLighthouseConfig = async (config: {
   model: string;
   apiKey: string;
   businessContext: string;
@@ -77,9 +77,9 @@ export const createAIConfiguration = async (config: {
   }
 };
 
-export const getAIConfiguration = async () => {
+export const getLighthouseConfig = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-  const configId = await getAIConfigurationId();
+  const configId = await getLighthouseConfigId();
 
   if (!configId) {
     return undefined;
@@ -99,13 +99,13 @@ export const getAIConfiguration = async () => {
   }
 };
 
-export const updateAIConfiguration = async (config: {
+export const updateLighthouseConfig = async (config: {
   model: string;
   apiKey: string;
   businessContext: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: true });
-  const configId = await getAIConfigurationId();
+  const configId = await getLighthouseConfigId();
 
   if (!configId) {
     return undefined;

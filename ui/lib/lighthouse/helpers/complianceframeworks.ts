@@ -67,6 +67,8 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
   return complianceFrameworks[provider_type as ProviderType] || [];
 };
 
-export const aiGetComplianceFrameworks = async (provider_type: string) => {
+export const getLighthouseComplianceFrameworks = async (
+  provider_type: string,
+) => {
   return await complianceFrameworksByProvider(provider_type);
 };

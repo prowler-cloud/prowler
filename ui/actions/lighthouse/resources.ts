@@ -1,6 +1,6 @@
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
 
-export async function aiGetResources(
+export async function getLighthouseResources(
   page: number = 1,
   query: string = "",
   sort: string = "",
@@ -46,7 +46,7 @@ export async function aiGetResources(
   }
 }
 
-export async function aiGetResource(
+export async function getLighthouseResourceById(
   id: string,
   fields: string[] = [],
   include: string[] = [],
