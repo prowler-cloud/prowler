@@ -1,0 +1,36 @@
+{
+    "Provider": "ionos",
+    "CheckID": "server_volume_snapshots_exists",
+    "CheckTitle": "Ensure server volumes have recent snapshots",
+    "CheckType": [
+        "Software and Configuration Checks",
+        "Disaster Recovery"
+    ],
+    "ServiceName": "server",
+    "SubServiceName": "server",
+    "ResourceIdTemplate": "arn:ionos:server:global:server:{{resource_id}}",
+    "Severity": "medium",
+    "ResourceType": "Server",
+    "Description": "Checks if IONOS server volumes have recent snapshot backups for disaster recovery purposes.",
+    "Risk": "Lack of recent snapshots could lead to data loss in case of system failure, corruption, or disaster events.",
+    "RelatedUrl": "https://docs.ionos.com/cloud/compute-engine/block-storage/snapshots",
+    "Remediation": {
+        "Code": {
+            "CLI": "ionos-cli snapshot create --datacenter-id <datacenter-id> --volume-id <volume-id>",
+            "NativeIaC": "",
+            "Terraform": "",
+            "Other": ""
+        },
+        "Recommendation": {
+            "Text": "Implement regular snapshot schedules for all critical server volumes and maintain an appropriate retention policy.",
+            "Url": "https://docs.ionos.com/cloud/compute-engine/block-storage/snapshots"
+        }
+    },
+    "Categories": [
+        "backup",
+        "recovery"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Regular snapshots are crucial for business continuity and disaster recovery planning."
+}

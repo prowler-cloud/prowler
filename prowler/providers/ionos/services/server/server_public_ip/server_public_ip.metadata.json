@@ -18,12 +18,12 @@
         "Code": {
             "CLI": "Use the IONOS CLI or console to reconfigure the server's network interfaces to use private IPs only",
             "NativeIaC": "",
-            "Terraform": "resource \"ionoscloud_server\" \"example\" {\n  name = \"example-server\"\n  # Configure with only private networks\n  nic {\n    lan = \"1\" # Use a private LAN ID\n    dhcp = true\n    firewall_active = true\n  }\n}",
+            "Terraform": "",
             "Other": ""
         },
         "Recommendation": {
             "Text": "Use private IP addresses for servers and implement secure methods like VPN or bastion hosts for remote access when needed.",
-            "Url": "https://docs.ionos.com/cloud/compute-engine/networks/configure-networking"
+            "Url": "https://docs.ionos.com/cloud/network-services/network-security-groups/overview"
         }
     },
     "Categories": [

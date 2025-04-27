@@ -1,7 +1,7 @@
 from typing import Optional, List
 import ionoscloud
 from ionoscloud import ApiClient, Configuration
-from ionoscloud.api import ServersApi, NetworkInterfacesApi
+from ionoscloud.api import ServersApi, NetworkInterfacesApi, VolumesApi, SnapshotsApi
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
 
@@ -18,13 +18,15 @@ class IonosServer(IonosService):
             provider: IonosProvider instance with authenticated API client
         """
         logger.info("Initializing IONOS Server service")
+        super().__init__(provider)
         self.service = "server"
-        self.session = provider.session
-        self.client = ServersApi(provider.session)
-        self.network_client = NetworkInterfacesApi(provider.session)
+        self.client = ServersApi(self.session)
+        self.network_client = NetworkInterfacesApi(self.session)
+        self.snapshots_client = SnapshotsApi(self.session)
         self.datacenter_id = provider.identity.datacenter_id
         self.servers = []
-        self.__threading_call__(self.__get_server_resources__)
+
+        self.__get_server_resources__()
 
     def __get_server_resources__(self):
         """
@@ -44,9 +46,6 @@ class IonosServer(IonosService):
         logger.info(f"Getting servers for datacenter {datacenter_id}")
         try:
             self.servers = self.client.datacenters_servers_get(datacenter_id)
-            #for server in servers:
-            #    server_details = self.client.get_server_details(datacenter_id, server.id)
-            #    self.servers.append(server_details)
         except Exception as error:
             logger.error(
                 f"{datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -113,5 +112,78 @@ class IonosServer(IonosService):
         except Exception as error:
             logger.error(
                 f"{datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+
+    def get_all_volumes(self) -> Optional[list]:
+        """
+        Get all volumes for all servers
+        
+        Returns:
+            list: List of volumes or None if not found
+        """
+        try:
+            volumes = self.client.datacenters_servers_volumes_get(self.datacenter_id, pretty=True, depth=1)
+            return volumes.items if hasattr(volumes, 'items') else None
+        except Exception as error:
+            logger.error(
+                f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def get_volumes_for_server(self, server_id: str) -> Optional[list]:
+        """
+        Get volumes for a specific server
+        
+        Args:
+            datacenter_id: ID of the datacenter containing the server
+            server_id: ID of the server
+            
+        Returns:
+            list: List of volumes or None if not found
+        """
+        try:
+            volumes = self.client.datacenters_servers_volumes_get(self.datacenter_id, server_id, pretty=True, depth=1)
+            return volumes.items if hasattr(volumes, 'items') else None
+        except Exception as error:
+            logger.error(
+                f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def get_snapshots_for_volume(self, volume_id: str) -> Optional[list]:
+        """
+        Get snapshots for a specific volume
+        
+        Args:
+            datacenter_id: ID of the datacenter containing the volume
+            volume_id: ID of the volume
+            
+        Returns:
+            list: List of snapshots or None if not found
+        """
+        try:
+            snapshots = self.client.datacenters_servers_volumes_snapshots_get(self.datacenter_id, volume_id, pretty=True, depth=1)
+            return snapshots.items if hasattr(snapshots, 'items') else None
+        except Exception as error:
+            logger.error(
+                f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def get_all_snapshots(self) -> Optional[list]:
+        """
+        Get all snapshots for all volumes
+        
+        Returns:
+            list: List of snapshots or None if not found
+        """
+        try:
+            snapshots = self.snapshots_client.snapshots_get(pretty=True, depth=1)
+            return snapshots.items if hasattr(snapshots, 'items') else None
+        except Exception as error:
+            logger.error(
+                f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None

@@ -5,7 +5,7 @@ from datetime import datetime
 from prowler.lib.check.models import Check, Check_Report_IONOS
 from prowler.providers.ionos.lib.service import IonosService
 from prowler.providers.ionos.services.server.server_client import ionos_server_client
-
+from prowler.lib.logger import logger
 
 class server_public_ip(Check):
     def execute(self):
@@ -16,6 +16,7 @@ class server_public_ip(Check):
         servers = servers_response.items if hasattr(servers_response, 'items') else []
         
         for server in servers:
+            logger.info("Checking server: %s", server.id)
             report = Check_Report_IONOS(self.metadata())
             report.resource_id = server.id
             report.resource_name = server.properties.name if hasattr(server.properties, 'name') else "No Name"
@@ -28,7 +29,6 @@ class server_public_ip(Check):
             for nic in nics:                
                 if nic.properties.ips:
                     for ip in nic.properties.ips:
-                        print(f"Checking IP: {ip}")
                         try:
                             ip_obj = ipaddress.ip_address(ip)
                             if ip_obj.is_global:
@@ -56,7 +56,6 @@ class server_public_ip(Check):
                 "has_public_ip": has_public_ip,
                 "public_ips": public_ips if has_public_ip else []
             }
-            
             report.resource_details = json.dumps(server_details)
             findings.append(report)
             
