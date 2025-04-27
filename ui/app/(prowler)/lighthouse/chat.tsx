@@ -14,7 +14,7 @@ interface SuggestedAction {
 export default function Chat() {
   const { messages, input, handleSubmit, handleInputChange, append, status } =
     useChat({
-      api: "/analyst",
+      api: "/api/lighthouse/analyst",
       credentials: "same-origin",
       experimental_throttle: 100,
       sendExtraMessageFields: true,
