@@ -917,6 +917,6 @@ const checksByProvider = async (provider_type: string) => {
   return checksByProvider[provider_type as ProviderType] || [];
 };
 
-export const aiGetProviderChecks = async (provider_type: string) => {
+export const getLighthouseProviderChecks = async (provider_type: string) => {
   return await checksByProvider(provider_type);
 };

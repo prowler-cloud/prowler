@@ -15,7 +15,7 @@ type CacheStore = {
 // In-memory cache store
 const cacheStore: CacheStore = {};
 
-// We'll use this to track the cache metadata
+// Cache metadata
 let cacheVersion = Date.now();
 let cacheCreatedAt = new Date().toISOString();
 let cacheHits = 0;
@@ -217,3 +217,43 @@ export const getCacheMetadata = async () => {
     timestamp: new Date().toISOString(),
   };
 };
+
+export async function getCachedDataSection(): Promise<string> {
+  try {
+    const cacheData = await getUserCache();
+    if (cacheData) {
+      return `
+**CURRENT USER DATA:**
+Information about the current user interacting with the chatbot:
+User: ${cacheData.user.name}
+Email: ${cacheData.user.email}
+Company: ${cacheData.user.company}
+
+**CURRENT PROVIDER DATA:**
+${cacheData.providers
+  .map(
+    (provider, index) => `
+Provider ${index + 1}:
+- Name: ${provider.name}
+- Type: ${provider.provider_type}
+- Alias: ${provider.alias}
+- Provider ID: ${provider.id}
+- Last Checked: ${provider.last_checked_at}
+${
+  provider.scan_id
+    ? `- Latest Scan ID: ${provider.scan_id}
+- Scan Duration: ${provider.scan_duration || "Unknown"}
+- Resource Count: ${provider.resource_count || "Unknown"}`
+    : "- No completed scans found"
+}
+`,
+  )
+  .join("\n")}
+`;
+    }
+    return "";
+  } catch (error) {
+    console.error("Failed to retrieve cached data:", error);
+    return "**CURRENT DATA: Not available**";
+  }
+}

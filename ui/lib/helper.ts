@@ -270,9 +270,4 @@ export const permissionFormFields: PermissionInfo[] = [
   },
 ];
 
-export type ProviderType =
-  | "aws"
-  | "gcp"
-  | "azure"
-  | "kubernetes"
-  | "m365";
+export type ProviderType = "aws" | "gcp" | "azure" | "kubernetes" | "m365";

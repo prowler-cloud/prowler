@@ -1,6 +1,6 @@
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
 
-export const aiGetCompliancesOverview = async ({
+export const getLighthouseCompliancesOverview = async ({
   scanId, // required
   fields,
   filters,
@@ -63,7 +63,7 @@ export const aiGetCompliancesOverview = async ({
   }
 };
 
-export const aiGetComplianceOverview = async ({
+export const getLighthouseComplianceOverview = async ({
   complianceId,
   fields,
 }: {
