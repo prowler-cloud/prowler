@@ -1,10 +1,10 @@
 import { tool } from "@langchain/core/tools";
 
 import {
-  aiGetComplianceOverview,
-  aiGetCompliancesOverview,
+  getLighthouseComplianceOverview,
+  getLighthouseCompliancesOverview,
 } from "@/actions/lighthouse/compliances";
-import { aiGetComplianceFrameworks } from "@/lib/lighthouse/helperComplianceFrameworks";
+import { getLighthouseComplianceFrameworks } from "@/lib/lighthouse/helpers/complianceframeworks";
 import {
   getComplianceFrameworksSchema,
   getComplianceOverviewSchema,
@@ -13,7 +13,7 @@ import {
 
 export const getCompliancesOverviewTool = tool(
   async ({ scanId, fields, filters, page, page_size, sort }) => {
-    return await aiGetCompliancesOverview({
+    return await getLighthouseCompliancesOverview({
       scanId,
       fields,
       filters,
@@ -32,7 +32,7 @@ export const getCompliancesOverviewTool = tool(
 
 export const getComplianceFrameworksTool = tool(
   async ({ provider }) => {
-    return await aiGetComplianceFrameworks(provider);
+    return await getLighthouseComplianceFrameworks(provider);
   },
   {
     name: "getComplianceFrameworks",
@@ -44,7 +44,7 @@ export const getComplianceFrameworksTool = tool(
 
 export const getComplianceOverviewTool = tool(
   async ({ complianceId, fields }) => {
-    return await aiGetComplianceOverview({ complianceId, fields });
+    return await getLighthouseComplianceOverview({ complianceId, fields });
   },
   {
     name: "getComplianceOverview",

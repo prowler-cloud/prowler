@@ -1,11 +1,14 @@
 import { tool } from "@langchain/core/tools";
 
-import { aiGetResource, aiGetResources } from "@/actions/lighthouse/resources";
+import {
+  getLighthouseResourceById,
+  getLighthouseResources,
+} from "@/actions/lighthouse/resources";
 import { getResourceSchema, getResourcesSchema } from "@/types/lighthouse";
 
 export const getResourcesTool = tool(
   async ({ page, query, sort, filters, fields }) => {
-    return await aiGetResources(page, query, sort, filters, fields);
+    return await getLighthouseResources(page, query, sort, filters, fields);
   },
   {
     name: "getResources",
@@ -16,7 +19,7 @@ export const getResourcesTool = tool(
 
 export const getResourceTool = tool(
   async ({ id, fields, include }) => {
-    return await aiGetResource(id, fields, include);
+    return await getLighthouseResourceById(id, fields, include);
   },
   {
     name: "getResource",

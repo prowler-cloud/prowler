@@ -8,9 +8,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import {
-  createAIConfiguration,
-  getAIConfiguration,
-  updateAIConfiguration,
+  createLighthouseConfig,
+  getLighthouseConfig,
+  updateLighthouseConfig,
 } from "@/actions/lighthouse";
 import { useToast } from "@/components/ui";
 import {
@@ -70,7 +70,7 @@ export default function ChatbotConfig() {
       setIsFetching(true);
 
       try {
-        const response = await getAIConfiguration();
+        const response = await getLighthouseConfig();
 
         if (!isMounted) return;
 
@@ -135,8 +135,8 @@ export default function ChatbotConfig() {
 
       // Conditionally use create or update based on whether configuration exists
       const result = configExists
-        ? await updateAIConfiguration(configData)
-        : await createAIConfiguration(configData);
+        ? await updateLighthouseConfig(configData)
+        : await createLighthouseConfig(configData);
 
       console.log("Operation result:", result);
 
