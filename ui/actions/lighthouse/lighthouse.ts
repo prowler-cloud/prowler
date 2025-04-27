@@ -94,7 +94,7 @@ export const getLighthouseConfig = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("[Server] Error in getAIConfiguration:", error);
+    console.error("[Server] Error in getLighthouseConfig:", error);
     return undefined;
   }
 };
