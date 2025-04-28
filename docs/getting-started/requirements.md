@@ -147,6 +147,8 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
 
+With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider, if you want to scan all the checks from M365 you will need to use the recommended authentication method.
+
 ### Service Principal and User Credentials authentication (recommended)
 
 Authentication flag: `--env-auth`
@@ -161,21 +163,48 @@ export M365_USER="your_email@example.com"
 export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
 ```
 
-These two new environment variables are required to execute the PowerShell modules needed to retrieve information from M365 services. Prowler will use service principal authentication to log into MS Graph and user credentials to authenticate to Microsoft PowerShell modules.
+These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler will use service principal authentication to log into MS Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
-The `M365_USER` should be your Microsoft account email, and `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString.
-To convert your password into a valid encrypted string, run the following commands in PowerShell:
+The `M365_USER` should be your Microsoft account email, and `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string you will need to use PowerShell.
+
+???+ warning
+    Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it may fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
+
+If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password, this can be done using WSL which is so easy to install on Windows.
+
+???+ note
+    You can omit the steps and go to the next note if you are not in the "Windows" problem
+
+How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
+
+```console
+wsl --install -d Ubuntu-22.04
+```
+
+Then open the Ubuntu terminal and run the following commands:
+
+```console
+sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
+wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt update
+sudo apt install -y powershell
+pwsh
+```
+
+With this done you will see now that a prompt running PowerShell is open so here you will be able to generate your encrypted password:
+
+???+ note
+    If you are not in the "Windows" problem, you don't have to do the steps above and you can just open PowerShell and generate your password like it's done in the following step.
 
 ```console
 $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
 $encryptedPassword = $securePassword | ConvertFrom-SecureString
-```
-
-If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
-```console
 Write-Output $encryptedPassword
 6500780061006d0070006c006500700061007300730077006f0072006400
 ```
+
+If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
 
 
 
@@ -184,3 +213,218 @@ Write-Output $encryptedPassword
 Authentication flag: `--browser-auth`
 
 This authentication method requires the user to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.
+
+With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider, if you want to scan all the checks from M365 you will need to use the recommended authentication method.
+
+
+### Needed permissions
+
+Prowler for M365 requires two types of permissions scopes to be set (if you want to run full provider including PowerShell checks), both needs to be set up using Microsoft Entra ID:
+
+- Service Principal Application Permissions: all of this are set at **application** level and they are used to retrieve data from the identity that will be assest:
+    - `Directory.Read.All`: Required for all services.
+    - `Policy.Read.All`: Required for all services.
+    - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+    - `Sites.Read.All`: Required for SharePoint service.
+    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+
+- Powershell Modules Permissions: this are set at M365_USER level, so the user used for running prowler must have one of the following roles:
+    - `Global Reader` (recommended): this allows you to read all roles needed.
+    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+
+In order to know how to assign those permissions and roles follow the instructions in the Microsoft Entra ID permissions and roles section.
+
+### Supported PowerShell versions
+
+You will need to have Powershell installed to run some M365 checks, currently we support the PowerShell 7.4 or higher (7.5 is the version recommended), this is as this because PowerShell 5.1 (the one that comes as default in some Windows systems) doesn't support some cmdlets that are needed to run the checks. Also, you can see that the rest of [versions are not having technical](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-support-lifecycle?view=powershell-7.5) support so they could have errors.
+
+???+ note
+    Installing powershell will be only needed if you install prowler from pip or other sources, these means that the SDK and API containers contain PowerShell installed by default.
+
+Installing PowerShell is different depending on your OS.
+
+- [Windows](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#install-powershell-using-winget-recommended): you will need to update PowerShell to +7.4 to be able to run prowler, if not some checks will not show findings and the provider could not work as expected. This version of PowerShell is [supported](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4#supported-versions-of-windows) on Windows 10, Windows 11, Windows Server 2016 and higher versions.
+
+```console
+winget install --id Microsoft.PowerShell --source winget
+```
+
+
+- [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once you have it is just running the command above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
+
+```console
+brew install powershell/tap/powershell
+```
+
+Once it's installed run `pwsh` on your terminal to verify it's working.
+
+- Linux: installing PowerShell on Linux depends on the distro you are using:
+
+    - [Ubuntu](https://learn.microsoft.com/es-es/powershell/scripting/install/install-ubuntu?view=powershell-7.5#installation-via-package-repository-the-package-repository): The required version for installing PowerShell +7.4 on Ubuntu are Ubuntu 22.04 and Ubuntu 24.04. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+
+    ```console
+    ###################################
+    # Prerequisites
+
+    # Update the list of packages
+    sudo apt-get update
+
+    # Install pre-requisite packages.
+    sudo apt-get install -y wget apt-transport-https software-properties-common
+
+    # Get the version of Ubuntu
+    source /etc/os-release
+
+    # Download the Microsoft repository keys
+    wget -q https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb
+
+    # Register the Microsoft repository keys
+    sudo dpkg -i packages-microsoft-prod.deb
+
+    # Delete the Microsoft repository keys file
+    rm packages-microsoft-prod.deb
+
+    # Update the list of packages after we added packages.microsoft.com
+    sudo apt-get update
+
+    ###################################
+    # Install PowerShell
+    sudo apt-get install -y powershell
+
+    # Start PowerShell
+    pwsh
+    ```
+
+    - [Alpine](https://learn.microsoft.com/es-es/powershell/scripting/install/install-alpine?view=powershell-7.5#installation-steps): The only supported version for installing PowerShell +7.4 on Alpine is Alpine 3.20. The unique way to install it is downloading the tar.gz package available on [PowerShell github](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz). You just need to follow the following steps:
+
+    ```console
+    # Install the requirements
+    sudo apk add --no-cache \
+        ca-certificates \
+        less \
+        ncurses-terminfo-base \
+        krb5-libs \
+        libgcc \
+        libintl \
+        libssl3 \
+        libstdc++ \
+        tzdata \
+        userspace-rcu \
+        zlib \
+        icu-libs \
+        curl
+
+    apk -X https://dl-cdn.alpinelinux.org/alpine/edge/main add --no-cache \
+        lttng-ust \
+        openssh-client \
+
+    # Download the powershell '.tar.gz' archive
+    curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz -o /tmp/powershell.tar.gz
+
+    # Create the target folder where powershell will be placed
+    sudo mkdir -p /opt/microsoft/powershell/7
+
+    # Expand powershell to the target folder
+    sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
+
+    # Set execute permissions
+    sudo chmod +x /opt/microsoft/powershell/7/pwsh
+
+    # Create the symbolic link that points to pwsh
+    sudo ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+
+    # Start PowerShell
+    pwsh
+    ```
+
+    - [Debian](https://learn.microsoft.com/es-es/powershell/scripting/install/install-debian?view=powershell-7.5#installation-on-debian-11-or-12-via-the-package-repository): The required version for installing PowerShell +7.4 on Debian are Debian 11 and Debian 12. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+
+    ```console
+    ###################################
+    # Prerequisites
+
+    # Update the list of packages
+    sudo apt-get update
+
+    # Install pre-requisite packages.
+    sudo apt-get install -y wget
+
+    # Get the version of Debian
+    source /etc/os-release
+
+    # Download the Microsoft repository GPG keys
+    wget -q https://packages.microsoft.com/config/debian/$VERSION_ID/packages-microsoft-prod.deb
+
+    # Register the Microsoft repository GPG keys
+    sudo dpkg -i packages-microsoft-prod.deb
+
+    # Delete the Microsoft repository GPG keys file
+    rm packages-microsoft-prod.deb
+
+    # Update the list of packages after we added packages.microsoft.com
+    sudo apt-get update
+
+    ###################################
+    # Install PowerShell
+    sudo apt-get install -y powershell
+
+    # Start PowerShell
+    pwsh
+    ```
+
+    - [Rhel](https://learn.microsoft.com/es-es/powershell/scripting/install/install-rhel?view=powershell-7.5#installation-via-the-package-repository): The required version for installing PowerShell +7.4 on Red Hat are RHEL 8 and RHEL 9. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+
+    ```console
+    ###################################
+    # Prerequisites
+
+    # Get version of RHEL
+    source /etc/os-release
+    if [ ${VERSION_ID%.*} -lt 8 ]
+    then majorver=7
+    elif [ ${VERSION_ID%.*} -lt 9 ]
+    then majorver=8
+    else majorver=9
+    fi
+
+    # Download the Microsoft RedHat repository package
+    curl -sSL -O https://packages.microsoft.com/config/rhel/$majorver/packages-microsoft-prod.rpm
+
+    # Register the Microsoft RedHat repository
+    sudo rpm -i packages-microsoft-prod.rpm
+
+    # Delete the downloaded package after installing
+    rm packages-microsoft-prod.rpm
+
+    # Update package index files
+    sudo dnf update
+    # Install PowerShell
+    sudo dnf install powershell -y
+    ```
+
+- [Docker](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-in-docker?view=powershell-7.5#use-powershell-in-a-container): The following command download the latest stable versions of PowerShell:
+
+    ```console
+    docker pull mcr.microsoft.com/dotnet/sdk:9.0
+    ```
+
+    To start an interactive shell of Pwsh you just need to run:
+
+    ```console
+    docker run -it mcr.microsoft.com/dotnet/sdk:9.0 pwsh
+    ```
+
+
+### Needed PowerShell modules
+
+In order to obtain the needed data for this provider we use some PowerShell cmdlets. Those cmdlets come from different modules that need to be installed.
+
+The installation of those modules will be done the first time you run Prowler (if you already have them installed there's no problem).
+
+???+ note
+    The installation done by Prowler will be with -Scope CurrentUser, if after this you see that any service is not working try to install the modules by yourself using -Scope AllUsers (we cannot do that because admin permission is needed). The command needed in case you have to install by yourself is: `Install-Module -Name "ModuleName" -Scope AllUsers -Force`.
+
+The modules are the following:
+
+- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): minimum version 3.6.0, this is needed for several checks across Exchange, Defender and Purview.
+- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): minimum version 6.6.0, this is needed for all the Teams checks.

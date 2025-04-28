@@ -102,6 +102,7 @@ nav:
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
           - Miscellaneous: tutorials/kubernetes/misc.md
       - Microsoft 365:
+          - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
