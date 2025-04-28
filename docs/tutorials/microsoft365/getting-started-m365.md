@@ -5,7 +5,7 @@ Set up your M365 account to enable security scanning using Prowler Cloud.
 ## Requirements
 
 
-## Step 1: Obtain your User ID
+## Step 1: Obtain your Domain
 
 
 ---

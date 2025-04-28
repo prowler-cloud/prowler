@@ -232,7 +232,8 @@ Prowler for M365 requires two types of permissions scopes to be set (if you want
     - `Global Reader` (recommended): this allows you to read all roles needed.
     - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
 
-In order to know how to assign those permissions and roles follow the instructions in the Microsoft Entra ID permissions and roles section.
+In order to know how to assign those permissions and roles follow the instructions in the Microsoft Entra ID [permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-api-permissions) and [roles](../tutorials/microsoft365/getting-started-m365.md#assign-required-roles-to-your-user) section.
+
 
 ### Supported PowerShell versions
 

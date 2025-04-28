@@ -104,6 +104,8 @@ nav:
       - Microsoft 365:
           - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
+          - Use of powershell: tutorials/microsoft365/use-of-powershell.md
+          - Create Service Principal App: tutorials/microsoft365/create-service-principal-app.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md
