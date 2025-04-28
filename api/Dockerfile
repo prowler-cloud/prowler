@@ -2,6 +2,8 @@ FROM python:3.12-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
+ARG POWERSHELL_VERSION=7.5.0
+
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc python3-dev \
@@ -13,9 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install PowerShell
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-        curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-x64.tar.gz -o /tmp/powershell.tar.gz ; \
+        curl -L https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-x64.tar.gz -o /tmp/powershell.tar.gz ; \
     elif [ "$ARCH" = "aarch64" ]; then \
-        curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-arm64.tar.gz -o /tmp/powershell.tar.gz ; \
+        curl -L https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-arm64.tar.gz -o /tmp/powershell.tar.gz ; \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1 ; \
     fi && \
