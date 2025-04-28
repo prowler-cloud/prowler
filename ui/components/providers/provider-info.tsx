@@ -1,7 +1,9 @@
 import React from "react";
 
+import { ProviderType } from "@/lib/helper";
+
 import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
-import { getProviderLogo, ProviderType } from "../ui/entities";
+import { getProviderLogo } from "../ui/entities";
 
 interface ProviderInfoProps {
   connected: boolean | null;
