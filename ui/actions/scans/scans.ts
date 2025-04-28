@@ -257,3 +257,42 @@ export const getExportsZip = async (scanId: string) => {
     };
   }
 };
+
+export const getScansByFields = async (
+  fields: string = "state",
+  filters = {},
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/scans`);
+
+  // Request only the necessary fields to optimize the response
+  url.searchParams.append("fields[scans]", fields);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value));
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to fetch scans by state");
+      } catch {
+        throw new Error("Failed to fetch scans by state");
+      }
+    }
+
+    const data = await response.json();
+
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching scans by state:", error);
+    return undefined;
+  }
+};

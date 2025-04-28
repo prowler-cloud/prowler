@@ -767,3 +767,145 @@ export interface UserProps {
   dateAdded: string;
   status: "active" | "inactive";
 }
+
+export interface ResourceProps {
+  type: "resources";
+  id: string;
+  attributes: {
+    inserted_at: string;
+    updated_at: string;
+    uid: string;
+    name: string;
+    region: string;
+    service: string;
+    tags: Record<string, string>;
+    type: string;
+  };
+  relationships: {
+    provider: {
+      data: {
+        type: "providers";
+        id: string;
+        attributes: {
+          inserted_at: string;
+          updated_at: string;
+          provider: string;
+          uid: string;
+          alias: string | null;
+          connection: {
+            connected: boolean;
+            last_checked_at: string;
+          };
+        };
+        relationships: {
+          secret: {
+            data: {
+              type: "provider-secrets";
+              id: string;
+            };
+          };
+        };
+        links: {
+          self: string;
+        };
+      };
+    };
+    findings: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: "findings";
+        id: string;
+        attributes: { status: string };
+      }[];
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+interface Provider {
+  type: "providers" | "findings";
+  id: string;
+  attributes: {
+    uid: string;
+    delta: string;
+    status: "PASS" | "FAIL" | "MANUAL";
+    status_extended: string;
+    severity: "informational" | "low" | "medium" | "high" | "critical";
+    check_id: string;
+    check_metadata: CheckMetadata;
+    raw_result: Record<string, any>;
+    inserted_at: string;
+    updated_at: string;
+    first_seen_at: string;
+    muted: boolean;
+  };
+  relationships: {
+    secret: {
+      data: {
+        type: string;
+        id: string;
+      };
+    };
+    scan: {
+      data: {
+        type: string;
+        id: string;
+      };
+    };
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: [];
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
+interface CheckMetadata {
+  risk: string;
+  notes: string;
+  checkid: string;
+  provider: string;
+  severity: string;
+  checktype: string[];
+  dependson: string[];
+  relatedto: string[];
+  categories: string[];
+  checktitle: string;
+  compliance: any;
+  relatedurl: string;
+  description: string;
+  remediation: {
+    code: {
+      cli: string;
+      other: string;
+      nativeiac: string;
+      terraform: string;
+    };
+    recommendation: {
+      url: string;
+      text: string;
+    };
+  };
+  servicename: string;
+  checkaliases: string[];
+  resourcetype: string;
+  subservicename: string;
+  resourceidtemplate: string;
+}
+
+interface Meta {
+  version: string;
+}
+
+export interface ResourceApiResponse {
+  data: ResourceProps;
+  included: Provider[];
+  meta: Meta;
+}
