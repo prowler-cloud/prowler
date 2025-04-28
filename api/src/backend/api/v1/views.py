@@ -1340,7 +1340,7 @@ class ScanViewSet(BaseRLSViewSet):
     @action(
         detail=True,
         methods=["get"],
-        url_path="compliance/(?P<name>[^/.]+)",
+        url_path="compliance/(?P<name>[^/]+)",
         url_name="compliance",
     )
     def compliance(self, request, pk=None, name=None):
@@ -1432,7 +1432,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    # "checks_to_execute": ["accessanalyzer_enabled"],
                 },
             )
 

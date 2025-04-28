@@ -256,112 +256,110 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         logger.info(f"No findings found for scan {scan_id}")
         return {"upload": False}
 
-    # Initialize the prowler provider
-    prowler_provider = initialize_prowler_provider(Provider.objects.get(id=provider_id))
+    provider_obj = Provider.objects.get(id=provider_id)
+    prowler_provider = initialize_prowler_provider(provider_obj)
+    provider_uid = provider_obj.uid
+    provider_type = provider_obj.provider
 
-    # Get the provider UID
-    provider_uid = Provider.objects.get(id=provider_id).uid
-    provider_type = Provider.objects.get(id=provider_id).provider
-
-    # Get the compliance frameworks for the provider
-    bulk_compliance_frameworks = Compliance.get_bulk(provider_type)
-    available_compliance_frameworks = get_available_compliance_frameworks(provider_type)
-
-    # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(
+    frameworks_bulk = Compliance.get_bulk(provider_type)
+    frameworks_avail = get_available_compliance_frameworks(provider_type)
+    out_dir = _generate_output_directory(
+        DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
+    )
+    comp_dir = _generate_compliance_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
-    # Generate compliance and ensure the output directory exists
-    compliance_output_directory = _generate_compliance_output_directory(
-        DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
-    )
+    def get_writer(writer_map, name, factory, is_last):
+        """
+        Return existing writer_map[name] or create via factory().
+        In both cases set `.close_file = is_last`.
+        """
+        initialization = False
+        if name not in writer_map:
+            writer_map[name] = factory()
+            initialization = True
+        w = writer_map[name]
+        w.close_file = is_last
 
-    # Define auxiliary variables
+        return w, initialization
+
     output_writers = {}
+    compliance_writers = {}
+
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    # Retrieve findings queryset
-    findings_qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid")
+    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
 
-    # Process findings in batches
-    for batch, is_last_batch in batched(
-        findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
-    ):
-        finding_outputs = [
-            FindingOutput.transform_api_finding(finding, prowler_provider)
-            for finding in batch
-        ]
-
-        # Generate output files
-        for mode, config in OUTPUT_FORMATS_MAPPING.items():
-            kwargs = dict(config.get("kwargs", {}))
+        # Outputs
+        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+            cls = cfg["class"]
+            suffix = cfg["suffix"]
+            extra = cfg.get("kwargs", {}).copy()
             if mode == "html":
-                kwargs["provider"] = prowler_provider
-                kwargs["stats"] = scan_summary
+                extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer_class = config["class"]
-            if writer_class in output_writers:
-                writer = output_writers[writer_class]
-                writer.transform(finding_outputs)
-                writer.close_file = is_last_batch
-            else:
-                writer = writer_class(
-                    findings=finding_outputs,
-                    file_path=output_directory,
-                    file_extension=config["suffix"],
+            writer, initialization = get_writer(
+                output_writers,
+                cls,
+                lambda cls=cls, fos=fos, suffix=suffix: cls(
+                    findings=fos,
+                    file_path=out_dir,
+                    file_extension=suffix,
                     from_cli=False,
-                )
-                writer.close_file = is_last_batch
-                output_writers[writer_class] = writer
-
-            # Write the current batch using the writer
-            writer.batch_write_data_to_file(**kwargs)
-
-            # TODO: Refactor the output classes to avoid this manual reset
-            writer._data = []
-
-        for compliance_name in available_compliance_frameworks:
-            filename = f"{compliance_output_directory}_{compliance_name}.csv"
-            compliance = bulk_compliance_frameworks[compliance_name]
-            writer_class = GenericCompliance  # Default
-
-            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                if condition(compliance_name):
-                    writer_class = cls
-                    break
-
-            writer = writer_class(
-                findings=finding_outputs,
-                compliance=compliance,
-                file_path=filename,
+                ),
+                is_last,
             )
+            if not initialization:
+                writer.transform(fos)
+            writer.batch_write_data_to_file(**extra)
+            writer._data.clear()
+
+        # Compliance CSVs
+        for name in frameworks_avail:
+            compliance_obj = frameworks_bulk[name]
+            klass = next(
+                (
+                    c
+                    for cond, c in COMPLIANCE_CLASS_MAP.get(provider_type, [])
+                    if cond(name)
+                ),
+                GenericCompliance,
+            )
+            filename = f"{comp_dir}_{name}.csv"
+
+            writer, initialization = get_writer(
+                compliance_writers,
+                name,
+                lambda klass=klass, fos=fos: klass(
+                    findings=fos,
+                    compliance=compliance_obj,
+                    file_path=filename,
+                    from_cli=False,
+                ),
+                is_last,
+            )
+            if not initialization:
+                writer.transform(fos, compliance_obj, name)
             writer.batch_write_data_to_file()
-            writer.close_file = is_last_batch
+            writer._data.clear()
 
-    # Compress output files
-    output_directory = _compress_output_files(output_directory)
+    compressed = _compress_output_files(out_dir)
+    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
 
-    # Save to configured storage
-    uploaded = _upload_to_s3(tenant_id, output_directory, scan_id)
-
-    if uploaded:
-        # Remove the local files after upload
+    if upload_uri:
         try:
-            rmtree(Path(output_directory).parent, ignore_errors=True)
-        except FileNotFoundError as e:
+            rmtree(Path(compressed).parent, ignore_errors=True)
+        except Exception as e:
             logger.error(f"Error deleting output files: {e}")
-
-        output_directory = uploaded
-        uploaded = True
+        final_location, did_upload = upload_uri, True
     else:
-        uploaded = False
+        final_location, did_upload = compressed, False
 
-    # Update the scan instance with the output path
-    Scan.all_objects.filter(id=scan_id).update(output_location=output_directory)
-
-    logger.info(f"Scan output files generated, output location: {output_directory}")
-
-    return {"upload": uploaded}
+    Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
+    logger.info(f"Scan outputs at {final_location}")
+    return {"upload": did_upload}
