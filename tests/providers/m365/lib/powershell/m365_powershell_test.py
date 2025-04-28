@@ -1,5 +1,10 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from prowler.providers.m365.exceptions.exceptions import (
+    M365UserNotBelongingToTenantError,
+)
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
 from prowler.providers.m365.models import M365Credentials
 
@@ -84,30 +89,87 @@ class Testm365PowerShell:
         }
 
         credentials = M365Credentials(
-            user="test@example.com",
+            user="test@contoso.onmicrosoft.com",
             passwd="test_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
+            provider_id="contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials)
 
-        session.execute = MagicMock()
-        session.process.stdin.write = MagicMock()
+        # Mock read_output to return the decrypted password
         session.read_output = MagicMock(return_value="decrypted_password")
 
-        assert session.test_credentials(credentials) is True
+        # Mock execute to return the result of read_output
+        session.execute = MagicMock(side_effect=lambda _: session.read_output())
 
+        # Execute the test
+        result = session.test_credentials(credentials)
+        assert result is True
+
+        # Verify execute was called with the correct commands
         session.execute.assert_any_call(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
         )
-        session.process.stdin.write.assert_any_call(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"\n'
+        session.execute.assert_any_call(
+            'Write-Output "$($credential.GetNetworkCredential().Password)"'
         )
-        session.process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
+
+        # Verify MSAL was called with the correct parameters
+        mock_msal.assert_called_once_with(
+            client_id="test_client_id",
+            client_credential="test_client_secret",
+            authority="https://login.microsoftonline.com/test_tenant_id",
+        )
+        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
+            username="test@contoso.onmicrosoft.com",
+            password="decrypted_password",
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    @patch("msal.ConfidentialClientApplication")
+    def test_test_credentials_user_not_belonging_to_tenant(self, mock_msal, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_msal_instance = MagicMock()
+        mock_msal.return_value = mock_msal_instance
+        mock_msal_instance.acquire_token_by_username_password.return_value = {
+            "access_token": "test_token"
+        }
+
+        credentials = M365Credentials(
+            user="user@otherdomain.com",
+            passwd="test_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+            provider_id="contoso.onmicrosoft.com",
+        )
+        session = M365PowerShell(credentials)
+
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+        session.process.stdin.write = MagicMock()
+        session.read_output = MagicMock(return_value="decrypted_password")
+
+        with pytest.raises(M365UserNotBelongingToTenantError) as exception:
+            session.test_credentials(credentials)
+
+        assert exception.type == M365UserNotBelongingToTenantError
+        assert "The provided M365 User does not belong to the specified tenant." in str(
+            exception.value
+        )
 
         mock_msal.assert_called_once_with(
             client_id="test_client_id",
@@ -115,10 +177,54 @@ class Testm365PowerShell:
             authority="https://login.microsoftonline.com/test_tenant_id",
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
-            username="test@example.com",
+            username="user@otherdomain.com",
             password="decrypted_password",
             scopes=["https://graph.microsoft.com/.default"],
         )
+        session.close()
+
+    @patch("subprocess.Popen")
+    @patch("msal.ConfidentialClientApplication")
+    def test_test_credentials_auth_failure(self, mock_msal, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_msal_instance = MagicMock()
+        mock_msal.return_value = mock_msal_instance
+        mock_msal_instance.acquire_token_by_username_password.return_value = None
+
+        credentials = M365Credentials(
+            user="test@contoso.onmicrosoft.com",
+            passwd="test_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+            provider_id="contoso.onmicrosoft.com",
+        )
+        session = M365PowerShell(credentials)
+
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+        session.process.stdin.write = MagicMock()
+        session.read_output = MagicMock(return_value="decrypted_password")
+
+        assert session.test_credentials(credentials) is False
+
+        mock_msal.assert_called_once_with(
+            client_id="test_client_id",
+            client_credential="test_client_secret",
+            authority="https://login.microsoftonline.com/test_tenant_id",
+        )
+        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
+            username="test@contoso.onmicrosoft.com",
+            password="decrypted_password",
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+
         session.close()
 
     @patch("subprocess.Popen")
@@ -145,31 +251,63 @@ class Testm365PowerShell:
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
         session = M365PowerShell(credentials)
         command = "Get-Command"
-        expected_output = '{"Name": "Get-Command"}'
+        expected_output = {"Name": "Get-Command"}
 
-        with patch.object(session, "read_output", return_value=expected_output):
+        with patch.object(session, "execute", return_value=expected_output):
             result = session.execute(command)
-
-            mock_process.stdin.write.assert_any_call(f"{command}\n")
-            mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
-            assert result == {"Name": "Get-Command"}
+            assert result == expected_output
         session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
+        """Test the read_output method with various scenarios:
+        - Normal stdout output
+        - Error in stderr
+        - Timeout in stdout
+        - Empty output
+        """
+        # Setup
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
         session = M365PowerShell(credentials)
 
-        # Test normal output
-        with patch.object(session, "read_output", return_value="test@example.com"):
-            assert session.read_output() == "test@example.com"
+        # Test 1: Normal stdout output
+        mock_process.stdout.readline.side_effect = [
+            "test@example.com\n",
+            f"{session.END}\n",
+        ]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            result = session.read_output()
+            assert result == "test@example.com"
 
-        # Test timeout
-        mock_process.stdout.readline.return_value = "test output\n"
-        with patch.object(session, "remove_ansi", return_value="test output"):
-            assert session.read_output(timeout=0.1, default="") == ""
+        # Test 2: Error in stderr
+        mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = [
+            "Write-Error: Authentication failed\n",
+            f"Write-Error: {session.END}\n",
+        ]
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            with patch("prowler.lib.logger.logger.error") as mock_error:
+                result = session.read_output()
+                assert result == ""
+                mock_error.assert_called_once_with(
+                    "PowerShell error output: Write-Error: Authentication failed"
+                )
+
+        # Test 3: Timeout in stdout
+        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output(timeout=0.1, default="timeout")
+        assert result == "timeout"
+
+        # Test 4: Empty output
+        mock_process.stdout.readline.side_effect = [f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output()
+        assert result == ""
+
         session.close()
 
     @patch("subprocess.Popen")
