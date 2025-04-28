@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { ResourceApiResponse, ResourceProps } from "@/types";
+
 import { SkeletonFindingSummary } from "../skeleton/skeleton-finding-summary";
 
 const renderValue = (value: string | null | undefined) => {
