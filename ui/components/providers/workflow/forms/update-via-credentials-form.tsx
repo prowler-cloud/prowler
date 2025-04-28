@@ -107,9 +107,11 @@ export const UpdateViaCredentialsForm = ({
   const onSubmitClient = async (values: FormType) => {
     const formData = new FormData();
 
-    Object.entries(values).forEach(
-      ([key, value]) => value !== undefined && formData.append(key, value),
-    );
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
 
     const data = await updateCredentialsProvider(providerSecretId, formData);
 
