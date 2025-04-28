@@ -100,7 +100,11 @@ def _store_resources(
 
 
 def perform_prowler_scan(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] = None,
+    excluded_checks: list[str] = None,
 ):
     """
     Perform a scan using Prowler and store the findings and resources in the database.
@@ -110,6 +114,7 @@ def perform_prowler_scan(
         scan_id (str): The ID of the scan instance.
         provider_id (str): The ID of the provider to scan.
         checks_to_execute (list[str], optional): A list of specific checks to execute. Defaults to None.
+        excluded_checks (list[str], optional): A list of checks to exclude from the scan. Defaults to None.
 
     Returns:
         dict: Serialized data of the completed scan instance.
@@ -146,7 +151,11 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
+        prowler_scan = ProwlerScan(
+            provider=prowler_provider,
+            checks=checks_to_execute,
+            excluded_checks=excluded_checks,
+        )
 
         resource_cache = {}
         tag_cache = {}

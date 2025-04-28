@@ -1326,6 +1326,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    # excluded_checks=scan.scanner_args.get("excluded_checks")
                 },
             )
 

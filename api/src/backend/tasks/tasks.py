@@ -69,7 +69,11 @@ def delete_provider_task(provider_id: str, tenant_id: str):
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
 def perform_scan_task(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] = None,
+    excluded_checks: list[str] = None,
 ):
     """
     Task to perform a Prowler scan on a given provider.
@@ -83,6 +87,7 @@ def perform_scan_task(
         scan_id (str): The ID of the scan to be performed.
         provider_id (str): The primary key of the Provider instance to scan.
         checks_to_execute (list[str], optional): A list of specific checks to perform during the scan. Defaults to None.
+        excluded_checks (list[str], optional): A list of specific checks to exclude from the scan. Defaults to None.
 
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
@@ -92,6 +97,7 @@ def perform_scan_task(
         scan_id=scan_id,
         provider_id=provider_id,
         checks_to_execute=checks_to_execute,
+        excluded_checks=excluded_checks,
     )
 
     chain(
