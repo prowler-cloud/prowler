@@ -1222,3 +1222,32 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class FilterValue(RowLevelSecurityProtectedModel):
+    scan_id = models.UUIDField(default=uuid7)
+    dimension = models.CharField(max_length=32)
+    value = models.TextField()
+
+    class Meta:
+        db_table = "filter_values"
+        unique_together = (("tenant_id", "scan_id", "dimension", "value"),)
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="filter_values_scan_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "dimension"],
+                name="filter_values_dim_idx",
+            ),
+        ]
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
