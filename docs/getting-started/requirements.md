@@ -444,8 +444,13 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
 To obtain the required data for this provider, we use several PowerShell cmdlets.
 These cmdlets come from different modules that must be installed.
 
-The installation of these modules will be performed automatically the first time you run Prowler.
-If you already have them installed, there is no problem.
+The installation of these modules will be performed automatically if you run Prowler with the flag `--init-modules`. This an example way of running Prowler and installing the modules:
+
+```console
+python3 prowler-cli.py m365 --verbose --log-level ERROR --env-auth --init-modules
+```
+
+If you already have them installed, there is no problem even if you use the flag because it will automatically check if the needed modules are already installed.
 
 ???+ note
     Prowler installs the modules using `-Scope CurrentUser`.
