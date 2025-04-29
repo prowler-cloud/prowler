@@ -105,6 +105,11 @@ class S3:
         """
         try:
             uploaded_objects = {"success": {}, "failure": {}}
+            extension_to_content_type = {
+                ".html": "text/html",
+                ".csv": "text/csv",
+                ".json": "application/json",
+            }
             # Keys are regular and/or compliance
             for key, output_list in outputs.items():
                 for output in output_list:
@@ -124,11 +129,25 @@ class S3:
                             f"Sending output file {output.file_descriptor.name} to S3 bucket {self._bucket_name}"
                         )
 
+                        # By default, the content type is text/html
+                        content_type = "text/html"
+
+                        # If the file extension is in the extension_to_content_type dictionary, use the content type of the extension
+                        for (
+                            ext,
+                            content_type_extension,
+                        ) in extension_to_content_type.items():
+                            if basename.endswith(ext):
+                                content_type = content_type_extension
+
                         # TODO: This will need further optimization if some processes are calling this since the files are written
                         # into the local filesystem because S3 upload file is the recommended way.
                         # https://aws.amazon.com/blogs/developer/uploading-files-to-amazon-s3/
                         self._session.upload_file(
-                            output.file_descriptor.name, self._bucket_name, object_name
+                            Filename=output.file_descriptor.name,
+                            Bucket=self._bucket_name,
+                            Key=object_name,
+                            ExtraArgs={"ContentType": content_type},
                         )
 
                         if output.file_extension in uploaded_objects["success"]:
