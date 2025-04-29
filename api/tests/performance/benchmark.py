@@ -118,6 +118,7 @@ def main() -> None:
     parser.add_argument(
         "--metrics-dir", default="baselines", help="Directory with CSV baselines"
     )
+    parser.add_argument("--version", default="current", help="Test version")
     args = parser.parse_args()
 
     metrics_dir = Path(args.metrics_dir)
@@ -128,7 +129,7 @@ def main() -> None:
     for csv_file in sorted(metrics_dir.glob("*.csv")):
         metrics_data[csv_file.stem] = load_percentiles(csv_file)
 
-    current_prefix = Path("current")
+    current_prefix = Path(args.version)
     current_csv = run_locust(
         locust_file=args.locustfile,
         host=args.host,
@@ -137,7 +138,7 @@ def main() -> None:
         run_time=args.time,
         csv_prefix=current_prefix,
     )
-    metrics_data["current"] = load_percentiles(current_csv)
+    metrics_data[args.version] = load_percentiles(current_csv)
 
     for endpoint in sorted(
         set.intersection(*(set(df.index) for df in metrics_data.values()))
