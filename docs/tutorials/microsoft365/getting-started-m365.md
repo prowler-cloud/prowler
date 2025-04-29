@@ -28,6 +28,10 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Search Domain Names](./img/search-domain-names.png)
 
+<br>
+
+![Custom Domain Names](./img/custom-domain-names.png)
+
 Once you are there just look for the `Default Domain` this should be something similar to `YourCompany.onmicrosoft.com`. To ensure that you are picking the correct domain just click on it and verify that the type is `Initial` and you can't delete it.
 
 ![Search Default Domain](./img/search-default-domain.png)
@@ -66,7 +70,7 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
     ![Overview of Microsoft Entra ID](./img/microsoft-entra-id.png)
 
-2. Navigate to `Manage` > `App registrations`
+2. Navigate to `Applications` > `App registrations`
 
     ![App Registration nav](./img/app-registration-menu.png)
 
@@ -77,15 +81,18 @@ A Service Principal is required to grant Prowler the necessary privileges.
 4. Go to `Certificates & secrets` > `+ New client secret`
 
     ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
+
+5. Fill in the required fields and click `Add`, then copy the generated value (that value will be `AZURE_CLIENT_SECRET`)
+
     ![New Client Secret](./img/new-client-secret.png)
 
-5. Fill in the required fields and click `Add`, then copy the generated value
+With this done you will have all the needed keys, summarized in the following table
 
 | Value | Description |
 |-------|-------------|
-| Client ID | Application ID |
+| Client ID | Application (client) ID |
 | Client Secret | AZURE_CLIENT_SECRET |
-| Tenant ID | Azure Tenant ID |
+| Tenant ID | Directory (tenant) ID |
 
 ---
 
@@ -93,22 +100,23 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
 Assign the following Microsoft Graph permissions:
 
-    - `Directory.Read.All`: Required for all services.
-    - `Policy.Read.All`: Required for all services.
-    - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
-    - `Sites.Read.All`: Required for SharePoint service.
-    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `Directory.Read.All`: Required for all services.
+- `Policy.Read.All`: Required for all services.
+- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+- `Sites.Read.All`: Required for SharePoint service.
+- `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 
-1. Go to your App Registration > `API permissions`
+Follow these steps to assign the permissions:
+
+1. Go to your App Registration > Select your Prowler App created before > click on `API permissions`
 
     ![API Permission Page](./img/api-permissions-page.png)
 
 2. Click `+ Add a permission` > `Microsoft Graph` > `Application permissions`
 
     ![Add API Permission](./img/add-app-api-permission.png)
-    ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
 
-3. Search and select:
+3. Search and select every permission below and once all are selected click on `Add permissions`:
 
     - `Directory.Read.All`
     - `Policy.Read.All`
@@ -124,17 +132,16 @@ Assign the following Microsoft Graph permissions:
 5. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
 
     ![Add API Permission](./img/add-delegated-api-permission.png)
-    ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
 
 6. Search and select:
 
     - `User.Read`
 
-    ![Permission Screenshots](./img/directory-permission.png)
+    ![Permission Screenshots](./img/directory-permission-delegated.png)
 
 7. Click `Add permissions`, then grant admin consent
 
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
+    ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
 
 ---
 
@@ -142,24 +149,26 @@ Assign the following Microsoft Graph permissions:
 
 Assign one of the following roles to your User:
 
-    - `Global Reader` (recommended): this allows you to read all roles needed.
-    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+- `Global Reader` (recommended): this allows you to read all roles needed.
+- `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
 
-1. Go to Users > All Users > Click on `user@example.onmicrosoft.com` you will use
+Follow these steps to assign the role:
+
+1. Go to Users > All Users > Click on the email for the user you will use
 
     ![User Overview](./img/user-info-page.png)
 
-2. Click `Roles`
+2. Click `Assigned Roles`
 
     ![User Roles](./img/user-role-page.png)
 
-3. Search and select:
+3. Click on `Add assignments`, then search and select:
 
     - `Global Reader` This is the recommended, if you want to use the others just search for them
 
     ![Global Reader Screenshots](./img/global-reader.png)
 
-4. Click `Add Role`, then grant admin consent
+4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
 
     ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
 
