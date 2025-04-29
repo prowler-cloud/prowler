@@ -131,9 +131,6 @@ class S3:
                             f"Sending output file {output.file_descriptor.name} to S3 bucket {self._bucket_name}"
                         )
 
-                        # By default, the content type is text/html
-                        content_type = "text/html"
-
                         # If the file extension is in the extension_to_content_type dictionary, use the content type of the extension
                         if file_extension in extension_to_content_type:
                             content_type = extension_to_content_type[file_extension]
