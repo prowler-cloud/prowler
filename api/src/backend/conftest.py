@@ -19,6 +19,7 @@ from api.models import (
     Integration,
     IntegrationProviderRelationship,
     Invitation,
+    LighthouseConfig,
     Membership,
     Provider,
     ProviderGroup,
@@ -927,6 +928,19 @@ def backfill_scan_metadata_fixture(scans_fixture, findings_fixture):
         tenant_id = scan_instance.tenant_id
         scan_id = scan_instance.id
         backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+@pytest.fixture
+def lighthouse_config_fixture(authenticated_client, tenants_fixture):
+    return LighthouseConfig.objects.create(
+        tenant_id=tenants_fixture[0].id,
+        name="OpenAI",
+        api_key_decoded="sk-test1234567890T3BlbkFJtest1234567890",
+        model="gpt-4o",
+        temperature=0,
+        max_tokens=4000,
+        business_context="Test business context",
+        is_active=True,
+    )
 
 
 @pytest.fixture(scope="function")
