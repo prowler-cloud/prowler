@@ -2797,7 +2797,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     ordering = ["-inserted_at"]
 
     def get_queryset(self):
-        return LighthouseConfig.objects.all()
+        return LighthouseConfig.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
