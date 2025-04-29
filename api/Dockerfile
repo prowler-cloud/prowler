@@ -6,7 +6,7 @@ ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends wget \
+RUN apt-get update && apt-get install -y --no-install-recommends wget libicu72 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -46,6 +46,8 @@ RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN poetry run python "$(poetry env info --path)/src/prowler/util/m365/m365_powershell_modules_installation.py"
 
 WORKDIR /home/prowler/backend
 
