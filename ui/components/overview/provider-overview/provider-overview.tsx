@@ -8,6 +8,7 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   KS8ProviderBadge,
+  M365ProviderBadge,
 } from "@/components/icons/providers-badge";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { ProviderOverviewProps } from "@/types";
@@ -26,6 +27,8 @@ export const ProvidersOverview = ({
         return <AWSProviderBadge width={30} height={30} />;
       case "azure":
         return <AzureProviderBadge width={30} height={30} />;
+      case "m365":
+        return <M365ProviderBadge width={30} height={30} />;
       case "gcp":
         return <GCPProviderBadge width={30} height={30} />;
       case "kubernetes":
@@ -38,6 +41,7 @@ export const ProvidersOverview = ({
   const providers = [
     { id: "aws", name: "AWS" },
     { id: "azure", name: "Azure" },
+    { id: "m365", name: "M365" },
     { id: "gcp", name: "GCP" },
     { id: "kubernetes", name: "Kubernetes" },
   ];
