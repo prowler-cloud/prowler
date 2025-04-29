@@ -1,7 +1,8 @@
 import json
+import logging
 import re
 from uuid import UUID, uuid4
-import logging
+
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
@@ -1329,15 +1330,39 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     Stores configuration and API keys for LLM services.
     """
 
+    MODEL_CHOICES = [
+        "gpt-4o-2024-11-20",
+        "gpt-4o-2024-08-06",
+        "gpt-4o-2024-05-13",
+        "gpt-4o",
+        "gpt-4o-mini-2024-07-18",
+        "gpt-4o-mini",
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
-    api_key = models.BinaryField(blank=False, null=False)
-    model = models.CharField(max_length=50, default="gpt-4o-2024-08-06")
-    temperature = models.FloatField(default=0)
-    max_tokens = models.IntegerField(default=4000)
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        blank=False,
+        null=False,
+        help_text="Name of the configuration",
+    )
+    api_key = models.BinaryField(
+        blank=False, null=False, help_text="Encrypted API key for the LLM service"
+    )
+    model = models.CharField(
+        max_length=50,
+        blank=False,
+        null=False,
+        help_text="Must be one of the supported model names",
+    )
+    temperature = models.FloatField(default=0, help_text="Must be between 0 and 1")
+    max_tokens = models.IntegerField(
+        default=4000, help_text="Must be between 500 and 5000"
+    )
     business_context = models.TextField(
         blank=True,
         null=True,
@@ -1347,6 +1372,33 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+
+        # Validate temperature
+        if not 0 <= self.temperature <= 1:
+            raise ModelValidationError(
+                detail="Temperature must be between 0 and 1",
+                code="invalid_temperature",
+                pointer="/data/attributes/temperature",
+            )
+
+        # Validate max_tokens
+        if not 500 <= self.max_tokens <= 5000:
+            raise ModelValidationError(
+                detail="Max tokens must be between 500 and 5000",
+                code="invalid_max_tokens",
+                pointer="/data/attributes/max_tokens",
+            )
+
+        # Validate model name
+        if self.model not in self.MODEL_CHOICES:
+            raise ModelValidationError(
+                detail=f"Model must be one of: {', '.join(self.MODEL_CHOICES)}",
+                code="invalid_model",
+                pointer="/data/attributes/model",
+            )
 
     @property
     def api_key_decoded(self):
@@ -1369,11 +1421,41 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     @api_key_decoded.setter
     def api_key_decoded(self, value):
         """Store the encrypted API key."""
+        if not value:
+            raise ModelValidationError(
+                detail="API key is required",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
+
         # Validate OpenAI API key format
         openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
         if not re.match(openai_key_pattern, value):
-            raise ValueError("Invalid OpenAI API key format. Must start with 'sk-'.")
+            raise ModelValidationError(
+                detail="Invalid OpenAI API key format. Must start with 'sk-'.",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
         self.api_key = fernet.encrypt(value.encode())
+
+    def save(self, *args, **kwargs):
+        # Validate required fields
+        if not self.name:
+            raise ModelValidationError(
+                detail="Name is required",
+                code="missing_name",
+                pointer="/data/attributes/name",
+            )
+
+        if not self.model:
+            raise ModelValidationError(
+                detail="Model is required",
+                code="missing_model",
+                pointer="/data/attributes/model",
+            )
+
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "lighthouse_config"
