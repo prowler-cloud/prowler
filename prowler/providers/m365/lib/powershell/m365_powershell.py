@@ -192,7 +192,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json"
+            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_user_settings(self) -> dict:
