@@ -1,23 +1,19 @@
-FROM python:3.12-slim-bookworm AS build
+FROM python:3.12.10-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc python3-dev bash \
-    libcurl4-openssl-dev ca-certificates less ncurses-base \
-    krb5-multidev libgcc-s1 gettext libssl3 \
-    libstdc++6 tzdata liburcu8 zlib1g libicu72 curl openssh-client \
+RUN apt-get update && apt-get install -y --no-install-recommends wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-        curl -L https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-x64.tar.gz -o /tmp/powershell.tar.gz ; \
+        wget --progress=dot:giga https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-x64.tar.gz -O /tmp/powershell.tar.gz ; \
     elif [ "$ARCH" = "aarch64" ]; then \
-        curl -L https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-arm64.tar.gz -o /tmp/powershell.tar.gz ; \
+        wget --progress=dot:giga https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-arm64.tar.gz -O /tmp/powershell.tar.gz ; \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1 ; \
     fi && \
@@ -54,14 +50,6 @@ WORKDIR /home/prowler/backend
 
 # Development image
 FROM build AS dev
-
-USER root
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl vim \
-    && rm -rf /var/lib/apt/lists/*
-
-USER prowler
 
 ENTRYPOINT ["../docker-entrypoint.sh", "dev"]
 
