@@ -233,8 +233,7 @@ def get_aws_html_header(args: list) -> str:
     Returns:
         str: HTML header for AWS
     """
-    aws_html_header = f"""
-<!DOCTYPE html>
+    aws_html_header = f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
