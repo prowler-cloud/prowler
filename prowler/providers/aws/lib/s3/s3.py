@@ -131,10 +131,6 @@ class S3:
                             f"Sending output file {output.file_descriptor.name} to S3 bucket {self._bucket_name}"
                         )
 
-                        # If the file extension is in the extension_to_content_type dictionary, use the content type of the extension
-                        if file_extension in extension_to_content_type:
-                            content_type = extension_to_content_type[file_extension]
-
                         # TODO: This will need further optimization if some processes are calling this since the files are written
                         # into the local filesystem because S3 upload file is the recommended way.
                         # https://aws.amazon.com/blogs/developer/uploading-files-to-amazon-s3/
@@ -142,7 +138,9 @@ class S3:
                             Filename=output.file_descriptor.name,
                             Bucket=self._bucket_name,
                             Key=object_name,
-                            ExtraArgs={"ContentType": content_type},
+                            ExtraArgs={
+                                "ContentType": extension_to_content_type[file_extension]
+                            },
                         )
 
                         if output.file_extension in uploaded_objects["success"]:
