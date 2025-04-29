@@ -29,12 +29,14 @@ interface DataTableProviderProps<TData, TValue> {
   data: TData[];
   metadata?: MetaDataProps;
   customFilters?: FilterOption[];
+  pageSizeOptions?: number[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   metadata,
+  pageSizeOptions,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -48,6 +50,7 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    manualPagination: true,
     state: {
       sorting,
       columnFilters,
@@ -108,7 +111,10 @@ export function DataTable<TData, TValue>({
       </div>
       {metadata && (
         <div className="flex w-full items-center space-x-2 py-4">
-          <DataTablePagination metadata={metadata} />
+          <DataTablePagination
+            metadata={metadata}
+            pageSizeOptions={pageSizeOptions}
+          />
         </div>
       )}
     </>

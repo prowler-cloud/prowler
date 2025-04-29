@@ -7,19 +7,37 @@ import {
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import { getPaginationInfo } from "@/lib";
 import { MetaDataProps } from "@/types";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../select/Select";
 
 interface DataTablePaginationProps {
   pageSizeOptions?: number[];
   metadata?: MetaDataProps;
 }
 
-export function DataTablePagination({ metadata }: DataTablePaginationProps) {
+export function DataTablePagination({
+  metadata,
+  pageSizeOptions,
+}: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialPageSize =
+    searchParams.get("pageSize") ?? pageSizeOptions?.[0]?.toString() ?? "10";
+
+  const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
 
   if (!metadata) return null;
 
@@ -44,6 +62,38 @@ export function DataTablePagination({ metadata }: DataTablePaginationProps) {
         {totalEntries} entries in Total.
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
+        {/* Rows per page selector */}
+        {pageSizeOptions && (
+          <div className="flex items-center space-x-2">
+            <p className="whitespace-nowrap text-sm font-medium">
+              Rows per page
+            </p>
+            <Select
+              value={selectedPageSize}
+              onValueChange={(value) => {
+                setSelectedPageSize(value);
+
+                const params = new URLSearchParams(searchParams);
+                params.set("pageSize", value);
+                params.set("page", "1");
+
+                // This pushes the URL without reloading the page
+                router.push(`${pathname}?${params.toString()}`);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[4.5rem]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {pageSizeOptions.map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="flex items-center justify-center text-sm font-medium">
           Page {currentPage} of {totalPages}
         </div>
