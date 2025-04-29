@@ -108,7 +108,8 @@ class S3:
             extension_to_content_type = {
                 ".html": "text/html",
                 ".csv": "text/csv",
-                ".json": "application/json",
+                ".ocsf.json": "application/json",
+                ".asff.json": "application/json",
             }
             # Keys are regular and/or compliance
             for key, output_list in outputs.items():
@@ -120,6 +121,7 @@ class S3:
 
                         bucket_directory = self.get_object_path(self._output_directory)
                         basename = path.basename(output.file_descriptor.name)
+                        file_extension = output.file_extension
 
                         if key == "compliance":
                             object_name = f"{bucket_directory}/{key}/{basename}"
@@ -133,12 +135,8 @@ class S3:
                         content_type = "text/html"
 
                         # If the file extension is in the extension_to_content_type dictionary, use the content type of the extension
-                        for (
-                            ext,
-                            content_type_extension,
-                        ) in extension_to_content_type.items():
-                            if basename.endswith(ext):
-                                content_type = content_type_extension
+                        if file_extension in extension_to_content_type:
+                            content_type = extension_to_content_type[file_extension]
 
                         # TODO: This will need further optimization if some processes are calling this since the files are written
                         # into the local filesystem because S3 upload file is the recommended way.
