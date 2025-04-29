@@ -36,7 +36,7 @@ COPY prowler/  /home/prowler/prowler/
 COPY dashboard/ /home/prowler/dashboard/
 COPY pyproject.toml /home/prowler
 COPY README.md /home/prowler/
-COPY util/m365/m365_powershell_modules_installation.py /home/prowler/util/m365/m365_powershell_modules_installation.py
+COPY prowler/providers/m365/lib/powershell/m365_powershell.py /home/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py
 
 # Install Python dependencies
 ENV HOME='/home/prowler'
@@ -53,7 +53,7 @@ RUN poetry install --compile && \
     rm -rf ~/.cache/pip
 
 # Install PowerShell modules
-RUN poetry run python util/m365/m365_powershell_modules_installation.py
+RUN poetry run python prowler/providers/m365/lib/powershell/m365_powershell.py
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \

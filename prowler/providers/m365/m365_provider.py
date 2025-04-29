@@ -53,15 +53,15 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
-from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
+from prowler.providers.m365.lib.powershell.m365_powershell import (
+    M365PowerShell,
+    initialize_m365_powershell_modules,
+)
 from prowler.providers.m365.lib.regions.regions import get_regions_config
 from prowler.providers.m365.models import (
     M365Credentials,
     M365IdentityInfo,
     M365RegionConfig,
-)
-from util.m365.m365_powershell_modules_installation import (
-    initialize_m365_powershell_modules,
 )
 
 
