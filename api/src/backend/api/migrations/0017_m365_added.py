@@ -25,4 +25,7 @@ class Migration(migrations.Migration):
                 default="aws",
             ),
         ),
+        migrations.RunSQL(
+            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'm365';",
+        ),
     ]
