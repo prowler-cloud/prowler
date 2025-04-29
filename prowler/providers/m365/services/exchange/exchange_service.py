@@ -35,6 +35,9 @@ class Exchange(M365Service):
                     audit_disabled=organization_configuration.get(
                         "AuditDisabled", False
                     ),
+                    oauth_enabled=organization_configuration.get(
+                        "OAuth2ClientProfileEnabled", True
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -117,6 +120,7 @@ class Organization(BaseModel):
     name: str
     guid: str
     audit_disabled: bool
+    oauth_enabled: bool
 
 
 class MailboxAuditConfig(BaseModel):
