@@ -147,7 +147,7 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
 
-With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider, if you want to scan all the checks from M365 you will need to use the recommended authentication method.
+With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
 
 ### Service Principal and User Credentials authentication (recommended)
 
@@ -163,48 +163,56 @@ export M365_USER="your_email@example.com"
 export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
 ```
 
-These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler will use service principal authentication to log into MS Graph and user credentials to authenticate to Microsoft PowerShell modules.
+These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
-The `M365_USER` should be your Microsoft account email, and `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string you will need to use PowerShell.
+- `M365_USER` should be your Microsoft account email using the default domain. This means it must look like `example@YourCompany.onmicrosoft.com`.
 
-???+ warning
-    Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it may fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
+    To ensure that you are using the default domain you can see how to verify it [here](../tutorials/microsoft365/getting-started-m365.md#step-1-obtain-your-domain).
 
-If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password, this can be done using WSL which is so easy to install on Windows.
+    If you don't have a user created with that domain, Prowler will not work (because the default domain cannot be deleted, guaranteeing availability). To proceed, you can either create a new user with that domain or modify the domain of an existing user.
 
-???+ note
-    You can omit the steps and go to the next note if you are not in the "Windows" problem
+    ![User Domains](../tutorials/microsoft365/img/user-domains.png)
 
-How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
+- `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
 
-```console
-wsl --install -d Ubuntu-22.04
-```
+    ???+ warning
+        Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it may fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
 
-Then open the Ubuntu terminal and run the following commands:
+    If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password, this can be done using WSL which is so easy to install on Windows.
 
-```console
-sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
-wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-sudo dpkg -i packages-microsoft-prod.deb
-sudo apt update
-sudo apt install -y powershell
-pwsh
-```
+    ???+ note
+        You can omit the steps and go to the next note if you are not in the "Windows" use case
 
-With this done you will see now that a prompt running PowerShell is open so here you will be able to generate your encrypted password:
+    How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
 
-???+ note
-    If you are not in the "Windows" problem, you don't have to do the steps above and you can just open PowerShell and generate your password like it's done in the following step.
+    ```console
+    wsl --install -d Ubuntu-22.04
+    ```
 
-```console
-$securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-$encryptedPassword = $securePassword | ConvertFrom-SecureString
-Write-Output $encryptedPassword
-6500780061006d0070006c006500700061007300730077006f0072006400
-```
+    Then, open the Ubuntu terminal and run the following commands:
 
-If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
+    ```console
+    sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
+    wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+    sudo dpkg -i packages-microsoft-prod.deb
+    sudo apt update
+    sudo apt install -y powershell
+    pwsh
+    ```
+
+    With this done you will see now that a prompt running PowerShell is open so here you will be able to generate your encrypted password:
+
+    ???+ note
+        If you are not in the "Windows" use case, you don't have to do the steps above and you can just open PowerShell and generate your password like it's done in the following step.
+
+    ```console
+    $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
+    $encryptedPassword = $securePassword | ConvertFrom-SecureString
+    Write-Output $encryptedPassword
+    6500780061006d0070006c006500700061007300730077006f0072006400
+    ```
+
+    If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
 
 
 
@@ -214,30 +222,35 @@ Authentication flag: `--browser-auth`
 
 This authentication method requires the user to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.
 
-With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider, if you want to scan all the checks from M365 you will need to use the recommended authentication method.
+With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
 
 
 ### Needed permissions
 
-Prowler for M365 requires two types of permissions scopes to be set (if you want to run full provider including PowerShell checks), both needs to be set up using Microsoft Entra ID:
+Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
 
-- Service Principal Application Permissions: all of this are set at **application** level and they are used to retrieve data from the identity that will be assest:
+- **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
     - `Directory.Read.All`: Required for all services.
     - `Policy.Read.All`: Required for all services.
-    - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
     - `Sites.Read.All`: Required for SharePoint service.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 
-- Powershell Modules Permissions: this are set at M365_USER level, so the user used for running prowler must have one of the following roles:
+- **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.
-    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
 
 In order to know how to assign those permissions and roles follow the instructions in the Microsoft Entra ID [permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-api-permissions) and [roles](../tutorials/microsoft365/getting-started-m365.md#assign-required-roles-to-your-user) section.
 
 
 ### Supported PowerShell versions
 
-You will need to have Powershell installed to run some M365 checks, currently we support the PowerShell 7.4 or higher (7.5 is the version recommended), this is as this because PowerShell 5.1 (the one that comes as default in some Windows systems) doesn't support some cmdlets that are needed to run the checks. Also, you can see that the rest of [versions are not having technical](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-support-lifecycle?view=powershell-7.5) support so they could have errors.
+You must have PowerShell installed to run certain M365 checks.
+Currently, we support **PowerShell version 7.4 or higher** (7.5 is recommended).
+
+This requirement exists because **PowerShell 5.1** (the version that comes by default on some Windows systems) does not support several cmdlets needed to run the checks properly.
+Additionally, earlier [PowerShell Cross-Platform versions](https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle?view=powershell-7.5) are no longer under technical support, which may cause unexpected errors.
+
 
 ???+ note
     Installing powershell will be only needed if you install prowler from pip or other sources, these means that the SDK and API containers contain PowerShell installed by default.
@@ -418,14 +431,21 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
 
 ### Needed PowerShell modules
 
-In order to obtain the needed data for this provider we use some PowerShell cmdlets. Those cmdlets come from different modules that need to be installed.
+To obtain the required data for this provider, we use several PowerShell cmdlets.
+These cmdlets come from different modules that must be installed.
 
-The installation of those modules will be done the first time you run Prowler (if you already have them installed there's no problem).
+The installation of these modules will be performed automatically the first time you run Prowler.
+If you already have them installed, there is no problem.
 
 ???+ note
-    The installation done by Prowler will be with -Scope CurrentUser, if after this you see that any service is not working try to install the modules by yourself using -Scope AllUsers (we cannot do that because admin permission is needed). The command needed in case you have to install by yourself is: `Install-Module -Name "ModuleName" -Scope AllUsers -Force`.
+    Prowler installs the modules using `-Scope CurrentUser`.
+    If you encounter any issues with services not working after the automatic installation, try installing the modules manually using `-Scope AllUsers` (administrator permissions are required for this).
+    The command needed to install a module manually is:
+    ```powershell
+    Install-Module -Name "ModuleName" -Scope AllUsers -Force
+    ```
 
-The modules are the following:
+The required modules are:
 
-- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): minimum version 3.6.0, this is needed for several checks across Exchange, Defender and Purview.
-- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): minimum version 6.6.0, this is needed for all the Teams checks.
+- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): Minimum version 3.6.0. Required for several checks across Exchange, Defender, and Purview.
+- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
