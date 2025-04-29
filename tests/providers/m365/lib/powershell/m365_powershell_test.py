@@ -332,6 +332,69 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
+    def test_read_output_queue_empty(self, mock_popen):
+        """Test read_output when both queues are empty"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return empty queues
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = []  # No error output
+
+        # Test with default value
+        result = session.read_output(timeout=0.1, default="empty_queue")
+        assert result == "empty_queue"
+
+        # Test without default value
+        result = session.read_output(timeout=0.1)
+        assert result == ""
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_read_output_error_queue_empty(self, mock_popen):
+        """Test read_output when error queue is empty but stdout has content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return content in stdout but empty stderr
+        mock_process.stdout.readline.side_effect = ["test output\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = []  # No error output
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output()
+            assert result == "test output"
+            mock_error.assert_not_called()
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_read_output_result_queue_empty(self, mock_popen):
+        """Test read_output when result queue is empty but stderr has content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return empty stdout but content in stderr
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = [
+            "Error message\n",
+            f"Write-Error: {session.END}\n",
+        ]
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output(timeout=0.1, default="default")
+            assert result == "default"
+            mock_error.assert_called_once_with("PowerShell error output: Error message")
+
+        session.close()
+
+    @patch("subprocess.Popen")
     def test_json_parse_output(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
