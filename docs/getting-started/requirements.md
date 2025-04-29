@@ -180,39 +180,49 @@ These two new environment variables are **required** to execute the PowerShell m
 
     If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password, this can be done using WSL which is so easy to install on Windows.
 
-    ???+ note
-        You can omit the steps and go to the next note if you are not in the "Windows" use case
+    === "UNIX"
 
-    How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
+        Open a PowerShell cmd with a [supported version](requirements.md#supported-powershell-versions) and then run the following command:
 
-    ```console
-    wsl --install -d Ubuntu-22.04
-    ```
+        ```console
+        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
+        $encryptedPassword = $securePassword | ConvertFrom-SecureString
+        Write-Output $encryptedPassword
+        6500780061006d0070006c006500700061007300730077006f0072006400
+        ```
 
-    Then, open the Ubuntu terminal and run the following commands:
+        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
 
-    ```console
-    sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
-    wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-    sudo dpkg -i packages-microsoft-prod.deb
-    sudo apt update
-    sudo apt install -y powershell
-    pwsh
-    ```
+    === "Windows"
 
-    With this done you will see now that a prompt running PowerShell is open so here you will be able to generate your encrypted password:
 
-    ???+ note
-        If you are not in the "Windows" use case, you don't have to do the steps above and you can just open PowerShell and generate your password like it's done in the following step.
+        How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
 
-    ```console
-    $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-    $encryptedPassword = $securePassword | ConvertFrom-SecureString
-    Write-Output $encryptedPassword
-    6500780061006d0070006c006500700061007300730077006f0072006400
-    ```
+        ```console
+        wsl --install -d Ubuntu-22.04
+        ```
 
-    If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
+        Then, open the Ubuntu terminal and run the following commands:
+
+        ```console
+        sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt update
+        sudo apt install -y powershell
+        pwsh
+        ```
+
+        With this done you will see now that a prompt running PowerShell with the latest version is open so here you will be able to generate your encrypted password:
+
+        ```console
+        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
+        $encryptedPassword = $securePassword | ConvertFrom-SecureString
+        Write-Output $encryptedPassword
+        6500780061006d0070006c006500700061007300730077006f0072006400
+        ```
+
+        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
 
 
 
