@@ -35,6 +35,11 @@ def init_parser(self):
         help="Microsoft 365 Tenant ID to be used with --browser-auth option",
     )
     m365_parser.add_argument(
+        "--init-modules",
+        action="store_true",
+        help="Initialize Microsoft 365 PowerShell modules",
+    )
+    m365_parser.add_argument(
         "--user",
         nargs="?",
         default=None,
