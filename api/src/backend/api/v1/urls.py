@@ -3,7 +3,6 @@ from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
-    LighthouseConfigViewSet,
     ComplianceOverviewViewSet,
     CustomTokenObtainView,
     CustomTokenRefreshView,
@@ -14,6 +13,7 @@ from api.v1.views import (
     IntegrationViewSet,
     InvitationAcceptViewSet,
     InvitationViewSet,
+    LighthouseConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
     ProviderGroupProvidersRelationshipView,
