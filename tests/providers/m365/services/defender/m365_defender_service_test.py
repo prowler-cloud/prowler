@@ -391,5 +391,12 @@ class Test_Defender_Service:
                 )
             )
             report_submission_policy = defender_client.report_submission_policy
-            assert report_submission_policy.id == "DefaultReportSubmissionPolicy"
-            assert report_submission_policy.identity == "DefaultReportSubmissionPolicy"
+            assert report_submission_policy.report_junk_to_customized_address is True
+            assert (
+                report_submission_policy.report_not_junk_to_customized_address is True
+            )
+            assert report_submission_policy.report_phish_to_customized_address is True
+            assert report_submission_policy.report_junk_addresses == []
+            assert report_submission_policy.report_not_junk_addresses == []
+            assert report_submission_policy.report_phish_addresses == []
+            assert report_submission_policy.report_chat_message_enabled is True
