@@ -27,5 +27,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'm365';",
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]
