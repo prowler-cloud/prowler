@@ -60,7 +60,9 @@ from prowler.providers.m365.models import (
     M365IdentityInfo,
     M365RegionConfig,
 )
-from util.m365_powershell_modules_installation import initialize_m365_powershell_modules
+from util.m365.m365_powershell_modules_installation import (
+    initialize_m365_powershell_modules,
+)
 
 
 class M365Provider(Provider):
