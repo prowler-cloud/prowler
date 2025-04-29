@@ -3,6 +3,7 @@ FROM python:3.12.10-slim-bookworm AS build
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
+ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends wget \
