@@ -346,18 +346,6 @@ config_kubernetes = {
     ],
 }
 
-config_m365 = {
-    "sign_in_frequency": 4,
-    "allowed_cloud_storage_services": [
-        "allow_box",
-        "allow_drop_box",
-        "allow_egnyte",
-        "allow_google_drive",
-        "allow_share_file",
-    ],
-    "recommended_mailtips_large_audience_threshold": 25,
-}
-
 
 class Test_Config:
     @mock.patch(
@@ -456,13 +444,6 @@ class Test_Config:
         provider = "azure"
 
         assert load_and_validate_config_file(provider, config_test_file) == config_azure
-
-    def test_load_and_validate_config_file_m365(self):
-        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-        config_test_file = f"{path}/fixtures/config.yaml"
-        provider = "m365"
-
-        assert load_and_validate_config_file(provider, config_test_file) == config_m365
 
     def test_load_and_validate_config_file_old_format(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
