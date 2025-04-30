@@ -1,3 +1,4 @@
+import uuid
 from asyncio import gather, get_event_loop
 from typing import List, Optional
 
@@ -26,7 +27,6 @@ class SharePoint(M365Service):
         settings = None
         try:
             global_settings = await self.client.admin.sharepoint.settings.get()
-
             settings = SharePointSettings(
                 sharingCapability=(
                     str(global_settings.sharing_capability).split(".")[-1]
@@ -38,6 +38,7 @@ class SharePoint(M365Service):
                 sharingDomainRestrictionMode=global_settings.sharing_domain_restriction_mode,
                 legacyAuth=global_settings.is_legacy_auth_protocols_enabled,
                 resharingEnabled=global_settings.is_resharing_by_external_users_enabled,
+                allowedDomainGuidsForSyncApp=global_settings.allowed_domain_guids_for_sync_app,
             )
 
         except ODataError as error:
@@ -60,3 +61,4 @@ class SharePointSettings(BaseModel):
     sharingDomainRestrictionMode: str
     resharingEnabled: bool
     legacyAuth: bool
+    allowedDomainGuidsForSyncApp: List[uuid.UUID]
