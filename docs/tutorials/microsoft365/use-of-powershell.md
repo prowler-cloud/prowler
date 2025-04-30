@@ -8,5 +8,5 @@ To learn more about how to install PowerShell and which versions are supported, 
 
 ## Required Modules
 
-The necessary modules will be installed automatically by Prowler.
-However, if you want to learn more about this process or you are running some issues with this, click [here](../../getting-started/requirements.md#needed-powershell-modules).
+The necessary modules will not be installed automatically by Prowler. Nevertheless, if you want Prowler to install them for you, you can execute the provider with the flag `--init-modules`, which will run the script to install and import them.
+If you want to learn more about this process or you are running some issues with this, click [here](../../getting-started/requirements.md#needed-powershell-modules).

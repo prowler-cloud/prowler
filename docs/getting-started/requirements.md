@@ -130,7 +130,7 @@ Prowler for M365 currently supports the following authentication types:
 
 
 ???+ warning
-    For Prowler App only the Service Principal with an application authentication method is supported.
+    For Prowler App only the Service Principal with User Credentials authentication method is supported.
 
 ### Service Principal authentication
 
@@ -169,16 +169,16 @@ These two new environment variables are **required** to execute the PowerShell m
 
     To ensure that you are using the default domain you can see how to verify it [here](../tutorials/microsoft365/getting-started-m365.md#step-1-obtain-your-domain).
 
-    If you don't have a user created with that domain, Prowler will not work (because the default domain cannot be deleted, guaranteeing availability). To proceed, you can either create a new user with that domain or modify the domain of an existing user.
+    If you don't have a user created with that domain, Prowler will not work as it will not be able to ensure both app an user belong to the same tenant. To proceed, you can either create a new user with that domain or modify the domain of an existing user.
 
     ![User Domains](../tutorials/microsoft365/img/user-domains.png)
 
 - `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
 
     ???+ warning
-        Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it may fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
+        Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it should fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
 
-    If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password, this can be done using WSL which is so easy to install on Windows.
+    If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password. This can be done using WSL which is so easy to install on Windows.
 
     === "UNIX"
 
@@ -233,6 +233,8 @@ Authentication flag: `--browser-auth`
 This authentication method requires the user to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.
 
 With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
+
+Since this is a delegated permission authentication method, necessary permissions should be given to the user, not the app.
 
 
 ### Needed permissions
