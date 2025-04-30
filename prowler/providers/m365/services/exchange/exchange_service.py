@@ -14,6 +14,7 @@ class Exchange(M365Service):
         self.mailboxes_config = []
         self.external_mail_config = []
         self.transport_rules = []
+        self.mailbox_policy = None
 
         if self.powershell:
             self.powershell.connect_exchange_online()
@@ -21,6 +22,7 @@ class Exchange(M365Service):
             self.mailboxes_config = self._get_mailbox_audit_config()
             self.external_mail_config = self._get_external_mail_config()
             self.transport_rules = self._get_transport_rules()
+            self.mailbox_policy = self._get_mailbox_policy()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -112,6 +114,24 @@ class Exchange(M365Service):
             )
         return transport_rules
 
+    def _get_mailbox_policy(self):
+        logger.info("Microsoft365 - Getting mailbox policy configuration...")
+        mailboxes_policy = None
+        try:
+            mailbox_policy = self.powershell.get_mailbox_policy()
+            if mailbox_policy:
+                mailboxes_policy = MailboxPolicy(
+                    id=mailbox_policy.get("Id", ""),
+                    additional_storage_enabled=mailbox_policy.get(
+                        "AdditionalStorageProvidersAvailable", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return mailboxes_policy
+
 
 class Organization(BaseModel):
     name: str
@@ -134,3 +154,8 @@ class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
     sender_domain_is: list[str]
+
+
+class MailboxPolicy(BaseModel):
+    id: str
+    additional_storage_enabled: bool
