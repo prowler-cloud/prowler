@@ -348,7 +348,13 @@ config_kubernetes = {
 
 config_m365 = {
     "sign_in_frequency": 4,
-    "allowed_cloud_storage_services": [],
+    "allowed_cloud_storage_services": [
+        "allow_box",
+        "allow_drop_box",
+        "allow_egnyte",
+        "allow_google_drive",
+        "allow_share_file",
+    ],
     "recommended_mailtips_large_audience_threshold": 25,
 }
 
