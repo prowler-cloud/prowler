@@ -193,7 +193,7 @@ class PowerShellSession:
 
         try:
             result = result_queue.get(timeout=timeout) or default
-            error_result = error_queue.get(timeout=1)
+            error_result = error_queue.get(timeout=1) or None
         except queue.Empty:
             result = default
 
