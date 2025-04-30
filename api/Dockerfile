@@ -47,7 +47,7 @@ RUN poetry install --no-root && \
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
-RUN poetry run python "$(poetry env info --path)/src/prowler/util/m365/m365_powershell_modules_installation.py"
+RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
 
 WORKDIR /home/prowler/backend
 
