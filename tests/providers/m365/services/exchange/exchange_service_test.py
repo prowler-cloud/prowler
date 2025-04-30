@@ -6,6 +6,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     Exchange,
     ExternalMailConfig,
     MailboxAuditConfig,
+    MailboxPolicy,
     Organization,
     TransportConfig,
     TransportRule,
@@ -55,6 +56,13 @@ def mock_exchange_get_transport_rules(_):
 def mock_exchange_get_transport_config(_):
     return TransportConfig(
         smtp_auth_disabled=True,
+    )
+
+
+def mock_exchange_get_mailbox_policy(_):
+    return MailboxPolicy(
+        id="test",
+        additional_storage_enabled=True,
     )
 
 
@@ -169,6 +177,26 @@ class Test_Exchange_Service:
             assert transport_rules[1].scl == 0
             assert transport_rules[1].sender_domain_is == ["example.com"]
 
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_policy",
+        new=mock_exchange_get_mailbox_policy,
+    )
+    def test_get_mailbox_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy.id == "test"
+            assert mailbox_policy.additional_storage_enabled is True
             exchange_client.powershell.close()
 
     @patch(

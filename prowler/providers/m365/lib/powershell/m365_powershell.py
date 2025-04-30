@@ -483,3 +483,21 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
+    def get_mailbox_policy(self) -> dict:
+        """
+        Get Mailbox Policy.
+
+        Retrieves the current mailbox policy settings for Exchange Online.
+
+        Returns:
+            dict: Mailbox policy settings in JSON format.
+
+        Example:
+            >>> get_mailbox_policy()
+            {
+                "Id": "OwaMailboxPolicy-Default",
+                "AdditionalStorageProvidersAvailable": True
+            }
+        """
+        return self.execute("Get-OwaMailboxPolicy | ConvertTo-Json", json_parse=True)
