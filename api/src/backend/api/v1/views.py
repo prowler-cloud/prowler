@@ -2897,7 +2897,7 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 class LighthouseConfigViewSet(BaseRLSViewSet):
     """
-    API endpoint for managing OpenAI API configuration.
+    API endpoint for managing Lighthouse configuration.
     """
 
     filterset_fields = {
@@ -2950,7 +2950,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
             )
 
     def create(self, request, *args, **kwargs):
-        """Create new AI configuration"""
+        """Create new Lighthouse configuration"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -2964,22 +2964,10 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
             headers=headers,
         )
 
-    def update(self, request, *args, **kwargs):
-        """Update existing AI configuration"""
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(
-            LighthouseConfigSerializer(
-                instance, context=self.get_serializer_context()
-            ).data
-        )
-
     @action(detail=True, methods=["get"], url_path="show_key")
     def show_key(self, request, pk=None):
         """
-        Return the decrypted API key for the specified AI configuration.
+        Return the decrypted API key for the specified Lighthouse configuration.
         """
         instance = self.get_object()
 
@@ -3010,12 +2998,3 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-    def destroy(self, request, *args, **kwargs):
-        """Delete AI configuration"""
-        instance = self.get_object()
-
-        # Perform deletion
-        self.perform_destroy(instance)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
