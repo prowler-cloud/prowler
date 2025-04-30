@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 from prowler.providers.m365.models import M365IdentityInfo
@@ -6,6 +7,8 @@ from prowler.providers.m365.services.sharepoint.sharepoint_service import (
     SharePointSettings,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
+
+uuid_value = uuid.uuid4()
 
 
 async def mock_sharepoint_get_settings(_):
@@ -16,6 +19,7 @@ async def mock_sharepoint_get_settings(_):
         sharingDomainRestrictionMode="allowList",
         resharingEnabled=False,
         legacyAuth=True,
+        allowedDomainGuidsForSyncApp=[uuid_value],
     )
 
 
@@ -39,3 +43,5 @@ class Test_SharePoint_Service:
         assert settings.sharingDomainRestrictionMode == "allowList"
         assert settings.resharingEnabled is False
         assert settings.legacyAuth is True
+        assert settings.allowedDomainGuidsForSyncApp == [uuid_value]
+        assert len(settings.allowedDomainGuidsForSyncApp) == 1
