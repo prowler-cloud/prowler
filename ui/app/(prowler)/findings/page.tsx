@@ -152,7 +152,6 @@ const SSRDataTable = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
-  const pageSizeOptions = [10, 20, 30, 50, 100];
 
   // Make sure the sort is correctly encoded
   const encodedSort = sort.replace(/^\+/, "");
@@ -229,7 +228,6 @@ const SSRDataTable = async ({
         columns={ColumnFindings}
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}
-        pageSizeOptions={pageSizeOptions}
       />
     </>
   );

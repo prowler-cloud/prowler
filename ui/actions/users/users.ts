@@ -15,6 +15,7 @@ export const getUsers = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -23,6 +24,7 @@ export const getUsers = async ({
   const url = new URL(`${apiBaseUrl}/users?include=roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
