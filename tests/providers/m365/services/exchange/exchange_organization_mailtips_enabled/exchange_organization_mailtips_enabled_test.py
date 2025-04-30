@@ -56,6 +56,10 @@ class Test_exchange_organization_mailtips_enabled:
                 Organization,
             )
 
+            exchange_client.audit_config = {
+                "recommended_mailtips_large_audience_threshold": 25
+            }
+
             exchange_client.organization_config = Organization(
                 name="test-org",
                 guid="org-guid",
@@ -103,6 +107,10 @@ class Test_exchange_organization_mailtips_enabled:
             from prowler.providers.m365.services.exchange.exchange_service import (
                 Organization,
             )
+
+            exchange_client.audit_config = {
+                "recommended_mailtips_large_audience_threshold": 25
+            }
 
             exchange_client.organization_config = Organization(
                 name="test-org",
