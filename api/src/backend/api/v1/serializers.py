@@ -7,6 +7,7 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
@@ -2181,16 +2182,13 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "business_context",
             "is_active",
         ]
-
-    def validate(self, attrs):
-        tenant_id = self.context.get("request").tenant_id
-        if LighthouseConfig.objects.filter(tenant_id=tenant_id).exists():
-            raise serializers.ValidationError(
-                {
-                    "tenant_id": "AI configuration already exists for this tenant. Use PUT to update."
-                }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=LighthouseConfig.objects.all(),
+                fields=["name"],
+                message="Lighthouse configuration already exists for this tenant.",
             )
-        return super().validate(attrs)
+        ]
 
     def create(self, validated_data):
         api_key = validated_data.pop("api_key")
