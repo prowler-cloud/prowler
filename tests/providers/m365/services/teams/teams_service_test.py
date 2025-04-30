@@ -25,7 +25,17 @@ def mock_get_teams_client_configuration(_):
 
 
 def mock_get_global_meeting_policy(_):
-    return GlobalMeetingPolicy(allow_anonymous_users_to_join_meeting=False)
+    return GlobalMeetingPolicy(
+        allow_anonymous_users_to_join_meeting=False,
+        allow_anonymous_users_to_start_meeting=False,
+        allow_external_participant_give_request_control=False,
+        allow_external_non_trusted_meeting_chat=False,
+        allow_cloud_recording=False,
+        designated_presenter_role_mode="EveryoneUserOverride",
+        allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
+        allow_pstn_users_to_bypass_lobby=False,
+        meeting_chat_enabled_type="EnabledExceptAnonymous",
+    )
 
 
 def mock_get_user_settings(_):
@@ -117,6 +127,14 @@ class Test_Teams_Service:
                 )
             )
             assert teams_client.global_meeting_policy == GlobalMeetingPolicy(
-                allow_anonymous_users_to_join_meeting=False
+                allow_anonymous_users_to_join_meeting=False,
+                allow_anonymous_users_to_start_meeting=False,
+                allow_external_participant_give_request_control=False,
+                allow_external_non_trusted_meeting_chat=False,
+                allow_cloud_recording=False,
+                designated_presenter_role_mode="EveryoneUserOverride",
+                allow_external_users_to_bypass_lobby="EveryoneInCompanyExcludingGuests",
+                allow_pstn_users_to_bypass_lobby=False,
+                meeting_chat_enabled_type="EnabledExceptAnonymous",
             )
             teams_client.powershell.close()

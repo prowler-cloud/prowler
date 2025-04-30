@@ -134,6 +134,8 @@ Prowler for M365 currently supports the following authentication types:
 
 ### Service Principal authentication
 
+Authentication flag: `--sp-env-auth`
+
 To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
 
 ```console
@@ -146,6 +148,9 @@ If you try to execute Prowler with the `--sp-env-auth` flag and those variables 
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
 
 ### Service Principal and User Credentials authentication (recommended)
+
+Authentication flag: `--env-auth`
+
 This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_ENCRYPTED_PASSWORD`.
 
 ```console
@@ -176,4 +181,6 @@ Write-Output $encryptedPassword
 
 ### Interactive Browser authentication
 
-To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.
+Authentication flag: `--browser-auth`
+
+This authentication method requires the user to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.

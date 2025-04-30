@@ -13,5 +13,7 @@ class M365Service:
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
-        if provider.credentials:
-            self.powershell = M365PowerShell(provider.credentials)
+        # Initialize PowerShell client only if credentials are available
+        self.powershell = (
+            M365PowerShell(provider.credentials) if provider.credentials else None
+        )

@@ -1,11 +1,11 @@
 import React from "react";
 
 import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
-import { getProviderLogo } from "../ui/entities";
+import { getProviderLogo, ProviderType } from "../ui/entities";
 
 interface ProviderInfoProps {
   connected: boolean | null;
-  provider: "aws" | "azure" | "gcp" | "kubernetes";
+  provider: ProviderType;
   providerAlias: string;
   providerUID?: string;
 }
