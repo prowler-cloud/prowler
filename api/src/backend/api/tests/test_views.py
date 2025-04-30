@@ -5503,7 +5503,7 @@ class TestLighthouseConfigViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (
-            "AI configuration already exists for this tenant"
+            "Lighthouse configuration already exists for this tenant"
             in response.json()["errors"][0]["detail"]
         )
 
