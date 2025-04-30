@@ -2166,7 +2166,7 @@ class LighthouseConfigSerializer(RLSSerializer):
 
 
 class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
-    """Serializer for creating new AI configurations."""
+    """Serializer for creating new Lighthouse configurations."""
 
     api_key = serializers.CharField(write_only=True, required=True)
 
@@ -2187,7 +2187,7 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
         if LighthouseConfig.objects.filter(tenant_id=tenant_id).exists():
             raise serializers.ValidationError(
                 {
-                    "tenant_id": "AI configuration already exists for this tenant. Use PUT to update."
+                    "tenant_id": "Lighthouse configuration already exists for this tenant."
                 }
             )
         return super().validate(attrs)
