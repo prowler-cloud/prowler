@@ -191,8 +191,11 @@ class PowerShellSession:
         error_thread.daemon = True
         error_thread.start()
 
-        result = result_queue.get(timeout=timeout) or default
-        error_result = error_queue.get(timeout=1)
+        try:
+            result = result_queue.get(timeout=timeout) or default
+            error_result = error_queue.get(timeout=1) or None
+        except queue.Empty:
+            result = default
 
         if error_result:
             logger.error(f"PowerShell error output: {error_result}")
