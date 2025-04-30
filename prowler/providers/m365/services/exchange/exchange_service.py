@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ class Exchange(M365Service):
         self.external_mail_config = []
         self.transport_rules = []
         self.mailbox_policy = None
+        self.mailbox_audit_properties = []
 
         if self.powershell:
             self.powershell.connect_exchange_online()
@@ -23,6 +25,7 @@ class Exchange(M365Service):
             self.external_mail_config = self._get_external_mail_config()
             self.transport_rules = self._get_transport_rules()
             self.mailbox_policy = self._get_mailbox_policy()
+            self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -132,6 +135,44 @@ class Exchange(M365Service):
             )
         return mailboxes_policy
 
+    def _get_mailbox_audit_properties(self):
+        logger.info("Microsoft365 - Getting mailbox audit properties...")
+        mailbox_audit_properties = []
+        try:
+            mailbox_audit_properties_info = (
+                self.powershell.get_mailbox_audit_properties()
+            )
+            if not mailbox_audit_properties_info:
+                return mailbox_audit_properties
+            if isinstance(mailbox_audit_properties_info, dict):
+                mailbox_audit_properties_info = [mailbox_audit_properties_info]
+            for mailbox_audit_property in mailbox_audit_properties_info:
+                if mailbox_audit_property:
+                    mailbox_audit_properties.append(
+                        MailboxAuditProperties(
+                            name=mailbox_audit_property.get("UserPrincipalName", ""),
+                            audit_enabled=mailbox_audit_property.get(
+                                "AuditEnabled", False
+                            ),
+                            audit_admin=mailbox_audit_property.get("AuditAdmin", []),
+                            audit_delegate=mailbox_audit_property.get(
+                                "AuditDelegate", []
+                            ),
+                            audit_owner=mailbox_audit_property.get("AuditOwner", []),
+                            audit_log_age=int(
+                                mailbox_audit_property.get(
+                                    "AuditLogAgeLimit", "90.00:00:00"
+                                ).split(".")[0]
+                            ),
+                            identity=mailbox_audit_property.get("Identity", ""),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return mailbox_audit_properties
+
 
 class Organization(BaseModel):
     name: str
@@ -159,3 +200,59 @@ class TransportRule(BaseModel):
 class MailboxPolicy(BaseModel):
     id: str
     additional_storage_enabled: bool
+
+
+class MailboxAuditProperties(BaseModel):
+    name: str
+    audit_enabled: bool
+    audit_admin: list[str]
+    audit_delegate: list[str]
+    audit_owner: list[str]
+    audit_log_age: int
+    identity: str
+
+
+class AuditAdmin(Enum):
+    APPLY_RECORD = "ApplyRecord"
+    COPY = "Copy"
+    CREATE = "Create"
+    FOLDER_BIND = "FolderBind"
+    HARD_DELETE = "HardDelete"
+    MOVE = "Move"
+    MOVE_TO_DELETED_ITEMS = "MoveToDeletedItems"
+    SEND_AS = "SendAs"
+    SEND_ON_BEHALF = "SendOnBehalf"
+    SOFT_DELETE = "SoftDelete"
+    UPDATE = "Update"
+    UPDATE_CALENDAR_DELEGATION = "UpdateCalendarDelegation"
+    UPDATE_FOLDER_PERMISSIONS = "UpdateFolderPermissions"
+    UPDATE_INBOX_RULES = "UpdateInboxRules"
+
+
+class AuditDelegate(Enum):
+    APPLY_RECORD = "ApplyRecord"
+    CREATE = "Create"
+    FOLDER_BIND = "FolderBind"
+    HARD_DELETE = "HardDelete"
+    MOVE = "Move"
+    MOVE_TO_DELETED_ITEMS = "MoveToDeletedItems"
+    SEND_AS = "SendAs"
+    SEND_ON_BEHALF = "SendOnBehalf"
+    SOFT_DELETE = "SoftDelete"
+    UPDATE = "Update"
+    UPDATE_FOLDER_PERMISSIONS = "UpdateFolderPermissions"
+    UPDATE_INBOX_RULES = "UpdateInboxRules"
+
+
+class AuditOwner(Enum):
+    APPLY_RECORD = "ApplyRecord"
+    CREATE = "Create"
+    HARD_DELETE = "HardDelete"
+    MAILBOX_LOGIN = "MailboxLogin"
+    MOVE = "Move"
+    MOVE_TO_DELETED_ITEMS = "MoveToDeletedItems"
+    SOFT_DELETE = "SoftDelete"
+    UPDATE = "Update"
+    UPDATE_CALENDAR_DELEGATION = "UpdateCalendarDelegation"
+    UPDATE_FOLDER_PERMISSIONS = "UpdateFolderPermissions"
+    UPDATE_INBOX_RULES = "UpdateInboxRules"
