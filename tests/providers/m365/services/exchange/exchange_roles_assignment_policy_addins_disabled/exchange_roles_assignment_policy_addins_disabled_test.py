@@ -119,7 +119,7 @@ class Test_exchange_roles_assignment_policy_addins_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Role assignment policy 'Policy2' allows Outlook add-ins via roles: MyCustomApps."
+                == "Role assignment policy 'Policy2' allows Outlook add-ins via roles: My Custom Apps."
             )
             assert result[0].resource_name == "Policy2"
             assert result[0].resource_id == "id-policy2"
