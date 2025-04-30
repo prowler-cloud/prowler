@@ -13,9 +13,7 @@ from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
 )
-from cryptography.fernet import Fernet
 from dj_rest_auth.registration.views import SocialLoginView
-from django.conf import settings
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -2884,7 +2882,10 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             return Response(
-                {"api_key": decrypted_key},
+                data={
+                    "type": "lighthouse-config",
+                    "attributes": {"api_key": decrypted_key},
+                },
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
