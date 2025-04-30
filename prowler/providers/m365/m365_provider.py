@@ -53,7 +53,10 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
-from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
+from prowler.providers.m365.lib.powershell.m365_powershell import (
+    M365PowerShell,
+    initialize_m365_powershell_modules,
+)
 from prowler.providers.m365.lib.regions.regions import get_regions_config
 from prowler.providers.m365.models import (
     M365Credentials,
@@ -115,6 +118,7 @@ class M365Provider(Provider):
         client_secret: str = None,
         user: str = None,
         encrypted_password: str = None,
+        init_modules: bool = False,
         region: str = "M365Global",
         config_content: dict = None,
         config_path: str = None,
@@ -202,6 +206,7 @@ class M365Provider(Provider):
             env_auth=env_auth,
             m365_credentials=m365_credentials,
             provider_id=self.identity.tenant_domain,
+            init_modules=init_modules,
         )
 
         # Audit Config
@@ -373,7 +378,10 @@ class M365Provider(Provider):
 
     @staticmethod
     def setup_powershell(
-        env_auth: bool = False, m365_credentials: dict = {}, provider_id: str = None
+        env_auth: bool = False,
+        m365_credentials: dict = {},
+        provider_id: str = None,
+        init_modules: bool = False,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
@@ -423,6 +431,8 @@ class M365Provider(Provider):
             test_session = M365PowerShell(credentials)
             try:
                 if test_session.test_credentials(credentials):
+                    if init_modules:
+                        initialize_m365_powershell_modules()
                     return credentials
                 raise M365EnvironmentUserCredentialsError(
                     file=os.path.basename(__file__),
