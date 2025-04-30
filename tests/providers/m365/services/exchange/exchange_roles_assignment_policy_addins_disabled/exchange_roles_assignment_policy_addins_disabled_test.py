@@ -62,7 +62,7 @@ class Test_exchange_roles_assignment_policy_addins_disabled:
                 RoleAssignmentPolicy(
                     name="Policy1",
                     id="id-policy1",
-                    assigned_roles=["MyBaseOptions", "MyVoiceMail"],
+                    assigned_roles=["My Base Options", "My Voice Mail"],
                 )
             ]
 
@@ -108,7 +108,7 @@ class Test_exchange_roles_assignment_policy_addins_disabled:
                 RoleAssignmentPolicy(
                     name="Policy2",
                     id="id-policy2",
-                    assigned_roles=["MyCustomApps", "MyVoiceMail"],
+                    assigned_roles=["My Custom Apps", "My Voice Mail"],
                 )
             ]
 
