@@ -5485,16 +5485,8 @@ class TestLighthouseConfigViewSet:
             assert any(field in error["source"]["pointer"] for error in errors)
 
     def test_lighthouse_config_create_duplicate(
-        self, authenticated_client, valid_config_payload
+        self, authenticated_client, valid_config_payload, lighthouse_config_fixture
     ):
-        # Create first config
-        response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
-            data=valid_config_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert response.status_code == status.HTTP_201_CREATED
-
         # Try to create second config for same tenant
         response = authenticated_client.post(
             reverse("lighthouseconfig-list"),
@@ -5503,7 +5495,7 @@ class TestLighthouseConfigViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (
-            "AI configuration already exists for this tenant"
+            "Lighthouse configuration already exists for this tenant"
             in response.json()["errors"][0]["detail"]
         )
 
