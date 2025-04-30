@@ -14,6 +14,7 @@ class Exchange(M365Service):
         self.mailboxes_config = []
         self.external_mail_config = []
         self.transport_rules = []
+        self.transport_config = None
 
         if self.powershell:
             self.powershell.connect_exchange_online()
@@ -21,6 +22,7 @@ class Exchange(M365Service):
             self.mailboxes_config = self._get_mailbox_audit_config()
             self.external_mail_config = self._get_external_mail_config()
             self.transport_rules = self._get_transport_rules()
+            self.transport_config = self._get_transport_config()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -112,6 +114,23 @@ class Exchange(M365Service):
             )
         return transport_rules
 
+    def _get_transport_config(self):
+        logger.info("Microsoft365 - Getting transport configuration...")
+        transport_config = []
+        try:
+            transport_configuration = self.powershell.get_transport_config()
+            if transport_configuration:
+                transport_config = TransportConfig(
+                    smtp_auth_disabled=transport_configuration.get(
+                        "SmtpClientAuthenticationDisabled", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return transport_config
+
 
 class Organization(BaseModel):
     name: str
@@ -134,3 +153,7 @@ class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
     sender_domain_is: list[str]
+
+
+class TransportConfig(BaseModel):
+    smtp_auth_disabled: bool

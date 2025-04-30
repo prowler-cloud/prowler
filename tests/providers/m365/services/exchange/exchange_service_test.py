@@ -7,6 +7,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     ExternalMailConfig,
     MailboxAuditConfig,
     Organization,
+    TransportConfig,
     TransportRule,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -49,6 +50,12 @@ def mock_exchange_get_transport_rules(_):
             sender_domain_is=["example.com"],
         ),
     ]
+
+
+def mock_exchange_get_transport_config(_):
+    return TransportConfig(
+        smtp_auth_disabled=True,
+    )
 
 
 class Test_Exchange_Service:
@@ -161,5 +168,25 @@ class Test_Exchange_Service:
             assert transport_rules[1].name == "test2"
             assert transport_rules[1].scl == 0
             assert transport_rules[1].sender_domain_is == ["example.com"]
+
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_transport_config",
+        new=mock_exchange_get_transport_config,
+    )
+    def test_get_transport_config(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            transport_config = exchange_client.transport_config
+            assert transport_config.smtp_auth_disabled is True
 
             exchange_client.powershell.close()
