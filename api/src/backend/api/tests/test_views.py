@@ -5681,7 +5681,7 @@ class TestLighthouseConfigViewSet:
             reverse("lighthouseconfig-show-key", kwargs={"pk": config_id})
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["data"]["api_key"] == expected_api_key
+        assert response.json()["data"]["attributes"]["api_key"] == expected_api_key
 
     def test_lighthouse_config_filters(
         self, authenticated_client, lighthouse_config_fixture

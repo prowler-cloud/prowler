@@ -41,7 +41,7 @@ export const getAIKey = async (): Promise<string> => {
   });
 
   const data = await response.json();
-  return data.data.api_key;
+  return data.data.attributes.api_key;
 };
 
 export const createLighthouseConfig = async (config: {
