@@ -89,6 +89,7 @@ coverage = "7.6.12"
 docker = "7.1.0"
 flake8 = "7.1.2"
 freezegun = "1.5.1"
+marshmallow = ">=3.15.0,<4.0.0"
 mock = "5.2.0"
 moto = {extras = ["all"], version = "5.0.28"}
 openapi-schema-validator = "0.6.3"

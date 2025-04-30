@@ -191,9 +191,10 @@ class PowerShellSession:
         error_thread.daemon = True
         error_thread.start()
 
+        error_result = None
         try:
             result = result_queue.get(timeout=timeout) or default
-            error_result = error_queue.get(timeout=1) or None
+            error_result = error_queue.get(timeout=1)
         except queue.Empty:
             result = default
 

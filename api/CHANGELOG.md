@@ -3,6 +3,14 @@
 All notable changes to the **Prowler API** are documented in this file.
 
 
+## [v1.7.0] (UNRELEASED)
+
+### Added
+
+- Added M365 as a new provider [(#7563)](https://github.com/prowler-cloud/prowler/pull/7563).
+
+---
+
 ## [v1.6.0] (Prowler v5.5.0)
 
 ### Added
