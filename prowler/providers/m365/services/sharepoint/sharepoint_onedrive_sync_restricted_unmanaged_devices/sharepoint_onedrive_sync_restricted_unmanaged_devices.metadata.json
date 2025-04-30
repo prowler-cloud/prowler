@@ -13,7 +13,7 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
   "Remediation": {
     "Code": {
-      "CLI": "Set-SPOTenantSyncClientRestriction -Enable -DomainGuids '786548DD-877B-4760-A749-6B1EFBC1190A; 877564FF-877B-4760-A749-6B1EFBC1190A'",
+      "CLI": "Set-SPOTenantSyncClientRestriction -Enable -DomainGuids '<domain_guid_1>; <domain_guid_2>; ...'",
       "NativeIaC": "",
       "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint 2. Click Settings then select OneDrive - Sync. 3. Check the Allow syncing only on computers joined to specific domains. 4. Use the Get-ADDomain PowerShell command on the on-premises server to obtain the GUID for each on-premises domain. 5. Click Save.",
       "Terraform": ""
