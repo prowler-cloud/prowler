@@ -193,13 +193,9 @@ class PowerShellSession:
 
         try:
             result = result_queue.get(timeout=timeout) or default
-        except queue.Empty:
-            result = default
-
-        try:
             error_result = error_queue.get(timeout=1)
         except queue.Empty:
-            error_result = ""
+            result = default
 
         if error_result:
             logger.error(f"PowerShell error output: {error_result}")

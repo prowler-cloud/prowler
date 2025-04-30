@@ -540,7 +540,10 @@ def initialize_m365_powershell_modules():
 
 
 def main():
-    initialize_m365_powershell_modules()
+    if initialize_m365_powershell_modules():
+        logger.info("M365 PowerShell modules initialized successfully")
+    else:
+        logger.error("Failed to initialize M365 PowerShell modules")
 
 
 if __name__ == "__main__":
