@@ -27,7 +27,8 @@ dependencies = [
   "psycopg2-binary==2.9.9",
   "pytest-celery[redis] (>=1.0.1,<2.0.0)",
   "sentry-sdk[django] (>=2.20.0,<3.0.0)",
-  "uuid6==2024.7.10"
+  "uuid6==2024.7.10",
+  "openai (>=1.72.0,<2.0.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
