@@ -39,18 +39,6 @@ def init_parser(self):
         action="store_true",
         help="Initialize Microsoft 365 PowerShell modules",
     )
-    m365_parser.add_argument(
-        "--user",
-        nargs="?",
-        default=None,
-        help="Microsoft 365 user email",
-    )
-    m365_parser.add_argument(
-        "--encypted-password",
-        nargs="?",
-        default=None,
-        help="Microsoft 365 encrypted password",
-    )
     # Regions
     m365_regions_subparser = m365_parser.add_argument_group("Regions")
     m365_regions_subparser.add_argument(
