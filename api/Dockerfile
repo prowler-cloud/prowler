@@ -37,7 +37,7 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
-COPY src/backend/  ./backend/
+COPY src/backend/ ./backend/
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
