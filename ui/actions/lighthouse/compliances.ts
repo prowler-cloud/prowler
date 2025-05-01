@@ -5,14 +5,14 @@ export const getLighthouseCompliancesOverview = async ({
   fields,
   filters,
   page,
-  page_size,
+  pageSize,
   sort,
 }: {
   scanId: string;
   fields?: string[];
   filters?: Record<string, string | number | boolean | undefined>;
   page?: number;
-  page_size?: number;
+  pageSize?: number;
   sort?: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -39,8 +39,8 @@ export const getLighthouseCompliancesOverview = async ({
   if (page) {
     url.searchParams.append("page[number]", page.toString());
   }
-  if (page_size) {
-    url.searchParams.append("page[size]", page_size.toString());
+  if (pageSize) {
+    url.searchParams.append("page[size]", pageSize.toString());
   }
 
   // Handle sorting
