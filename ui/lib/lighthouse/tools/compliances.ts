@@ -12,13 +12,13 @@ import {
 } from "@/types/lighthouse";
 
 export const getCompliancesOverviewTool = tool(
-  async ({ scanId, fields, filters, page, page_size, sort }) => {
+  async ({ scanId, fields, filters, page, pageSize, sort }) => {
     return await getLighthouseCompliancesOverview({
       scanId,
       fields,
       filters,
       page,
-      page_size,
+      pageSize,
       sort,
     });
   },
@@ -31,8 +31,8 @@ export const getCompliancesOverviewTool = tool(
 );
 
 export const getComplianceFrameworksTool = tool(
-  async ({ provider }) => {
-    return await getLighthouseComplianceFrameworks(provider);
+  async ({ providerType }) => {
+    return await getLighthouseComplianceFrameworks(providerType);
   },
   {
     name: "getComplianceFrameworks",

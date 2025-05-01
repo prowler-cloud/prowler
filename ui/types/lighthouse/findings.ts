@@ -2,24 +2,6 @@ import { z } from "zod";
 
 // Get Findings Schema
 
-// const findingFieldsEnum = z.enum([
-//   "",
-//   "uid",
-//   "delta",
-//   "status",
-//   "status_extended",
-//   "severity",
-//   "check_id",
-//   "check_metadata",
-//   "raw_result",
-//   "inserted_at",
-//   "updated_at",
-//   "first_seen_at",
-//   "url",
-//   "scan",
-//   "resources",
-// ]);
-
 const deltaEnum = z.enum(["", "new", "changed"]);
 
 const impactEnum = z.enum([

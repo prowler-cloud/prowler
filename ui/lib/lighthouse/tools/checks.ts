@@ -4,8 +4,8 @@ import { getLighthouseProviderChecks } from "@/lib/lighthouse/helpers/checks";
 import { checkSchema } from "@/types/lighthouse";
 
 export const getProviderChecksTool = tool(
-  async ({ provider_type }) => {
-    const checks = await getLighthouseProviderChecks(provider_type);
+  async ({ providerType }) => {
+    const checks = await getLighthouseProviderChecks(providerType);
     return checks;
   },
   {

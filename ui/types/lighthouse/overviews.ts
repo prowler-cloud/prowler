@@ -18,24 +18,6 @@ export const getProvidersOverviewSchema = z.object({
 
 // Get Findings By Status
 
-// const findingsOverviewFieldsEnum = z.enum([
-//   "",
-//   "id",
-//   "new",
-//   "changed",
-//   "unchanged",
-//   "fail_new",
-//   "fail_changed",
-//   "pass_new",
-//   "pass_changed",
-//   "muted_new",
-//   "muted_changed",
-//   "total",
-//   "fail",
-//   "muted",
-//   "pass",
-// ]);
-
 const providerTypeEnum = z.enum(["", "aws", "azure", "gcp", "kubernetes"]);
 
 const sortFieldsEnum = z.enum([

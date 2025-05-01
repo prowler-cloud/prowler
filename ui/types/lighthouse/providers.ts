@@ -2,19 +2,6 @@ import { z } from "zod";
 
 // Get Providers Schema
 
-// const providerFieldsEnum = z.enum([
-//   "",
-//   "inserted_at",
-//   "updated_at",
-//   "provider",
-//   "uid",
-//   "alias",
-//   "connection",
-//   "secret",
-//   "provider_groups",
-//   "url",
-// ]);
-
 const providerEnum = z.enum(["", "aws", "azure", "gcp", "kubernetes"]);
 
 const sortFieldsEnum = z.enum([

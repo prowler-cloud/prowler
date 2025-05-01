@@ -81,15 +81,15 @@ export const getCompliancesOverviewSchema = z.object({
       "The filters to get the compliances overview for. If not provided, all regions will be returned by default.",
     ),
   page: z.number().optional().describe("Page number. Default is 1."),
-  page_size: z.number().optional().describe("Page size. Default is 10."),
+  pageSize: z.number().optional().describe("Page size. Default is 10."),
   sort: getCompliancesOverviewSort
     .optional()
     .describe("Sort by field. Default is inserted_at."),
 });
 
 export const getComplianceFrameworksSchema = z.object({
-  provider: z
-    .enum(["aws", "azure", "gcp", "kubernetes"])
+  providerType: z
+    .enum(["aws", "azure", "gcp", "kubernetes", "m365"])
     .describe("The provider type to get the compliance frameworks for."),
 });
 
