@@ -2,6 +2,7 @@ import os
 
 import msal
 
+from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365UserNotBelongingToTenantError,
@@ -26,6 +27,7 @@ class M365PowerShell(PowerShellSession):
 
     Attributes:
         credentials (M365Credentials): The Microsoft 365 credentials used for authentication.
+        required_modules (list): List of required PowerShell modules for M365 operations.
 
     Note:
         This class requires the Microsoft Teams and Exchange Online PowerShell modules
@@ -371,6 +373,24 @@ class M365PowerShell(PowerShellSession):
             "Get-MailboxAuditBypassAssociation | ConvertTo-Json", json_parse=True
         )
 
+    def get_mailbox_policy(self) -> dict:
+        """
+        Get Mailbox Policy.
+
+        Retrieves the current mailbox policy settings for Exchange Online.
+
+        Returns:
+            dict: Mailbox policy settings in JSON format.
+
+        Example:
+            >>> get_mailbox_policy()
+            {
+                "Id": "OwaMailboxPolicy-Default",
+                "AdditionalStorageProvidersAvailable": True
+            }
+        """
+        return self.execute("Get-OwaMailboxPolicy | ConvertTo-Json", json_parse=True)
+
     def get_external_mail_config(self) -> dict:
         """
         Get Exchange Online External Mail Configuration.
@@ -484,20 +504,64 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
 
-    def get_mailbox_policy(self) -> dict:
-        """
-        Get Mailbox Policy.
 
-        Retrieves the current mailbox policy settings for Exchange Online.
+# This function is used to install the required M365 PowerShell modules in Docker containers
+def initialize_m365_powershell_modules():
+    """
+    Initialize required PowerShell modules.
 
-        Returns:
-            dict: Mailbox policy settings in JSON format.
+    Checks if the required PowerShell modules are installed and installs them if necessary.
+    This method ensures that all required modules for M365 operations are available.
 
-        Example:
-            >>> get_mailbox_policy()
-            {
-                "Id": "OwaMailboxPolicy-Default",
-                "AdditionalStorageProvidersAvailable": True
-            }
-        """
-        return self.execute("Get-OwaMailboxPolicy | ConvertTo-Json", json_parse=True)
+    Returns:
+        bool: True if all modules were successfully initialized, False otherwise
+    """
+
+    REQUIRED_MODULES = [
+        "ExchangeOnlineManagement",
+        "MicrosoftTeams",
+    ]
+
+    pwsh = PowerShellSession()
+    try:
+        for module in REQUIRED_MODULES:
+            try:
+                # Check if module is already installed
+                result = pwsh.execute(
+                    f"Get-Module -ListAvailable -Name {module}", timeout=5
+                )
+
+                # Install module if not installed
+                if not result:
+                    install_result = pwsh.execute(
+                        f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        timeout=30,
+                    )
+                    if install_result:
+                        logger.warning(
+                            f"Unexpected output while installing module {module}: {install_result}"
+                        )
+                    else:
+                        logger.info(f"Successfully installed module {module}")
+
+                    # Import module
+                    pwsh.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
+
+            except Exception as error:
+                logger.error(f"Failed to initialize module {module}: {str(error)}")
+                return False
+
+        return True
+    finally:
+        pwsh.close()
+
+
+def main():
+    if initialize_m365_powershell_modules():
+        logger.info("M365 PowerShell modules initialized successfully")
+    else:
+        logger.error("Failed to initialize M365 PowerShell modules")
+
+
+if __name__ == "__main__":
+    main()

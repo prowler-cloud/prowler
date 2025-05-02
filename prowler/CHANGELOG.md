@@ -39,6 +39,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check `sharepoint_onedrive_sync_restricted_unmanaged_devices` [(#7589)](https://github.com/prowler-cloud/prowler/pull/7589)
 - Add new check for Additional Storage restricted for Exchange in M365 [(#7638)](https://github.com/prowler-cloud/prowler/pull/7638)
 - Add new check for SMTP Auth disabled for Exchange in M365 [(#7640)](https://github.com/prowler-cloud/prowler/pull/7640)
+- Add new check for MailTips full enabled for Exchange in M365 [(#7637)](https://github.com/prowler-cloud/prowler/pull/7637)
 
 ### Fixed
 
@@ -50,6 +51,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Improve compliance and dashboard [(#7596)](https://github.com/prowler-cloud/prowler/pull/7596)
 - Remove invalid parameter `create_file_descriptor` [(#7600)](https://github.com/prowler-cloud/prowler/pull/7600)
 - Remove first empty line in HTML output [(#7606)](https://github.com/prowler-cloud/prowler/pull/7606)
+- Ensure that ContentType in upload_file matches the uploaded file’s format [(#7635)](https://github.com/prowler-cloud/prowler/pull/7635)
 
 ---
 
