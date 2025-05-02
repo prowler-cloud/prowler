@@ -6,7 +6,7 @@
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Exchange Role Assignment Policy",
   "Description": "Restricting users from installing Outlook add-ins reduces the risk of data exposure or exploitation through unapproved or vulnerable add-ins.",
   "Risk": "Allowing users to install add-ins may expose sensitive information or introduce malicious behavior through third-party integrations. Disabling this capability mitigates the risk of unauthorized data access.",
