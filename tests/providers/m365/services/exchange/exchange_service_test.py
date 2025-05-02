@@ -9,6 +9,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     MailboxAuditProperties,
     MailboxPolicy,
     Organization,
+    RoleAssignmentPolicy,
     TransportConfig,
     TransportRule,
 )
@@ -73,6 +74,27 @@ def mock_exchange_get_mailbox_policy(_):
         id="test",
         additional_storage_enabled=True,
     )
+
+
+def mock_exchange_get_role_assignment_policies(_):
+    return [
+        RoleAssignmentPolicy(
+            name="Default Role Assignment Policy",
+            id="12345678-1234-1234-1234",
+            assigned_roles=[
+                "MyProfileInformation",
+                "MyDistributionGroupMembership",
+                "MyRetentionPolicies",
+                "MyDistributionGroups",
+                "MyVoiceMail",
+            ],
+        ),
+        RoleAssignmentPolicy(
+            name="Test Policy",
+            id="12345678-1234-1234",
+            assigned_roles=[],
+        ),
+    ]
 
 
 def mock_exchange_get_mailbox_audit_properties(_):
@@ -344,4 +366,36 @@ class Test_Exchange_Service:
             ]
             assert mailbox_audit_properties[0].audit_log_age == 90
             assert mailbox_audit_properties[0].identity == "test"
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_role_assignment_policies",
+        new=mock_exchange_get_role_assignment_policies,
+    )
+    def test_get_role_assignment_policies(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            role_assignment_policies = exchange_client.role_assignment_policies
+            assert len(role_assignment_policies) == 2
+            assert role_assignment_policies[0].name == "Default Role Assignment Policy"
+            assert role_assignment_policies[0].id == "12345678-1234-1234-1234"
+            assert role_assignment_policies[0].assigned_roles == [
+                "MyProfileInformation",
+                "MyDistributionGroupMembership",
+                "MyRetentionPolicies",
+                "MyDistributionGroups",
+                "MyVoiceMail",
+            ]
+            assert role_assignment_policies[1].name == "Test Policy"
+            assert role_assignment_policies[1].id == "12345678-1234-1234"
+            assert role_assignment_policies[1].assigned_roles == []
+
             exchange_client.powershell.close()

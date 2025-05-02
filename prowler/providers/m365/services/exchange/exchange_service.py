@@ -17,6 +17,7 @@ class Exchange(M365Service):
         self.transport_rules = []
         self.transport_config = None
         self.mailbox_policy = None
+        self.role_assignment_policies = []
         self.mailbox_audit_properties = []
 
         if self.powershell:
@@ -27,6 +28,7 @@ class Exchange(M365Service):
             self.transport_rules = self._get_transport_rules()
             self.transport_config = self._get_transport_config()
             self.mailbox_policy = self._get_mailbox_policy()
+            self.role_assignment_policies = self._get_role_assignment_policies()
             self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
 
@@ -166,6 +168,30 @@ class Exchange(M365Service):
             )
         return mailboxes_policy
 
+    def _get_role_assignment_policies(self):
+        logger.info("Microsoft365 - Getting role assignment policies...")
+        role_assignment_policies = []
+        try:
+            policies_data = self.powershell.get_role_assignment_policies()
+            if not policies_data:
+                return role_assignment_policies
+            if isinstance(policies_data, dict):
+                policies_data = [policies_data]
+            for policy in policies_data:
+                if policy:
+                    role_assignment_policies.append(
+                        RoleAssignmentPolicy(
+                            name=policy.get("Name", ""),
+                            id=policy.get("Guid", ""),
+                            assigned_roles=policy.get("AssignedRoles", []),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return role_assignment_policies
+
     def _get_mailbox_audit_properties(self):
         logger.info("Microsoft365 - Getting mailbox audit properties...")
         mailbox_audit_properties = []
@@ -239,6 +265,18 @@ class TransportConfig(BaseModel):
 class MailboxPolicy(BaseModel):
     id: str
     additional_storage_enabled: bool
+
+
+class RoleAssignmentPolicy(BaseModel):
+    name: str
+    id: str
+    assigned_roles: list[str]
+
+
+class AddinRoles(Enum):
+    MY_CUSTOM_APPS = "My Custom Apps"
+    MY_MARKETPLACE_APPS = "My Marketplace Apps"
+    MY_READWRITE_MAILBOX_APPS = "My ReadWriteMailbox Apps"
 
 
 class MailboxAuditProperties(BaseModel):
