@@ -1,6 +1,6 @@
 "use client";
 
-import { Snippet, Tooltip } from "@nextui-org/react";
+import { Snippet } from "@nextui-org/react";
 import Link from "next/link";
 
 import { InfoField } from "@/components/ui/entities";
@@ -13,7 +13,6 @@ import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
-import { InfoIcon } from "lucide-react";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";

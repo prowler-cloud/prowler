@@ -1,5 +1,5 @@
-import clsx from "clsx";
 import { Tooltip } from "@nextui-org/react";
+import clsx from "clsx";
 import { InfoIcon } from "lucide-react";
 
 interface InfoFieldProps {
