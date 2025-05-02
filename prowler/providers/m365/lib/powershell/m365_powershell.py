@@ -491,7 +491,7 @@ class M365PowerShell(PowerShellSession):
         """
         Get Mailbox Properties.
 
-        Retrieves the properties of a specific mailbox in Exchange Online.
+        Retrieves the properties of all mailboxes in the organization in Exchange Online.
 
         Args:
             mailbox (str): The email address or identifier of the mailbox.
