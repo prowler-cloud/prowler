@@ -221,6 +221,7 @@ class Provider(ABC):
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         tenant_id=arguments.tenant_id,
+                        init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
                     )
                 elif "nhn" in provider_class_name.lower():

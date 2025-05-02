@@ -6,14 +6,26 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     Exchange,
     ExternalMailConfig,
     MailboxAuditConfig,
+    MailboxAuditProperties,
+    MailboxPolicy,
     Organization,
+    RoleAssignmentPolicy,
+    TransportConfig,
     TransportRule,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
 def mock_exchange_get_organization_config(_):
-    return Organization(audit_disabled=True, name="test", guid="test")
+    return Organization(
+        audit_disabled=True,
+        name="test",
+        guid="test",
+        mailtips_enabled=True,
+        mailtips_external_recipient_enabled=False,
+        mailtips_group_metrics_enabled=True,
+        mailtips_large_audience_threshold=25,
+    )
 
 
 def mock_exchange_get_mailbox_audit_config(_):
@@ -48,6 +60,91 @@ def mock_exchange_get_transport_rules(_):
             scl=0,
             sender_domain_is=["example.com"],
         ),
+    ]
+
+
+def mock_exchange_get_transport_config(_):
+    return TransportConfig(
+        smtp_auth_disabled=True,
+    )
+
+
+def mock_exchange_get_mailbox_policy(_):
+    return MailboxPolicy(
+        id="test",
+        additional_storage_enabled=True,
+    )
+
+
+def mock_exchange_get_role_assignment_policies(_):
+    return [
+        RoleAssignmentPolicy(
+            name="Default Role Assignment Policy",
+            id="12345678-1234-1234-1234",
+            assigned_roles=[
+                "MyProfileInformation",
+                "MyDistributionGroupMembership",
+                "MyRetentionPolicies",
+                "MyDistributionGroups",
+                "MyVoiceMail",
+            ],
+        ),
+        RoleAssignmentPolicy(
+            name="Test Policy",
+            id="12345678-1234-1234",
+            assigned_roles=[],
+        ),
+    ]
+
+
+def mock_exchange_get_mailbox_audit_properties(_):
+    return [
+        MailboxAuditProperties(
+            name="User1",
+            audit_enabled=False,
+            audit_admin=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ],
+            audit_delegate=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "ApplyRecord",
+                "MailItemsAccessed",
+            ],
+            audit_owner=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ],
+            audit_log_age=90,
+            identity="test",
+        )
     ]
 
 
@@ -86,6 +183,10 @@ class Test_Exchange_Service:
             assert organization_config.name == "test"
             assert organization_config.guid == "test"
             assert organization_config.audit_disabled is True
+            assert organization_config.mailtips_enabled is True
+            assert organization_config.mailtips_external_recipient_enabled is False
+            assert organization_config.mailtips_group_metrics_enabled is True
+            assert organization_config.mailtips_large_audience_threshold == 25
 
             exchange_client.powershell.close()
 
@@ -161,5 +262,140 @@ class Test_Exchange_Service:
             assert transport_rules[1].name == "test2"
             assert transport_rules[1].scl == 0
             assert transport_rules[1].sender_domain_is == ["example.com"]
+
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_policy",
+        new=mock_exchange_get_mailbox_policy,
+    )
+    def test_get_mailbox_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy.id == "test"
+            assert mailbox_policy.additional_storage_enabled is True
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_transport_config",
+        new=mock_exchange_get_transport_config,
+    )
+    def test_get_transport_config(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            transport_config = exchange_client.transport_config
+            assert transport_config.smtp_auth_disabled is True
+
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_audit_properties",
+        new=mock_exchange_get_mailbox_audit_properties,
+    )
+    def test_get_mailbox_audit_properties(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_audit_properties = exchange_client.mailbox_audit_properties
+            assert len(mailbox_audit_properties) == 1
+            assert mailbox_audit_properties[0].name == "User1"
+            assert mailbox_audit_properties[0].audit_enabled is False
+            assert mailbox_audit_properties[0].audit_admin == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ]
+            assert mailbox_audit_properties[0].audit_delegate == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "ApplyRecord",
+                "MailItemsAccessed",
+            ]
+            assert mailbox_audit_properties[0].audit_owner == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ]
+            assert mailbox_audit_properties[0].audit_log_age == 90
+            assert mailbox_audit_properties[0].identity == "test"
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_role_assignment_policies",
+        new=mock_exchange_get_role_assignment_policies,
+    )
+    def test_get_role_assignment_policies(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            role_assignment_policies = exchange_client.role_assignment_policies
+            assert len(role_assignment_policies) == 2
+            assert role_assignment_policies[0].name == "Default Role Assignment Policy"
+            assert role_assignment_policies[0].id == "12345678-1234-1234-1234"
+            assert role_assignment_policies[0].assigned_roles == [
+                "MyProfileInformation",
+                "MyDistributionGroupMembership",
+                "MyRetentionPolicies",
+                "MyDistributionGroups",
+                "MyVoiceMail",
+            ]
+            assert role_assignment_policies[1].name == "Test Policy"
+            assert role_assignment_policies[1].id == "12345678-1234-1234"
+            assert role_assignment_policies[1].assigned_roles == []
 
             exchange_client.powershell.close()
