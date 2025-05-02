@@ -44,6 +44,9 @@ class Exchange(M365Service):
                     audit_disabled=organization_configuration.get(
                         "AuditDisabled", False
                     ),
+                    oauth_enabled=organization_configuration.get(
+                        "OAuth2ClientProfileEnabled", True
+                    ),
                     mailtips_enabled=organization_configuration.get(
                         "MailTipsAllTipsEnabled", True
                     ),
@@ -235,6 +238,7 @@ class Organization(BaseModel):
     name: str
     guid: str
     audit_disabled: bool
+    oauth_enabled: bool
     mailtips_enabled: bool
     mailtips_external_recipient_enabled: bool
     mailtips_group_metrics_enabled: bool
