@@ -6,6 +6,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     Exchange,
     ExternalMailConfig,
     MailboxAuditConfig,
+    MailboxAuditProperties,
     MailboxPolicy,
     Organization,
     TransportConfig,
@@ -72,6 +73,57 @@ def mock_exchange_get_mailbox_policy(_):
         id="test",
         additional_storage_enabled=True,
     )
+
+
+def mock_exchange_get_mailbox_audit_properties(_):
+    return [
+        MailboxAuditProperties(
+            name="User1",
+            audit_enabled=False,
+            audit_admin=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ],
+            audit_delegate=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "ApplyRecord",
+                "MailItemsAccessed",
+            ],
+            audit_owner=[
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ],
+            audit_log_age=90,
+            identity="test",
+        )
+    ]
 
 
 class Test_Exchange_Service:
@@ -229,4 +281,67 @@ class Test_Exchange_Service:
             transport_config = exchange_client.transport_config
             assert transport_config.smtp_auth_disabled is True
 
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_audit_properties",
+        new=mock_exchange_get_mailbox_audit_properties,
+    )
+    def test_get_mailbox_audit_properties(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_audit_properties = exchange_client.mailbox_audit_properties
+            assert len(mailbox_audit_properties) == 1
+            assert mailbox_audit_properties[0].name == "User1"
+            assert mailbox_audit_properties[0].audit_enabled is False
+            assert mailbox_audit_properties[0].audit_admin == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ]
+            assert mailbox_audit_properties[0].audit_delegate == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "SendAs",
+                "SendOnBehalf",
+                "Create",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "ApplyRecord",
+                "MailItemsAccessed",
+            ]
+            assert mailbox_audit_properties[0].audit_owner == [
+                "Update",
+                "MoveToDeletedItems",
+                "SoftDelete",
+                "HardDelete",
+                "UpdateFolderPermissions",
+                "UpdateInboxRules",
+                "UpdateCalendarDelegation",
+                "ApplyRecord",
+                "MailItemsAccessed",
+                "Send",
+            ]
+            assert mailbox_audit_properties[0].audit_log_age == 90
+            assert mailbox_audit_properties[0].identity == "test"
             exchange_client.powershell.close()

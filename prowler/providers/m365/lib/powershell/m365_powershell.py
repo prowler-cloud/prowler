@@ -487,6 +487,72 @@ class M365PowerShell(PowerShellSession):
             "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
         )
 
+    def get_mailbox_audit_properties(self) -> dict:
+        """
+        Get Mailbox Properties.
+
+        Retrieves the properties of all mailboxes in the organization in Exchange Online.
+
+        Args:
+            mailbox (str): The email address or identifier of the mailbox.
+
+        Returns:
+            dict: Mailbox properties in JSON format.
+
+        Example:
+            >>> get_mailbox_properties()
+            {
+                "UserPrincipalName": "User1",
+                "AuditEnabled": "false"
+                "AuditAdmin": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditDelegate": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "ApplyRecord",
+                    "MailItemsAccessed"
+                ],
+                "AuditOwner": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditLogAgeLimit": "90",
+                "Identity": "User1",
+            }
+        """
+        return self.execute(
+            "Get-EXOMailbox -PropertySets Audit -ResultSize Unlimited | ConvertTo-Json",
+            json_parse=True,
+        )
+
     def get_transport_config(self) -> dict:
         """
         Get Exchange Online Transport Configuration.
