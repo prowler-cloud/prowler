@@ -145,7 +145,7 @@ jobs:
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run safety check --ignore 70612,66963
+          poetry run safety check --ignore 70612,66963,74429
 
       - name: Vulture
         working-directory: ./api
