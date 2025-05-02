@@ -1,6 +1,6 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet, Tooltip } from "@nextui-org/react";
 import Link from "next/link";
 
 import { InfoField } from "@/components/ui/entities";
@@ -13,6 +13,7 @@ import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
+import { InfoIcon } from "lucide-react";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -87,33 +88,40 @@ export const FindingDetail = ({
 
       {/* Check Metadata */}
       <Section title="Finding Details">
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <InfoField label="Provider" variant="simple">
-            <div className="flex items-center gap-2">
-              {getProviderLogo(
-                attributes.check_metadata.provider as ProviderType,
-              )}
-            </div>
+        <div className="flex flex-wrap gap-4">
+          <InfoField label="Provider" variant="simple" className="flex-grow">
+            {getProviderLogo(
+              attributes.check_metadata.provider as ProviderType,
+            )}
           </InfoField>
-          <InfoField label="Service">
+          <InfoField label="Service" className="flex-grow">
             {attributes.check_metadata.servicename}
           </InfoField>
-          <InfoField label="Region">{resource.region}</InfoField>
-          <InfoField label="First Seen">
+          <InfoField label="Region" className="flex-grow">
+            {resource.region}
+          </InfoField>
+          <InfoField label="First Seen" className="flex-grow">
             <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
+          </InfoField>
+          <InfoField
+            label="Delta"
+            tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
+            className="flex-grow capitalize"
+          >
+            {attributes.delta}
           </InfoField>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex flex-wrap gap-4">
           <InfoField label="Check ID" variant="simple">
             <Snippet
-              className="max-w-full bg-gray-50 py-1 text-xs dark:bg-slate-800"
+              className="bg-gray-50 py-1 text-xs dark:bg-slate-800"
               hideSymbol
             >
               {attributes.check_id}
             </Snippet>
           </InfoField>
-          <InfoField label="Severity" variant="simple">
+          <InfoField label="Severity" variant="simple" className="flex-grow">
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
         </div>
