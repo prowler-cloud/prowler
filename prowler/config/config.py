@@ -132,7 +132,7 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             else:
                 config = config_file if config_file else {}
                 # Not to break Azure, K8s and GCP does not support or use the old config format
-                if provider in ["azure", "gcp", "kubernetes"]:
+                if provider in ["azure", "gcp", "kubernetes", "m365"]:
                     config = {}
 
             return config

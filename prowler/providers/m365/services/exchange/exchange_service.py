@@ -37,6 +37,18 @@ class Exchange(M365Service):
                     audit_disabled=organization_configuration.get(
                         "AuditDisabled", False
                     ),
+                    mailtips_enabled=organization_configuration.get(
+                        "MailTipsAllTipsEnabled", True
+                    ),
+                    mailtips_external_recipient_enabled=organization_configuration.get(
+                        "MailTipsExternalRecipientsTipsEnabled", False
+                    ),
+                    mailtips_group_metrics_enabled=organization_configuration.get(
+                        "MailTipsGroupMetricsEnabled", True
+                    ),
+                    mailtips_large_audience_threshold=organization_configuration.get(
+                        "MailTipsLargeAudienceThreshold", 25
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -137,6 +149,10 @@ class Organization(BaseModel):
     name: str
     guid: str
     audit_disabled: bool
+    mailtips_enabled: bool
+    mailtips_external_recipient_enabled: bool
+    mailtips_group_metrics_enabled: bool
+    mailtips_large_audience_threshold: int
 
 
 class MailboxAuditConfig(BaseModel):
