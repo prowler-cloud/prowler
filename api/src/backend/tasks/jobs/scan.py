@@ -16,6 +16,7 @@ from api.compliance import (
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
+    FilterValue,
     Finding,
     Provider,
     Resource,
@@ -121,6 +122,7 @@ def perform_prowler_scan(
     check_status_by_region = {}
     exception = None
     unique_resources = set()
+    filter_cache: set[tuple] = set()
     start_time = time.time()
 
     with rls_transaction(tenant_id):
@@ -295,6 +297,21 @@ def perform_prowler_scan(
                     continue
                 region_dict[finding.check_id] = finding.status.value
 
+                # Update filter values
+                dimensions = [
+                    ("service", resource_instance.service),
+                    ("region", resource_instance.region),
+                    ("resource_type", resource_instance.type),
+                    ("status", finding_instance.status),
+                    ("severity", finding_instance.severity),
+                    ("provider_type", provider_instance.provider),
+                    ("delta", finding_instance.delta),
+                ]
+
+                for dimension, value in dimensions:
+                    if value is not None:
+                        filter_cache.add((str(resource_instance.id), dimension, value))
+
             # Update scan progress
             with rls_transaction(tenant_id):
                 scan_instance.progress = progress
@@ -314,65 +331,88 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None:
-        try:
-            regions = prowler_provider.get_regions()
-        except AttributeError:
-            regions = set()
-
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
-        compliance_overview_by_region = {
-            region: deepcopy(compliance_template) for region in regions
-        }
-
-        for region, check_status in check_status_by_region.items():
-            compliance_data = compliance_overview_by_region.setdefault(
-                region, deepcopy(compliance_template)
-            )
-            for check_name, status in check_status.items():
-                generate_scan_compliance(
-                    compliance_data,
-                    provider_instance.provider,
-                    check_name,
-                    status,
-                )
-
-        # Prepare compliance overview objects
-        compliance_overview_objects = []
-        for region, compliance_data in compliance_overview_by_region.items():
-            for compliance_id, compliance in compliance_data.items():
-                compliance_overview_objects.append(
-                    ComplianceOverview(
-                        tenant_id=tenant_id,
-                        scan=scan_instance,
-                        region=region,
-                        compliance_id=compliance_id,
-                        framework=compliance["framework"],
-                        version=compliance["version"],
-                        description=compliance["description"],
-                        requirements=compliance["requirements"],
-                        requirements_passed=compliance["requirements_status"]["passed"],
-                        requirements_failed=compliance["requirements_status"]["failed"],
-                        requirements_manual=compliance["requirements_status"]["manual"],
-                        total_requirements=compliance["total_requirements"],
-                    )
-                )
-        try:
-            with rls_transaction(tenant_id):
-                ComplianceOverview.objects.bulk_create(
-                    compliance_overview_objects, batch_size=100
-                )
-        except Exception as overview_exception:
-            import sentry_sdk
-
-            sentry_sdk.capture_exception(overview_exception)
-            logger.error(
-                f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
-            )
     if exception is not None:
         raise exception
+
+    try:
+        regions = prowler_provider.get_regions()
+    except AttributeError:
+        regions = set()
+
+    compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+        provider_instance.provider
+    ]
+    compliance_overview_by_region = {
+        region: deepcopy(compliance_template) for region in regions
+    }
+
+    for region, check_status in check_status_by_region.items():
+        compliance_data = compliance_overview_by_region.setdefault(
+            region, deepcopy(compliance_template)
+        )
+        for check_name, status in check_status.items():
+            generate_scan_compliance(
+                compliance_data,
+                provider_instance.provider,
+                check_name,
+                status,
+            )
+
+    # Prepare compliance overview objects
+    compliance_overview_objects = []
+    for region, compliance_data in compliance_overview_by_region.items():
+        for compliance_id, compliance in compliance_data.items():
+            compliance_overview_objects.append(
+                ComplianceOverview(
+                    tenant_id=tenant_id,
+                    scan=scan_instance,
+                    region=region,
+                    compliance_id=compliance_id,
+                    framework=compliance["framework"],
+                    version=compliance["version"],
+                    description=compliance["description"],
+                    requirements=compliance["requirements"],
+                    requirements_passed=compliance["requirements_status"]["passed"],
+                    requirements_failed=compliance["requirements_status"]["failed"],
+                    requirements_manual=compliance["requirements_status"]["manual"],
+                    total_requirements=compliance["total_requirements"],
+                )
+            )
+    try:
+        with rls_transaction(tenant_id):
+            ComplianceOverview.objects.bulk_create(
+                compliance_overview_objects, batch_size=500
+            )
+    except Exception as overview_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(overview_exception)
+        logger.error(
+            f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
+        )
+
+    try:
+        filter_values = [
+            FilterValue(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                resource_id=resource_id,
+                dimension=dimension,
+                value=value,
+            )
+            for resource_id, dimension, value in filter_cache
+        ]
+        with rls_transaction(tenant_id):
+            FilterValue.objects.bulk_create(
+                filter_values, batch_size=500, ignore_conflicts=True
+            )
+    except Exception as filter_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(filter_exception)
+        logger.error(
+            f"Error storing filter values for scan {scan_id}: {filter_exception}"
+        )
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data

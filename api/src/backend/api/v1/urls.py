@@ -120,3 +120,7 @@ urlpatterns = [
     path("schema", SchemaView.as_view(), name="schema"),
     path("docs", SpectacularRedocView.as_view(url_name="schema"), name="docs"),
 ]
+
+# urlpatterns += [
+#     path("silk/", include("silk.urls", namespace="silk")),
+# ]

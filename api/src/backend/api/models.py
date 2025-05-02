@@ -1236,20 +1236,23 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
 
 class FilterValue(RowLevelSecurityProtectedModel):
     scan_id = models.UUIDField(default=uuid7)
+    resource_id = models.UUIDField(default=uuid4)
     dimension = models.CharField(max_length=32)
     value = models.TextField()
 
     class Meta:
         db_table = "filter_values"
-        unique_together = (("tenant_id", "scan_id", "dimension", "value"),)
+        unique_together = (
+            ("tenant_id", "scan_id", "resource_id", "dimension", "value"),
+        )
 
         indexes = [
             models.Index(
-                fields=["tenant_id", "scan_id"],
-                name="filter_values_scan_idx",
+                fields=["tenant_id", "scan_id", "resource_id", "dimension"],
+                name="filter_val_scan_res_idx",
             ),
             models.Index(
-                fields=["tenant_id", "scan_id", "dimension"],
+                fields=["tenant_id", "scan_id", "dimension", "value"],
                 name="filter_values_dim_idx",
             ),
         ]
