@@ -487,6 +487,27 @@ class M365PowerShell(PowerShellSession):
             "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
         )
 
+    def get_role_assignment_policies(self) -> dict:
+        """
+        Get Role Assignment Policies.
+
+        Retrieves the current role assignment policies for Exchange Online.
+
+        Returns:
+            dict: Role assignment policies in JSON format.
+
+        Example:
+            >>> get_role_assignment_policies()
+            {
+                "Name": "Default Role Assignment Policy",
+                "Guid": "12345678-1234-1234-1234-123456789012",
+                "AssignedRoles": ["MyRole"]
+            }
+        """
+        return self.execute(
+            "Get-RoleAssignmentPolicy | ConvertTo-Json", json_parse=True
+        )
+
     def get_mailbox_audit_properties(self) -> dict:
         """
         Get Mailbox Properties.
