@@ -1,7 +1,6 @@
 import glob
 import os
 
-import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
@@ -1223,8 +1222,12 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ScanUpdateSerializer
         elif self.action == "report":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
             return ScanReportSerializer
         elif self.action == "compliance":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
             return ScanComplianceReportSerializer
         return super().get_serializer_class()
 
@@ -1243,70 +1246,86 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["get"], url_name="report")
-    def report(self, request, pk=None):
-        scan_instance = self.get_object()
+    def _get_running_task_response(self, scan_instance):
+        """
+        If the scan or its report-generation task is still executing,
+        return a 202 Response with the task payload and Content-Location.
+        """
+        task = None
 
-        if scan_instance.state == StateChoices.EXECUTING:
-            # If the scan is still running, return the task
-            prowler_task = Task.objects.get(id=scan_instance.task.id)
-            self.response_serializer_class = TaskSerializer
-            output_serializer = self.get_serializer(prowler_task)
-            return Response(
-                data=output_serializer.data,
-                status=status.HTTP_202_ACCEPTED,
-                headers={
-                    "Content-Location": reverse(
-                        "task-detail", kwargs={"pk": output_serializer.data["id"]}
-                    )
-                },
-            )
-
-        try:
-            output_celery_task = Task.objects.get(
-                task_runner_task__task_name="scan-report",
-                task_runner_task__task_args__contains=pk,
-            )
-            self.response_serializer_class = TaskSerializer
-            output_serializer = self.get_serializer(output_celery_task)
-            if output_serializer.data["state"] == StateChoices.EXECUTING:
-                # If the task is still running, return the task
-                return Response(
-                    data=output_serializer.data,
-                    status=status.HTTP_202_ACCEPTED,
-                    headers={
-                        "Content-Location": reverse(
-                            "task-detail", kwargs={"pk": output_serializer.data["id"]}
-                        )
-                    },
-                )
-        except Task.DoesNotExist:
-            # If the task does not exist, it means that the task is removed from the database
-            pass
-
-        output_location = scan_instance.output_location
-        if not output_location:
-            return Response(
-                {"detail": "The scan has no reports."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        if scan_instance.output_location.startswith("s3://"):
+        if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
+            task = scan_instance.task
+        else:
             try:
-                s3_client = get_s3_client()
+                task = Task.objects.get(
+                    task_runner_task__task_name="scan-report",
+                    task_runner_task__task_args__contains=str(scan_instance.id),
+                )
+            except Task.DoesNotExist:
+                return None
+
+        self.response_serializer_class = TaskSerializer
+        serializer = self.get_serializer(task)
+
+        if serializer.data.get("state") != StateChoices.EXECUTING:
+            return None
+
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": serializer.data["id"]}
+                )
+            },
+        )
+
+    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+        """
+        Load binary content and filename.
+        If s3=True and list_objects=False: treat path_pattern as exact key.
+        If s3=True and list_objects=True: list by prefix, then pick first matching key.
+        Else: treat path_pattern as glob pattern on local FS.
+        Returns (content, filename) or Response on error.
+        """
+        if s3:
+            try:
+                client = get_s3_client()
             except (ClientError, NoCredentialsError, ParamValidationError):
                 return Response(
                     {"detail": "There is a problem with credentials."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-
-            bucket_name = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET")
-            key = output_location[len(f"s3://{bucket_name}/") :]
+            if list_objects:
+                # list keys under prefix then match suffix
+                prefix = os.path.dirname(path_pattern)
+                suffix = os.path.basename(path_pattern)
+                try:
+                    resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+                except ClientError:
+                    return Response(
+                        {"detail": "Failed to list compliance files in S3."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+                contents = resp.get("Contents", [])
+                keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
+                if not keys:
+                    return Response(
+                        {
+                            "detail": f"No compliance file found for name '{os.path.splitext(suffix)[0]}'."
+                        },
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                # path_pattern here is prefix, but in compliance we build correct suffix check before
+                key = keys[0]
+            else:
+                # path_pattern is exact key
+                key = path_pattern
             try:
-                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+                s3_obj = client.get_object(Bucket=bucket, Key=key)
             except ClientError as e:
-                error_code = e.response.get("Error", {}).get("Code")
-                if error_code == "NoSuchKey":
+                code = e.response.get("Error", {}).get("Code")
+                if code == "NoSuchKey":
                     return Response(
                         {"detail": "The scan has no reports."},
                         status=status.HTTP_404_NOT_FOUND,
@@ -1315,27 +1334,55 @@ class ScanViewSet(BaseRLSViewSet):
                     {"detail": "There is a problem with credentials."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            file_content = s3_object["Body"].read()
-            filename = os.path.basename(output_location.split("/")[-1])
+            content = s3_obj["Body"].read()
+            filename = os.path.basename(key)
         else:
-            zip_files = glob.glob(output_location)
-            try:
-                file_path = zip_files[0]
-            except IndexError as e:
-                sentry_sdk.capture_exception(e)
+            files = glob.glob(path_pattern)
+            if not files:
                 return Response(
                     {"detail": "The scan has no reports."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            with open(file_path, "rb") as f:
-                file_content = f.read()
-            filename = os.path.basename(file_path)
+            filepath = files[0]
+            with open(filepath, "rb") as f:
+                content = f.read()
+            filename = os.path.basename(filepath)
 
-        response = HttpResponse(
-            file_content, content_type="application/x-zip-compressed"
-        )
+        return content, filename
+
+    def _serve_file(self, content, filename, content_type):
+        response = HttpResponse(content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
         return response
+
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        scan = self.get_object()
+        # Check for executing tasks
+        running_resp = self._get_running_task_response(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            loader = self._load_file(
+                key_prefix, s3=True, bucket=bucket, list_objects=False
+            )
+        else:
+            loader = self._load_file(scan.output_location, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/x-zip-compressed")
 
     @action(
         detail=True,
@@ -1344,81 +1391,39 @@ class ScanViewSet(BaseRLSViewSet):
         url_name="compliance",
     )
     def compliance(self, request, pk=None, name=None):
-        scan_instance = self.get_object()
-        if name not in get_available_compliance_frameworks(
-            scan_instance.provider.provider
-        ):
+        scan = self.get_object()
+        if name not in get_available_compliance_frameworks(scan.provider.provider):
             return Response(
                 {"detail": f"Compliance '{name}' not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if scan_instance.output_location.startswith("s3://"):
-            try:
-                s3 = get_s3_client()
-                bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET")
-            except (ClientError, NoCredentialsError, ParamValidationError):
-                return Response(
-                    {"detail": "Problem with S3 credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        running_resp = self._get_running_task_response(scan)
+        if running_resp:
+            return running_resp
 
-            key_prefix = scan_instance.output_location[len(f"s3://{bucket}/") :]
-            compliance_prefix = f"{os.path.dirname(key_prefix)}/compliance/"
-            try:
-                resp = s3.list_objects_v2(Bucket=bucket, Prefix=compliance_prefix)
-            except ClientError:
-                return Response(
-                    {"detail": "Failed to list compliance files in S3."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-            contents = resp.get("Contents", [])
-            matches = [
-                obj["Key"] for obj in contents if obj["Key"].endswith(f"_{name}.csv")
-            ]
-            if not matches:
-                return Response(
-                    {"detail": f"No compliance file found for '{name}' in S3."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            file_path = matches[0]
-            try:
-                s3_obj = s3.get_object(Bucket=bucket, Key=file_path)
-            except ClientError as e:
-                error_code = e.response.get("Error", {}).get("Code")
-                if error_code == "NoSuchKey":
-                    return Response(
-                        {"detail": "The compliance file does not exist in S3."},
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
-
-                return Response(
-                    {"detail": "Error downloading the compliance file from S3."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-            file_content = s3_obj["Body"].read()
-        else:
-            output_location = os.path.join(
-                os.path.dirname(scan_instance.output_location), "compliance"
+        if not scan.output_location:
+            return Response(
+                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
             )
-            search_pattern = os.path.join(output_location, f"*_{name}.csv")
-            matching_files = glob.glob(search_pattern)
-            if not matching_files:
-                return Response(
-                    {"detail": f"No compliance file found for name '{name}'."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            file_path = matching_files[0]
-            with open(file_path, "rb") as f:
-                file_content = f.read()
 
-        filename = os.path.basename(file_path)
-        response = HttpResponse(file_content, content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix), "compliance", f"{name}.csv"
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "compliance", f"*_{name}.csv")
+            loader = self._load_file(pattern, s3=False)
 
-        return response
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "text/csv")
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
