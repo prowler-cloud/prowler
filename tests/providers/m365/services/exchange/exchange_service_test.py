@@ -21,6 +21,7 @@ def mock_exchange_get_organization_config(_):
         audit_disabled=True,
         name="test",
         guid="test",
+        oauth_enabled=True,
         mailtips_enabled=True,
         mailtips_external_recipient_enabled=False,
         mailtips_group_metrics_enabled=True,
@@ -183,6 +184,7 @@ class Test_Exchange_Service:
             assert organization_config.name == "test"
             assert organization_config.guid == "test"
             assert organization_config.audit_disabled is True
+            assert organization_config.oauth_enabled is True
             assert organization_config.mailtips_enabled is True
             assert organization_config.mailtips_external_recipient_enabled is False
             assert organization_config.mailtips_group_metrics_enabled is True
