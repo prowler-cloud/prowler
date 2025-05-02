@@ -508,6 +508,89 @@ class M365PowerShell(PowerShellSession):
             "Get-RoleAssignmentPolicy | ConvertTo-Json", json_parse=True
         )
 
+    def get_mailbox_audit_properties(self) -> dict:
+        """
+        Get Mailbox Properties.
+
+        Retrieves the properties of all mailboxes in the organization in Exchange Online.
+
+        Args:
+            mailbox (str): The email address or identifier of the mailbox.
+
+        Returns:
+            dict: Mailbox properties in JSON format.
+
+        Example:
+            >>> get_mailbox_properties()
+            {
+                "UserPrincipalName": "User1",
+                "AuditEnabled": "false"
+                "AuditAdmin": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditDelegate": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "ApplyRecord",
+                    "MailItemsAccessed"
+                ],
+                "AuditOwner": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditLogAgeLimit": "90",
+                "Identity": "User1",
+            }
+        """
+        return self.execute(
+            "Get-EXOMailbox -PropertySets Audit -ResultSize Unlimited | ConvertTo-Json",
+            json_parse=True,
+        )
+
+    def get_transport_config(self) -> dict:
+        """
+        Get Exchange Online Transport Configuration.
+
+        Retrieves the current transport configuration settings for Exchange Online.
+
+        Returns:
+            dict: Transport configuration settings in JSON format.
+
+        Example:
+            >>> get_transport_config()
+            {
+                "SmtpClientAuthenticationDisabled": True,
+            }
+        """
+        return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
