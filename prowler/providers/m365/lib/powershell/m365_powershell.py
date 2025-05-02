@@ -553,6 +553,23 @@ class M365PowerShell(PowerShellSession):
             json_parse=True,
         )
 
+    def get_transport_config(self) -> dict:
+        """
+        Get Exchange Online Transport Configuration.
+
+        Retrieves the current transport configuration settings for Exchange Online.
+
+        Returns:
+            dict: Transport configuration settings in JSON format.
+
+        Example:
+            >>> get_transport_config()
+            {
+                "SmtpClientAuthenticationDisabled": True,
+            }
+        """
+        return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():

@@ -15,6 +15,7 @@ class Exchange(M365Service):
         self.mailboxes_config = []
         self.external_mail_config = []
         self.transport_rules = []
+        self.transport_config = None
         self.mailbox_policy = None
         self.mailbox_audit_properties = []
 
@@ -24,6 +25,7 @@ class Exchange(M365Service):
             self.mailboxes_config = self._get_mailbox_audit_config()
             self.external_mail_config = self._get_external_mail_config()
             self.transport_rules = self._get_transport_rules()
+            self.transport_config = self._get_transport_config()
             self.mailbox_policy = self._get_mailbox_policy()
             self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
@@ -39,6 +41,18 @@ class Exchange(M365Service):
                     guid=organization_configuration.get("Guid", ""),
                     audit_disabled=organization_configuration.get(
                         "AuditDisabled", False
+                    ),
+                    mailtips_enabled=organization_configuration.get(
+                        "MailTipsAllTipsEnabled", True
+                    ),
+                    mailtips_external_recipient_enabled=organization_configuration.get(
+                        "MailTipsExternalRecipientsTipsEnabled", False
+                    ),
+                    mailtips_group_metrics_enabled=organization_configuration.get(
+                        "MailTipsGroupMetricsEnabled", True
+                    ),
+                    mailtips_large_audience_threshold=organization_configuration.get(
+                        "MailTipsLargeAudienceThreshold", 25
                     ),
                 )
         except Exception as error:
@@ -117,6 +131,23 @@ class Exchange(M365Service):
             )
         return transport_rules
 
+    def _get_transport_config(self):
+        logger.info("Microsoft365 - Getting transport configuration...")
+        transport_config = []
+        try:
+            transport_configuration = self.powershell.get_transport_config()
+            if transport_configuration:
+                transport_config = TransportConfig(
+                    smtp_auth_disabled=transport_configuration.get(
+                        "SmtpClientAuthenticationDisabled", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return transport_config
+
     def _get_mailbox_policy(self):
         logger.info("Microsoft365 - Getting mailbox policy configuration...")
         mailboxes_policy = None
@@ -178,6 +209,10 @@ class Organization(BaseModel):
     name: str
     guid: str
     audit_disabled: bool
+    mailtips_enabled: bool
+    mailtips_external_recipient_enabled: bool
+    mailtips_group_metrics_enabled: bool
+    mailtips_large_audience_threshold: int
 
 
 class MailboxAuditConfig(BaseModel):
@@ -195,6 +230,10 @@ class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
     sender_domain_is: list[str]
+
+
+class TransportConfig(BaseModel):
+    smtp_auth_disabled: bool
 
 
 class MailboxPolicy(BaseModel):
