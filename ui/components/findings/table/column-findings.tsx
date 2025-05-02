@@ -59,6 +59,18 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   const findingId = searchParams.get("id");
   const isOpen = findingId === row.original.id;
 
+  const handleOpenChange = (open: boolean) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (open) {
+      params.set("id", row.original.id);
+    } else {
+      params.delete("id");
+    }
+
+    window.history.pushState({}, "", `?${params.toString()}`);
+  };
+
   return (
     <div className="flex justify-center">
       <TriggerSheet
@@ -66,6 +78,7 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
         title="Finding Details"
         description="View the finding details"
         defaultOpen={isOpen}
+        onOpenChange={handleOpenChange}
       >
         <DataTableRowDetails
           entityId={row.original.id}
