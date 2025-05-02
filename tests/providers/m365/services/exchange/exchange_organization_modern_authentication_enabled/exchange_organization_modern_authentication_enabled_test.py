@@ -57,7 +57,14 @@ class Test_exchange_organization_modern_authentication_enabled:
             )
 
             exchange_client.organization_config = Organization(
-                oauth_enabled=False, name="test", guid="test", audit_disabled=True
+                oauth_enabled=False,
+                name="test",
+                guid="test",
+                audit_disabled=False,
+                mailtips_enabled=False,
+                mailtips_external_recipient_enabled=False,
+                mailtips_group_metrics_enabled=True,
+                mailtips_large_audience_threshold=25,
             )
 
             check = exchange_organization_modern_authentication_enabled()
@@ -99,7 +106,14 @@ class Test_exchange_organization_modern_authentication_enabled:
             )
 
             exchange_client.organization_config = Organization(
-                oauth_enabled=True, name="test", guid="test", audit_disabled=True
+                oauth_enabled=True,
+                name="test",
+                guid="test",
+                audit_disabled=False,
+                mailtips_enabled=False,
+                mailtips_external_recipient_enabled=False,
+                mailtips_group_metrics_enabled=True,
+                mailtips_large_audience_threshold=25,
             )
 
             check = exchange_organization_modern_authentication_enabled()
