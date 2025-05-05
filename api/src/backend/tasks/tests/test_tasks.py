@@ -95,7 +95,6 @@ class TestGenerateOutputs:
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
         ):
-
             mock_compress.return_value = "/tmp/zipped.zip"
             mock_upload.return_value = "s3://bucket/zipped.zip"
 
@@ -142,7 +141,6 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value=None),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
         ):
-
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
                 [MagicMock()],
@@ -186,7 +184,6 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/f.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
         ):
-
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
                 [MagicMock()],
@@ -266,7 +263,6 @@ class TestGenerateOutputs:
                 ],
             ),
         ):
-
             mock_summary.return_value.exists.return_value = True
 
             with patch(
@@ -349,7 +345,6 @@ class TestGenerateOutputs:
                 {"aws": [(lambda name: True, TrackingComplianceWriter)]},
             ),
         ):
-
             mock_summary.return_value.exists.return_value = True
 
             result = generate_outputs(
@@ -392,7 +387,6 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
         ):
-
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
                 [MagicMock()],
