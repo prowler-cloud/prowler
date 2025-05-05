@@ -161,8 +161,11 @@ export const getPaginationInfo = (metadata: MetaDataProps) => {
   const currentPage = metadata?.pagination.page ?? "1";
   const totalPages = metadata?.pagination.pages;
   const totalEntries = metadata?.pagination.count;
+  const itemsPerPageOptions = metadata?.pagination.itemsPerPage ?? [
+    10, 20, 30, 50, 100,
+  ];
 
-  return { currentPage, totalPages, totalEntries };
+  return { currentPage, totalPages, totalEntries, itemsPerPageOptions };
 };
 
 export function encryptKey(passkey: string) {

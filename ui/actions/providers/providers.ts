@@ -16,6 +16,7 @@ export const getProviders = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -24,6 +25,7 @@ export const getProviders = async ({
   const url = new URL(`${apiBaseUrl}/providers?include=provider_groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
