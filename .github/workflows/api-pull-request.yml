@@ -85,6 +85,13 @@ jobs:
             api/README.md
             api/mkdocs.yml
 
+      - name: Replace @master with current branch in pyproject.toml
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          echo "Replacing @master with @${GITHUB_REF_NAME} in pyproject.toml"
+          sed -i "s|@master|@${GITHUB_REF_NAME}|g" pyproject.toml
+
       - name: Install poetry
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
