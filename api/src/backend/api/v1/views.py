@@ -1249,8 +1249,19 @@ class ScanViewSet(BaseRLSViewSet):
 
     def _get_task_status(self, scan_instance):
         """
-        If the scan or its report-generation task is still executing,
-        return an `HTTP 202 Accepted` response with the task payload and Content-Location.
+        Returns task status if the scan or its associated report-generation task is still executing.
+
+        If the scan is in an EXECUTING state or if a background task related to report generation
+        is found and also executing, this method returns a 202 Accepted response with the task
+        metadata and a `Content-Location` header pointing to the task detail endpoint.
+
+        Args:
+            scan_instance (Scan): The scan instance for which the task status is being checked.
+
+        Returns:
+            Response or None:
+                - A `Response` with HTTP 202 status and serialized task data if the task is executing.
+                - `None` if no running task is found or if the task has already completed.
         """
         task = None
 
@@ -1283,11 +1294,22 @@ class ScanViewSet(BaseRLSViewSet):
 
     def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
         """
-        Load binary content and filename.
-        If s3=True and list_objects=False: treat path_pattern as exact key.
-        If s3=True and list_objects=True: list by prefix, then pick first matching key.
-        Else: treat path_pattern as glob pattern on local FS.
-        Returns (content, filename) or Response on error.
+        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+
+        Depending on the input parameters, this method supports loading:
+        - From S3 using a direct key.
+        - From S3 by listing objects under a prefix and matching suffix.
+        - From the local filesystem using glob pattern matching.
+
+        Args:
+            path_pattern (str): The key or glob pattern representing the file location.
+            s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
+            bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
+            list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+
+        Returns:
+            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
+            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
         """
         if s3:
             try:
