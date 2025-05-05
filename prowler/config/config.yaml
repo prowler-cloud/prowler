@@ -497,3 +497,6 @@ m365:
       #"allow_google_drive",
       #"allow_share_file",
     ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
