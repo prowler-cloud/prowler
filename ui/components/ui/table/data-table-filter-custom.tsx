@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { useCallback } from "react";
 
 import { CustomFilterIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
 
 export interface DataTableFilterCustomProps {
@@ -17,24 +17,14 @@ export const DataTableFilterCustom = ({
   filters,
   defaultOpen = false,
 }: DataTableFilterCustomProps) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { updateFilter } = useUrlFilters();
   const [showFilters, setShowFilters] = useState(defaultOpen);
 
   const pushDropdownFilter = useCallback(
     (key: string, values: string[]) => {
-      const params = new URLSearchParams(searchParams);
-      const filterKey = `filter[${key}]`;
-
-      if (values.length === 0) {
-        params.delete(filterKey);
-      } else {
-        params.set(filterKey, values.join(","));
-      }
-
-      router.push(`?${params.toString()}`);
+      updateFilter(key, values.length > 0 ? values : null);
     },
-    [router, searchParams],
+    [updateFilter],
   );
 
   return (
