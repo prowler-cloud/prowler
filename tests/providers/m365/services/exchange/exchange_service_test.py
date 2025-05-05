@@ -43,11 +43,13 @@ def mock_exchange_get_transport_rules(_):
             name="test",
             scl=-1,
             sender_domain_is=["example.com"],
+            redirect_message_to=None,
         ),
         TransportRule(
             name="test2",
             scl=0,
             sender_domain_is=["example.com"],
+            redirect_message_to=["test@example.com"],
         ),
     ]
 
@@ -166,9 +168,11 @@ class Test_Exchange_Service:
             assert transport_rules[0].name == "test"
             assert transport_rules[0].scl == -1
             assert transport_rules[0].sender_domain_is == ["example.com"]
+            assert transport_rules[0].redirect_message_to is None
             assert transport_rules[1].name == "test2"
             assert transport_rules[1].scl == 0
             assert transport_rules[1].sender_domain_is == ["example.com"]
+            assert transport_rules[1].redirect_message_to == ["test@example.com"]
 
             exchange_client.powershell.close()
 
