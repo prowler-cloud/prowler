@@ -318,14 +318,13 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         # Compliance CSVs
         for name in frameworks_avail:
             compliance_obj = frameworks_bulk[name]
-            klass = next(
-                (
-                    c
-                    for cond, c in COMPLIANCE_CLASS_MAP.get(provider_type, [])
-                    if cond(name)
-                ),
-                GenericCompliance,
-            )
+
+            klass = GenericCompliance
+            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                if condition(name):
+                    klass = cls
+                    break
+
             filename = f"{comp_dir}_{name}.csv"
 
             writer, initialization = get_writer(
