@@ -561,12 +561,12 @@ export interface ScanProps {
     name: string;
     trigger: "scheduled" | "manual";
     state:
-      | "available"
-      | "scheduled"
-      | "executing"
-      | "completed"
-      | "failed"
-      | "cancelled";
+    | "available"
+    | "scheduled"
+    | "executing"
+    | "completed"
+    | "failed"
+    | "cancelled";
     unique_resource_count: number;
     progress: number;
     scanner_args: {
@@ -755,7 +755,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
-    itemsPerPage: Array<number>;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }
