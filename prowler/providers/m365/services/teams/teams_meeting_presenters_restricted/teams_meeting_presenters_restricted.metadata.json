@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_meeting_presenters_restricted",
+  "CheckTitle": "Ensure only organizers and co-organizers can present",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Teams Global Meeting Policy",
+  "Description": "Ensure only organizers and co-organizers can present in a Teams meeting. The recommended state is 'Only organizers and co-organizers'.",
+  "Risk": "Allowing everyone to present increases the risk that a malicious user can inadvertently show inappropriate content.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -DesignatedPresenterRoleMode \"OrganizerOnlyUserOverride\"",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under content sharing set Who can present to Only organizers and co-organizers.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict presentation capabilities to only organizers and co-organizers to reduce the risk of inappropriate content being shown.",
+      "Url": "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

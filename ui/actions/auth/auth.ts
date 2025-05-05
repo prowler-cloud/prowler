@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
+import { apiBaseUrl } from "@/lib";
 import { authFormSchema } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
@@ -57,8 +58,7 @@ export async function authenticate(
 export const createNewUser = async (
   formData: z.infer<typeof formSchemaSignUp>,
 ) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/users`);
+  const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
     url.searchParams.append("invitation_token", formData.invitationToken);
@@ -105,8 +105,7 @@ export const createNewUser = async (
 };
 
 export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tokens`);
+  const url = new URL(`${apiBaseUrl}/tokens`);
 
   const bodyData = {
     data: {
@@ -144,8 +143,7 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
 };
 
 export const getUserByMe = async (accessToken: string) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/users/me`);
+  const url = new URL(`${apiBaseUrl}/users/me`);
 
   try {
     const response = await fetch(url.toString(), {

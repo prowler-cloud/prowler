@@ -42,7 +42,7 @@ export const filterFindings = [
   {
     key: "status__in",
     labelCheckboxGroup: "Status",
-    values: ["PASS", "FAIL", "MANUAL", "MUTED"],
+    values: ["PASS", "FAIL", "MANUAL"],
   },
   {
     key: "delta__in",

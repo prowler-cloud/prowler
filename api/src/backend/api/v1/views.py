@@ -22,6 +22,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -101,6 +102,7 @@ from api.rls import Tenant
 from api.utils import CustomOAuth2Client, validate_invitation
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
+    ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
@@ -245,7 +247,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.6.0"
+        spectacular_settings.VERSION = "1.7.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1087,6 +1089,8 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
+        task_name = f"scan-perform-scheduled-{pk}"
+        PeriodicTask.objects.filter(name=task_name).update(enabled=False)
 
         with transaction.atomic():
             task = delete_provider_task.delay(
@@ -2054,6 +2058,21 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
         "requirement information and check's status.",
     ),
+    metadata=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Retrieve metadata values from compliance overviews",
+        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
+        "filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -2115,6 +2134,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ComplianceOverviewFullSerializer
+        elif self.action == "metadata":
+            return ComplianceOverviewMetadataSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
@@ -2130,6 +2151,35 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = self.request.tenant_id
+
+        regions = list(
+            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values_list("region", flat=True)
+            .order_by("region")
+            .distinct()
+        )
+        result = {"regions": regions}
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Overview"])

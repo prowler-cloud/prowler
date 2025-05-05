@@ -53,7 +53,7 @@ Prowler App can be installed in different ways, depending on your environment:
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
 
     ???+ note
-        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml to run the app in development mode.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -136,7 +136,7 @@ Prowler App can be installed in different ways, depending on your environment:
 
 ### Prowler CLI Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9, <= 3.12`:
 
 === "pipx"
 
@@ -144,7 +144,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
@@ -168,9 +168,9 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `Python pip >= 21.0.0`
-    * AWS, GCP, Azure, Microsoft365 and/or Kubernetes credentials
+    * AWS, GCP, Azure, M365 and/or Kubernetes credentials
 
     _Commands_:
 
@@ -219,7 +219,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
     poetry install
-    poetry run python prowler.py -v
+    poetry run python prowler-cli.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
@@ -228,7 +228,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -244,8 +244,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
-    * `Python >= 3.9`
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9, <= 3.12`.
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -423,7 +423,7 @@ While the scan is running, start exploring the findings in these sections:
 
 ### Prowler CLI
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `microsoft365` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365` or `kubernetes`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
@@ -565,23 +565,27 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
-#### Microsoft365
+#### Microsoft 365
 
-With Microsoft365 you need to specify which auth method is going to be used:
+With M365 you need to specify which auth method is going to be used:
 
 ```console
+
+# To use both service principal (for MSGraph) and user credentials (for PowerShell modules)
+prowler m365 --env-auth
+
 # To use service principal authentication
-prowler microsoft365 --sp-env-auth
+prowler m365 --sp-env-auth
 
 # To use az cli authentication
-prowler microsoft365 --az-cli-auth
+prowler m365 --az-cli-auth
 
 # To use browser authentication
-prowler microsoft365 --browser-auth --tenant-id "XXXXXXXX"
+prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 
 ```
 
-See more details about Microsoft365 Authentication in [Requirements](getting-started/requirements.md#microsoft365)
+See more details about M365 Authentication in [Requirements](getting-started/requirements.md#microsoft-365)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

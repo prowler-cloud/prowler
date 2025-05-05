@@ -153,6 +153,12 @@ class S3:
         """
         try:
             uploaded_objects = {"success": {}, "failure": {}}
+            extension_to_content_type = {
+                ".html": "text/html",
+                ".csv": "text/csv",
+                ".ocsf.json": "application/json",
+                ".asff.json": "application/json",
+            }
             # Keys are regular and/or compliance
             for key, output_list in outputs.items():
                 for output in output_list:
@@ -163,6 +169,7 @@ class S3:
 
                         bucket_directory = self.get_object_path(self._output_directory)
                         basename = path.basename(output.file_descriptor.name)
+                        file_extension = output.file_extension
 
                         if key == "compliance":
                             object_name = f"{bucket_directory}/{key}/{basename}"
@@ -176,7 +183,12 @@ class S3:
                         # into the local filesystem because S3 upload file is the recommended way.
                         # https://aws.amazon.com/blogs/developer/uploading-files-to-amazon-s3/
                         self._session.upload_file(
-                            output.file_descriptor.name, self._bucket_name, object_name
+                            Filename=output.file_descriptor.name,
+                            Bucket=self._bucket_name,
+                            Key=object_name,
+                            ExtraArgs={
+                                "ContentType": extension_to_content_type[file_extension]
+                            },
                         )
 
                         if output.file_extension in uploaded_objects["success"]:

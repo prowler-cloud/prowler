@@ -11,6 +11,7 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+from prowler.providers.m365.m365_provider import M365Provider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -51,14 +52,14 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider]:
+) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider]:
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: The corresponding provider class.
+        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -72,6 +73,8 @@ def return_prowler_provider(
             prowler_provider = AzureProvider
         case Provider.ProviderChoices.KUBERNETES.value:
             prowler_provider = KubernetesProvider
+        case Provider.ProviderChoices.M365.value:
+            prowler_provider = M365Provider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -104,15 +107,15 @@ def get_prowler_provider_kwargs(provider: Provider) -> dict:
 
 def initialize_prowler_provider(
     provider: Provider,
-) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider:
+) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider:
     """Initialize a Prowler provider instance based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, or `KubernetesProvider`) initialized with the
+        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
+            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
@@ -130,7 +133,12 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         Connection: A connection object representing the result of the connection test for the specified provider.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = provider.secret.secret
+
+    try:
+        prowler_provider_kwargs = provider.secret.secret
+    except Provider.secret.RelatedObjectDoesNotExist as secret_error:
+        return Connection(is_connected=False, error=secret_error)
+
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )

@@ -95,6 +95,7 @@ aws:
       "python3.6",
       "python2.7",
       "python3.7",
+      "python3.8",
       "nodejs4.3",
       "nodejs4.3-edge",
       "nodejs6.10",
@@ -105,6 +106,7 @@ aws:
       "nodejs14.x",
       "nodejs16.x",
       "dotnet5.0",
+      "dotnet6",
       "dotnet7",
       "dotnetcore1.0",
       "dotnetcore2.0",
@@ -325,7 +327,6 @@ aws:
     [
       "RSA-1024",
       "P-192",
-      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -445,6 +446,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # GCP Service Account and user-managed keys unused configuration
+  # gcp.iam_service_account_unused
+  # gcp.iam_sa_user_managed_key_unused
+  max_unused_account_days: 180
 
 # Kubernetes Configuration
 kubernetes:
@@ -477,8 +482,21 @@ kubernetes:
     ]
 
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients

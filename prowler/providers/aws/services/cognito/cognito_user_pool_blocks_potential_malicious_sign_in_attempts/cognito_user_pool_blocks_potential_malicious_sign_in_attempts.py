@@ -7,18 +7,22 @@ class cognito_user_pool_blocks_potential_malicious_sign_in_attempts(Check):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=pool)
-            if pool.advanced_security_mode == "ENFORCED" and all(
-                [
-                    pool.risk_configuration.account_takeover_risk_configuration.low_action
-                    and pool.risk_configuration.account_takeover_risk_configuration.low_action
-                    == "BLOCK",
-                    pool.risk_configuration.account_takeover_risk_configuration.medium_action
-                    and pool.risk_configuration.account_takeover_risk_configuration.medium_action
-                    == "BLOCK",
-                    pool.risk_configuration.account_takeover_risk_configuration.high_action
-                    and pool.risk_configuration.account_takeover_risk_configuration.high_action
-                    == "BLOCK",
-                ]
+            if (
+                pool.advanced_security_mode == "ENFORCED"
+                and pool.risk_configuration
+                and all(
+                    [
+                        pool.risk_configuration.account_takeover_risk_configuration.low_action
+                        and pool.risk_configuration.account_takeover_risk_configuration.low_action
+                        == "BLOCK",
+                        pool.risk_configuration.account_takeover_risk_configuration.medium_action
+                        and pool.risk_configuration.account_takeover_risk_configuration.medium_action
+                        == "BLOCK",
+                        pool.risk_configuration.account_takeover_risk_configuration.high_action
+                        and pool.risk_configuration.account_takeover_risk_configuration.high_action
+                        == "BLOCK",
+                    ]
+                )
             ):
                 report.status = "PASS"
                 report.status_extended = f"User pool {pool.name} blocks all potential malicious sign-in attempts."

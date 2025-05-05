@@ -1,3 +1,4 @@
+import json
 import time
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -6,6 +7,7 @@ from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Sum, When
+from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -191,6 +193,17 @@ def perform_prowler_scan(
                         if resource_instance.type != finding.resource_type:
                             resource_instance.type = finding.resource_type
                             updated_fields.append("type")
+                        if resource_instance.metadata != finding.resource_metadata:
+                            resource_instance.metadata = json.dumps(
+                                finding.resource_metadata, cls=CustomEncoder
+                            )
+                            updated_fields.append("metadata")
+                        if resource_instance.details != finding.resource_details:
+                            resource_instance.details = finding.resource_details
+                            updated_fields.append("details")
+                        if resource_instance.partition != finding.partition:
+                            resource_instance.partition = finding.partition
+                            updated_fields.append("partition")
                         if updated_fields:
                             with rls_transaction(tenant_id):
                                 resource_instance.save(update_fields=updated_fields)
@@ -267,6 +280,8 @@ def perform_prowler_scan(
                         check_id=finding.check_id,
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
+                        muted=finding.muted,
+                        compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
 
@@ -402,21 +417,21 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         ).annotate(
             fail=Sum(
                 Case(
-                    When(status="FAIL", then=1),
+                    When(status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             _pass=Sum(
                 Case(
-                    When(status="PASS", then=1),
+                    When(status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
-            muted=Sum(
+            muted_count=Sum(
                 Case(
-                    When(status="MUTED", then=1),
+                    When(muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -424,63 +439,63 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             total=Count("id"),
             new=Sum(
                 Case(
-                    When(delta="new", then=1),
+                    When(delta="new", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             changed=Sum(
                 Case(
-                    When(delta="changed", then=1),
+                    When(delta="changed", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             unchanged=Sum(
                 Case(
-                    When(delta__isnull=True, then=1),
+                    When(delta__isnull=True, muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_new=Sum(
                 Case(
-                    When(delta="new", status="FAIL", then=1),
+                    When(delta="new", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_changed=Sum(
                 Case(
-                    When(delta="changed", status="FAIL", then=1),
+                    When(delta="changed", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_new=Sum(
                 Case(
-                    When(delta="new", status="PASS", then=1),
+                    When(delta="new", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_changed=Sum(
                 Case(
-                    When(delta="changed", status="PASS", then=1),
+                    When(delta="changed", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_new=Sum(
                 Case(
-                    When(delta="new", status="MUTED", then=1),
+                    When(delta="new", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_changed=Sum(
                 Case(
-                    When(delta="changed", status="MUTED", then=1),
+                    When(delta="changed", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -498,7 +513,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 region=agg["resources__region"],
                 fail=agg["fail"],
                 _pass=agg["_pass"],
-                muted=agg["muted"],
+                muted=agg["muted_count"],
                 total=agg["total"],
                 new=agg["new"],
                 changed=agg["changed"],

@@ -89,7 +89,7 @@ export const ScanDetail = ({
 
         <InfoField label="Scan ID" variant="simple">
           <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            {renderValue(taskDetails?.attributes.task_args.scan_id)}
+            {scanDetails.id}
           </Snippet>
         </InfoField>
 

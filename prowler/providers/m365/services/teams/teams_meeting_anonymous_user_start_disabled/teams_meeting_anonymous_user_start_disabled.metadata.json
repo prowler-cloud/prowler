@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_meeting_anonymous_user_start_disabled",
+  "CheckTitle": "Ensure anonymous users are not able to start meetings.",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Teams Global Meeting Policy",
+  "Description": "Ensure anonymous users and dial-in callers are not able to start meetings.",
+  "Risk": "Allowing anonymous users and dial-in callers to start meetings without an authenticated participant present can lead to meeting spamming, unauthorized activity, and potential misuse of organizational resources.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToStartMeeting $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting join & lobby set Anonymous users and dial-in callers can start a meeting to Off.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that anonymous users and dial-in callers are required to wait in the lobby until a verified user from the organization or a trusted external domain starts the meeting. This reduces the risk of abuse and maintains meeting integrity.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

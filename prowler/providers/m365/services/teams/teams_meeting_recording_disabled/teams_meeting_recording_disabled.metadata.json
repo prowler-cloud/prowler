@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_meeting_recording_disabled",
+  "CheckTitle": "Ensure meeting recording is disabled by default",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Teams Global Meeting Policy",
+  "Description": "Ensures that only authorized users, such as organizers, co-organizers, and leads, can initiate a recording.",
+  "Risk": "Allowing meeting recordings by default increases the risk of unauthorized individuals capturing and potentially sharing sensitive meeting content.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowCloudRecording $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under Recording & transcription set Meeting recording to Off.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable meeting recording in the Global meeting policy to ensure only authorized users can initiate recordings. Create separate policies for users or groups who need recording capabilities.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

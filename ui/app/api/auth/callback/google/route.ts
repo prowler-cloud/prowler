@@ -3,11 +3,10 @@
 import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
+import { apiBaseUrl, baseUrl } from "@/lib/helper";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-
-  const keyServer = process.env.API_BASE_URL;
 
   const code = searchParams.get("code");
 
@@ -22,7 +21,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const response = await fetch(`${keyServer}/tokens/google`, {
+    const response = await fetch(`${apiBaseUrl}/tokens/google`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -42,19 +41,19 @@ export async function GET(req: Request) {
         accessToken: access,
         refreshToken: refresh,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: `${baseUrl}/`,
       });
 
       if (result?.error) {
         throw new Error(result.error);
       }
 
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/", baseUrl));
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("SignIn error:", error);
       return NextResponse.redirect(
-        new URL("/sign-in?error=AuthenticationFailed", req.url),
+        new URL("/sign-in?error=AuthenticationFailed", baseUrl),
       );
     }
   } catch (error) {

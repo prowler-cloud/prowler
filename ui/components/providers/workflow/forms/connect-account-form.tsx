@@ -9,17 +9,13 @@ import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import {
-  getProviderLogo,
-  getProviderName,
-  ProviderType,
-} from "@/components/ui/entities";
+import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
-
+import { ProviderTitleDocs } from "../provider-title-docs";
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
 // Helper function for labels and placeholders
@@ -28,22 +24,27 @@ const getProviderFieldDetails = (providerType?: string) => {
     case "aws":
       return {
         label: "Account ID",
-        placeholder: "123456...",
+        placeholder: "e.g. 123456789012",
       };
     case "gcp":
       return {
         label: "Project ID",
-        placeholder: "project_id...",
+        placeholder: "e.g. my-gcp-project",
       };
     case "azure":
       return {
         label: "Subscription ID",
-        placeholder: "fc94207a-d396-4a14-a7fd-12a...",
+        placeholder: "e.g. fc94207a-d396-4a14-a7fd-12ab34cd56ef",
       };
     case "kubernetes":
       return {
         label: "Kubernetes Context",
-        placeholder: "context_name....",
+        placeholder: "e.g. my-cluster-context",
+      };
+    case "m365":
+      return {
+        label: "Domain ID",
+        placeholder: "e.g. your-domain.onmicrosoft.com",
       };
     default:
       return {
@@ -170,14 +171,7 @@ export const ConnectAccountForm = () => {
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
-            <div className="mb-4 flex items-center space-x-4">
-              {providerType && getProviderLogo(providerType as ProviderType)}
-              <span className="text-lg font-semibold">
-                {providerType
-                  ? getProviderName(providerType as ProviderType)
-                  : "Unknown Provider"}
-              </span>
-            </div>
+            <ProviderTitleDocs providerType={providerType as ProviderType} />
             <CustomInput
               control={form.control}
               name="providerUid"
