@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
@@ -12,6 +13,7 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
@@ -43,16 +45,6 @@ const getProviderData = (
     `No ${field} found in provider`
   );
 };
-
-// const getScanData = (
-//   row: { original: FindingProps },
-//   field: keyof FindingProps["relationships"]["scan"]["attributes"],
-// ) => {
-//   return (
-//     row.original.relationships?.scan?.attributes?.[field] ||
-//     `No ${field} found in scan`
-//   );
-// };
 
 const FindingDetailsCell = ({ row }: { row: any }) => {
   const searchParams = useSearchParams();
@@ -109,11 +101,47 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const {
         attributes: { muted },
       } = getFindingsData(row);
+      const { delta } = row.original.attributes;
+
       return (
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
-          <p className="mr-7 whitespace-normal break-words text-sm">
-            {checktitle}
-          </p>
+          <div className="flex flex-row items-center gap-4">
+            {(delta === "new" || delta === "changed") && (
+              <Tooltip
+                content={
+                  <div className="flex gap-1 text-xs">
+                    <span>
+                      {delta === "new"
+                        ? "New finding."
+                        : "Status changed since the previous scan."}
+                    </span>
+                    <a
+                      href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary"
+                    >
+                      Learn more
+                    </a>
+                  </div>
+                }
+              >
+                <div
+                  className={cn(
+                    "h-2 min-w-2 cursor-pointer rounded-full",
+                    delta === "new"
+                      ? "bg-system-severity-high"
+                      : delta === "changed"
+                        ? "bg-system-severity-medium"
+                        : "bg-gray-500",
+                  )}
+                />
+              </Tooltip>
+            )}
+            <p className="mr-7 whitespace-normal break-words text-sm">
+              {checktitle}
+            </p>
+          </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
             <Muted isMuted={muted} />
           </span>

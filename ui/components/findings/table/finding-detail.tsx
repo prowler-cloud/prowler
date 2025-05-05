@@ -3,6 +3,7 @@
 import { Snippet } from "@nextui-org/react";
 import Link from "next/link";
 
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import {
@@ -88,42 +89,38 @@ export const FindingDetail = ({
       {/* Check Metadata */}
       <Section title="Finding Details">
         <div className="flex flex-wrap gap-4">
-          <InfoField label="Provider" variant="simple" className="flex-grow">
+          <InfoField label="Provider" variant="simple">
             {getProviderLogo(
               attributes.check_metadata.provider as ProviderType,
             )}
           </InfoField>
-          <InfoField label="Service" className="flex-grow">
+          <InfoField label="Service">
             {attributes.check_metadata.servicename}
           </InfoField>
-          <InfoField label="Region" className="flex-grow">
-            {resource.region}
-          </InfoField>
-          <InfoField label="First Seen" className="flex-grow">
+          <InfoField label="Region">{resource.region}</InfoField>
+          <InfoField label="First Seen">
             <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
           </InfoField>
           <InfoField
             label="Delta"
             tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
-            className="flex-grow capitalize"
+            className="capitalize"
           >
             {attributes.delta}
           </InfoField>
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          <InfoField label="Check ID" variant="simple">
-            <Snippet
-              className="bg-gray-50 py-1 text-xs dark:bg-slate-800"
-              hideSymbol
-            >
-              {attributes.check_id}
-            </Snippet>
-          </InfoField>
-          <InfoField label="Severity" variant="simple" className="flex-grow">
+          <InfoField label="Severity" variant="simple">
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
         </div>
+        <InfoField label="ID" variant="simple">
+          <CodeSnippet value={findingDetails.id} />
+        </InfoField>
+        <InfoField label="Check ID" variant="simple">
+          <CodeSnippet value={attributes.check_id} />
+        </InfoField>
+        <InfoField label="UID" variant="simple">
+          <CodeSnippet value={attributes.uid} />
+        </InfoField>
 
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
