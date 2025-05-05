@@ -1,3 +1,4 @@
+import uuid
 from unittest import mock
 
 from prowler.providers.m365.services.sharepoint.sharepoint_service import (
@@ -35,6 +36,7 @@ class Test_sharepoint_external_sharing_restricted:
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
                 legacyAuth=True,
+                allowedDomainGuidsForSyncApp=[uuid.uuid4()],
             )
             sharepoint_client.tenant_domain = DOMAIN
 
@@ -78,6 +80,7 @@ class Test_sharepoint_external_sharing_restricted:
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
                 legacyAuth=True,
+                allowedDomainGuidsForSyncApp=[uuid.uuid4()],
             )
             sharepoint_client.tenant_domain = DOMAIN
 
