@@ -8,6 +8,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 
 - Added M365 as a new provider [(#7563)](https://github.com/prowler-cloud/prowler/pull/7563).
+- Added compliance folder to export outputs as ZIP functionality [(#7653)](https://github.com/prowler-cloud/prowler/pull/7653).
+- Added a new endpoint to download the specified compliance file [(#7653)](https://github.com/prowler-cloud/prowler/pull/7653).
 
 ---
 
