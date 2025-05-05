@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_mailbox_properties_auditing_e3_enabled",
+  "CheckTitle": "Ensure mailbox auditing for E3 users is enabled.",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Mailboxes Properties",
+  "Description": "Ensure mailbox auditing is enabled for all E3-licensed user mailboxes, including the configuration of audit actions for owners, delegates, and admins beyond the Microsoft defaults.",
+  "Risk": "If auditing is not properly enabled and configured, critical mailbox actions may go unrecorded, reducing the ability to investigate incidents, enforce compliance, or detect malicious behavior.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "$AuditAdmin = @(\"ApplyRecord\", \"Copy\", \"Create\", \"FolderBind\", \"HardDelete\", \"Move\", \"MoveToDeletedItems\", \"SendAs\", \"SendOnBehalf\", \"SoftDelete\", \"Update\", \"UpdateCalendarDelegation\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $AuditDelegate = @(\"ApplyRecord\", \"Create\", \"FolderBind\", \"HardDelete\", \"Move\", \"MoveToDeletedItems\", \"SendAs\", \"SendOnBehalf\", \"SoftDelete\", \"Update\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $AuditOwner = @(\"ApplyRecord\", \"Create\", \"HardDelete\", \"MailboxLogin\", \"Move\", \"MoveToDeletedItems\", \"SoftDelete\", \"Update\", \"UpdateCalendarDelegation\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $MBX = Get-EXOMailbox -ResultSize Unlimited | Where-Object { $_.RecipientTypeDetails -eq \"UserMailbox\" }; $MBX | Set-Mailbox -AuditEnabled $true -AuditLogAgeLimit 90 -AuditAdmin $AuditAdmin -AuditDelegate $AuditDelegate -AuditOwner $AuditOwner",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable mailbox auditing for all E3 user mailboxes and configure auditing for key mailbox actions for owners, delegates, and admins.",
+      "Url": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

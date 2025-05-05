@@ -1988,7 +1988,7 @@
       "Id": "4.4.1",
       "Description": "Ensure 'Enforce SSL connection' is set to 'Enabled' for Standard MySQL Database Server",
       "Checks": [
-        "postgresql_flexible_server_allow_access_services_disabled"
+        "mysql_flexible_server_ssl_connection_enabled"
       ],
       "Attributes": [
         {

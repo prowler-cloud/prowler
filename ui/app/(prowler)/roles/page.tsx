@@ -41,6 +41,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
@@ -50,7 +51,7 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const rolesData = await getRoles({ query, page, sort, filters });
+  const rolesData = await getRoles({ query, page, sort, filters, pageSize });
 
   return (
     <DataTable
