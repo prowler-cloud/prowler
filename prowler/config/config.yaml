@@ -500,3 +500,6 @@ m365:
   # Exchange Organization Settings
   # m365.exchange_organization_mailtips_enabled
   recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+  # Exchange Mailbox Settings
+  # m365.exchange_mailbox_properties_auditing_enabled
+  audit_log_age: 90 # maximum number of days to keep audit logs

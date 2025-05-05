@@ -9,7 +9,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
 )
 
 
-class exchange_mailbox_properties_auditing_e3_enabled(Check):
+class exchange_mailbox_properties_auditing_enabled(Check):
     """
     Check to ensure that mailbox auditing properties are enabled and properly configured.
 
@@ -57,8 +57,10 @@ class exchange_mailbox_properties_auditing_e3_enabled(Check):
                     and required_delegate.issubset(audit_delegate)
                     and required_owner.issubset(audit_owner)
                 ):
-                    # The limit for E3 is 90 days, but we check >= 90 because E5 users can set it to more than 90 days
-                    if mailbox.audit_log_age >= 90:
+                    # The limit for E3 is 90 days, but we check >= 90 by default because E5 users can set it to more than 90 days (recommended 180 days)
+                    if mailbox.audit_log_age >= exchange_client.audit_config.get(
+                        "audit_log_age", 90
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled and properly configured."
                     else:

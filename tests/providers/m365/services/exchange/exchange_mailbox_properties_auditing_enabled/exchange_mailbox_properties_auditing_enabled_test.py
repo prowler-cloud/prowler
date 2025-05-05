@@ -9,7 +9,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_exchange_mailbox_properties_auditing_e3_enabled:
+class Test_exchange_mailbox_properties_auditing_enabled:
     def test_no_auditing_mailboxes(self):
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
@@ -24,17 +24,17 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled import (
-                exchange_mailbox_properties_auditing_e3_enabled,
+            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
+                exchange_mailbox_properties_auditing_enabled,
             )
 
             exchange_client.mailbox_audit_properties = []
 
-            check = exchange_mailbox_properties_auditing_e3_enabled()
+            check = exchange_mailbox_properties_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -53,13 +53,15 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled import (
-                exchange_mailbox_properties_auditing_e3_enabled,
+            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
+                exchange_mailbox_properties_auditing_enabled,
             )
+
+            exchange_client.audit_config = {"audit_log_age": 180}
 
             exchange_client.mailbox_audit_properties = [
                 MailboxAuditProperties(
@@ -73,7 +75,7 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_e3_enabled()
+            check = exchange_mailbox_properties_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -103,13 +105,15 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled import (
-                exchange_mailbox_properties_auditing_e3_enabled,
+            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
+                exchange_mailbox_properties_auditing_enabled,
             )
+
+            exchange_client.audit_config = {"audit_log_age": 90}
 
             exchange_client.mailbox_audit_properties = [
                 MailboxAuditProperties(
@@ -123,7 +127,7 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_e3_enabled()
+            check = exchange_mailbox_properties_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -153,13 +157,15 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled import (
-                exchange_mailbox_properties_auditing_e3_enabled,
+            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
+                exchange_mailbox_properties_auditing_enabled,
             )
+
+            exchange_client.audit_config = {"audit_log_age": 90}
 
             exchange_client.mailbox_audit_properties = [
                 MailboxAuditProperties(
@@ -173,7 +179,7 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_e3_enabled()
+            check = exchange_mailbox_properties_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -203,13 +209,15 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_e3_enabled.exchange_mailbox_properties_auditing_e3_enabled import (
-                exchange_mailbox_properties_auditing_e3_enabled,
+            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
+                exchange_mailbox_properties_auditing_enabled,
             )
+
+            exchange_client.audit_config = {"audit_log_age": 90}
 
             exchange_client.mailbox_audit_properties = [
                 MailboxAuditProperties(
@@ -223,7 +231,7 @@ class Test_exchange_mailbox_properties_auditing_e3_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_e3_enabled()
+            check = exchange_mailbox_properties_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
