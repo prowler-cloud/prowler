@@ -179,7 +179,7 @@ const SSRDataTable = async ({
     page,
     sort,
     filters,
-    pageSize
+    pageSize,
   });
   return (
     <DataTable
