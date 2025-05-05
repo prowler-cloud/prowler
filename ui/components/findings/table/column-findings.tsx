@@ -1,6 +1,5 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
@@ -13,10 +12,10 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
+import { DeltaTooltip } from "./delta-tooltip";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -107,36 +106,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
           <div className="flex flex-row items-center gap-4">
             {(delta === "new" || delta === "changed") && (
-              <Tooltip
-                content={
-                  <div className="flex gap-1 text-xs">
-                    <span>
-                      {delta === "new"
-                        ? "New finding."
-                        : "Status changed since the previous scan."}
-                    </span>
-                    <a
-                      href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary"
-                    >
-                      Learn more
-                    </a>
-                  </div>
-                }
-              >
-                <div
-                  className={cn(
-                    "h-2 min-w-2 cursor-pointer rounded-full",
-                    delta === "new"
-                      ? "bg-system-severity-high"
-                      : delta === "changed"
-                        ? "bg-system-severity-medium"
-                        : "bg-gray-500",
-                  )}
-                />
-              </Tooltip>
+              <DeltaTooltip delta={delta} className="min-w-2" />
             )}
             <p className="mr-7 whitespace-normal break-words text-sm">
               {checktitle}

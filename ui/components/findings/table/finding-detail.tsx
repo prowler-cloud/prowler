@@ -14,6 +14,7 @@ import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
+import { DeltaTooltip } from "./delta-tooltip";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -101,13 +102,18 @@ export const FindingDetail = ({
           <InfoField label="First Seen">
             <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
           </InfoField>
-          <InfoField
-            label="Delta"
-            tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
-            className="capitalize"
-          >
-            {attributes.delta}
-          </InfoField>
+          {attributes.delta && (
+            <InfoField
+              label="Delta"
+              tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
+              className="capitalize"
+            >
+              <div className="flex items-center gap-2">
+                <DeltaTooltip delta={attributes.delta} />
+                {attributes.delta}
+              </div>
+            </InfoField>
+          )}
           <InfoField label="Severity" variant="simple">
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
