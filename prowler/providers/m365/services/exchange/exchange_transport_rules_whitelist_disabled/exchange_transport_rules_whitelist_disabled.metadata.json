@@ -13,7 +13,7 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
   "Remediation": {
     "Code": {
-      "CLI": "Remove-TransportRule <RuleName>",
+      "CLI": "Remove-TransportRule -Identity <RuleName>",
       "NativeIaC": "",
       "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com.. 2. Click to expand Mail Flow and then select Rules. 3. For each rule that whitelists specific domains, select the rule and click the 'Delete' icon.",
       "Terraform": ""
