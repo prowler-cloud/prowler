@@ -128,6 +128,7 @@ class Exchange(M365Service):
                             name=rule.get("Name", ""),
                             scl=rule.get("SetSCL", None),
                             sender_domain_is=rule.get("SenderDomainIs", []),
+                            redirect_message_to=rule.get("RedirectMessageTo", None),
                         )
                     )
         except Exception as error:
@@ -260,6 +261,7 @@ class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
     sender_domain_is: list[str]
+    redirect_message_to: Optional[list[str]]
 
 
 class TransportConfig(BaseModel):
