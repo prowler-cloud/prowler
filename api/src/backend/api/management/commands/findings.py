@@ -8,11 +8,11 @@ from tqdm import tqdm
 
 from api.db_utils import rls_transaction
 from api.models import (
-    FilterValue,
     Finding,
     Provider,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     Scan,
     StatusChoices,
 )
@@ -198,7 +198,7 @@ class Command(BaseCommand):
 
             # Create ResourceFindingMapping
             mappings = []
-            filter_cache: set[tuple] = set()
+            scan_resource_cache: set[tuple] = set()
             for index, finding_instance in enumerate(findings):
                 resource_instance = resources[findings_resources_mapping[index]]
                 mappings.append(
@@ -208,19 +208,14 @@ class Command(BaseCommand):
                         finding=finding_instance,
                     )
                 )
-                dimensions = [
-                    ("service", resource_instance.service),
-                    ("region", resource_instance.region),
-                    ("resource_type", resource_instance.type),
-                    ("status", finding_instance.status),
-                    ("severity", finding_instance.severity),
-                    ("provider_type", provider.provider),
-                    ("delta", finding_instance.delta),
-                ]
-
-                for dimension, value in dimensions:
-                    if value is not None:
-                        filter_cache.add((str(resource_instance.id), dimension, value))
+                scan_resource_cache.add(
+                    (
+                        str(resource_instance.id),
+                        resource_instance.service,
+                        resource_instance.region,
+                        resource_instance.type,
+                    )
+                )
 
             num_batches = ceil(len(mappings) / batch_size)
             self.stdout.write(
@@ -242,24 +237,27 @@ class Command(BaseCommand):
                 scan.save()
 
             self.stdout.write(self.style.WARNING("Creating finding filter values..."))
-            filter_values = [
-                FilterValue(
+            resource_scan_summaries = [
+                ResourceScanSummary(
                     tenant_id=tenant_id,
                     scan_id=str(scan.id),
                     resource_id=resource_id,
-                    dimension=dimension,
-                    value=value,
+                    service=service,
+                    region=region,
+                    resource_type=resource_type,
                 )
-                for resource_id, dimension, value in filter_cache
+                for resource_id, service, region, resource_type in scan_resource_cache
             ]
-            num_batches = ceil(len(filter_values) / batch_size)
+            num_batches = ceil(len(resource_scan_summaries) / batch_size)
             with rls_transaction(tenant_id):
                 for i in tqdm(
-                    range(0, len(filter_values), batch_size), total=num_batches
+                    range(0, len(resource_scan_summaries), batch_size),
+                    total=num_batches,
                 ):
                     with rls_transaction(tenant_id):
-                        FilterValue.objects.bulk_create(
-                            filter_values[i : i + batch_size], ignore_conflicts=True
+                        ResourceScanSummary.objects.bulk_create(
+                            resource_scan_summaries[i : i + batch_size],
+                            ignore_conflicts=True,
                         )
 
             self.stdout.write(

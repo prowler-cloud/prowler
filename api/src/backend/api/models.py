@@ -1234,26 +1234,43 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
         ]
 
 
-class FilterValue(RowLevelSecurityProtectedModel):
-    scan_id = models.UUIDField(default=uuid7)
-    resource_id = models.UUIDField(default=uuid4)
-    dimension = models.CharField(max_length=32)
-    value = models.TextField()
+class ResourceScanSummary(RowLevelSecurityProtectedModel):
+    scan_id = models.UUIDField(default=uuid7, db_index=True)
+    resource_id = models.UUIDField(default=uuid4, db_index=True)
+    service = models.CharField(max_length=100)
+    region = models.CharField(max_length=100)
+    resource_type = models.CharField(max_length=100)
 
     class Meta:
-        db_table = "filter_values"
-        unique_together = (
-            ("tenant_id", "scan_id", "resource_id", "dimension", "value"),
-        )
+        db_table = "resource_scan_summaries"
+        unique_together = (("tenant_id", "scan_id", "resource_id"),)
 
         indexes = [
+            # Single-dimension lookups:
             models.Index(
-                fields=["tenant_id", "scan_id", "resource_id", "dimension"],
-                name="filter_val_scan_res_idx",
+                fields=["tenant_id", "scan_id", "service"],
+                name="rss_tenant_scan_svc_idx",
             ),
             models.Index(
-                fields=["tenant_id", "scan_id", "dimension", "value"],
-                name="filter_values_dim_idx",
+                fields=["tenant_id", "scan_id", "region"],
+                name="rss_tenant_scan_reg_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "resource_type"],
+                name="rss_tenant_scan_type_idx",
+            ),
+            # Two-dimension cross-filters:
+            models.Index(
+                fields=["tenant_id", "scan_id", "region", "service"],
+                name="rss_tenant_scan_reg_svc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "service", "resource_type"],
+                name="rss_tenant_scan_svc_type_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "region", "resource_type"],
+                name="rss_tenant_scan_reg_type_idx",
             ),
         ]
 

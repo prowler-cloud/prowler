@@ -78,7 +78,6 @@ from api.filters import (
 )
 from api.models import (
     ComplianceOverview,
-    FilterValue,
     Finding,
     Integration,
     Invitation,
@@ -89,6 +88,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
     Scan,
@@ -1645,116 +1645,94 @@ class FindingViewSet(BaseRLSViewSet):
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=False, methods=["get"], url_name="metadata")
-    # def metadata(self, request):
-    #     tenant_id = self.request.tenant_id
-    #     queryset = self.get_queryset()
-    #     filtered_queryset = self.filter_queryset(queryset)
-    #
-    #     filtered_ids = filtered_queryset.order_by().values("id")
-    #
-    #     relevant_resources = Resource.all_objects.filter(
-    #         tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
-    #     ).only("service", "region", "type")
-    #
-    #     aggregation = relevant_resources.aggregate(
-    #         services=ArrayAgg("service", flat=True),
-    #         regions=ArrayAgg("region", flat=True),
-    #         resource_types=ArrayAgg("type", flat=True),
-    #     )
-    #
-    #     services = sorted(set(aggregation["services"] or []))
-    #     regions = sorted({region for region in aggregation["regions"] or [] if region})
-    #     resource_types = sorted(set(aggregation["resource_types"] or []))
-    #
-    #     result = {
-    #         "services": services,
-    #         "regions": regions,
-    #         "resource_types": resource_types,
-    #     }
-    #
-    #     serializer = self.get_serializer(data=result)
-    #     serializer.is_valid(raise_exception=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="metadata_new")
+    @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
-        # 1) Enforce & apply all Finding filters (scan, date, status, severity, delta, provider, etc.)
+        # Force filter validation
         self.filter_queryset(self.get_queryset())
 
         tenant_id = request.tenant_id
-        qp = request.query_params
+        query_params = request.query_params
 
-        # 2) Build the base FilterValue queryset scoped by tenant + scan/date
-        fv_qs = FilterValue.objects.filter(tenant_id=tenant_id)
+        queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
 
-        if scans := qp.get("filter[scan__in]") or qp.get("filter[scan]"):
-            fv_qs = fv_qs.filter(scan_id__in=scans.split(","))
+        if scans := query_params.get("filter[scan__in]") or query_params.get(
+            "filter[scan]"
+        ):
+            queryset = queryset.filter(scan_id__in=scans.split(","))
         else:
-            exact = qp.get("filter[inserted_at]")
-            gte = qp.get("filter[inserted_at__gte]")
-            lte = qp.get("filter[inserted_at__lte]")
+            exact = query_params.get("filter[inserted_at]")
+            gte = query_params.get("filter[inserted_at__gte]")
+            lte = query_params.get("filter[inserted_at__lte]")
 
-            df = {}
+            date_filters = {}
             if exact:
-                d = parse_date(exact)
-                dt0 = datetime.combine(d, datetime.min.time(), tzinfo=timezone.utc)
-                dt1 = dt0 + timedelta(days=1)
-                df["scan_id__gte"] = uuid7_start(datetime_to_uuid7(dt0))
-                df["scan_id__lt"] = uuid7_start(datetime_to_uuid7(dt1))
+                date = parse_date(exact)
+                datetime_start = datetime.combine(
+                    date, datetime.min.time(), tzinfo=timezone.utc
+                )
+                datetime_end = datetime_start + timedelta(days=1)
+                date_filters["scan_id__gte"] = uuid7_start(
+                    datetime_to_uuid7(datetime_start)
+                )
+                date_filters["scan_id__lt"] = uuid7_start(
+                    datetime_to_uuid7(datetime_end)
+                )
             else:
                 if gte:
-                    d0 = parse_date(gte)
-                    dt0 = datetime.combine(d0, datetime.min.time(), tzinfo=timezone.utc)
-                    df["scan_id__gte"] = uuid7_start(datetime_to_uuid7(dt0))
+                    date_start = parse_date(gte)
+                    datetime_start = datetime.combine(
+                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                    )
+                    date_filters["scan_id__gte"] = uuid7_start(
+                        datetime_to_uuid7(datetime_start)
+                    )
                 if lte:
-                    d1 = parse_date(lte)
-                    dt1 = datetime.combine(
-                        d1 + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+                    date_end = parse_date(lte)
+                    datetime_end = datetime.combine(
+                        date_end + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
                     )
-                    df["scan_id__lt"] = uuid7_start(datetime_to_uuid7(dt1))
-
-            fv_qs = fv_qs.filter(**df)
-
-        # 3) Build resource_ids only if the user applied a resource‐level filter
-        resource_dims = ["service", "region", "resource_type"]
-        resource_ids_qs = None
-
-        for dim in resource_dims:
-            p = qp.get(f"filter[{dim}]")
-            p__ = qp.get(f"filter[{dim}__in]")
-            if not (param := p or p__):
-                continue
-
-            vals = param.split(",")
-            if resource_ids_qs is None:
-                # first resource filter: no prior restriction
-                resource_ids_qs = (
-                    fv_qs.filter(dimension=dim, value__in=vals)
-                    .values_list("resource_id", flat=True)
-                    .distinct()
-                )
-            else:
-                # subsequent filters: intersect
-                resource_ids_qs = (
-                    fv_qs.filter(
-                        dimension=dim, value__in=vals, resource_id__in=resource_ids_qs
+                    date_filters["scan_id__lt"] = uuid7_start(
+                        datetime_to_uuid7(datetime_end)
                     )
-                    .values_list("resource_id", flat=True)
-                    .distinct()
-                )
 
-        # 4) Collect resource‐level facets, WITHOUT any resource_id join if no resource filter
-        result = {}
-        for dim in resource_dims:
-            qs = fv_qs.filter(dimension=dim)
-            if resource_ids_qs is not None:
-                qs = qs.filter(resource_id__in=resource_ids_qs)
-            result[f"{dim}s"] = list(
-                qs.values_list("value", flat=True).distinct().order_by("value")
+            if date_filters:
+                queryset = queryset.filter(**date_filters)
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get(
+            "filter[resource_type]"
+        ) or query_params.get("filter[resource_type__in]"):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
             )
 
-        # 6) Serialize & return
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "resource_types": resource_types,
+        }
+
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)

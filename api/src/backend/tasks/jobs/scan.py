@@ -16,10 +16,10 @@ from api.compliance import (
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
-    FilterValue,
     Finding,
     Provider,
     Resource,
+    ResourceScanSummary,
     ResourceTag,
     Scan,
     ScanSummary,
@@ -122,7 +122,7 @@ def perform_prowler_scan(
     check_status_by_region = {}
     exception = None
     unique_resources = set()
-    filter_cache: set[tuple] = set()
+    scan_resource_cache: set[tuple[str, str, str, str]] = set()
     start_time = time.time()
 
     with rls_transaction(tenant_id):
@@ -297,20 +297,15 @@ def perform_prowler_scan(
                     continue
                 region_dict[finding.check_id] = finding.status.value
 
-                # Update filter values
-                dimensions = [
-                    ("service", resource_instance.service),
-                    ("region", resource_instance.region),
-                    ("resource_type", resource_instance.type),
-                    ("status", finding_instance.status),
-                    ("severity", finding_instance.severity),
-                    ("provider_type", provider_instance.provider),
-                    ("delta", finding_instance.delta),
-                ]
-
-                for dimension, value in dimensions:
-                    if value is not None:
-                        filter_cache.add((str(resource_instance.id), dimension, value))
+                # Update scan resource summaries
+                scan_resource_cache.add(
+                    (
+                        str(resource_instance.id),
+                        resource_instance.service,
+                        resource_instance.region,
+                        resource_instance.type,
+                    )
+                )
 
             # Update scan progress
             with rls_transaction(tenant_id):
@@ -392,19 +387,20 @@ def perform_prowler_scan(
         )
 
     try:
-        filter_values = [
-            FilterValue(
+        resource_scan_summaries = [
+            ResourceScanSummary(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
                 resource_id=resource_id,
-                dimension=dimension,
-                value=value,
+                service=service,
+                region=region,
+                resource_type=resource_type,
             )
-            for resource_id, dimension, value in filter_cache
+            for resource_id, service, region, resource_type in scan_resource_cache
         ]
         with rls_transaction(tenant_id):
-            FilterValue.objects.bulk_create(
-                filter_values, batch_size=500, ignore_conflicts=True
+            ResourceScanSummary.objects.bulk_create(
+                resource_scan_summaries, batch_size=500, ignore_conflicts=True
             )
     except Exception as filter_exception:
         import sentry_sdk
