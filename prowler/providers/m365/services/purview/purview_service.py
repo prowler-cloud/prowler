@@ -8,9 +8,12 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Purview(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        self.powershell.connect_exchange_online()
-        self.audit_log_config = self._get_audit_log_config()
-        self.powershell.close()
+        self.audit_log_config = None
+
+        if self.powershell:
+            self.powershell.connect_exchange_online()
+            self.audit_log_config = self._get_audit_log_config()
+            self.powershell.close()
 
     def _get_audit_log_config(self):
         logger.info("M365 - Getting Admin Audit Log settings...")

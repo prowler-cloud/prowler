@@ -53,7 +53,7 @@ Prowler App can be installed in different ways, depending on your environment:
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
 
     ???+ note
-        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml to run the app in development mode.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -570,6 +570,10 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 With M365 you need to specify which auth method is going to be used:
 
 ```console
+
+# To use both service principal (for MSGraph) and user credentials (for PowerShell modules)
+prowler m365 --env-auth
+
 # To use service principal authentication
 prowler m365 --sp-env-auth
 

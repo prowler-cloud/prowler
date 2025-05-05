@@ -39,6 +39,9 @@ IGNORED_EXCEPTIONS = [
     "RequestExpired",
     "ConnectionClosedError",
     "MaxRetryError",
+    "AWSAccessKeyIDInvalidError",
+    "AWSSessionTokenExpiredError",
+    "EndpointConnectionError",  # AWS Service is not available in a region
     "Pool is closed",  # The following comes from urllib3: eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
     # Authentication Errors from GCP
     "ClientAuthenticationError",
@@ -63,8 +66,6 @@ IGNORED_EXCEPTIONS = [
     "AzureClientIdAndClientSecretNotBelongingToTenantIdError",
     "AzureHTTPResponseError",
     "Error with credentials provided",
-    # AWS Service is not available in a region
-    "EndpointConnectionError",
 ]
 
 
@@ -96,4 +97,6 @@ sentry_sdk.init(
         # possible.
         "continuous_profiling_auto_start": True,
     },
+    attach_stacktrace=True,
+    ignore_errors=IGNORED_EXCEPTIONS,
 )
