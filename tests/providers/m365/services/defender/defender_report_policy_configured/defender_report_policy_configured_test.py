@@ -48,10 +48,7 @@ class Test_defender_report_policy_configured:
                 result[0].status_extended
                 == "Defender report submission policy is properly configured for Teams security reporting."
             )
-            assert (
-                result[0].resource["defender_policy"]
-                == defender_client.report_submission_policy.dict()
-            )
+            assert result[0].resource == defender_client.report_submission_policy.dict()
             assert result[0].resource_name == "Defender Security Reporting Policy"
             assert result[0].resource_id == "defenderSecurityReportingPolicy"
             assert result[0].location == "global"
@@ -97,10 +94,7 @@ class Test_defender_report_policy_configured:
                 result[0].status_extended
                 == "Defender report submission policy is not properly configured for Teams security reporting."
             )
-            assert (
-                result[0].resource["defender_policy"]
-                == defender_client.report_submission_policy.dict()
-            )
+            assert result[0].resource == defender_client.report_submission_policy.dict()
             assert result[0].resource_name == "Defender Security Reporting Policy"
             assert result[0].resource_id == "defenderSecurityReportingPolicy"
             assert result[0].location == "global"

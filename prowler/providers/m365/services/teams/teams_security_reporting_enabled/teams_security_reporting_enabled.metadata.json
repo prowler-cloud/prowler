@@ -15,11 +15,11 @@
     "Code": {
       "CLI": "Set-CsTeamsMessagingPolicy -Identity Global -AllowSecurityEndUserReporting $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center (https://admin.teams.microsoft.com). 2. Click to expand Messaging and select Messaging policies. 3. Click Global (Org-wide default). 4. Ensure Report a security concern is On. 5. Navigate to Microsoft 365 Defender (https://security.microsoft.com/). 6. Click on Settings > Email & collaboration > User reported settings. 7. Scroll to Microsoft Teams section. 8. Ensure Monitor reported messages in Microsoft Teams is checked. 9. Ensure Send reported messages to: is set to My reporting mailbox only with report email addresses defined for authorized staff.",
+      "Other": "1. Navigate to Microsoft Teams admin center (https://admin.teams.microsoft.com). 2. Click to expand Messaging and select Messaging policies. 3. Click Global (Org-wide default). 4. Ensure Report a security concern is On.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable security reporting in Teams and configure Defender to use organization-specific reporting addresses to ensure proper handling of security concerns.",
+      "Text": "Enable security reporting in Teams messaging policy.",
       "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
     }
   },

@@ -25,9 +25,7 @@ class defender_report_policy_configured(Check):
         if report_submission_policy:
             report = CheckReportM365(
                 metadata=self.metadata(),
-                resource={
-                    "defender_policy": report_submission_policy.dict(),
-                },
+                resource=report_submission_policy if report_submission_policy else {},
                 resource_name="Defender Security Reporting Policy",
                 resource_id="defenderSecurityReportingPolicy",
             )
