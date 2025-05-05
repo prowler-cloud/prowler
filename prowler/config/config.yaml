@@ -500,3 +500,15 @@ m365:
   # Exchange Organization Settings
   # m365.exchange_organization_mailtips_enabled
   recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+  # Defender Malware Policy Settings
+  # m365.defender_malware_policy_comprehensive_attachments_filter_applied
+  # The recommended list of file extensions to be blocked, this can be changed depending on the organization needs
+  default_recommended_extensions:
+    [
+      "ace", "ani", "apk", "app", "appx", "arj", "bat", "cab", "cmd", "com",
+      "deb", "dex", "dll", "docm", "elf", "exe", "hta", "img", "iso", "jar",
+      "jnlp", "kext", "lha", "lib", "library", "lnk", "lzh", "macho", "msc",
+      "msi", "msix", "msp", "mst", "pif", "ppa", "ppam", "reg", "rev", "scf",
+      "scr", "sct", "sys", "uif", "vb", "vbe", "vbs", "vxd", "wsc", "wsf",
+      "wsh", "xll", "xz", "z"
+    ]

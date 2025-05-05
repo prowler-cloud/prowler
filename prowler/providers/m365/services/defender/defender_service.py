@@ -22,6 +22,7 @@ class Defender(M365Service):
         if self.powershell:
             self.powershell.connect_exchange_online()
             self.malware_policies = self._get_malware_filter_policy()
+            self.malware_rules = self._get_malware_filter_rule()
             self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
             self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
             self.antiphishing_policies = self._get_antiphising_policy()
@@ -50,6 +51,8 @@ class Defender(M365Service):
                             internal_sender_admin_address=policy.get(
                                 "InternalSenderAdminAddress", ""
                             ),
+                            file_types=policy.get("FileTypes", []),
+                            is_default=policy.get("IsDefault", False),
                         )
                     )
         except Exception as error:
@@ -57,6 +60,24 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return malware_policies
+
+    def _get_malware_filter_rule(self):
+        logger.info("Microsoft365 - Getting Defender malware filter rule...")
+        malware_rules = {}
+        try:
+            malware_rule = self.powershell.get_malware_filter_rule()
+            if isinstance(malware_rule, dict):
+                malware_rule = [malware_rule]
+            for rule in malware_rule:
+                if rule:
+                    malware_rules[rule.get("Name", "")] = MalwareRule(
+                        state=rule.get("State", ""),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return malware_rules
 
     def _get_antiphising_policy(self):
         logger.info("Microsoft365 - Getting Defender antiphishing policy...")
@@ -221,6 +242,12 @@ class MalwarePolicy(BaseModel):
     identity: str
     enable_internal_sender_admin_notifications: bool
     internal_sender_admin_address: str
+    file_types: list[str]
+    is_default: bool
+
+
+class MalwareRule(BaseModel):
+    state: str
 
 
 class AntiphishingPolicy(BaseModel):

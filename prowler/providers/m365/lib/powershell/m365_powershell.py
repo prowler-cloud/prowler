@@ -249,6 +249,24 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json", json_parse=True)
 
+    def get_malware_filter_rule(self) -> dict:
+        """
+        Get Defender Malware Filter Rule.
+
+        Retrieves the current Defender anti-malware filter rule settings.
+
+        Returns:
+            dict: Malware filter rule settings in JSON format.
+
+        Example:
+            >>> get_malware_filter_rule()
+            {
+                "Name": "Default",
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-MalwareFilterRule | ConvertTo-Json", json_parse=True)
+
     def get_outbound_spam_filter_policy(self) -> dict:
         """
         Get Defender Outbound Spam Filter Policy.
