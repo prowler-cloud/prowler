@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365UserNotBelongingToTenantError,
 )
@@ -265,6 +266,7 @@ class Testm365PowerShell:
         - Error in stderr
         - Timeout in stdout
         - Empty output
+        - Empty queue handling
         """
         # Setup
         mock_process = MagicMock()
@@ -308,6 +310,89 @@ class Testm365PowerShell:
         result = session.read_output()
         assert result == ""
 
+        # Test 5: Empty queue handling
+        mock_process.stdout.readline.side_effect = []  # No output at all
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output(timeout=0.1, default="empty_queue")
+        assert result == "empty_queue"
+
+        # Test 6: Empty error queue handling
+        mock_process.stdout.readline.side_effect = ["test output\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = []  # No error output
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output()
+            assert result == "test output"
+            mock_error.assert_not_called()
+
+        # Test 7: Both queues empty
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = []  # No error output
+        result = session.read_output(timeout=0.1, default="both_empty")
+        assert result == "both_empty"
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_read_output_queue_empty(self, mock_popen):
+        """Test read_output when both queues are empty"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return empty queues
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = []  # No error output
+
+        # Test with default value
+        result = session.read_output(timeout=0.1, default="empty_queue")
+        assert result == "empty_queue"
+
+        # Test without default value
+        result = session.read_output(timeout=0.1)
+        assert result == ""
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_read_output_error_queue_empty(self, mock_popen):
+        """Test read_output when error queue is empty but stdout has content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return content in stdout but empty stderr
+        mock_process.stdout.readline.side_effect = ["test output\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = []  # No error output
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output()
+            assert result == "test output"
+            mock_error.assert_not_called()
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_read_output_result_queue_empty(self, mock_popen):
+        """Test read_output when result queue is empty but stderr has content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        session = M365PowerShell(credentials)
+
+        # Mock process to return empty stdout but content in stderr
+        mock_process.stdout.readline.side_effect = []  # No output
+        mock_process.stderr.readline.side_effect = [
+            "Error message\n",
+            f"Write-Error: {session.END}\n",
+        ]
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output(timeout=0.1, default="default")
+            assert result == "default"
+            mock_error.assert_called_once_with("PowerShell error output: Error message")
+
         session.close()
 
     @patch("subprocess.Popen")
@@ -346,3 +431,149 @@ class Testm365PowerShell:
 
         mock_process.stdin.flush.assert_called_once()
         mock_process.terminate.assert_called_once()
+
+    @patch("subprocess.Popen")
+    def test_initialize_m365_powershell_modules_success(self, mock_popen):
+        """Test initialize_m365_powershell_modules when all modules are successfully initialized"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        # Mock the execute method to simulate successful module installation
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                return None  # Installation successful
+            elif "Import-Module" in command:
+                return None  # Import successful
+            return None
+
+        with (
+            patch.object(
+                PowerShellSession, "execute", side_effect=mock_execute
+            ) as mock_execute_obj,
+            patch("prowler.lib.logger.logger.info") as mock_info,
+        ):
+            from prowler.providers.m365.lib.powershell.m365_powershell import (
+                initialize_m365_powershell_modules,
+            )
+
+            result = initialize_m365_powershell_modules()
+
+            # Verify successful initialization
+            assert result is True
+            # Verify that execute was called for each module
+            assert mock_execute_obj.call_count == 6  # 2 modules * 3 commands each
+            # Verify success messages were logged
+            mock_info.assert_any_call(
+                "Successfully installed module ExchangeOnlineManagement"
+            )
+            mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
+
+    @patch("subprocess.Popen")
+    def test_initialize_m365_powershell_modules_failure(self, mock_popen):
+        """Test initialize_m365_powershell_modules when module initialization fails"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        # Mock the execute method to simulate installation failure
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                raise Exception("Installation failed")
+            return None
+
+        with (
+            patch.object(
+                PowerShellSession, "execute", side_effect=mock_execute
+            ) as mock_execute_obj,
+            patch("prowler.lib.logger.logger.error") as mock_error,
+        ):
+            from prowler.providers.m365.lib.powershell.m365_powershell import (
+                initialize_m365_powershell_modules,
+            )
+
+            result = initialize_m365_powershell_modules()
+
+            # Verify failed initialization
+            assert result is False
+            # Verify that execute was called at least twice
+            assert mock_execute_obj.call_count >= 2
+            # Verify error was logged
+            mock_error.assert_called_with(
+                "Failed to initialize module ExchangeOnlineManagement: Installation failed"
+            )
+
+    @patch("subprocess.Popen")
+    def test_main_success(self, mock_popen):
+        """Test main() function when module initialization is successful"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        # Mock the execute method to simulate successful module installation
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                return None  # Installation successful
+            elif "Import-Module" in command:
+                return None  # Import successful
+            return None
+
+        with (
+            patch.object(PowerShellSession, "execute", side_effect=mock_execute),
+            patch("prowler.lib.logger.logger.info") as mock_info,
+            patch("prowler.lib.logger.logger.error") as mock_error,
+        ):
+            from prowler.providers.m365.lib.powershell.m365_powershell import main
+
+            main()
+
+            # Verify all info messages were logged in the correct order
+            assert mock_info.call_count == 3
+            mock_info.assert_has_calls(
+                [
+                    call("Successfully installed module ExchangeOnlineManagement"),
+                    call("Successfully installed module MicrosoftTeams"),
+                    call("M365 PowerShell modules initialized successfully"),
+                ]
+            )
+            # Verify no error was logged
+            mock_error.assert_not_called()
+
+    @patch("subprocess.Popen")
+    def test_main_failure(self, mock_popen):
+        """Test main() function when module initialization fails"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        # Mock the execute method to simulate installation failure
+        def mock_execute(command, *args, **kwargs):
+            if "Get-Module" in command:
+                return None  # Module not installed
+            elif "Install-Module" in command:
+                raise Exception("Installation failed")
+            return None
+
+        with (
+            patch.object(PowerShellSession, "execute", side_effect=mock_execute),
+            patch("prowler.lib.logger.logger.info") as mock_info,
+            patch("prowler.lib.logger.logger.error") as mock_error,
+        ):
+            from prowler.providers.m365.lib.powershell.m365_powershell import main
+
+            main()
+
+            # Verify all error messages were logged in the correct order
+            assert mock_error.call_count == 2
+            mock_error.assert_has_calls(
+                [
+                    call(
+                        "Failed to initialize module ExchangeOnlineManagement: Installation failed"
+                    ),
+                    call("Failed to initialize M365 PowerShell modules"),
+                ]
+            )
+            # Verify no info messages were logged
+            mock_info.assert_not_called()

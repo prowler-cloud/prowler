@@ -149,6 +149,7 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
 
@@ -186,7 +187,7 @@ const SSRDataTable = async ({
     page,
     sort: encodedSort,
     filters,
-    pageSize: 10,
+    pageSize,
   });
 
   // Create dictionaries for resources, scans, and providers
