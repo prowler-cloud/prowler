@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Teams Global Messaging Policy and Defender Settings",
-  "Description": "Ensure users can report security concerns in Teams through proper configuration of Teams messaging policy and Defender settings.",
+  "ResourceType": "Teams Global Messaging Policy",
+  "Description": "Ensure Teams user reporting settings allow a user to report a message as malicious for further analysis",
   "Risk": "Without proper security reporting enabled, users cannot effectively report suspicious or malicious messages, potentially allowing security threats to go unnoticed.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
   "Remediation": {
     "Code": {
-      "CLI": "Set-CsTeamsMessagingPolicy -Identity Global -AllowSecurityEndUserReporting $true\nSet-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy -EnableReportToMicrosoft $false -ReportChatMessageEnabled $false -ReportChatMessageToCustomizedAddressEnabled $true -ReportJunkToCustomizedAddress $true -ReportNotJunkToCustomizedAddress $true -ReportPhishToCustomizedAddress $true -ReportJunkAddresses $usersub -ReportNotJunkAddresses $usersub -ReportPhishAddresses $usersub",
+      "CLI": "Set-CsTeamsMessagingPolicy -Identity Global -AllowSecurityEndUserReporting $true",
       "NativeIaC": "",
       "Other": "1. Navigate to Microsoft Teams admin center (https://admin.teams.microsoft.com). 2. Click to expand Messaging and select Messaging policies. 3. Click Global (Org-wide default). 4. Ensure Report a security concern is On. 5. Navigate to Microsoft 365 Defender (https://security.microsoft.com/). 6. Click on Settings > Email & collaboration > User reported settings. 7. Scroll to Microsoft Teams section. 8. Ensure Monitor reported messages in Microsoft Teams is checked. 9. Ensure Send reported messages to: is set to My reporting mailbox only with report email addresses defined for authorized staff.",
       "Terraform": ""

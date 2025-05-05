@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_report_policy_configured",
+  "CheckTitle": "Ensure Defender report submission policy is properly configured",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender Report Submission Policy",
+  "Description": "Ensure Defender report submission policy is properly configured to use customized addresses and enable chat message reporting to customized addresses, while disabling report chat message to Microsoft.",
+  "Risk": "If Defender report submission policy is not properly configured, reported messages from Teams may not be handled or routed correctly, reducing the organization's ability to respond to threats.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy -EnableReportToMicrosoft $false -ReportChatMessageEnabled $false -ReportChatMessageToCustomizedAddressEnabled $true -ReportJunkToCustomizedAddress $true -ReportNotJunkToCustomizedAddress $true -ReportPhishToCustomizedAddress $true -ReportJunkAddresses $usersub -ReportNotJunkAddresses $usersub -ReportPhishAddresses $usersub",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 Defender (https://security.microsoft.com/). 2. Click on Settings > Email & collaboration > User reported settings. 3. Scroll to Microsoft Teams section. 4. Ensure Monitor reported messages in Microsoft Teams is checked. 5. Ensure Send reported messages to: is set to My reporting mailbox only with report email addresses defined for authorized staff.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure Defender report submission policy to use customized addresses and enable chat message reporting to customized addresses, while disabling report chat message to Microsoft.",
+      "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
