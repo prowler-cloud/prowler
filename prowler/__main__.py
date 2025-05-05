@@ -190,18 +190,6 @@ def prowler():
         provider=provider,
     )
 
-    #print("Bulk Checks Metadata:", bulk_checks_metadata)
-    #print("Bulk Compliance Frameworks:", bulk_compliance_frameworks)
-    #print("Checks File:", checks_file)
-    #print("Checks:", checks)
-    #print("Services:", services)
-    #print("Severities:", severities)
-    #print("Compliance Framework:", compliance_framework)
-    #print("Categories:", categories)
-    #print("Provider:", provider)
-
-    #print(checks_to_execute)
-
     # if --list-checks-json, dump a json file and exit
     if args.list_checks_json:
         print(list_checks_json(provider, sorted(checks_to_execute)))

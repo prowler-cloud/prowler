@@ -1,7 +1,7 @@
 from typing import Optional, List
 import ionoscloud
 from ionoscloud import ApiClient, Configuration
-from ionoscloud.api import ServersApi, NetworkInterfacesApi, VolumesApi, SnapshotsApi
+from ionoscloud.api import ServersApi, NetworkInterfacesApi, VolumesApi, SnapshotsApi, FirewallRulesApi
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
 
@@ -24,6 +24,7 @@ class IonosServer(IonosService):
         self.network_client = NetworkInterfacesApi(self.session)
         self.snapshots_client = SnapshotsApi(self.session)
         self.datacenter_id = provider.identity.datacenter_id
+        self.security_rules_api = FirewallRulesApi(self.session)
         self.servers = []
 
         self.__get_server_resources__()
@@ -45,7 +46,7 @@ class IonosServer(IonosService):
         """
         logger.info(f"Getting servers for datacenter {datacenter_id}")
         try:
-            self.servers = self.client.datacenters_servers_get(datacenter_id)
+            self.servers = self.client.datacenters_servers_get(datacenter_id, pretty=True, depth=1)
         except Exception as error:
             logger.error(
                 f"{datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -182,6 +183,33 @@ class IonosServer(IonosService):
         try:
             snapshots = self.snapshots_client.snapshots_get(pretty=True, depth=1)
             return snapshots.items if hasattr(snapshots, 'items') else None
+        except Exception as error:
+            logger.error(
+                f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+
+    def get_network_security_rules(self, server_id, nic_id) -> Optional[list]:
+        """
+        Get all network security groups for all servers
+        
+        Returns:
+            list: List of network security groups or None if not found
+        """
+        try:
+            logger.info(f"Fetching firewall rules for server {server_id} and NIC {nic_id}")
+            nsgs = self.security_rules_api.datacenters_servers_nics_firewallrules_get(
+                self.datacenter_id, 
+                server_id, 
+                nic_id, 
+                pretty=True, 
+                depth=1
+            )
+            if hasattr(nsgs, 'items'):
+                return nsgs.items
+            else:
+                return None
         except Exception as error:
             logger.error(
                 f"{self.datacenter_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

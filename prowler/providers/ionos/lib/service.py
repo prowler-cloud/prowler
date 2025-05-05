@@ -23,4 +23,5 @@ class IonosService:
         """
         self.provider = provider
         self.session = self.provider.session
+        self.identity = self.provider.identity
         self.audited_partition = "ionos"
