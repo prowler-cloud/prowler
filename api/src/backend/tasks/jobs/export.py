@@ -37,6 +37,15 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
+    ProwlerThreatScoreAWS,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azure import (
+    ProwlerThreatScoreAzure,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
+    ProwlerThreatScoreGCP,
+)
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
@@ -55,18 +64,21 @@ COMPLIANCE_CLASS_MAP = {
         ),
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
+        (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
         (lambda name: name == "mitre_attack_azure", AzureMitreAttack),
         (lambda name: name.startswith("ens_"), AzureENS),
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
+        (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
         (lambda name: name == "mitre_attack_gcp", GCPMitreAttack),
         (lambda name: name.startswith("ens_"), GCPENS),
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
+        (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
