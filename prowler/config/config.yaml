@@ -484,10 +484,10 @@ kubernetes:
 
 # M365 Configuration
 m365:
-  # Entra Conditional Access Policy
+  # Entra
   # m365.entra_admin_users_sign_in_frequency_enabled
   sign_in_frequency: 4 # 4 hours
-  # Teams Settings
+  # Teams
   # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:
     [
@@ -497,9 +497,9 @@ m365:
       #"allow_google_drive",
       #"allow_share_file",
     ]
-  # Exchange Organization Settings
+  # Exchange
   # m365.exchange_organization_mailtips_enabled
   recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
-  # Exchange Mailbox Settings
   # m365.exchange_mailbox_properties_auditing_enabled
-  audit_log_age: 90 # maximum number of days to keep audit logs
+  # Maximum number of days to keep audit logs
+  audit_log_age: 90

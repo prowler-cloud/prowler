@@ -9,9 +9,9 @@ from prowler.providers.m365.services.exchange.exchange_service import (
 )
 
 
-class exchange_mailbox_properties_auditing_enabled(Check):
+class exchange_user_mailbox_auditing_enabled(Check):
     """
-    Check to ensure that mailbox auditing properties are enabled and properly configured.
+    Check to ensure mailbox auditing is enabled for all user mailboxes.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -19,7 +19,7 @@ class exchange_mailbox_properties_auditing_enabled(Check):
 
     def execute(self) -> List[CheckReportM365]:
         """
-        Execute the check to validate that mailbox auditing properties are enabled and properly configured.
+        Execute the check to validate that mailbox auditing is enabled for all user mailboxes.
 
         This method retrieves all mailbox audit properties from the Exchange service and evaluates
         whether auditing is enabled and correctly configured for each mailbox. A report is generated
@@ -57,19 +57,15 @@ class exchange_mailbox_properties_auditing_enabled(Check):
                     and required_delegate.issubset(audit_delegate)
                     and required_owner.issubset(audit_owner)
                 ):
-                    # The limit for E3 is 90 days, but we check >= 90 by default because E5 users can set it to more than 90 days (recommended 180 days)
                     if mailbox.audit_log_age >= exchange_client.audit_config.get(
                         "audit_log_age", 90
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled and properly configured."
+                        report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled with an audit log age of {mailbox.audit_log_age} days."
                     else:
-                        report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled and properly configured but the audit log age is less than 90 days."
+                        report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled but the audit log age is less than {exchange_client.audit_config.get('audit_log_age', 90)} days ({mailbox.audit_log_age} days)."
                 else:
-                    report.status_extended = (
-                        f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled but not properly configured. "
-                        f"Missing audit actions may exist."
-                    )
+                    report.status_extended = f"Mailbox Audit Properties for Mailbox {mailbox.name} is enabled but without all audit actions configured."
 
             findings.append(report)
 

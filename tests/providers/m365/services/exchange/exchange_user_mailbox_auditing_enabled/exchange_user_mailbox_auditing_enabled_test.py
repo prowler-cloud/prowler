@@ -9,7 +9,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_exchange_mailbox_properties_auditing_enabled:
+class Test_exchange_user_mailbox_auditing_enabled:
     def test_no_auditing_mailboxes(self):
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
@@ -24,17 +24,17 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
-                exchange_mailbox_properties_auditing_enabled,
+            from prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled import (
+                exchange_user_mailbox_auditing_enabled,
             )
 
             exchange_client.mailbox_audit_properties = []
 
-            check = exchange_mailbox_properties_auditing_enabled()
+            check = exchange_user_mailbox_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -53,12 +53,12 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
-                exchange_mailbox_properties_auditing_enabled,
+            from prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled import (
+                exchange_user_mailbox_auditing_enabled,
             )
 
             exchange_client.audit_config = {"audit_log_age": 180}
@@ -75,14 +75,14 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_enabled()
+            check = exchange_user_mailbox_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Mailbox Audit Properties for Mailbox User1 is enabled and properly configured."
+                == "Mailbox Audit Properties for Mailbox User1 is enabled with an audit log age of 180 days."
             )
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == "User1"
@@ -105,12 +105,12 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
-                exchange_mailbox_properties_auditing_enabled,
+            from prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled import (
+                exchange_user_mailbox_auditing_enabled,
             )
 
             exchange_client.audit_config = {"audit_log_age": 90}
@@ -127,14 +127,14 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_enabled()
+            check = exchange_user_mailbox_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Mailbox Audit Properties for Mailbox User2 is enabled but not properly configured. Missing audit actions may exist."
+                == "Mailbox Audit Properties for Mailbox User2 is enabled but without all audit actions configured."
             )
             assert result[0].resource_name == "User2"
             assert result[0].resource_id == "User2"
@@ -157,12 +157,12 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
-                exchange_mailbox_properties_auditing_enabled,
+            from prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled import (
+                exchange_user_mailbox_auditing_enabled,
             )
 
             exchange_client.audit_config = {"audit_log_age": 90}
@@ -179,7 +179,7 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_enabled()
+            check = exchange_user_mailbox_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -209,12 +209,12 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled.exchange_client",
+                "prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled.exchange_client",
                 new=exchange_client,
             ),
         ):
-            from prowler.providers.m365.services.exchange.exchange_mailbox_properties_auditing_enabled.exchange_mailbox_properties_auditing_enabled import (
-                exchange_mailbox_properties_auditing_enabled,
+            from prowler.providers.m365.services.exchange.exchange_user_mailbox_auditing_enabled.exchange_user_mailbox_auditing_enabled import (
+                exchange_user_mailbox_auditing_enabled,
             )
 
             exchange_client.audit_config = {"audit_log_age": 90}
@@ -231,14 +231,14 @@ class Test_exchange_mailbox_properties_auditing_enabled:
                 )
             ]
 
-            check = exchange_mailbox_properties_auditing_enabled()
+            check = exchange_user_mailbox_auditing_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Mailbox Audit Properties for Mailbox User4 is enabled and properly configured but the audit log age is less than 90 days."
+                == "Mailbox Audit Properties for Mailbox User4 is enabled but the audit log age is less than 90 days (30 days)."
             )
             assert result[0].resource_name == "User4"
             assert result[0].resource_id == "User4"

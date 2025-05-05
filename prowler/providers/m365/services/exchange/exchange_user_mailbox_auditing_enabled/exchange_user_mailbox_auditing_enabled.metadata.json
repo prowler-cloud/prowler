@@ -1,14 +1,14 @@
 {
   "Provider": "m365",
-  "CheckID": "exchange_mailbox_properties_auditing_enabled",
-  "CheckTitle": "Ensure mailbox auditing for E3 or E5 users is enabled.",
+  "CheckID": "exchange_user_mailbox_auditing_enabled",
+  "CheckTitle": "Ensure mailbox auditing is enabled for all user mailboxes.",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Mailboxes Properties",
-  "Description": "Ensure mailbox auditing is enabled for all E3-licensed or E5-licensed user mailboxes, including the configuration of audit actions for owners, delegates, and admins beyond the Microsoft defaults. The difference between both subscription is the log age so this parameter is configurable and users can set it to their subscription neededs.",
+  "Description": "Ensure mailbox auditing is enabled for all user mailboxes, including the configuration of audit actions for owners, delegates, and admins beyond the Microsoft defaults. The difference between both subscription is the log age so this parameter is configurable and users can set it to their subscription needs.",
   "Risk": "If auditing is not properly enabled and configured, critical mailbox actions may go unrecorded, reducing the ability to investigate incidents, enforce compliance, or detect malicious behavior.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
   "Remediation": {
@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable mailbox auditing for all E3 or E5 user mailboxes and configure auditing for key mailbox actions for owners, delegates, and admins.",
+      "Text": "Enable mailbox auditing for all user mailboxes and configure auditing for key mailbox actions for owners, delegates, and admins.",
       "Url": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide"
     }
   },
