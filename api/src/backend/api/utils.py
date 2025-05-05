@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Subquery
 from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation, Provider
+from api.models import Invitation, Provider, Resource
+from api.v1.serializers import FindingMetadataSerializer
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
@@ -205,3 +208,32 @@ def validate_invitation(
         )
 
     return invitation
+
+
+# ToRemove after removing the fallback mechanism in /findings/metadata
+def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
+    filtered_ids = filtered_queryset.order_by().values("id")
+
+    relevant_resources = Resource.all_objects.filter(
+        tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+    ).only("service", "region", "type")
+
+    aggregation = relevant_resources.aggregate(
+        services=ArrayAgg("service", flat=True),
+        regions=ArrayAgg("region", flat=True),
+        resource_types=ArrayAgg("type", flat=True),
+    )
+
+    services = sorted(set(aggregation["services"] or []))
+    regions = sorted({region for region in aggregation["regions"] or [] if region})
+    resource_types = sorted(set(aggregation["resource_types"] or []))
+
+    result = {
+        "services": services,
+        "regions": regions,
+        "resource_types": resource_types,
+    }
+
+    serializer = FindingMetadataSerializer(data=result)
+    serializer.is_valid(raise_exception=True)
+    return serializer.data

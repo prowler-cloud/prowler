@@ -54,6 +54,7 @@ from tasks.tasks import (
     delete_provider_task,
     delete_tenant_task,
     perform_scan_task,
+    backfill_scan_resource_summaries_task
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -102,7 +103,7 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from api.utils import CustomOAuth2Client, validate_invitation
+from api.utils import CustomOAuth2Client, validate_invitation, get_findings_metadata_no_aggregations
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
@@ -1564,7 +1565,7 @@ class FindingViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
             return FindingDynamicFilterSerializer
-        elif self.action in ["metadata", "metadata_new"]:
+        elif self.action in ["metadata"]:
             return FindingMetadataSerializer
 
         return super().get_serializer_class()
@@ -1648,17 +1649,19 @@ class FindingViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
         # Force filter validation
-        self.filter_queryset(self.get_queryset())
+        filtered_queryset = self.filter_queryset(self.get_queryset())
 
         tenant_id = request.tenant_id
         query_params = request.query_params
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        scan_based_filters = {}
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
         ):
             queryset = queryset.filter(scan_id__in=scans.split(","))
+            scan_based_filters = {"id__in": scans.split(",")}
         else:
             exact = query_params.get("filter[inserted_at]")
             gte = query_params.get("filter[inserted_at__gte]")
@@ -1699,6 +1702,18 @@ class FindingViewSet(BaseRLSViewSet):
 
             if date_filters:
                 queryset = queryset.filter(**date_filters)
+                scan_based_filters = date_filters
+
+        # ToRemove: Temporary fallback mechanism
+        if not queryset.exists():
+            scan_ids = Scan.objects.filter(tenant_id=tenant_id, **scan_based_filters).values_list(
+                "id", flat=True
+            )
+            for scan_id in scan_ids:
+                backfill_scan_resource_summaries_task.apply_async(
+                    kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+                )
+            return Response(get_findings_metadata_no_aggregations(tenant_id, filtered_queryset))
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
             "filter[service__in]"
