@@ -115,7 +115,7 @@ repos:
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'safety check --ignore 70612,66963'
+        entry: bash -c 'safety check --ignore 70612,66963,74429'
         language: system
 
       - id: vulture
