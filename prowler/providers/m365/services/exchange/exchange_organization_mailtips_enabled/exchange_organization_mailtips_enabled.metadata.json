@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_organization_mailtips_enabled",
+  "CheckTitle": "Ensure MailTips are enabled for end users.",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Exchange Organization Configuration",
+  "Description": "Ensure that MailTips are enabled in Exchange Online to provide users with informative messages while composing emails, helping to avoid issues such as sending to large groups or external recipients unintentionally.",
+  "Risk": "Without MailTips, users may inadvertently send sensitive information externally or generate non-delivery reports, leading to communication errors and potential data exposure.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips",
+  "Remediation": {
+    "Code": {
+      "CLI": "$TipsParams = @{ MailTipsAllTipsEnabled = $true; MailTipsExternalRecipientsTipsEnabled = $true; MailTipsGroupMetricsEnabled = $true; MailTipsLargeAudienceThreshold = '25' }; Set-OrganizationConfig @TipsParams",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable MailTips features in Exchange Online and configure the large audience threshold appropriately to assist users when composing emails.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

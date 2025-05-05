@@ -93,7 +93,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     @mock_aws
@@ -132,7 +132,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
         remove(f"{CURRENT_DIRECTORY}/{csv_file}")
@@ -171,7 +171,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "application/json"
         )
 
     @mock_aws
@@ -209,7 +209,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/html"
         )
 
     @mock_aws
@@ -290,7 +290,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     def test_get_get_object_path_with_prowler(self):
