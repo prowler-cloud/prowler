@@ -1,6 +1,7 @@
 import glob
 import os
 
+import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
@@ -1302,10 +1303,11 @@ class ScanViewSet(BaseRLSViewSet):
                 suffix = os.path.basename(path_pattern)
                 try:
                     resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-                except ClientError:
+                except ClientError as e:
+                    sentry_sdk.capture_exception(e)
                     return Response(
                         {"detail": "Failed to list compliance files in S3."},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
                 contents = resp.get("Contents", [])
                 keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
