@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Remove invalid parameter `create_file_descriptor` [(#7600)](https://github.com/prowler-cloud/prowler/pull/7600)
 - Remove first empty line in HTML output [(#7606)](https://github.com/prowler-cloud/prowler/pull/7606)
 - Ensure that ContentType in upload_file matches the uploaded file’s format [(#7635)](https://github.com/prowler-cloud/prowler/pull/7635)
+- Fix incorrect check inside 4.4.1 requirement for Azure CIS 2.0 [(#7656)](https://github.com/prowler-cloud/prowler/pull/7656).
 
 ---
 
