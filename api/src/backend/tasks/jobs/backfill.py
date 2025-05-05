@@ -1,12 +1,17 @@
 from api.db_utils import rls_transaction
-from api.models import Resource, ResourceScanSummary, ResourceFindingMapping, Scan, StateChoices
+from api.models import (
+    Resource,
+    ResourceFindingMapping,
+    ResourceScanSummary,
+    Scan,
+    StateChoices,
+)
 
 
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
     with rls_transaction(tenant_id):
         if ResourceScanSummary.objects.filter(
-            tenant_id=tenant_id,
-            scan_id=scan_id
+            tenant_id=tenant_id, scan_id=scan_id
         ).exists():
             return {"status": "already backfilled"}
 
@@ -19,10 +24,8 @@ def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
             return {"status": "scan is not completed"}
 
         resource_ids_qs = (
-            ResourceFindingMapping.objects
-            .filter(
-                tenant_id=tenant_id,
-                finding__scan_id=scan_id
+            ResourceFindingMapping.objects.filter(
+                tenant_id=tenant_id, finding__scan_id=scan_id
             )
             .values_list("resource_id", flat=True)
             .distinct()
@@ -34,8 +37,7 @@ def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
             return {"status": "no resources to backfill"}
 
         resources_qs = Resource.objects.filter(
-            tenant_id=tenant_id,
-            id__in=resource_ids
+            tenant_id=tenant_id, id__in=resource_ids
         ).only("id", "service", "region", "type")
 
         summaries = []
@@ -53,8 +55,7 @@ def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
 
         for i in range(0, len(summaries), 500):
             ResourceScanSummary.objects.bulk_create(
-                summaries[i: i + 500],
-                ignore_conflicts=True
+                summaries[i : i + 500], ignore_conflicts=True
             )
 
     return {"status": "backfilled", "inserted": len(summaries)}

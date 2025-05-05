@@ -236,4 +236,5 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
 
     serializer = FindingMetadataSerializer(data=result)
     serializer.is_valid(raise_exception=True)
+
     return serializer.data

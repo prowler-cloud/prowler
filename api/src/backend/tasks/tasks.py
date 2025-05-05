@@ -4,16 +4,9 @@ from shutil import rmtree
 
 from celery import chain, shared_task
 from celery.utils.log import get_task_logger
-from django_celery_beat.models import PeriodicTask
-
-from api.db_utils import rls_transaction
-from api.decorators import set_tenant
-from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
-from prowler.lib.outputs.finding import Finding as FindingOutput
+from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import backfill_resource_scan_summaries
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
@@ -25,6 +18,13 @@ from tasks.jobs.export import (
 )
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 from tasks.utils import batched, get_next_execution_datetime
+
+from api.db_utils import rls_transaction
+from api.decorators import set_tenant
+from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
+from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
 
