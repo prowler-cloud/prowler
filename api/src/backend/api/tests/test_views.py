@@ -3,11 +3,11 @@ import io
 import json
 import os
 from datetime import datetime, timedelta, timezone
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
 import pytest
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
 from django.urls import reverse
@@ -2506,6 +2506,104 @@ class TestScanViewSet:
         cd = resp["Content-Disposition"]
         assert cd.startswith('attachment; filename="')
         assert cd.endswith(f'filename="{fname.name}"')
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_returns_none_if_task_not_executing(
+        self, mock_task_serializer, mock_task_get, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        mock_task_get.return_value = task
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.COMPLETED,
+        }
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.v1.views.get_s3_client")
+    @patch("api.v1.views.sentry_sdk.capture_exception")
+    def test_compliance_list_objects_client_error(
+        self,
+        mock_sentry_capture,
+        mock_get_s3_client,
+        authenticated_client,
+        scans_fixture,
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/path/to/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.list_objects_v2.side_effect = ClientError(
+            {"Error": {"Code": "InternalError"}}, "ListObjectsV2"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        framework = get_available_compliance_frameworks(scan.provider.provider)[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"]["detail"]
+            == "Failed to list compliance files in S3."
+        )
+        mock_sentry_capture.assert_called()
+
+    @patch("api.v1.views.get_s3_client")
+    def test_report_s3_nosuchkey(
+        self, mock_get_s3_client, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/report.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.get_object.side_effect = ClientError(
+            {"Error": {"Code": "NoSuchKey"}}, "GetObject"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
+
+    @patch("api.v1.views.get_s3_client")
+    def test_report_s3_client_error_other(
+        self, mock_get_s3_client, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/report.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.get_object.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied"}}, "GetObject"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "There is a problem with credentials."
+        )
 
 
 @pytest.mark.django_db
