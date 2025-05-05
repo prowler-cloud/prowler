@@ -1246,10 +1246,10 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
-    def _get_running_task_response(self, scan_instance):
+    def _get_task_status(self, scan_instance):
         """
         If the scan or its report-generation task is still executing,
-        return a 202 Response with the task payload and Content-Location.
+        return an `HTTP 202 Accepted` response with the task payload and Content-Location.
         """
         task = None
 
@@ -1360,7 +1360,7 @@ class ScanViewSet(BaseRLSViewSet):
     def report(self, request, pk=None):
         scan = self.get_object()
         # Check for executing tasks
-        running_resp = self._get_running_task_response(scan)
+        running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
 
@@ -1398,7 +1398,7 @@ class ScanViewSet(BaseRLSViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        running_resp = self._get_running_task_response(scan)
+        running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
 
