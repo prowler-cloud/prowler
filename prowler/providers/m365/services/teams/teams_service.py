@@ -10,12 +10,14 @@ class Teams(M365Service):
         super().__init__(provider)
         self.teams_settings = None
         self.global_meeting_policy = None
+        self.global_messaging_policy = None
         self.user_settings = None
 
         if self.powershell:
             self.powershell.connect_microsoft_teams()
             self.teams_settings = self._get_teams_client_configuration()
             self.global_meeting_policy = self._get_global_meeting_policy()
+            self.global_messaging_policy = self._get_global_messaging_policy()
             self.user_settings = self._get_user_settings()
             self.powershell.close()
 
@@ -75,6 +77,9 @@ class Teams(M365Service):
                     designated_presenter_role_mode=global_meeting_policy.get(
                         "DesignatedPresenterRoleMode", "EveryoneUserOverride"
                     ),
+                    allow_security_end_user_reporting=global_meeting_policy.get(
+                        "AllowSecurityEndUserReporting", False
+                    ),
                     meeting_chat_enabled_type=global_meeting_policy.get(
                         "MeetingChatEnabledType", "EnabledForEveryone"
                     ),
@@ -84,6 +89,23 @@ class Teams(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return global_meeting_policy
+
+    def _get_global_messaging_policy(self):
+        logger.info("M365 - Getting Teams global messaging policy...")
+        global_messaging_policy = None
+        try:
+            global_messaging_policy = self.powershell.get_global_messaging_policy()
+            if global_messaging_policy:
+                global_messaging_policy = GlobalMessagingPolicy(
+                    allow_security_end_user_reporting=global_messaging_policy.get(
+                        "AllowSecurityEndUserReporting", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return global_messaging_policy
 
     def _get_user_settings(self):
         logger.info("M365 - Getting Teams user settings...")
@@ -128,6 +150,10 @@ class GlobalMeetingPolicy(BaseModel):
     allow_external_users_to_bypass_lobby: str = "Everyone"
     allow_pstn_users_to_bypass_lobby: bool = True
     meeting_chat_enabled_type: str = "EnabledForEveryone"
+
+
+class GlobalMessagingPolicy(BaseModel):
+    allow_security_end_user_reporting: bool = False
 
 
 class UserSettings(BaseModel):

@@ -13,6 +13,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     MalwareRule,
     OutboundSpamPolicy,
     OutboundSpamRule,
+    ReportSubmissionPolicy,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -109,6 +110,22 @@ def mock_defender_get_dkim_config(_):
         DkimConfig(dkim_signing_enabled=True, id="domain1"),
         DkimConfig(dkim_signing_enabled=False, id="domain2"),
     ]
+
+
+def mock_defender_get_report_submission_policy(_):
+    return ReportSubmissionPolicy(
+        id="DefaultReportSubmissionPolicy",
+        identity="DefaultReportSubmissionPolicy",
+        name="DefaultReportSubmissionPolicy",
+        report_junk_to_customized_address=True,
+        report_not_junk_to_customized_address=True,
+        report_phish_to_customized_address=True,
+        report_junk_addresses=[],
+        report_not_junk_addresses=[],
+        report_phish_addresses=[],
+        report_chat_message_enabled=True,
+        report_chat_message_to_customized_address_enabled=True,
+    )
 
 
 def mock_defender_get_outbound_spam_filter_policy(_):
@@ -399,3 +416,29 @@ class Test_Defender_Service:
             assert inbound_spam_policies[0].allowed_sender_domains == []
             assert inbound_spam_policies[1].allowed_sender_domains == ["example.com"]
             defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_report_submission_policy",
+        new=mock_defender_get_report_submission_policy,
+    )
+    def test_get_report_submission_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            report_submission_policy = defender_client.report_submission_policy
+            assert report_submission_policy.report_junk_to_customized_address is True
+            assert (
+                report_submission_policy.report_not_junk_to_customized_address is True
+            )
+            assert report_submission_policy.report_phish_to_customized_address is True
+            assert report_submission_policy.report_junk_addresses == []
+            assert report_submission_policy.report_not_junk_addresses == []
+            assert report_submission_policy.report_phish_addresses == []
+            assert report_submission_policy.report_chat_message_enabled is True

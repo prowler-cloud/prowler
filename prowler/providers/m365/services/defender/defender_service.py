@@ -18,7 +18,7 @@ class Defender(M365Service):
         self.connection_filter_policy = None
         self.dkim_configurations = []
         self.inbound_spam_policies = []
-
+        self.report_submission_policy = None
         if self.powershell:
             self.powershell.connect_exchange_online()
             self.malware_policies = self._get_malware_filter_policy()
@@ -30,6 +30,7 @@ class Defender(M365Service):
             self.connection_filter_policy = self._get_connection_filter_policy()
             self.dkim_configurations = self._get_dkim_config()
             self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
+            self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -237,6 +238,44 @@ class Defender(M365Service):
             )
         return inbound_spam_policies
 
+    def _get_report_submission_policy(self):
+        logger.info("Microsoft365 - Getting Defender report submission policy...")
+        report_submission_policy = None
+        try:
+            report_submission_policy = self.powershell.get_report_submission_policy()
+            if report_submission_policy:
+                report_submission_policy = ReportSubmissionPolicy(
+                    report_junk_to_customized_address=report_submission_policy.get(
+                        "ReportJunkToCustomizedAddress", True
+                    ),
+                    report_not_junk_to_customized_address=report_submission_policy.get(
+                        "ReportNotJunkToCustomizedAddress", True
+                    ),
+                    report_phish_to_customized_address=report_submission_policy.get(
+                        "ReportPhishToCustomizedAddress", True
+                    ),
+                    report_junk_addresses=report_submission_policy.get(
+                        "ReportJunkAddresses", []
+                    ),
+                    report_not_junk_addresses=report_submission_policy.get(
+                        "ReportNotJunkAddresses", []
+                    ),
+                    report_phish_addresses=report_submission_policy.get(
+                        "ReportPhishAddresses", []
+                    ),
+                    report_chat_message_enabled=report_submission_policy.get(
+                        "ReportChatMessageEnabled", True
+                    ),
+                    report_chat_message_to_customized_address_enabled=report_submission_policy.get(
+                        "ReportChatMessageToCustomizedAddressEnabled", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return report_submission_policy
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -294,3 +333,14 @@ class OutboundSpamRule(BaseModel):
 class DefenderInboundSpamPolicy(BaseModel):
     identity: str
     allowed_sender_domains: list[str] = []
+
+
+class ReportSubmissionPolicy(BaseModel):
+    report_junk_to_customized_address: bool
+    report_not_junk_to_customized_address: bool
+    report_phish_to_customized_address: bool
+    report_junk_addresses: list[str]
+    report_not_junk_addresses: list[str]
+    report_phish_addresses: list[str]
+    report_chat_message_enabled: bool
+    report_chat_message_to_customized_address_enabled: bool
