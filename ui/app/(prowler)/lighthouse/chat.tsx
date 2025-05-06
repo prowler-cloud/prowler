@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
@@ -12,7 +13,11 @@ interface SuggestedAction {
   action: string;
 }
 
-export default function Chat() {
+interface ChatProps {
+  hasApiKey: boolean;
+}
+
+export default function Chat({ hasApiKey }: ChatProps) {
   const { messages, input, handleSubmit, handleInputChange, append, status } =
     useChat({
       api: "/api/lighthouse/analyst",
@@ -82,7 +87,27 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+    <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+      {!hasApiKey && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
+            <h3 className="mb-2 text-lg font-semibold">
+              OpenAI API Key Required
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Please configure your OpenAI API key to use the Lighthouse Cloud
+              Security Analyst.
+            </p>
+            <Link
+              href="/lighthouse/config"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Configure API Key
+            </Link>
+          </div>
+        </div>
+      )}
+
       {messages.length === 0 ? (
         <div className="flex flex-1 items-center justify-center p-4">
           <div className="w-full max-w-2xl">
