@@ -78,7 +78,7 @@ class Teams(M365Service):
                         "DesignatedPresenterRoleMode", "EveryoneUserOverride"
                     ),
                     allow_security_end_user_reporting=global_meeting_policy.get(
-                        "AllowSecurityEndUserReporting", True
+                        "AllowSecurityEndUserReporting", False
                     ),
                     meeting_chat_enabled_type=global_meeting_policy.get(
                         "MeetingChatEnabledType", "EnabledForEveryone"
@@ -98,7 +98,7 @@ class Teams(M365Service):
             if global_messaging_policy:
                 global_messaging_policy = GlobalMessagingPolicy(
                     allow_security_end_user_reporting=global_messaging_policy.get(
-                        "AllowSecurityEndUserReporting", True
+                        "AllowSecurityEndUserReporting", False
                     ),
                 )
         except Exception as error:
@@ -153,7 +153,7 @@ class GlobalMeetingPolicy(BaseModel):
 
 
 class GlobalMessagingPolicy(BaseModel):
-    allow_security_end_user_reporting: bool = True
+    allow_security_end_user_reporting: bool = False
 
 
 class UserSettings(BaseModel):

@@ -25,7 +25,7 @@ class teams_security_reporting_enabled(Check):
         if global_messaging_policy:
             report = CheckReportM365(
                 metadata=self.metadata(),
-                resource=global_messaging_policy if global_messaging_policy else {},
+                resource=global_messaging_policy,
                 resource_name="Teams Security Reporting Settings",
                 resource_id="teamsSecurityReporting",
             )
