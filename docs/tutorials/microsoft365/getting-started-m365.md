@@ -194,7 +194,7 @@ For this step you will need to use PowerShell, here you will have to create your
     - `M365_USER` your user using the default domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
     - `M365_ENCRYPTED_PASSWORD` generated before
 
-    ![Prowler Cloud M365 Credentials](./img/add-credentials-m365-prowler-cloud.png)
+    ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
 3. Click `Next`
 
