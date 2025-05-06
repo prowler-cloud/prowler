@@ -49,6 +49,8 @@ export function DataTableRowActions<ProviderProps>({
     await checkConnectionProvider(formData);
   };
 
+  const hasSecret = (row.original as any).relationships?.secret?.data;
+
   return (
     <>
       <CustomAlertModal
@@ -89,24 +91,33 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                key="update"
-                description="Update the provider credentials"
-                textValue="Update Credentials"
+                key={hasSecret ? "update" : "add"}
+                description={
+                  hasSecret
+                    ? "Update the provider credentials"
+                    : "Add the provider credentials"
+                }
+                textValue={hasSecret ? "Update Credentials" : "Add Credentials"}
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onPress={() =>
                   router.push(
-                    `/providers/update-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
+                    `/providers/${hasSecret ? "update" : "add"}-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
                   )
                 }
               >
-                Update Credentials
+                {hasSecret ? "Update Credentials" : "Add Credentials"}
               </DropdownItem>
               <DropdownItem
                 key="new"
-                description="Check the connection to the provider"
+                description={
+                  hasSecret
+                    ? "Check the connection to the provider"
+                    : "Add credentials to test the connection"
+                }
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
                 onPress={handleTestConnection}
+                isDisabled={!hasSecret}
               >
                 Test Connection
               </DropdownItem>
