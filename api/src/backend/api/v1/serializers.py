@@ -2135,7 +2135,7 @@ class LighthouseConfigSerializer(RLSSerializer):
     Serializer for the LighthouseConfig model.
     """
 
-    api_key = serializers.CharField(write_only=True, required=False)
+    api_key = serializers.CharField(required=False)
 
     class Meta:
         model = LighthouseConfig
@@ -2159,10 +2159,18 @@ class LighthouseConfigSerializer(RLSSerializer):
         }
 
     def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        # Add back the masked API key for display
-        ret["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
-        return ret
+        data = super().to_representation(instance)
+        # Check if api_key is specifically requested in fields param
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-config]", "")
+        if fields_param == "api_key":
+            # Return decrypted key if specifically requested
+            data["api_key"] = instance.api_key_decoded if instance.api_key else None
+        else:
+            # Return masked key for general requests
+            data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
 
 
 class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):

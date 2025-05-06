@@ -2963,38 +2963,3 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
             status=status.HTTP_201_CREATED,
             headers=headers,
         )
-
-    @action(detail=True, methods=["get"], url_path="show_key")
-    def show_key(self, request, pk=None):
-        """
-        Return the decrypted API key for the specified Lighthouse configuration.
-        """
-        instance = self.get_object()
-
-        if not instance.api_key:
-            return Response(
-                {"detail": "API key is missing."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            decrypted_key = instance.api_key_decoded
-            if decrypted_key is None:
-                return Response(
-                    {"detail": "API key is invalid or missing."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            return Response(
-                data={
-                    "type": "lighthouse-config",
-                    "attributes": {"api_key": decrypted_key},
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Exception as e:
-            return Response(
-                {
-                    "detail": f"An unexpected error occurred while retrieving the API key. {str(e)}"
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
