@@ -460,3 +460,6 @@ m365:
       "scr", "sct", "sys", "uif", "vb", "vbe", "vbs", "vxd", "wsc", "wsf",
       "wsh", "xll", "xz", "z"
     ]
+  # Exchange Mailbox Settings
+  # m365.exchange_mailbox_properties_auditing_enabled
+  audit_log_age: 90 # maximum number of days to keep audit logs
