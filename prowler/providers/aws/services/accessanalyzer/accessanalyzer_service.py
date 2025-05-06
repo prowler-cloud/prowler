@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
+from prowler.providers.aws.lib.resource.resource import AWSResource
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -127,11 +128,8 @@ class Finding(BaseModel):
     status: str = ""
 
 
-class Analyzer(BaseModel):
-    arn: str
-    name: str
+class Analyzer(AWSResource):
     status: str
     findings: list[Finding] = []
     tags: Optional[list] = []
     type: str
-    region: str

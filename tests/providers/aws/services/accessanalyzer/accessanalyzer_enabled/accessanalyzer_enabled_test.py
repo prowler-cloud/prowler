@@ -72,10 +72,16 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
+            # Review this values too
             assert result[0].resource_id == "123456789012"
+            # Review the following line, maybe it should be:
+            # "arn:aws:access-analyzer::123456789012:root"
+            # "arn:aws:access-analyzer::123456789012:account"
             assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
+            assert result[0].resource_service == "access-analyzer"
+            # assert result[0].resource == ""
 
     def test_one_analyzer_not_available_muted(self):
         # Include analyzers to check
@@ -125,6 +131,8 @@ class Test_accessanalyzer_enabled:
             assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
+            assert result[0].resource_service == "access-analyzer"
+            # assert result[0].resource == ""
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
@@ -196,6 +204,8 @@ class Test_accessanalyzer_enabled:
             assert result[1].resource_arn == ACCESS_ANALYZER_ARN
             assert result[1].resource_tags == []
             assert result[1].region == AWS_REGION_2
+            assert result[0].resource_service == "access-analyzer"
+            # assert result[0].resource == ""
 
     def test_one_active_analyzer(self):
         accessanalyzer_client = mock.MagicMock
@@ -233,3 +243,5 @@ class Test_accessanalyzer_enabled:
             assert result[0].resource_arn == ACCESS_ANALYZER_ARN
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_2
+            assert result[0].resource_service == "access-analyzer"
+            # assert result[0].resource == ""
