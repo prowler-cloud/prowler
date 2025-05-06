@@ -11,3 +11,4 @@ export * from "./main-layout/main-layout";
 export * from "./select/Select";
 export * from "./sidebar";
 export * from "./toast";
+export * from "./download-icon-button/download-icon-button";
