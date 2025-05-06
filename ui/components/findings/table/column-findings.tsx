@@ -15,7 +15,7 @@ import {
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
-import { DeltaTooltip } from "./delta-tooltip";
+import { DeltaIndicator } from "./delta-indicator";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -106,7 +106,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
           <div className="flex flex-row items-center gap-4">
             {(delta === "new" || delta === "changed") && (
-              <DeltaTooltip delta={delta} className="min-w-2" />
+              <DeltaIndicator delta={delta} />
             )}
             <p className="mr-7 whitespace-normal break-words text-sm">
               {checktitle}

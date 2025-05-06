@@ -14,7 +14,7 @@ import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
-import { DeltaTooltip } from "./delta-tooltip";
+import { DeltaIndicator } from "./delta-indicator";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -109,7 +109,7 @@ export const FindingDetail = ({
               className="capitalize"
             >
               <div className="flex items-center gap-2">
-                <DeltaTooltip delta={attributes.delta} />
+                <DeltaIndicator delta={attributes.delta} />
                 {attributes.delta}
               </div>
             </InfoField>
