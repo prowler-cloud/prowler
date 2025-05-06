@@ -37,6 +37,7 @@ export function DataTableRowActions<ProviderProps>({
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const providerId = (row.original as { id: string }).id;
   const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
@@ -44,9 +45,11 @@ export function DataTableRowActions<ProviderProps>({
     (row.original as any).relationships?.secret?.data?.id || null;
 
   const handleTestConnection = async () => {
+    setLoading(true);
     const formData = new FormData();
     formData.append("providerId", providerId);
     await checkConnectionProvider(formData);
+    setLoading(false);
   };
 
   const hasSecret = (row.original as any).relationships?.secret?.data;
@@ -83,12 +86,7 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-default-400" />
             </Button>
           </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
+          <DropdownMenu aria-label="Actions" color="default" variant="flat">
             <DropdownSection title="Actions">
               <DropdownItem
                 key={hasSecret ? "update" : "add"}
@@ -104,22 +102,26 @@ export function DataTableRowActions<ProviderProps>({
                     `/providers/${hasSecret ? "update" : "add"}-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
                   )
                 }
+                closeOnSelect={true}
               >
                 {hasSecret ? "Update Credentials" : "Add Credentials"}
               </DropdownItem>
               <DropdownItem
                 key="new"
                 description={
-                  hasSecret
-                    ? "Check the connection to the provider"
-                    : "Add credentials to test the connection"
+                  hasSecret && !loading
+                    ? "Check the provider connection"
+                    : loading
+                      ? "Checking provider connection"
+                      : "Add credentials to test the connection"
                 }
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
                 onPress={handleTestConnection}
-                isDisabled={!hasSecret}
+                isDisabled={!hasSecret || loading}
+                closeOnSelect={false}
               >
-                Test Connection
+                {loading ? "Testing..." : "Test Connection"}
               </DropdownItem>
               <DropdownItem
                 key="edit"
@@ -127,6 +129,7 @@ export function DataTableRowActions<ProviderProps>({
                 textValue="Edit Provider"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onPress={() => setIsEditOpen(true)}
+                closeOnSelect={true}
               >
                 Edit Provider Alias
               </DropdownItem>
@@ -144,6 +147,7 @@ export function DataTableRowActions<ProviderProps>({
                   />
                 }
                 onPress={() => setIsDeleteOpen(true)}
+                closeOnSelect={true}
               >
                 Delete Provider
               </DropdownItem>
