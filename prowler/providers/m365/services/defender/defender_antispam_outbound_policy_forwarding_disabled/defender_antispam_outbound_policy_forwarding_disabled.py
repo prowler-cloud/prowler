@@ -20,28 +20,86 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
             List[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
-        for policy_name, policy in defender_client.outbound_spam_policies.items():
+
+        # Only Default Defender Outbound Spam Policy exists
+        if not defender_client.outbound_spam_rules:
             report = CheckReportM365(
                 metadata=self.metadata(),
-                resource=policy,
-                resource_name="Defender Outbound Spam Policy",
-                resource_id=policy_name,
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                f"Outbound Spam Policy {policy_name} does allow mail forwarding."
+                resource={},
+                resource_name="Default Defender Outbound Spam Policy",
+                resource_id="defaultDefenderOutboundSpamPolicy",
             )
 
-            if (
-                not policy.default
-                and policy_name in defender_client.outbound_spam_rules
-                and defender_client.outbound_spam_rules[policy_name].state.lower()
-                == "enabled"
-            ) or policy.default:
-                if not policy.auto_forwarding_mode:
-                    report.status = "PASS"
-                    report.status_extended = f"Outbound Spam Policy {policy_name} does not allow mail forwarding."
-
+            if self._is_forwarding_disabled(defender_client.outbound_spam_policies[0]):
+                # Case 1: Default policy exists and has forwarding disabled
+                report.status = "PASS"
+                report.status_extended = "Mail forwarding is disabled in the default Defender Outbound Spam Policy (no other policies exist)."
+            else:
+                # Case 5: Default policy exists but allows forwarding
+                report.status = "FAIL"
+                report.status_extended = "Mail forwarding is allowed in the default Defender Outbound Spam Policy (no other policies exist)."
             findings.append(report)
 
+        # Multiple Defender Outbound Spam Policies exist
+        else:
+            forwarding_enabled_policies = []
+            report = None
+
+            for policy_name, policy in defender_client.outbound_spam_policies.items():
+                if policy.default:
+                    if not self._is_forwarding_disabled(policy):
+                        # Case 4: Default policy allows forwarding (potential false positive if another policy overrides it)
+                        report = CheckReportM365(
+                            metadata=self.metadata(),
+                            resource={},
+                            resource_name="Default Defender Outbound Spam Policy",
+                            resource_id="defaultDefenderOutboundSpamPolicy",
+                        )
+                        report.status = "FAIL"
+                        report.status_extended = "Mail forwarding is allowed in the default Defender Outbound Spam Policy, but could be overridden by another policy which is out of Prowler's scope."
+                        findings.append(report)
+                        break
+                else:
+                    if not self._is_forwarding_disabled(policy):
+                        forwarding_enabled_policies.append(policy_name)
+
+            if forwarding_enabled_policies:
+                # Case 3: Default policy has forwarding disabled but some other policies allow it
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name="Defender Outbound Spam Policies",
+                    resource_id="defenderOutboundSpamPolicies",
+                )
+                report.status = "FAIL"
+                report.status_extended = f"Mail forwarding is disabled in default Defender Outbound Spam Policy but allowed in the following Defender Outbound Spam Policies that may override it: {', '.join(forwarding_enabled_policies)}."
+                findings.append(report)
+            elif not report:
+                # Case 2: Default policy has forwarding disabled and all other policies do too
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name="Defender Outbound Spam Policies",
+                    resource_id="defenderOutboundSpamPolicies",
+                )
+                report.status = "PASS"
+                report.status_extended = "Mail forwarding is disabled in all Defender Outbound Spam Policies."
+                findings.append(report)
+
         return findings
+
+    def _is_forwarding_disabled(self, policy) -> bool:
+        """
+        Check if mail forwarding is disabled in the policy.
+
+        Args:
+            policy: The outbound spam policy to check.
+
+        Returns:
+            bool: True if mail forwarding is disabled, False otherwise.
+        """
+        return (
+            policy.default
+            or defender_client.outbound_spam_rules[policy.name].state.lower()
+            == "enabled"
+        ) and not policy.auto_forwarding_mode

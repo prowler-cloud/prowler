@@ -18,6 +18,7 @@ class Defender(M365Service):
         self.connection_filter_policy = None
         self.dkim_configurations = []
         self.inbound_spam_policies = []
+        self.inbound_spam_rules = {}
         self.report_submission_policy = None
         if self.powershell:
             self.powershell.connect_exchange_online()
@@ -30,6 +31,7 @@ class Defender(M365Service):
             self.connection_filter_policy = self._get_connection_filter_policy()
             self.dkim_configurations = self._get_dkim_config()
             self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
+            self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
             self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
 
@@ -44,7 +46,7 @@ class Defender(M365Service):
                 if policy:
                     malware_policies.append(
                         MalwarePolicy(
-                            enable_file_filter=policy.get("EnableFileFilter", True),
+                            enable_file_filter=policy.get("EnableFileFilter", False),
                             identity=policy.get("Identity", ""),
                             enable_internal_sender_admin_notifications=policy.get(
                                 "EnableInternalSenderAdminNotifications", False
@@ -56,6 +58,7 @@ class Defender(M365Service):
                             is_default=policy.get("IsDefault", False),
                         )
                     )
+                    malware_policies.sort(key=lambda x: x.is_default, reverse=True)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -90,6 +93,7 @@ class Defender(M365Service):
             for policy in antiphishing_policy:
                 if policy:
                     antiphishing_policies[policy.get("Name", "")] = AntiphishingPolicy(
+                        name=policy.get("Name", ""),
                         spoof_intelligence=policy.get("EnableSpoofIntelligence", True),
                         spoof_intelligence_action=policy.get(
                             "AuthenticationFailAction", ""
@@ -176,6 +180,7 @@ class Defender(M365Service):
             for policy in outbound_spam_policy:
                 if policy:
                     outbound_spam_policies[policy.get("Name", "")] = OutboundSpamPolicy(
+                        name=policy.get("Name", ""),
                         notify_sender_blocked=policy.get("NotifyOutboundSpam", True),
                         notify_limit_exceeded=policy.get(
                             "BccSuspiciousOutboundMail", True
@@ -230,13 +235,33 @@ class Defender(M365Service):
                             allowed_sender_domains=policy.get(
                                 "AllowedSenderDomains", []
                             ),
+                            default=policy.get("IsDefault", False),
                         )
                     )
+                    inbound_spam_policies.sort(key=lambda x: x.default, reverse=True)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return inbound_spam_policies
+
+    def _get_inbound_spam_filter_rule(self):
+        logger.info("Microsoft365 - Getting Defender inbound spam filter rule...")
+        inbound_spam_rules = {}
+        try:
+            inbound_spam_rule = self.powershell.get_inbound_spam_filter_rule()
+            if isinstance(inbound_spam_rule, dict):
+                inbound_spam_rule = [inbound_spam_rule]
+            for rule in inbound_spam_rule:
+                if rule:
+                    inbound_spam_rules[rule.get("Name", "")] = InboundSpamRule(
+                        state=rule.get("State", "Disabled"),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return inbound_spam_rules
 
     def _get_report_submission_policy(self):
         logger.info("Microsoft365 - Getting Defender report submission policy...")
@@ -291,6 +316,7 @@ class MalwareRule(BaseModel):
 
 
 class AntiphishingPolicy(BaseModel):
+    name: str
     spoof_intelligence: bool
     spoof_intelligence_action: str
     dmarc_reject_action: str
@@ -318,6 +344,7 @@ class DkimConfig(BaseModel):
 
 
 class OutboundSpamPolicy(BaseModel):
+    name: str
     notify_sender_blocked: bool
     notify_limit_exceeded: bool
     notify_limit_exceeded_addresses: List[str]
@@ -333,6 +360,11 @@ class OutboundSpamRule(BaseModel):
 class DefenderInboundSpamPolicy(BaseModel):
     identity: str
     allowed_sender_domains: list[str] = []
+    default: bool
+
+
+class InboundSpamRule(BaseModel):
+    state: str
 
 
 class ReportSubmissionPolicy(BaseModel):
