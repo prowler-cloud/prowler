@@ -223,6 +223,9 @@ export async function getCachedDataSection(): Promise<string> {
     const cacheData = await getUserCache();
     if (cacheData) {
       return `
+**TODAY'S DATE:**
+${new Date().toISOString()}
+
 **CURRENT USER DATA:**
 Information about the current user interacting with the chatbot:
 User: ${cacheData.user.name}

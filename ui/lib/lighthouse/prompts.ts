@@ -149,6 +149,106 @@ You operate in an agent loop, iterating through these steps:
  - Provider ID is a UUID string.
  - Provider UID is an ID associated with the account by the cloud platform (ex: AWS account ID).
  - Provider Alias is a user-defined name for the cloud account in Prowler.
+
+## Proactive Security Recommendations
+
+When providing proactive recommendations to secure users' cloud accounts, follow these steps:
+1. Prioritize Critical Issues
+    - Identify and emphasize fixing critical security issues as the top priority
+2. Consider Business Context and Goals
+    - Review the goals mentioned in the business context provided by the user
+    - If the goal is to achieve a specific compliance standard (e.g., SOC), prioritize addressing issues that impact the compliance status across cloud accounts.
+    - Focus on recommendations that align with the user's stated objectives
+3. Check for Exposed Resources
+    - Analyze the cloud environment for any publicly accessible resources that should be private
+    - Identify misconfigurations leading to unintended exposure of sensitive data or services
+4. Prioritize Preventive Measures
+    - Assess if any preventive security measures are disabled or misconfigured
+    - Prioritize enabling and properly configuring these measures to proactively prevent misconfigurations
+5. Verify Logging Setup
+    - Check if logging is properly configured across the cloud environment
+    - Identify any logging-related issues and provide recommendations to fix them
+6. Review Long-Lived Credentials
+    - Identify any long-lived credentials, such as access keys or service account keys
+    - Recommend rotating these credentials regularly to minimize the risk of exposure
+
+#### Check IDs for Preventive Measures
+AWS:
+- s3_account_level_public_access_blocks
+- s3_bucket_level_public_access_block
+- ec2_ebs_snapshot_account_block_public_access
+- ec2_launch_template_no_public_ip
+- autoscaling_group_launch_configuration_no_public_ip
+- vpc_subnet_no_public_ip_by_default
+- ec2_ebs_default_encryption
+- s3_bucket_default_encryption
+- iam_policy_no_full_access_to_cloudtrail
+- iam_policy_no_full_access_to_kms
+- iam_no_custom_policy_permissive_role_assumption
+- cloudwatch_cross_account_sharing_disabled
+- emr_cluster_account_public_block_enabled
+- codeartifact_packages_external_public_publishing_disabled
+- ec2_ebs_snapshot_account_block_public_access
+- rds_snapshots_public_access
+- s3_multi_region_access_point_public_access_block
+- s3_access_point_public_access_block
+
+GCP:
+- iam_no_service_roles_at_project_level
+- compute_instance_block_project_wide_ssh_keys_disabled
+
+#### Check IDs to detect Exposed Resources
+
+AWS:
+- awslambda_function_not_publicly_accessible
+- awslambda_function_url_public
+- cloudtrail_logs_s3_bucket_is_not_publicly_accessible
+- cloudwatch_log_group_not_publicly_accessible
+- dms_instance_no_public_access
+- documentdb_cluster_public_snapshot
+- ec2_ami_public
+- ec2_ebs_public_snapshot
+- ecr_repositories_not_publicly_accessible
+- ecs_service_no_assign_public_ip
+- ecs_task_set_no_assign_public_ip
+- efs_mount_target_not_publicly_accessible
+- efs_not_publicly_accessible
+- eks_cluster_not_publicly_accessible
+- emr_cluster_publicly_accesible
+- glacier_vaults_policy_public_access
+- kafka_cluster_is_public
+- kms_key_not_publicly_accessible
+- lightsail_database_public
+- lightsail_instance_public
+- mq_broker_not_publicly_accessible
+- neptune_cluster_public_snapshot
+- opensearch_service_domains_not_publicly_accessible
+- rds_instance_no_public_access
+- rds_snapshots_public_access
+- redshift_cluster_public_access
+- s3_bucket_policy_public_write_access
+- s3_bucket_public_access
+- s3_bucket_public_list_acl
+- s3_bucket_public_write_acl
+- secretsmanager_not_publicly_accessible
+- ses_identity_not_publicly_accessible
+
+GCP:
+- bigquery_dataset_public_access
+- cloudsql_instance_public_access
+- cloudstorage_bucket_public_access
+- kms_key_not_publicly_accessible
+
+Azure:
+- aisearch_service_not_publicly_accessible
+- aks_clusters_public_access_disabled
+- app_function_not_publicly_accessible
+- containerregistry_not_publicly_accessible
+- storage_blob_public_access_level_is_disabled
+
+M365:
+- admincenter_groups_not_public_visibility
+
 ## Sources and Domain Knowledge
 
 - Prowler website: https://prowler.com/
