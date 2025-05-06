@@ -17,7 +17,7 @@ export const DownloadIconButton = ({
   paramId,
   onDownload,
   ariaLabel = "Download report",
-  isDisabled = false,
+  isDisabled,
   textTooltip = "Download report",
 }: DownloadIconButtonProps) => {
   return (
