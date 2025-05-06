@@ -178,6 +178,26 @@ class M365PowerShell(PowerShellSession):
             json_parse=True,
         )
 
+    def get_global_messaging_policy(self) -> dict:
+        """
+        Get Teams Global Messaging Policy.
+
+        Retrieves the current Microsoft Teams global messaging policy settings.
+
+        Returns:
+            dict: Teams global messaging policy settings in JSON format.
+
+        Example:
+            >>> get_global_meeting_policy()
+            {
+                "AllowAnonymousUsersToJoinMeeting": true
+            }
+        """
+        return self.execute(
+            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
+        )
+
     def get_user_settings(self) -> dict:
         """
         Get Teams User Settings.
@@ -503,6 +523,37 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
+        )
+
+    def get_report_submission_policy(self) -> dict:
+        """
+        Get Exchange Online Report Submission Policy.
+
+        Retrieves the current Exchange Online report submission policy settings.
+
+        Returns:
+            dict: Report submission policy settings in JSON format.
+
+        Example:
+            >>> get_report_submission_policy()
+            {
+                "Id": "DefaultReportSubmissionPolicy",
+                "Identity": "DefaultReportSubmissionPolicy",
+                "Name": "DefaultReportSubmissionPolicy",
+                "ReportChatMessageEnabled": true,
+                "ReportChatMessageToCustomizedAddressEnabled": true,
+                "ReportJunkAddresses": [],
+                "ReportJunkToCustomizedAddress": true,
+                "ReportNotJunkAddresses": [],
+                "ReportNotJunkToCustomizedAddress": true,
+                "ReportPhishAddresses": [],
+                "ReportPhishToCustomizedAddress": true,
+                "ThirdPartyReportAddresses": [],
+                ...
+            }
+        """
+        return self.execute(
+            "Get-ReportSubmissionPolicy | ConvertTo-Json", json_parse=True
         )
 
     def get_role_assignment_policies(self) -> dict:
