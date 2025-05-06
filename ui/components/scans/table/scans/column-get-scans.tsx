@@ -9,6 +9,7 @@ import { DownloadIconButton, toast } from "@/components/ui";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
+import { downloadScanZip } from "@/lib/helper";
 import { ScanProps } from "@/types";
 
 import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
@@ -135,6 +136,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <DownloadIconButton
           paramId={scanId}
+          onDownload={() => downloadScanZip(scanId, toast)}
           isDisabled={scanState !== "completed"}
         />
       );
