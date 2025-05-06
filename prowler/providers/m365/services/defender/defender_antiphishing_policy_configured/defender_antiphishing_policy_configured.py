@@ -24,72 +24,77 @@ class defender_antiphishing_policy_configured(Check):
         """
         findings = []
 
-        # Only Default Defender Anti-Phishing Policy
-        if not defender_client.antiphising_rules:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Default Defender Anti-Phishing Policy",
-                resource_id="defaultDefenderAntiPhishingPolicy",
-            )
+        if defender_client.antiphishing_policies:
+            # Only Default Defender Anti-Phishing Policy
+            if not defender_client.antiphising_rules:
+                # Get the only policy in the dictionary
+                policy = next(iter(defender_client.antiphishing_policies.values()))
 
-            if self._is_policy_properly_configured(
-                defender_client.antiphishing_policies[0]
-            ):
-                # Case 1: Default policy exists and is properly configured
-                report.status = "PASS"
-                report.status_extended = "Anti-phishing policy is properly configured in the default Defender Anti-Phishing Policy."
-            else:
-                # Case 5: Default policy exists but is not properly configured
-                report.status = "FAIL"
-                report.status_extended = "Anti-phishing policy is not properly configured in the default Defender Anti-Phishing Policy."
-            findings.append(report)
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=policy,
+                    resource_name=policy.name,
+                    resource_id="defaultDefenderAntiPhishingPolicy",
+                )
 
-        # Multiple Defender Anti-Phishing Policies
-        else:
-            misconfigured_policies = []
-            report = None
-
-            for policy_name, policy in defender_client.antiphishing_policies.items():
-                if policy.default:
-                    if not self._is_policy_properly_configured(policy):
-                        # Case 4: Default policy is not properly configured (potential false positive)
-                        report = CheckReportM365(
-                            metadata=self.metadata(),
-                            resource={},
-                            resource_name="Default Defender Anti-Phishing Policy",
-                            resource_id="defaultDefenderAntiPhishingPolicy",
-                        )
-                        report.status = "FAIL"
-                        report.status_extended = "Anti-phishing policy is not properly configured in the default Defender Anti-Phishing Policy, but could be overridden by another policy which is out of Prowler's scope."
-                        findings.append(report)
-                        break
+                if self._is_policy_properly_configured(policy):
+                    # Case 1: Default policy exists and is properly configured
+                    report.status = "PASS"
+                    report.status_extended = "Anti-phishing policy is properly configured in the default Defender Anti-Phishing Policy."
                 else:
-                    if not self._is_policy_properly_configured(policy):
-                        misconfigured_policies.append(policy_name)
+                    # Case 5: Default policy exists but is not properly configured
+                    report.status = "FAIL"
+                    report.status_extended = "Anti-phishing policy is not properly configured in the default Defender Anti-Phishing Policy."
+                findings.append(report)
 
-            if misconfigured_policies:
-                # Case 3: Default policy is properly configured but some other policies are not
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource={},
-                    resource_name="Defender Anti-Phishing Policies",
-                    resource_id="defenderAntiPhishingPolicies",
-                )
-                report.status = "FAIL"
-                report.status_extended = f"Anti-phishing policy is properly configured in default Defender Anti-Phishing Policy but not in the following Defender Anti-Phishing Policies that may override it: {', '.join(misconfigured_policies)}."
-                findings.append(report)
-            elif not report:
-                # Case 2: Default policy is properly configured and all other policies are too
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource={},
-                    resource_name="Defender Anti-Phishing Policies",
-                    resource_id="defenderAntiPhishingPolicies",
-                )
-                report.status = "PASS"
-                report.status_extended = "Anti-phishing policy is properly configured in all Defender Anti-Phishing Policies."
-                findings.append(report)
+            # Multiple Defender Anti-Phishing Policies
+            else:
+                misconfigured_policies = []
+                report = None
+
+                for (
+                    policy_name,
+                    policy,
+                ) in defender_client.antiphishing_policies.items():
+                    if policy.default:
+                        if not self._is_policy_properly_configured(policy):
+                            # Case 4: Default policy is not properly configured (potential false positive)
+                            report = CheckReportM365(
+                                metadata=self.metadata(),
+                                resource=policy,
+                                resource_name=policy.name,
+                                resource_id="defaultDefenderAntiPhishingPolicy",
+                            )
+                            report.status = "FAIL"
+                            report.status_extended = "Anti-phishing policy is not properly configured in the default Defender Anti-Phishing Policy, but could be overridden by another policy which is out of Prowler's scope."
+                            findings.append(report)
+                            break
+                    else:
+                        if not self._is_policy_properly_configured(policy):
+                            misconfigured_policies.append(policy_name)
+
+                if misconfigured_policies:
+                    # Case 3: Default policy is properly configured but some other policies are not
+                    report = CheckReportM365(
+                        metadata=self.metadata(),
+                        resource={},
+                        resource_name="Defender Anti-Phishing Policies",
+                        resource_id="defenderAntiPhishingPolicies",
+                    )
+                    report.status = "FAIL"
+                    report.status_extended = f"Anti-phishing policy is properly configured in default Defender Anti-Phishing Policy but not in the following Defender Anti-Phishing Policies that may override it: {', '.join(misconfigured_policies)}."
+                    findings.append(report)
+                elif not report:
+                    # Case 2: Default policy is properly configured and all other policies are too
+                    report = CheckReportM365(
+                        metadata=self.metadata(),
+                        resource={},
+                        resource_name="Defender Anti-Phishing Policies",
+                        resource_id="defenderAntiPhishingPolicies",
+                    )
+                    report.status = "PASS"
+                    report.status_extended = "Anti-phishing policy is properly configured in all Defender Anti-Phishing Policies."
+                    findings.append(report)
 
         return findings
 

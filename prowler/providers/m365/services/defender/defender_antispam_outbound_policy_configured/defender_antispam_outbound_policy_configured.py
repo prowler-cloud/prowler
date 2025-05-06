@@ -23,72 +23,77 @@ class defender_antispam_outbound_policy_configured(Check):
         """
         findings = []
 
-        # Only Default Defender Outbound Spam Policy exists
-        if not defender_client.outbound_spam_rules:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Default Defender Outbound Spam Policy",
-                resource_id="defaultDefenderOutboundSpamPolicy",
-            )
+        if defender_client.outbound_spam_policies:
+            # Only Default Defender Outbound Spam Policy exists
+            if not defender_client.outbound_spam_rules:
+                # Get the only policy in the dictionary
+                policy = next(iter(defender_client.outbound_spam_policies.values()))
 
-            if self._is_policy_properly_configured(
-                defender_client.outbound_spam_policies[0]
-            ):
-                # Case 1: Default policy exists and is properly configured
-                report.status = "PASS"
-                report.status_extended = "Outbound Spam Policy is properly configured in the default Defender Outbound Spam Policy (no other policies exist)."
-            else:
-                # Case 5: Default policy exists but is not properly configured
-                report.status = "FAIL"
-                report.status_extended = "Outbound Spam Policy is not properly configured in the default Defender Outbound Spam Policy (no other policies exist)."
-            findings.append(report)
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=policy,
+                    resource_name=policy.name,
+                    resource_id="defaultDefenderOutboundSpamPolicy",
+                )
 
-        # Multiple Defender Outbound Spam Policies exist
-        else:
-            misconfigured_policies = []
-            report = None
-
-            for policy_name, policy in defender_client.outbound_spam_policies.items():
-                if policy.default:
-                    if not self._is_policy_properly_configured(policy):
-                        # Case 4: Default policy is not properly configured (potential false positive if another policy overrides it)
-                        report = CheckReportM365(
-                            metadata=self.metadata(),
-                            resource={},
-                            resource_name="Default Defender Outbound Spam Policy",
-                            resource_id="defaultDefenderOutboundSpamPolicy",
-                        )
-                        report.status = "FAIL"
-                        report.status_extended = "Outbound Spam Policy is not properly configured in the default Defender Outbound Spam Policy, but could be overridden by another policy which is out of Prowler's scope."
-                        findings.append(report)
-                        break
+                if self._is_policy_properly_configured(policy):
+                    # Case 1: Default policy exists and is properly configured
+                    report.status = "PASS"
+                    report.status_extended = "Outbound Spam Policy is properly configured in the default Defender Outbound Spam Policy (no other policies exist)."
                 else:
-                    if not self._is_policy_properly_configured(policy):
-                        misconfigured_policies.append(policy_name)
+                    # Case 5: Default policy exists but is not properly configured
+                    report.status = "FAIL"
+                    report.status_extended = "Outbound Spam Policy is not properly configured in the default Defender Outbound Spam Policy (no other policies exist)."
+                findings.append(report)
 
-            if misconfigured_policies:
-                # Case 3: Default policy is properly configured but some other policies are not
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource={},
-                    resource_name="Defender Outbound Spam Policies",
-                    resource_id="defenderOutboundSpamPolicies",
-                )
-                report.status = "FAIL"
-                report.status_extended = f"Outbound Spam Policy is properly configured in default Defender Outbound Spam Policy but not in the following Defender Outbound Spam Policies that may override it: {', '.join(misconfigured_policies)}."
-                findings.append(report)
-            elif not report:
-                # Case 2: Default policy is properly configured and all other policies are too
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource={},
-                    resource_name="Defender Outbound Spam Policies",
-                    resource_id="defenderOutboundSpamPolicies",
-                )
-                report.status = "PASS"
-                report.status_extended = "Outbound Spam Policy is properly configured in all Defender Outbound Spam Policies."
-                findings.append(report)
+            # Multiple Defender Outbound Spam Policies exist
+            else:
+                misconfigured_policies = []
+                report = None
+
+                for (
+                    policy_name,
+                    policy,
+                ) in defender_client.outbound_spam_policies.items():
+                    if policy.default:
+                        if not self._is_policy_properly_configured(policy):
+                            # Case 4: Default policy is not properly configured (potential false positive if another policy overrides it)
+                            report = CheckReportM365(
+                                metadata=self.metadata(),
+                                resource=policy,
+                                resource_name=policy.name,
+                                resource_id="defaultDefenderOutboundSpamPolicy",
+                            )
+                            report.status = "FAIL"
+                            report.status_extended = "Outbound Spam Policy is not properly configured in the default Defender Outbound Spam Policy, but could be overridden by another policy which is out of Prowler's scope."
+                            findings.append(report)
+                            break
+                    else:
+                        if not self._is_policy_properly_configured(policy):
+                            misconfigured_policies.append(policy_name)
+
+                if misconfigured_policies:
+                    # Case 3: Default policy is properly configured but some other policies are not
+                    report = CheckReportM365(
+                        metadata=self.metadata(),
+                        resource={},
+                        resource_name="Defender Outbound Spam Policies",
+                        resource_id="defenderOutboundSpamPolicies",
+                    )
+                    report.status = "FAIL"
+                    report.status_extended = f"Outbound Spam Policy is properly configured in default Defender Outbound Spam Policy but not in the following Defender Outbound Spam Policies that may override it: {', '.join(misconfigured_policies)}."
+                    findings.append(report)
+                elif not report:
+                    # Case 2: Default policy is properly configured and all other policies are too
+                    report = CheckReportM365(
+                        metadata=self.metadata(),
+                        resource={},
+                        resource_name="Defender Outbound Spam Policies",
+                        resource_id="defenderOutboundSpamPolicies",
+                    )
+                    report.status = "PASS"
+                    report.status_extended = "Outbound Spam Policy is properly configured in all Defender Outbound Spam Policies."
+                    findings.append(report)
 
         return findings
 

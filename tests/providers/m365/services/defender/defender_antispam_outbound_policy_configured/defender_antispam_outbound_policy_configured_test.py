@@ -32,6 +32,7 @@ class Test_defender_antispam_outbound_policy_configured:
 
             defender_client.outbound_spam_policies = {
                 "Policy1": OutboundSpamPolicy(
+                    name="Policy1",
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
                     notify_limit_exceeded_addresses=["test@correo.com"],
@@ -50,14 +51,11 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy Policy1 is properly configured and enabled."
+                == "Outbound Spam Policy is properly configured in all Defender Outbound Spam Policies."
             )
-            assert (
-                result[0].resource
-                == defender_client.outbound_spam_policies["Policy1"].dict()
-            )
-            assert result[0].resource_name == "Defender Outbound Spam Policy"
-            assert result[0].resource_id == "Policy1"
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender Outbound Spam Policies"
+            assert result[0].resource_id == "defenderOutboundSpamPolicies"
             assert result[0].location == "global"
 
     def test_not_properly_configured_policy(self):
@@ -88,6 +86,7 @@ class Test_defender_antispam_outbound_policy_configured:
 
             defender_client.outbound_spam_policies = {
                 "Policy2": OutboundSpamPolicy(
+                    name="Policy2",
                     notify_sender_blocked=False,
                     notify_limit_exceeded=False,
                     notify_limit_exceeded_addresses=[],
@@ -106,14 +105,11 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy Policy2 is not properly configured."
+                == "Outbound Spam Policy is properly configured in default Defender Outbound Spam Policy but not in the following Defender Outbound Spam Policies that may override it: Policy2."
             )
-            assert (
-                result[0].resource
-                == defender_client.outbound_spam_policies["Policy2"].dict()
-            )
-            assert result[0].resource_name == "Defender Outbound Spam Policy"
-            assert result[0].resource_id == "Policy2"
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender Outbound Spam Policies"
+            assert result[0].resource_id == "defenderOutboundSpamPolicies"
             assert result[0].location == "global"
 
     def test_properly_configured_default_policy(self):
@@ -143,6 +139,7 @@ class Test_defender_antispam_outbound_policy_configured:
 
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
+                    name="Default",
                     notify_sender_blocked=True,
                     notify_limit_exceeded=True,
                     notify_limit_exceeded_addresses=["test@correo.com"],
@@ -159,67 +156,17 @@ class Test_defender_antispam_outbound_policy_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Outbound Spam Policy Default is properly configured and enabled."
+                == "Outbound Spam Policy is properly configured in the default Defender Outbound Spam Policy (no other policies exist)."
             )
             assert (
                 result[0].resource
                 == defender_client.outbound_spam_policies["Default"].dict()
             )
-            assert result[0].resource_name == "Defender Outbound Spam Policy"
-            assert result[0].resource_id == "Default"
-            assert result[0].location == "global"
-
-    def test_policy_without_rule(self):
-        defender_client = mock.MagicMock()
-        defender_client.audited_tenant = "audited_tenant"
-        defender_client.audited_domain = DOMAIN
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_m365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
-            ),
-            mock.patch(
-                "prowler.providers.m365.services.defender.defender_antispam_outbound_policy_configured.defender_antispam_outbound_policy_configured.defender_client",
-                new=defender_client,
-            ),
-        ):
-            from prowler.providers.m365.services.defender.defender_antispam_outbound_policy_configured.defender_antispam_outbound_policy_configured import (
-                defender_antispam_outbound_policy_configured,
-            )
-            from prowler.providers.m365.services.defender.defender_service import (
-                OutboundSpamPolicy,
-            )
-
-            defender_client.outbound_spam_policies = {
-                "PolicyX": OutboundSpamPolicy(
-                    notify_sender_blocked=True,
-                    notify_limit_exceeded=True,
-                    notify_limit_exceeded_addresses=["admin@org.com"],
-                    notify_sender_blocked_addresses=["admin@org.com"],
-                    default=False,
-                    auto_forwarding_mode=False,
-                )
-            }
-            defender_client.outbound_spam_rules = {}
-
-            check = defender_antispam_outbound_policy_configured()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended
-                == "Outbound Spam Policy PolicyX is not properly configured."
+                result[0].resource_name
+                == defender_client.outbound_spam_policies["Default"].name
             )
-            assert (
-                result[0].resource
-                == defender_client.outbound_spam_policies["PolicyX"].dict()
-            )
-            assert result[0].resource_name == "Defender Outbound Spam Policy"
-            assert result[0].resource_id == "PolicyX"
+            assert result[0].resource_id == "defaultDefenderOutboundSpamPolicy"
             assert result[0].location == "global"
 
     def test_no_outbound_spam_policies(self):

@@ -33,6 +33,7 @@ class Test_defender_antispam_policy_inbound_no_allowed_domains:
                 DefenderInboundSpamPolicy(
                     identity="Policy1",
                     allowed_sender_domains=[],
+                    default=True,
                 )
             ]
 
@@ -43,11 +44,11 @@ class Test_defender_antispam_policy_inbound_no_allowed_domains:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Inbound anti-spam policy Policy1 does not contain allowed domains."
+                == "Inbound anti-spam policy does not contain allowed domains in all Defender Inbound Spam Policies."
             )
-            assert result[0].resource == defender_client.inbound_spam_policies[0].dict()
-            assert result[0].resource_name == "Defender Inbound Spam Policy"
-            assert result[0].resource_id == "Policy1"
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender Inbound Spam Policies"
+            assert result[0].resource_id == "defenderInboundSpamPolicies"
             assert result[0].location == "global"
 
     def test_policy_with_allowed_domains(self):
@@ -79,6 +80,7 @@ class Test_defender_antispam_policy_inbound_no_allowed_domains:
                 DefenderInboundSpamPolicy(
                     identity="Policy2",
                     allowed_sender_domains=["bad-domain.com"],
+                    default=False,
                 )
             ]
 
@@ -89,11 +91,11 @@ class Test_defender_antispam_policy_inbound_no_allowed_domains:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Inbound anti-spam policy Policy2 contains allowed domains: ['bad-domain.com']."
+                == "Inbound anti-spam policy does not contain allowed domains in default Defender Inbound Spam Policy but does in the following Defender Inbound Spam Policies that may override it: Policy2."
             )
-            assert result[0].resource == defender_client.inbound_spam_policies[0].dict()
-            assert result[0].resource_name == "Defender Inbound Spam Policy"
-            assert result[0].resource_id == "Policy2"
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender Inbound Spam Policies"
+            assert result[0].resource_id == "defenderInboundSpamPolicies"
             assert result[0].location == "global"
 
     def test_no_inbound_spam_policies(self):

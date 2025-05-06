@@ -9,6 +9,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     Defender,
     DefenderInboundSpamPolicy,
     DkimConfig,
+    InboundSpamRule,
     MalwarePolicy,
     MalwareRule,
     OutboundSpamPolicy,
@@ -49,6 +50,7 @@ def mock_defender_get_malware_filter_rule(_):
 def mock_defender_get_antiphising_policy(_):
     return {
         "Policy1": AntiphishingPolicy(
+            name="Policy1",
             spoof_intelligence=True,
             spoof_intelligence_action="Quarantine",
             dmarc_reject_action="Reject",
@@ -60,6 +62,7 @@ def mock_defender_get_antiphising_policy(_):
             default=False,
         ),
         "Policy2": AntiphishingPolicy(
+            name="Policy2",
             spoof_intelligence=False,
             spoof_intelligence_action="None",
             dmarc_reject_action="None",
@@ -89,12 +92,21 @@ def mock_defender_get_inbound_spam_policy(_):
         DefenderInboundSpamPolicy(
             identity="Policy1",
             allowed_sender_domains=[],
+            default=False,
         ),
         DefenderInboundSpamPolicy(
             identity="Policy2",
             allowed_sender_domains=["example.com"],
+            default=True,
         ),
     ]
+
+
+def mock_defender_get_inbound_spam_rule(_):
+    return {
+        "Policy1": InboundSpamRule(state="Enabled"),
+        "Policy2": InboundSpamRule(state="Disabled"),
+    }
 
 
 def mock_defender_get_connection_filter_policy(_):
@@ -131,6 +143,7 @@ def mock_defender_get_report_submission_policy(_):
 def mock_defender_get_outbound_spam_filter_policy(_):
     return {
         "Policy1": OutboundSpamPolicy(
+            name="Policy1",
             notify_sender_blocked=True,
             notify_limit_exceeded=True,
             notify_limit_exceeded_addresses=["security@example.com"],
@@ -139,6 +152,7 @@ def mock_defender_get_outbound_spam_filter_policy(_):
             default=False,
         ),
         "Policy2": OutboundSpamPolicy(
+            name="Policy2",
             notify_sender_blocked=False,
             notify_limit_exceeded=False,
             notify_limit_exceeded_addresses=[],
@@ -249,6 +263,7 @@ class Test_Defender_Service:
                 )
             )
             antiphishing_policies = defender_client.antiphishing_policies
+            assert antiphishing_policies["Policy1"].name == "Policy1"
             assert antiphishing_policies["Policy1"].spoof_intelligence is True
             assert (
                 antiphishing_policies["Policy1"].spoof_intelligence_action
@@ -265,6 +280,7 @@ class Test_Defender_Service:
             assert antiphishing_policies["Policy1"].show_tag is True
             assert antiphishing_policies["Policy1"].honor_dmarc_policy is True
             assert antiphishing_policies["Policy1"].default is False
+            assert antiphishing_policies["Policy2"].name == "Policy2"
             assert antiphishing_policies["Policy2"].spoof_intelligence is False
             assert antiphishing_policies["Policy2"].spoof_intelligence_action == "None"
             assert antiphishing_policies["Policy2"].dmarc_reject_action == "None"
@@ -357,6 +373,7 @@ class Test_Defender_Service:
                 )
             )
             outbound_spam_policies = defender_client.outbound_spam_policies
+            assert outbound_spam_policies["Policy1"].name == "Policy1"
             assert outbound_spam_policies["Policy1"].notify_sender_blocked is True
             assert outbound_spam_policies["Policy1"].notify_limit_exceeded is True
             assert outbound_spam_policies[
@@ -367,6 +384,7 @@ class Test_Defender_Service:
             ].notify_sender_blocked_addresses == ["security@example.com"]
             assert outbound_spam_policies["Policy1"].auto_forwarding_mode is False
             assert outbound_spam_policies["Policy1"].default is False
+            assert outbound_spam_policies["Policy2"].name == "Policy2"
             assert outbound_spam_policies["Policy2"].notify_sender_blocked is False
             assert outbound_spam_policies["Policy2"].notify_limit_exceeded is False
             assert (
@@ -415,6 +433,26 @@ class Test_Defender_Service:
             inbound_spam_policies = defender_client.inbound_spam_policies
             assert inbound_spam_policies[0].allowed_sender_domains == []
             assert inbound_spam_policies[1].allowed_sender_domains == ["example.com"]
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_inbound_spam_filter_rule",
+        new=mock_defender_get_inbound_spam_rule,
+    )
+    def test__get_inbound_spam_filter_rule(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            inbound_spam_rules = defender_client.inbound_spam_rules
+            assert inbound_spam_rules["Policy1"].state == "Enabled"
+            assert inbound_spam_rules["Policy2"].state == "Disabled"
             defender_client.powershell.close()
 
     @patch(
