@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 
@@ -52,6 +52,17 @@ export default function Chat() {
   ];
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (messagesContainerRef.current && latestUserMsgRef.current) {
+      const container = messagesContainerRef.current;
+      const userMsg = latestUserMsgRef.current;
+      const containerPadding = 16; // p-4 in Tailwind = 16px
+      container.scrollTop = userMsg.offsetTop - container.offsetTop - containerPadding;
+    }
+  }, [messages]);
 
   const handleAutoResizeInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     handleInputChange(e);
@@ -93,29 +104,37 @@ export default function Chat() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+        <div className="flex-1 space-y-4 overflow-y-auto p-4" ref={messagesContainerRef}>
+          {messages.map((message, idx) => {
+            const lastUserIdx = messages
+              .map((m, i) => (m.role === "user" ? i : -1))
+              .filter(i => i !== -1)
+              .pop();
+            const isLatestUserMsg = message.role === "user" && lastUserIdx === idx;
+            return (
               <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground dark:!text-black"
-                    : "bg-muted"
+                key={message.id}
+                ref={isLatestUserMsg ? latestUserMsgRef : undefined}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground dark:!text-black"
+                      : "bg-muted"
+                  }`}
                 >
-                  <MemoizedMarkdown id={message.id} content={message.content} />
+                  <div
+                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                  >
+                    <MemoizedMarkdown id={message.id} content={message.content} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {status === "submitted" && (
             <div className="flex justify-start">
               <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
