@@ -15,6 +15,7 @@ import {
 import { FindingProps } from "@/types";
 
 import { Muted } from "../muted";
+import { DeltaIndicator } from "./delta-indicator";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -44,20 +45,22 @@ const getProviderData = (
   );
 };
 
-// const getScanData = (
-//   row: { original: FindingProps },
-//   field: keyof FindingProps["relationships"]["scan"]["attributes"],
-// ) => {
-//   return (
-//     row.original.relationships?.scan?.attributes?.[field] ||
-//     `No ${field} found in scan`
-//   );
-// };
-
 const FindingDetailsCell = ({ row }: { row: any }) => {
   const searchParams = useSearchParams();
   const findingId = searchParams.get("id");
   const isOpen = findingId === row.original.id;
+
+  const handleOpenChange = (open: boolean) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (open) {
+      params.set("id", row.original.id);
+    } else {
+      params.delete("id");
+    }
+
+    window.history.pushState({}, "", `?${params.toString()}`);
+  };
 
   return (
     <div className="flex justify-center">
@@ -66,6 +69,7 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
         title="Finding Details"
         description="View the finding details"
         defaultOpen={isOpen}
+        onOpenChange={handleOpenChange}
       >
         <DataTableRowDetails
           entityId={row.original.id}
@@ -96,11 +100,18 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const {
         attributes: { muted },
       } = getFindingsData(row);
+      const { delta } = row.original.attributes;
+
       return (
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
-          <p className="mr-7 whitespace-normal break-words text-sm">
-            {checktitle}
-          </p>
+          <div className="flex flex-row items-center gap-4">
+            {(delta === "new" || delta === "changed") && (
+              <DeltaIndicator delta={delta} />
+            )}
+            <p className="mr-7 whitespace-normal break-words text-sm">
+              {checktitle}
+            </p>
+          </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
             <Muted isMuted={muted} />
           </span>

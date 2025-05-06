@@ -76,6 +76,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
+            if "M65" in result:
+                result = result.replace("_M65", " - M65")
             results.append(result)
 
     unique_results = set(results)
@@ -263,6 +265,15 @@ def display_data(
     if "kubernetes" in analytics_input:
         data.rename(columns={"CONTEXT": "ACCOUNTID"}, inplace=True)
         data.rename(columns={"NAMESPACE": "REGION"}, inplace=True)
+        if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
+            data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
+                "REQUIREMENTS_ATTRIBUTES_PROFILE"
+            ].apply(lambda x: x.split(" - ")[0])
+
+    # Add the column ACCOUNTID to the data if the provider is m65
+    if "m365" in analytics_input:
+        data.rename(columns={"TENANTID": "ACCOUNTID"}, inplace=True)
+        data.rename(columns={"LOCATION": "REGION"}, inplace=True)
         if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
