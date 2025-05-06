@@ -134,6 +134,7 @@ class Command(BaseCommand):
                         region=random.choice(possible_regions),
                         service=random.choice(possible_services),
                         type=random.choice(possible_types),
+                        inserted_at="2024-10-01T00:00:00Z",
                     )
                 )
 
@@ -182,6 +183,10 @@ class Command(BaseCommand):
                             "servicename": assigned_resource.service,
                             "resourcetype": assigned_resource.type,
                         },
+                        resource_types=[assigned_resource.type],
+                        resource_regions=[assigned_resource.region],
+                        resource_services=[assigned_resource.service],
+                        inserted_at="2024-10-01T00:00:00Z",
                     )
                 )
 

@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
@@ -673,6 +674,21 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     muted = models.BooleanField(default=False, null=False)
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
+    # Denormalize resource data for performance
+    resource_regions = ArrayField(
+        models.CharField(max_length=100), blank=True, null=True
+    )
+    resource_services = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+    )
+    resource_types = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+    )
+
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
 
@@ -713,18 +729,6 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         ]
 
         indexes = [
-            models.Index(fields=["uid"], name="findings_uid_idx"),
-            models.Index(
-                fields=[
-                    "scan_id",
-                    "impact",
-                    "severity",
-                    "status",
-                    "check_id",
-                    "delta",
-                ],
-                name="findings_filter_idx",
-            ),
             models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
             GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
             models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
@@ -736,6 +740,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 condition=Q(delta="new"),
                 name="find_delta_new_idx",
             ),
+            GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
+            GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
+            GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
         ]
 
     class JSONAPIMeta:
