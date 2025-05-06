@@ -46,7 +46,6 @@ class Test_inspector2_active_findings_exist:
                 "prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist.inspector2_client",
                 new=inspector2_client,
             ):
-
                 # Test Check
                 from prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist import (
                     inspector2_active_findings_exist,
@@ -101,7 +100,6 @@ class Test_inspector2_active_findings_exist:
                 "prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist.inspector2_client",
                 new=inspector2_client,
             ):
-
                 # Test Check
                 from prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist import (
                     inspector2_active_findings_exist,
@@ -156,7 +154,6 @@ class Test_inspector2_active_findings_exist:
                 "prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist.inspector2_client",
                 new=inspector2_client,
             ):
-
                 # Test Check
                 from prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist import (
                     inspector2_active_findings_exist,
@@ -176,6 +173,49 @@ class Test_inspector2_active_findings_exist:
                     == f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_enabled_with_none_finding(self):
+        # Mock the inspector2 client
+        inspector2_client = mock.MagicMock
+
+        inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
+        inspector2_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
+        inspector2_client.region = AWS_REGION_EU_WEST_1
+        inspector2_client.inspectors = [
+            Inspector(
+                id=AWS_ACCOUNT_NUMBER,
+                arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
+                region=AWS_REGION_EU_WEST_1,
+                status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="DISABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
+                active_findings=None,
+            )
+        ]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist.inspector2_client",
+                new=inspector2_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist import (
+                    inspector2_active_findings_exist,
+                )
+
+                check = inspector2_active_findings_exist()
+                result = check.execute()
+
+                assert len(result) == 0
 
     def test_inspector2_disabled_ignoring(self):
         # Mock the inspector2 client
@@ -221,7 +261,6 @@ class Test_inspector2_active_findings_exist:
                 "prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist.inspector2_client",
                 new=inspector2_client,
             ):
-
                 # Test Check
                 from prowler.providers.aws.services.inspector2.inspector2_active_findings_exist.inspector2_active_findings_exist import (
                     inspector2_active_findings_exist,
