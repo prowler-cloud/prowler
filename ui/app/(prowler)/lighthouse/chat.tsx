@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 
@@ -60,11 +60,14 @@ export default function Chat() {
       const container = messagesContainerRef.current;
       const userMsg = latestUserMsgRef.current;
       const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop = userMsg.offsetTop - container.offsetTop - containerPadding;
+      container.scrollTop =
+        userMsg.offsetTop - container.offsetTop - containerPadding;
     }
   }, [messages]);
 
-  const handleAutoResizeInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleAutoResizeInputChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     handleInputChange(e);
     const textarea = textareaRef.current;
     if (textarea) {
@@ -104,13 +107,17 @@ export default function Chat() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 space-y-4 overflow-y-auto p-4" ref={messagesContainerRef}>
+        <div
+          className="flex-1 space-y-4 overflow-y-auto p-4"
+          ref={messagesContainerRef}
+        >
           {messages.map((message, idx) => {
             const lastUserIdx = messages
               .map((m, i) => (m.role === "user" ? i : -1))
-              .filter(i => i !== -1)
+              .filter((i) => i !== -1)
               .pop();
-            const isLatestUserMsg = message.role === "user" && lastUserIdx === idx;
+            const isLatestUserMsg =
+              message.role === "user" && lastUserIdx === idx;
             return (
               <div
                 key={message.id}
@@ -129,7 +136,10 @@ export default function Chat() {
                   <div
                     className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
                   >
-                    <MemoizedMarkdown id={message.id} content={message.content} />
+                    <MemoizedMarkdown
+                      id={message.id}
+                      content={message.content}
+                    />
                   </div>
                 </div>
               </div>
@@ -156,7 +166,7 @@ export default function Chat() {
             onChange={handleAutoResizeInputChange}
             placeholder="Type your message..."
             rows={1}
-            className="w-full flex-1 px-3 py-2 focus:outline-none resize-none overflow-hidden rounded-lg border bg-background"
+            className="w-full flex-1 resize-none overflow-hidden rounded-lg border bg-background px-3 py-2 focus:outline-none"
             style={{ minHeight: "40px", maxHeight: "160px" }}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -168,7 +178,7 @@ export default function Chat() {
           <button
             type="submit"
             disabled={status === "submitted" || !input.trim()}
-            className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex-shrink-0 h-10 w-10 flex items-center justify-center"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {status === "submitted" ? <span>■</span> : <span>➤</span>}
           </button>

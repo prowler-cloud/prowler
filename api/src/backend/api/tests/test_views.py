@@ -5584,13 +5584,14 @@ class TestLighthouseConfigViewSet:
         assert "gpt-4o" in response.json()["data"]["available_models"]
         assert "gpt-4o-mini" in response.json()["data"]["available_models"]
 
-    def test_lighthouse_config_show_key(
+    def test_lighthouse_config_get_key(
         self, authenticated_client, lighthouse_config_fixture, valid_config_payload
     ):
         config_id = lighthouse_config_fixture.id
         expected_api_key = valid_config_payload["data"]["attributes"]["api_key"]
         response = authenticated_client.get(
-            reverse("lighthouseconfig-show-key", kwargs={"pk": config_id})
+            reverse("lighthouseconfig-detail", kwargs={"pk": config_id})
+            + "?fields[lighthouse-config]=api_key"
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["api_key"] == expected_api_key
