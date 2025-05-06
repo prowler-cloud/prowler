@@ -43,6 +43,7 @@ class AWSResource(Resource):
         return values
 
     @validator("region")
+    # TODO: validate regions
     def region_must_be_valid(cls, v):
         if not v:
             raise ValueError("region cannot be empty")
