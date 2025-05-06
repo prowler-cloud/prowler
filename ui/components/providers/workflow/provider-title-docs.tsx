@@ -21,6 +21,11 @@ export const ProviderTitleDocs = ({
           text: "Need help connecting your Azure subscription?",
           link: "https://goto.prowler.com/provider-azure",
         };
+      case "m365":
+        return {
+          text: "Need help connecting your Microsoft 365 account?",
+          link: "https://goto.prowler.com/provider-m365",
+        };
       case "gcp":
         return {
           text: "Need help connecting your GCP project?",
