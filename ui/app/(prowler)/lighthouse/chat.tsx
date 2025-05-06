@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { useRef } from "react";
 
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 
@@ -49,6 +50,22 @@ export default function Chat() {
       action: "List my highest privileged AWS IAM users with full admin access",
     },
   ];
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleAutoResizeInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleInputChange(e);
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
+      if (textarea.scrollHeight > textarea.clientHeight + 1) {
+        textarea.style.overflowY = "auto";
+      } else {
+        textarea.style.overflowY = "hidden";
+      }
+    }
+  };
 
   return (
     <div className="flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
@@ -113,23 +130,30 @@ export default function Chat() {
         onSubmit={handleSubmit}
         className="mx-auto flex w-full gap-2 px-4 pb-4 md:max-w-3xl md:pb-6"
       >
-        <div className="focus-within:ring-ring relative flex-1 overflow-hidden rounded-lg border bg-background focus-within:ring-1">
-          <input
-            type="text"
+        <div className="flex w-full items-end gap-2">
+          <textarea
+            ref={textareaRef}
             value={input}
-            onChange={handleInputChange}
+            onChange={handleAutoResizeInputChange}
             placeholder="Type your message..."
-            className="w-full flex-1 px-3 py-2 focus:outline-none"
+            rows={1}
+            className="w-full flex-1 px-3 py-2 focus:outline-none resize-none overflow-hidden rounded-lg border bg-background"
+            style={{ minHeight: "40px", maxHeight: "160px" }}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
           />
+          <button
+            type="submit"
+            disabled={status === "submitted" || !input.trim()}
+            className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex-shrink-0 h-10 w-10 flex items-center justify-center"
+          >
+            {status === "submitted" ? <span>■</span> : <span>➤</span>}
+          </button>
         </div>
-
-        <button
-          type="submit"
-          disabled={status === "submitted" || !input.trim()}
-          className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {status === "submitted" ? <span>■</span> : <span>➤</span>}
-        </button>
       </form>
     </div>
   );
