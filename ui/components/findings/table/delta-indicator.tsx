@@ -10,6 +10,7 @@ interface DeltaIndicatorProps {
 export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
   return (
     <Tooltip
+      className="pointer-events-auto"
       content={
         <div className="flex gap-1 text-xs">
           <span>
