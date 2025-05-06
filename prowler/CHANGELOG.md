@@ -34,6 +34,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check `teams_meeting_external_chat_disabled` [(#7605)](https://github.com/prowler-cloud/prowler/pull/7605)
 - Add new check `teams_meeting_recording_disabled` [(#7607)](https://github.com/prowler-cloud/prowler/pull/7607)
 - Add new check `teams_meeting_presenters_restricted` [(#7613)](https://github.com/prowler-cloud/prowler/pull/7613)
+- Add new check `teams_security_reporting_enabled` [(#7614)](https://github.com/prowler-cloud/prowler/pull/7614)
+- Add new check `defender_chat_report_policy_configured` [(#7614)](https://github.com/prowler-cloud/prowler/pull/7614)
 - Add new check `teams_meeting_chat_anonymous_users_disabled` [(#7579)](https://github.com/prowler-cloud/prowler/pull/7579)
 - Add Prowler Threat Score Compliance Framework [(#7603)](https://github.com/prowler-cloud/prowler/pull/7603)
 - Add documentation for M365 provider [(#7622)](https://github.com/prowler-cloud/prowler/pull/7622)
@@ -45,6 +47,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check for Auditing Mailbox on E3 users is enabled for Exchange in M365 [(#7642)](https://github.com/prowler-cloud/prowler/pull/7642)
 - Add new check for SMTP Auth disabled for Exchange in M365 [(#7640)](https://github.com/prowler-cloud/prowler/pull/7640)
 - Add new check for MailTips full enabled for Exchange in M365 [(#7637)](https://github.com/prowler-cloud/prowler/pull/7637)
+- Add new check for Comprehensive Attachments Filter Applied for Defender in M365 [(#7661)](https://github.com/prowler-cloud/prowler/pull/7661)
+- Modified check `exchange_mailbox_properties_auditing_enabled` to make it configurable [(#7662)](https://github.com/prowler-cloud/prowler/pull/7662)
 - Support statics credentials for sending findings using S3 and SH [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
 
 ### Fixed

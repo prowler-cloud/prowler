@@ -259,3 +259,42 @@ export const getExportsZip = async (scanId: string) => {
     };
   }
 };
+
+export const getComplianceCsv = async (
+  scanId: string,
+  complianceId: string,
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(
+    `${apiBaseUrl}/scans/${scanId}/compliance/${complianceId}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData?.errors?.[0]?.detail || "Failed to fetch compliance report",
+      );
+    }
+
+    // Get the blob data as an array buffer
+    const arrayBuffer = await response.arrayBuffer();
+    // Convert to base64
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+    return {
+      success: true,
+      data: base64,
+      filename: `scan-${scanId}-compliance-${complianceId}.csv`,
+    };
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
