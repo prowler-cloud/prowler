@@ -45,7 +45,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check for Auditing Mailbox on E3 users is enabled for Exchange in M365 [(#7642)](https://github.com/prowler-cloud/prowler/pull/7642)
 - Add new check for SMTP Auth disabled for Exchange in M365 [(#7640)](https://github.com/prowler-cloud/prowler/pull/7640)
 - Add new check for MailTips full enabled for Exchange in M365 [(#7637)](https://github.com/prowler-cloud/prowler/pull/7637)
-- Support statics credentials for sending findings using S3 and SH [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
+- Add support for static credentials for sending findings to Amazon S3 and AWS Security Hub [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
 
 ### Fixed
 
