@@ -34,7 +34,9 @@ export const getAIKey = async (): Promise<string> => {
     return "";
   }
 
-  const url = new URL(`${apiBaseUrl}/lighthouse-config/${configId}/show_key`);
+  const url = new URL(
+    `${apiBaseUrl}/lighthouse-config/${configId}?fields[lighthouse-config]=api_key`,
+  );
   const response = await fetch(url.toString(), {
     method: "GET",
     headers,
