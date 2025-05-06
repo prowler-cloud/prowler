@@ -86,7 +86,10 @@ class TestGCPProvider:
             assert gcp_provider.projects == projects
             assert gcp_provider.default_project_id == "test-project"
             assert gcp_provider.identity == GCPIdentityInfo(profile="default")
-            assert gcp_provider.audit_config == {"shodan_api_key": None}
+            assert gcp_provider.audit_config == {
+                "shodan_api_key": None,
+                "max_unused_account_days": 180,
+            }
 
     @freeze_time(datetime.today())
     def test_is_project_matching(self):
@@ -319,6 +322,26 @@ class TestGCPProvider:
                 gcp_provider.impersonated_service_account
                 == "test-impersonate-service-account"
             )
+
+    def test_setup_session_with_access_token(self, monkeypatch):
+        from google.oauth2.credentials import Credentials as TokenCredentials
+
+        access_token = "fake-access-token"
+        default_project_id = "test-access-token-project"
+
+        monkeypatch.setenv("CLOUDSDK_AUTH_ACCESS_TOKEN", access_token)
+        monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", default_project_id)
+
+        session, project_id = GcpProvider.setup_session(
+            credentials_file=None,
+            service_account=None,
+            gcp_credentials=None,
+            service_account_key=None,
+        )
+
+        assert isinstance(session, TokenCredentials)
+        assert session.token == access_token
+        assert project_id == default_project_id
 
     def test_setup_session_with_organization_id(self):
         mocked_credentials = MagicMock()

@@ -327,7 +327,6 @@ aws:
     [
       "RSA-1024",
       "P-192",
-      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -447,6 +446,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # GCP Service Account and user-managed keys unused configuration
+  # gcp.iam_service_account_unused
+  # gcp.iam_sa_user_managed_key_unused
+  max_unused_account_days: 180
 
 # Kubernetes Configuration
 kubernetes:
@@ -479,8 +482,24 @@ kubernetes:
     ]
 
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+  # m365.exchange_mailbox_properties_auditing_enabled
+  # Maximum number of days to keep audit logs
+  audit_log_age: 90

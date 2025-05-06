@@ -1,8 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 
 export const getCompliancesOverview = async ({
   scanId,
@@ -13,7 +12,7 @@ export const getCompliancesOverview = async ({
   region?: string | string[];
   query?: string;
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews`);
 
@@ -27,10 +26,7 @@ export const getCompliancesOverview = async ({
 
   try {
     const compliances = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await compliances.json();
     const parsedData = parseStringify(data);
@@ -49,7 +45,7 @@ export const getComplianceOverviewMetadataInfo = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews/metadata`);
 
@@ -65,10 +61,7 @@ export const getComplianceOverviewMetadataInfo = async ({
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
