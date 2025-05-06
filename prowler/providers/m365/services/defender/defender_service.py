@@ -18,10 +18,11 @@ class Defender(M365Service):
         self.connection_filter_policy = None
         self.dkim_configurations = []
         self.inbound_spam_policies = []
-
+        self.report_submission_policy = None
         if self.powershell:
             self.powershell.connect_exchange_online()
             self.malware_policies = self._get_malware_filter_policy()
+            self.malware_rules = self._get_malware_filter_rule()
             self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
             self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
             self.antiphishing_policies = self._get_antiphising_policy()
@@ -29,6 +30,7 @@ class Defender(M365Service):
             self.connection_filter_policy = self._get_connection_filter_policy()
             self.dkim_configurations = self._get_dkim_config()
             self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
+            self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -50,6 +52,8 @@ class Defender(M365Service):
                             internal_sender_admin_address=policy.get(
                                 "InternalSenderAdminAddress", ""
                             ),
+                            file_types=policy.get("FileTypes", []),
+                            is_default=policy.get("IsDefault", False),
                         )
                     )
         except Exception as error:
@@ -57,6 +61,24 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return malware_policies
+
+    def _get_malware_filter_rule(self):
+        logger.info("Microsoft365 - Getting Defender malware filter rule...")
+        malware_rules = {}
+        try:
+            malware_rule = self.powershell.get_malware_filter_rule()
+            if isinstance(malware_rule, dict):
+                malware_rule = [malware_rule]
+            for rule in malware_rule:
+                if rule:
+                    malware_rules[rule.get("Name", "")] = MalwareRule(
+                        state=rule.get("State", ""),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return malware_rules
 
     def _get_antiphising_policy(self):
         logger.info("Microsoft365 - Getting Defender antiphishing policy...")
@@ -216,12 +238,56 @@ class Defender(M365Service):
             )
         return inbound_spam_policies
 
+    def _get_report_submission_policy(self):
+        logger.info("Microsoft365 - Getting Defender report submission policy...")
+        report_submission_policy = None
+        try:
+            report_submission_policy = self.powershell.get_report_submission_policy()
+            if report_submission_policy:
+                report_submission_policy = ReportSubmissionPolicy(
+                    report_junk_to_customized_address=report_submission_policy.get(
+                        "ReportJunkToCustomizedAddress", True
+                    ),
+                    report_not_junk_to_customized_address=report_submission_policy.get(
+                        "ReportNotJunkToCustomizedAddress", True
+                    ),
+                    report_phish_to_customized_address=report_submission_policy.get(
+                        "ReportPhishToCustomizedAddress", True
+                    ),
+                    report_junk_addresses=report_submission_policy.get(
+                        "ReportJunkAddresses", []
+                    ),
+                    report_not_junk_addresses=report_submission_policy.get(
+                        "ReportNotJunkAddresses", []
+                    ),
+                    report_phish_addresses=report_submission_policy.get(
+                        "ReportPhishAddresses", []
+                    ),
+                    report_chat_message_enabled=report_submission_policy.get(
+                        "ReportChatMessageEnabled", True
+                    ),
+                    report_chat_message_to_customized_address_enabled=report_submission_policy.get(
+                        "ReportChatMessageToCustomizedAddressEnabled", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return report_submission_policy
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
     identity: str
     enable_internal_sender_admin_notifications: bool
     internal_sender_admin_address: str
+    file_types: list[str]
+    is_default: bool
+
+
+class MalwareRule(BaseModel):
+    state: str
 
 
 class AntiphishingPolicy(BaseModel):
@@ -267,3 +333,14 @@ class OutboundSpamRule(BaseModel):
 class DefenderInboundSpamPolicy(BaseModel):
     identity: str
     allowed_sender_domains: list[str] = []
+
+
+class ReportSubmissionPolicy(BaseModel):
+    report_junk_to_customized_address: bool
+    report_not_junk_to_customized_address: bool
+    report_phish_to_customized_address: bool
+    report_junk_addresses: list[str]
+    report_not_junk_addresses: list[str]
+    report_phish_addresses: list[str]
+    report_chat_message_enabled: bool
+    report_chat_message_to_customized_address_enabled: bool
