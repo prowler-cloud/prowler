@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
-  "CheckID": "defender_report_policy_configured",
-  "CheckTitle": "Ensure Defender report submission policy is properly configured",
+  "CheckID": "defender_chat_report_policy_configured",
+  "CheckTitle": "Ensure chat report submission policy is properly configured in Defender",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",

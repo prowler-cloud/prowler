@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
 
-class defender_report_policy_configured(Check):
+class defender_chat_report_policy_configured(Check):
     """Check if Defender report submission policy is properly configured for Teams security reporting.
 
     Attributes:
