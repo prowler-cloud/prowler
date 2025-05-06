@@ -755,6 +755,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

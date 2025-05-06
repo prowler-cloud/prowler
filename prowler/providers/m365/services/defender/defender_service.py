@@ -164,6 +164,7 @@ class Defender(M365Service):
                         notify_sender_blocked_addresses=policy.get(
                             "NotifyOutboundSpamRecipients", []
                         ),
+                        auto_forwarding_mode=policy.get("AutoForwardingMode", True),
                         default=policy.get("IsDefault", False),
                     )
         except Exception as error:
@@ -255,6 +256,7 @@ class OutboundSpamPolicy(BaseModel):
     notify_limit_exceeded: bool
     notify_limit_exceeded_addresses: List[str]
     notify_sender_blocked_addresses: List[str]
+    auto_forwarding_mode: bool
     default: bool
 
 

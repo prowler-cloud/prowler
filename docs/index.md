@@ -53,7 +53,7 @@ Prowler App can be installed in different ways, depending on your environment:
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
 
     ???+ note
-        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml to run the app in development mode.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -585,7 +585,7 @@ prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 
 ```
 
-See more details about M365 Authentication in [Requirements](getting-started/requirements/#microsoft-365)
+See more details about M365 Authentication in [Requirements](getting-started/requirements.md#microsoft-365)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
