@@ -28,7 +28,7 @@ class TestGenerateOutputs:
     @patch("tasks.tasks.rmtree")
     @patch("tasks.tasks._upload_to_s3")
     @patch("tasks.tasks._compress_output_files")
-    @patch("tasks.tasks.get_available_compliance_frameworks")
+    @patch("tasks.tasks.get_compliance_frameworks")
     @patch("tasks.tasks.Compliance.get_bulk")
     @patch("tasks.tasks.initialize_prowler_provider")
     @patch("tasks.tasks.Provider.objects.get")
@@ -116,7 +116,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Provider.objects.get"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),
-            patch("tasks.tasks.get_available_compliance_frameworks"),
+            patch("tasks.tasks.get_compliance_frameworks"),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory", return_value=("out", "comp")
@@ -165,9 +165,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Provider.objects.get"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
-            patch(
-                "tasks.tasks.get_available_compliance_frameworks", return_value=["cis"]
-            ),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory", return_value=("out", "comp")
@@ -241,7 +239,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Provider.objects.get"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),
-            patch("tasks.tasks.get_available_compliance_frameworks", return_value=[]),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
                 "tasks.tasks.FindingOutput.transform_api_finding",
@@ -319,9 +317,7 @@ class TestGenerateOutputs:
             patch(
                 "tasks.tasks.Compliance.get_bulk", return_value={"cis": compliance_obj}
             ),
-            patch(
-                "tasks.tasks.get_available_compliance_frameworks", return_value=["cis"]
-            ),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
                 return_value=("outdir", "compdir"),
@@ -367,9 +363,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Provider.objects.get"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
-            patch(
-                "tasks.tasks.get_available_compliance_frameworks", return_value=["cis"]
-            ),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory", return_value=("out", "comp")
