@@ -1112,7 +1112,13 @@ class M365Provider(Provider):
                         file=os.path.basename(__file__),
                         message="The provided Microsoft 365 Client Secret is not valid for the specified Tenant ID and Client ID.",
                     )
-
-        except Exception as e:
-            # Generic exception handling (if needed)
-            raise RuntimeError(f"An unexpected error occurred: {str(e)}")
+        except (
+            M365NotValidTenantIdError,
+            M365NotValidClientIdError,
+            M365NotValidClientSecretError,
+        ) as m365_error:
+            # M365 specific errors already raised
+            raise RuntimeError(f"{m365_error}")
+        except Exception as error:
+            # Generic exception handling for unexpected errors
+            raise RuntimeError(f"An unexpected error occurred: {str(error)}")
