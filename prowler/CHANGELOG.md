@@ -51,6 +51,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Modified check `exchange_mailbox_properties_auditing_enabled` to make it configurable [(#7662)](https://github.com/prowler-cloud/prowler/pull/7662)
 - Add snapshots to m365 documentation [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
 - Add support for static credentials for sending findings to Amazon S3 and AWS Security Hub [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
+- Add Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
 
 ### Fixed
 
