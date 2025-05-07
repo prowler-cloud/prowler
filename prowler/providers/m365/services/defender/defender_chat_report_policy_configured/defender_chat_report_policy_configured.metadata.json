@@ -3,7 +3,7 @@
   "CheckID": "defender_chat_report_policy_configured",
   "CheckTitle": "Ensure chat report submission policy is properly configured in Defender",
   "CheckType": [],
-  "ServiceName": "teams",
+  "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
