@@ -2,7 +2,7 @@
 
 import { Tooltip } from "@nextui-org/react";
 import * as React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ export const HorizontalSplitBar = ({
 }: HorizontalSplitBarProps) => {
   // Reference to the container to measure its width
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const [maxContainerWidth, setMaxContainerWidth] = React.useState(0);
+  const [maxContainerWidth, setMaxContainerWidth] = useState(0);
 
   // Effect to measure the container width
   useEffect(() => {
@@ -179,7 +179,10 @@ export const HorizontalSplitBar = ({
           style={{ width: `${halfWidth}px` }}
         >
           {/* Left label */}
-          <div className={cn("text-xs font-medium", labelColor)}>
+          <div
+            className={cn("text-xs font-medium", labelColor)}
+            aria-label={`${formattedValueA} ${tooltipContentA ? tooltipContentA : ""}`}
+          >
             {valA > 0 ? formattedValueA : "0"}
           </div>
           {/* Left bar */}
@@ -223,7 +226,10 @@ export const HorizontalSplitBar = ({
             </Tooltip>
           )}
           {/* Right label */}
-          <div className={cn("text-xs font-medium", labelColor)}>
+          <div
+            className={cn("text-xs font-medium", labelColor)}
+            aria-label={`${formattedValueB} ${tooltipContentB ? tooltipContentB : ""}`}
+          >
             {valB > 0 ? formattedValueB : "0"}
           </div>
         </div>
@@ -231,8 +237,5 @@ export const HorizontalSplitBar = ({
     </div>
   );
 };
-
-// Assign a displayName for DevTools
-HorizontalSplitBar.displayName = "HorizontalSplitBar";
 
 export default HorizontalSplitBar;
