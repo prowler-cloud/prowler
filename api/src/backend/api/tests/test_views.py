@@ -2553,10 +2553,10 @@ class TestScanViewSet:
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         response = authenticated_client.get(url)
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
         assert (
             response.json()["errors"]["detail"]
-            == "Failed to list compliance files in S3."
+            == "Unable to list compliance files in S3: encountered an AWS error."
         )
         mock_sentry_capture.assert_called()
 

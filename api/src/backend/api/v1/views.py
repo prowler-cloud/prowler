@@ -1327,8 +1327,10 @@ class ScanViewSet(BaseRLSViewSet):
                 except ClientError as e:
                     sentry_sdk.capture_exception(e)
                     return Response(
-                        {"detail": "Failed to list compliance files in S3."},
-                        status=status.HTTP_400_BAD_REQUEST,
+                        {
+                            "detail": "Unable to list compliance files in S3: encountered an AWS error."
+                        },
+                        status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
                 keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
