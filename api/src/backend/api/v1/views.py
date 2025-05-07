@@ -55,6 +55,7 @@ from tasks.tasks import (
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
+from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
@@ -151,7 +152,6 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
-from prowler.config.config import get_available_compliance_frameworks
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -1156,7 +1156,6 @@ class ProviderViewSet(BaseRLSViewSet):
         tags=["Scan"],
         summary="Retrieve compliance report as CSV",
         description="Download a specific compliance report (e.g., 'cis_1.4_aws') as a CSV file.",
-        operation_id="scan_compliance_download",
         parameters=[
             OpenApiParameter(
                 name="name",
@@ -1416,7 +1415,7 @@ class ScanViewSet(BaseRLSViewSet):
     )
     def compliance(self, request, pk=None, name=None):
         scan = self.get_object()
-        if name not in get_available_compliance_frameworks(scan.provider.provider):
+        if name not in get_compliance_frameworks(scan.provider.provider):
             return Response(
                 {"detail": f"Compliance '{name}' not found."},
                 status=status.HTTP_404_NOT_FOUND,

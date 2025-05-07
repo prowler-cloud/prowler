@@ -13,6 +13,7 @@ from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
+from api.compliance import get_compliance_frameworks
 from api.models import (
     ComplianceOverview,
     Integration,
@@ -31,7 +32,6 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
-from prowler.config.config import get_available_compliance_frameworks
 
 TODAY = str(datetime.today().date())
 
@@ -2375,7 +2375,7 @@ class TestScanViewSet:
             lambda *args, **kwargs: type("S", (), {"data": dummy}),
         )
 
-        framework = get_available_compliance_frameworks(scan.provider.provider)[0]
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_202_ACCEPTED
@@ -2388,7 +2388,7 @@ class TestScanViewSet:
         scan.output_location = ""
         scan.save()
 
-        framework = get_available_compliance_frameworks(scan.provider.provider)[0]
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
@@ -2409,7 +2409,7 @@ class TestScanViewSet:
             lambda: (_ for _ in ()).throw(NoCredentialsError()),
         )
 
-        framework = get_available_compliance_frameworks(scan.provider.provider)[0]
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_403_FORBIDDEN
@@ -2549,7 +2549,7 @@ class TestScanViewSet:
         )
         mock_get_s3_client.return_value = fake_client
 
-        framework = get_available_compliance_frameworks(scan.provider.provider)[0]
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         response = authenticated_client.get(url)
 
