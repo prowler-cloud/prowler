@@ -1,6 +1,6 @@
-# Getting Started with M365 on Prowler Cloud
+# Getting Started with M365 on Prowler Cloud/App
 
-Set up your M365 account to enable security scanning using Prowler Cloud.
+Set up your M365 account to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
@@ -8,7 +8,7 @@ To configure your M365 account, you’ll need:
 
 1. Obtain your `Default Domain` from the Entra ID portal.
 
-2. Access Prowler Cloud and add a new cloud provider `Microsoft 365`.
+2. Access Prowler Cloud/App and add a new cloud provider `Microsoft 365`.
 
 3. Configure your M365 account:
 
@@ -20,7 +20,7 @@ To configure your M365 account, you’ll need:
 
     3.4 Retrieve your encrypted password.
 
-4. Add the credentials to Prowler Cloud.
+4. Add the credentials to Prowler Cloud/App.
 
 ## Step 1: Obtain your Domain
 
@@ -38,9 +38,9 @@ Once you are there just look for the `Default Domain` this should be something s
 
 ---
 
-## Step 2: Access Prowler Cloud
+## Step 2: Access Prowler Cloud/App
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/)
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
@@ -180,13 +180,13 @@ For this step you will need to use PowerShell, here you will have to create your
 
 ---
 
-## Step 4: Add credentials to Prowler Cloud
+## Step 4: Add credentials to Prowler Cloud/App
 
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
 
-2. Go to Prowler Cloud and paste:
+2. Go to Prowler Cloud/App and paste:
 
     - `Client ID`
     - `Tenant ID`
