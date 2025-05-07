@@ -4503,6 +4503,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/compliance/{name}:
+    get:
+      operationId: scan_compliance_download
+      description: Download a specific compliance report (e.g., 'cis_1.4_aws') as
+        a CSV file.
+      summary: Retrieve compliance report as CSV
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: path
+        name: name
+        schema:
+          type: string
+        description: The compliance report name, like 'cis_1.4_aws'
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: CSV file containing the compliance report
+        '404':
+          description: Compliance report not found
   /api/v1/scans/{id}/report:
     get:
       operationId: scans_report_retrieve

@@ -960,6 +960,15 @@ class ScanReportSerializer(serializers.Serializer):
         fields = ["id"]
 
 
+class ScanComplianceReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+    name = serializers.CharField()
+
+    class Meta:
+        resource_name = "scan-reports"
+        fields = ["id", "name"]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
