@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -108,7 +109,9 @@ class TestGenerateOutputs:
             mock_scan_update.return_value.update.assert_called_once_with(
                 output_location="s3://bucket/zipped.zip"
             )
-            mock_rmtree.assert_called_once()
+            mock_rmtree.assert_called_once_with(
+                Path("/tmp/zipped.zip").parent, ignore_errors=True
+            )
 
     def test_generate_outputs_fails_upload(self):
         with (
