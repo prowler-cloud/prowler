@@ -14,6 +14,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add delta indicator in new findings table. [(#7676)](https://github.com/prowler-cloud/prowler/pull/7676)
 - Add a button to download the CSV report in compliance card. [(#7665)](https://github.com/prowler-cloud/prowler/pull/7665)
 - Show loading state while checking provider connection. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
+- Add a new chart to show the split between passed and failed findings. [(#7680)](https://github.com/prowler-cloud/prowler/pull/7680)
 
 ### 🔄 Changed
 
