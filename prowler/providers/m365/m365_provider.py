@@ -33,7 +33,6 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365ConfigCredentialsError,
     M365CredentialsUnavailableError,
     M365DefaultAzureCredentialError,
-    M365EnvironmentUserCredentialsError,
     M365EnvironmentVariableError,
     M365GetTokenIdentityError,
     M365HTTPResponseError,
@@ -51,6 +50,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365SetUpSessionError,
     M365TenantIdAndClientIdNotBelongingToClientSecretError,
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
+    M365UserCredentialsError,
 )
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
 from prowler.providers.m365.lib.powershell.m365_powershell import (
@@ -434,9 +434,9 @@ class M365Provider(Provider):
                     if init_modules:
                         initialize_m365_powershell_modules()
                     return credentials
-                raise M365EnvironmentUserCredentialsError(
+                raise M365UserCredentialsError(
                     file=os.path.basename(__file__),
-                    message="M365_USER or M365_ENCRYPTED_PASSWORD environment variables are not correct. Please ensure you are using the right credentials.",
+                    message="The provided M365 User credentials are not valid.",
                 )
             finally:
                 test_session.close()

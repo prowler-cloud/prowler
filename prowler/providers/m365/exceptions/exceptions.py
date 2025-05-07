@@ -98,9 +98,9 @@ class M365BaseException(ProwlerException):
             "message": "User and Password environment variables are needed to use Credentials authentication method.",
             "remediation": "Ensure your environment variables are properly set up.",
         },
-        (6023, "M365EnvironmentUserCredentialsError"): {
-            "message": "User or Password environment variables are not correct.",
-            "remediation": "Ensure you are using the right credentials.",
+        (6023, "M365UserCredentialsError"): {
+            "message": "The provided M365 User credentials are not valid.",
+            "remediation": "Check the M365 User credentials and ensure they are valid.",
         },
         (6024, "M365NotValidUserError"): {
             "message": "The provided M365 User is not valid.",
@@ -298,7 +298,7 @@ class M365MissingEnvironmentCredentialsError(M365CredentialsError):
         )
 
 
-class M365EnvironmentUserCredentialsError(M365CredentialsError):
+class M365UserCredentialsError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6023, file=file, original_exception=original_exception, message=message
