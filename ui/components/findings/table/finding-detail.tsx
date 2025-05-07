@@ -290,16 +290,12 @@ export const FindingDetail = ({
           <InfoField label="Launched At">
             <DateWithTime inline dateTime={scan.inserted_at || "-"} />
           </InfoField>
-          <InfoField label="Next Scan">
-            <DateWithTime inline dateTime={scan.next_scan_at || "-"} />
-          </InfoField>
+          {scan.scheduled_at && (
+            <InfoField label="Scheduled At">
+              <DateWithTime inline dateTime={scan.scheduled_at} />
+            </InfoField>
+          )}
         </div>
-
-        {scan.scheduled_at && (
-          <InfoField label="Scheduled At">
-            <DateWithTime inline dateTime={scan.scheduled_at} />
-          </InfoField>
-        )}
       </Section>
 
       {/* Provider Details section */}
