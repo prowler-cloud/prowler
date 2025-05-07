@@ -19,12 +19,12 @@ from tasks.jobs.export import (
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 from tasks.utils import batched, get_next_execution_datetime
 
+from api.compliance import get_compliance_frameworks
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
-from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
@@ -261,7 +261,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     provider_type = provider_obj.provider
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
-    frameworks_avail = get_available_compliance_frameworks(provider_type)
+    frameworks_avail = get_compliance_frameworks(provider_type)
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
