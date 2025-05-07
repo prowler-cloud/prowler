@@ -431,6 +431,9 @@ def display_data(
             )
 
         df = data.copy()
+        # Remove Muted rows
+        if "MUTED" in df.columns:
+            df = df[df["MUTED"] == "False"]
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
 
