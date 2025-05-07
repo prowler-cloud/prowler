@@ -45,7 +45,7 @@ class Inspector2(AWSService):
             regional_client = self.regional_clients[inspector.region]
             active_findings = regional_client.list_findings(
                 filterCriteria={
-                    "awsAccountI": [
+                    "awsAccountId": [
                         {"comparison": "EQUALS", "value": self.audited_account},
                     ],
                     "findingStatus": [{"comparison": "EQUALS", "value": "ACTIVE"}],
