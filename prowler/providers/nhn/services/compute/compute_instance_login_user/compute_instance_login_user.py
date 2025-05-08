@@ -12,7 +12,7 @@ class compute_instance_login_user(Check):
             )
             report.status = "PASS"
             report.status_extended = (
-                f"VM Instance {instance.name} has a appropriate login user."
+                f"VM Instance {instance.name} has an appropriate login user."
             )
             if instance.login_user:
                 report.status = "FAIL"
