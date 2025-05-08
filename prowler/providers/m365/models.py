@@ -10,6 +10,7 @@ class M365IdentityInfo(BaseModel):
     tenant_id: str = ""
     tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
     location: str = ""
+    user: str = None
 
 
 class M365RegionConfig(BaseModel):

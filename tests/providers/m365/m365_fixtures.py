@@ -29,6 +29,7 @@ def set_mocked_m365_provider(
         identity_type=IDENTITY_TYPE,
         tenant_id=TENANT_ID,
         tenant_domain=DOMAIN,
+        user="user@email.com",
     ),
     audit_config: dict = None,
     azure_region_config: M365RegionConfig = M365RegionConfig(),
