@@ -45,7 +45,7 @@ dependencies = [
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
   "microsoft-kiota-abstractions==1.9.2",
-  "msgraph-sdk==1.18.0",
+  "msgraph-sdk==1.23.0",
   "numpy==2.0.2",
   "pandas==2.2.3",
   "py-ocsf-models==0.3.1",
@@ -64,7 +64,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">3.9.1,<3.13"
-version = "5.5.1"
+version = "5.6.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
