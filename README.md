@@ -43,12 +43,14 @@
 
 # Description
 
-**Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes. Prowler CLI and Prowler Cloud
+**Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes.
+
+## Prowler CLI and Prowler Cloud
+
 Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and an additional service built on top of it, called <a href="https://prowler.com">Prowler Cloud</a>.
 
 ## Prowler App
 
-Prowler App
 Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler App](docs/img/overview.png)
@@ -62,6 +64,18 @@ prowler <provider>
 ```
 ![Prowler CLI Execution](docs/img/short-display.png)
 
+## Prowler CLI Features
+
+Prowler CLI includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
+
+- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
+- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
+- **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
+- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
+- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
+- **National Security Standards:** ENS (Spanish National Security Scheme)
+- **Custom Security Frameworks:** Tailored to your needs
+
 ## Prowler Dashboard
 
 ```console
@@ -69,22 +83,7 @@ prowler dashboard
 ```
 ![Prowler Dashboard](docs/img/dashboard.png)
 
-Prowler CLI Features
-Prowler CLI includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
-- Industry standards: CIS, NIST 800, NIST CSF, and CISA
-
-- Regulatory compliance and governance: RBI, FedRAMP, and PCI-DSS
-
-- Frameworks for sensitive data and privacy: GDPR, HIPAA, and FFIEC
-
-- Frameworks for organizational governance and quality control: SOC2 and GXP
-
-- AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
-
-- ENS (Spanish National Security Scheme)
-
-- Custom security frameworks tailored to your needs
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
@@ -97,7 +96,7 @@ Prowler CLI includes hundreds of built-in controls to ensure compliance with sta
 
 > Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
-# 💻 Installation
+# Installation
 
 ## Prowler App
 
@@ -120,12 +119,15 @@ curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/mast
 docker compose up -d
 ```
 
-> Containers are built for `linux/amd64`. Configuring Your Workstation for Prowler App
+> Containers are built for `linux/amd64`.
+
+### Configuring Your Workstation for Prowler App
+
 If your workstation's architecture is incompatible, you can resolve this by:
 
-Setting the environment variable: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
+- **Setting the environment variable**: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
+- **Using the following flag in your Docker command**: `--platform linux/amd64`
 
-Using the `--platform linux/amd64` flag in your Docker command.
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ### From GitHub
@@ -209,7 +211,8 @@ prowler -v
 
 ### Containers
 
-Available Versions of Prowler CLI
+**Available Versions of Prowler CLI**
+
 The following versions of Prowler CLI are available, depending on your requirements:
 
 - `latest`: Synchronizes with the `master` branch. Note that this version is not stable.
@@ -247,6 +250,7 @@ python prowler-cli.py -v
 
 Cloning Prowler on Windows
 > To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
+
 # ✏️ High level architecture
 
 ## Prowler App
@@ -259,7 +263,9 @@ Cloning Prowler on Windows
 ![Prowler App Architecture](docs/img/prowler-app-architecture.png)
 
 ## Prowler CLI
-Running Prowler
+
+**Running Prowler**
+
 Prowler can be executed across various environments, offering flexibility to meet your needs. It can be rum from:
 
 - Your own workstation
@@ -288,25 +294,32 @@ And many more environments.
 - All findings with an `INFO` status have been reclassified as `MANUAL`.
 - The CSV output format is standardized across all providers.
 
-Deprecated Output Formats
+**Deprecated Output Formats**
+
 The following formats are now deprecated:
 - Native JSON has been replaced with JSON in [OCSF] v1.1.0 format, which is standardized across all providers (https://schema.ocsf.io/).
 
 ## AWS
-AWS Flag Deprecation
+
+**AWS Flag Deprecation**
+
 The flag --sts-endpoint-region has been deprecated due to the adoption of AWS STS regional tokens.
-Sending FAIL Results to AWS Security Hub
+
+**Sending FAIL Results to AWS Security Hub**
+
 - To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
 
 
-# 📖 Documentation
+#  Documentation
 
-Documentation Resources
+**Documentation Resources**
+
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
-# 📃 License
+# License
 
-Prowler License Information
+**Prowler License Information**
+
 Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
-A copy of the License is available at
-<http://www.apache.org/licenses/LICENSE-2.0>
+
+A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>
