@@ -66,6 +66,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Ensure that ContentType in upload_file matches the uploaded file’s format [(#7635)](https://github.com/prowler-cloud/prowler/pull/7635)
 - Fix incorrect check inside 4.4.1 requirement for Azure CIS 2.0 [(#7656)](https://github.com/prowler-cloud/prowler/pull/7656).
 - Remove muted findings on compliance page from Prowler Dashboard [(#7683)](https://github.com/prowler-cloud/prowler/pull/7683).
+- Remove duplicated findings on compliance page from Prowler Dashboard [(#7686)](https://github.com/prowler-cloud/prowler/pull/7686).
 
 ---
 
