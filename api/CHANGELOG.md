@@ -3,7 +3,7 @@
 All notable changes to the **Prowler API** are documented in this file.
 
 
-## [v1.7.0] (UNRELEASED)
+## [v1.7.0] (Prowler v5.6.0)
 
 ### Added
 
