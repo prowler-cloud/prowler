@@ -35,6 +35,7 @@ prowler <provider> --list-compliance
 - `cis_1.5_aws`
 - `cis_2.0_aws`
 - `cis_3.0_aws`
+- `cis_4.0_aws`
 - `cisa_aws`
 - `ens_rd2022_aws`
 - `fedramp_low_revision_4_aws`
@@ -45,6 +46,7 @@ prowler <provider> --list-compliance
 - `gxp_eu_annex_11_aws`
 - `hipaa_aws`
 - `iso27001_2013_aws`
+- `iso27001_2022_aws`
 - `kisa_isms_p_2023_aws`
 - `kisa_isms_p_2023_korean_aws`
 - `mitre_attack_aws`
@@ -53,6 +55,8 @@ prowler <provider> --list-compliance
 - `nist_800_53_revision_5_aws`
 - `nist_csf_1.1_aws`
 - `pci_3.2.1_aws`
+- `pci_4.0_aws`
+- `prowler_threatscore_aws`
 - `rbi_cyber_security_framework_aws`
 - `soc2_aws`
 
@@ -60,18 +64,36 @@ prowler <provider> --list-compliance
 
 - `cis_2.0_azure`
 - `cis_2.1_azure`
+- `cis_3.0_azure`
 - `ens_rd2022_azure`
+- `iso27001_2022_azure`
+- `mitre_attack_azure`
+- `pci_4.0_azure`
+- `prowler_threatscore_azure`
 - `mitre_attack_azure`
 
 ### GCP
 
 - `cis_2.0_gcp`
+- `cis_3.0_gcp`
 - `ens_rd2022_gcp`
+- `iso27001_2022_gcp`
 - `mitre_attack_gcp`
+- `pci_4.0_gcp`
+- `prowler_threatscore_gcp`
+- `soc2_gcp`
 
 ### Kubernetes
 
 - `cis_1.8_kubernetes`
+- `cis_1.10_kubernetes`
+- `iso27001_2022_kubernetes`
+- `pci_4.0_kubernetes`
+
+### M365
+
+- `cis_4.0_m365`
+- `prowler_threatscore_m365`
 
 ## List Requirements of Compliance Frameworks
 For each compliance framework, you can use option `--list-compliance-requirements` to list its requirements:
