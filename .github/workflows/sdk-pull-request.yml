@@ -51,7 +51,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
@@ -115,6 +115,7 @@ jobs:
           files: |
             ./prowler/providers/aws/**
             ./tests/providers/aws/**
+            .poetry.lock
 
       - name: AWS - Test
         if: steps.aws-changed-files.outputs.any_changed == 'true'
@@ -129,6 +130,7 @@ jobs:
           files: |
             ./prowler/providers/azure/**
             ./tests/providers/azure/**
+            .poetry.lock
 
       - name: Azure - Test
         if: steps.azure-changed-files.outputs.any_changed == 'true'
@@ -143,6 +145,7 @@ jobs:
           files: |
             ./prowler/providers/gcp/**
             ./tests/providers/gcp/**
+            .poetry.lock
 
       - name: GCP - Test
         if: steps.gcp-changed-files.outputs.any_changed == 'true'
@@ -157,6 +160,7 @@ jobs:
           files: |
             ./prowler/providers/kubernetes/**
             ./tests/providers/kubernetes/**
+            .poetry.lock
 
       - name: Kubernetes - Test
         if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
@@ -171,6 +175,7 @@ jobs:
           files: |
             ./prowler/providers/nhn/**
             ./tests/providers/nhn/**
+            .poetry.lock
 
       - name: NHN - Test
         if: steps.nhn-changed-files.outputs.any_changed == 'true'
@@ -185,6 +190,7 @@ jobs:
           files: |
             ./prowler/providers/m365/**
             ./tests/providers/m365/**
+            .poetry.lock
 
       - name: M365 - Test
         if: steps.m365-changed-files.outputs.any_changed == 'true'

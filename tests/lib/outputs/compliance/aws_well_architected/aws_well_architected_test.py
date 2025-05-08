@@ -25,7 +25,9 @@ class TestAWSWellArchitected:
             )
         ]
 
-        output = AWSWellArchitected(findings, AWS_WELL_ARCHITECTED)
+        output = AWSWellArchitected(
+            findings, AWS_WELL_ARCHITECTED, file_extension=".csv"
+        )
         output_data = output.data[0]
         assert isinstance(output_data, AWSWellArchitectedModel)
         assert output_data.Provider == "aws"

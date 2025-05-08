@@ -1,5 +1,4 @@
 import json
-import platform
 import queue
 import re
 import subprocess
@@ -47,12 +46,7 @@ class PowerShellSession:
             This is a base implementation that should be extended by subclasses
             to add specific initialization logic (e.g., credential setup).
         """
-        # Determine the appropriate PowerShell command based on the OS
-        if platform.system() == "Windows":
-            powershell_cmd = "powershell"
-        else:
-            powershell_cmd = "pwsh"
-
+        powershell_cmd = "pwsh"
         self.process = subprocess.Popen(
             [powershell_cmd, "-NoExit", "-Command", "-"],
             stdin=subprocess.PIPE,

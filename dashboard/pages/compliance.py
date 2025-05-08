@@ -76,6 +76,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
+            if "M65" in result:
+                result = result.replace("_M65", " - M65")
             results.append(result)
 
     unique_results = set(results)
@@ -267,6 +269,15 @@ def display_data(
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
             ].apply(lambda x: x.split(" - ")[0])
+
+    # Add the column ACCOUNTID to the data if the provider is m65
+    if "m365" in analytics_input:
+        data.rename(columns={"TENANTID": "ACCOUNTID"}, inplace=True)
+        data.rename(columns={"LOCATION": "REGION"}, inplace=True)
+        if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
+            data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
+                "REQUIREMENTS_ATTRIBUTES_PROFILE"
+            ].apply(lambda x: x.split(" - ")[0])
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
@@ -397,7 +408,9 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
-            data.drop_duplicates(keep="first", inplace=True)
+            data = data.drop_duplicates(
+                subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
+            )
 
             if "threatscore" in analytics_input:
                 data = get_threatscore_mean_by_pillar(data)
@@ -420,6 +433,9 @@ def display_data(
             )
 
         df = data.copy()
+        # Remove Muted rows
+        if "MUTED" in df.columns:
+            df = df[df["MUTED"] == "False"]
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
 

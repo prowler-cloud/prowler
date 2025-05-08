@@ -513,7 +513,7 @@ export interface ProviderProps {
   id: string;
   type: "providers";
   attributes: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    provider: "aws" | "azure" | "m365" | "gcp" | "kubernetes";
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
@@ -755,6 +755,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

@@ -37,6 +37,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_limit_exceeded_addresses=["test@correo.com"],
                     notify_sender_blocked_addresses=["test@correo.com"],
                     default=False,
+                    auto_forwarding_mode=False,
                 )
             }
             defender_client.outbound_spam_rules = {
@@ -92,6 +93,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
                     default=False,
+                    auto_forwarding_mode=False,
                 )
             }
             defender_client.outbound_spam_rules = {
@@ -146,6 +148,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_limit_exceeded_addresses=["test@correo.com"],
                     notify_sender_blocked_addresses=["test@correo.com"],
                     default=True,
+                    auto_forwarding_mode=False,
                 )
             }
             defender_client.outbound_spam_rules = {}
@@ -198,6 +201,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_limit_exceeded_addresses=["admin@org.com"],
                     notify_sender_blocked_addresses=["admin@org.com"],
                     default=False,
+                    auto_forwarding_mode=False,
                 )
             }
             defender_client.outbound_spam_rules = {}
