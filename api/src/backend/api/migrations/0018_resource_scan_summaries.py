@@ -10,7 +10,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0017_m365_provider"),
     ]
