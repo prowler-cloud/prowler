@@ -95,7 +95,7 @@ export const CustomInput = <T extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => (
-        <>
+        <div className="relative w-full">
           <FormControl>
             <Input
               id={name}
@@ -120,9 +120,9 @@ export const CustomInput = <T extends FieldValues>({
             />
           </FormControl>
           {showFormMessage && (
-            <FormMessage className="text-system-error dark:text-system-error" />
+            <FormMessage className="absolute max-w-full text-xs text-system-error dark:text-system-error" />
           )}
-        </>
+        </div>
       )}
     />
   );

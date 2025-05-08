@@ -26,8 +26,12 @@ export const LaunchScanWorkflow = ({
 }: {
   providers: ProviderInfo[];
 }) => {
-  const formSchema = onDemandScanFormSchema();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formSchema = z.object({
+    ...onDemandScanFormSchema().shape,
+    scanName: z.string().min(3, "Must have at least 3 characters").optional(),
+  });
+
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId: "",
@@ -77,25 +81,25 @@ export const LaunchScanWorkflow = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-wrap justify-start gap-4"
       >
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-3">
-            <SelectScanProvider
-              providers={providers}
-              control={form.control}
-              name="providerId"
-            />
-          </div>
-          <AnimatePresence>
-            {form.watch("providerId") && (
-              <>
+        <div className="w-72">
+          <SelectScanProvider
+            providers={providers}
+            control={form.control}
+            name="providerId"
+          />
+        </div>
+        <AnimatePresence>
+          {form.watch("providerId") && (
+            <>
+              <div className="flex flex-wrap gap-6 md:gap-4">
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="col-span-2 self-end"
+                  className="min-w-48 self-end"
                 >
                   <CustomInput
                     control={form.control}
@@ -115,36 +119,36 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="col-span-4 flex items-end gap-4"
+                  className="flex items-end gap-4"
                 >
-                  <div className="flex flex-row items-end gap-4">
-                    <CustomButton
-                      type="submit"
-                      ariaLabel="Start scan now"
-                      variant="solid"
-                      color="action"
-                      size="sm"
-                      isLoading={isLoading}
-                      startContent={!isLoading && <RocketIcon size={16} />}
-                    >
-                      {isLoading ? <>Loading</> : <span>Start now</span>}
-                    </CustomButton>
-                    <CustomButton
-                      onPress={() => form.reset()}
-                      className="w-fit border-gray-200 bg-transparent"
-                      ariaLabel="Clear form"
-                      variant="bordered"
-                      size="sm"
-                      radius="sm"
-                    >
-                      Cancel
-                    </CustomButton>
-                  </div>
+                  <CustomButton
+                    type="submit"
+                    ariaLabel="Start scan now"
+                    variant="solid"
+                    color="action"
+                    size="sm"
+                    isLoading={isLoading}
+                    isDisabled={!form.formState.isValid}
+                    startContent={!isLoading && <RocketIcon size={16} />}
+                  >
+                    {isLoading ? <>Loading</> : <span>Start now</span>}
+                  </CustomButton>
+                  <CustomButton
+                    onPress={() => form.reset()}
+                    className="w-fit border-gray-200 bg-transparent"
+                    ariaLabel="Clear form"
+                    variant="bordered"
+                    size="sm"
+                    radius="sm"
+                  >
+                    Cancel
+                  </CustomButton>
                 </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-          {/* 
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+        {/*
           <div className="flex flex-col justify-start">
             <AnimatePresence>
               {form.watch("providerId") && (
@@ -169,7 +173,6 @@ export const LaunchScanWorkflow = ({
               )}
             </AnimatePresence>
           </div> */}
-        </div>
       </form>
     </Form>
   );
