@@ -3597,7 +3597,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.6.0"
+version = "5.5.1"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">3.9.1,<3.13"
@@ -3640,7 +3640,7 @@ google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "32.0.1"
 microsoft-kiota-abstractions = "1.9.2"
-msgraph-sdk = "1.23.0"
+msgraph-sdk = "1.18.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.3.1"
@@ -3656,8 +3656,8 @@ tzlocal = "5.3.1"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "v5.5"
-resolved_reference = "c1b70ed0fc6bd586c8c69a121411f1d710d94845"
+reference = "v5.6"
+resolved_reference = "1cc09b81f9d2d84fcfad0f0c21d62ed0c19c9caf"
 
 [[package]]
 name = "psutil"
@@ -5488,4 +5488,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "fd475f6b8f0b5c64e9f4e1d3e76ddc1d53a2caa5b028ee2b4ed9c8b74d3c5627"
+content-hash = "14ea83a93529f222a427cb33dbfa7ba244e7c8a81e42e1ecfc1abe21b7ee40a2"
