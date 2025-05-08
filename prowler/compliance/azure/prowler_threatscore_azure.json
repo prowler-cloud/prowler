@@ -68,7 +68,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "This recommendation ensures that users accessing the Windows Azure Service Management API (e.g., Azure PowerShell, Azure CLI, Azure Resource Manager API) are required to authenticate using multi-factor authentication (MFA) before accessing resources.",
           "AdditionalInformation": "Administrative access to the Azure Service Management API should be secured with enhanced authentication measures to prevent unauthorized changes. Enforcing MFA helps mitigate the risk of credential compromise, privilege abuse, and unauthorized modifications to administrative settings. IMPORTANT: While exceptions for specific users or groups may be configured, they should be carefully tracked and periodically reviewed through an Access Review process. The policy should apply to all users by default, ensuring that only explicitly exempted accounts bypass MFA.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -85,7 +85,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "This recommendation ensures that users accessing Microsoft Admin Portals (such as Microsoft 365 Admin, Microsoft 365 Defender, Exchange Admin Center, and Azure Portal) must authenticate using multi-factor authentication (MFA) before logging in.",
           "AdditionalInformation": "Microsoft Admin Portals provide privileged access to critical settings and resources, requiring enhanced security measures. Enforcing MFA reduces the risk of unauthorized access, credential compromise, and administrative abuse, preventing intruders from making unauthorized changes to administrative settings.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -102,7 +102,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "Ensure that privileged virtual machines do not allow logins from identities without multi-factor authentication (MFA) and that access is restricted to necessary permissions only. Unauthorized access can enable attackers to move laterally and misuse the virtual machine’s managed identity for further privilege escalation or unauthorized operations.",
           "AdditionalInformation": "Requiring MFA for privileged VM access reduces the risk of credential compromise, lateral movement, and unauthorized access to cloud resources. Attackers can exploit valid accounts to access virtual machines and escalate privileges using the managed identity. Enforcing MFA and least privilege access helps mitigate these risks by preventing unauthorized logins and restricting administrative permissions to only what is necessary.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -119,7 +119,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Restrict the ability to create new Microsoft Entra ID or Azure AD B2C tenants to administrators or appropriately delegated users.",
           "AdditionalInformation": "Limiting tenant creation to authorized administrators prevents unauthorized users from creating new tenants, reducing the risk of uncontrolled environments, misconfigurations, and potential security gaps. This ensures that only approved users can establish and manage tenant resources.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -136,7 +136,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "To maintain security and operational efficiency, it is recommended to have a minimum of two and a maximum of four users assigned the Global Administrator role in Microsoft Entra ID. This ensures redundancy while minimizing the risk of excessive privileged access.",
           "AdditionalInformation": "The Global Administrator role holds broad privileges across Microsoft Entra ID services and should not be used for daily tasks. Administrators should have separate accounts for regular activities and privileged actions. Limiting the number of Global Administrators reduces the risk of unauthorized access, human error, and privilege misuse, while ensuring at least two administrators are available to prevent disruptions in case of unavailability. This approach aligns with the principle of least privilege and strengthens the security posture of an Azure tenant.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -153,7 +153,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Restrict guest user permissions to prevent unauthorized access to directory resources and administrative roles.",
           "AdditionalInformation": "Limiting guest access ensures that guest accounts cannot enumerate users, groups, or directory objects and prevents them from being assigned administrative roles. Guest access has three levels of restriction, with the most secure option being: “Guest user access is restricted to their own directory object” (most restrictive). This setting minimizes the risk of unauthorized access and ensures guests only interact with their assigned resources.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -170,7 +170,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Require administrators to provide consent before applications can access Microsoft Entra ID resources, preventing unauthorized or malicious app integrations.",
           "AdditionalInformation": "Allowing users to grant application permissions without restrictions increases the risk of data exfiltration and privilege abuse by malicious applications. Restricting app consent to administrators ensures that only verified and approved applications gain access, protecting sensitive data and privileged accounts from unauthorized use.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -187,7 +187,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Allow users to grant consent only for selected permissions when the request comes from a verified publisher, ensuring tighter control over third-party application access.",
           "AdditionalInformation": "Restricting app consent to verified publishers helps mitigate the risk of unauthorized data access and privilege abuse. Malicious applications may attempt to exploit user-granted permissions, so ensuring only trusted, verified applications can request access enhances security while maintaining flexibility for approved integrations.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -204,7 +204,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Microsoft Entra ID Conditional Access allows organizations to define Named Locations and categorize them as trusted or untrusted. These locations can be based on geographical regions, specific IP addresses, or IP ranges to enhance access control policies.",
           "AdditionalInformation": "Defining trusted IP addresses or ranges enables organizations to enforce Conditional Access policies based on user location. Users authenticating from trusted locations may receive fewer access restrictions, while those from untrusted sources can be subject to stricter security controls, reducing the risk of unauthorized access.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -221,7 +221,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Limit the ability to create security groups to administrators only, preventing unauthorized users from managing group memberships.",
           "AdditionalInformation": "Allowing all users to create and manage security groups can lead to uncontrolled access, misconfigurations, and potential security risks. Unless business requirements justify broader delegation, restricting security group creation to administrators ensures that group permissions and memberships are properly managed, reducing the risk of unauthorized access.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -238,7 +238,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Restrict the ability to register third-party applications to administrators or appropriately delegated users, ensuring better security control over app integrations.",
           "AdditionalInformation": "Allowing unrestricted application registration can expose Microsoft Entra ID data to security risks. Requiring administrator approval ensures that custom-developed applications undergo a formal security review before being granted access. Organizations may delegate permissions to developers or high-request users as needed, but policies should be reviewed to align with security best practices and operational needs.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -255,7 +255,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Limit the ability to send invitations to users with specific administrative roles, preventing unauthorized guest access to cloud resources.",
           "AdditionalInformation": "Restricting guest invitations to designated administrators helps enforce “Need to Know” permissions, reducing the risk of unintended data exposure. By default, anyone in the organization—including guests and non-admins—can invite external users, which can lead to unauthorized access. Restricting this capability ensures that only approved accounts can extend access to the tenant, strengthening security and access control.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -272,7 +272,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Limit Microsoft 365 group creation to administrators only, ensuring that group management remains under centralized control.",
           "AdditionalInformation": "Restricting group creation to administrators prevents unauthorized or unnecessary group creation, ensuring that only appropriate groups are created and managed. This reduces the risk of misconfigurations, access issues, and uncontrolled resource sharing within the organization.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -289,7 +289,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Regularly review Network Security Groups (NSGs) for misconfigured or overly permissive rules, especially those exposing ports and protocols to the public internet. Any unnecessary exposure should be restricted to reduce security risks.",
           "AdditionalInformation": "Exposing Remote Desktop Protocol (RDP) or other critical services to the internet increases the risk of brute-force attacks, which could lead to unauthorized access to Azure Virtual Machines. Compromised VMs can be used to launch attacks on other networked resources, both inside and outside Azure. Periodic NSG evaluations help minimize attack surfaces and ensure that only explicitly required access is permitted.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -306,7 +306,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Regularly review Network Security Groups (NSGs) for misconfigured or overly permissive rules, particularly those exposing SSH (port 22) or other critical services to the internet. Any unnecessary exposure should be restricted to reduce security risks.",
           "AdditionalInformation": "Exposing SSH over the internet increases the risk of brute-force attacks, allowing attackers to gain unauthorized access to Azure Virtual Machines. Once compromised, a VM can be used as a pivot point to attack other machines within the Azure Virtual Network or even external systems. Periodic NSG evaluations help minimize attack surfaces and ensure that only explicitly required access is permitted.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -323,7 +323,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Regularly review Network Security Groups (NSGs) for misconfigured or overly permissive UDP rules, especially those exposing UDP-based services to the internet. Any unnecessary exposure should be restricted to prevent security risks.",
           "AdditionalInformation": "Exposing UDP services to the internet increases the risk of Distributed Denial-of-Service (DDoS) amplification attacks, where attackers can reflect and amplify spoofed traffic from Azure Virtual Machines. Commonly exploited UDP services include DNS, NTP, SSDP, SNMP, and CLDAP, which can be used to disrupt services or launch attacks against other networked systems inside and outside Azure. Regular NSG evaluations help minimize attack surfaces and prevent VMs from being leveraged in DDoS attacks.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -340,7 +340,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Regularly review Network Security Groups (NSGs) for misconfigured or overly permissive HTTP(S) rules, ensuring that exposure to the internet is necessary and narrowly configured. Restrict access where it is not explicitly required.",
           "AdditionalInformation": "Exposing HTTP(S) services to the internet increases the risk of brute-force attacks, credential stuffing, and exploitation of vulnerabilities in web applications or services. If compromised, an attacker can use the affected resource as a pivot point to escalate privileges, move laterally, and compromise other Azure resources within the tenant. Periodic NSG evaluations help reduce attack surfaces and enforce least privilege access.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -357,7 +357,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Enable Azure Bastion to securely access Azure Virtual Machines (VMs) over the internet without exposing RDP (3389/TCP) or SSH (22/TCP) ports directly to the public network. Azure Bastion provides remote access through TLS (443/TCP) while integrating with Azure Active Directory (AAD) security policies.",
           "AdditionalInformation": "Using Azure Bastion eliminates the need to assign public IP addresses to VMs, reducing exposure to brute-force attacks and unauthorized access. It enhances security by enabling browser-based RDP/SSH access, leveraging Azure Active Directory controls, and supporting Multi-Factor Authentication (MFA), Conditional Access Policies, and other hardening measures for a centralized and secure access solution.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -374,7 +374,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Use Microsoft Entra authentication for SQL Database to centralize identity and credential management, enhancing security and simplifying access control. By leveraging Microsoft Entra ID, organizations can manage database users, permissions, and authentication policies in a single location, reducing complexity and improving security.",
           "AdditionalInformation": "Microsoft Entra authentication eliminates the need for separate SQL authentication, preventing identity sprawl and simplifying password management. It enables centralized permission management, supports token-based authentication, integrates with Active Directory Federation Services (ADFS), and enhances security with Multi-Factor Authentication (MFA). Using Entra ID authentication also eliminates the need to store passwords, enabling secure, modern authentication methods while ensuring seamless access control for users and applications.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -391,7 +391,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Disable access from Azure services to PostgreSQL flexible servers to restrict inbound connections and enhance security.",
           "AdditionalInformation": "Allowing access from all Azure services bypasses firewall restrictions and permits connections from any Azure resource, including those outside your subscription. This can expose the database to unauthorized access and security risks. Instead, configure firewall rules or Virtual Network (VNet) rules to allow only specific, trusted network ranges, ensuring tighter access control.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -408,7 +408,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Restrict Cosmos DB access to whitelisted networks to minimize exposure and reduce potential attack vectors.",
           "AdditionalInformation": "Limiting Cosmos DB communication to specific trusted networks prevents unauthorized access from unapproved sources, including the public internet. This enhances security by reducing the attack surface and ensuring only designated networks can interact with the database.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -425,7 +425,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Use private endpoints for Cosmos DB to restrict network traffic to approved sources, ensuring secure and private communication.",
           "AdditionalInformation": "For sensitive data, private endpoints provide granular control over which services can access Cosmos DB, preventing exposure to unauthorized networks. This setup ensures that all traffic remains within a private network, reducing security risks and enhancing data protection.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -442,7 +442,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Use Microsoft Entra ID for Cosmos DB client authentication, leveraging Azure RBAC for enhanced security, centralized management, and MFA support.",
           "AdditionalInformation": "Entra ID authentication is significantly more secure than token-based authentication, as tokens must be stored persistently on the client, increasing the risk of compromise. Entra ID eliminates this risk by securely handling credentials, integrating seamlessly with Azure RBAC, and supporting multi-factor authentication (MFA) for stronger access control.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -459,7 +459,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Disable public network access for Azure Storage accounts, ensuring that access settings for individual containers cannot override this restriction. This applies to Azure Resource Manager deployment model storage accounts, as classic deployment model accounts will be retired by August 31, 2024.",
           "AdditionalInformation": "By default, Azure Storage accounts allow users with appropriate permissions to enable public access to containers and blobs, granting read-only access without requiring authentication. To minimize the risk of unauthorized data exposure, public access should be restricted unless explicitly required. Instead, use Azure AD RBAC or shared access signatures (SAS) to grant controlled and time-limited access to storage resources.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -476,7 +476,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Restricting default network access enhances security by preventing unrestricted connections to Azure Storage accounts. By default, storage accounts accept connections from any network, so access should be limited to selected networks by modifying the default configuration.",
           "AdditionalInformation": "Storage accounts should deny access from all networks by default, except for explicitly allowed Azure Virtual Networks or specific IP address ranges. This approach creates a secure network boundary, ensuring only authorized applications can connect. Even when network rules allow access, proper authentication (via access keys or SAS tokens) is still required, adding an extra layer of security.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -493,7 +493,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "This recommendation assumes that public network access is set to “Enabled from selected virtual networks and IP addresses” and that the default network access rule for storage accounts is set to deny. Some Azure services require access to storage accounts from networks that cannot be explicitly granted permissions through network rules. To allow these services to function properly, enable the trusted Azure services exception, which allows selected Azure services to bypass network restrictions while still enforcing strong authentication.",
           "AdditionalInformation": "Enabling firewall rules on a storage account blocks access to all incoming requests, including those from other Azure services. Allowing access to trusted Azure services ensures that essential Azure functions, such as Azure Backup, Event Grid, Monitor, and Site Recovery, can interact with storage accounts securely without exposing them to broader public access.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -510,7 +510,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Use private endpoints for Azure Storage accounts to enable secure, encrypted access over a Private Link. Private endpoints assign an IP address from the Virtual Network (VNet) for each service, ensuring that network traffic remains isolated and encrypted within the VNet. This configuration helps segment network traffic, preventing external access while allowing secure communication between services. Additionally, VNets can extend addressing spaces or act as secure tunnels over public networks, connecting remote infrastructures securely.",
           "AdditionalInformation": "Encrypting traffic between services protects sensitive data from interception and unauthorized access. Using private endpoints ensures that data remains within a controlled network environment, reducing exposure to external threats and enhancing overall security posture.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -527,7 +527,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Ensure that Azure SQL Databases do not allow ingress from 0.0.0.0/0 (ANY IP), as this would expose them to the public internet. Azure SQL Server includes a firewall that blocks unauthorized connections by default, but it allows defining more granular IP address rules to restrict access. Allowing 0.0.0.0/0 effectively grants open access, increasing security risks.",
           "AdditionalInformation": "Leaving Azure SQL firewall rules open to ANY IP significantly increases the attack surface, making databases vulnerable to brute-force attacks and unauthorized access. Instead, firewall rules should be restricted to specific, trusted IP ranges from known datacenters or internal resources. Additionally, enabling Allow Azure services and resources to access this server could allow access from outside your organization’s subscription or region, potentially bypassing SQL Server’s network ACLs and exposing the database to malicious activity.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 5
         }
       ]
     },
@@ -544,7 +544,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Enable Azure App Service Authentication to restrict anonymous HTTP requests and enforce authentication using identity providers before requests reach the application.",
           "AdditionalInformation": "Enabling App Service Authentication ensures that all incoming HTTP requests are validated and authenticated before being processed by the application. It integrates with Microsoft Entra ID, Google, Facebook, Microsoft Accounts, and Twitter to manage authentication, token validation, and session handling. Additionally, disabling HTTP Basic Authentication helps mitigate risks from legacy authentication methods, strengthening application security.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -561,7 +561,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Ensure that FTP access is disabled for Azure App Services, or if required, enforce FTPS (FTP over SSL/TLS) for secure authentication and data transmission.",
           "AdditionalInformation": "FTP transmits data, including credentials, in plaintext, making it vulnerable to interception, credential theft, and data exfiltration. Requiring FTPS ensures that all FTP connections are encrypted, reducing the risk of unauthorized access, persistence, and lateral movement within the environment. If FTP is not needed, disabling it entirely enhances security by eliminating an unnecessary attack vector.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -697,7 +697,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Ensure that network flow logs are collected and sent to a central Log Analytics workspace for monitoring and analysis.",
           "AdditionalInformation": "Capturing network flow logs provides visibility into traffic patterns across your network, helping detect anomalies, potential lateral movement, and security threats. These logs integrate with Azure Monitor and Azure Sentinel, enabling advanced analytics and visualization for improved network security and incident response.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -714,7 +714,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Enable AppServiceHTTPLogs for Azure App Service instances to capture and centrally log all HTTP requests.",
           "AdditionalInformation": "Logging web requests provides critical data for security monitoring and incident response. Captured logs can be ingested into a SIEM or central log aggregation system, helping security analysts detect anomalies, investigate threats, and enhance application security.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 1
         }
       ]
     },
@@ -816,7 +816,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Delete SQL Server Firewall Rule event to monitor and track firewall rule removals in SQL Server.",
           "AdditionalInformation": "Monitoring firewall rule deletions helps detect unauthorized or accidental changes that could expose the database to security risks. Timely alerts ensure quick detection and response to prevent unauthorized network access and maintain a secure SQL environment.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -850,7 +850,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Delete Public IP Address event to monitor and track the removal of public IP addresses.",
           "AdditionalInformation": "Monitoring public IP deletions helps detect unauthorized or accidental changes that could impact network accessibility or security. Timely alerts enable quick investigation and response, ensuring that critical network configurations remain intact and secure.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -867,7 +867,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Application Insights in Azure serves as an Application Performance Monitoring (APM) solution, providing valuable insights into application performance, telemetry data, and trace logs. It helps organizations monitor application health and troubleshoot incidents efficiently.",
           "AdditionalInformation": "Enabling Application Insights enhances security monitoring and performance optimization by collecting metrics, telemetry, and trace logs. These logs aid in proactive performance tuning to reduce costs and support incident response by helping identify the root cause of potential security or operational issues. Integrating Application Insights into a broader logging and monitoring strategy strengthens an organization’s overall observability and security posture.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 1
         }
       ]
     },
@@ -901,7 +901,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Ensure endpoint protection is installed on all Azure Virtual Machines (VMs) to provide real-time security monitoring and threat detection.",
           "AdditionalInformation": "Endpoint protection helps detect and remove malware, viruses, and other security threats, protecting VMs from compromise and unauthorized access. It also provides configurable alerts for suspicious activity, enhancing security monitoring and incident response across Azure environments.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -918,7 +918,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Ensure that all Windows and Linux Virtual Machines (VMs) have the latest OS patches and security updates applied to mitigate vulnerabilities and improve system stability.",
           "AdditionalInformation": "Keeping VMs updated helps address security vulnerabilities, bug fixes, and stability improvements. Microsoft Defender for Cloud continuously checks for missing critical and security updates using Windows Update, WSUS, or Linux package managers. Applying recommended updates reduces the risk of exploits, malware, and performance issues, ensuring a secure and resilient cloud environment.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -935,7 +935,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Ensure that all Microsoft Cloud Security Benchmark (MCSB) policies are enabled to effectively evaluate resource configurations against best practice security recommendations.",
           "AdditionalInformation": "The MCSB Policy Initiative enforces security best practices and helps ensure compliance with organizational and regulatory requirements. If a policy’s Effect is set to Disabled, it will not be evaluated, potentially preventing administrators from detecting security misconfigurations. Keeping all MCSB policies enabled allows Microsoft Defender for Cloud to assess relevant resources and provide actionable security insights to strengthen cloud security.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -952,7 +952,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Ensure that security alert emails are enabled for subscription owners to receive notifications about potential security threats and vulnerabilities.",
           "AdditionalInformation": "Enabling security alert emails ensures that subscription owners are promptly informed of security incidents, threats, or misconfigurations detected by Microsoft Defender for Cloud. Timely notifications allow administrators to take immediate action, mitigate risks, and maintain a strong security posture within the Azure environment.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -969,7 +969,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Configure Microsoft Defender for Cloud to send high-severity security alerts to a designated security contact email in addition to the subscription owner.",
           "AdditionalInformation": "By default, Microsoft Defender for Cloud notifies only subscription owners of critical security alerts. Adding a security contact email ensures that the security team is promptly informed of potential threats, allowing for faster response and risk mitigation to maintain a secure Azure environment.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -1003,7 +1003,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Enable security alert emails to notify the subscription owner or designated security contacts about potential security threats.",
           "AdditionalInformation": "Ensuring security alerts are sent to the appropriate personnel allows for timely detection and response to security incidents. This helps mitigate risks by ensuring that critical threats and vulnerabilities are addressed promptly, improving the overall security posture of the Azure environment.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1020,7 +1020,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Enable Microsoft Defender for DNS to monitor and scan outgoing DNS traffic within a subscription for potential security threats. (Note: As of August 1, 2023, new subscribers receive DNS threat alerts as part of Defender for Servers P2.)",
           "AdditionalInformation": "Defender for DNS analyzes DNS queries against a dynamic threat intelligence list to detect potential malicious activity, compromised services, or security breaches. Monitoring DNS lookups helps identify and prevent threats such as data exfiltration, command and control (C2) communications, and phishing attacks, improving overall network security.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1037,7 +1037,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an activity log alert for the Create Policy Assignment event to track changes in Azure Policy assignments.",
           "AdditionalInformation": "Monitoring policy assignment events helps detect unauthorized or unintended changes in Azure policies, providing greater visibility and reducing the time required to identify and respond to policy modifications.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1054,7 +1054,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an activity log alert for the Delete Policy Assignment event to monitor and track policy removal activities in Azure Policy assignments.",
           "AdditionalInformation": "Monitoring policy deletions helps detect unauthorized or unintended changes, ensuring policy integrity and reducing the time required to identify and respond to security or compliance violations.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1071,7 +1071,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Create or Update Network Security Group (NSG) event to track changes in network security configurations.",
           "AdditionalInformation": "Monitoring NSG creation and updates provides visibility into network access changes, helping to detect unauthorized modifications and identify potential security risks in a timely manner.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1088,7 +1088,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Delete Network Security Group (NSG) event to monitor and track network security group removals.",
           "AdditionalInformation": "Monitoring NSG deletions provides visibility into network access changes, helping to detect unauthorized modifications and identify potential security threats before they impact the environment.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1105,7 +1105,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Create or Update Security Solution event to track modifications to security solutions in your environment.",
           "AdditionalInformation": "Monitoring security solution changes provides visibility into updates, additions, or modifications to active security configurations. This helps detect unauthorized changes or suspicious activity and ensures that security controls remain properly configured.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1122,7 +1122,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Delete Security Solution event to monitor and track the removal of security solutions in your environment.",
           "AdditionalInformation": "Monitoring security solution deletions helps detect unauthorized removals or suspicious activity, ensuring that critical security controls are not accidentally or maliciously disabled. This improves security visibility and helps maintain a strong security posture.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1139,7 +1139,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Create an Activity Log Alert for the Create or Update SQL Server Firewall Rule event to track changes in SQL Server firewall configurations.",
           "AdditionalInformation": "Monitoring firewall rule modifications provides visibility into network access changes, helping detect unauthorized updates that could expose the database to security risks. Timely alerts can reduce the time needed to identify and respond to suspicious activity, ensuring a secure SQL environment.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1156,7 +1156,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Enable require_secure_transport on PostgreSQL flexible servers to enforce SSL connections between the database server and client applications, ensuring encrypted communication.",
           "AdditionalInformation": "Requiring SSL encryption helps protect data in transit from man-in-the-middle attacks by securing the connection between the database server and client applications. Enforcing secure transport prevents unauthorized access and strengthens data integrity and confidentiality.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -1173,7 +1173,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Enable require_secure_transport on MySQL flexible servers to enforce SSL encryption between the database server and client applications, ensuring secure communication.",
           "AdditionalInformation": "Requiring SSL connectivity protects data in transit from man-in-the-middle attacks by encrypting communication between client applications and the database server. Enforcing secure transport helps prevent unauthorized access and data interception, strengthening the overall security posture of the database.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -1207,7 +1207,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Configure Azure App Service to enforce HTTPS-only traffic, ensuring that all HTTP requests are automatically redirected to HTTPS for secure communication.",
           "AdditionalInformation": "Enforcing HTTPS protects data in transit by using TLS/SSL encryption, preventing man-in-the-middle attacks and ensuring secure authentication. Redirecting non-secure HTTP traffic to HTTPS enhances the confidentiality and integrity of application communications, reducing exposure to security vulnerabilities.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -1224,7 +1224,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Ensure that Azure App Service is configured to use TLS 1.2 or higher to secure data transmission and align with industry security standards.",
           "AdditionalInformation": "TLS 1.0 and 1.1 are outdated protocols with known vulnerabilities that expose web applications to security threats, including data interception and man-in-the-middle attacks. TLS 1.2 is the recommended encryption standard by industry frameworks such as PCI DSS, providing stronger encryption and improved security for web app connections.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1241,7 +1241,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Ensure that Azure App Service is configured to use the latest supported HTTP version to benefit from security improvements, performance enhancements, and new functionalities.",
           "AdditionalInformation": "Newer HTTP versions provide security enhancements, performance optimizations, and better resource management. HTTP/2, for example, improves efficiency by addressing issues such as head-of-line blocking, header compression, and request prioritization. Keeping apps updated to the latest HTTP version ensures they leverage modern security protocols and enhanced data transmission capabilities while maintaining compatibility and performance standards.",
-          "LevelOfRisk": 2
+          "LevelOfRisk": 1
         }
       ]
     },
@@ -1258,7 +1258,7 @@
           "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Enable encryption at rest using Customer Managed Keys (CMK) instead of Microsoft Managed Keys to maintain greater control over sensitive data encryption in Azure Storage accounts.",
           "AdditionalInformation": "By default, Azure encrypts all storage resources (blobs, disks, files, queues, and tables) using Microsoft Managed Keys. However, using Customer Managed Keys (CMK) allows organizations to control, manage, and rotate their encryption keys through Azure Key Vault, ensuring compliance with security policies. CMKs also support automatic key version updates for enhanced security. Since this recommendation applies specifically to storage accounts holding critical data, its assessment remains manual rather than automated.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -1275,7 +1275,7 @@
           "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Enable Transparent Data Encryption (TDE) with Customer-Managed Keys (CMK) to enhance control, security, and separation of duties over the TDE Protector. TDE encrypts data at rest using a database encryption key (DEK). Traditionally, DEKs were protected by Azure SQL Service-managed certificates, but with Customer-Managed Key support, the DEK can now be secured using an asymmetric key stored in Azure Key Vault. Azure Key Vault provides centralized key management, FIPS 140-2 Level 2 validated HSMs, and additional security through key and data separation. Based on business needs and data sensitivity, organizations should use Customer-Managed Keys for TDE encryption.",
           "AdditionalInformation": "Using Customer-Managed Keys for TDE gives organizations full control over encryption keys, including who can access them and when. Azure Key Vault serves as a secure external key management system, ensuring that TDE encryption keys remain protected from unauthorized access. When configured, the asymmetric key is set at the server level and inherited by all databases under that server, providing consistent encryption management across the environment.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
