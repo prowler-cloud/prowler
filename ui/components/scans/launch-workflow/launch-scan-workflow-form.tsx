@@ -128,7 +128,6 @@ export const LaunchScanWorkflow = ({
                     color="action"
                     size="sm"
                     isLoading={isLoading}
-                    isDisabled={!form.formState.isValid}
                     startContent={!isLoading && <RocketIcon size={16} />}
                   >
                     {isLoading ? <>Loading</> : <span>Start now</span>}
