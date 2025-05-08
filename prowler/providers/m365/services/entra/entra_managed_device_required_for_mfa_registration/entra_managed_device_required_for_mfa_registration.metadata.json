@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-registration"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

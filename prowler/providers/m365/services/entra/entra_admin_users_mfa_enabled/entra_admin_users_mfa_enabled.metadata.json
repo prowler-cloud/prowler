@@ -26,7 +26,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

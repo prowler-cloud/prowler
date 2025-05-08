@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Either of the two restrictive settings ensures compliance. The most restrictive setting prevents guests from viewing other directory objects entirely."

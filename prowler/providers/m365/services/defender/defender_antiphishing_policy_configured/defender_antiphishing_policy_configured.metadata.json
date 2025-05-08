@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/set-up-anti-phishing-policies?view=o365-worldwide"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e5",
+    "e5-level-2"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -23,7 +23,12 @@
       "Url": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1",
+    "e5",
+    "e5-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

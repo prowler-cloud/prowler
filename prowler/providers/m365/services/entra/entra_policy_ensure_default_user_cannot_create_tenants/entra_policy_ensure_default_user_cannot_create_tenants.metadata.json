@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

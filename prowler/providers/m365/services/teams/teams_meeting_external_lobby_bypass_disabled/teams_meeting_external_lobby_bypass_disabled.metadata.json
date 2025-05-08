@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

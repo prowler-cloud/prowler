@@ -125,9 +125,9 @@ class CheckMetadata(BaseModel):
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
-        if not re.match("^[a-z-]+$", value_lower):
+        if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
             )
         return value_lower
 

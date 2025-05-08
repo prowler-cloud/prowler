@@ -26,7 +26,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-2"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

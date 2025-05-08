@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#guest-inviter"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-2"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "A more restrictive setting is acceptable, but the minimum requirement is limiting invitations to admins and Guest Inviters."

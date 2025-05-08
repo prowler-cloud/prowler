@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-2"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enforcing this setting may create additional requests that administrators need to review."

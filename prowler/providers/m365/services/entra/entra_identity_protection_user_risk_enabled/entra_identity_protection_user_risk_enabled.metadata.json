@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e5",
+    "e5-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -23,7 +23,10 @@
       "Url": "https://learn.microsoft.com/en-us/mem/intune/protect/create-conditional-access-intune"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3",
+    "e3-level-1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
