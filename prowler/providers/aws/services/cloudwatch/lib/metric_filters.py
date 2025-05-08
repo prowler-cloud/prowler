@@ -27,6 +27,10 @@ def check_cloudwatch_log_metric_filter(
                 )
                 report.status = "FAIL"
                 report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
+                report.check_metadata.ResourceIdTemplate = (
+                    "arn:partition:logs:region:account-id:log-group:log-group-name"
+                )
+                report.check_metadata.ResourceType = "AwsLogsLogGroup"
                 # 3. Check if there is an alarm for the metric
                 for alarm in metric_alarms:
                     if alarm.metric == metric_filter.metric:
