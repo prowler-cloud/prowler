@@ -37,7 +37,7 @@ interface HorizontalSplitBarProps {
   valueSuffix?: string;
   /**
    * Bar height
-   * @default "h-6"
+   * @default "h-4"
    */
   barHeight?: string;
   /**
@@ -92,7 +92,7 @@ export const HorizontalSplitBar = ({
   colorA = "bg-system-success",
   colorB = "bg-system-error",
   valueSuffix = "",
-  barHeight = "h-6",
+  barHeight = "h-4",
   emptyColor = "bg-gray-300",
   emptyText = "No data available",
   minBarWidth = 25,
