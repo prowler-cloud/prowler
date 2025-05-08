@@ -24,6 +24,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Set a default session duration when configuring an AWS Cloud Provider using a role. [(#7639)](https://github.com/prowler-cloud/prowler/pull/7639)
 - Error about page number persistence when filters change. [(#7655)](https://github.com/prowler-cloud/prowler/pull/7655)
+- Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
 
 ---
 
