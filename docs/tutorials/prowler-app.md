@@ -224,13 +224,13 @@ The `zip` file unpacks into a folder named like `prowler-output-<provider_id>-<t
 
 Once your scan has finished, you don’t need to grab the entire ZIP—just pull down the specific compliance report you want:
 
-1. Navigate to the **Compliance** section of the UI.
+- Navigate to the **Compliance** section of the UI.
 
 <img src="../../img/compliance_section.png" alt="Compliance section" width="700"/>
 
-2. Find the Framework report you need.
+- Find the Framework report you need.
 
-3. Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
+- Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
 
 <img src="../../img/compliance_download.png" alt="Download compliance output" width="700"/>
 
