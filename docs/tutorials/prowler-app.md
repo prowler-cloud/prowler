@@ -208,11 +208,12 @@ These outputs are bundled into a single .zip archive containing:
 
 - A folder with individual compliance reports
 
-To download the archive, click the **Download button**. This button is enabled only after the scan has successfully completed.
+???+ note "Note"
+    The Download button only becomes active after a scan completes successfully.
 
 <img src="../../img/download_output.png" alt="Download output" width="700"/>
 
-The downloaded .zip file includes an output folder with the above-mentioned files. (Note: The screenshot below shows only a subset of the compliance reports).
+The `zip` file unpacks into a folder named like `prowler-output-<provider_id>-<timestamp>`, which includes all of the above outputs. In the example below, you can see the `.csv`, .`json`, and `.html` reports alongside a subfolder for detailed compliance checks.
 
 <img src="../../img/output_folder.png" alt="Output folder" width="700"/>
 
@@ -221,13 +222,17 @@ The downloaded .zip file includes an output folder with the above-mentioned file
 
 ## **Step 10: Download specified compliance report**
 
-After the scan completes, you can also download individual compliance reports without downloading the full .zip archive. To do this, go to the Compliance section:
+Once your scan has finished, you don’t need to grab the entire ZIP—just pull down the specific compliance report you want:
+
+1. Navigate to the **Compliance** section of the UI.
 
 <img src="../../img/compliance_section.png" alt="Compliance section" width="700"/>
 
-Locate the desired report, and click its **Download button**. This will download the corresponding CSV file containing detailed report data.
+2. Find the Framework report you need.
+
+3. Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
 
 <img src="../../img/compliance_download.png" alt="Download compliance output" width="700"/>
 
 ???+ note "API Note"
-    For more details about the API endpoint used to retrieve compliance reports as CSV files, visit: [Prowler API Reference - Retrieve compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)
+    To fetch a single compliance report via API, see the Retrieve compliance report as CSV endpoint in the Prowler API Reference.[Prowler API Reference - Retrieve compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)
