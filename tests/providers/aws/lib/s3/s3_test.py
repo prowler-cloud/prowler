@@ -344,3 +344,46 @@ class TestS3:
             assert s3 is not None
             assert s3.is_connected is False
             assert s3.error is not None
+
+    @mock_aws
+    def test_init_without_session(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+            )
+
+        assert (
+            str(e.value)
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
+        )
+
+    @mock_aws
+    def test_init_without_session_but_role_arn(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                role_arn="arn:aws:iam::123456789012:role/role_name",
+            )
+
+        assert (
+            str(e.value)
+            == "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
+        )
+
+    @mock_aws
+    def test_init_without_session_and_role_arn_but_session_duration(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                session_duration=3600,
+            )
+        assert (
+            str(e.value)
+            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+        )

@@ -1,8 +1,8 @@
 import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
-from boto3 import Session
 from botocore import exceptions
 
 from prowler.lib.logger import logger
@@ -14,6 +14,8 @@ from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3InvalidBucketNameError,
     S3TestConnectionError,
 )
+from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
+from prowler.providers.aws.models import AWSIdentityInfo, AWSSession
 from prowler.providers.common.models import Connection
 
 
@@ -33,22 +35,68 @@ class S3:
     - send_to_bucket: Sends the provided outputs to the S3 bucket.
     """
 
-    _session: Session
+    _session: AWSSession
+    _identity: AWSIdentityInfo
     _bucket_name: str
     _output_directory: str
 
     def __init__(
-        self, session: Session, bucket_name: str, output_directory: str
+        self,
+        bucket_name: str,
+        output_directory: str,
+        session: AWSSession = None,
+        role_arn: str = None,
+        session_duration: int = None,
+        external_id: str = None,
+        role_session_name: str = None,
+        mfa: bool = None,
+        profile: str = None,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
+        retries_max_attempts: int = 3,
+        regions: set = set(),
     ) -> None:
         """
         Initializes a new instance of the `S3` class.
 
-        Parameters:
-        - session: An instance of the `Session` class representing the AWS session.
+        Args:
+        - session: An instance of the `AWSSession` class representing the AWS session.
         - bucket_name: A string representing the name of the S3 bucket.
         - output_directory: A string representing the output directory path.
+        - role_arn: The ARN of the IAM role to assume.
+        - session_duration: The duration of the session in seconds, between 900 and 43200.
+        - external_id: The external ID to use when assuming the IAM role.
+        - role_session_name: The name of the session when assuming the IAM role.
+        - mfa: A boolean indicating whether MFA is enabled.
+        - profile: The name of the AWS CLI profile to use.
+        - aws_access_key_id: The AWS access key ID.
+        - aws_secret_access_key: The AWS secret access key.
+        - aws_session_token: The AWS session token, optional.
+        - retries_max_attempts: The maximum number of retries for the AWS client.
+        - regions: A set of regions to audit.
+
+        Returns:
+        - None
         """
-        self._session = session.client(__class__.__name__.lower())
+        if session:
+            self._session = session.client(__class__.__name__.lower())
+        else:
+            aws_setup_session = AwsSetUpSession(
+                role_arn=role_arn,
+                session_duration=session_duration,
+                external_id=external_id,
+                role_session_name=role_session_name,
+                mfa=mfa,
+                profile=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                retries_max_attempts=retries_max_attempts,
+                regions=regions,
+            )
+            self._session = aws_setup_session._session
+
         self._bucket_name = bucket_name
         self._output_directory = output_directory
 
