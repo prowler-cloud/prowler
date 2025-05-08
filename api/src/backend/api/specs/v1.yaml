@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.7.0
+  version: 1.8.0
   description: |-
     Prowler API specification.
 
@@ -4505,7 +4505,7 @@ paths:
           description: ''
   /api/v1/scans/{id}/compliance/{name}:
     get:
-      operationId: scan_compliance_download
+      operationId: scans_compliance_retrieve
       description: Download a specific compliance report (e.g., 'cis_1.4_aws') as
         a CSV file.
       summary: Retrieve compliance report as CSV
