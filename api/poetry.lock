@@ -3597,7 +3597,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.5.1"
+version = "5.6.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">3.9.1,<3.13"
@@ -3640,7 +3640,7 @@ google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "32.0.1"
 microsoft-kiota-abstractions = "1.9.2"
-msgraph-sdk = "1.18.0"
+msgraph-sdk = "1.23.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.3.1"
