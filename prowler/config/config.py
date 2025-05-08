@@ -12,7 +12,7 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "5.5.0"
+prowler_version = "5.6.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -28,7 +28,8 @@ class Provider(str, Enum):
     GCP = "gcp"
     AZURE = "azure"
     KUBERNETES = "kubernetes"
-    MICROSOFT365 = "microsoft365"
+    M365 = "m365"
+    NHN = "nhn"
 
 
 # Compliance
@@ -125,13 +126,13 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             # and a new format with a key for each provider to include their configuration values within.
             if any(
                 key in config_file
-                for key in ["aws", "gcp", "azure", "kubernetes", "microsoft365"]
+                for key in ["aws", "gcp", "azure", "kubernetes", "m365"]
             ):
                 config = config_file.get(provider, {})
             else:
                 config = config_file if config_file else {}
                 # Not to break Azure, K8s and GCP does not support or use the old config format
-                if provider in ["azure", "gcp", "kubernetes"]:
+                if provider in ["azure", "gcp", "kubernetes", "m365"]:
                     config = {}
 
             return config

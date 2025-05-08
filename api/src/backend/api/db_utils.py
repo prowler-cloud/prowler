@@ -106,7 +106,7 @@ def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
     return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
 
 
-def batch_delete(tenant_id, queryset, batch_size=5000):
+def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE):
     """
     Deletes objects in batches and returns the total number of deletions and a summary.
 

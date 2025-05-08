@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.6.0
+  version: 1.7.0
   description: |-
     Prowler API specification.
 
@@ -83,11 +83,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -99,6 +101,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -106,6 +109,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -450,11 +454,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -466,6 +472,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -473,6 +480,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -962,11 +970,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -978,6 +988,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -985,6 +996,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -1395,11 +1407,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1411,6 +1425,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -1418,6 +1433,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2047,11 +2063,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2063,6 +2081,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2070,6 +2089,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2204,11 +2224,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2220,6 +2242,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2227,6 +2250,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2377,11 +2401,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2393,6 +2419,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2400,6 +2427,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2863,11 +2891,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider__in]
         schema:
@@ -3441,11 +3471,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3457,6 +3489,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -3464,6 +3497,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -4167,11 +4201,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4183,6 +4219,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -4190,6 +4227,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -4465,6 +4503,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/compliance/{name}:
+    get:
+      operationId: scan_compliance_download
+      description: Download a specific compliance report (e.g., 'cis_1.4_aws') as
+        a CSV file.
+      summary: Retrieve compliance report as CSV
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: path
+        name: name
+        schema:
+          type: string
+        description: The compliance report name, like 'cis_1.4_aws'
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: CSV file containing the compliance report
+        '404':
+          description: Compliance report not found
   /api/v1/scans/{id}/report:
     get:
       operationId: scans_report_retrieve
@@ -8348,6 +8427,33 @@ components:
                     - client_secret
                     - tenant_id
                   - type: object
+                    title: M365 Static Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      user:
+                        type: email
+                        description: User microsoft email address.
+                      encrypted_password:
+                        type: string
+                        description: User encrypted password.
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - encrypted_password
+                  - type: object
                     title: GCP Static Credentials
                     properties:
                       client_id:
@@ -8814,12 +8920,14 @@ components:
               - azure
               - gcp
               - kubernetes
+              - m365
               type: string
               description: |-
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
+                * `m365` - M365
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -8926,12 +9034,14 @@ components:
               - azure
               - gcp
               - kubernetes
+              - m365
               type: string
               description: |-
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
+                * `m365` - M365
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -8969,12 +9079,14 @@ components:
                   - azure
                   - gcp
                   - kubernetes
+                  - m365
                   type: string
                   description: |-
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
+                    * `m365` - M365
                 uid:
                   type: string
                   minLength: 3
@@ -9560,6 +9672,33 @@ components:
                 - client_secret
                 - tenant_id
               - type: object
+                title: M365 Static Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  user:
+                    type: email
+                    description: User microsoft email address.
+                  encrypted_password:
+                    type: string
+                    description: User encrypted password.
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - encrypted_password
+              - type: object
                 title: GCP Static Credentials
                 properties:
                   client_id:
@@ -9741,6 +9880,33 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
+                  - type: object
+                    title: M365 Static Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      user:
+                        type: email
+                        description: User microsoft email address.
+                      encrypted_password:
+                        type: string
+                        description: User encrypted password.
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - encrypted_password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -9939,6 +10105,33 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
+              - type: object
+                title: M365 Static Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  user:
+                    type: email
+                    description: User microsoft email address.
+                  encrypted_password:
+                    type: string
+                    description: User encrypted password.
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - encrypted_password
               - type: object
                 title: GCP Static Credentials
                 properties:

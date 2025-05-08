@@ -238,6 +238,16 @@ export type AzureCredentials = {
   providerId: string;
 };
 
+export type M365Credentials = {
+  client_id: string;
+  client_secret: string;
+  tenant_id: string;
+  user: string;
+  encrypted_password: string;
+  secretName: string;
+  providerId: string;
+};
+
 export type GCPCredentials = {
   client_id: string;
   client_secret: string;
@@ -256,7 +266,8 @@ export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPCredentials
-  | KubernetesCredentials;
+  | KubernetesCredentials
+  | M365Credentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -502,7 +513,7 @@ export interface ProviderProps {
   id: string;
   type: "providers";
   attributes: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    provider: "aws" | "azure" | "m365" | "gcp" | "kubernetes";
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
@@ -744,6 +755,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

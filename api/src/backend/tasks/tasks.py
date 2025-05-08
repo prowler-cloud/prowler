@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
@@ -9,6 +10,7 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
+    COMPLIANCE_CLASS_MAP,
     OUTPUT_FORMATS_MAPPING,
     _compress_output_files,
     _generate_output_directory,
@@ -17,10 +19,14 @@ from tasks.jobs.export import (
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 from tasks.utils import batched, get_next_execution_datetime
 
+from api.compliance import get_compliance_frameworks
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -128,6 +134,43 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
+
+        executed_scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            task__task_runner_task__task_id=task_id,
+        ).order_by("completed_at")
+
+        if (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.EXECUTING,
+                scheduler_task_id=periodic_task_instance.id,
+                scheduled_at__date=datetime.now(timezone.utc).date(),
+            ).exists()
+            or executed_scan.exists()
+        ):
+            # Duplicated task execution due to visibility timeout or scan is already running
+            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+            try:
+                affected_scan = executed_scan.first()
+                if not affected_scan:
+                    raise ValueError(
+                        "Error retrieving affected scan details after detecting duplicated scheduled "
+                        "scan."
+                    )
+                # Return the affected scan details to avoid losing data
+                serializer = ScanTaskSerializer(instance=affected_scan)
+            except Exception as duplicated_scan_exception:
+                logger.error(
+                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
+                    f"{str(duplicated_scan_exception)}"
+                )
+                raise duplicated_scan_exception
+            return serializer.data
+
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
@@ -135,7 +178,11 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             trigger=Scan.TriggerChoices.SCHEDULED,
             state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=periodic_task_instance.id,
-            defaults={"state": StateChoices.SCHEDULED},
+            defaults={
+                "state": StateChoices.SCHEDULED,
+                "name": "Daily scheduled scan",
+                "scheduled_at": next_scan_datetime - timedelta(days=1),
+            },
         )
 
         scan_instance.task_id = task_id
@@ -203,84 +250,111 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
-    # Initialize the prowler provider
-    prowler_provider = initialize_prowler_provider(Provider.objects.get(id=provider_id))
+    # Check if the scan has findings
+    if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+        logger.info(f"No findings found for scan {scan_id}")
+        return {"upload": False}
 
-    # Get the provider UID
-    provider_uid = Provider.objects.get(id=provider_id).uid
+    provider_obj = Provider.objects.get(id=provider_id)
+    prowler_provider = initialize_prowler_provider(provider_obj)
+    provider_uid = provider_obj.uid
+    provider_type = provider_obj.provider
 
-    # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(
+    frameworks_bulk = Compliance.get_bulk(provider_type)
+    frameworks_avail = get_compliance_frameworks(provider_type)
+    out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
-    # Define auxiliary variables
+    def get_writer(writer_map, name, factory, is_last):
+        """
+        Return existing writer_map[name] or create via factory().
+        In both cases set `.close_file = is_last`.
+        """
+        initialization = False
+        if name not in writer_map:
+            writer_map[name] = factory()
+            initialization = True
+        w = writer_map[name]
+        w.close_file = is_last
+
+        return w, initialization
+
     output_writers = {}
+    compliance_writers = {}
+
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    # Retrieve findings queryset
-    findings_qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid")
+    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
 
-    # Process findings in batches
-    for batch, is_last_batch in batched(
-        findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
-    ):
-        finding_outputs = [
-            FindingOutput.transform_api_finding(finding, prowler_provider)
-            for finding in batch
-        ]
-
-        # Generate output files
-        for mode, config in OUTPUT_FORMATS_MAPPING.items():
-            kwargs = dict(config.get("kwargs", {}))
+        # Outputs
+        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+            cls = cfg["class"]
+            suffix = cfg["suffix"]
+            extra = cfg.get("kwargs", {}).copy()
             if mode == "html":
-                kwargs["provider"] = prowler_provider
-                kwargs["stats"] = scan_summary
+                extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer_class = config["class"]
-            if writer_class in output_writers:
-                writer = output_writers[writer_class]
-                writer.transform(finding_outputs)
-                writer.close_file = is_last_batch
-            else:
-                writer = writer_class(
-                    findings=finding_outputs,
-                    file_path=output_directory,
-                    file_extension=config["suffix"],
+            writer, initialization = get_writer(
+                output_writers,
+                cls,
+                lambda cls=cls, fos=fos, suffix=suffix: cls(
+                    findings=fos,
+                    file_path=out_dir,
+                    file_extension=suffix,
                     from_cli=False,
-                )
-                writer.close_file = is_last_batch
-                output_writers[writer_class] = writer
+                ),
+                is_last,
+            )
+            if not initialization:
+                writer.transform(fos)
+            writer.batch_write_data_to_file(**extra)
+            writer._data.clear()
 
-            # Write the current batch using the writer
-            writer.batch_write_data_to_file(**kwargs)
+        # Compliance CSVs
+        for name in frameworks_avail:
+            compliance_obj = frameworks_bulk[name]
 
-            # TODO: Refactor the output classes to avoid this manual reset
-            writer._data = []
+            klass = GenericCompliance
+            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                if condition(name):
+                    klass = cls
+                    break
 
-    # Compress output files
-    output_directory = _compress_output_files(output_directory)
+            filename = f"{comp_dir}_{name}.csv"
 
-    # Save to configured storage
-    uploaded = _upload_to_s3(tenant_id, output_directory, scan_id)
+            writer, initialization = get_writer(
+                compliance_writers,
+                name,
+                lambda klass=klass, fos=fos: klass(
+                    findings=fos,
+                    compliance=compliance_obj,
+                    file_path=filename,
+                    from_cli=False,
+                ),
+                is_last,
+            )
+            if not initialization:
+                writer.transform(fos, compliance_obj, name)
+            writer.batch_write_data_to_file()
+            writer._data.clear()
 
-    if uploaded:
-        # Remove the local files after upload
+    compressed = _compress_output_files(out_dir)
+    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    if upload_uri:
         try:
-            rmtree(Path(output_directory).parent, ignore_errors=True)
-        except FileNotFoundError as e:
+            rmtree(Path(compressed).parent, ignore_errors=True)
+        except Exception as e:
             logger.error(f"Error deleting output files: {e}")
-
-        output_directory = uploaded
-        uploaded = True
+        final_location, did_upload = upload_uri, True
     else:
-        uploaded = False
+        final_location, did_upload = compressed, False
 
-    # Update the scan instance with the output path
-    Scan.all_objects.filter(id=scan_id).update(output_location=output_directory)
-
-    logger.info(f"Scan output files generated, output location: {output_directory}")
-
-    return {"upload": uploaded}
+    Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
+    logger.info(f"Scan outputs at {final_location}")
+    return {"upload": did_upload}

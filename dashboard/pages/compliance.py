@@ -76,6 +76,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
+            if "M65" in result:
+                result = result.replace("_M65", " - M65")
             results.append(result)
 
     unique_results = set(results)
@@ -267,6 +269,15 @@ def display_data(
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
             ].apply(lambda x: x.split(" - ")[0])
+
+    # Add the column ACCOUNTID to the data if the provider is m65
+    if "m365" in analytics_input:
+        data.rename(columns={"TENANTID": "ACCOUNTID"}, inplace=True)
+        data.rename(columns={"LOCATION": "REGION"}, inplace=True)
+        if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
+            data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
+                "REQUIREMENTS_ATTRIBUTES_PROFILE"
+            ].apply(lambda x: x.split(" - ")[0])
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
@@ -397,7 +408,13 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
-            data.drop_duplicates(keep="first", inplace=True)
+            data = data.drop_duplicates(
+                subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
+            )
+
+            if "threatscore" in analytics_input:
+                data = get_threatscore_mean_by_pillar(data)
+
             table = compliance_module.get_table(data)
         except ModuleNotFoundError:
             table = html.Div(
@@ -416,6 +433,9 @@ def display_data(
             )
 
         df = data.copy()
+        # Remove Muted rows
+        if "MUTED" in df.columns:
+            df = df[df["MUTED"] == "False"]
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
 
@@ -430,6 +450,9 @@ def display_data(
         if "pci" in analytics_input:
             pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
             current_filter = "req_id"
+        elif "threatscore" in analytics_input:
+            pie_2 = get_table_prowler_threatscore(df)
+            current_filter = "threatscore"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
@@ -488,6 +511,13 @@ def display_data(
         pie_2, f"Top 5 failed {current_filter} by requirements"
     )
 
+    if "threatscore" in analytics_input:
+        security_level_graph = get_graph(
+            pie_2,
+            "Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
+            margin_top=0,
+        )
+
     return (
         table_output,
         overall_status_result_graph,
@@ -501,7 +531,7 @@ def display_data(
     )
 
 
-def get_graph(pie, title):
+def get_graph(pie, title, margin_top=7):
     return [
         html.Span(
             title,
@@ -514,7 +544,7 @@ def get_graph(pie, title):
                 "display": "flex",
                 "justify-content": "center",
                 "align-items": "center",
-                "margin-top": "7%",
+                "margin-top": f"{margin_top}%",
             },
         ),
     ]
@@ -618,3 +648,87 @@ def get_table(current_compliance, table):
             className="relative flex flex-col bg-white shadow-provider rounded-xl px-4 py-3 flex-wrap w-full",
         ),
     ]
+
+
+def get_threatscore_mean_by_pillar(df):
+    modified_df = df[df["STATUS"] == "FAIL"]
+
+    modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
+        modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+    )
+
+    pillar_means = (
+        modified_df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
+            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
+        ]
+        .mean()
+        .round(2)
+    )
+
+    output = []
+    for pillar, mean in pillar_means.items():
+        output.append(f"{pillar} - [{mean}]")
+
+    for value in output:
+        if value.split(" - ")[0] in df["REQUIREMENTS_ATTRIBUTES_SECTION"].values:
+            df.loc[
+                df["REQUIREMENTS_ATTRIBUTES_SECTION"] == value.split(" - ")[0],
+                "REQUIREMENTS_ATTRIBUTES_SECTION",
+            ] = value
+    return df
+
+
+def get_table_prowler_threatscore(df):
+    df = df[df["STATUS"] == "FAIL"]
+
+    # Delete " - " from the column REQUIREMENTS_ATTRIBUTES_SECTION
+    df["REQUIREMENTS_ATTRIBUTES_SECTION"] = (
+        df["REQUIREMENTS_ATTRIBUTES_SECTION"].str.split(" - ").str[0]
+    )
+
+    df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
+        df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+    )
+
+    score_df = (
+        df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
+            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
+        ]
+        .mean()
+        .reset_index()
+        .rename(
+            columns={
+                "REQUIREMENTS_ATTRIBUTES_SECTION": "Pillar",
+                "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK": "Score",
+            }
+        )
+    )
+
+    fig = px.bar(
+        score_df,
+        x="Pillar",
+        y="Score",
+        color="Score",
+        color_continuous_scale=[
+            "#45cc6e",
+            "#f4d44d",
+            "#e77676",
+        ],  # verde → amarillo → rojo
+        hover_data={"Score": True, "Pillar": True},
+        labels={"Score": "Average Risk Score", "Pillar": "Section"},
+        height=400,
+    )
+
+    fig.update_layout(
+        xaxis_title="Pillar",
+        yaxis_title="Level of Risk",
+        margin=dict(l=20, r=20, t=30, b=20),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        coloraxis_colorbar=dict(title="Risk"),
+    )
+
+    return dcc.Graph(
+        figure=fig,
+        style={"height": "25rem", "width": "40rem"},
+    )

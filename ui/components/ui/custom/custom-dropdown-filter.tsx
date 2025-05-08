@@ -11,10 +11,11 @@ import {
   ScrollShadow,
 } from "@nextui-org/react";
 import { XCircle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { CustomDropdownFilterProps } from "@/types";
 
 const filterSelectedClass =
@@ -24,8 +25,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { clearFilter } = useUrlFilters();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
   const [pendingClearFilter, setPendingClearFilter] = useState<string | null>(
     null,
@@ -114,13 +115,11 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
 
   // Execute the update in the router after the render
   useEffect(() => {
-    if (pendingClearFilter) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete(`filter[${pendingClearFilter}]`);
-      router.push(`?${params.toString()}`, { scroll: false });
+    if (pendingClearFilter && filter) {
+      clearFilter(pendingClearFilter);
       setPendingClearFilter(null); // Reset the state
     }
-  }, [pendingClearFilter, searchParams, router]);
+  }, [pendingClearFilter, clearFilter, filter]);
 
   return (
     <div className="relative flex w-full flex-col gap-2">

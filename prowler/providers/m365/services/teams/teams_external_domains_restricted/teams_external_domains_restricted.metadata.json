@@ -1,0 +1,30 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_external_domains_restricted",
+  "CheckTitle": "Ensure external domains are restricted.",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Teams Settings",
+  "Description": "Ensure external domains are restricted from being used in Teams admin center.",
+  "Risk": "Allowing unrestricted communication with external domains in Microsoft Teams increases the risk of exposure to social engineering attacks, phishing, malware delivery (e.g., DarkGate), and exploitation tactics such as GIFShell or username enumeration.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTenantFederationConfiguration -AllowFederatedUsers $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com/. 2. Click to expand Users select External access. 3. Under Teams and Skype for Business users in external organizations set Choose which external domains your users have access to to one of the following: Allow only specific external domains or Block all external domains. 4. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict external collaboration by configuring Teams to either Block all external domains or Allow only specific, trusted external domains. This ensures users can only interact with vetted organizations, significantly reducing the attack surface.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

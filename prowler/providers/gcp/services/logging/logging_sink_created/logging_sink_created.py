@@ -5,23 +5,13 @@ from prowler.providers.gcp.services.logging.logging_client import logging_client
 class logging_sink_created(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        projects_with_sink = set()
+        projects_with_logging_sink = {}
         for sink in logging_client.sinks:
-            report = Check_Report_GCP(
-                metadata=self.metadata(),
-                resource=sink,
-                location=logging_client.region,
-            )
-            projects_with_sink.add(sink.project_id)
-            report.status = "FAIL"
-            report.status_extended = f"Sink {sink.name} is enabled but not exporting copies of all the log entries in project {sink.project_id}."
             if sink.filter == "all":
-                report.status = "PASS"
-                report.status_extended = f"Sink {sink.name} is enabled exporting copies of all the log entries in project {sink.project_id}."
-            findings.append(report)
+                projects_with_logging_sink[sink.project_id] = sink
 
         for project in logging_client.project_ids:
-            if project not in projects_with_sink:
+            if project not in projects_with_logging_sink.keys():
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
                     resource=logging_client.projects[project],
@@ -31,5 +21,13 @@ class logging_sink_created(Check):
                 report.status = "FAIL"
                 report.status_extended = f"There are no logging sinks to export copies of all the log entries in project {project}."
                 findings.append(report)
-
+            else:
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource=projects_with_logging_sink[project],
+                    location=logging_client.region,
+                )
+                report.status = "PASS"
+                report.status_extended = f"Sink {projects_with_logging_sink[project].name} is enabled exporting copies of all the log entries in project {project}."
+                findings.append(report)
         return findings
