@@ -42,8 +42,20 @@ def mock_defender_get_malware_filter_policy(_):
 
 def mock_defender_get_malware_filter_rule(_):
     return {
-        "Policy1": MalwareRule(state="Enabled"),
-        "Policy2": MalwareRule(state="Disabled"),
+        "Policy1": MalwareRule(
+            state="Enabled",
+            priority=1,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
+        ),
+        "Policy2": MalwareRule(
+            state="Disabled",
+            priority=2,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
+        ),
     }
 
 
@@ -80,9 +92,17 @@ def mock_defender_get_antiphising_rules(_):
     return {
         "Policy1": AntiphishingRule(
             state="Enabled",
+            priority=1,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
         ),
         "Policy2": AntiphishingRule(
             state="Disabled",
+            priority=2,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
         ),
     }
 
@@ -104,8 +124,20 @@ def mock_defender_get_inbound_spam_policy(_):
 
 def mock_defender_get_inbound_spam_rule(_):
     return {
-        "Policy1": InboundSpamRule(state="Enabled"),
-        "Policy2": InboundSpamRule(state="Disabled"),
+        "Policy1": InboundSpamRule(
+            state="Enabled",
+            priority=1,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
+        ),
+        "Policy2": InboundSpamRule(
+            state="Disabled",
+            priority=2,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
+        ),
     }
 
 
@@ -167,9 +199,17 @@ def mock_defender_get_outbound_spam_filter_rule(_):
     return {
         "Policy1": OutboundSpamRule(
             state="Enabled",
+            priority=1,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
         ),
         "Policy2": OutboundSpamRule(
             state="Disabled",
+            priority=2,
+            users=["test@example.com"],
+            groups=["example_group"],
+            domains=["example.com"],
         ),
     }
 
@@ -244,7 +284,15 @@ class Test_Defender_Service:
             )
             malware_rules = defender_client.malware_rules
             assert malware_rules["Policy1"].state == "Enabled"
+            assert malware_rules["Policy1"].priority == 1
+            assert malware_rules["Policy1"].users == ["test@example.com"]
+            assert malware_rules["Policy1"].groups == ["example_group"]
+            assert malware_rules["Policy1"].domains == ["example.com"]
             assert malware_rules["Policy2"].state == "Disabled"
+            assert malware_rules["Policy2"].priority == 2
+            assert malware_rules["Policy2"].users == ["test@example.com"]
+            assert malware_rules["Policy2"].groups == ["example_group"]
+            assert malware_rules["Policy2"].domains == ["example.com"]
             defender_client.powershell.close()
 
     @patch(
@@ -311,7 +359,15 @@ class Test_Defender_Service:
             )
             antiphishing_rules = defender_client.antiphising_rules
             assert antiphishing_rules["Policy1"].state == "Enabled"
+            assert antiphishing_rules["Policy1"].priority == 1
+            assert antiphishing_rules["Policy1"].users == ["test@example.com"]
+            assert antiphishing_rules["Policy1"].groups == ["example_group"]
+            assert antiphishing_rules["Policy1"].domains == ["example.com"]
             assert antiphishing_rules["Policy2"].state == "Disabled"
+            assert antiphishing_rules["Policy2"].priority == 2
+            assert antiphishing_rules["Policy2"].users == ["test@example.com"]
+            assert antiphishing_rules["Policy2"].groups == ["example_group"]
+            assert antiphishing_rules["Policy2"].domains == ["example.com"]
             defender_client.powershell.close()
 
     @patch(
@@ -395,6 +451,7 @@ class Test_Defender_Service:
             )
             assert outbound_spam_policies["Policy2"].auto_forwarding_mode is True
             assert outbound_spam_policies["Policy2"].default is True
+            defender_client.powershell.close()
 
     @patch(
         "prowler.providers.m365.services.defender.defender_service.Defender._get_outbound_spam_filter_rule",
@@ -413,7 +470,16 @@ class Test_Defender_Service:
             )
             outbound_spam_rules = defender_client.outbound_spam_rules
             assert outbound_spam_rules["Policy1"].state == "Enabled"
+            assert outbound_spam_rules["Policy1"].priority == 1
+            assert outbound_spam_rules["Policy1"].users == ["test@example.com"]
+            assert outbound_spam_rules["Policy1"].groups == ["example_group"]
+            assert outbound_spam_rules["Policy1"].domains == ["example.com"]
             assert outbound_spam_rules["Policy2"].state == "Disabled"
+            assert outbound_spam_rules["Policy2"].priority == 2
+            assert outbound_spam_rules["Policy2"].users == ["test@example.com"]
+            assert outbound_spam_rules["Policy2"].groups == ["example_group"]
+            assert outbound_spam_rules["Policy2"].domains == ["example.com"]
+            defender_client.powershell.close()
 
     @patch(
         "prowler.providers.m365.services.defender.defender_service.Defender._get_inbound_spam_filter_policy",
@@ -452,7 +518,15 @@ class Test_Defender_Service:
             )
             inbound_spam_rules = defender_client.inbound_spam_rules
             assert inbound_spam_rules["Policy1"].state == "Enabled"
+            assert inbound_spam_rules["Policy1"].priority == 1
+            assert inbound_spam_rules["Policy1"].users == ["test@example.com"]
+            assert inbound_spam_rules["Policy1"].groups == ["example_group"]
+            assert inbound_spam_rules["Policy1"].domains == ["example.com"]
             assert inbound_spam_rules["Policy2"].state == "Disabled"
+            assert inbound_spam_rules["Policy2"].priority == 2
+            assert inbound_spam_rules["Policy2"].users == ["test@example.com"]
+            assert inbound_spam_rules["Policy2"].groups == ["example_group"]
+            assert inbound_spam_rules["Policy2"].domains == ["example.com"]
             defender_client.powershell.close()
 
     @patch(

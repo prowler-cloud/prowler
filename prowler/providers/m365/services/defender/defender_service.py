@@ -76,6 +76,10 @@ class Defender(M365Service):
                 if rule:
                     malware_rules[rule.get("Name", "")] = MalwareRule(
                         state=rule.get("State", ""),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo", []),
+                        groups=rule.get("SentToMemberOf", []),
+                        domains=rule.get("RecipientDomainIs", []),
                     )
         except Exception as error:
             logger.error(
@@ -125,6 +129,10 @@ class Defender(M365Service):
                 if rule:
                     antiphishing_rules[rule.get("Name", "")] = AntiphishingRule(
                         state=rule.get("State", ""),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo", []),
+                        groups=rule.get("SentToMemberOf", []),
+                        domains=rule.get("RecipientDomainIs", []),
                     )
         except Exception as error:
             logger.error(
@@ -211,6 +219,10 @@ class Defender(M365Service):
                 if rule:
                     outbound_spam_rules[rule.get("Name", "")] = OutboundSpamRule(
                         state=rule.get("State", "Disabled"),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo", []),
+                        groups=rule.get("SentToMemberOf", []),
+                        domains=rule.get("RecipientDomainIs", []),
                     )
         except Exception as error:
             logger.error(
@@ -256,6 +268,10 @@ class Defender(M365Service):
                 if rule:
                     inbound_spam_rules[rule.get("Name", "")] = InboundSpamRule(
                         state=rule.get("State", "Disabled"),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo", []),
+                        groups=rule.get("SentToMemberOf", []),
+                        domains=rule.get("RecipientDomainIs", []),
                     )
         except Exception as error:
             logger.error(
@@ -313,6 +329,10 @@ class MalwarePolicy(BaseModel):
 
 class MalwareRule(BaseModel):
     state: str
+    priority: int
+    users: list[str]
+    groups: list[str]
+    domains: list[str]
 
 
 class AntiphishingPolicy(BaseModel):
@@ -330,6 +350,10 @@ class AntiphishingPolicy(BaseModel):
 
 class AntiphishingRule(BaseModel):
     state: str
+    priority: int
+    users: list[str]
+    groups: list[str]
+    domains: list[str]
 
 
 class ConnectionFilterPolicy(BaseModel):
@@ -355,6 +379,10 @@ class OutboundSpamPolicy(BaseModel):
 
 class OutboundSpamRule(BaseModel):
     state: str
+    priority: int
+    users: list[str]
+    groups: list[str]
+    domains: list[str]
 
 
 class DefenderInboundSpamPolicy(BaseModel):
@@ -365,6 +393,10 @@ class DefenderInboundSpamPolicy(BaseModel):
 
 class InboundSpamRule(BaseModel):
     state: str
+    priority: int
+    users: list[str]
+    groups: list[str]
+    domains: list[str]
 
 
 class ReportSubmissionPolicy(BaseModel):
