@@ -99,20 +99,20 @@ class M365BaseException(ProwlerException):
             "remediation": "Ensure your environment variables are properly set up.",
         },
         (6023, "M365UserCredentialsError"): {
-            "message": "The provided M365 User credentials are not valid.",
-            "remediation": "Check the M365 User credentials and ensure they are valid.",
+            "message": "The provided User credentials are not valid.",
+            "remediation": "Check the User credentials and ensure they are valid.",
         },
         (6024, "M365NotValidUserError"): {
-            "message": "The provided M365 User is not valid.",
-            "remediation": "Check the M365 User and ensure it is a valid user.",
+            "message": "The provided User is not valid.",
+            "remediation": "Check the User and ensure it is a valid user.",
         },
         (6025, "M365NotValidEncryptedPasswordError"): {
-            "message": "The provided M365 Encrypted Password is not valid.",
-            "remediation": "Check the M365 Encrypted Password and ensure it is a valid password.",
+            "message": "The provided Encrypted Password is not valid.",
+            "remediation": "Check the Encrypted Password and ensure it is a valid password.",
         },
         (6026, "M365UserNotBelongingToTenantError"): {
-            "message": "The provided M365 User does not belong to the specified tenant.",
-            "remediation": "Check the M365 User email domain and ensure it belongs to the specified tenant.",
+            "message": "The provided User does not belong to the specified tenant.",
+            "remediation": "Check the User email domain and ensure it belongs to the specified tenant.",
         },
     }
 

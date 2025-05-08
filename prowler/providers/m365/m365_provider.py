@@ -436,7 +436,7 @@ class M365Provider(Provider):
                     return credentials
                 raise M365UserCredentialsError(
                     file=os.path.basename(__file__),
-                    message="The provided M365 User credentials are not valid.",
+                    message="The provided User credentials are not valid.",
                 )
             finally:
                 test_session.close()
