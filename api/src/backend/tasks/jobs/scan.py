@@ -284,9 +284,6 @@ def perform_prowler_scan(
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
                         compliance=finding.compliance,
-                        resource_regions=[finding.region],
-                        resource_services=[finding.service_name],
-                        resource_types=[finding.resource_type],
                     )
                     finding_instance.add_resources([resource_instance])
 

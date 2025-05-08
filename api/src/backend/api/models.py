@@ -749,13 +749,29 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         resource_name = "findings"
 
     def add_resources(self, resources: list[Resource] | None):
-        # Add new relationships with the tenant_id field
+        if not resources:
+            return
+
+        self.resource_regions = self.resource_regions or []
+        self.resource_services = self.resource_services or []
+        self.resource_types = self.resource_types or []
+
+        # Deduplication
+        regions = set(self.resource_regions)
+        services = set(self.resource_services)
+        types = set(self.resource_types)
+
         for resource in resources:
             ResourceFindingMapping.objects.update_or_create(
                 resource=resource, finding=self, tenant_id=self.tenant_id
             )
+            regions.add(resource.region)
+            services.add(resource.service)
+            types.add(resource.type)
 
-        # Save the instance
+        self.resource_regions = list(regions)
+        self.resource_services = list(services)
+        self.resource_types = list(types)
         self.save()
 
 

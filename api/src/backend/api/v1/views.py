@@ -1843,7 +1843,9 @@ class FindingViewSet(BaseRLSViewSet):
 
             if date_filters:
                 queryset = queryset.filter(**date_filters)
-                scan_based_filters = date_filters
+                scan_based_filters = {
+                    key.lstrip("scan_"): value for key, value in date_filters.items()
+                }
 
         # ToRemove: Temporary fallback mechanism
         if not queryset.exists():
