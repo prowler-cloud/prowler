@@ -994,7 +994,7 @@ class M365Provider(Provider):
         except ValueError:
             raise M365NotValidTenantIdError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Tenant ID is not valid.",
+                message="The provided Tenant ID is not valid.",
             )
 
         # Validate the Client ID
@@ -1003,28 +1003,28 @@ class M365Provider(Provider):
         except ValueError:
             raise M365NotValidClientIdError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Client ID is not valid.",
+                message="The provided Client ID is not valid.",
             )
 
         # Validate the Client Secret
         if not client_secret:
             raise M365NotValidClientSecretError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Client Secret is not valid.",
+                message="The provided Client Secret is not valid.",
             )
 
         # Validate the User
         if not user:
             raise M365NotValidUserError(
                 file=os.path.basename(__file__),
-                message="The provided M365 User is not valid.",
+                message="The provided User is not valid.",
             )
 
         # Validate the Encrypted Password
         if not encrypted_password:
             raise M365NotValidEncryptedPasswordError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Encrypted Password is not valid.",
+                message="The provided Encrypted Password is not valid.",
             )
 
         try:
@@ -1042,7 +1042,7 @@ class M365Provider(Provider):
             )
             raise M365ClientIdAndClientSecretNotBelongingToTenantIdError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Client ID and Client Secret do not belong to the specified Tenant ID.",
+                message="The provided Client ID and Client Secret do not belong to the specified Tenant ID.",
             )
         except M365NotValidClientIdError as client_id_error:
             logger.error(
@@ -1050,7 +1050,7 @@ class M365Provider(Provider):
             )
             raise M365TenantIdAndClientSecretNotBelongingToClientIdError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Tenant ID and Client Secret do not belong to the specified Client ID.",
+                message="The provided Tenant ID and Client Secret do not belong to the specified Client ID.",
             )
         except M365NotValidClientSecretError as client_secret_error:
             logger.error(
@@ -1058,7 +1058,7 @@ class M365Provider(Provider):
             )
             raise M365TenantIdAndClientIdNotBelongingToClientSecretError(
                 file=os.path.basename(__file__),
-                message="The provided M365 Tenant ID and Client ID do not belong to the specified Client Secret.",
+                message="The provided Tenant ID and Client ID do not belong to the specified Client Secret.",
             )
 
     @staticmethod

@@ -522,7 +522,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="test_password",
             )
-        assert "The provided M365 Tenant ID is not valid." in str(exception.value)
+        assert "The provided Tenant ID is not valid." in str(exception.value)
 
     def test_validate_static_credentials_missing_client_id(self):
         with pytest.raises(M365NotValidClientIdError) as exception:
@@ -533,7 +533,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="test_password",
             )
-        assert "The provided M365 Client ID is not valid." in str(exception.value)
+        assert "The provided Client ID is not valid." in str(exception.value)
 
     def test_validate_static_credentials_missing_client_secret(self):
         with pytest.raises(M365NotValidClientSecretError) as exception:
@@ -544,7 +544,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="test_password",
             )
-        assert "The provided M365 Client Secret is not valid." in str(exception.value)
+        assert "The provided Client Secret is not valid." in str(exception.value)
 
     def test_validate_static_credentials_missing_user(self):
         with pytest.raises(M365NotValidUserError) as exception:
@@ -555,7 +555,7 @@ class TestM365Provider:
                 user="",
                 encrypted_password="test_password",
             )
-        assert "The provided M365 User is not valid." in str(exception.value)
+        assert "The provided User is not valid." in str(exception.value)
 
     def test_validate_static_credentials_missing_encrypted_password(self):
         with pytest.raises(M365NotValidEncryptedPasswordError) as exception:
@@ -566,7 +566,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="",
             )
-        assert "The provided M365 Encrypted Password is not valid." in str(
+        assert "The provided Encrypted Password is not valid." in str(
             exception.value
         )
 
