@@ -1,6 +1,8 @@
 from argparse import Namespace
 from unittest.mock import patch
 
+from kubernetes.config.config_exception import ConfigException
+
 from kubernetes import client
 from prowler.config.config import (
     default_config_file_path,
@@ -305,3 +307,49 @@ class TestKubernetesProvider:
 
         assert connection.is_connected
         assert connection.error is None
+
+    def test_kubernetes_provider_incluster_with_env_var(self, monkeypatch):
+        monkeypatch.setenv("CLUSTER_NAME", "env-cluster-name")
+
+        with (
+            patch(
+                "kubernetes.config.load_kube_config",
+                side_effect=ConfigException("No kubeconfig"),
+            ),
+            patch("kubernetes.config.load_incluster_config", return_value=None),
+            patch("prowler.providers.kubernetes.kubernetes_provider.client.ApiClient"),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
+                return_value=["default"],
+            ),
+        ):
+            session = KubernetesProvider.setup_session(
+                kubeconfig_file=None,
+                kubeconfig_content=None,
+                context=None,
+                cluster_name=None,
+            )
+            assert isinstance(session, KubernetesSession)
+            assert session.context["context"]["cluster"] == "env-cluster-name"
+
+    def test_kubernetes_provider_incluster_with_cli_flag(self):
+        with (
+            patch(
+                "kubernetes.config.load_kube_config",
+                side_effect=ConfigException("No kubeconfig"),
+            ),
+            patch("kubernetes.config.load_incluster_config", return_value=None),
+            patch("prowler.providers.kubernetes.kubernetes_provider.client.ApiClient"),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
+                return_value=["default"],
+            ),
+        ):
+            session = KubernetesProvider.setup_session(
+                kubeconfig_file=None,
+                kubeconfig_content=None,
+                context=None,
+                cluster_name="cli-cluster-name",
+            )
+            assert isinstance(session, KubernetesSession)
+            assert session.context["context"]["cluster"] == "cli-cluster-name"
