@@ -566,9 +566,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="",
             )
-        assert "The provided Encrypted Password is not valid." in str(
-            exception.value
-        )
+        assert "The provided Encrypted Password is not valid." in str(exception.value)
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
@@ -583,6 +581,7 @@ class TestM365Provider:
                 user=None,
                 encrypted_password=None,
             )
+
         assert (
             "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth"
             in str(exception.value)
