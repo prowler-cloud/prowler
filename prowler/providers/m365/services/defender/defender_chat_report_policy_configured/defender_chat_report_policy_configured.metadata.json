@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

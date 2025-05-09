@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
