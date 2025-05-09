@@ -1,0 +1,1081 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Version": "1.0",
+  "Provider": "M365",
+  "Description": "Prowler ThreatScore Compliance Framework for Microsoft 365 ensures that the Microsoft 365 tenant is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure the 'Password expiration policy' is set to 'Set passwords to never expire'",
+      "Checks": [
+        "admincenter_settings_password_never_expire"
+      ],
+      "Attributes": [
+        {
+          "Title": "Password expiration policy' is set to 'Set passwords to never expire'",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Microsoft cloud-only accounts are governed by a built-in password policy that cannot be customized. The only configurable options are the password expiration period and whether password expiration is enabled at all.",
+          "AdditionalInformation": "Modern security guidance from organizations like NIST and Microsoft recommends against forcing regular password changes unless there is a known compromise or the user has forgotten the password. Arbitrary password expiration policies can lead to weaker password practices, such as predictable patterns or reused credentials. This is especially relevant even in single-factor (password-only) scenarios. When combined with strong security measures like Multi-Factor Authentication (MFA) and Entra ID password protection, the need for periodic password changes becomes less critical. As such, it’s more effective to focus on strengthening overall authentication practices rather than enforcing frequent password resets.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure multifactor authentication is enabled for all users in administrative roles",
+      "Checks": [
+        "entra_admin_users_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Multifactor authentication is enabled for all users in administrative roles",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Multifactor Authentication (MFA) enhances account security by requiring users to provide at least two forms of identity verification during sign-in—such as a password and a one-time code from a mobile device, biometric scan, or authentication app. It is critical to ensure that all users in administrator roles have MFA enabled to protect privileged access.",
+          "AdditionalInformation": "MFA significantly reduces the risk of unauthorized access by requiring attackers to compromise multiple independent authentication factors. For administrative accounts—often targeted due to their elevated privileges—this additional layer of security is essential. Enforcing MFA for admins helps ensure that only authorized individuals can access sensitive systems and configurations, thereby strengthening the overall security posture of the organization.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Ensure multifactor authentication is enabled for all users",
+      "Checks": [
+        "entra_users_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Multifactor authentication is enabled for all users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Enable Multifactor Authentication (MFA) for all users in the Microsoft 365 tenant to strengthen identity security. Once enabled, users will be prompted to verify their identity using a second factor during sign-in. Common second factors include a one-time code sent via SMS or generated through an authentication app such as Microsoft Authenticator.",
+          "AdditionalInformation": "MFA adds a critical layer of protection by requiring users to provide two or more independent forms of authentication before access is granted. This significantly reduces the likelihood of unauthorized access, as an attacker would need to compromise both the primary credentials and the second authentication factor. Enabling MFA across all user accounts helps protect the organization from phishing, credential theft, and other identity-based threats.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.4",
+      "Description": "Enable Conditional Access policies to block legacy authentication",
+      "Checks": [
+        "entra_legacy_authentication_blocked"
+      ],
+      "Attributes": [
+        {
+          "Title": "Conditional Access policies to block legacy authentication",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Microsoft Entra ID supports a variety of authentication and authorization protocols, including legacy authentication methods. Legacy authentication typically refers to Basic Authentication, which prompts users to submit a username and password without support for modern security features like Multifactor Authentication (MFA). Several messaging and connection protocols fall under legacy authentication, including: • Authenticated SMTP – Sends authenticated email messages. • Autodiscover – Helps Outlook and Exchange ActiveSync (EAS) clients locate mailboxes. • Exchange ActiveSync (EAS) – Connects mobile devices to Exchange Online. • Exchange Online PowerShell – Requires the Exchange Online PowerShell Module when Basic Auth is blocked. • Exchange Web Services (EWS) – Used by Outlook, Outlook for Mac, and third-party applications. • IMAP4 and POP3 – Used by legacy email clients. • MAPI over HTTP (MAPI/HTTP) – Primary protocol for Outlook 2010 SP2 and newer. • Offline Address Book (OAB) – Downloads address lists for Outlook. • Outlook Anywhere (RPC over HTTP) – Legacy access method for Outlook. • Reporting Web Services – Retrieves reporting data from Exchange Online.•Universal Outlook – Used by the Windows 10 Mail and Calendar app. • Other clients – Protocols identified as using legacy authentication patterns.",
+          "AdditionalInformation": "Legacy authentication protocols do not support multifactor authentication, making them a common attack vector for credential theft and brute-force attacks. Blocking legacy authentication significantly reduces the organization’s attack surface and helps enforce modern, more secure sign-in methods that support MFA.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.5",
+      "Description": "Ensure 'Phishing-resistant MFA strength' is required for Administrators",
+      "Checks": [
+        "entra_admin_users_phishing_resistant_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Phishing-resistant MFA strength' is required for Administrators",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Authentication Strength is a Conditional Access (CA) control in Microsoft Entra ID that allows administrators to define which authentication methods are permitted for accessing specific resources. This enables a tailored approach to security—stronger methods can be enforced for sensitive assets, while less secure methods may be acceptable for lower-risk scenarios. Microsoft provides three built-in authentication strength levels: • MFA Strength • Passwordless MFA Strength • Phishing-resistant MFA Strength It is recommended that all users in administrator roles are protected by a Conditional Access policy that enforces Phishing-resistant MFA Strength. Administrators can meet this requirement by registering and using one of the following phishing-resistant authentication methods: • FIDO2 Security Key • Windows Hello for Business • Certificate-based Authentication (CBA) Note: Configuration steps for these methods (e.g., setting up FIDO2 keys) are not covered here but are available in Microsoft’s documentation. The Conditional Access policy only enforces that at least one of these methods is used. Warning: Ensure that administrators are pre-registered for one of the supported strong authentication methods before enforcing the policy. As also recommended elsewhere in the CIS Benchmark, a break-glass account should be excluded from this policy to maintain emergency access.",
+          "AdditionalInformation": "As MFA adoption increases, so does the sophistication of attacks designed to bypass it. Phishing-resistant authentication methods are more secure because they eliminate passwords from the authentication process. These methods rely on strong public/private key cryptography and ensure that authentication can only occur between trusted devices and providers—preventing login attempts from fake or phishing websites.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.1.6",
+      "Description": "Ensure a managed device is required for authentication",
+      "Checks": [
+        "entra_managed_device_required_for_authentication"
+      ],
+      "Attributes": [
+        {
+          "Title": "A managed device is required for authentication",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Conditional Access (CA) policies can be configured to enforce access controls based on whether a device is compliant or Microsoft Entra hybrid joined. These conditions allow organizations to distinguish between managed and unmanaged devices, enabling more granular enforcement of authentication policies. • The Require device to be marked as compliant control ensures that devices meet the compliance standards defined in Intune compliance policies. Devices must first be enrolled in Intune Mobile Device Management (MDM) before these policies can be evaluated. • The Require Microsoft Entra hybrid joined device control applies to devices synchronized from an on-premises Active Directory environment, marking them as trusted within the hybrid identity model. When both conditions are included in the same Conditional Access policy, the evaluation functions as an OR logic—only one of the two conditions needs to be met for the user to authenticate successfully from a device. Recommended configuration: • Require device to be marked as compliant • Require Microsoft Entra hybrid joined device • Require one of the selected controls",
+          "AdditionalInformation": "Managed devices are generally more secure due to enforced configurations such as Group Policy, mobile device compliance policies, endpoint detection and response (EDR), managed patching, and centralized alerting. Limiting access to only compliant or hybrid joined devices ensures that users are authenticating from secure environments. This policy helps mitigate the risk of compromised credentials by requiring attackers to first obtain access to a trusted device. When combined with additional CA controls—such as multi-factor authentication—it adds a further barrier to unauthorized access and strengthens the organization’s overall security posture.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.7",
+      "Description": "Ensure a managed device is required for MFA registration",
+      "Checks": [
+        "entra_managed_device_required_for_mfa_registration"
+      ],
+      "Attributes": [
+        {
+          "Title": "Managed device is required for MFA registration",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Conditional Access (CA) policies can be used to restrict the registration of multi-factor authentication (MFA) methods based on a device’s compliance status or whether it is Microsoft Entra hybrid joined. This allows organizations to enforce that only managed devices are used when users register security information.• Require device to be marked as compliant enforces that the device meets all conditions defined in Intune compliance policies. Devices must be enrolled in Intune Mobile Device Management (MDM) for this to apply. • Require Microsoft Entra hybrid joined device ensures the device has been synchronized from an on-premises Active Directory, marking it as trusted within the hybrid identity environment. When both controls are included in a Conditional Access policy for MFA registration, they operate with OR logic—only one of the conditions must be satisfied for the user to proceed. Recommended configuration: Restrict the “Register security information” operation to devices that are either compliant or Microsoft Entra hybrid joined.",
+          "AdditionalInformation": "Restricting MFA registration to trusted, managed devices significantly reduces the risk of attackers using stolen credentials to set up fraudulent authentication methods. Accounts that exist but are not yet registered for MFA are particularly vulnerable to takeover. This policy ensures that security information is registered only from secured, policy-enforced endpoints—which often include additional layers of protection such as endpoint detection, encryption, and monitoring—thereby reducing the attack surface and strengthening the organization’s identity security posture.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.8",
+      "Description": "Ensure modern authentication for SharePoint applications is required",
+      "Checks": [
+        "sharepoint_modern_authentication_required"
+      ],
+      "Attributes": [
+        {
+          "Title": "Modern authentication for SharePoint applications is required",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Modern authentication in Microsoft 365 enables advanced authentication capabilities such as multifactor authentication (MFA), smart card support, certificate-based authentication (CBA), and integration with third-party SAML identity providers. It replaces legacy authentication protocols with more secure, token-based authentication methods. It is recommended to enforce modern authentication for SharePoint applications to ensure secure access.",
+          "AdditionalInformation": "If SharePoint applications are allowed to use basic authentication, they may bypass strong authentication controls such as MFA, exposing the environment to potential compromise. Enforcing modern authentication ensures that all sessions between users, applications, and SharePoint utilize robust, policy-enforced authentication methods—significantly reducing the risk of credential theft and unauthorized access.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.9",
+      "Description": "Ensure that SharePoint guest users cannot share items they don't own",
+      "Checks": [
+        "sharepoint_guest_sharing_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "SharePoint guest users cannot share items they don't own",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "SharePoint Online allows users to share files, folders, and entire site collections both internally and externally. With appropriate permissions, internal users can extend access to external collaborators, enabling seamless cross-organizational collaboration.",
+          "AdditionalInformation": "While external sharing supports productivity and collaboration, it’s essential that owners of files, folders, or site collections retain control over what content is shared and with whom. This helps prevent unauthorized data disclosure and ensures that sensitive information is only accessible to intended recipients. Proper sharing governance empowers data owners to make informed decisions and reinforces accountability across the organization.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.1.10",
+      "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Privileged Users",
+      "Checks": [
+        "entra_admin_users_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Multi-Factor Auth Status' is 'Enabled' for all Privileged Users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The “Multi-Factor Authentication (MFA) Status” setting determines whether users are required to authenticate using a second factor beyond their password. For privileged users—those with administrative roles or elevated permissions—this setting should be set to “Enabled” to ensure that MFA is enforced whenever they sign in.",
+          "AdditionalInformation": "Privileged accounts have access to critical systems, sensitive data, and administrative functions that, if compromised, could lead to significant security breaches. Enforcing MFA for all privileged users greatly reduces the risk of unauthorized access by requiring attackers to compromise two or more independent authentication factors. MFA is one of the most effective defenses against phishing, credential theft, and brute-force attacks, making it a foundational control for protecting administrative accounts in any secure identity and access management strategy.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.1.11",
+      "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
+      "Checks": [
+        "entra_users_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The “Multi-Factor Authentication (MFA) Status” setting determines whether users must verify their identity using a second factor in addition to their password. For non-privileged users—those without administrative or elevated permissions—it is recommended that MFA is enabled across the entire user base to provide comprehensive protection against identity-based attacks.",
+          "AdditionalInformation": "While non-privileged users may not have administrative access, they still have access to email, internal systems, and potentially sensitive business data. These accounts are often targeted in phishing campaigns, credential stuffing attacks, and social engineering tactics to gain an initial foothold in the organization. Enforcing MFA for all users significantly reduces the likelihood of account compromise by requiring a second form of verification, such as a mobile app, hardware token, or one-time passcode. This broad protection is essential in a Zero Trust security model and ensures that every account—regardless of privilege—is secured against unauthorized access.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.1.12",
+      "Description": "Ensure email from external senders is identified",
+      "Checks": [
+        "exchange_external_email_tagging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Email from external senders is identified",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The External Callouts feature in Exchange Online introduces a native visual indicator for emails originating from outside the organization. When enabled, this feature displays a localized “External” tag within supported Outlook clients, along with additional user interface elements at the top of the message reading pane. These enhancements help users easily identify and verify the actual sender’s email address, providing critical context when evaluating incoming messages. The feature is enabled via PowerShell using the Set-ExternalInOutlook cmdlet, and typically becomes visible to end users within 24–48 hours, provided their Outlook client version supports the functionality. Note: While Exchange administrators have historically used mail flow rules to prepend “[External]” or similar text to subject lines, this method is less reliable and may not consistently apply across all message types or clients. The CIS Benchmark recommends enabling the native External tagging feature for a more consistent and secure user experience.",
+          "AdditionalInformation": "Tagging emails from external senders increases user awareness and vigilance, enabling recipients to recognize messages that originate outside the organization’s trusted environment. This visual cue acts as a simple but effective layer of defense, encouraging users to treat unexpected or suspicious emails with caution—especially those that may be phishing attempts, impersonation attacks, or social engineering lures. By clearly marking external messages, organizations enhance their users’ ability to make informed security decisions, reducing the likelihood of credential compromise, malware infection, or inadvertent data disclosure.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.1.13",
+      "Description": "Ensure modern authentication for Exchange Online is enabled",
+      "Checks": [
+        "exchange_organization_modern_authentication_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Modern authentication for Exchange Online is enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Modern authentication in Microsoft 365 enables advanced authentication capabilities such as multi-factor authentication (MFA), smart card-based login, certificate-based authentication (CBA), and integration with third-party SAML identity providers. When enabled for Exchange Online, clients like Outlook 2016 and Outlook 2013 utilize modern authentication protocols (such as OAuth 2.0) to securely connect to Microsoft 365 mailboxes. If modern authentication is disabled, these clients fall back to basic authentication, a legacy protocol that transmits credentials in plaintext and lacks support for MFA. Newer clients—including Outlook for Mac 2016, Outlook Mobile, and all Microsoft 365 Apps for Enterprise versions of Outlook—are built to use modern authentication by default.",
+          "AdditionalInformation": "Allowing basic authentication significantly weakens the security posture of an organization. It bypasses modern controls like multi-factor authentication, exposing user credentials to a higher risk of compromise through phishing, brute-force attacks, or session hijacking. By enabling modern authentication in Exchange Online, organizations enforce the use of strong, token-based authentication methods that are resistant to credential theft and session replay. This is critical for protecting sensitive email data and ensuring secure communication between user devices and Microsoft 365 services. Enabling modern authentication also supports compliance mandates and zero-trust principles, making it a foundational step in securing user identities and email infrastructure.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.14",
+      "Description": "Ensure anonymous users can't join a meeting",
+      "Checks": [
+        "teams_meeting_anonymous_user_join_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Anonymous users can't join a meeting",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "This policy setting in Microsoft Teams controls who is allowed to bypass the meeting lobby and directly join a meeting. When properly configured, only explicitly invited attendees—either those directly invited by the organizer or individuals to whom the invitation was intentionally forwarded—can skip the lobby and enter the meeting. All other participants, including anonymous users or those with access to the meeting link but not explicitly invited, must wait in the lobby for approval by the meeting organizer or a designated participant.",
+          "AdditionalInformation": "For meetings involving sensitive, confidential, or regulated information, it is essential to tightly control participant access. Requiring all non-invited individuals to wait in the lobby allows the organizer to review and manually admit attendees, thereby preventing unauthorized access or accidental exposure of sensitive content. Additionally, this setting prevents misuse of the meeting link by anonymous or unintended users, such as initiating unauthorized meetings outside scheduled times. Even organizations that do not regularly operate in high-security (Level 2) environments but occasionally handle sensitive data should consider enabling this policy to reinforce data protection and meeting integrity. By limiting automatic entry to only verified, intended participants, this control supports secure collaboration, reduces risk of information leakage, and enhances confidence in Microsoft Teams as a platform for sensitive communications.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.15",
+      "Description": "Ensure anonymous users and dial-in callers can't start a meeting",
+      "Checks": [
+        "teams_meeting_anonymous_user_start_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Anonymous users and dial-in callers can't start a meeting",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "This policy setting in Microsoft Teams determines whether anonymous participants can start a meeting before a verified user from the organization or a trusted external organization has joined. When this setting is enabled, anonymous users and dial-in callers must wait in the meeting lobby until the meeting is initiated by an authenticated participant. Anonymous participants are defined as: • Users not signed in with a work or school account • Participants from non-trusted organizations, based on external access configuration • Individuals from organizations without mutual trust relationships Note: This setting only applies when the “Who can bypass the lobby” policy is set to Everyone. If the broader setting “Anonymous users can join a meeting” is disabled at the organizational level, this policy applies only to dial-in callers.",
+          "AdditionalInformation": "Disallowing anonymous participants from starting meetings helps mitigate the risk of meeting abuse, such as spamming, hijacking, or unauthorized use of Teams meetings for unintended purposes. Anonymous users pose a higher risk because their identities cannot be verified, and they are not subject to organizational controls or compliance policies. Requiring an authenticated user to start the meeting ensures that someone with verified access and accountability is present before the session begins. This adds a layer of security and governance, especially in meetings that could involve sensitive discussions or are exposed to a wide range of external participants. Enforcing this policy supports a secure and controlled meeting environment and aligns with best practices for preventing unauthorized or disruptive activity in collaborative platforms.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.16",
+      "Description": "Ensure only people in my org can bypass the lobby",
+      "Checks": [
+        "teams_meeting_external_lobby_bypass_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Only people in my org can bypass the lobby",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "This policy setting in Microsoft Teams defines who can bypass the meeting lobby and join a meeting directly, versus who must wait in the lobby until admitted by a meeting organizer, co-organizer, or designated presenter. Options include allowing access to everyone, people in your organization, trusted external organizations, or only invited users.",
+          "AdditionalInformation": "Restricting direct access to meetings—particularly those that involve sensitive, confidential, or regulated information—ensures that only authorized and expected attendees can participate. Requiring participants to wait in the lobby gives meeting organizers the opportunity to vet and approve each attendee before admitting them. This policy also helps prevent unauthorized access through forwarded meeting links and reduces the risk of anonymous users joining meetings at unscheduled times, which can lead to disruptions or even security breaches. Enforcing lobby controls aligns with zero trust principles and is a best practice for maintaining the integrity and confidentiality of Teams meetings.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.1.17",
+      "Description": "Ensure users dialing in can't bypass the lobby",
+      "Checks": [
+        "teams_meeting_dial_in_lobby_bypass_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users dialing in can't bypass the lobby",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "This policy setting in Microsoft Teams determines whether dial-in participants—users who join meetings by phone—can bypass the lobby and join directly, or if they must wait in the lobby until admitted by a meeting organizer, co-organizer, or presenter.",
+          "AdditionalInformation": "Dial-in participants typically cannot be authenticated in the same way as users joining via Teams apps or web clients, making it more difficult to verify their identity. For meetings that may involve sensitive, confidential, or regulated information, it is essential that the meeting organizer has the opportunity to manually vet and admit these participants.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "Ensure that only organizationally managed/approved public groups exist",
+      "Checks": [
+        "admincenter_groups_not_public_visibility"
+      ],
+      "Attributes": [
+        {
+          "Title": "Only organizationally managed/approved public groups exist",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Microsoft 365 Groups serve as the foundation for collaboration across Microsoft 365, providing shared resources (e.g., Outlook inbox, SharePoint site, Teams workspace) to group members. While various group types exist, this recommendation specifically addresses Microsoft 365 Groups. By default, when a Microsoft 365 Group is created via the admin panel, its privacy setting is set to “Public”, meaning anyone in the organization can access its content unless the setting is manually changed.",
+          "AdditionalInformation": "To protect sensitive organizational data, it’s important to ensure that only authorized and managed public groups exist. Public groups expose their content to all users in the organization through several access paths: • Users can add themselves to a public group using the Azure portal. • Users can request access via the Access Panel’s Groups app—this sends a request to the group owner but still grants immediate access. • Users may discover and directly access the associated SharePoint site via a guessable or easily discoverable URL.While admins are notified when Azure Portal access is used, other methods may not generate alerts. If group privacy settings are not properly managed, sensitive data could be inadvertently exposed. For this reason, privacy settings should be reviewed and adjusted to Private by default unless a public setting is explicitly required and approved.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.2",
+      "Description": "Ensure a dynamic group for guest users is created",
+      "Checks": [
+        "entra_dynamic_group_for_guests_created"
+      ],
+      "Attributes": [
+        {
+          "Title": "Dynamic group for guest users is created",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "A dynamic group in Microsoft Entra ID automatically manages group membership based on user attributes such as userType, department, or country/region. Administrators can define rules to ensure that users meeting specific criteria are added to—or removed from—a group without manual intervention. The recommended configuration is to create a dynamic group that specifically includes guest accounts.",
+          "AdditionalInformation": "Dynamic groups streamline user management by automating group assignments. By including guest users in a dynamic group, organizations can consistently apply existing Conditional Access policies, access controls, and other security measures. This ensures that new guest accounts are governed by the same security standards as existing ones, reducing the risk of misconfiguration or oversight.",
+          "LevelOfRisk": 3
+        }
+      ]
+    },
+    {
+      "Id": "1.2.3",
+      "Description": "entra_managed_device_required_for_mfa_registration",
+      "Checks": [
+        "entra_admin_consent_workflow_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Admin consent workflow is enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The admin consent workflow provides a secure and controlled process for granting access to applications that require administrator approval. When a user attempts to access an application but lacks permission to grant consent, they can submit a request for review. This request is sent via email to designated administrators, who act as reviewers. Once a decision is made, the user is notified of the outcome.",
+          "AdditionalInformation": "The admin consent workflow (Preview) enhances security by ensuring that access to sensitive applications is reviewed and approved by authorized administrators. It prevents users from unintentionally granting permissions to potentially risky applications while maintaining a clear approval process with full visibility and accountability.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "Enable Identity Protection user risk policies",
+      "Checks": [
+        "entra_identity_protection_user_risk_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Identity Protection user risk policies",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Microsoft Entra ID Protection uses user risk policies to evaluate the likelihood that a user account has been compromised. These policies assign a risk level (low, medium, or high) based on detected anomalies, such as unfamiliar sign-ins, leaked credentials, or atypical behavior. Note: While Entra ID Protection includes built-in user risk policies, Microsoft strongly recommends implementing risk-based Conditional Access (CA) policies instead of relying on the older, legacy policy model. The modern CA approach offers several key advantages:• Access to enhanced diagnostic and troubleshooting data • Integration with report-only mode for safe testing • Support for automation via Microsoft Graph API • Greater flexibility through advanced Conditional Access attributes, such as sign-in frequency and session controls",
+          "AdditionalInformation": "Enabling user risk policies through Conditional Access allows organizations to automatically respond to suspected account compromise by enforcing real-time controls—such as blocking access or requiring secure reauthentication. This proactive approach enhances the organization’s ability to detect and mitigate identity-based threats before they escalate.",
+          "LevelOfRisk": 3
+        }
+      ]
+    },
+    {
+      "Id": "1.2.5",
+      "Description": "Enable Identity Protection sign-in risk policies ",
+      "Checks": [
+        "entra_identity_protection_sign_in_risk_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Identity Protection sign-in risk policies ",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Microsoft Entra ID Protection evaluates sign-in risk by detecting potentially suspicious sign-in attempts—both in real time and through offline analysis. A risky sign-in indicates that the attempt may not have been performed by the legitimate account owner, based on signals such as unusual location, device anomalies, or unfamiliar sign-in behavior. Note: Although Microsoft Entra ID Protection includes built-in sign-in risk policies, it is strongly recommended to implement risk-based policies using Conditional Access instead of relying on legacy risk policies. The Conditional Access method provides several key advantages: • Access to enhanced diagnostic and investigation data • Ability to test with report-only mode • Integration with Microsoft Graph API for automation and management • Use of additional CA attributes such as sign-in frequency and session controls",
+          "AdditionalInformation": "Enabling a sign-in risk Conditional Access policy allows organizations to automatically challenge suspicious sign-ins with multi-factor authentication (MFA). This reduces the likelihood of unauthorized access by requiring an additional verification step whenever unusual activity is detected, strengthening identity protection and reducing the risk of account compromise.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.2.6",
+      "Description": "Ensure external content sharing is restricted",
+      "Checks": [
+        "sharepoint_external_sharing_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "External content sharing is restricted",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "External sharing settings in Microsoft 365 govern how content is shared outside the organization. While each SharePoint site can have its own sharing configuration, it must be equal to or more restrictive than the organization-wide setting. The recommended configuration is “New and existing guests” or a more restrictive option. This setting requires external users to either sign in with a Microsoft 365 work or school account, a personal Microsoft account, or verify their identity using a one-time passcode. Users can share content with existing guests in the directory or invite new guests, who will be added to the directory upon sign-in.",
+          "AdditionalInformation": "Requiring guest authentication ensures that external users are registered and identifiable within the organization’s directory. This allows administrators to apply governance controls—such as Conditional Access policies, group-based restrictions, and activity monitoring—to external identities. By enforcing authenticated sharing, organizations maintain visibility and control over externally shared resources, reducing the risk of unauthorized data access and supporting compliance with security and privacy policies.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.7",
+      "Description": "Ensure SharePoint external sharing is managed through domain whitelist/blacklists",
+      "Checks": [
+        "sharepoint_external_sharing_managed"
+      ],
+      "Attributes": [
+        {
+          "Title": "SharePoint external sharing is managed through domain whitelist/blacklists",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Organizations can control how documents are shared externally by configuring domain-based restrictions. This can be done by either blocking specific external domains or allowing sharing only with a defined list of trusted domains. These settings apply to services like SharePoint and OneDrive to help manage external collaboration securely.",
+          "AdditionalInformation": "Restricting document sharing to approved domains reduces the risk of accidental or malicious data exposure. Attackers may attempt to exfiltrate sensitive information by sharing it with external entities. By limiting sharing to trusted domains, organizations minimize their external attack surface and maintain greater control over data flow.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.8",
+      "Description": "Ensure inbound anti-spam policies do not contain allowed domains",
+      "Checks": [
+        "defender_antispam_policy_inbound_no_allowed_domains"
+      ],
+      "Attributes": [
+        {
+          "Title": "Inbound anti-spam policies do not contain allowed domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Anti-spam protection in Exchange Online leverages configurable policies to reduce the volume of unwanted emails—such as junk, bulk, and phishing messages—received by users. These policies include several configurable lists that influence how email from specific sources is treated:• Allowed Senders List • Allowed Domains List • Blocked Senders List • Blocked Domains List While these features offer flexibility, it is strongly recommended not to define any entries in the Allowed Domains List in a production environment.",
+          "AdditionalInformation": "When a sender or domain is added to the Allowed Domains List, their messages bypass key security checks—including spam filtering and authentication mechanisms like SPF, DKIM, and DMARC—unless flagged as containing malware or high-confidence phishing. This introduces a significant security risk, as attackers may exploit these exceptions to deliver malicious emails directly to users’ inboxes. The risk is especially high when common or widely used domains are allow-listed, as these are frequent targets for spoofing attempts. Moreover, Microsoft’s official guidance clearly states that allowed domains should only be used for testing purposes, not for general use in production environments. To maintain a strong email security posture, organizations should avoid defining Allowed Domains and instead rely on more controlled methods such as block lists, quarantine policies, or targeted safe sender configurations for trusted entities.",
+          "LevelOfRisk": 1
+        }
+      ]
+    },
+    {
+      "Id": "1.2.9",
+      "Description": "Ensure all forms of mail forwarding are blocked and/or disabled",
+      "Checks": [
+        "defender_antispam_outbound_policy_forwarding_disabled",
+        "exchange_transport_rules_mail_forwarding_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "All forms of mail forwarding are blocked and/or disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Exchange Online provides multiple mechanisms to manage and control the flow of outbound email messages, helping organizations prevent unauthorized data exfiltration. These mechanisms include: • Remote Domain Settings • Transport Rules • Anti-Spam Outbound Policies These tools work in tandem to control and monitor various email forwarding methods that users or attackers may exploit, such as: • Inbox rules configured in Outlook • Automatic forwarding via Out of Office (OOF) rules • Forwarding settings in Outlook Web Access (OWA) using ForwardingSmtpAddress • Admin-defined forwarding in the Exchange Admin Center (EAC) using ForwardingAddress • Automated forwarding using Power Automate / Microsoft Flow To effectively reduce the risk of unauthorized data leaks, organizations should implement both a Transport Rule and an Outbound Anti-Spam Policy to block automatic mail forwarding. Note: If any exclusions are required (e.g., for trusted third-party systems or compliance tools), they should be strictly defined and approved in accordance with organizational policy.",
+          "AdditionalInformation": "",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.10",
+      "Description": "Ensure mail transport rules do not whitelist specific domains",
+      "Checks": [
+        "exchange_transport_rules_whitelist_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Mail transport rules do not whitelist specific domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Mail flow rules (also known as transport rules) in Exchange Online allow administrators to inspect, modify, or block email messages as they pass through the organization. These rules can be configured based on a wide range of conditions—such as sender, recipient, subject content, or attachment type—and can enforce actions including message redirection, header modification, or delivery rejection. While transport rules offer powerful control over email behavior, they must be implemented with caution—particularly when it comes to whitelisting domains or bypassing standard filtering mechanisms.",
+          "AdditionalInformation": "Whitelisting external domains through transport rules can disable critical security checks such as anti-malware scanning, phishing detection, and sender authentication (e.g., SPF, DKIM, DMARC). If a trusted domain is later compromised—or was malicious from the start—this bypass can allow attackers to deliver malicious content directly to user inboxes without scrutiny. By avoiding broad or permanent domain whitelisting in transport rules, organizations preserve the integrity of their email filtering and reduce the risk of successful phishing campaigns, malware delivery, or data exfiltration originating from seemingly trusted sources. Transport rules should be reviewed regularly, and any exceptions must be justified, narrowly scoped, and documented according to organizational policy.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.11",
+      "Description": "Ensure MailTips are enabled for end users",
+      "Checks": [
+        "exchange_organization_mailtips_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "MailTips are enabled for end users",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "MailTips are real-time, context-aware notifications displayed to users as they compose email messages in Outlook. These tips are generated by Exchange while a message is being drafted and are based on an analysis of the email’s content and recipient list. If Exchange detects potential issues—such as the message being sent to a large distribution group, an external recipient, or someone who is out of office—it presents the user with a MailTip alert before the message is sent.This proactive feedback helps users avoid common issues like sending sensitive information to unintended recipients, triggering non-delivery reports (NDRs), or violating communication policies.",
+          "AdditionalInformation": "Enabling MailTips provides valuable visual cues that promote user awareness and responsible communication. For example, users are warned when they are sending emails to external recipients or large distribution lists, which helps prevent data leakage, unintentional over-sharing, and excessive email traffic. MailTips serve as a lightweight but effective safeguard by nudging users to review recipients and message context before sending, reducing the risk of human error. In regulated or security-conscious environments, this feature reinforces compliance by helping users adhere to organizational communication policies in real time.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.2.12",
+      "Description": "Ensure users can't send emails to a channel email address",
+      "Checks": [
+        "teams_email_sending_to_channel_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users can't send emails to a channel email address",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Microsoft Teams channel email addresses are an optional feature that enables users to send emails directly into a Teams channel. When enabled, each channel is assigned a unique email address that users can use to forward messages, share content, or initiate discussions from outside Teams. While this can enhance collaboration by bridging email and Teams-based communication, the generated email addresses are typically not part of the organization’s primary domain, and their usage is subject to broader Microsoft 365 infrastructure settings.",
+          "AdditionalInformation": "Channel email addresses introduce potential security and governance concerns, as they are not managed under the organization’s domain and are exposed to external communication. If an attacker is able to discover or guess a channel’s email address, they could send messages directly into Teams, potentially introducing phishing links, malicious attachments, or inappropriate content into collaborative spaces. Furthermore, since organizations have limited control over the security configurations and exposure of these addresses, they may become a blind spot in security monitoring and email filtering. Disabling or restricting the use of Teams channel email addresses helps reduce the attack surface, prevent unauthorized message injection, and strengthen the overall security posture of Microsoft Teams.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.13",
+      "Description": "Ensure external domains are restricted in the Teams admin center",
+      "Checks": [
+        "teams_external_domains_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "External domains are restricted in the Teams admin center",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy governs how external access is managed in Microsoft Teams, specifically determining whether users in your organization can communicate and collaborate with individuals from external domains. Administrators can configure this setting to: • Allow communication with all external domains • Block all external domains • Allow only specific (approved) external domains using an allowlist When external access is enabled, users can chat, invite external participants to meetings, and use audio/video conferencing with users in other Microsoft 365 or federated organizations. Recommended Configuration: To reduce exposure, it is recommended to either allow only specific external domains with whom collaboration is necessary or block all external domains entirely.",
+          "AdditionalInformation": "While external collaboration can be valuable, unrestricted access to external domains introduces significant security risks. Without proper controls, users may inadvertently engage with untrusted or malicious entities, opening the door to phishing, social engineering, malware delivery, or data exfiltration. Notable threats that have leveraged Teams’ external access features include: • DarkGate malware distributed through malicious Teams messages • Phishing and impersonation campaigns by actors like Midnight Blizzard (APT29) • GIFShell, a technique for covert communication using GIFs within Teams • Username enumeration, allowing attackers to confirm the existence of user accounts By allowlisting only trusted domains, organizations retain the benefits of external collaboration while maintaining tight control over who can interact with internal users. This aligns with zero trust principles and helps ensure that external communication is both intentional and secure.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.14",
+      "Description": "Ensure communication with unmanaged Teams users is disabled",
+      "Checks": [
+        "teams_unmanaged_communication_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Communication with unmanaged Teams users is disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams controls whether users in your organization can chat or join meetings with external Teams users who are not affiliated with a managed organization—for example, users of Microsoft Teams (free) or those without an associated Microsoft Entra ID (formerly Azure AD) tenant. These unmanaged accounts operate outside of enterprise governance and lack the administrative oversight, compliance enforcement, and security controls typically applied in organizational environments. Recommended Configuration: Set the policy to “Off” for “People in my organization can communicate with Teams users whose accounts aren’t managed by an organization” to block communication with unmanaged Teams users.",
+          "AdditionalInformation": "Allowing communication with unmanaged external Teams users introduces a significant security risk. Since anyone can register for a free Teams account, attackers can easily create unmanaged identities and attempt to initiate contact with internal users. These interactions can be used to deliver malicious content, perform social engineering, or carry out reconnaissance. Documented attacks exploiting this communication channel include: • DarkGate malware delivery via malicious messages • Phishing and impersonation campaigns attributed to Midnight Blizzard (APT29) • GIFShell, a technique allowing covert exfiltration via GIFs in Teams chats • Username enumeration, enabling attackers to identify valid users in an organization Disabling communication with unmanaged Teams users helps enforce a zero trust posture, ensuring that all external interactions occur only with verified and trusted organizations under enforceable security policies. This reduces the organization’s exposure to external threats, protects sensitive communications, and upholds compliance standards.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.2.15",
+      "Description": "Ensure external Teams users cannot initiate conversations",
+      "Checks": [
+        "teams_external_users_cannot_start_conversations"
+      ],
+      "Attributes": [
+        {
+          "Title": "External Teams users cannot initiate conversations",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams controls whether external users with unmanaged Teams accounts—such as those using Microsoft Teams (free)—can initiate conversations with users in your organization. These unmanaged users do not belong to a verified Microsoft Entra (Azure AD) tenant and are not subject to organizational controls or governance. Recommended Configuration: Uncheck the option “External users with Teams accounts not managed by an organization can contact users in my organization” to prevent these users from initiating communication. This setting is designed as an additional safeguard to complement the broader policy that disables communication with unmanaged Teams users entirely. In scenarios where an organization allows limited interaction with such users, this control ensures that only internal users can initiate communication, further reducing exposure to unsolicited or malicious contact attempts.",
+          "AdditionalInformation": "Enabling unmanaged Teams users to initiate contact with internal users poses a significant security risk, as anyone can easily register for a free Teams account with minimal identity verification. Threat actors can exploit this feature to deliver malicious content, impersonate legitimate contacts, or conduct reconnaissance by probing user availability and behavior. Notable real-world threats facilitated through external Teams access include:• DarkGate malware delivered via malicious chats • Social engineering and phishing campaigns by advanced threat actors such as Midnight Blizzard (APT29) • GIFShell, a covert data exfiltration method using GIFs in Teams • Username enumeration, enabling discovery of valid user accounts within an organization By preventing unmanaged external users from initiating conversations, organizations can better protect their internal users from unsolicited and potentially harmful contact attempts. This policy reinforces a defense-in-depth strategy, ensuring that even in exceptional cases where limited unmanaged communication is permitted, external contact remains tightly controlled and monitored.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.2.16",
+      "Description": "Ensure meeting chat does not allow anonymous users",
+      "Checks": [
+        "teams_meeting_chat_anonymous_users_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Meeting chat does not allow anonymous users",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams controls who can read and write messages in the meeting chat. It allows administrators or meeting organizers to specify whether chat is available to everyone, only specific roles (such as presenters), or is disabled entirely for participants. This setting applies to chat interactions during the meeting and helps manage the flow and visibility of information shared in the chat pane.",
+          "AdditionalInformation": "Limiting chat access to only authorized participants helps prevent the unintended disclosure of sensitive information and reduces the risk of inappropriate or disruptive content being shared during a meeting. In meetings involving confidential topics or external participants, restricting chat can safeguard against data leakage and maintain focus on the meeting agenda.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "1.2.17",
+      "Description": "Ensure only organizers and co-organizers can present",
+      "Checks": [
+        "teams_meeting_presenters_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Only organizers and co-organizers can present",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams determines who is allowed to present content during a meeting. Presenters have elevated permissions that allow them to share their screen, display files, manage participants, and control other collaborative features. This setting can be configured at the organizational or meeting level to allow only organizers, co-organizers, or a designated group of participants to present.",
+          "AdditionalInformation": "Restricting presentation privileges to authorized individuals helps ensure that only trusted participants can share content with the group. This minimizes the risk of inappropriate, disruptive, or unapproved material being displayed, whether intentionally or accidentally.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.18",
+      "Description": "Ensure external participants can't give or request control",
+      "Checks": [
+        "teams_meeting_external_control_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "External participants can't give or request control",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams provides control over who can present content and who can request control of shared content during a meeting. It enables administrators and meeting organizers to limit these privileges to internal, trusted participants, while restricting or blocking external participants—including guests, external users, and anonymous users—from taking control of the presentation or initiating content sharing.",
+          "AdditionalInformation": "Restricting presentation and control capabilities to authorized, internal participants significantly reduces the risk of accidental or malicious content sharing, interruptions, or abuse of meeting privileges. External participants—including guests, federated users, and anonymous joiners—may not be subject to the same identity verification or policy enforcement as users within the organization.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.2.19",
+      "Description": "Ensure meeting recording is off by default",
+      "Checks": [
+        "teams_meeting_recording_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Meeting recording is off by default",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "This policy setting in Microsoft Teams determines whether a user is allowed to initiate the recording of a meeting in progress. When enabled, participants with the appropriate permissions can start recording audio, video, and screen-sharing content during the session.",
+          "AdditionalInformation": "Restricting the ability to start a meeting recording ensures that only authorized individuals—such as organizers, co-organizers, team leads, or designated presenters—can capture meeting content. This is especially important for meetings that involve sensitive, confidential, or regulated information, where inappropriate or unauthorized recording could lead to data exposure, compliance violations, or reputational harm.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.3.1",
+      "Description": "Ensure that between two and four global admins are designated",
+      "Checks": [
+        "admincenter_users_between_two_and_four_global_admins"
+      ],
+      "Attributes": [
+        {
+          "Title": "Between two and four global admins are designated",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Each tenant should have more than one designated Global Administrator to ensure both accountability and redundancy in case one administrator leaves the organization. However, it’s equally important to limit the total number of Global Administrators to no more than four to reduce the overall security risk. Ideally, Global Administrator accounts should not have any user licenses assigned, limiting their exposure to commonly targeted services.",
+          "AdditionalInformation": "Relying on a single Global Administrator creates a risk of unmonitored malicious activity. On the other hand, having too many Global Administrators increases the likelihood that one of their accounts could be compromised. A balanced approach supports both oversight and security.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.3.2",
+      "Description": "Ensure administrative accounts use licenses with a reduced application footprint",
+      "Checks": [
+        "admincenter_users_admins_reduced_license_footprint"
+      ],
+      "Attributes": [
+        {
+          "Title": "Administrative accounts use licenses with a reduced application footprint",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Administrative accounts are privileged identities with elevated access to critical data, user management, and system settings. Assigning a license to these accounts may grant access to various applications, depending on the license type. The recommended practice is to avoid assigning licenses to privileged accounts altogether. If licensing is required—for example, to enable features such as Identity Protection, Privileged Identity Management (PIM), or Conditional Access—only Microsoft Entra ID P1 or P2 licenses should be used, as they do not include access to potentially vulnerable services like email or Teams.",
+          "AdditionalInformation": "Minimizing application access for administrative accounts significantly reduces the attack surface associated with high-privilege identities. Access to tools like mailboxes or collaboration apps increases the risk of exposure to phishing or social engineering attacks. Administrative tasks should be performed using dedicated, unlicensed accounts, while day-to-day activities should be conducted through separate, unprivileged “daily driver” accounts.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.3.3",
+      "Description": "Ensure third party integrated applications are not allowed",
+      "Checks": [
+        "entra_thirdparty_integrated_apps_not_allowed"
+      ],
+      "Attributes": [
+        {
+          "Title": "Third party integrated applications are not allowed",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "App registration allows users to register custom or third-party applications for use within the organization’s Microsoft Entra ID directory. These applications can request access to organizational data and integrate with various Microsoft 365 services.",
+          "AdditionalInformation": "While there are valid business cases for registering applications, this capability should be restricted to prevent unauthorized or insecure integrations. Attackers can exploit this feature by using compromised accounts to grant persistent access to third-party applications, enabling data exfiltration without needing to maintain direct control of the breached account. App registration should be disabled for standard users unless there is a clear business need and strong security controls—such as app consent policies and review workflows—are in place.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.3.4",
+      "Description": "Ensure 'Restrict non-admin users from creating tenants' is set to 'Yes'",
+      "Checks": [
+        "entra_policy_ensure_default_user_cannot_create_tenants"
+      ],
+      "Attributes": [
+        {
+          "Title": "Restrict non-admin users from creating tenants' is set to 'Yes'",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "By default, non-privileged users can create new Microsoft Entra tenants through the “Manage tenant” option in the Entra admin portal. When a user creates a tenant, the action is logged in the Audit Log under the category DirectoryManagement with the activity Create Company. The user who creates the tenant is automatically assigned the Global Administrator role for that tenant. Note that newly created tenants do not inherit any of the organization’s existing security or configuration settings.",
+          "AdditionalInformation": "Allowing unrestricted tenant creation introduces the risk of unauthorized or unmanaged environments, often referred to as shadow IT. These tenants may be mistakenly perceived as part of the organization’s secure infrastructure, leading users to adopt them for business use. This can fragment IT governance, complicate security oversight, and increase the likelihood of data exposure or policy violations. Restricting tenant creation ensures centralized control over the organization’s cloud environment and helps maintain consistent security and compliance standards.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.3.5",
+      "Description": "Ensure user consent to apps accessing company data on their behalf is not allowed",
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps"
+      ],
+      "Attributes": [
+        {
+          "Title": "User consent to apps accessing company data on their behalf is not allowed",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Organizations can control whether end users and group owners are allowed to grant consent to applications, or whether such requests require administrator review and approval. While allowing user consent can enhance productivity by enabling access to useful apps, it also introduces potential security risks if not properly managed.",
+          "AdditionalInformation": "Attackers often exploit application consent mechanisms by tricking users into authorizing malicious apps, thereby gaining access to sensitive company data. Disabling user consent for future app authorizations helps mitigate this risk by reducing the overall attack surface. When user consent is disabled, any existing consent remains valid, but all future consent requests must be explicitly approved by an administrator—ensuring better oversight and stronger security controls.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.3.6",
+      "Description": "Ensure that guest user access is restricted",
+      "Checks": [
+        "entra_policy_guest_users_access_restrictions"
+      ],
+      "Attributes": [
+        {
+          "Title": "Guest user access is restricted",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Microsoft Entra ID, as part of the Microsoft Entra suite, allows organizations to control what external guest users can view and access within the directory. By default, guest users are assigned a more limited permission level than internal members, who receive the full set of user permissions. These directory-level permissions apply across Microsoft Entra services, including Microsoft Graph, PowerShell v2, the Azure portal, and the My Apps portal. They also affect Microsoft 365 services that rely on Microsoft 365 Groups for collaboration—such as Outlook, Microsoft Teams, and SharePoint—though they do not override guest-specific settings within Teams or SharePoint. The recommended configuration is to ensure that guest users have limited access to directory properties and group memberships, or an even more restrictive setting.",
+          "AdditionalInformation": "Restricting guest access helps prevent unauthorized enumeration of users and groups within the directory—a common reconnaissance tactic used by attackers during the early stages of a targeted attack (as defined in the Cyber Kill Chain framework). Limiting this visibility reduces the organization’s exposure to potential threats and supports a stronger security posture.",
+          "LevelOfRisk": 3
+        }
+      ]
+    },
+    {
+      "Id": "1.3.7",
+      "Description": "Ensure guest user invitations are limited to the Guest Inviter role",
+      "Checks": [
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ],
+      "Attributes": [
+        {
+          "Title": "Guest user invitations are limited to the Guest Inviter role",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "By default, all users in the organization—including B2B collaboration guest users—can invite external users to collaborate via Microsoft Entra ID. This invitation capability can be broadly enabled or disabled, or it can be restricted to users in specific administrative roles. The recommended configuration is to limit guest invitations to only those users assigned to specific admin roles.",
+          "AdditionalInformation": "Restricting who can invite external guests reduces the risk of unauthorized or unmanaged external access. By limiting this ability to trusted administrative roles, organizations can maintain tighter control over their environment and reduce potential exposure to security threats originating from unvetted accounts.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "1.3.8",
+      "Description": "Ensure Sign-in frequency is enabled and browser sessions are not persistent for Administrative users",
+      "Checks": [
+        "entra_admin_users_sign_in_frequency_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Sign-in frequency is enabled and browser sessions are not persistent for Administrative users",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "In complex environments, organizations may need to place limits on authentication session durations to reduce risk. Microsoft Entra Conditional Access (CA) policies allow organizations to enforce session controls based on user roles, device state, location, and application sensitivity. Common scenarios include: • Access from unmanaged or shared devices • External access to sensitive resources • High-privileged user accounts • Business-critical applications The following configurations are recommended: • Sign-in frequency: Require reauthentication at least every 4 hours for Microsoft 365 E3 tenants, or every 24 hours for E5 tenants using Privileged Identity Management (PIM). • Persistent browser session: Set to Never persistent. Note: These settings can be integrated into the Conditional Access policy that enforces multifactor authentication for users in administrative roles.",
+          "AdditionalInformation": "Limiting the duration of authentication sessions helps prevent long-lived sessions that could be hijacked by attackers. Requiring periodic reauthentication ensures that a session cannot remain active indefinitely. Disabling persistent browser sessions further reduces the risk of drive-by browser attacks and ensures that session cookies are not stored, leaving nothing behind for an attacker to reuse in case of a compromised device.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "1.3.9",
+      "Description": "Ensure OneDrive sync is restricted for unmanaged devices",
+      "Checks": [
+        "sharepoint_onedrive_sync_restricted_unmanaged_devices"
+      ],
+      "Attributes": [
+        {
+          "Title": "OneDrive sync is restricted for unmanaged devices",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Microsoft OneDrive allows users to sign in with their organizational (cloud tenant) account and sync their OneDrive files—including selected folders or the entire contents of their storage—to a local computer. By default, synchronization is permitted on any device where OneDrive is installed, regardless of whether the device is Microsoft Entra ID Joined, Hybrid Entra ID Joined, or Active Directory Domain Joined. To improve control over where organizational data can be synchronized, it is recommended to restrict OneDrive syncing to only those devices joined to specific, trusted domains by enabling the policy: “Allow syncing only on computers joined to specific domains”, and specifying the appropriate Active Directory (AD) domain GUID(s)",
+          "AdditionalInformation": "Allowing users to sync OneDrive data to unmanaged or personal devices introduces significant risk, as those endpoints may not comply with corporate security policies, lack endpoint protection, or be subject to malicious activity. When organizational data is synchronized to such devices, the organization loses visibility and control over how that data is accessed, shared, or protected. This opens the door to accidental data leaks, intentional misuse, or loss of sensitive information through theft or compromise. Restricting synchronization to verified, domain-joined devices ensures that only endpoints under the organization’s management and monitoring can access and store OneDrive data locally. This approach aligns with zero-trust principles, enforces data governance policies, and significantly reduces the risk of unauthorized access or exfiltration.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Ensure the connection filter IP allow list is not used",
+      "Checks": [
+        "defender_antispam_connection_filter_policy_empty_ip_allowlist"
+      ],
+      "Attributes": [
+        {
+          "Title": "Connection filter IP allow list is not used",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "In Microsoft 365 environments—whether using Exchange Online mailboxes or standalone Exchange Online Protection (EOP)—connection filtering policies play a critical role in determining the trustworthiness of incoming email based on the source IP address. The default connection filter policy includes three main components: the IP Allow List, the IP Block List, and a Safe List. These lists influence how email messages are processed before any content filtering occurs. It is recommended that the IP Allow List remains empty or undefined to avoid bypassing essential security checks.",
+          "AdditionalInformation": "Email originating from IP addresses on the Allow List bypasses several key layers of protection, including spam filtering and sender authentication protocols such as SPF, DKIM, and DMARC. Without additional safeguards like mail flow rules, this configuration introduces a significant risk: malicious actors can exploit the Allow List to deliver spoofed or harmful emails directly to users’ inboxes. Maintaining an empty IP Allow List ensures that all messages undergo full evaluation and filtering, reducing the likelihood of malware, phishing attempts, and impersonation attacks reaching end users.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2",
+      "Description": "Ensure the connection filter safe list is off",
+      "Checks": [
+        "defender_antispam_connection_filter_policy_safe_list_off"
+      ],
+      "Attributes": [
+        {
+          "Title": "Connection filter safe list is off",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "In Microsoft 365 environments—whether using Exchange Online mailboxes or standalone Exchange Online Protection (EOP)—connection filtering policies are used to evaluate and classify incoming email based on the IP address of the sending server. The default connection filter policy includes three main components: the IP Allow List, the IP Block List, and the Safe List. The Safe List is a Microsoft-managed, dynamically updated set of sender IP addresses that are automatically treated as trusted sources. The recommended configuration is to have the Safe List disabled (set to Off or False) to ensure all incoming mail is properly evaluated by the organization’s email security policies.",
+          "AdditionalInformation": "When the Safe List is enabled, messages from IP addresses on this list bypass key security mechanisms, including spam filtering and sender authentication checks such as SPF, DKIM, and DMARC. Although Microsoft manages this list dynamically, administrators have no visibility or control over which senders are included. As a result, allowing Safe List traffic to skip verification introduces significant risk—malicious actors could exploit this blind spot to deliver spam, phishing, or malware directly to user inboxes. Disabling the Safe List ensures that all messages undergo full inspection, allowing organizations to maintain strict control over the email filtering pipeline and reduce the likelihood of successful compromise.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "2.1.3",
+      "Description": "Ensure SMTP AUTH is disabled",
+      "Checks": [
+        "exchange_transport_config_smtp_auth_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SMTP AUTH is disabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "The SMTP AUTH (Simple Mail Transfer Protocol Authentication) setting in Exchange Online controls whether authenticated client SMTP submission is enabled at the organization level. This legacy protocol is used primarily by older applications and devices to send email via SMTP using basic authentication. By default, Microsoft recommends disabling SMTP AUTH at the tenant level to enhance security posture. Modern email clients and applications that connect to Microsoft 365 mailboxes no longer require SMTP AUTH and can use more secure, modern authentication methods (such as OAuth 2.0).",
+          "AdditionalInformation": "SMTP AUTH is an outdated and insecure protocol that relies on basic authentication, which transmits credentials in plaintext and lacks support for multifactor authentication. Leaving this protocol enabled increases the risk of credential theft, account compromise, and unauthorized access, especially in environments not protected by additional controls such as Conditional Access or legacy protocol blocking. Disabling SMTP AUTH supports the principle of least functionality by reducing protocol exposure and hardening the email infrastructure against exploitation attempts. This action also aligns with Microsoft’s broader security guidance and helps organizations phase out legacy authentication methods in favor of modern, secure protocols.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "Ensure additional storage providers are restricted in Outlook on the web",
+      "Checks": [
+        "exchange_mailbox_policy_additional_storage_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Additional storage providers are restricted in Outlook on the web",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "The AdditionalStorageProvidersAvailable setting in Microsoft 365 controls whether users can connect to and open files from third-party storage services while using Outlook on the Web (OWA). When enabled, users may link external services such as Dropbox, Box, Google Drive, Facebook, or OneDrive Personal to access and interact with files directly within the Outlook web interface. Although this can enhance user productivity, it also introduces third-party services that Microsoft does not govern, meaning their terms of use, privacy policies, and security practices are outside the organization’s control. To mitigate potential risks, it is recommended to restrict or disable access to additional storage providers, limiting file access to only trusted organizational sources.",
+          "AdditionalInformation": "Allowing connections to external storage providers from within Outlook on the Web significantly increases the risk of data leakage and malware exposure. Users may inadvertently upload or download sensitive organizational data to or from non-sanctioned storage platforms, where proper security controls and compliance measures may not be in place. Additionally, files retrieved from these services could serve as vectors for malware or phishing payloads, especially if users are unaware of their origin or if access controls on those platforms are weak. Restricting access to third-party storage providers helps enforce data governance policies, reduces the organization’s attack surface, and ensures that sensitive communications and files remain within controlled and monitored environments. This is especially important in industries with regulatory or compliance obligations.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "2.2.2",
+      "Description": "Ensure external file sharing in Teams is enabled for only approved cloud storage services",
+      "Checks": [
+        "teams_external_file_sharing_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "External file sharing in Teams is enabled for only approved cloud storage services",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "Microsoft Teams facilitates collaboration by enabling users to share and access files within chat, meetings, and channels. By default, file sharing in Teams is integrated with SharePoint Online for team channels and OneDrive for Business for private chats. However, the platform also supports third-party cloud storage providers such as Dropbox, Box, and Google Drive, which can be made available within the Teams interface. Administrators have the ability to configure and restrict which external storage providers are accessible to end users. This helps align file-sharing capabilities with organizational data governance and compliance requirements. Note: While Skype for Business was officially deprecated on July 31, 2021, some configuration settings inherited from its infrastructure may still apply for a limited time. Refer to Microsoft’s official documentation for ongoing support timelines.",
+          "AdditionalInformation": "Allowing unrestricted access to third-party cloud storage providers within Microsoft Teams can undermine an organization’s data protection and compliance efforts. Users may unintentionally store or share sensitive information using non-sanctioned platforms that fall outside of the organization’s control, monitoring, or security policies. By restricting file-sharing capabilities to only approved storage providers, organizations can ensure that collaboration remains within trusted ecosystems. This reduces the risk of data leakage, non-compliant data transfers, and unauthorized access, while also reinforcing secure and consistent file management practices across the collaboration environment.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "Ensure the Common Attachment Types Filter is Enabled",
+      "Checks": [
+        "defender_malware_policy_common_attachments_filter_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Common Attachment Types Filter is Enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The Common Attachment Types Filter allows users to block both well-known and custom-defined malicious file types from being attached to email messages.",
+          "AdditionalInformation": "By blocking commonly exploited file types, this filter helps prevent the delivery of malware-laden attachments, reducing the risk of endpoint compromise and broader system infection.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "2.3.2",
+      "Description": "Ensure comprehensive attachment filtering is applied",
+      "Checks": [
+        "defender_malware_policy_comprehensive_attachments_filter_applied"
+      ],
+      "Attributes": [
+        {
+          "Title": "Comprehensive attachment filtering is applied",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The Common Attachment Types Filter allows users to block both known and custom-defined malicious file types from being attached to email messages. While Microsoft provides a default policy that blocks 53 high-risk file extensions, organizations can extend this protection by defining their own custom list. This recommendation includes a broader set of 186 potentially dangerous file extensions, offering a more robust safeguard. Although comprehensive, the list is not exhaustive and should be tailored to fit organizational needs.",
+          "AdditionalInformation": "Blocking file types commonly associated with malware helps prevent the delivery of malicious payloads that can compromise hosts, exfiltrate data, or facilitate phishing attacks. By enforcing a strict attachment policy, organizations reduce their exposure to threats delivered through legacy formats, binary executables, and compressed archives. Allow-listing only those file types necessary for business operations and blocking all others is an effective strategy for mitigating risks such as Business Email Compromise (BEC) and enhancing overall email security posture.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "2.3.3",
+      "Description": "Ensure users installing Outlook add-ins is not allowed",
+      "Checks": [
+        "exchange_roles_assignment_policy_addins_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users installing Outlook add-ins is not allowed",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "In Exchange Online, administrators have the ability to control who can install and manage Outlook add-ins within the Microsoft 365 environment. By default, end users are allowed to install third-party or custom add-ins directly in their Outlook desktop client, which can access data within the application such as emails, calendar events, and contacts. To enhance security and reduce potential risks, it is recommended to restrict add-in management privileges to a limited set of trusted administrators and users. This can be configured via the Microsoft 365 admin center or PowerShell, providing centralized control over which add-ins are allowed and who can deploy them.",
+          "AdditionalInformation": "Allowing end users to install Outlook add-ins introduces a potential attack surface, especially if the add-ins are vulnerable, poorly maintained, or intentionally malicious. Threat actors can exploit this capability to gain unauthorized access to sensitive mailbox data or to execute malicious code within the Outlook client. By disabling or restricting user-installed add-ins, organizations can significantly reduce the risk of data exfiltration, phishing, and privilege abuse. Managing add-ins centrally ensures that only vetted and trusted integrations are used, aligning with best practices for securing email clients and minimizing exposure to third-party threats.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "2.3.4",
+      "Description": "Ensure external meeting chat is off",
+      "Checks": [
+        "teams_meeting_external_chat_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "External meeting chat is off",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "This meeting policy setting in Microsoft Teams governs whether users in your organization can read or write messages in meeting chats hosted by external, untrusted organizations. If the external meeting is hosted by an organization that has been explicitly designated as trusted, this restriction does not apply.",
+          "AdditionalInformation": "Allowing unrestricted chat participation in meetings hosted by untrusted external organizations increases the risk of exposure to malicious content, including links, files, or payloads designed to exploit user behavior or application vulnerabilities.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "2.3.5",
+      "Description": "Ensure users can report security concerns in Teams",
+      "Checks": [
+        "teams_security_reporting_enabled",
+        "defender_chat_report_policy_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users can report security concerns in Teams",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "User reporting settings in Microsoft Teams and Microsoft 365 allow end users to report messages they believe to be malicious or suspicious, enabling quicker response and investigation by security teams. To ensure the reporting feature functions as intended, this recommendation encompasses three distinct but interdependent settings that must all be correctly configured: 1. Teams Admin Center – User Reporting: This setting controls whether users can report messages directly from the Teams interface. It is enabled by default for new tenants. If disabled, users cannot report messages in Teams, and downstream settings in Microsoft Defender will not have any effect. 2. Microsoft 365 Defender Portal – User Reporting Integration: Also enabled by default in new tenants, this setting must be explicitly enabled for existing tenants. It ensures that messages reported from Teams are properly surfaced on the “User reported” tab of the Submissions page in Microsoft 365 Defender. 3. Defender – Report Message Destinations: This broader configuration applies to multiple Microsoft 365 services, including Teams. It allows organizations to control where reported messages are routed, such as keeping them within the organization or forwarding them to Microsoft for deeper analysis. Given its influence on how user submissions are processed, it is included as a required configuration in this assessment.",
+          "AdditionalInformation": "Enabling user reporting equips employees with a straightforward mechanism to flag suspicious or potentially malicious content in Teams, acting as a critical early warning system for security teams. This improves organizational responsiveness to phishing, social engineering, or targeted attacks that may initially evade automated detection.",
+          "LevelOfRisk": 2
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "Ensure 'AuditDisabled' organizationally is set to 'False'",
+      "Checks": [
+        "exchange_organization_mailbox_auditing_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "AuditDisabled organizationally is set to False",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "The setting “Mailbox auditing on by default” determines whether mailbox auditing is automatically enabled across all mailboxes in the organization, regardless of their individual auditing configuration. When this setting is configured as False, it enables auditing at the organization level, overriding the AuditEnabled property for individual mailboxes—even if it is explicitly set to False. With this setting enabled, default audit actions are automatically recorded for all mailboxes without requiring manual configuration. Conversely, disabling this setting (True) effectively turns off mailbox auditing across the organization and overrides any mailbox-level auditing settings. The consequences of disabling this setting include: • Mailbox auditing is completely disabled organization-wide. • No mailbox actions are logged, even if AuditEnabled is set to True for individual mailboxes. • New mailboxes do not inherit auditing, and setting AuditEnabled=True has no effect. • Bypass audit rules set via Set-MailboxAuditBypassAssociation are ignored. • Existing audit records remain in place until they expire based on the audit log retention policy. The recommended configuration is to set this value to False at the organization level to ensure auditing is enforced consistently.",
+          "AdditionalInformation": "Enforcing mailbox auditing by default ensures that audit logging cannot be unintentionally or maliciously disabled on individual mailboxes. This setting provides vital visibility for forensic investigations and incident response (IR) teams, allowing them to trace suspicious or malicious activity—such as unauthorized inbox access, message deletion, or rule manipulation—that may signal account compromise. Consistent auditing across all mailboxes is critical for detecting threat actor behaviors (TTPs) and correlating events across users. While organizations without Microsoft 365 E5 licenses are limited to 90 days of audit log retention, enabling this setting still significantly improves detection and accountability within that window.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2",
+      "Description": "Ensure mailbox auditing for E3 users is Enabled",
+      "Checks": [
+        "exchange_user_mailbox_auditing_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Mailbox auditing for E3 users is Enabled",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "As of January 2019, Microsoft enables mailbox audit logging by default across all organizations. This feature ensures that specific actions performed by mailbox owners, delegates, and administrators are automatically captured and recorded. These audit records can then be searched by administrators through the mailbox audit log in Microsoft 365. Each mailbox type—whether user, shared, resource, or public folder—can have tailored audit settings to track activities that are most relevant to the organization. While audit logging is enabled by default at the organizational level, it is important to explicitly configure the AuditEnabled property to True on all user mailboxes, and to expand the list of audited actions beyond the Microsoft defaults to meet specific visibility or compliance needs. Note: This recommendation is particularly relevant to users with Microsoft 365 E3 licenses, where audit actions differ slightly from the default configurations in E5.",
+          "AdditionalInformation": "Mailbox auditing plays a critical role in supporting both regulatory compliance and security monitoring. Whether investigating unauthorized configuration changes, potential account compromise, or insider threats, detailed mailbox audit logs provide essential evidence for security operations, forensic analysis, and general administrative oversight. While mailbox auditing is enabled by default for most user mailboxes, certain mailbox types—such as Resource Mailboxes, Public Folder Mailboxes, and the DiscoverySearch Mailbox—do not inherit the organizational auditing default. For these mailboxes, AuditEnabled must be manually set to True to ensure relevant activities are captured. Note: Organizations without Microsoft 365 E5 licenses are subject to a 90-day audit log retention limit, but enabling comprehensive mailbox auditing remains a best practice for operational readiness and incident response.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3",
+      "Description": "Ensure mailbox auditing for E5 users is Enabled",
+      "Checks": [
+        "exchange_user_mailbox_auditing_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Mailbox auditing for E5 users is Enabled",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "Since January 2019, mailbox audit logging has been enabled by default in all Microsoft 365 organizations. This feature ensures that specific actions performed by mailbox owners, delegates, and administrators are automatically captured and stored as audit records. These logs are accessible to administrators through the Microsoft 365 mailbox audit log, enabling visibility into key mailbox-level activity. Although logging is enabled by default, each mailbox—particularly user and shared mailboxes—can have custom audit actions assigned to capture the specific types of events deemed valuable by the organization. For environments with Microsoft 365 E5 licenses or the advanced auditing add-on, it is recommended to explicitly set AuditEnabled to True on all user mailboxes and to configure additional audit actions beyond Microsoft’s default settings for enhanced visibility. Note: This recommendation specifically applies to E5 or equivalent auditing-enabled license holders, as the available audit depth and event coverage differ from E3.",
+          "AdditionalInformation": "Mailbox audit logging is essential for supporting security investigations, regulatory compliance, and operational forensics in Microsoft 365. Whether you’re tracking unauthorized changes, detecting suspicious access, or conducting post-incident analysis, having a complete and accurate mailbox audit trail is critical. While audit logging is broadly applied by default, certain mailbox types bypass the organizational setting and require manual configuration to enable auditing. These include: • Resource Mailboxes • Public Folder Mailboxes • DiscoverySearch Mailboxes For these mailbox types, the AuditEnabled property must be explicitly set to True to ensure that audit events are captured. Important: Without advanced auditing (included in E5 or via add-on), mailbox audit logs are retained for only 90 days, limiting the historical window for investigations. Nonetheless, enabling detailed auditing remains a key best practice for maintaining strong visibility and compliance readiness.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4",
+      "Description": "Ensure 'AuditBypassEnabled' is not enabled on mailboxes",
+      "Checks": [
+        "exchange_mailbox_audit_bypass_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "AuditBypassEnabled is not enabled on mailboxes",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "The AuditBypassEnabled setting in Microsoft 365 allows specific user or computer accounts to bypass mailbox audit logging, meaning that any actions they perform on mailboxes will not be recorded in the audit logs. This includes actions such as reading, deleting, moving, or modifying messages.",
+          "AdditionalInformation": "Allowing an account to bypass mailbox audit logging creates a blind spot in security monitoring. If the account is compromised, misused, or maliciously configured, it can access and interact with mailboxes without leaving any trace in the logs. This significantly undermines the organization’s ability to conduct forensic investigations, detect insider threats, or comply with audit requirements.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Ensure Microsoft 365 audit log search is Enabled ",
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Microsoft 365 audit log search is Enabled ",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "Audit log search in the Microsoft Purview compliance portal allows organizations to track and retain user and administrator activities across Microsoft 365 services. When enabled, audit events—such as sign-ins, file access, configuration changes, and other operational actions—are captured and stored for up to 90 days by default. While some organizations may choose to integrate auditing data with third-party Security Information and Event Management (SIEM) systems, audit log search in Microsoft Purview remains a critical native capability for centralized visibility and incident response. Although global administrators have the ability to disable audit log search, it is generally recommended to keep it enabled to maintain full visibility into user and system activity.",
+          "AdditionalInformation": "Activating audit log search provides essential forensic and compliance value. It enables organizations to detect anomalous behavior, investigate potential security incidents, and demonstrate adherence to regulatory and legal requirements. In addition, it supports operational monitoring, internal audits, and proactive threat detection. By retaining and centralizing audit data within the Microsoft 365 ecosystem, security and compliance teams gain faster access to actionable insights, reducing response times and strengthening the organization’s overall security posture.",
+          "LevelOfRisk": 5
+        }
+      ]
+    },
+    {
+      "Id": "3.3.1",
+      "Description": "Ensure notifications for internal users sending malware is Enabled",
+      "Checks": [
+        "defender_malware_policy_notifications_internal_users_malware_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Notifications for internal users sending malware is Enabled",
+          "Section": "3. Logging and monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "Exchange Online Protection (EOP) is Microsoft’s cloud-based email filtering service designed to safeguard organizations against spam, malware, and other email-borne threats. It is included by default in all Microsoft 365 tenants with Exchange Online mailboxes. EOP provides customizable anti-malware policies that allow administrators to define protection settings and configure alerts for detected malicious activity.",
+          "AdditionalInformation": "Enabling notifications for malware detections ensures that administrators are alerted when an internal user sends a message containing malware. Such incidents may signal a compromised user account or infected device, requiring immediate investigation to mitigate potential security breaches.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "Ensure that DKIM is enabled for all Exchange Online Domains",
+      "Checks": [
+        "defender_domain_dkim_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "DKIM is enabled for all Exchange Online Domains",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "DomainKeys Identified Mail (DKIM) is one of the three key email authentication technologies—alongside SPF and DMARC—used to protect domains from being spoofed by malicious actors. DKIM allows organizations to apply a cryptographic digital signature to the header of outbound email messages. When properly configured, DKIM enables a domain to associate its identity with the message, allowing recipient email systems to verify the authenticity of the sender. Combined with SPF and DMARC, DKIM helps prevent unauthorized use of your domain in phishing or spoofing attacks.",
+          "AdditionalInformation": "Enabling DKIM in Office 365 ensures that all outbound emails sent via Exchange Online are cryptographically signed. This enables recipient mail servers to verify that messages originate from an authorized source, significantly reducing the risk of email spoofing and reinforcing trust in the organization’s email communications.",
+          "LevelOfRisk": 4
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Ensure that password hash sync is enabled for hybrid deployments",
+      "Checks": [
+        "entra_password_hash_sync_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Password hash sync is enabled for hybrid deployments",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Password Hash Synchronization (PHS) is a hybrid identity sign-in method that enables secure synchronization of user credentials from an on-premises Active Directory to Microsoft Entra ID. Microsoft Entra Connect performs this by syncing a hash of the password hash, ensuring credentials are not exposed in transit or storage. Note: This recommendation applies only to Microsoft 365 tenants configured with Entra Connect synchronization in a hybrid environment. It does not apply to tenants using federated domain configurations.",
+          "AdditionalInformation": "PHS simplifies the user experience by allowing a single password to be used across both on-premises and cloud resources. It also enables leaked credential detection via Microsoft Entra ID Protection, helping identify compromised accounts when passwords appear in known data breaches or public forums. Compared to other synchronization methods like federation, PHS offers greater resilience—users can still sign in to Microsoft 365 even if connectivity to the on-premises environment is temporarily unavailable.",
+          "LevelOfRisk": 2
+        }
+      ]
+    }
+  ]
+}
