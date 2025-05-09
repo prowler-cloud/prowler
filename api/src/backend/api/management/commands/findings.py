@@ -12,6 +12,7 @@ from api.models import (
     Provider,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     Scan,
     StatusChoices,
 )
@@ -133,6 +134,7 @@ class Command(BaseCommand):
                         region=random.choice(possible_regions),
                         service=random.choice(possible_services),
                         type=random.choice(possible_types),
+                        inserted_at="2024-10-01T00:00:00Z",
                     )
                 )
 
@@ -181,6 +183,10 @@ class Command(BaseCommand):
                             "servicename": assigned_resource.service,
                             "resourcetype": assigned_resource.type,
                         },
+                        resource_types=[assigned_resource.type],
+                        resource_regions=[assigned_resource.region],
+                        resource_services=[assigned_resource.service],
+                        inserted_at="2024-10-01T00:00:00Z",
                     )
                 )
 
@@ -197,12 +203,22 @@ class Command(BaseCommand):
 
             # Create ResourceFindingMapping
             mappings = []
-            for index, f in enumerate(findings):
+            scan_resource_cache: set[tuple] = set()
+            for index, finding_instance in enumerate(findings):
+                resource_instance = resources[findings_resources_mapping[index]]
                 mappings.append(
                     ResourceFindingMapping(
                         tenant_id=tenant_id,
-                        resource=resources[findings_resources_mapping[index]],
-                        finding=f,
+                        resource=resource_instance,
+                        finding=finding_instance,
+                    )
+                )
+                scan_resource_cache.add(
+                    (
+                        str(resource_instance.id),
+                        resource_instance.service,
+                        resource_instance.region,
+                        resource_instance.type,
                     )
                 )
 
@@ -219,6 +235,38 @@ class Command(BaseCommand):
                 self.style.SUCCESS(
                     "Resource-finding mappings created successfully.\n\n"
                 )
+            )
+
+            with rls_transaction(tenant_id):
+                scan.progress = 99
+                scan.save()
+
+            self.stdout.write(self.style.WARNING("Creating finding filter values..."))
+            resource_scan_summaries = [
+                ResourceScanSummary(
+                    tenant_id=tenant_id,
+                    scan_id=str(scan.id),
+                    resource_id=resource_id,
+                    service=service,
+                    region=region,
+                    resource_type=resource_type,
+                )
+                for resource_id, service, region, resource_type in scan_resource_cache
+            ]
+            num_batches = ceil(len(resource_scan_summaries) / batch_size)
+            with rls_transaction(tenant_id):
+                for i in tqdm(
+                    range(0, len(resource_scan_summaries), batch_size),
+                    total=num_batches,
+                ):
+                    with rls_transaction(tenant_id):
+                        ResourceScanSummary.objects.bulk_create(
+                            resource_scan_summaries[i : i + batch_size],
+                            ignore_conflicts=True,
+                        )
+
+            self.stdout.write(
+                self.style.SUCCESS("Finding filter values created successfully.\n\n")
             )
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Failed to populate test data: {e}"))
