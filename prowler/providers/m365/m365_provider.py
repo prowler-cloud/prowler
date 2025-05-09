@@ -1100,17 +1100,17 @@ class M365Provider(Provider):
                 if f"Tenant '{tenant_id}'" in error_description:
                     raise M365NotValidTenantIdError(
                         file=os.path.basename(__file__),
-                        message="The provided Microsoft 365 Tenant ID is not valid for the specified Client ID and Client Secret.",
+                        message="The provided Tenant ID is not valid for the specified Client ID and Client Secret.",
                     )
                 if f"Application with identifier '{client_id}'" in error_description:
                     raise M365NotValidClientIdError(
                         file=os.path.basename(__file__),
-                        message="The provided Microsoft 365 Client ID is not valid for the specified Tenant ID and Client Secret.",
+                        message="The provided Client ID is not valid for the specified Tenant ID and Client Secret.",
                     )
                 if "Invalid client secret provided" in error_description:
                     raise M365NotValidClientSecretError(
                         file=os.path.basename(__file__),
-                        message="The provided Microsoft 365 Client Secret is not valid for the specified Tenant ID and Client ID.",
+                        message="The provided Client Secret is not valid for the specified Tenant ID and Client ID.",
                     )
         except (
             M365NotValidTenantIdError,
