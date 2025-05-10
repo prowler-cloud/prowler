@@ -8,6 +8,7 @@ from ionoscloud import ApiClient, Configuration
 from ionoscloud.rest import ApiException
 import ionoscloud_dataplatform
 from ionoscloud.api.data_centers_api import DataCentersApi
+from ionoscloud.api.user_management_api import UserManagementApi
 
 from prowler.config.config import get_default_mute_file_path, load_and_validate_config_file
 from prowler.lib.logger import logger
@@ -53,14 +54,17 @@ class IonosProvider(Provider):
             password=ionos_password,
             datacenter_id="",
         )
-        
-        #if not self._identity.username or not self._identity.password:
-        #    self._username, self._password, self._token = self.load_env_credentials()
-        #else:
 
         self._session = self.setup_session(
             identity=self._identity,
         )
+
+        if not self.test_connection():
+            logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
+            sys.exit(1)
+
+        if not self._identity.username or not self._identity.password:
+            self._identity.username = self.get_ionos_username()
 
         self._datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
 
@@ -128,6 +132,17 @@ class IonosProvider(Provider):
             logger.warning(f"Failed to load IONOS token from ionosctl: {error}")
             return None
 
+    def get_ionos_username(self) -> Optional[str]:
+        """
+        Obtiene el nombre de usuario de IONOS desde la API.
+        """
+        user_api = UserManagementApi(self._session)
+        try:
+            user = user_api.um_users_get(depth=1).items[0]
+            return user.properties.email
+        except ApiException as error:
+            logger.error(f"Failed to retrieve user information: {error}")
+            sys.exit(1)
 
     @property
     def type(self) -> str:
@@ -235,12 +250,11 @@ class IonosProvider(Provider):
         Prueba la conexión con la API de IONOS.
         """
         try:
-            datacenter_api = ionoscloud.DataCenterApi(self._session)
+            datacenter_api = DataCentersApi(self._session)
             datacenters = datacenter_api.datacenters_get()
             logger.info("Successfully connected to IONOS Cloud API.")
             return True
         except ApiException as error:
-            logger.error(f"Failed to connect to IONOS Cloud API: {error}")
             return False
 
     def get_datacenters(self) -> list:
