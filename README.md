@@ -266,7 +266,7 @@ Cloning Prowler on Windows
 
 **Running Prowler**
 
-Prowler can be executed across various environments, offering flexibility to meet your needs. It can be rum from:
+Prowler can be executed across various environments, offering flexibility to meet your needs. It can be run from:
 
 - Your own workstation
 
