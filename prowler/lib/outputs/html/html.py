@@ -570,7 +570,10 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Ionos Token:</b> {provider.identity.token}
+                                <b>Ionos Token:</b> {provider.identity.token[:8]}...{provider.identity.token[-8:]}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Ionos User:</b> {provider.identity.username}
                             </li>
                         </ul>
                     </div>

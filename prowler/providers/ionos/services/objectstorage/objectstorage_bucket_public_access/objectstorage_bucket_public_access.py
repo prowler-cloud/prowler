@@ -9,7 +9,7 @@ class objectstorage_bucket_public_access(Check):
         
         buckets = ionos_objectstorage_client.get_buckets_by_region("eu-south-2")
 
-        print(len(buckets))
+        #print(len(buckets))
         
         for bucket in buckets:
             logger.info("Checking bucket: %s", bucket["Name"])
@@ -21,7 +21,7 @@ class objectstorage_bucket_public_access(Check):
             
             bucket_acl = ionos_objectstorage_client.get_bucket_acl(bucket["Name"])
 
-            print(f"Bucket ACL: {bucket_acl}")
+            #print(f"Bucket ACL: {bucket_acl}")
             
             if bucket_acl:
                 for grant in bucket_acl.get("Grants", []):

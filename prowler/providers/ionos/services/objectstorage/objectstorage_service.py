@@ -87,11 +87,11 @@ class IonosObjectStorage(IonosService):
         logger.info("Getting buckets from IONOS Object Storage")
         try:
             response = self.client.list_buckets()
-            for bucket in response['Buckets']:
-                print(f"- {bucket['Name']} (Created: {bucket['CreationDate']})")
+            #for bucket in response['Buckets']:
+            #    print(f"- {bucket['Name']} (Created: {bucket['CreationDate']})")
             self.buckets = response.get('Buckets', [])
-            print("Cantidad:", len(self.buckets))
-            print(f"Buckets: {self.buckets}")
+            #print("Cantidad:", len(self.buckets))
+            #print(f"Buckets: {self.buckets}")
         except Exception as error:
             logger.error(
                 f"Object Storage -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -134,7 +134,7 @@ class IonosObjectStorage(IonosService):
         try:
             response = self.client.get_bucket_location(Bucket=bucket_name)
             location = response.get('LocationConstraint')
-            print(f"Bucket {bucket_name} is in location: {location}")
+            #print(f"Bucket {bucket_name} is in location: {location}")
             # En IONOS, None significa que está en la región por defecto (eu-south-2)
             return location if location else "eu-south-2"
         except Exception as error:

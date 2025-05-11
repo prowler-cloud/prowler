@@ -66,23 +66,25 @@ class IonosProvider(Provider):
         if not self._identity.username or not self._identity.password:
             self._identity.username = self.get_ionos_username()
 
-        self._datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
-
-        self._identity.datacenter_id = self._datacenter_id
+        self._identity.datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
 
         if config_path is None:
             self._audit_config = {}
         else:
             self._audit_config = load_and_validate_config_file("ionos", config_path)
         
-        self._mutelist = IonosMutelist(mutelist_path=mutelist_path) if mutelist_path else None
+        if mutelist_content and not self.validate_mutelist_content(mutelist_content):
+            logger.error("Invalid mutelist content format")
+            mutelist_content = None
 
-        # Mutelist
+        if mutelist_path and not os.path.exists(mutelist_path):
+            logger.warning(f"Mutelist file not found at {mutelist_path}")
+            mutelist_path = None
+
         if mutelist_content:
             self._mutelist = IonosMutelist(
                 mutelist_content=mutelist_content,
                 session=self._session,
-                #aws_account_id=self._identity.account,
             )
         else:
             if not mutelist_path:
@@ -90,10 +92,8 @@ class IonosProvider(Provider):
             self._mutelist = IonosMutelist(
                 mutelist_path=mutelist_path,
                 session=self._session,
-                #aws_account_id=self._identity.account,
             )
 
-        # Se asigna la instancia global usando el método de la clase base.
         Provider.set_global_provider(self)
 
     @staticmethod
@@ -285,3 +285,13 @@ class IonosProvider(Provider):
             datacenter_id=datacenter_id,
             token=self._token,
         )
+
+    def validate_mutelist_content(self, content: dict) -> bool:
+        """Valida el formato del contenido del mutelist"""
+        if not isinstance(content, dict):
+            return False
+        if "muted_checks" not in content:
+            return False
+        if not isinstance(content["muted_checks"], list):
+            return False
+        return True
