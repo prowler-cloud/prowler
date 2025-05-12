@@ -583,7 +583,7 @@ class HTML(Output):
                             </li>
                             {f'''<li class="list-group-item">
                                 <b>M365 User:</b> {provider.identity.user}
-                            </li>''' if hasattr(provider.identity, 'user') and provider.identity.user is not None else None}
+                            </li>''' if hasattr(provider.identity, 'user') and provider.identity.user is not None else ""}
                         </ul>
                     </div>
                 </div>"""
