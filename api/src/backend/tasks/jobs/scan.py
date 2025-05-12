@@ -19,6 +19,7 @@ from api.models import (
     Finding,
     Provider,
     Resource,
+    ResourceScanSummary,
     ResourceTag,
     Scan,
     ScanSummary,
@@ -121,6 +122,7 @@ def perform_prowler_scan(
     check_status_by_region = {}
     exception = None
     unique_resources = set()
+    scan_resource_cache: set[tuple[str, str, str, str]] = set()
     start_time = time.time()
 
     with rls_transaction(tenant_id):
@@ -295,6 +297,16 @@ def perform_prowler_scan(
                     continue
                 region_dict[finding.check_id] = finding.status.value
 
+                # Update scan resource summaries
+                scan_resource_cache.add(
+                    (
+                        str(resource_instance.id),
+                        resource_instance.service,
+                        resource_instance.region,
+                        resource_instance.type,
+                    )
+                )
+
             # Update scan progress
             with rls_transaction(tenant_id):
                 scan_instance.progress = progress
@@ -314,65 +326,89 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None:
-        try:
-            regions = prowler_provider.get_regions()
-        except AttributeError:
-            regions = set()
-
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
-        compliance_overview_by_region = {
-            region: deepcopy(compliance_template) for region in regions
-        }
-
-        for region, check_status in check_status_by_region.items():
-            compliance_data = compliance_overview_by_region.setdefault(
-                region, deepcopy(compliance_template)
-            )
-            for check_name, status in check_status.items():
-                generate_scan_compliance(
-                    compliance_data,
-                    provider_instance.provider,
-                    check_name,
-                    status,
-                )
-
-        # Prepare compliance overview objects
-        compliance_overview_objects = []
-        for region, compliance_data in compliance_overview_by_region.items():
-            for compliance_id, compliance in compliance_data.items():
-                compliance_overview_objects.append(
-                    ComplianceOverview(
-                        tenant_id=tenant_id,
-                        scan=scan_instance,
-                        region=region,
-                        compliance_id=compliance_id,
-                        framework=compliance["framework"],
-                        version=compliance["version"],
-                        description=compliance["description"],
-                        requirements=compliance["requirements"],
-                        requirements_passed=compliance["requirements_status"]["passed"],
-                        requirements_failed=compliance["requirements_status"]["failed"],
-                        requirements_manual=compliance["requirements_status"]["manual"],
-                        total_requirements=compliance["total_requirements"],
-                    )
-                )
-        try:
-            with rls_transaction(tenant_id):
-                ComplianceOverview.objects.bulk_create(
-                    compliance_overview_objects, batch_size=100
-                )
-        except Exception as overview_exception:
-            import sentry_sdk
-
-            sentry_sdk.capture_exception(overview_exception)
-            logger.error(
-                f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
-            )
     if exception is not None:
         raise exception
+
+    try:
+        regions = prowler_provider.get_regions()
+    except AttributeError:
+        regions = set()
+
+    compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+        provider_instance.provider
+    ]
+    compliance_overview_by_region = {
+        region: deepcopy(compliance_template) for region in regions
+    }
+
+    for region, check_status in check_status_by_region.items():
+        compliance_data = compliance_overview_by_region.setdefault(
+            region, deepcopy(compliance_template)
+        )
+        for check_name, status in check_status.items():
+            generate_scan_compliance(
+                compliance_data,
+                provider_instance.provider,
+                check_name,
+                status,
+            )
+
+    # Prepare compliance overview objects
+    compliance_overview_objects = []
+    for region, compliance_data in compliance_overview_by_region.items():
+        for compliance_id, compliance in compliance_data.items():
+            compliance_overview_objects.append(
+                ComplianceOverview(
+                    tenant_id=tenant_id,
+                    scan=scan_instance,
+                    region=region,
+                    compliance_id=compliance_id,
+                    framework=compliance["framework"],
+                    version=compliance["version"],
+                    description=compliance["description"],
+                    requirements=compliance["requirements"],
+                    requirements_passed=compliance["requirements_status"]["passed"],
+                    requirements_failed=compliance["requirements_status"]["failed"],
+                    requirements_manual=compliance["requirements_status"]["manual"],
+                    total_requirements=compliance["total_requirements"],
+                )
+            )
+    try:
+        with rls_transaction(tenant_id):
+            ComplianceOverview.objects.bulk_create(
+                compliance_overview_objects, batch_size=500
+            )
+    except Exception as overview_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(overview_exception)
+        logger.error(
+            f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
+        )
+
+    try:
+        resource_scan_summaries = [
+            ResourceScanSummary(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                resource_id=resource_id,
+                service=service,
+                region=region,
+                resource_type=resource_type,
+            )
+            for resource_id, service, region, resource_type in scan_resource_cache
+        ]
+        with rls_transaction(tenant_id):
+            ResourceScanSummary.objects.bulk_create(
+                resource_scan_summaries, batch_size=500, ignore_conflicts=True
+            )
+    except Exception as filter_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(filter_exception)
+        logger.error(
+            f"Error storing filter values for scan {scan_id}: {filter_exception}"
+        )
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data

@@ -9,8 +9,8 @@ import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
+import { ProviderType } from "@/types";
 
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";

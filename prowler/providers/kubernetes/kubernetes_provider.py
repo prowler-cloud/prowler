@@ -70,6 +70,7 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = None,
         context: str = None,
         namespace: list = None,
+        cluster_name: str = None,
         config_path: str = None,
         config_content: dict = {},
         fixer_config: dict = {},
@@ -84,6 +85,7 @@ class KubernetesProvider(Provider):
             kubeconfig_file (str): Path to the kubeconfig file.
             kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
+            cluster_name (str): Cluster name.
             namespace (list): List of namespaces.
             config_content (dict): Audit configuration.
             config_path (str): Path to the configuration file.
@@ -147,7 +149,9 @@ class KubernetesProvider(Provider):
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(kubeconfig_file, kubeconfig_content, context)
+        self._session = self.setup_session(
+            kubeconfig_file, kubeconfig_content, context, cluster_name
+        )
         if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
@@ -227,6 +231,7 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = None,
         kubeconfig_content: Union[dict, str] = None,
         context: str = None,
+        cluster_name: str = None,
     ) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
@@ -235,7 +240,7 @@ class KubernetesProvider(Provider):
             kubeconfig_file (str): Path to the kubeconfig file.
             kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
-
+            cluster_name (str): Cluster name.
         Returns:
             Tuple: A tuple containing the API client and the context.
 
@@ -270,11 +275,15 @@ class KubernetesProvider(Provider):
                     # If the kubeconfig file is not found, try to use the in-cluster config
                     logger.info("Using in-cluster config")
                     config.load_incluster_config()
+                    # Use CLI flag or env var to set cluster name
+                    resolved_cluster_name = cluster_name or os.getenv(
+                        "CLUSTER_NAME", "in-cluster"
+                    )
                     context = {
                         "name": "In-Cluster",
                         "context": {
-                            "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                            "user": "service-account-name",  # Also a placeholder
+                            "cluster": resolved_cluster_name,
+                            "user": "service-account-name",
                         },
                     }
                     return KubernetesSession(
