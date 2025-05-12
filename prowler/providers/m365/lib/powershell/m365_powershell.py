@@ -525,6 +525,26 @@ class M365PowerShell(PowerShellSession):
             "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
         )
 
+    def get_inbound_spam_filter_rule(self) -> dict:
+        """
+        Get Inbound Spam Filter Rule.
+
+        Retrieves the current inbound spam filter rule settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_rule()
+            {
+                "Name": "Rule1",
+                "State": "Enabled"
+            }
+        """
+        return self.execute(
+            "Get-HostedContentFilterRule | ConvertTo-Json", json_parse=True
+        )
+
     def get_report_submission_policy(self) -> dict:
         """
         Get Exchange Online Report Submission Policy.
