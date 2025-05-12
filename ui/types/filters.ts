@@ -1,7 +1,14 @@
+import { CloudProviders } from "./components";
+export interface ProviderAttributes {
+  provider: CloudProviders;
+  uid: string;
+  alias: string;
+}
 export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
+  valueLabelMapping?: Array<{ [uid: string]: ProviderAttributes }>;
 }
 
 export interface CustomDropdownFilterProps {

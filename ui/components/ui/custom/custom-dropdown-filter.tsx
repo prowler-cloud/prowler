@@ -18,6 +18,8 @@ import { PlusCircleIcon } from "@/components/icons";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { CustomDropdownFilterProps } from "@/types";
 
+import { EntityInfoShort } from "../entities";
+
 const filterSelectedClass =
   "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
 
@@ -192,18 +194,37 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 hideScrollBar
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
-                {memoizedFilterValues.map((value) => (
-                  <Checkbox
-                    classNames={{
-                      label: "text-small font-normal",
-                      wrapper: "checkbox-update",
-                    }}
-                    key={value}
-                    value={value}
-                  >
-                    {value}
-                  </Checkbox>
-                ))}
+                {memoizedFilterValues.map((value) => {
+                  // Find the corresponding entity from valueLabelMapping
+                  const matchingEntry = filter.valueLabelMapping?.find(
+                    (entry) => entry[value],
+                  );
+                  const entity = matchingEntry?.[value];
+
+                  return (
+                    <Checkbox
+                      classNames={{
+                        label: "text-small font-normal",
+                        wrapper: "checkbox-update",
+                      }}
+                      key={value}
+                      value={value}
+                    >
+                      {entity ? (
+                        <div>
+                          <EntityInfoShort
+                            cloudProvider={entity.provider}
+                            entityAlias={entity.alias}
+                            entityId={entity.uid}
+                            hideCopyButton
+                          />
+                        </div>
+                      ) : (
+                        value
+                      )}
+                    </Checkbox>
+                  );
+                })}
               </ScrollShadow>
             </CheckboxGroup>
           </div>
