@@ -27,6 +27,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add a button to download the CSV report in compliance card. [(#7665)](https://github.com/prowler-cloud/prowler/pull/7665)
 - Show loading state while checking provider connection. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
 
+
 ### 🔄 Changed
 
 - Finding URLs now include the ID, allowing them to be shared within the organization. [(#7654)](https://github.com/prowler-cloud/prowler/pull/7654)
