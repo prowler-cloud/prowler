@@ -293,16 +293,16 @@ class FindingFilter(FilterSet):
 
     resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
 
-    region = CharFilter(field_name="resources__region")
-    region__in = CharInFilter(field_name="resources__region", lookup_expr="in")
+    region = CharFilter(method="filter_resource_region")
+    region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
     region__icontains = CharFilter(
-        field_name="resources__region", lookup_expr="icontains"
+        field_name="resource_regions", lookup_expr="icontains"
     )
 
-    service = CharFilter(field_name="resources__service")
-    service__in = CharInFilter(field_name="resources__service", lookup_expr="in")
+    service = CharFilter(method="filter_resource_service")
+    service__in = CharInFilter(field_name="resource_services", lookup_expr="overlap")
     service__icontains = CharFilter(
-        field_name="resources__service", lookup_expr="icontains"
+        field_name="resource_services", lookup_expr="icontains"
     )
 
     resource_uid = CharFilter(field_name="resources__uid")
@@ -317,8 +317,8 @@ class FindingFilter(FilterSet):
         field_name="resources__name", lookup_expr="icontains"
     )
 
-    resource_type = CharFilter(field_name="resources__type")
-    resource_type__in = CharInFilter(field_name="resources__type", lookup_expr="in")
+    resource_type = CharFilter(method="filter_resource_type")
+    resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
     resource_type__icontains = CharFilter(
         field_name="resources__type", lookup_expr="icontains"
     )
@@ -384,6 +384,15 @@ class FindingFilter(FilterSet):
                 "filter_class": CharFilter,
             },
         }
+
+    def filter_resource_type(self, queryset, name, value):
+        return queryset.filter(resource_types__contains=[value])
+
+    def filter_resource_region(self, queryset, name, value):
+        return queryset.filter(resource_regions__contains=[value])
+
+    def filter_resource_service(self, queryset, name, value):
+        return queryset.filter(resource_services__contains=[value])
 
     def filter_queryset(self, queryset):
         if not (self.data.get("scan") or self.data.get("scan__in")) and not (
