@@ -34,5 +34,5 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
     ```yaml
     env:
         - name: CLUSTER_NAME
-        value: production-cluster
+          value: production-cluster
     ```
