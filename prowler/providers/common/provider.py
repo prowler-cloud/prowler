@@ -207,6 +207,7 @@ class Provider(ABC):
                         kubeconfig_file=arguments.kubeconfig_file,
                         context=arguments.context,
                         namespace=arguments.namespace,
+                        cluster_name=arguments.cluster_name,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
