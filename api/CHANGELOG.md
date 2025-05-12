@@ -2,10 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.8.0] (Prowler v5.7.0)
+## [v1.8.0] (Prowler v5.6.1)
 
 ### Added
 - Added huge improvements to `/findings/metadata` and resource related filters for findings [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
+- Added improvements to `/overviews` endpoints [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
 - Added new queue to perform backfill background tasks [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
 
 ---
