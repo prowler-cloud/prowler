@@ -227,6 +227,77 @@ def register_enum(apps, schema_editor, enum_class):  # noqa: F841
         register_adapter(enum_class, enum_adapter)
 
 
+def create_index_on_partitions(
+    apps,  # noqa: F841
+    schema_editor,
+    parent_table: str,
+    index_name: str,
+    columns: str,
+    method: str = "BTREE",
+    where: str = "",
+):
+    """
+    Create an index on every existing partition of `parent_table`.
+
+    Args:
+        parent_table: The name of the root table (e.g. "findings").
+        index_name: A short name for the index (will be prefixed per-partition).
+        columns: The parenthesized column list, e.g. "tenant_id, scan_id, status".
+        method:   The index method—BTREE, GIN, etc.  Defaults to BTREE.
+        where:    Optional WHERE clause (without the leading "WHERE"), e.g. "status = 'FAIL'".
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT inhrelid::regclass::text
+            FROM pg_inherits
+            WHERE inhparent = %s::regclass
+            """,
+            [parent_table],
+        )
+        partitions = [row[0] for row in cursor.fetchall()]
+
+    where_sql = f" WHERE {where}" if where else ""
+    for partition in partitions:
+        idx_name = f"{partition.replace('.', '_')}_{index_name}"
+        sql = (
+            f"CREATE INDEX CONCURRENTLY IF NOT EXISTS {idx_name} "
+            f"ON {partition} USING {method} ({columns})"
+            f"{where_sql};"
+        )
+        schema_editor.execute(sql)
+
+
+def drop_index_on_partitions(
+    apps,  # noqa: F841
+    schema_editor,
+    parent_table: str,
+    index_name: str,
+):
+    """
+    Drop the per-partition indexes that were created by create_index_on_partitions.
+
+    Args:
+        parent_table: The name of the root table (e.g. "findings").
+        index_name:   The same short name used when creating them.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT inhrelid::regclass::text
+            FROM pg_inherits
+            WHERE inhparent = %s::regclass
+            """,
+            [parent_table],
+        )
+        partitions = [row[0] for row in cursor.fetchall()]
+
+    for partition in partitions:
+        idx_name = f"{partition.replace('.', '_')}_{index_name}"
+        sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
+        schema_editor.execute(sql)
+
+
 # Postgres enum definition for member role
 
 
