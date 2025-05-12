@@ -60,88 +60,137 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                 not_denied_services = []
 
                 # Check for an explicit Deny that applies to all Principals except those defined in the Condition
-                has_explicit_deny_for_all = any(
-                    "*" in self.extract_field(statement.get("Principal", {}))
-                    and any(
-                        action in self.extract_field(statement.get("Action", []))
-                        for action in ["*", "secretsmanager:*"]
-                    )
-                    and self.is_valid_resource(
+                has_explicit_deny_for_all = False
+
+                for statement in statements:
+                    if statement.get("Effect") != "Deny":
+                        continue
+                    principal = self.extract_field(statement.get("Principal", {}))
+                    if "*" not in principal:
+                        continue
+                    actions = self.extract_field(statement.get("Action", []))
+                    if not any(
+                        action in ["*", "secretsmanager:*"] for action in actions
+                    ):
+                        continue
+                    if not self.is_valid_resource(
                         secret, self.extract_field(statement.get("Resource", "*"))
-                    )
-                    and "Condition" in statement
-                    # accept only the allowed Condition operators
-                    and all(
-                        operator in ["StringNotEquals", "StringNotEqualsIfExists"]
-                        for operator in statement["Condition"].keys()
-                    )
-                    # no PrincipalArn nor Service of the Condition must have wildcard * in its name
-                    and all(
-                        self.is_valid_principal(
-                            principal_value=principal_value,
-                            not_denied_list=not_denied_list,
-                            pattern=pattern,
+                    ):
+                        continue
+
+                    condition = statement.get("Condition", {})
+
+                    condition_principals = {}
+                    if "StringNotEquals" in condition:
+                        condition_principals = condition.get("StringNotEquals", {})
+                    elif "StringNotEqualsIfExists" in condition:
+                        condition_principals = condition.get(
+                            "StringNotEqualsIfExists", {}
                         )
-                        for operator, condition_values in statement["Condition"].items()
-                        for principal_key, principal_value in condition_values.items()
-                        # only these two keys are allowed:
-                        for mapping in [
-                            {
-                                "aws:PrincipalArn": (
-                                    not_denied_principals,
-                                    arn_pattern,
-                                ),
-                                "aws:PrincipalServiceName": (
-                                    not_denied_services,
-                                    service_pattern,
-                                ),
-                            }.get(principal_key)
-                        ]
-                        # the principal_key decides which list and pattern is passed to is_valid_principal
-                        for not_denied_list, pattern in [
-                            mapping if mapping is not None else (None, None)
-                        ]
-                        # direct tuple unpacking of the mapping
+
+                    uses_principal_arn = "aws:PrincipalArn" in condition_principals
+                    uses_principal_service = (
+                        "aws:PrincipalServiceName" in condition_principals
                     )
-                    for statement in statements
-                    if statement.get("Effect") == "Deny"
-                )
+
+                    valid_keys = {"aws:PrincipalArn", "aws:PrincipalServiceName"}
+                    if not set(condition_principals.keys()).issubset(valid_keys):
+                        continue
+
+                    # check values of principals
+                    all_valid = True
+                    for key, (not_denied_list, pattern) in {
+                        "aws:PrincipalArn": (not_denied_principals, arn_pattern),
+                        "aws:PrincipalServiceName": (
+                            not_denied_services,
+                            service_pattern,
+                        ),
+                    }.items():
+                        if key in condition_principals:
+                            if not self.is_valid_principal(
+                                condition_principals[key], not_denied_list, pattern
+                            ):
+                                all_valid = False
+                                break
+
+                    if not all_valid:
+                        continue
+
+                    # case 1: both keys for Principal and Service exist → require IfExists + Null Condition
+                    if uses_principal_arn and uses_principal_service:
+                        if (
+                            "StringNotEqualsIfExists" in condition
+                            and "Null" in condition
+                        ):
+                            null_condition = condition.get("Null", {})
+                            if (
+                                null_condition.get("aws:PrincipalArn") == "true"
+                                and null_condition.get("aws:PrincipalServiceName")
+                                == "true"
+                            ):
+                                has_explicit_deny_for_all = True
+                                break
+
+                    # case 2: only PrincipalArn exists → require StringNotEquals
+                    elif uses_principal_arn and not uses_principal_service:
+                        if "StringNotEquals" in condition:
+                            has_explicit_deny_for_all = True
+                            break
 
                 # Check for Deny with "StringNotEquals":"aws:PrincipalOrgID" condition
                 has_deny_outside_org = (
                     True
                     if not organizations_trusted_ids
                     else any(
-                        (
-                            ("*" in self.extract_field(statement.get("Principal", {})))
-                            or (
-                                "NotPrincipal" in statement
-                                and any(
-                                    allowed_service
-                                    in self.extract_field(
-                                        statement.get("NotPrincipal", {})
-                                    )
-                                    for allowed_service in not_denied_services
-                                )
-                            )
-                        )
+                        statement.get("Effect") == "Deny"
+                        and "*" in self.extract_field(statement.get("Principal", {}))
                         and any(
-                            action in self.extract_field(statement.get("Action", []))
-                            for action in ["*", "secretsmanager:*"]
+                            action in ["*", "secretsmanager:*"]
+                            for action in self.extract_field(
+                                statement.get("Action", [])
+                            )
                         )
                         and self.is_valid_resource(
                             secret, self.extract_field(statement.get("Resource", "*"))
                         )
                         and "Condition" in statement
                         and set(statement["Condition"].keys()) == {"StringNotEquals"}
-                        and set(statement["Condition"]["StringNotEquals"].keys())
-                        == {"aws:PrincipalOrgID"}
-                        and statement["Condition"]["StringNotEquals"][
-                            "aws:PrincipalOrgID"
-                        ]
-                        in organizations_trusted_ids
+                        and (
+                            (
+                                set(statement["Condition"]["StringNotEquals"].keys())
+                                == {"aws:PrincipalOrgID"}
+                                and all(
+                                    v in organizations_trusted_ids
+                                    for v in self.extract_field(
+                                        statement["Condition"]["StringNotEquals"][
+                                            "aws:PrincipalOrgID"
+                                        ]
+                                    )
+                                )
+                            )
+                            if not not_denied_services
+                            else (
+                                set(statement["Condition"]["StringNotEquals"].keys())
+                                == {"aws:PrincipalOrgID", "aws:PrincipalServiceName"}
+                                and all(
+                                    v in organizations_trusted_ids
+                                    for v in self.extract_field(
+                                        statement["Condition"]["StringNotEquals"][
+                                            "aws:PrincipalOrgID"
+                                        ]
+                                    )
+                                )
+                                and all(
+                                    s in not_denied_services
+                                    for s in self.extract_field(
+                                        statement["Condition"]["StringNotEquals"][
+                                            "aws:PrincipalServiceName"
+                                        ]
+                                    )
+                                )
+                            )
+                        )
                         for statement in statements
-                        if statement.get("Effect") == "Deny"
                     )
                 )
 

@@ -229,7 +229,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                     {
                         "Condition": {
                             "StringNotEquals": {
-                                "aws:PrincipalServiceName": "invalid.service.com"
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com"
                             }
                         }
                     },
@@ -237,19 +237,19 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 "FAIL",
             ),
             (
-                "Valid Service Principal in Condition in DenyUnauthorizedPrincipals",
+                "Invalid Condition Operator for Principal in DenyUnauthorizedPrincipals",
                 None,
                 (
                     0,
                     {
                         "Condition": {
-                            "StringNotEquals": {
-                                "aws:PrincipalServiceName": "valid.amazonaws.com"
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/AccountSecurityAuditRole"
                             }
                         }
                     },
                 ),
-                "PASS",
+                "FAIL",
             ),
             # test modified statement DenyOutsideOrganization
             (
@@ -364,6 +364,38 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                     },
                 ),
                 "PASS",
+            ),
+            (
+                "Invalid multiple Condition Operators in DenyOutsideOrganization",
+                None,
+                (
+                    1,
+                    {
+                        "Condition": {
+                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"},
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalOrgID": "o-1234567890"
+                            },
+                        }
+                    },
+                ),
+                "FAIL",
+            ),
+            (
+                "Invalid multiple keys in StringNotEquals Condition in DenyOutsideOrganization",
+                None,
+                (
+                    1,
+                    {
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalOrgID": "o-1234567890",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            }
+                        }
+                    },
+                ),
+                "FAIL",
             ),
             # test modified statement AllowAuditPolicyRead
             (
@@ -520,10 +552,70 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 None,
                 "PASS",
             ),
+            # test statement DenyUnauthorizedPrincipals
+            (
+                "Missing Null Condition",
+                (
+                    0,
+                    {
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": [
+                                    "arn:aws:iam::123456789012:role/AccountSecurityAuditRole",
+                                    "arn:aws:iam::123456789012:role/Role2",
+                                ],
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            }
+                        }
+                    },
+                ),
+                "FAIL",
+            ),
+            (
+                "Missing PrincipalArn in Null Condition",
+                (
+                    0,
+                    {
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": [
+                                    "arn:aws:iam::123456789012:role/AccountSecurityAuditRole",
+                                    "arn:aws:iam::123456789012:role/Role2",
+                                ],
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            },
+                            "Null": {"aws:PrincipalServiceName": "true"},
+                        }
+                    },
+                ),
+                "FAIL",
+            ),
+            (
+                "Invalid value for PrincipalArn in Null Condition",
+                (
+                    0,
+                    {
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": [
+                                    "arn:aws:iam::123456789012:role/AccountSecurityAuditRole",
+                                    "arn:aws:iam::123456789012:role/Role2",
+                                ],
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            },
+                            "Null": {
+                                "aws:PrincipalArn": "false",
+                                "aws:PrincipalServiceName": "true",
+                            },
+                        }
+                    },
+                ),
+                "FAIL",
+            ),
             # test statement DenyOutsideOrganization
             (
-                "Invalid DenyOutsideOrganization using NotPrincipal with disallowed service",
-                (1, {"NotPrincipal": {"Service": "invalid.service.com"}}),
+                "Invalid DenyOutsideOrganization using Principal with disallowed service",
+                (1, {"Principal": {"Service": "invalid.service.com"}}),
                 "FAIL",
             ),
             # test statement AllowAppFlowAccess
@@ -607,7 +699,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
             ),
         ],
     )
-    def test_secretsmanager_policies_for_services(
+    def test_secretsmanager_policies_for_principals_and_services(
         self, secretsmanager_client, description, modify_element, expected_status
     ):
         with mock_aws():
@@ -629,17 +721,24 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                                     "arn:aws:iam::123456789012:role/Role2",
                                 ],
                                 "aws:PrincipalServiceName": "appflow.amazonaws.com",
-                            }
+                            },
+                            "Null": {
+                                "aws:PrincipalArn": "true",
+                                "aws:PrincipalServiceName": "true",
+                            },
                         },
                     },
                     {
                         "Sid": "DenyOutsideOrganization",
                         "Effect": "Deny",
-                        "NotPrincipal": {"Service": "appflow.amazonaws.com"},
+                        "Principal": "*",
                         "Action": "secretsmanager:*",
                         "Resource": "*",
                         "Condition": {
-                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                            "StringNotEquals": {
+                                "aws:PrincipalOrgID": "o-1234567890",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            }
                         },
                     },
                     {
