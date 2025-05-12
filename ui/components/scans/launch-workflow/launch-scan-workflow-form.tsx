@@ -28,7 +28,11 @@ export const LaunchScanWorkflow = ({
 }) => {
   const formSchema = z.object({
     ...onDemandScanFormSchema().shape,
-    scanName: z.string().min(3, "Must have at least 3 characters").optional(),
+    scanName: z
+      .string()
+      .min(3, "Must have at least 3 characters")
+      .or(z.literal(""))
+      .optional(),
   });
 
   const form = useForm({
