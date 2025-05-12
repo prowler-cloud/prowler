@@ -242,13 +242,13 @@ poetry install
 python prowler-cli.py -v
 ```
 > [!IMPORTANT]
+> To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
+
+> [!IMPORTANT]
 > As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
 >
 > If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
 > For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
-
-#### Cloning Prowler on Windows
-> To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
 
 # ✏️ High level architecture
 
