@@ -1,5 +1,6 @@
 import glob
 import os
+from datetime import datetime, timedelta, timezone
 
 import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
@@ -20,6 +21,7 @@ from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, 
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
@@ -48,6 +50,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    backfill_scan_resource_summaries_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -87,6 +90,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
     Scan,
@@ -100,7 +104,12 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from api.utils import CustomOAuth2Client, validate_invitation
+from api.utils import (
+    CustomOAuth2Client,
+    get_findings_metadata_no_aggregations,
+    validate_invitation,
+)
+from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewMetadataSerializer,
@@ -249,7 +258,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.7.0"
+        spectacular_settings.VERSION = "1.8.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1780,25 +1789,103 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
+        # Force filter validation
+        filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        filtered_ids = filtered_queryset.order_by().values("id")
+        tenant_id = request.tenant_id
+        query_params = request.query_params
 
-        relevant_resources = Resource.all_objects.filter(
-            tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
-        ).only("service", "region", "type")
+        queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        scan_based_filters = {}
 
-        aggregation = relevant_resources.aggregate(
-            services=ArrayAgg("service", flat=True),
-            regions=ArrayAgg("region", flat=True),
-            resource_types=ArrayAgg("type", flat=True),
+        if scans := query_params.get("filter[scan__in]") or query_params.get(
+            "filter[scan]"
+        ):
+            queryset = queryset.filter(scan_id__in=scans.split(","))
+            scan_based_filters = {"id__in": scans.split(",")}
+        else:
+            exact = query_params.get("filter[inserted_at]")
+            gte = query_params.get("filter[inserted_at__gte]")
+            lte = query_params.get("filter[inserted_at__lte]")
+
+            date_filters = {}
+            if exact:
+                date = parse_date(exact)
+                datetime_start = datetime.combine(
+                    date, datetime.min.time(), tzinfo=timezone.utc
+                )
+                datetime_end = datetime_start + timedelta(days=1)
+                date_filters["scan_id__gte"] = uuid7_start(
+                    datetime_to_uuid7(datetime_start)
+                )
+                date_filters["scan_id__lt"] = uuid7_start(
+                    datetime_to_uuid7(datetime_end)
+                )
+            else:
+                if gte:
+                    date_start = parse_date(gte)
+                    datetime_start = datetime.combine(
+                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                    )
+                    date_filters["scan_id__gte"] = uuid7_start(
+                        datetime_to_uuid7(datetime_start)
+                    )
+                if lte:
+                    date_end = parse_date(lte)
+                    datetime_end = datetime.combine(
+                        date_end + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
+                    )
+                    date_filters["scan_id__lt"] = uuid7_start(
+                        datetime_to_uuid7(datetime_end)
+                    )
+
+            if date_filters:
+                queryset = queryset.filter(**date_filters)
+                scan_based_filters = {
+                    key.lstrip("scan_"): value for key, value in date_filters.items()
+                }
+
+        # ToRemove: Temporary fallback mechanism
+        if not queryset.exists():
+            scan_ids = Scan.objects.filter(
+                tenant_id=tenant_id, **scan_based_filters
+            ).values_list("id", flat=True)
+            for scan_id in scan_ids:
+                backfill_scan_resource_summaries_task.apply_async(
+                    kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+                )
+            return Response(
+                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
+            )
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get(
+            "filter[resource_type]"
+        ) or query_params.get("filter[resource_type__in]"):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
         )
-
-        services = sorted(set(aggregation["services"] or []))
-        regions = sorted({region for region in aggregation["regions"] or [] if region})
-        resource_types = sorted(set(aggregation["resource_types"] or []))
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .distinct()
+            .order_by("resource_type")
+        )
 
         result = {
             "services": services,
@@ -1808,7 +1895,7 @@ class FindingViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
 
 @extend_schema_view(
@@ -2375,8 +2462,8 @@ class OverviewViewSet(BaseRLSViewSet):
 
         def _get_filtered_queryset(model):
             if role.unlimited_visibility:
-                return model.objects.filter(tenant_id=self.request.tenant_id)
-            return model.objects.filter(
+                return model.all_objects.filter(tenant_id=self.request.tenant_id)
+            return model.all_objects.filter(
                 tenant_id=self.request.tenant_id, scan__provider__in=providers
             )
 
@@ -2420,51 +2507,38 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
 
         latest_scan_ids = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
 
-        findings_aggregated = (
-            ScanSummary.objects.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
-            .values("scan__provider__provider")
+        resource_count_queryset = (
+            Resource.all_objects.filter(
+                tenant_id=tenant_id,
+                provider_id=OuterRef("scan__provider_id"),
+            )
+            .order_by()
+            .values("provider_id")
+            .annotate(cnt=Count("id"))
+            .values("cnt")
+        )
+
+        overview_queryset = (
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
                 findings_muted=Coalesce(Sum("muted"), 0),
                 total_findings=Coalesce(Sum("total"), 0),
+                total_resources=Coalesce(Subquery(resource_count_queryset), 0),
             )
         )
 
-        resources_aggregated = (
-            Resource.objects.filter(tenant_id=tenant_id)
-            .values("provider__provider")
-            .annotate(total_resources=Count("id"))
-        )
-        resources_dict = {
-            row["provider__provider"]: row["total_resources"]
-            for row in resources_aggregated
-        }
-
-        overview = []
-        for row in findings_aggregated:
-            provider_type = row["scan__provider__provider"]
-            overview.append(
-                {
-                    "provider": provider_type,
-                    "total_resources": resources_dict.get(provider_type, 0),
-                    "total_findings": row["total_findings"],
-                    "findings_passed": row["findings_passed"],
-                    "findings_failed": row["findings_failed"],
-                    "findings_muted": row["findings_muted"],
-                }
-            )
-
-        serializer = OverviewProviderSerializer(overview, many=True)
+        serializer = OverviewProviderSerializer(overview_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2473,21 +2547,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -2518,21 +2586,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         severity_counts = (
             filtered_queryset.values("severity")
@@ -2554,21 +2616,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         services_data = (
             filtered_queryset.values("service")

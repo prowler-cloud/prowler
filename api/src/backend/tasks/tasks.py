@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
+from tasks.jobs.backfill import backfill_resource_scan_summaries
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
@@ -358,3 +359,15 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
     logger.info(f"Scan outputs at {final_location}")
     return {"upload": did_upload}
+
+
+@shared_task(name="backfill-scan-resource-summaries", queue="backfill")
+def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Tries to backfill the resource scan summaries table for a given scan.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)

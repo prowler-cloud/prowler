@@ -10,6 +10,7 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
+from tasks.jobs.backfill import backfill_resource_scan_summaries
 
 from api.db_utils import rls_transaction
 from api.models import (
@@ -918,6 +919,14 @@ def integrations_fixture(providers_fixture):
     )
 
     return integration1, integration2
+
+
+@pytest.fixture
+def backfill_scan_metadata_fixture(scans_fixture, findings_fixture):
+    for scan_instance in scans_fixture:
+        tenant_id = scan_instance.tenant_id
+        scan_id = scan_instance.id
+        backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 def get_authorization_header(access_token: str) -> dict:
