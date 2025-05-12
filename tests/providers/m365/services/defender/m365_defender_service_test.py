@@ -59,7 +59,7 @@ def mock_defender_get_malware_filter_rule(_):
     }
 
 
-def mock_defender_get_antiphising_policy(_):
+def mock_defender_get_antiphishing_policy(_):
     return {
         "Policy1": AntiphishingPolicy(
             name="Policy1",
@@ -88,7 +88,7 @@ def mock_defender_get_antiphising_policy(_):
     }
 
 
-def mock_defender_get_antiphising_rules(_):
+def mock_defender_get_antiphishing_rules(_):
     return {
         "Policy1": AntiphishingRule(
             state="Enabled",
@@ -296,10 +296,10 @@ class Test_Defender_Service:
             defender_client.powershell.close()
 
     @patch(
-        "prowler.providers.m365.services.defender.defender_service.Defender._get_antiphising_policy",
-        new=mock_defender_get_antiphising_policy,
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_antiphishing_policy",
+        new=mock_defender_get_antiphishing_policy,
     )
-    def test_get_antiphising_policy(self):
+    def test_get_antiphishing_policy(self):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
@@ -343,10 +343,10 @@ class Test_Defender_Service:
             defender_client.powershell.close()
 
     @patch(
-        "prowler.providers.m365.services.defender.defender_service.Defender._get_antiphising_rules",
-        new=mock_defender_get_antiphising_rules,
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_antiphishing_rules",
+        new=mock_defender_get_antiphishing_rules,
     )
-    def test_get_antiphising_rules(self):
+    def test_get_antiphishing_rules(self):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
@@ -357,7 +357,7 @@ class Test_Defender_Service:
                     identity=M365IdentityInfo(tenant_domain=DOMAIN)
                 )
             )
-            antiphishing_rules = defender_client.antiphising_rules
+            antiphishing_rules = defender_client.antiphishing_rules
             assert antiphishing_rules["Policy1"].state == "Enabled"
             assert antiphishing_rules["Policy1"].priority == 1
             assert antiphishing_rules["Policy1"].users == ["test@example.com"]

@@ -14,7 +14,7 @@ class Defender(M365Service):
         self.outbound_spam_policies = {}
         self.outbound_spam_rules = {}
         self.antiphishing_policies = {}
-        self.antiphising_rules = {}
+        self.antiphishing_rules = {}
         self.connection_filter_policy = None
         self.dkim_configurations = []
         self.inbound_spam_policies = []
@@ -26,8 +26,8 @@ class Defender(M365Service):
             self.malware_rules = self._get_malware_filter_rule()
             self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
             self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
-            self.antiphishing_policies = self._get_antiphising_policy()
-            self.antiphising_rules = self._get_antiphising_rules()
+            self.antiphishing_policies = self._get_antiphishing_policy()
+            self.antiphishing_rules = self._get_antiphishing_rules()
             self.connection_filter_policy = self._get_connection_filter_policy()
             self.dkim_configurations = self._get_dkim_config()
             self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
@@ -87,7 +87,7 @@ class Defender(M365Service):
             )
         return malware_rules
 
-    def _get_antiphising_policy(self):
+    def _get_antiphishing_policy(self):
         logger.info("Microsoft365 - Getting Defender antiphishing policy...")
         antiphishing_policies = {}
         try:
@@ -126,7 +126,7 @@ class Defender(M365Service):
             )
         return antiphishing_policies
 
-    def _get_antiphising_rules(self):
+    def _get_antiphishing_rules(self):
         logger.info("Microsoft365 - Getting Defender antiphishing rules...")
         antiphishing_rules = {}
         try:

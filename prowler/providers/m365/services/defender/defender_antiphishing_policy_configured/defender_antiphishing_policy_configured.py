@@ -26,7 +26,7 @@ class defender_antiphishing_policy_configured(Check):
 
         if defender_client.antiphishing_policies:
             # Only Default Defender Anti-Phishing Policy
-            if not defender_client.antiphising_rules:
+            if not defender_client.antiphishing_rules:
                 # Get the only policy in the dictionary
                 policy = next(iter(defender_client.antiphishing_policies.values()))
 
@@ -77,17 +77,17 @@ class defender_antiphishing_policy_configured(Check):
                         if not self._is_policy_properly_configured(policy):
                             affected_entities = []
 
-                            if defender_client.antiphising_rules[policy.name].users:
+                            if defender_client.antiphishing_rules[policy.name].users:
                                 affected_entities.append(
-                                    f"users: {', '.join(defender_client.antiphising_rules[policy.name].users)}"
+                                    f"users: {', '.join(defender_client.antiphishing_rules[policy.name].users)}"
                                 )
-                            if defender_client.antiphising_rules[policy.name].groups:
+                            if defender_client.antiphishing_rules[policy.name].groups:
                                 affected_entities.append(
-                                    f"groups: {', '.join(defender_client.antiphising_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(defender_client.antiphishing_rules[policy.name].groups)}"
                                 )
-                            if defender_client.antiphising_rules[policy.name].domains:
+                            if defender_client.antiphishing_rules[policy.name].domains:
                                 affected_entities.append(
-                                    f"domains: {', '.join(defender_client.antiphising_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(defender_client.antiphishing_rules[policy.name].domains)}"
                                 )
 
                             affected_str = "; ".join(affected_entities)
@@ -97,7 +97,7 @@ class defender_antiphishing_policy_configured(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Anti-phishing policy '{policy_name}' is not properly configured and affects {affected_str}, "
-                                    f"with priority {defender_client.antiphising_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {defender_client.antiphishing_rules[policy.name].priority} (0 is the highest). "
                                     "However, the default policy is properly configured, so entities not affected by this custom policy could be correctly protected."
                                 )
                                 findings.append(report)
@@ -106,24 +106,24 @@ class defender_antiphishing_policy_configured(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Anti-phishing policy '{policy_name}' is not properly configured and affects {affected_str}, "
-                                    f"with priority {defender_client.antiphising_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {defender_client.antiphishing_rules[policy.name].priority} (0 is the highest). "
                                     "Also, the default policy is not properly configured, so entities not affected by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
                         else:
                             affected_entities = []
 
-                            if defender_client.antiphising_rules[policy.name].users:
+                            if defender_client.antiphishing_rules[policy.name].users:
                                 affected_entities.append(
-                                    f"users: {', '.join(defender_client.antiphising_rules[policy.name].users)}"
+                                    f"users: {', '.join(defender_client.antiphishing_rules[policy.name].users)}"
                                 )
-                            if defender_client.antiphising_rules[policy.name].groups:
+                            if defender_client.antiphishing_rules[policy.name].groups:
                                 affected_entities.append(
-                                    f"groups: {', '.join(defender_client.antiphising_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(defender_client.antiphishing_rules[policy.name].groups)}"
                                 )
-                            if defender_client.antiphising_rules[policy.name].domains:
+                            if defender_client.antiphishing_rules[policy.name].domains:
                                 affected_entities.append(
-                                    f"domains: {', '.join(defender_client.antiphising_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(defender_client.antiphishing_rules[policy.name].domains)}"
                                 )
 
                             affected_str = "; ".join(affected_entities)
@@ -133,7 +133,7 @@ class defender_antiphishing_policy_configured(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Anti-phishing policy '{policy_name}' is properly configured and affects {affected_str}, "
-                                    f"with priority {defender_client.antiphising_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {defender_client.antiphishing_rules[policy.name].priority} (0 is the highest). "
                                     "Also, the default policy is properly configured, so entities not affected by this custom policy could still be correctly protected."
                                 )
                                 findings.append(report)
@@ -143,7 +143,7 @@ class defender_antiphishing_policy_configured(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Anti-phishing policy '{policy_name}' is properly configured and affects {affected_str}, "
-                                    f"with priority {defender_client.antiphising_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {defender_client.antiphishing_rules[policy.name].priority} (0 is the highest). "
                                     "However, the default policy is not properly configured, so entities not affected by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
@@ -163,7 +163,7 @@ class defender_antiphishing_policy_configured(Check):
         return (
             (
                 policy.default
-                or defender_client.antiphising_rules[policy.name].state.lower()
+                or defender_client.antiphishing_rules[policy.name].state.lower()
                 == "enabled"
             )
             and policy.spoof_intelligence

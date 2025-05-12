@@ -43,7 +43,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=True,
                 )
             }
-            defender_client.antiphising_rules = {}
+            defender_client.antiphishing_rules = {}
 
             check = defender_antiphishing_policy_configured()
             result = check.execute()
@@ -118,7 +118,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=False,
                 ),
             }
-            defender_client.antiphising_rules = {
+            defender_client.antiphishing_rules = {
                 "Policy1": AntiphishingRule(
                     state="Enabled",
                     priority=1,
@@ -151,8 +151,8 @@ class Test_defender_antiphishing_policy_configured:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == f"Custom Anti-phishing policy '{defender_client.antiphishing_policies['Policy1'].name}' is properly configured and affects users: {', '.join(defender_client.antiphising_rules['Policy1'].users)}; groups: {', '.join(defender_client.antiphising_rules['Policy1'].groups)}; domains: {', '.join(defender_client.antiphising_rules['Policy1'].domains)}, "
-                f"with priority {defender_client.antiphising_rules['Policy1'].priority} (0 is the highest). "
+                == f"Custom Anti-phishing policy '{defender_client.antiphishing_policies['Policy1'].name}' is properly configured and affects users: {', '.join(defender_client.antiphishing_rules['Policy1'].users)}; groups: {', '.join(defender_client.antiphishing_rules['Policy1'].groups)}; domains: {', '.join(defender_client.antiphishing_rules['Policy1'].domains)}, "
+                f"with priority {defender_client.antiphishing_rules['Policy1'].priority} (0 is the highest). "
                 "Also, the default policy is properly configured, so entities not affected by this custom policy could still be correctly protected."
             )
             assert (
@@ -220,7 +220,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=False,
                 ),
             }
-            defender_client.antiphising_rules = {
+            defender_client.antiphishing_rules = {
                 "Policy1": AntiphishingRule(
                     state="Enabled",
                     priority=1,
@@ -310,7 +310,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=False,
                 ),
             }
-            defender_client.antiphising_rules = {
+            defender_client.antiphishing_rules = {
                 "Policy1": AntiphishingRule(
                     state="Enabled",
                     priority=1,
@@ -338,7 +338,7 @@ class Test_defender_antiphishing_policy_configured:
             assert (
                 result[1].status_extended
                 == "Custom Anti-phishing policy 'Policy1' is properly configured and affects users: test@example.com; groups: example_group; domains: example.com, "
-                f"with priority {defender_client.antiphising_rules['Policy1'].priority} (0 is the highest). "
+                f"with priority {defender_client.antiphishing_rules['Policy1'].priority} (0 is the highest). "
                 "However, the default policy is not properly configured, so entities not affected by this custom policy could not be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
@@ -387,7 +387,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=True,
                 )
             }
-            defender_client.antiphising_rules = {}
+            defender_client.antiphishing_rules = {}
 
             check = defender_antiphishing_policy_configured()
             result = check.execute()
@@ -456,7 +456,7 @@ class Test_defender_antiphishing_policy_configured:
                     default=False,
                 ),
             }
-            defender_client.antiphising_rules = {
+            defender_client.antiphishing_rules = {
                 "Policy1": AntiphishingRule(
                     state="Enabled",
                     priority=1,
@@ -516,7 +516,7 @@ class Test_defender_antiphishing_policy_configured:
             )
 
             defender_client.antiphishing_policies = {}
-            defender_client.antiphising_rules = {}
+            defender_client.antiphishing_rules = {}
 
             check = defender_antiphishing_policy_configured()
             result = check.execute()
