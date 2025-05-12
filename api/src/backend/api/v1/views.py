@@ -1706,7 +1706,7 @@ class FindingViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
             return FindingDynamicFilterSerializer
-        elif self.action in ["metadata"]:
+        elif self.action == "metadata":
             return FindingMetadataSerializer
 
         return super().get_serializer_class()
