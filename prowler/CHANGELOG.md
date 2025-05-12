@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [v5.7.0] (Prowler v5.7.0)
 
 ### Added
@@ -16,7 +14,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 7c3a53908 (chore(compliance): update `CIS 4.0` for `M365` (#7699))
 ## [v5.6.0] (Prowler v5.6.0)
 
 ### Added
