@@ -10,7 +10,7 @@ import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { downloadScanZip } from "@/lib/helper";
-import { ScanProps } from "@/types";
+import { ProviderType, ScanProps } from "@/types";
 
 import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { TriggerIcon } from "../../trigger-icon";
@@ -60,7 +60,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
 
       return (
         <EntityInfoShort
-          cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+          cloudProvider={provider as ProviderType}
           entityAlias={alias}
           entityId={uid}
         />
