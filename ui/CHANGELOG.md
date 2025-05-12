@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.7.0] (Prowler v5.7.0)
+
+### 🚀 Added
+
+- Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
+
 ---
 
 ## [v1.6.0] (Prowler v5.6.0)
