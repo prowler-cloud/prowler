@@ -6,6 +6,19 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
+def _get_patterns_from_standard_value(value):
+    """
+    Helper function to process standard action/notaction values.
+    Accepts a string or list of strings and returns a set of string patterns.
+    """
+    patterns = set()
+    if isinstance(value, str):
+        patterns.add(value)
+    elif isinstance(value, list):
+        patterns.update(item for item in value if isinstance(item, str))
+    return patterns
+
+
 def get_effective_actions(policy: dict) -> set[str]:
     """
     Calculates the set of effectively allowed IAM actions from a policy document.
@@ -47,17 +60,7 @@ def get_effective_actions(policy: dict) -> set[str]:
         actions = statement.get("Action")
         not_actions = statement.get("NotAction")
 
-        # Helper function to process standard action/notaction values
-        def get_patterns_from_standard_value(value):
-            patterns = set()
-            if isinstance(value, str):
-                patterns.add(value)  # Treat string as a single pattern
-            elif isinstance(value, list):
-                # Iterate through list, adding only string elements
-                patterns.update(item for item in value if isinstance(item, str))
-            return patterns
-
-        action_patterns_to_expand = get_patterns_from_standard_value(actions)
+        action_patterns_to_expand = _get_patterns_from_standard_value(actions)
         if action_patterns_to_expand:
             expanded = set()
             for pattern in action_patterns_to_expand:
@@ -72,7 +75,7 @@ def get_effective_actions(policy: dict) -> set[str]:
             else:  # deny
                 directly_denied_actions.update(expanded)
 
-        not_action_patterns_to_expand = get_patterns_from_standard_value(not_actions)
+        not_action_patterns_to_expand = _get_patterns_from_standard_value(not_actions)
         if not_action_patterns_to_expand:
             expanded_exclusions = set()
             for pattern in not_action_patterns_to_expand:
@@ -176,17 +179,8 @@ def check_full_service_access(service: str, policy: dict) -> bool:
         not_actions = statement.get("NotAction")
         statement_specific_allowed = set()
 
-        # TODO: Check if we can merge this with the one in get_effective_actions
-        def get_patterns_from_standard_value(value):
-            patterns = set()
-            if isinstance(value, str):
-                patterns.add(value)
-            elif isinstance(value, list):
-                patterns.update(item for item in value if isinstance(item, str))
-            return patterns
-
-        # Actions granted by "Action" field in this statement
-        action_patterns = get_patterns_from_standard_value(actions)
+        # Use the shared helper function instead of the duplicated one
+        action_patterns = _get_patterns_from_standard_value(actions)
         for pattern in action_patterns:
             statement_specific_allowed.update(
                 expand_actions(
@@ -195,8 +189,7 @@ def check_full_service_access(service: str, policy: dict) -> bool:
                 )
             )
 
-        # Actions granted by "NotAction" field in this statement
-        not_action_patterns = get_patterns_from_standard_value(not_actions)
+        not_action_patterns = _get_patterns_from_standard_value(not_actions)
         if not_action_patterns:
             if all_aws_actions_for_inversion is None:
                 all_aws_actions_for_inversion = set(
