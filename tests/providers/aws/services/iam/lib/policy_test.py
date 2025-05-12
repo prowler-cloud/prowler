@@ -1583,6 +1583,38 @@ class Test_Policy:
             "s3", policy_allow_wildcard_action_and_resource
         )
 
+    def test_policy_allows_full_service_access_with_wildcard_action_and_resource_using_unicode(
+        self,
+    ):
+        policy_allow_wildcard_action_and_resource = {
+            "Statement": [
+                {
+                    "Effect": "\u0041llow",
+                    "Action": "\u00733:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_wildcard_action_and_resource
+        )
+
+    def test_policy_allows_full_service_access_with_wildcard_action_and_resource_using_double_start(
+        self,
+    ):
+        policy_allow_wildcard_action_and_resource = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:**",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_wildcard_action_and_resource
+        )
+
     def test_policy_does_not_allow_full_service_access_with_specific_get_action(self):
         policy_allow_specific_get_action = {
             "Statement": [
@@ -1629,6 +1661,22 @@ class Test_Policy:
                 {
                     "Effect": "Allow",
                     "NotAction": "ec2:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_not_action_excluding_other_service
+        )
+
+    def test_policy_allows_full_service_access_with_invalid_service_as_not_action(
+        self,
+    ):
+        policy_allow_not_action_excluding_other_service = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "prowler:check",
                     "Resource": "*",
                 }
             ]
