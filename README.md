@@ -45,6 +45,16 @@
 
 **Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes.
 
+Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
+
+- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
+- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
+- **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
+- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
+- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
+- **National Security Standards:** ENS (Spanish National Security Scheme)
+- **Custom Security Frameworks:** Tailored to your needs
+
 ## Prowler CLI and Prowler Cloud
 
 Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and an additional service built on top of it, called <a href="https://prowler.com">Prowler Cloud</a>.
@@ -64,17 +74,6 @@ prowler <provider>
 ```
 ![Prowler CLI Execution](docs/img/short-display.png)
 
-## Prowler CLI Features
-
-Prowler CLI includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
-
-- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
-- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
-- **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
-- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
-- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
-- **National Security Standards:** ENS (Spanish National Security Scheme)
-- **Custom Security Frameworks:** Tailored to your needs
 
 ## Prowler Dashboard
 
@@ -83,7 +82,7 @@ prowler dashboard
 ```
 ![Prowler Dashboard](docs/img/dashboard.png)
 
-
+# Prowler at a Glance
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
