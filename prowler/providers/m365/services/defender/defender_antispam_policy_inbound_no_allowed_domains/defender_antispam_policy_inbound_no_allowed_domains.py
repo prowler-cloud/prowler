@@ -78,28 +78,28 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                             findings.append(report)
                     else:
                         if not self._has_no_allowed_domains(policy):
-                            affected_entities = []
+                            included_resources = []
 
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].users:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"users: {', '.join(defender_client.inbound_spam_rules[policy.identity].users)}"
                                 )
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].groups:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"groups: {', '.join(defender_client.inbound_spam_rules[policy.identity].groups)}"
                                 )
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].domains:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"domains: {', '.join(defender_client.inbound_spam_rules[policy.identity].domains)}"
                                 )
 
-                            affected_str = "; ".join(affected_entities)
+                            included_resources_str = "; ".join(included_resources)
                             priority = defender_client.inbound_spam_rules[
                                 policy.identity
                             ].priority
@@ -108,42 +108,42 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                                 # Case 3: Default policy has no allowed domains but custom one does
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Inbound Spam policy '{policy.identity}' contains allowed domains and affects {affected_str}, "
+                                    f"Custom Inbound Spam policy {policy.identity} contains allowed domains and includes {included_resources_str}, "
                                     f"with priority {priority} (0 is the highest). However, the default policy does not contain allowed domains, "
-                                    "so entities not affected by this custom policy could be correctly protected."
+                                    "so entities not included by this custom policy could be correctly protected."
                                 )
                             else:
                                 # Case 5: Neither default nor custom policies are correctly configured
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Inbound Spam policy '{policy.identity}' contains allowed domains and affects {affected_str}, "
+                                    f"Custom Inbound Spam policy {policy.identity} contains allowed domains and includes {included_resources_str}, "
                                     f"with priority {priority} (0 is the highest). Also, the default policy contains allowed domains, "
-                                    "so entities not affected by this custom policy could not be correctly protected."
+                                    "so entities not included by this custom policy could not be correctly protected."
                                 )
                             findings.append(report)
                         else:
-                            affected_entities = []
+                            included_resources = []
 
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].users:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"users: {', '.join(defender_client.inbound_spam_rules[policy.identity].users)}"
                                 )
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].groups:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"groups: {', '.join(defender_client.inbound_spam_rules[policy.identity].groups)}"
                                 )
                             if defender_client.inbound_spam_rules[
                                 policy.identity
                             ].domains:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"domains: {', '.join(defender_client.inbound_spam_rules[policy.identity].domains)}"
                                 )
 
-                            affected_str = "; ".join(affected_entities)
+                            included_resources_str = "; ".join(included_resources)
                             priority = defender_client.inbound_spam_rules[
                                 policy.identity
                             ].priority
@@ -152,17 +152,17 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                                 # Case 2: Both default and custom policies do not contain allowed domains
                                 report.status = "PASS"
                                 report.status_extended = (
-                                    f"Custom Inbound Spam policy '{policy.identity}' does not contain allowed domains and affects {affected_str}, "
+                                    f"Custom Inbound Spam policy {policy.identity} does not contain allowed domains and includes {included_resources_str}, "
                                     f"with priority {priority} (0 is the highest). Also, the default policy does not contain allowed domains, "
-                                    "so entities not affected by this custom policy could still be correctly protected."
+                                    "so entities not included by this custom policy could still be correctly protected."
                                 )
                             else:
                                 # Case 6: Default policy contains allowed domains, custom policy does not
                                 report.status = "PASS"
                                 report.status_extended = (
-                                    f"Custom Inbound Spam policy '{policy.identity}' does not contain allowed domains and affects {affected_str}, "
+                                    f"Custom Inbound Spam policy {policy.identity} does not contain allowed domains and includes {included_resources_str}, "
                                     f"with priority {priority} (0 is the highest). However, the default policy contains allowed domains, "
-                                    "so entities not affected by this custom policy could not be correctly protected."
+                                    "so entities not included by this custom policy could not be correctly protected."
                                 )
                             findings.append(report)
 

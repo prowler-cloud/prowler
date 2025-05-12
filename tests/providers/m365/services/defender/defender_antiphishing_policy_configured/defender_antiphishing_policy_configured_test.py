@@ -151,9 +151,9 @@ class Test_defender_antiphishing_policy_configured:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == f"Custom Anti-phishing policy '{defender_client.antiphishing_policies['Policy1'].name}' is properly configured and affects users: {', '.join(defender_client.antiphishing_rules['Policy1'].users)}; groups: {', '.join(defender_client.antiphishing_rules['Policy1'].groups)}; domains: {', '.join(defender_client.antiphishing_rules['Policy1'].domains)}, "
+                == f"Custom Anti-phishing policy {defender_client.antiphishing_policies['Policy1'].name} is properly configured and includes users: {', '.join(defender_client.antiphishing_rules['Policy1'].users)}; groups: {', '.join(defender_client.antiphishing_rules['Policy1'].groups)}; domains: {', '.join(defender_client.antiphishing_rules['Policy1'].domains)}, "
                 f"with priority {defender_client.antiphishing_rules['Policy1'].priority} (0 is the highest). "
-                "Also, the default policy is properly configured, so entities not affected by this custom policy could still be correctly protected."
+                "Also, the default policy is properly configured, so entities not included by this custom policy could still be correctly protected."
             )
             assert (
                 result[1].resource_name
@@ -248,8 +248,8 @@ class Test_defender_antiphishing_policy_configured:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == "Custom Anti-phishing policy 'Policy1' is not properly configured and affects users: test@example.com; groups: example_group; domains: example.com, "
-                "with priority 1 (0 is the highest). However, the default policy is properly configured, so entities not affected by this custom policy could be correctly protected."
+                == "Custom Anti-phishing policy Policy1 is not properly configured and includes users: test@example.com; groups: example_group; domains: example.com, "
+                "with priority 1 (0 is the highest). However, the default policy is properly configured, so entities not included by this custom policy could be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"
@@ -337,9 +337,9 @@ class Test_defender_antiphishing_policy_configured:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Custom Anti-phishing policy 'Policy1' is properly configured and affects users: test@example.com; groups: example_group; domains: example.com, "
+                == "Custom Anti-phishing policy Policy1 is properly configured and includes users: test@example.com; groups: example_group; domains: example.com, "
                 f"with priority {defender_client.antiphishing_rules['Policy1'].priority} (0 is the highest). "
-                "However, the default policy is not properly configured, so entities not affected by this custom policy could not be correctly protected."
+                "However, the default policy is not properly configured, so entities not included by this custom policy could not be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"
@@ -483,8 +483,8 @@ class Test_defender_antiphishing_policy_configured:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == "Custom Anti-phishing policy 'Policy1' is not properly configured and affects domains: example.com, "
-                "with priority 1 (0 is the highest). Also, the default policy is not properly configured, so entities not affected by this custom policy could not be correctly protected."
+                == "Custom Anti-phishing policy Policy1 is not properly configured and includes domains: example.com, "
+                "with priority 1 (0 is the highest). Also, the default policy is not properly configured, so entities not included by this custom policy could not be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"

@@ -133,8 +133,8 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Custom Outbound Spam policy 'Policy1' disables mail forwarding and affects users: test@example.com; groups: group1; domains: example.com, "
-                "with priority 1 (0 is the highest). Also, the default policy disables mail forwarding, so entities not affected by this custom policy could still be correctly protected."
+                == "Custom Outbound Spam policy Policy1 disables mail forwarding and includes users: test@example.com; groups: group1; domains: example.com, "
+                "with priority 1 (0 is the highest). Also, the default policy disables mail forwarding, so entities not included by this custom policy could still be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"
@@ -219,8 +219,8 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == "Custom Outbound Spam policy 'Policy1' allows mail forwarding and affects users: test@example.com; groups: group1; domains: example.com, "
-                "with priority 1 (0 is the highest). However, the default policy disables mail forwarding, so entities not affected by this custom policy could be correctly protected."
+                == "Custom Outbound Spam policy Policy1 allows mail forwarding and includes users: test@example.com; groups: group1; domains: example.com, "
+                "with priority 1 (0 is the highest). However, the default policy disables mail forwarding, so entities not included by this custom policy could be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"
@@ -305,8 +305,8 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Custom Outbound Spam policy 'Policy1' disables mail forwarding and affects users: user1@example.com; groups: group1; domains: domain.com, "
-                "with priority 0 (0 is the highest). However, the default policy allows mail forwarding, so entities not affected by this custom policy could not be correctly protected."
+                == "Custom Outbound Spam policy Policy1 disables mail forwarding and includes users: user1@example.com; groups: group1; domains: domain.com, "
+                "with priority 0 (0 is the highest). However, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"
@@ -444,8 +444,8 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == "Custom Outbound Spam policy 'Policy1' allows mail forwarding and affects users: user@example.com; groups: group1; domains: domain.com, "
-                "with priority 1 (0 is the highest). Also, the default policy allows mail forwarding, so entities not affected by this custom policy could not be correctly protected."
+                == "Custom Outbound Spam policy Policy1 allows mail forwarding and includes users: user@example.com; groups: group1; domains: domain.com, "
+                "with priority 1 (0 is the highest). Also, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
             )
             assert result[1].resource_name == "Policy1"
             assert result[1].resource_id == "Policy1"

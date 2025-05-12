@@ -78,75 +78,75 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                             findings.append(report)
                     else:
                         if not self._is_forwarding_disabled(policy):
-                            affected_entities = []
+                            included_resources = []
 
                             if defender_client.outbound_spam_rules[policy.name].users:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
                                 )
                             if defender_client.outbound_spam_rules[policy.name].groups:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
                                 )
                             if defender_client.outbound_spam_rules[policy.name].domains:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
                                 )
 
-                            affected_str = "; ".join(affected_entities)
+                            included_resources_str = "; ".join(included_resources)
 
                             if default_policy_well_configured:
                                 # Case 3: Default policy disables forwarding but custom one doesn't
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Outbound Spam policy '{policy_name}' allows mail forwarding and affects {affected_str}, "
+                                    f"Custom Outbound Spam policy {policy_name} allows mail forwarding and includes {included_resources_str}, "
                                     f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
-                                    "However, the default policy disables mail forwarding, so entities not affected by this custom policy could be correctly protected."
+                                    "However, the default policy disables mail forwarding, so entities not included by this custom policy could be correctly protected."
                                 )
                                 findings.append(report)
                             else:
                                 # Case 5: Neither default nor custom policies disable forwarding
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Outbound Spam policy '{policy_name}' allows mail forwarding and affects {affected_str}, "
+                                    f"Custom Outbound Spam policy {policy_name} allows mail forwarding and includes {included_resources_str}, "
                                     f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
-                                    "Also, the default policy allows mail forwarding, so entities not affected by this custom policy could not be correctly protected."
+                                    "Also, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
                         else:
-                            affected_entities = []
+                            included_resources = []
 
                             if defender_client.outbound_spam_rules[policy.name].users:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
                                 )
                             if defender_client.outbound_spam_rules[policy.name].groups:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
                                 )
                             if defender_client.outbound_spam_rules[policy.name].domains:
-                                affected_entities.append(
+                                included_resources.append(
                                     f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
                                 )
 
-                            affected_str = "; ".join(affected_entities)
+                            included_resources_str = "; ".join(included_resources)
 
                             if default_policy_well_configured:
                                 # Case 2: Both default and custom policies disable forwarding
                                 report.status = "PASS"
                                 report.status_extended = (
-                                    f"Custom Outbound Spam policy '{policy_name}' disables mail forwarding and affects {affected_str}, "
+                                    f"Custom Outbound Spam policy {policy_name} disables mail forwarding and includes {included_resources_str}, "
                                     f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
-                                    "Also, the default policy disables mail forwarding, so entities not affected by this custom policy could still be correctly protected."
+                                    "Also, the default policy disables mail forwarding, so entities not included by this custom policy could still be correctly protected."
                                 )
                                 findings.append(report)
                             else:
                                 # Case 6: Default policy allows forwarding, custom policy disables it
                                 report.status = "PASS"
                                 report.status_extended = (
-                                    f"Custom Outbound Spam policy '{policy_name}' disables mail forwarding and affects {affected_str}, "
+                                    f"Custom Outbound Spam policy {policy_name} disables mail forwarding and includes {included_resources_str}, "
                                     f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
-                                    "However, the default policy allows mail forwarding, so entities not affected by this custom policy could not be correctly protected."
+                                    "However, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
 
