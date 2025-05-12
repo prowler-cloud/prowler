@@ -95,7 +95,7 @@ prowler dashboard
 
 > Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
-# Installation
+# 💻 Installation
 
 ## Prowler App
 
@@ -247,7 +247,7 @@ python prowler-cli.py -v
 > If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
 > For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
-Cloning Prowler on Windows
+#### Cloning Prowler on Windows
 > To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
 
 # ✏️ High level architecture
@@ -309,13 +309,13 @@ The flag --sts-endpoint-region has been deprecated due to the adoption of AWS ST
 - To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
 
 
-#  Documentation
+# 📖 Documentation
 
 **Documentation Resources**
 
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
-# License
+# 📃 License
 
 **Prowler License Information**
 
