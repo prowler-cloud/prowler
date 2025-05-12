@@ -2,6 +2,21 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v5.7.0] (Prowler v5.7.0)
+
+### Added
+- Update the compliance list supported for each provider from docs. [(#7694)](https://github.com/prowler-cloud/prowler/pull/7694)
+- Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
+- Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
+
+### Fixed
+- Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
+
+---
+
+>>>>>>> 7c3a53908 (chore(compliance): update `CIS 4.0` for `M365` (#7699))
 ## [v5.6.0] (Prowler v5.6.0)
 
 ### Added
