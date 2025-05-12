@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [v1.7.0] (Prowler v5.7.0) – Not released
 
 ### 🚀 Added
@@ -16,7 +14,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 
->>>>>>> 60e004057 (fix: move ProviderType to shared types and update usages (#7710))
 ---
 
 ## [v1.6.0] (Prowler v5.6.0)
