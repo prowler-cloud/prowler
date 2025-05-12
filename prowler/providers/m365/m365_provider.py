@@ -207,6 +207,7 @@ class M365Provider(Provider):
             m365_credentials=m365_credentials,
             provider_id=self.identity.tenant_domain,
             init_modules=init_modules,
+            identity=self.identity,
         )
 
         # Audit Config
@@ -382,6 +383,7 @@ class M365Provider(Provider):
         m365_credentials: dict = {},
         provider_id: str = None,
         init_modules: bool = False,
+        identity: M365IdentityInfo = None,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
@@ -394,6 +396,7 @@ class M365Provider(Provider):
                 If False, returns empty credentials.
         """
         credentials = None
+
         if m365_credentials:
             credentials = M365Credentials(
                 user=m365_credentials.get("user", ""),
@@ -428,6 +431,9 @@ class M365Provider(Provider):
             )
 
         if credentials:
+            if identity:
+                identity.identity_type = "Service Principal and User Credentials"
+                identity.user = credentials.user
             test_session = M365PowerShell(credentials)
             try:
                 if test_session.test_credentials(credentials):

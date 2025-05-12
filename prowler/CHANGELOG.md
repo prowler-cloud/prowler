@@ -64,6 +64,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add snapshots to m365 documentation. [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
 - Add support for static credentials for sending findings to Amazon S3 and AWS Security Hub. [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
+- Add Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
 
 ### Fixed
 

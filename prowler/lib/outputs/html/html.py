@@ -581,6 +581,9 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>M365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
+                            {f'''<li class="list-group-item">
+                                <b>M365 User:</b> {provider.identity.user}
+                            </li>''' if hasattr(provider.identity, 'user') and provider.identity.user is not None else ""}
                         </ul>
                     </div>
                 </div>"""
