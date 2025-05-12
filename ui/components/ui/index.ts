@@ -1,3 +1,4 @@
+export * from "./accordion/Accordion";
 export * from "./action-card/ActionCard";
 export * from "./alert/Alert";
 export * from "./alert-dialog/AlertDialog";

@@ -3,7 +3,7 @@
   "CheckID": "defender_chat_report_policy_configured",
   "CheckTitle": "Ensure chat report submission policy is properly configured in Defender",
   "CheckType": [],
-  "ServiceName": "teams",
+  "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
