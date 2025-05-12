@@ -3,7 +3,6 @@
 import {
   AlertCircle,
   Bookmark,
-  Boxes,
   CloudCog,
   Group,
   LayoutGrid,
@@ -26,6 +25,7 @@ import {
   CircleHelpIcon,
   DocIcon,
   GCPIcon,
+  KubernetesIcon,
   M365Icon,
   SupportIcon,
 } from "@/components/icons/Icons";
@@ -108,7 +108,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
               label: "Kubernetes",
-              icon: Boxes,
+              icon: KubernetesIcon,
             },
           ],
           defaultOpen: false,
