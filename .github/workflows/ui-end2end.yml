@@ -27,7 +27,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './ui/package-lock.json'
 
-      - name: Cache Playwright browsers
+      - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -42,14 +42,16 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         working-directory: ./ui
-
-      - name: Start Docker Compose backend
+      
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746   #v1.2.0
+      - name: Start Docker Compose
         run: docker-compose -f ${DOCKER_COMPOSE_FILE} up -d ${SERVICES_TO_START}
 
       - name: Wait for API to be ready
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost:8000/; then
+            if curl -s http://localhost:8000/api/v1; then
               echo "API is up!"
               break
             fi
