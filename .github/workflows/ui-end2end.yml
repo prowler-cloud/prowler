@@ -27,13 +27,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './ui/package-lock.json'
 
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
+      # - name: Cache Playwright Browsers
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/ms-playwright
+      #     key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       playwright-${{ runner.os }}-
 
       - name: Install dependencies
         run: npm ci
@@ -42,11 +42,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         working-directory: ./ui
-      
+
       - name: Set up Docker Compose
         uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746   #v1.2.0
       - name: Start Docker Compose
-        run: docker-compose -f ${DOCKER_COMPOSE_FILE} up -d ${SERVICES_TO_START}
+        run: docker compose -f ${DOCKER_COMPOSE_FILE} up -d ${SERVICES_TO_START}
 
       - name: Wait for API to be ready
         run: |
@@ -77,4 +77,4 @@ jobs:
 
       - name: Docker Compose Down
         if: always()
-        run: docker-compose -f ${DOCKER_COMPOSE_FILE} down
+        run: docker compose -f ${DOCKER_COMPOSE_FILE} down
