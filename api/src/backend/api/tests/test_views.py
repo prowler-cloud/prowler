@@ -4816,9 +4816,8 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
-            resources_fixture
-        )
+        # Since we rely on completed scans, there are only 2 resources now
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture

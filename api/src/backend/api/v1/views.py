@@ -2462,8 +2462,8 @@ class OverviewViewSet(BaseRLSViewSet):
 
         def _get_filtered_queryset(model):
             if role.unlimited_visibility:
-                return model.objects.filter(tenant_id=self.request.tenant_id)
-            return model.objects.filter(
+                return model.all_objects.filter(tenant_id=self.request.tenant_id)
+            return model.all_objects.filter(
                 tenant_id=self.request.tenant_id, scan__provider__in=providers
             )
 
@@ -2507,51 +2507,38 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
 
         latest_scan_ids = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
 
-        findings_aggregated = (
-            ScanSummary.objects.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
-            .values("scan__provider__provider")
+        resource_count_queryset = (
+            Resource.all_objects.filter(
+                tenant_id=tenant_id,
+                provider_id=OuterRef("scan__provider_id"),
+            )
+            .order_by()
+            .values("provider_id")
+            .annotate(cnt=Count("id"))
+            .values("cnt")
+        )
+
+        overview_queryset = (
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
                 findings_muted=Coalesce(Sum("muted"), 0),
                 total_findings=Coalesce(Sum("total"), 0),
+                total_resources=Coalesce(Subquery(resource_count_queryset), 0),
             )
         )
 
-        resources_aggregated = (
-            Resource.objects.filter(tenant_id=tenant_id)
-            .values("provider__provider")
-            .annotate(total_resources=Count("id"))
-        )
-        resources_dict = {
-            row["provider__provider"]: row["total_resources"]
-            for row in resources_aggregated
-        }
-
-        overview = []
-        for row in findings_aggregated:
-            provider_type = row["scan__provider__provider"]
-            overview.append(
-                {
-                    "provider": provider_type,
-                    "total_resources": resources_dict.get(provider_type, 0),
-                    "total_findings": row["total_findings"],
-                    "findings_passed": row["findings_passed"],
-                    "findings_failed": row["findings_failed"],
-                    "findings_muted": row["findings_muted"],
-                }
-            )
-
-        serializer = OverviewProviderSerializer(overview, many=True)
+        serializer = OverviewProviderSerializer(overview_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2560,21 +2547,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -2605,21 +2586,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         severity_counts = (
             filtered_queryset.values("severity")
@@ -2641,21 +2616,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         services_data = (
             filtered_queryset.values("service")
