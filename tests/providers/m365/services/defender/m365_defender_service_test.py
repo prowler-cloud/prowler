@@ -10,8 +10,10 @@ from prowler.providers.m365.services.defender.defender_service import (
     DefenderInboundSpamPolicy,
     DkimConfig,
     MalwarePolicy,
+    MalwareRule,
     OutboundSpamPolicy,
     OutboundSpamRule,
+    ReportSubmissionPolicy,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -23,14 +25,25 @@ def mock_defender_get_malware_filter_policy(_):
             identity="Policy1",
             enable_internal_sender_admin_notifications=False,
             internal_sender_admin_address="",
+            file_types=[],
+            is_default=True,
         ),
         MalwarePolicy(
             enable_file_filter=True,
             identity="Policy2",
             enable_internal_sender_admin_notifications=True,
             internal_sender_admin_address="security@example.com",
+            file_types=["exe", "zip"],
+            is_default=False,
         ),
     ]
+
+
+def mock_defender_get_malware_filter_rule(_):
+    return {
+        "Policy1": MalwareRule(state="Enabled"),
+        "Policy2": MalwareRule(state="Disabled"),
+    }
 
 
 def mock_defender_get_antiphising_policy(_):
@@ -97,6 +110,22 @@ def mock_defender_get_dkim_config(_):
         DkimConfig(dkim_signing_enabled=True, id="domain1"),
         DkimConfig(dkim_signing_enabled=False, id="domain2"),
     ]
+
+
+def mock_defender_get_report_submission_policy(_):
+    return ReportSubmissionPolicy(
+        id="DefaultReportSubmissionPolicy",
+        identity="DefaultReportSubmissionPolicy",
+        name="DefaultReportSubmissionPolicy",
+        report_junk_to_customized_address=True,
+        report_not_junk_to_customized_address=True,
+        report_phish_to_customized_address=True,
+        report_junk_addresses=[],
+        report_not_junk_addresses=[],
+        report_phish_addresses=[],
+        report_chat_message_enabled=True,
+        report_chat_message_to_customized_address_enabled=True,
+    )
 
 
 def mock_defender_get_outbound_spam_filter_policy(_):
@@ -167,6 +196,10 @@ class Test_Defender_Service:
                 malware_policies[0].enable_internal_sender_admin_notifications is False
             )
             assert malware_policies[0].internal_sender_admin_address == ""
+            assert malware_policies[0].enable_file_filter is False
+            assert malware_policies[0].identity == "Policy1"
+            assert malware_policies[0].file_types == []
+            assert malware_policies[0].is_default is True
             assert malware_policies[1].enable_file_filter is True
             assert malware_policies[1].identity == "Policy2"
             assert (
@@ -176,6 +209,28 @@ class Test_Defender_Service:
                 malware_policies[1].internal_sender_admin_address
                 == "security@example.com"
             )
+            assert malware_policies[1].file_types == ["exe", "zip"]
+            assert malware_policies[1].is_default is False
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_malware_filter_rule",
+        new=mock_defender_get_malware_filter_rule,
+    )
+    def test__get_malware_filter_rule(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            malware_rules = defender_client.malware_rules
+            assert malware_rules["Policy1"].state == "Enabled"
+            assert malware_rules["Policy2"].state == "Disabled"
             defender_client.powershell.close()
 
     @patch(
@@ -361,3 +416,29 @@ class Test_Defender_Service:
             assert inbound_spam_policies[0].allowed_sender_domains == []
             assert inbound_spam_policies[1].allowed_sender_domains == ["example.com"]
             defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_report_submission_policy",
+        new=mock_defender_get_report_submission_policy,
+    )
+    def test_get_report_submission_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            report_submission_policy = defender_client.report_submission_policy
+            assert report_submission_policy.report_junk_to_customized_address is True
+            assert (
+                report_submission_policy.report_not_junk_to_customized_address is True
+            )
+            assert report_submission_policy.report_phish_to_customized_address is True
+            assert report_submission_policy.report_junk_addresses == []
+            assert report_submission_policy.report_not_junk_addresses == []
+            assert report_submission_policy.report_phish_addresses == []
+            assert report_submission_policy.report_chat_message_enabled is True

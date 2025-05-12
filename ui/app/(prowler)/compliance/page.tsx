@@ -159,6 +159,7 @@ const SSRComplianceGrid = async ({
           framework,
           version,
           requirements_status: { passed, total },
+          compliance_id,
         } = attributes;
 
         return (
@@ -170,6 +171,8 @@ const SSRComplianceGrid = async ({
             totalRequirements={total}
             prevPassingRequirements={passed}
             prevTotalRequirements={total}
+            scanId={scanId}
+            complianceId={compliance_id}
           />
         );
       })}

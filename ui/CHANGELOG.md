@@ -4,6 +4,29 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [v1.6.0] (Prowler v5.6.0)
+
+### 🚀 Added
+
+- Support for the `M365` Cloud Provider. [(#7590)](https://github.com/prowler-cloud/prowler/pull/7590)
+- Added option to customize the number of items displayed per table page. [(#7634)](https://github.com/prowler-cloud/prowler/pull/7634)
+- Add delta attribute in findings detail view. [(#7654)](https://github.com/prowler-cloud/prowler/pull/7654)
+- Add delta indicator in new findings table. [(#7676)](https://github.com/prowler-cloud/prowler/pull/7676)
+- Add a button to download the CSV report in compliance card. [(#7665)](https://github.com/prowler-cloud/prowler/pull/7665)
+- Show loading state while checking provider connection. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
+
+### 🔄 Changed
+
+- Finding URLs now include the ID, allowing them to be shared within the organization. [(#7654)](https://github.com/prowler-cloud/prowler/pull/7654)
+- Show Add/Update credentials depending on whether a secret is already set or not. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
+
+### 🐞 Fixes
+
+- Set a default session duration when configuring an AWS Cloud Provider using a role. [(#7639)](https://github.com/prowler-cloud/prowler/pull/7639)
+- Error about page number persistence when filters change. [(#7655)](https://github.com/prowler-cloud/prowler/pull/7655)
+
+---
+
 ## [v1.5.0] (Prowler v5.5.0)
 
 ### 🚀 Added
