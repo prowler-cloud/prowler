@@ -579,6 +579,11 @@ class Resource(RowLevelSecurityProtectedModel):
                 name="resource_tenant_metadata_idx",
             ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
+            models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="resources_tenant_provider_idx",
+            ),
         ]
 
         constraints = [
