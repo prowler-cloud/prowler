@@ -1,20 +1,25 @@
-# Create a new security compliance framework
-
+# Creating a New Security Compliance Framework in Prowler
 
 ## Introduction
-If you want to create or contribute with your own security frameworks or add public ones to Prowler you need to make sure the checks are available if not you have to create your own. Then create a compliance file per provider like in `prowler/compliance/<provider>/` and name it as `<framework>_<version>_<provider>.json` then follow the following format to create yours.
+
+To create or contribute a custom security framework for Prowler—or to integrate a public framework—you must ensure the necessary checks are available. If they are missing, they must be implemented before proceeding. 
+
+Each framework is defined in a compliance file per provider. The file should follow the structure used in `prowler/compliance/<provider>/` and be named `<framework>_<version>_<provider>.json`. Follow the format below to create your own.
 
 ## Compliance Framework
-Each file version of a framework will have the following structure at high level with the case that each framework needs to be generally identified, one requirement can be also called one control but one requirement can be linked to multiple prowler checks.:
 
-- `Framework`: string. Distinguish name of the framework, like CIS
-- `Provider`: string. Provider where the framework applies, such as AWS, Azure, OCI,...
-- `Version`: string. Version of the framework itself, like 1.4 for CIS.
-- `Requirements`: array of objects. Include all requirements or controls with the mapping to Prowler.
-- `Requirements_Id`: string. Unique identifier per each requirement in the specific framework
-- `Requirements_Description`: string. Description as in the framework.
-- `Requirements_Attributes`: array of objects. Includes all needed attributes per each requirement, like levels, sections, etc. Whatever helps to create a dedicated report with the result of the findings. Attributes would be taken as closely as possible from the framework's own terminology directly.
-- `Requirements_Checks`: array. Prowler checks that are needed to prove this requirement. It can be one or multiple checks. In case of no automation possible this can be empty.
+Compliance Framework Structure  
+
+Each compliance framework file consists of structured metadata that identifies the framework and maps security checks to requirements or controls. Please note that a single requirement can be linked to multiple Prowler checks:
+
+- `Framework`: string – The distinguished name of the framework (e.g., CIS).
+- `Provider`: string – The cloud provider where the framework applies (AWS, Azure, OCI).
+- `Version`: string – The framework version (e.g., 1.4 for CIS).
+- `Requirements`: array of objects. – Defines security requirements and their mapping to Prowler checks. All requirements or controls are to be included with the mapping to Prowler.
+- `Requirements_Id`: string – A unique identifier for each requirement within the framework
+- `Requirements_Description`: string – The requirement description as specified in the framework.
+- `Requirements_Attributes`: array of objects. – Contains relevant metadata such as security levels, sections, and any additional data needed for reporting with the result of the findings. Attributes should be derived directly from the framework’s own terminology, ensuring consistency with its established definitions.
+- `Requirements_Checks`: array. The Prowler checks that are needed to prove this requirement. It can be one or multiple checks. In case automation is not feasible, this can be empty.
 
 ```
 {
@@ -23,9 +28,9 @@ Each file version of a framework will have the following structure at high level
   "Requirements": [
     {
       "Id": "<unique-id>",
-      "Description": "Requirement full description",
+      "Description": "Full description of the requirement",
       "Checks": [
-        "Here is the prowler check or checks that is going to be executed"
+        "Here is the prowler check or checks that will be executed"
       ],
       "Attributes": [
         {
@@ -38,4 +43,4 @@ Each file version of a framework will have the following structure at high level
 }
 ```
 
-Finally, to have a proper output file for your reports, your framework data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`. Also, you need to add a new conditional in `prowler/lib/outputs/file_descriptors.py` if you create a new CSV model.
+Finally, to have a proper output file for your reports, your framework data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`. Also, you need to add a new conditional in `prowler/lib/outputs/file_descriptors.py` if creating a new CSV model.

@@ -1,29 +1,43 @@
+# Creating a New Provider in Prowler
 
-# Create a new Provider for Prowler
-
-Here you can find how to create a new Provider in Prowler to give support for making all security checks needed and make your cloud safer!
+Below are instructions for creating new providers in Prowler with all the relevant checks in order to achieve a safer cloud.
 
 ## Introduction
 
-Providers are the foundation on which Prowler is built, a simple definition for a cloud provider could be "third-party company that offers a platform where any IT resource you need is available at any time upon request". The most well-known cloud providers are Amazon Web Services, Azure from Microsoft and Google Cloud which are already supported by Prowler.
+Providers form the backbone of Prowler, enabling security assessments across various cloud environments. 
 
-To create a new provider that is not supported now by Prowler and add your security checks you must create a new folder to store all the related files within it (services, checks, etc.). It must be store in route `prowler/providers/<new_provider_name>/`.
+A cloud provider is a third-party company that offers on-demand IT resources via its platform. Prowler currently supports the most widely used cloud providers, including:  
+  
+Amazon Web Services (AWS)  
+  
+Microsoft Azure  
+  
+Google Cloud Platform (GCP)
 
-Inside that folder, you MUST create the following files and folders:
+Adding a New Provider  
 
-- A `lib` folder: to store all extra functions.
-- A `services` folder: to store all [services](./services.md) to audit.
-- An empty `__init__.py`: to make Python treat this service folder as a package.
-- A `<new_provider_name>_provider.py`, containing all the provider's logic necessary to get authenticated in the provider, configurations and extra data useful for final report.
-- A `models.py`, containing all the models necessary for the new provider.
+To integrate a cloud provider not yet supported by Prowler and implement security checks, follow these steps: Create a dedicated folder to store all related files (services, checks, etc.).  
+  
+This folder must be placed within `prowler/providers/<new_provider_name>/`.
 
-## Provider
+Within this folder the following folders are also to be created:
 
-The structure for Prowler's providers is set up in such a way that they can be utilized through a generic service specific to each provider. This is achieved by passing the required parameters to the constructor, which in turn initializes all the necessary session values.
+- `lib` – Stores additional utility functions.
+- `services` – Stores all [services](./services.md) to audit.
+- `__init__.py` (empty) – Ensures Python recognizes this folder as a package.
+- `<new_provider_name>_provider.py` – Defines authentication logic, configurations, and other provider-specific data.
+- `models.py` – Contains necessary models for the new provider.  
+By adhering to this structure, Prowler can effectively support security checks for additional cloud providers.
+
+## Provider Structure in Prowler
+
+Prowler's provider architecture is designed to facilitate security audits through a generic service tailored to each provider. This is accomplished by passing the necessary parameters to the constructor, which initializes all required session values.
 
 ### Base Class
 
-All the providers in Prowler inherits from the same [base class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py). It is an [abstract base class](https://docs.python.org/3/library/abc.html) that defines the interface for all provider classes. The code of the class is the next:
+All Prowler providers inherit from the same [base class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py). It is an [abstract base class](https://docs.python.org/3/library/abc.html) that defines the interface for all provider classes. 
+
+Class Definition:
 
 ```python title="Provider Base Class"
 
@@ -34,22 +48,22 @@ class Provider(ABC):
     """
     The Provider class is an abstract base class that defines the interface for all provider classes in the auditing system.
 
-    Attributes:
-        type (property): The type of the provider.
-        identity (property): The identity of the provider for auditing.
-        session (property): The session of the provider for auditing.
-        audit_config (property): The audit configuration of the provider.
-        output_options (property): The output configuration of the provider for auditing.
+    Attributes
+        type (property): Specifies the type of provider.
+        identity (property): Represents the provider's identity for auditing purposes.
+        session (property): Manages the provider's session for audit operations.
+        audit_config (property): Stores audit configuration details.
+        output_options (property): Defines output settings for auditing.
 
-    Methods:
-        print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
+    Methods
+        print_credentials(): Displays the provider's credentials in the CLI.
         setup_session(): Sets up the session for the provider.
-        validate_arguments(): Validates the arguments for the provider.
-        get_checks_to_execute_by_audit_resources(): Returns a set of checks based on the input resources to scan.
+        validate_arguments(): Verifies input arguments for validity.
+        get_checks_to_execute_by_audit_resources(): Retrieves a set of checks based on the input resources.
 
     Note:
-        This is an abstract base class and should not be instantiated directly. Each provider should implement its own
-        version of the Provider class by inheriting from this base class and implementing the required methods and properties.
+        This is an abstract base class and **should not be instantiated directly**. Each provider must implement its own version of the `Provider`
+        class by inheriting from this base class and defining the necessary methods and attributes.
     """
 
     @property
@@ -140,7 +154,7 @@ class Provider(ABC):
 
     def get_checks_to_execute_by_audit_resources(self) -> set:
         """
-        get_checks_to_execute_by_audit_resources returns a set of checks based on the input resources to scan.
+        get_checks_to_execute_by_audit_resources retrieves a set of checks based on the input resources.
 
         This is a fallback that returns None if the service has not implemented this function.
         """
@@ -169,19 +183,25 @@ class Provider(ABC):
 
 ### Provider Class
 
-Due to the complexity and differences of each provider use the rest of the providers as a template for the implementation.
+Provider Implementation Guidance  
+
+Given the complexity and variability of cloud providers, use existing provider implementations as templates when developing new integrations.
 
 - [AWS](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_provider.py)
 - [GCP](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
 - [Azure](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
-- [M365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/m365/m365_provider.py)
+- [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
 
-To facilitate understanding here is a pseudocode of how the most basic provider could be with examples.
+Basic Provider Implementation: Pseudocode Example  
+
+To simplify understanding, the following pseudocode outlines the fundamental structure of a provider, including library imports necessary for authentication.
 
 ```python title="Provider Example Class"
 
-# Library imports to authenticate in the Provider
+# Library Imports for Authentication
+
+When implementing authentication for a provider, import the required libraries.
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
@@ -190,14 +210,14 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.<new_provider_name>.models import (
-    # All providers models needed
+    # All provider models needed.
     ProviderSessionModel,
     ProviderIdentityModel,
     ProviderOutputOptionsModel
 )
 
 class NewProvider(Provider):
-    # All properties from the class, some of this are properties in the base class
+    # All properties from the class, some of which are properties in the base class.
     _type: str = "<provider_name>"
     _session: <ProviderSessionModel>
     _identity: <ProviderIdentityModel>
@@ -213,20 +233,32 @@ class NewProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Setting <NewProviderName> provider ...")
-        # First get from arguments the necessary from the cloud account (subscriptions or projects or whatever the provider use for storing services)
 
-        # Set the session with the method enforced by parent class
+# Initializing the Provider Session
+
+# Steps:
+
+# Retrieve Cloud Account Information 
+# Extract relevant account identifiers (subscriptions, projects, or other service references) from the provided arguments.
+
+# Establish a Session
+
+# Use the method enforced by the parent class to set up the session:
         self._session = self.setup_session(credentials_file)
 
-        # Set the Identity class normaly the provider class give by Python provider library
+# Define Provider Identity
+# Assign the identity class, typically provided by the Python provider library:
+
         self._identity = <ProviderIdentityModel>()
 
-        # Set the provider configuration
+# Configure the Provider
+# Set the provider-specific configuration.
+
         self._audit_config = load_and_validate_config_file(
             self._type, arguments.config_file
         )
 
-    # All enforced properties by the parent class
+    # All the enforced properties by the parent class.
     @property
     def identity(self):
         return self._identity
@@ -252,7 +284,7 @@ class NewProvider(Provider):
         Sets up the Provider session.
 
         Args:
-            <all_needed_for_auth> Can include all necessary arguments to setup the session
+            <all_needed_for_auth> Can include all necessary arguments to set up the session
 
         Returns:
             Credentials necessary to communicate with the provider.
@@ -262,11 +294,8 @@ class NewProvider(Provider):
     """
     This method is enforced by parent class and is used to print all relevant
     information during the prowler execution as a header of execution.
-    Normally the Account ID, User name or stuff like this is displayed in colors using the colorama module (Fore).
+    Displaying Account Information with Color Formatting. In Prowler, Account IDs, usernames, and other identifiers are typically displayed using color formatting provided by the colorama module (Fore).
     """
     def print_credentials(self):
         pass
-
-
-
 ```

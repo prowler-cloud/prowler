@@ -1,14 +1,16 @@
-# Debugging
+# Debugging in Prowler
 
-Debugging in Prowler make things easier!
-If you are developing Prowler, it's possible that you will encounter some situations where you have to inspect the code in depth to fix some unexpected issues during the execution.
+Debugging in Prowler simplifies the development process, allowing developers to efficiently inspect and resolve unexpected issues during execution.
 
-## VSCode
+## Debugging with Visual Studio Code
 
-In VSCode you can run the code using the integrated debugger. Please, refer to this [documentation](https://code.visualstudio.com/docs/editor/debugging) for guidance about the debugger in VSCode.
-The following file is an example of the [debugging configuration](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) file that you can add to [Virtual Studio Code](https://code.visualstudio.com/).
+Visual Studio Code (also referred to as VSCode) provides an integrated debugger for executing and analyzing Prowler code. Refer to the official VSCode debugger [documentation](https://code.visualstudio.com/docs/editor/debugging) for detailed instructions.
 
-This file should inside the *.vscode* folder and its name has to be *launch.json*:
+Debugging Configuration Example  
+
+The following file is an example of a [debugging configuration](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) file for [Virtual Studio Code](https://code.visualstudio.com/).
+
+This file must be placed inside the *.vscode* directory and named *launch.json*:
 
 ```json
 {

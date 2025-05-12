@@ -1,75 +1,111 @@
 # Developer Guide
 
-You can extend Prowler Open Source in many different ways, in most cases you will want to create your own checks and compliance security frameworks, here is where you can learn about how to get started with it. We also include how to create custom outputs, integrations and more.
+Extending Prowler Open Source  
+Prowler can be extended in various ways, with common use cases including:  
+  
+Custom security checks  
+  
+Compliance frameworks Custom outputs and integrations  
+Other options  
+All the relevant information for these cases is included in this guide.
 
-## Get the code and install all dependencies
+## Getting the Code and Installing All Dependencies
 
-First of all, you need a version of Python 3.9 or higher and also `pip` installed to be able to install all dependencies required.
+Prerequisites 
 
-Then, to start working with the Prowler Github repository you need to fork it to be able to propose changes for new features, bug fixing, etc. To fork the Prowler repo please refer to [this guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo?tool=webui#forking-a-repository).
+Before proceeding, ensure the following:  
+  
+- Python 3.9 or higher is installed.  
+- `pip` is installed to manage dependencies.
 
-Once that is satisfied go ahead and clone your forked repo:
+Forking the Prowler Repository
+
+To contribute to Prowler, fork the Prowler GitHub repository. This allows you to propose changes, submit new features, and fix bugs. For guidance on forking, refer to the [official GitHub documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo?tool=webui#forking-a-repository).
+
+Cloning Your Forked Repository
+ 
+Once your fork is created, clone it using the following command:
 
 ```
 git clone https://github.com/<your-github-user>/prowler
 cd prowler
 ```
-For isolation and to avoid conflicts with other environments, we recommend using `poetry`, a Python dependency management tool. You can install it by following the instructions [here](https://python-poetry.org/docs/#installation).
 
-Then install all dependencies including the ones for developers:
+Dependency Management and Environment Isolation 
+
+To prevent conflicts between environments, we recommend using `poetry`, a Python dependency management solution. Install it by following the [instructions](https://python-poetry.org/docs/#installation).
+
+Installing Dependencies  
+
+To install all required dependencies, including those needed for development, run:
+
 ```
 poetry install --with dev
 eval $(poetry env activate) \
 ```
-> [!IMPORTANT]
-> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
->
-> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
-> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
-## Contributing with your code or fixes to Prowler
+> \[!IMPORTANT] Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+ 
+> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment. For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
-This repo has git pre-commit hooks managed via the [pre-commit](https://pre-commit.com/) tool. [Install](https://pre-commit.com/#install) it how ever you like, then in the root of this repo run:
+## Contributing to Prowler
+
+You can contribute to Prowler with code or fixes.
+
+Pre-Commit Hooks 
+
+This repository uses Git pre-commit hooks managed by the [pre-commit](https://pre-commit.com/) tool. To install: follow [these](https://pre-commit.com/#install) instructions as per your preferences. Next, run the following command in the root of this repository:
+
 ```shell
 pre-commit install
 ```
-You should get an output like the following:
+
+Successful installation should produce the following output:
+
 ```shell
 pre-commit installed at .git/hooks/pre-commit
 ```
 
-Before we merge any of your pull requests we pass checks to the code, we use the following tools and automation to make sure the code is secure and dependencies up-to-dated:
-???+ note
-    These should have been already installed if you ran `poetry install --with dev`
+Code Quality and Security Checks  
+
+Before merging pull requests, several automated checks and utilities ensure code security and updated dependencies: 
+
+???+ note These should have been already installed if `poetry install --with dev` was aready run.
 
 - [`bandit`](https://pypi.org/project/bandit/) for code security review.
 - [`safety`](https://pypi.org/project/safety/) and [`dependabot`](https://github.com/features/security) for dependencies.
-- [`hadolint`](https://github.com/hadolint/hadolint) and [`dockle`](https://github.com/goodwithtech/dockle) for our containers security.
+- [`hadolint`](https://github.com/hadolint/hadolint) and [`dockle`](https://github.com/goodwithtech/dockle) for container security.
 - [`Snyk`](https://docs.snyk.io/integrations/snyk-container-integrations/container-security-with-docker-hub-integration) in Docker Hub.
 - [`clair`](https://github.com/quay/clair) in Amazon ECR.
-- [`vulture`](https://pypi.org/project/vulture/), [`flake8`](https://pypi.org/project/flake8/), [`black`](https://pypi.org/project/black/) and [`pylint`](https://pypi.org/project/pylint/) for formatting and best practices.
+- [`vulture`](https://pypi.org/project/vulture/), [`flake8`](https://pypi.org/project/flake8/), [`black`](https://pypi.org/project/black/), and [`pylint`](https://pypi.org/project/pylint/) for formatting and best practices.
 
-You can see all dependencies in file `pyproject.toml`.
+Dependency Management
 
-Moreover, you would need to install [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) on the latest version to check for secrets in the code. You can install it using the official installation guide [here](https://github.com/trufflesecurity/trufflehog?tab=readme-ov-file#floppy_disk-installation).
+All dependencies are listed in the `pyproject.toml` file.
 
-Additionally, please ensure to follow the code documentation practices outlined in this guide: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
+Additionally, ensure the latest version of [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) is installed to scan for sensitive data in the code. Follow the official [installation guide](https://github.com/trufflesecurity/trufflehog?tab=readme-ov-file#floppy_disk-installation) for setup.
 
-???+ note
-    If you have any trouble when committing to the Prowler repository, add the `--no-verify` flag to the `git commit` command.
+For proper code documentation, refer to the following and follow the code documentation practices presented there: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
+
+???+ note If you encounter issues when committing to the Prowler repository, use the `--no-verify` flag with the `git commit` command.
 
 ## Pull Request Checklist
 
-If you create or review a PR in https://github.com/prowler-cloud/prowler please follow this checklist:
+When creating or reviewing a pull request in https://github.com/prowler-cloud/prowler, follow this checklist:
 
-- [ ] Make sure you've read the Prowler Developer Guide at https://docs.prowler.cloud/en/latest/developer-guide/introduction/
-- [ ] Are we following the style guide, hence installed all the linters and formatters? Please check https://docs.prowler.cloud/en/latest/developer-guide/introduction/#contributing-with-your-code-or-fixes-to-prowler
-- [ ] Are we increasing/decreasing the test coverage? Please, review if we need to include/modify tests for the new code.
-- [ ] Are we modifying outputs? Please review it carefully.
-- [ ] Do we need to modify the Prowler documentation to reflect the changes introduced?
-- [ ] Are we introducing possible breaking changes? Are we modifying a core feature?
+- [ ] Review the Prowler Developer Guide. Read it here: https://docs.prowler.cloud/en/latest/developer-guide/introduction/
+- [ ] Code Style Compliance: Ensure linters and formatters are installed and used. Verify adherence to the style guide: https://docs.prowler.cloud/en/latest/developer-guide/introduction/#contributing-with-your-code-or-fixes-to-prowler
+- [ ] Test Coverage (Increasing or Decreasing): Check if new tests are needed to cover modifications.
+- [ ] Output Changes: Carefully review modifications to Prowler outputs.
+- [ ] Documentation Updates: Ensure documentation reflects introduced changes.
+- [ ] Breaking Changes: Assess whether the update introduces compatibility-breaking modifications. Core Feature Modifications:  
+  
+Determine if the PR affects a core feature.
 
+## Contribution Appreciation
 
-## Want some swag as appreciation for your contribution?
+If you enjoy swag, we’d love to thank you for your contribution with laptop stickers or other Prowler merchandise!  
+  
+To request swag: Share your pull request details in our [Slack workspace](https://goto.prowler.com/slack).
 
-If you are like us and you love swag, we are happy to thank you for your contribution with some laptop stickers or whatever other swag we may have at that time. Please, tell us more details and your pull request link in our [Slack workspace here](https://goto.prowler.com/slack). You can also reach out to Toni de la Fuente on Twitter [here](https://twitter.com/ToniBlyx), his DMs are open.
+You can also reach out to Toni de la Fuente on [Twitter](https://twitter.com/ToniBlyx)—his DMs are open!
