@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 
 ### Fixed
+- Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
 
 ---
 
