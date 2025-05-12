@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [v1.7.0] (Prowler v5.7.0)
+## [v1.7.0] (Prowler v5.7.0) – Not released
 
 ### 🚀 Added
 
@@ -11,7 +11,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixes
 
+- Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
+
 ---
 
 ## [v1.6.0] (Prowler v5.6.0)
@@ -24,7 +26,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add delta indicator in new findings table. [(#7676)](https://github.com/prowler-cloud/prowler/pull/7676)
 - Add a button to download the CSV report in compliance card. [(#7665)](https://github.com/prowler-cloud/prowler/pull/7665)
 - Show loading state while checking provider connection. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
-
 
 ### 🔄 Changed
 
