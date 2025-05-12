@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

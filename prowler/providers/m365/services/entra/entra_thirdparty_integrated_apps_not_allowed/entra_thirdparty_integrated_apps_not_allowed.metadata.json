@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enforcing this setting will create additional requests for approval that will need to be addressed by an administrator. If permissions are delegated, a user may approve a malevolent third party application, potentially giving it access to your data."

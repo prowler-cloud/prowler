@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Ensure settings are applied to the highest priority policy if custom policies exist."

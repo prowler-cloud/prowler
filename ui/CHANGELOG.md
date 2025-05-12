@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.7.0] (Prowler v5.7.0)
+
+### 🚀 Added
+
+- Add a new chart to show the split between passed and failed findings. [(#7680)](https://github.com/prowler-cloud/prowler/pull/7680)
+- Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
+
 ---
 
 ## [v1.6.0] (Prowler v5.6.0)
@@ -14,6 +21,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add delta indicator in new findings table. [(#7676)](https://github.com/prowler-cloud/prowler/pull/7676)
 - Add a button to download the CSV report in compliance card. [(#7665)](https://github.com/prowler-cloud/prowler/pull/7665)
 - Show loading state while checking provider connection. [(#7669)](https://github.com/prowler-cloud/prowler/pull/7669)
+
 
 ### 🔄 Changed
 
