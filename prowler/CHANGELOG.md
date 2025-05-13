@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.7.0] (Prowler v5.7.0)
+
+### Added
+- Update the compliance list supported for each provider from docs. [(#7694)](https://github.com/prowler-cloud/prowler/pull/7694)
+- Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
+- Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
+
+### Fixed
+- Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
+
+---
+
 ## [v5.6.0] (Prowler v5.6.0)
 
 ### Added
@@ -51,6 +63,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Modified check `exchange_mailbox_properties_auditing_enabled` to make it configurable. [(#7662)](https://github.com/prowler-cloud/prowler/pull/7662)
 - Add snapshots to m365 documentation. [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
 - Add support for static credentials for sending findings to Amazon S3 and AWS Security Hub. [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
+- Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
+- Add Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
 
 ### Fixed
 

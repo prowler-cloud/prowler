@@ -120,7 +120,7 @@ export const CustomInput = <T extends FieldValues>({
             />
           </FormControl>
           {showFormMessage && (
-            <FormMessage className="text-system-error dark:text-system-error" />
+            <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
           )}
         </>
       )}

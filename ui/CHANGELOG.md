@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.7.0] (Prowler v5.7.0) – Not released
+
+### 🚀 Added
+
+- Add a new chart to show the split between passed and failed findings. [(#7680)](https://github.com/prowler-cloud/prowler/pull/7680)
+- Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
+
+### 🐞 Fixes
+
+- Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
+- Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
+
 ---
 
 ## [v1.6.0] (Prowler v5.6.0)
