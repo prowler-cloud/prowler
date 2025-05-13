@@ -1,6 +1,7 @@
-import { CloudProviders } from "./components";
+import { ProviderType } from "./providers";
+
 export interface ProviderAttributes {
-  provider: CloudProviders;
+  provider: ProviderType;
   uid: string;
   alias: string;
 }

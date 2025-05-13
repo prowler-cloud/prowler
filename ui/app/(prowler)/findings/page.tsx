@@ -210,16 +210,16 @@ const SSRDataTable = async ({
   // Expand each finding with its corresponding resource, scan, and provider
   const expandedFindings = findingsData?.data
     ? findingsData.data.map((finding: FindingProps) => {
-      const scan = scanDict[finding.relationships?.scan?.data?.id];
-      const resource =
-        resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-      const provider = providerDict[scan?.relationships?.provider?.data?.id];
+        const scan = scanDict[finding.relationships?.scan?.data?.id];
+        const resource =
+          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
+        const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
-      return {
-        ...finding,
-        relationships: { scan, resource, provider },
-      };
-    })
+        return {
+          ...finding,
+          relationships: { scan, resource, provider },
+        };
+      })
     : [];
 
   // Create the new object while maintaining the original structure

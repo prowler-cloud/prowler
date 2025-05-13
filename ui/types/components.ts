@@ -704,5 +704,3 @@ export interface UserProps {
   dateAdded: string;
   status: "active" | "inactive";
 }
-
-export type CloudProviders = "aws" | "azure" | "gcp" | "kubernetes";
