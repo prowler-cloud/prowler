@@ -30,12 +30,15 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
 
             secretsmanager_client.secrets.clear()
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
-                new=SecretsManager(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
                     secretsmanager_has_restrictive_resource_policy,
@@ -67,12 +70,15 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
                 secretsmanager_has_restrictive_resource_policy,
@@ -523,15 +529,19 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
             )
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
-                new=SecretsManager(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
-                {"organizations_trusted_ids": "o-1234567890"},
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
             ):
                 from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
                     secretsmanager_has_restrictive_resource_policy,
@@ -794,15 +804,19 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
             )
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
-                new=SecretsManager(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
-                {"organizations_trusted_ids": "o-1234567890"},
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
             ):
                 from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
                     secretsmanager_has_restrictive_resource_policy,
