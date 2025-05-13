@@ -1,5 +1,6 @@
 import os
 import zipfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,8 +15,8 @@ from tasks.jobs.export import (
 
 @pytest.mark.django_db
 class TestOutputs:
-    def test_compress_output_files_creates_zip(self, tmp_path_factory):
-        base_tmp = tmp_path_factory.mktemp("compress_output")
+    def test_compress_output_files_creates_zip(self, tmpdir):
+        base_tmp = Path(str(tmpdir.mkdir("compress_output")))
         output_dir = base_tmp / "output"
         output_dir.mkdir()
         file_path = output_dir / "result.csv"
@@ -55,10 +56,10 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
-    def test_upload_to_s3_success(self, mock_base, mock_get_client, tmp_path_factory):
+    def test_upload_to_s3_success(self, mock_base, mock_get_client, tmpdir):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
 
-        base_tmp = tmp_path_factory.mktemp("upload_success")
+        base_tmp = Path(str(tmpdir.mkdir("upload_success")))
         zip_path = base_tmp / "outputs.zip"
         zip_path.write_bytes(b"dummy")
 
@@ -84,11 +85,9 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
-    def test_upload_to_s3_skips_non_files(
-        self, mock_base, mock_get_client, tmp_path_factory
-    ):
+    def test_upload_to_s3_skips_non_files(self, mock_base, mock_get_client, tmpdir):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
-        base_tmp = tmp_path_factory.mktemp("upload_skips_non_files")
+        base_tmp = Path(str(tmpdir.mkdir("upload_skips_non_files")))
 
         zip_path = base_tmp / "results.zip"
         zip_path.write_bytes(b"zip")
@@ -113,11 +112,11 @@ class TestOutputs:
     @patch("tasks.jobs.export.base")
     @patch("tasks.jobs.export.logger.error")
     def test_upload_to_s3_failure_logs_error(
-        self, mock_logger, mock_base, mock_get_client, tmp_path_factory
+        self, mock_logger, mock_base, mock_get_client, tmpdir
     ):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "bucket"
 
-        base_tmp = tmp_path_factory.mktemp("upload_failure_logs")
+        base_tmp = Path(str(tmpdir.mkdir("upload_failure_logs")))
         zip_path = base_tmp / "zipfile.zip"
         zip_path.write_bytes(b"zip")
 
@@ -128,10 +127,10 @@ class TestOutputs:
         _upload_to_s3("tenant", str(zip_path), "scan")
         mock_logger.assert_called()
 
-    def test_generate_output_directory_creates_paths(self, tmp_path_factory):
+    def test_generate_output_directory_creates_paths(self, tmpdir):
         from prowler.config.config import output_file_timestamp
 
-        base_tmp = tmp_path_factory.mktemp("generate_output")
+        base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
         tenant_id = "t1"
         scan_id = "s1"

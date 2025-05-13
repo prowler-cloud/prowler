@@ -2,7 +2,9 @@ import glob
 import io
 import json
 import os
+import tempfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
@@ -2318,36 +2320,34 @@ class TestScanViewSet:
         assert response.status_code == 404
         assert response.json()["errors"]["detail"] == "The scan has no reports."
 
-    def test_report_local_file(
-        self, authenticated_client, scans_fixture, tmp_path_factory, monkeypatch
-    ):
-        """
-        When output_location is a local file path, the view should read the file from disk
-        and return it with proper headers.
-        """
+    def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
-        base_tmp = tmp_path_factory.mktemp("report_local_file")
-        file_content = b"local zip file content"
-        file_path = base_tmp / "report.zip"
-        file_path.write_bytes(file_content)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base_tmp = tmp_path / "report_local_file"
+            base_tmp.mkdir(parents=True, exist_ok=True)
 
-        scan.output_location = str(file_path)
-        scan.state = StateChoices.COMPLETED
-        scan.save()
+            file_content = b"local zip file content"
+            file_path = base_tmp / "report.zip"
+            file_path.write_bytes(file_content)
 
-        monkeypatch.setattr(
-            glob,
-            "glob",
-            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
-        )
+            scan.output_location = str(file_path)
+            scan.state = StateChoices.COMPLETED
+            scan.save()
 
-        url = reverse("scan-report", kwargs={"pk": scan.id})
-        response = authenticated_client.get(url)
-        assert response.status_code == 200
-        assert response.content == file_content
-        content_disposition = response.get("Content-Disposition")
-        assert content_disposition.startswith('attachment; filename="')
-        assert f'filename="{file_path.name}"' in content_disposition
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+            )
+
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == 200
+            assert response.content == file_content
+            content_disposition = response.get("Content-Disposition")
+            assert content_disposition.startswith('attachment; filename="')
+            assert f'filename="{file_path.name}"' in content_disposition
 
     def test_compliance_invalid_framework(self, authenticated_client, scans_fixture):
         scan = scans_fixture[0]
@@ -2482,33 +2482,36 @@ class TestScanViewSet:
         )
 
     def test_compliance_local_file(
-        self, authenticated_client, scans_fixture, tmp_path_factory, monkeypatch
+        self, authenticated_client, scans_fixture, monkeypatch
     ):
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
 
-        base_tmp = tmp_path_factory.mktemp("compliance_local_file")
-        base = base_tmp / "reports"
-        comp_dir = base / "compliance"
-        comp_dir.mkdir(parents=True)
-        fname = comp_dir / "scan_cis.csv"
-        fname.write_bytes(b"ignored")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            comp_dir = base / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+            fname = comp_dir / "scan_cis.csv"
+            fname.write_bytes(b"ignored")
 
-        scan.output_location = str(base / "scan.zip")
-        scan.save()
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
 
-        monkeypatch.setattr(
-            glob,
-            "glob",
-            lambda p: [str(fname)] if p.endswith("*_cis_1.4_aws.csv") else [],
-        )
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(fname)] if p.endswith("*_cis_1.4_aws.csv") else [],
+            )
 
-        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
-        resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_200_OK
-        cd = resp["Content-Disposition"]
-        assert cd.startswith('attachment; filename="')
-        assert cd.endswith(f'filename="{fname.name}"')
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
 
     @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.TaskSerializer")
