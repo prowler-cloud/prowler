@@ -2513,33 +2513,48 @@ class OverviewViewSet(BaseRLSViewSet):
             .values_list("id", flat=True)
         )
 
-        resource_count_queryset = (
-            Resource.all_objects.filter(
-                tenant_id=tenant_id,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by()
-            .values("provider_id")
-            .annotate(cnt=Count("id"))
-            .values("cnt")
-        )
-
-        overview_queryset = (
+        findings_aggregated = (
             ScanSummary.all_objects.filter(
                 tenant_id=tenant_id, scan_id__in=latest_scan_ids
             )
-            .values(provider=F("scan__provider__provider"))
+            .values(
+                "scan__provider_id",
+                provider=F("scan__provider__provider"),
+            )
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
                 findings_muted=Coalesce(Sum("muted"), 0),
                 total_findings=Coalesce(Sum("total"), 0),
-                total_resources=Coalesce(Subquery(resource_count_queryset), 0),
             )
         )
 
-        serializer = OverviewProviderSerializer(overview_queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        resources_aggregated = (
+            Resource.all_objects.filter(tenant_id=tenant_id)
+            .values("provider_id")
+            .annotate(total_resources=Count("id"))
+        )
+        resource_map = {
+            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+        }
+
+        overview = []
+        for row in findings_aggregated:
+            overview.append(
+                {
+                    "provider": row["provider"],
+                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_findings": row["total_findings"],
+                    "findings_passed": row["findings_passed"],
+                    "findings_failed": row["findings_failed"],
+                    "findings_muted": row["findings_muted"],
+                }
+            )
+
+        return Response(
+            OverviewProviderSerializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):
