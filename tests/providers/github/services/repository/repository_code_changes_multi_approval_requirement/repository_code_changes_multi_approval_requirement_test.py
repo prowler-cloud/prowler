@@ -9,12 +9,15 @@ class Test_repository_code_changes_multi_approval_requirement:
         repository_client = mock.MagicMock
         repository_client.repositories = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement import (
                 repository_code_changes_multi_approval_requirement,
@@ -40,12 +43,15 @@ class Test_repository_code_changes_multi_approval_requirement:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement import (
                 repository_code_changes_multi_approval_requirement,
@@ -78,12 +84,15 @@ class Test_repository_code_changes_multi_approval_requirement:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement import (
                 repository_code_changes_multi_approval_requirement,
@@ -116,12 +125,15 @@ class Test_repository_code_changes_multi_approval_requirement:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_code_changes_multi_approval_requirement.repository_code_changes_multi_approval_requirement import (
                 repository_code_changes_multi_approval_requirement,
