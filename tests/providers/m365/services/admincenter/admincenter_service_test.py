@@ -7,6 +7,7 @@ from prowler.providers.m365.services.admincenter.admincenter_service import (
     DirectoryRole,
     Group,
     Organization,
+    SharingPolicy,
     User,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -46,6 +47,14 @@ def mock_admincenter_get_organization(_):
     )
 
 
+def mock_admincenter_get_sharing_policy(_):
+    return SharingPolicy(
+        guid="id-1",
+        name="Test",
+        enabled=False,
+    )
+
+
 @patch(
     "prowler.providers.m365.services.admincenter.admincenter_service.AdminCenter._get_users",
     new=mock_admincenter_get_users,
@@ -61,6 +70,10 @@ def mock_admincenter_get_organization(_):
 @patch(
     "prowler.providers.m365.services.admincenter.admincenter_service.AdminCenter._get_organization_config",
     new=mock_admincenter_get_organization,
+)
+@patch(
+    "prowler.providers.m365.services.admincenter.admincenter_service.AdminCenter._get_sharing_policy",
+    new=mock_admincenter_get_sharing_policy,
 )
 class Test_AdminCenter_Service:
     def test_get_client(self):
@@ -131,4 +144,20 @@ class Test_AdminCenter_Service:
             assert (
                 admincenter_client.organization_config.customer_lockbox_enabled is False
             )
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert admincenter_client.sharing_policy.guid == "id-1"
+            assert admincenter_client.sharing_policy.name == "Test"
+            assert admincenter_client.sharing_policy.enabled is False
             admincenter_client.powershell.close()

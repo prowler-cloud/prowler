@@ -680,6 +680,24 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
 
+    def get_sharing_policy(self) -> dict:
+        """
+        Get Exchange Online Sharing Policy.
+
+        Retrieves the current sharing policy settings for Exchange Online.
+
+        Returns:
+            dict: Sharing policy settings in JSON format.
+
+        Example:
+            >>> get_sharing_policy()
+            {
+                "Identity": "Default",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
