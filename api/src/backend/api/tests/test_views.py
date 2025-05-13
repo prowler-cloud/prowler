@@ -2319,15 +2319,16 @@ class TestScanViewSet:
         assert response.json()["errors"]["detail"] == "The scan has no reports."
 
     def test_report_local_file(
-        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+        self, authenticated_client, scans_fixture, tmp_path_factory, monkeypatch
     ):
         """
         When output_location is a local file path, the view should read the file from disk
         and return it with proper headers.
         """
         scan = scans_fixture[0]
+        base_tmp = tmp_path_factory.mktemp("report_local_file")
         file_content = b"local zip file content"
-        file_path = tmp_path / "report.zip"
+        file_path = base_tmp / "report.zip"
         file_path.write_bytes(file_content)
 
         scan.output_location = str(file_path)
@@ -2481,11 +2482,13 @@ class TestScanViewSet:
         )
 
     def test_compliance_local_file(
-        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+        self, authenticated_client, scans_fixture, tmp_path_factory, monkeypatch
     ):
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
-        base = tmp_path / "reports"
+
+        base_tmp = tmp_path_factory.mktemp("compliance_local_file")
+        base = base_tmp / "reports"
         comp_dir = base / "compliance"
         comp_dir.mkdir(parents=True)
         fname = comp_dir / "scan_cis.csv"
