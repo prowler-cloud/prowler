@@ -13,7 +13,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization.An AWS account supports a number of contact details, and AWS will use these to contact the account owner if activity judged to be in breach of the Acceptable Use Policy or indicative of a likely security compromise is observed by the AWS Abuse team. Contact details should not be for a single individual, as circumstances may arise where that individual is unavailable. Email contact details should point to a mail alias which forwards email to multiple individuals within the organization; where feasible, phone contact details should point to a PABX hunt group or other call-forwarding system.",
@@ -36,7 +35,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "AWS provides customers with the option of specifying the contact information for account's security team. It is recommended that this information be provided.",
@@ -59,7 +57,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "The AWS support portal allows account owners to establish security questions that can be used to authenticate individuals calling AWS customer service for support. It is recommended that security questions be established.",
@@ -82,7 +79,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The 'root' user account is the most privileged user in an AWS account. AWS Access Keys provide programmatic access to a given AWS account. It is recommended that all access keys associated with the 'root' user account be deleted.",
@@ -105,7 +101,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The 'root' user account is the most privileged user in an AWS account. Multi-factor Authentication (MFA) adds an extra layer of protection on top of a username and password. With MFA enabled, when a user signs in to an AWS website, they will be prompted for their username and password as well as for an authentication code from their AWS MFA device.**Note:** When virtual MFA is used for 'root' accounts, it is recommended that the device used is NOT a personal device, but rather a dedicated mobile device (tablet or phone) that is kept charged and secured, independent of any individual personal devices (non-personal virtual MFA). This lessens the risks of losing access to the MFA due to device loss, device trade-in, or if the individual owning the device is no longer employed at the company.",
@@ -128,7 +123,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "The 'root' user account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled, when a user signs in to an AWS website, they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2, it is recommended that the 'root' user account be protected with a hardware MFA.",
@@ -151,7 +145,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "With the creation of an AWS account, a 'root user' is created that cannot be disabled or deleted. That user has unrestricted access to and control over all resources in the AWS account. It is highly recommended that the use of this account be avoided for everyday tasks.",
@@ -174,7 +167,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Password policies are, in part, used to enforce password complexity requirements. IAM password policies can be used to ensure passwords are at least a given length. It is recommended that the password policy require a minimum password length 14.",
@@ -197,7 +189,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "IAM password policies can prevent the reuse of a given password by the same user. It is recommended that the password policy prevent the reuse of passwords.",
@@ -220,7 +211,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Multi-Factor Authentication (MFA) adds an extra layer of authentication assurance beyond traditional credentials. With MFA enabled, when a user signs in to the AWS Console, they will be prompted for their user name and password as well as for an authentication code from their physical or virtual MFA token. It is recommended that MFA be enabled for all accounts that have a console password.",
@@ -243,7 +233,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "AWS console defaults to no check boxes selected when creating a new IAM user. When creating the IAM User credentials you have to determine what type of access they require. Programmatic access: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. AWS Management Console access: If the user needs to access the AWS Management Console, create a password for the user.",
@@ -267,7 +256,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "AWS IAM users can access AWS resources using different types of credentials, such as passwords or access keys. It is recommended that all credentials that have been unused for 45 days or more be deactivated or removed.",
@@ -290,7 +278,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Access keys are long-term credentials for an IAM user or the AWS account 'root' user. You can use access keys to sign programmatic requests to the AWS CLI or AWS API (directly or using the AWS SDK)",
@@ -313,7 +300,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Access keys consist of an access key ID and secret access key, which are used to sign programmatic requests that you make to AWS. AWS users need their own access keys to make programmatic calls to AWS from the AWS Command Line Interface (AWS CLI), Tools for Windows PowerShell, the AWS SDKs, or direct HTTP calls using the APIs for individual AWS services. It is recommended that all access keys be rotated regularly.",
@@ -336,7 +322,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "IAM users are granted access to services, functions, and data through IAM policies. There are four ways to define policies for a user: 1) Edit the user policy directly, also known as an inline or user policy; 2) attach a policy directly to a user; 3) add the user to an IAM group that has an attached policy; 4) add the user to an IAM group that has an inline policy.Only the third implementation is recommended.",
@@ -360,7 +345,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "IAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended and considered standard security advice to grant least privilege—that is, granting only the permissions required to perform a task. Determine what users need to do, and then craft policies for them that allow the users to perform only those tasks, instead of granting full administrative privileges.",
@@ -383,7 +367,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "AWS provides a support center that can be used for incident notification and response, as well as technical support and customer services. Create an IAM Role, with the appropriate policy assigned, to allow authorized users to manage incidents with AWS Support.",
@@ -406,7 +389,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "AWS access from within AWS instances can be done by either encoding AWS keys into AWS API calls or by assigning the instance to a role which has an appropriate permissions policy for the required access. AWS Access means accessing the APIs of AWS in order to access AWS resources or manage AWS account resources.",
@@ -429,7 +411,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "To enable HTTPS connections to your website or application in AWS, you need an SSL/TLS server certificate. You can use AWS Certificate Manager (ACM) or IAM to store and deploy server certificates. Use IAM as a certificate manager only when you must support HTTPS connections in a region that is not supported by ACM. IAM securely encrypts your private keys and stores the encrypted version in IAM SSL certificate storage. IAM supports deploying server certificates in all regions, but you must obtain your certificate from an external provider for use with AWS. You cannot upload an ACM certificate to IAM. Additionally, you cannot manage your certificates from the IAM Console.",
@@ -452,7 +433,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable the IAM Access Analyzer for IAM policies regarding all resources in each active AWS region.IAM Access Analyzer is a technology introduced at AWS reinvent 2019. After the Analyzer is enabled in IAM, scan results are displayed on the console showing the accessible resources. Scans show resources that other accounts and federated users can access, such as KMS keys and IAM roles. The results allow you to determine whether an unintended user is permitted, making it easier for administrators to monitor least privilege access. Access Analyzer analyzes only the policies that are applied to resources in the same AWS Region.",
@@ -475,7 +455,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "In multi-account environments, IAM user centralization facilitates greater user control. User access beyond the initial account is then provided via role assumption. Centralization of users can be accomplished through federation with an external identity provider or through the use of AWS Organizations.",
@@ -498,7 +477,6 @@
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "AWS CloudShell is a convenient way of running CLI commands against AWS services; a managed IAM policy ('AWSCloudShellFullAccess') provides full access to CloudShell, which allows file upload and download capability between a user's local system and the CloudShell environment. Within the CloudShell environment, a user has sudo permissions and can access the internet. Therefore, it is feasible to install file transfer software, for example, and move data from CloudShell to external internet servers.",
@@ -730,7 +708,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "AWS CloudTrail is a web service that records AWS API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the AWS service. CloudTrail provides a history of AWS API calls for an account, including API calls made via the Management Console, SDKs, command line tools, and higher-level AWS services (such as CloudFormation).",
@@ -753,7 +730,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "CloudTrail log file validation creates a digitally signed digest file containing a hash of each log that CloudTrail writes to S3. These digest files can be used to determine whether a log file was changed, deleted, or remained unchanged after CloudTrail delivered the log. It is recommended that file validation be enabled for all CloudTrails.",
@@ -776,7 +752,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "AWS Config is a web service that performs configuration management of supported AWS resources within your account and delivers log files to you. The recorded information includes the configuration items (AWS resources), relationships between configuration items (AWS resources), and any configuration changes between resources. It is recommended that AWS Config be enabled in all regions.",
@@ -799,7 +774,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Server access logging generates a log that contains access records for each request made to your S3 bucket. An access log record contains details about the request, such as the request type, the resources specified in the request worked, and the time and date the request was processed. It is recommended that server access logging be enabled on the CloudTrail S3 bucket.",
@@ -822,7 +796,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "AWS CloudTrail is a web service that records AWS API calls for an account and makes those logs available to users and resources in accordance with IAM policies. AWS Key Management Service (KMS) is a managed service that helps create and control the encryption keys used to encrypt account data, and uses Hardware Security Modules (HSMs) to protect the security of encryption keys. CloudTrail logs can be configured to leverage server side encryption (SSE) and KMS customer-created master keys (CMK) to further protect CloudTrail logs. It is recommended that CloudTrail be configured to use SSE-KMS.",
@@ -845,7 +818,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "AWS Key Management Service (KMS) allows customers to rotate the backing key, which is key material stored within the KMS that is tied to the key ID of the customer-created customer master key (CMK). The backing key is used to perform cryptographic operations such as encryption and decryption. Automated key rotation currently retains all prior backing keys so that decryption of encrypted data can occur transparently. It is recommended that CMK key rotation be enabled for symmetric keys. Key rotation cannot be enabled for any asymmetric CMK.",
@@ -868,7 +840,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "VPC Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. After you've created a flow log, you can view and retrieve its data in Amazon CloudWatch Logs. It is recommended that VPC Flow Logs be enabled for packet Rejects for VPCs.",
@@ -891,7 +862,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "S3 object-level API operations, such as GetObject, DeleteObject, and PutObject, are referred to as data events. By default, CloudTrail trails do not log data events, so it is recommended to enable object-level logging for S3 buckets.",
@@ -914,7 +884,6 @@
       "Attributes": [
         {
           "Section": "3 Logging",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "S3 object-level API operations, such as GetObject, DeleteObject, and PutObject, are referred to as data events. By default, CloudTrail trails do not log data events, so it is recommended to enable object-level logging for S3 buckets.",
@@ -937,7 +906,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for unauthorized API calls.",
@@ -960,7 +928,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for console logins that are not protected by multi-factor authentication (MFA).",
@@ -983,7 +950,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for 'root' login attempts to detect unauthorized use or attempts to use the root account.",
@@ -1006,7 +972,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms.It is recommended that a metric filter and alarm be established for changes made to Identity and Access Management (IAM) policies.",
@@ -1029,7 +994,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be used to detect changes to CloudTrail's configurations.",
@@ -1052,7 +1016,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for failed console authentication attempts.",
@@ -1075,7 +1038,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for customer-created CMKs that have changed state to disabled or are scheduled for deletion.",
@@ -1098,7 +1060,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for changes to S3 bucket policies.",
@@ -1121,7 +1082,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for detecting changes to AWS Config's configurations.",
@@ -1144,7 +1104,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. Security groups are stateful packet filters that control ingress and egress traffic within a VPC.It is recommended that a metric filter and alarm be established to detect changes to security groups.",
@@ -1167,7 +1126,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. NACLs are used as a stateless packet filter to control ingress and egress traffic for subnets within a VPC. It is recommended that a metric filter and alarm be established for any changes made to NACLs.",
@@ -1190,7 +1148,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. Network gateways are required to send and receive traffic to a destination outside of a VPC. It is recommended that a metric filter and alarm be established for changes to network gateways.",
@@ -1213,7 +1170,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. Routing tables are used to route network traffic between subnets and to network gateways.It is recommended that a metric filter and alarm be established for changes to route tables.",
@@ -1236,7 +1192,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is possible to have more than one VPC within an account; additionally, it is also possible to create a peer connection between two VPCs, enabling network traffic to route between them.It is recommended that a metric filter and alarm be established for changes made to VPCs.",
@@ -1259,7 +1214,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs or an external Security Information and Event Management (SIEM) environment, and establishing corresponding metric filters and alarms. It is recommended that a metric filter and alarm be established for changes made to AWS Organizations in the master AWS account.",
@@ -1282,7 +1236,6 @@
       "Attributes": [
         {
           "Section": "4 Monitoring",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Security Hub collects security data from various AWS accounts, services, and supported third-party partner products, helping you analyze your security trends and identify the highest-priority security issues. When you enable Security Hub, it begins to consume, aggregate, organize, and prioritize findings from the AWS services that you have enabled, such as Amazon GuardDuty, Amazon Inspector, and Amazon Macie. You can also enable integrations with AWS partner security products.",
@@ -1307,7 +1260,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The Network Access Control List (NACL) function provides stateless filtering of ingress and egress network traffic to AWS resources. It is recommended that no NACL allows unrestricted ingress access to remote server administration ports, such as SSH on port `22` and RDP on port `3389`, using either the TCP (6), UDP (17), or ALL (-1) protocols.",
@@ -1332,7 +1284,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Security groups provide stateful filtering of ingress and egress network traffic to AWS resources. It is recommended that no security group allows unrestricted ingress access to remote server administration ports, such as SSH on port `22` and RDP on port `3389`, using either the TCP (6), UDP (17), or ALL (-1) protocols.",
@@ -1357,7 +1308,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Security groups provide stateful filtering of ingress and egress network traffic to AWS resources. It is recommended that no security group allows unrestricted ingress access to remote server administration ports, such as SSH on port `22` and RDP on port `3389`.",
@@ -1380,7 +1330,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "A VPC comes with a default security group whose initial settings deny all inbound traffic, allow all outbound traffic, and allow all traffic between instances assigned to the security group. If a security group is not specified when an instance is launched, it is automatically assigned to this default security group. Security groups provide stateful filtering of ingress/egress network traffic to AWS resources. It is recommended that the default security group restrict all traffic, both inbound and outbound.The default VPC in every region should have its default security group updated to comply with the following: - No inbound rules. - No outbound rules.Any newly created VPCs will automatically contain a default security group that will need remediation to comply with this recommendation.**Note:** When implementing this recommendation, VPC flow logging is invaluable in determining the least privilege port access required by systems to work properly, as it can log all packet acceptances and rejections occurring under the current security groups. This dramatically reduces the primary barrier to least privilege engineering by discovering the minimum ports required by systems in the environment. Even if the VPC flow logging recommendation in this benchmark is not adopted as a permanent security measure, it should be used during any period of discovery and engineering for least privileged security groups.",
@@ -1403,7 +1352,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Once a VPC peering connection is established, routing tables must be updated to enable any connections between the peered VPCs. These routes can be as specific as desired, even allowing for the peering of a VPC to only a single host on the other side of the connection.",
@@ -1426,7 +1374,6 @@
       "Attributes": [
         {
           "Section": "5 Networking",
-          "SubSection": "",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "When enabling the Metadata Service on AWS EC2 instances, users have the option of using either Instance Metadata Service Version 1 (IMDSv1; a request/response method) or Instance Metadata Service Version 2 (IMDSv2; a session-oriented method).",

@@ -10,7 +10,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -31,7 +31,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -52,7 +52,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -73,7 +73,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -94,7 +94,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -115,7 +115,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -136,7 +136,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -157,7 +157,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -178,7 +178,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -199,7 +199,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -220,7 +220,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -241,7 +241,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -262,7 +262,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -283,7 +283,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -304,7 +304,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -325,7 +325,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -346,7 +346,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -367,7 +367,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -388,7 +388,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -409,7 +409,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -430,7 +430,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -453,7 +453,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -476,7 +476,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -499,7 +499,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -522,7 +522,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -545,7 +545,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -568,7 +568,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -591,7 +591,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -614,7 +614,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -637,7 +637,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -660,7 +660,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -683,7 +683,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -706,7 +706,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -729,7 +729,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
@@ -752,7 +752,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
@@ -775,7 +775,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
@@ -798,7 +798,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -821,7 +821,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -844,7 +844,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -867,7 +867,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -890,7 +890,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -913,7 +913,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -936,7 +936,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -959,7 +959,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -982,7 +982,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1005,7 +1005,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1028,7 +1028,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1051,7 +1051,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1074,7 +1074,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1095,7 +1095,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1118,7 +1118,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1141,7 +1141,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1164,7 +1164,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1187,7 +1187,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1210,7 +1210,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1233,7 +1233,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1256,7 +1256,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1279,7 +1279,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1302,7 +1302,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.4 Scheduler",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1325,7 +1325,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
+          "Section": "1 Control Plane Components",
           "SubSection": "1.4 Scheduler",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1500,7 +1500,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
+          "Section": "3 Control Plane Configuration",
           "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1521,7 +1521,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
+          "Section": "3 Control Plane Configuration",
           "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1542,7 +1542,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
+          "Section": "3 Control Plane Configuration",
           "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1563,7 +1563,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
+          "Section": "3 Control Plane Configuration",
           "SubSection": "3.2 Logging",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1584,7 +1584,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
+          "Section": "3 Control Plane Configuration",
           "SubSection": "3.2 Logging",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -1607,7 +1607,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -1630,7 +1630,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1651,7 +1651,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1672,7 +1672,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1695,7 +1695,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1718,7 +1718,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1739,7 +1739,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1760,7 +1760,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1783,7 +1783,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1806,7 +1806,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1829,7 +1829,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1852,7 +1852,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1875,7 +1875,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1898,7 +1898,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1921,7 +1921,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1944,7 +1944,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -1965,7 +1965,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -1988,7 +1988,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 2 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2011,7 +2011,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2034,7 +2034,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
@@ -2055,7 +2055,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2078,7 +2078,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2099,7 +2099,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
+          "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2122,7 +2122,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2145,7 +2145,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2168,7 +2168,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
@@ -2191,7 +2191,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2212,7 +2212,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2233,7 +2233,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2254,7 +2254,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2275,7 +2275,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2298,7 +2298,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2321,7 +2321,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2344,7 +2344,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2367,7 +2367,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2390,7 +2390,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2411,7 +2411,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2434,7 +2434,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2457,7 +2457,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2480,7 +2480,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2503,7 +2503,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2526,7 +2526,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2549,7 +2549,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2572,7 +2572,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2595,7 +2595,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
@@ -2618,7 +2618,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2641,7 +2641,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2662,7 +2662,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2685,7 +2685,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2706,7 +2706,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.3 Network Policies and CNI",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2727,7 +2727,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.3 Network Policies and CNI",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2750,7 +2750,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2771,7 +2771,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2792,7 +2792,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2813,7 +2813,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.7 General Policies",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2836,7 +2836,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2857,7 +2857,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
@@ -2878,7 +2878,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
+          "Section": "5 Policies",
           "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",

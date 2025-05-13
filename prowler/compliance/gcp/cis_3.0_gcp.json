@@ -10,7 +10,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Use corporate login credentials instead of consumer accounts, such as Gmail accounts.",
@@ -30,7 +30,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Setup multi-factor authentication for Google Cloud Platform accounts.",
@@ -50,7 +50,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Setup Security Key Enforcement for Google Cloud Platform admin accounts.",
@@ -72,7 +72,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "User-managed service accounts should not have user-managed keys.",
@@ -94,7 +94,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "A service account is a special Google account that belongs to an application or a VM, instead of to an individual end-user. The application uses the service account to call the service's Google API so that users aren't directly involved. It's recommended not to use admin access for ServiceAccount.",
@@ -116,7 +116,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to assign the `Service Account User (iam.serviceAccountUser)` and `Service Account Token Creator (iam.serviceAccountTokenCreator)` roles to a user for a specific service account rather than assigning the role to a user at project level.",
@@ -138,7 +138,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Service Account keys consist of a key ID (Private_key_Id) and Private key, which are used to sign programmatic requests users make to Google cloud services accessible to that particular service account. It is recommended that all Service Account keys are regularly rotated.",
@@ -160,7 +160,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that the principle of 'Separation of Duties' is enforced while assigning service-account related roles to users.",
@@ -182,7 +182,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that the IAM policy on Cloud KMS `cryptokeys` should restrict anonymous and/or public access.",
@@ -204,7 +204,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Google Cloud Key Management Service stores cryptographic keys in a hierarchical structure designed for useful and elegant access control management. The format for the rotation schedule depends on the client library that is used. For the gcloud command-line tool, the next rotation time must be in `ISO` or `RFC3339` format, and the rotation period must be in the form `INTEGER[UNIT]`, where units can be one of seconds (s), minutes (m), hours (h) or days (d).",
@@ -226,7 +226,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that the principle of 'Separation of Duties' is enforced while assigning KMS related roles to users.",
@@ -248,7 +248,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. Unused keys with their permissions in tact may still exist within a project. Keys are insecure because they can be viewed publicly, such as from within a browser, or they can be accessed on a device where the key resides. It is recommended to use standard authentication flow instead.",
@@ -268,7 +268,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. In this case, unrestricted keys are insecure because they can be viewed publicly, such as from within a browser, or they can be accessed on a device where the key resides. It is recommended to restrict API key usage to trusted hosts, HTTP referrers and apps. It is recommended to use the more secure standard authentication flow instead.",
@@ -290,7 +290,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. API keys are always at risk because they can be viewed publicly, such as from within a browser, or they can be accessed on a device where the key resides. It is recommended to restrict API keys to use (call) only APIs required by an application.",
@@ -312,7 +312,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. If they are in use it is recommended to rotate API keys every 90 days.",
@@ -334,7 +334,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that Essential Contacts is configured to designate email addresses for Google Cloud services to notify of important technical or security information.",
@@ -354,7 +354,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Google Cloud Functions allow you to host serverless code that is executed when an event is triggered, without the requiring the management a host operating system. These functions can also store environment variables to be used by the code that may contain authentication or other information that needs to remain confidential.",
@@ -376,7 +376,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that Cloud Audit Logging is configured to track all admin activities and read, write access to user data.",
@@ -398,7 +398,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to create a sink that will export copies of all the log entries. This can help aggregate logs from multiple projects and export them to a Security Information and Event Management (SIEM).",
@@ -420,7 +420,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enabling retention policies on log buckets will protect logs stored in cloud storage buckets from being overwritten or accidentally deleted. It is recommended to set up retention policies and configure Bucket Lock on all storage buckets that are used as log sinks.",
@@ -442,7 +442,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In order to prevent unnecessary project ownership assignments to users/service-accounts and further misuses of projects and resources, all `roles/Owner` assignments should be monitored.Members (users/Service-Accounts) with a role assignment to primitive role `roles/Owner` are project owners.The project owner has all the privileges on the project the role belongs to. These are summarized below:- All viewer permissions on all GCP Services within the project- Permissions for actions that modify the state of all GCP services within the project- Manage roles and permissions for a project and all resources within the project- Set up billing for a projectGranting the owner role to a member (user/Service-Account) will allow that member to modify the Identity and Access Management (IAM) policy. Therefore, grant the owner role only if the member has a legitimate purpose to manage the IAM policy. This is because the project IAM policy contains sensitive access control data. Having a minimal set of users allowed to manage IAM policy will simplify any auditing that may be necessary.",
@@ -464,7 +464,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Google Cloud Platform (GCP) services write audit log entries to the Admin Activity and Data Access logs to help answer the questions of, \"who did what, where, and when?\" within GCP projects.Cloud audit logging records information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by GCP services. Cloud audit logging provides a history of GCP API calls for an account, including API calls made via the console, SDKs, command-line tools, and other GCP services.",
@@ -486,7 +486,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for changes to Identity and Access Management (IAM) role creation, deletion and updating activities.",
@@ -508,7 +508,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) Network Firewall rule changes.",
@@ -530,7 +530,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) network route changes.",
@@ -552,7 +552,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) network changes.",
@@ -574,7 +574,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for Cloud Storage Bucket IAM changes.",
@@ -596,7 +596,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that a metric filter and alarm be established for SQL instance configuration changes.",
@@ -616,7 +616,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Cloud DNS logging records the queries from the name servers within your VPC to Stackdriver. Logged queries can come from Compute Engine VMs, GKE containers, or other GCP resources provisioned within the VPC.",
@@ -638,7 +638,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.Cloud Asset Inventory Service (CAIS) API enablement is not required for operation of the service, but rather enables the mechanism for searching/exporting CAIS asset data directly.",
@@ -658,7 +658,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "GCP Access Transparency provides audit logs for all actions that Google personnel take in your Google Cloud resources.",
@@ -680,7 +680,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "GCP Access Approval enables you to require your organizations' explicit approval whenever Google support try to access your projects. You can then select users within your organization who can approve these requests through giving them a security role in IAM. All access requests display which Google Employee requested them in an email or Pub/Sub message that you can choose to Approve. This adds an additional control and logging of who in your organization approved/denied these requests.",
@@ -702,7 +702,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Logging and Monitoring",
+          "Section": "2 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Logging enabled on a HTTPS Load Balancer will show all network traffic and its destination.",
@@ -724,7 +724,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "To prevent use of `default` network, a project should not have a `default` network.",
@@ -746,7 +746,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In order to prevent use of legacy networks, a project should not have a legacy network configured. As of now, Legacy Networks are gradually being phased out, and you can no longer create projects with them. This recommendation is to check older projects to ensure that they are not using Legacy Networks.",
@@ -768,7 +768,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Cloud Domain Name System (DNS) is a fast, reliable and cost-effective domain name system that powers millions of domains on the internet. Domain Name System Security Extensions (DNSSEC) in Cloud DNS enables domain owners to take easy steps to protect their domains against DNS hijacking and man-in-the-middle and other attacks.",
@@ -790,7 +790,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "NOTE: Currently, the SHA1 algorithm has been removed from general use by Google, and, if being used, needs to be whitelisted on a project basis by Google and will also, therefore, require a Google Cloud support contract.DNSSEC algorithm numbers in this registry may be used in CERT RRs. Zone signing (DNSSEC) and transaction security mechanisms (SIG(0) and TSIG) make use of particular subsets of these algorithms. The algorithm used for key signing should be a recommended one and it should be strong.",
@@ -812,7 +812,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "NOTE: Currently, the SHA1 algorithm has been removed from general use by Google, and, if being used, needs to be whitelisted on a project basis by Google and will also, therefore, require a Google Cloud support contract.DNSSEC algorithm numbers in this registry may be used in CERT RRs. Zone signing (DNSSEC) and transaction security mechanisms (SIG(0) and TSIG) make use of particular subsets of these algorithms. The algorithm used for key signing should be a recommended one and it should be strong.",
@@ -834,7 +834,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "GCP `Firewall Rules` are specific to a `VPC Network`. Each rule either `allows` or `denies` traffic when its conditions are met. Its conditions allow the user to specify the type of traffic, such as ports and protocols, and the source or destination of the traffic, including IP addresses, subnets, and instances.Firewall rules are defined at the VPC network level and are specific to the network in which they are defined. The rules themselves cannot be shared among networks. Firewall rules only support IPv4 traffic. When specifying a source for an ingress rule or a destination for an egress rule by address, only an `IPv4` address or `IPv4 block in CIDR` notation can be used. Generic `(0.0.0.0/0)` incoming traffic from the internet to VPC or VM instance using `SSH` on `Port 22` can be avoided.",
@@ -856,7 +856,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "GCP `Firewall Rules` are specific to a `VPC Network`. Each rule either `allows` or `denies` traffic when its conditions are met. Its conditions allow users to specify the type of traffic, such as ports and protocols, and the source or destination of the traffic, including IP addresses, subnets, and instances.Firewall rules are defined at the VPC network level and are specific to the network in which they are defined. The rules themselves cannot be shared among networks. Firewall rules only support IPv4 traffic. When specifying a source for an ingress rule or a destination for an egress rule by address, an `IPv4` address or `IPv4 block in CIDR` notation can be used. Generic `(0.0.0.0/0)` incoming traffic from the Internet to a VPC or VM instance using `RDP` on `Port 3389` can be avoided.",
@@ -878,7 +878,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Flow Logs is a feature that enables users to capture information about the IP traffic going to and from network interfaces in the organization's VPC Subnets. Once a flow log is created, the user can view and retrieve its data in Stackdriver Logging. It is recommended that Flow Logs be enabled for every business-critical VPC subnet.",
@@ -898,7 +898,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Secure Sockets Layer (SSL) policies determine what port Transport Layer Security (TLS) features clients are permitted to use when connecting to load balancers. To prevent usage of insecure features, SSL policies should use (a) at least TLS 1.2 with the MODERN profile; or (b) the RESTRICTED profile, because it effectively requires clients to use TLS 1.2 regardless of the chosen minimum TLS version; or (3) a CUSTOM profile that does not support any of the following features: ```TLS_RSA_WITH_AES_128_GCM_SHA256TLS_RSA_WITH_AES_256_GCM_SHA384TLS_RSA_WITH_AES_128_CBC_SHATLS_RSA_WITH_AES_256_CBC_SHATLS_RSA_WITH_3DES_EDE_CBC_SHA```",
@@ -918,7 +918,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Networking",
+          "Section": "3 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "IAP authenticates the user requests to your apps via a Google single sign in. You can then manage these users with permissions to control access. It is recommended to use both IAP permissions and firewalls to restrict this access to your apps with sensitive information.",
@@ -940,7 +940,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to configure your instance to not use the default Compute Engine service account because it has the Editor role on the project.",
@@ -962,7 +962,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "To support principle of least privileges and prevent potential privilege escalation it is recommended that instances are not assigned to default service account `Compute Engine default service account` with Scope `Allow full access to all Cloud APIs`.",
@@ -984,7 +984,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to use Instance specific SSH key(s) instead of using common/shared project-wide SSH key(s) to access Instances.",
@@ -1006,7 +1006,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enabling OS login binds SSH certificates to IAM users and facilitates effective SSH certificate management.",
@@ -1028,7 +1028,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Interacting with a serial port is often referred to as the serial console, which is similar to using a terminal window, in that input and output is entirely in text mode and there is no graphical interface or mouse support.If you enable the interactive serial console on an instance, clients can attempt to connect to that instance from any IP address. Therefore interactive serial console support should be disabled.",
@@ -1050,7 +1050,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Compute Engine instance cannot forward a packet unless the source IP address of the packet matches the IP address of the instance. Similarly, GCP won't deliver a packet whose destination IP address is different than the IP address of the instance receiving the packet. However, both capabilities are required if you want to use instances to help route packets.Forwarding of data packets should be disabled to prevent data loss or information disclosure.",
@@ -1072,7 +1072,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Customer-Supplied Encryption Keys (CSEK) are a feature in Google Cloud Storage and Google Compute Engine. If you supply your own encryption keys, Google uses your key to protect the Google-generated keys used to encrypt and decrypt your data. By default, Google Compute Engine encrypts all data at rest. Compute Engine handles and manages this encryption for you without any additional actions on your part. However, if you wanted to control and manage this encryption yourself, you can provide your own encryption keys.",
@@ -1094,7 +1094,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "To defend against advanced threats and ensure that the boot loader and firmware on your VMs are signed and untampered, it is recommended that Compute instances are launched with Shielded VM enabled.",
@@ -1116,7 +1116,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Compute instances should not be configured to have external IP addresses.",
@@ -1136,7 +1136,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "In order to maintain the highest level of security all connections to an application should be secure by default.",
@@ -1158,7 +1158,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Google Cloud encrypts data at-rest and in-transit, but customer data must be decrypted for processing. Confidential Computing is a breakthrough technology which encrypts data in-use—while it is being processed. Confidential Computing environments keep data encrypted in memory and elsewhere outside the central processing unit (CPU). Confidential VMs leverage the Secure Encrypted Virtualization (SEV) feature of AMD EPYC™ CPUs. Customer data will stay encrypted while it is used, indexed, queried, or trained on. Encryption keys are generated in hardware, per VM, and not exportable. Thanks to built-in hardware optimizations of both performance and security, there is no significant performance penalty to Confidential Computing workloads.",
@@ -1178,7 +1178,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Virtual Machines",
+          "Section": "4 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Google Cloud Virtual Machines have the ability via an OS Config agent API to periodically (about every 10 minutes) report OS inventory data. A patch compliance API periodically reads this data, and cross references metadata to determine if the latest updates are installed.This is not the only Patch Management solution available to your organization and you should weigh your needs before committing to using this method.",
@@ -1200,7 +1200,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Storage",
+          "Section": "5 Storage",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that IAM policy on Cloud Storage bucket does not allows anonymous or public access.",
@@ -1222,7 +1222,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Storage",
+          "Section": "5 Storage",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that uniform bucket-level access is enabled on Cloud Storage buckets.",
@@ -1244,7 +1244,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
+          "Section": "6 Cloud SQL Database Services",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to enforce all incoming connections to SQL database instance to use SSL.",
@@ -1266,7 +1266,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
+          "Section": "6 Cloud SQL Database Services",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Database Server should accept connections only from trusted Network(s)/IP(s) and restrict access from public IP addresses.",
@@ -1288,7 +1288,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
+          "Section": "6 Cloud SQL Database Services",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to configure Second Generation Sql instance to use private IPs instead of public IPs.",
@@ -1310,7 +1310,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
+          "Section": "6 Cloud SQL Database Services",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to have all SQL database instances set to enable automated backups.",
@@ -1330,8 +1330,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.1. MySQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.1 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "It is recommended to set a password for the administrative user (`root` by default) to prevent unauthorized access to the SQL database instances.This recommendation is applicable only for MySQL Instances. PostgreSQL does not offer any setting for No Password from the cloud console.",
@@ -1353,8 +1353,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.1. MySQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.1 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `skip_show_database` database flag for Cloud SQL Mysql instance to `on`",
@@ -1376,8 +1376,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.1. MySQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.1 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set the `local_infile` database flag for a Cloud SQL MySQL instance to `off`.",
@@ -1399,8 +1399,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The `log_error_verbosity` flag controls the verbosity/details of messages logged. Valid values are:- `TERSE`- `DEFAULT`- `VERBOSE``TERSE` excludes the logging of `DETAIL`, `HINT`, `QUERY`, and `CONTEXT` error information.`VERBOSE` output includes the `SQLSTATE` error code, source code file name, function name, and line number that generated the error.Ensure an appropriate value is set to 'DEFAULT' or stricter.",
@@ -1422,8 +1422,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enabling the `log_connections` setting causes each attempted connection to the server to be logged, along with successful completion of client authentication. This parameter cannot be changed after the session starts.",
@@ -1445,8 +1445,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enabling the `log_disconnections` setting logs the end of each session, including the session duration.",
@@ -1468,8 +1468,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The value of `log_statement` flag determined the SQL statements that are logged. Valid values are:- `none`- `ddl`- `mod`- `all`The value `ddl` logs all data definition statements.The value `mod` logs all ddl statements, plus data-modifying statements.The statements are logged after a basic parsing is done and statement type is determined, thus this does not logs statements with errors. When using extended query protocol, logging occurs after an Execute message is received and values of the Bind parameters are included.A value of 'ddl' is recommended unless otherwise directed by your organization's logging policy.",
@@ -1491,8 +1491,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_messages` flag defines the minimum message severity level that is considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include (from lowest to highest severity) `DEBUG5`, `DEBUG4`, `DEBUG3`, `DEBUG2`, `DEBUG1`, `INFO`, `NOTICE`, `WARNING`, `ERROR`, `LOG`, `FATAL`, and `PANIC`.Each severity level includes the subsequent levels mentioned above. ERROR is considered the best practice setting. Changes should only be made in accordance with the organization's logging policy.",
@@ -1514,8 +1514,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_error_statement` flag defines the minimum message severity level that are considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include (from lowest to highest severity) `DEBUG5`, `DEBUG4`, `DEBUG3`, `DEBUG2`, `DEBUG1`, `INFO`, `NOTICE`, `WARNING`, `ERROR`, `LOG`, `FATAL`, and `PANIC`.Each severity level includes the subsequent levels mentioned above. Ensure a value of `ERROR` or stricter is set.",
@@ -1537,8 +1537,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_duration_statement` flag defines the minimum amount of execution time of a statement in milliseconds where the total duration of the statement is logged. Ensure that `log_min_duration_statement` is disabled, i.e., a value of `-1` is set.",
@@ -1560,8 +1560,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.2. PostgreSQL Database",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.2 PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure `cloudsql.enable_pgaudit` database flag for Cloud SQL PostgreSQL instance is set to `on` to allow for centralized logging.",
@@ -1583,8 +1583,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `external scripts enabled` database flag for Cloud SQL SQL Server instance to `off`",
@@ -1606,8 +1606,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `cross db ownership chaining` database flag for Cloud SQL SQL Server instance to `off`.This flag is deprecated for all SQL Server versions in CGP. Going forward, you can't set its value to on. However, if you have this flag enabled, we strongly recommend that you either remove the flag from your database or set it to off. For cross-database access, use the [Microsoft tutorial for signing stored procedures with a certificate](https://learn.microsoft.com/en-us/sql/relational-databases/tutorial-signing-stored-procedures-with-a-certificate?view=sql-server-ver16).",
@@ -1629,8 +1629,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to check the `user connections` for a Cloud SQL SQL Server instance to ensure that it is not artificially limiting connections.",
@@ -1652,8 +1652,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that, `user options` database flag for Cloud SQL SQL Server instance should not be configured.",
@@ -1675,8 +1675,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `remote access` database flag for Cloud SQL SQL Server instance to `off`.",
@@ -1694,12 +1694,12 @@
       "Id": "6.3.6",
       "Description": "Ensure '3625 (trace flag)' database flag for all Cloud SQL Server instances is set to 'on'",
       "Checks": [
-        "cloudsql_instance_sqlserver_trace_flag\""
+        "cloudsql_instance_sqlserver_trace_flag"
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `3625 (trace flag)` database flag for Cloud SQL SQL Server instance to `on`.",
@@ -1721,8 +1721,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Cloud SQL Database Services",
-          "SubSection": "6.3. SQL Server",
+          "Section": "6 Cloud SQL Database Services",
+          "SubSection": "6.3 SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended not to set `contained database authentication` database flag for Cloud SQL on the SQL Server instance to `on`.",
@@ -1744,7 +1744,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. BigQuery",
+          "Section": "7 BigQuery",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that the IAM policy on BigQuery datasets does not allow anonymous and/or public access.",
@@ -1766,7 +1766,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. BigQuery",
+          "Section": "7 BigQuery",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "BigQuery by default encrypts the data as rest by employing `Envelope Encryption` using Google managed cryptographic keys. The data is encrypted using the `data encryption keys` and data encryption keys themselves are further encrypted using `key encryption keys`. This is seamless and do not require any additional input from the user. However, if you want to have greater control, Customer-managed encryption keys (CMEK) can be used as encryption key management solution for BigQuery Data Sets. If CMEK is used, the CMEK is used to encrypt the data encryption keys instead of using google-managed encryption keys.",
@@ -1788,7 +1788,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. BigQuery",
+          "Section": "7 BigQuery",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "BigQuery by default encrypts the data as rest by employing `Envelope Encryption` using Google managed cryptographic keys. The data is encrypted using the `data encryption keys` and data encryption keys themselves are further encrypted using `key encryption keys`. This is seamless and do not require any additional input from the user. However, if you want to have greater control, Customer-managed encryption keys (CMEK) can be used as encryption key management solution for BigQuery Data Sets.",
@@ -1808,7 +1808,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7. BigQuery",
+          "Section": "7 BigQuery",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "BigQuery tables can contain sensitive data that for security purposes should be discovered, monitored, classified, and protected. Google Cloud's Sensitive Data Protection tools can automatically provide data classification of all BigQuery data across an organization.",
@@ -1830,7 +1830,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Dataproc",
+          "Section": "8 Dataproc",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "When you use Dataproc, cluster and job data is stored on Persistent Disks (PDs) associated with the Compute Engine VMs in your cluster and in a Cloud Storage staging bucket. This PD and bucket data is encrypted using a Google-generated data encryption key (DEK) and key encryption key (KEK). The CMEK feature allows you to create, use, and revoke the key encryption key (KEK). Google still controls the data encryption key (DEK).",

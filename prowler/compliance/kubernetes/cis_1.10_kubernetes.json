@@ -10,8 +10,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the API server pod specification file has permissions of `600` or more restrictive.",
@@ -31,8 +31,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the API server pod specification file ownership is set to `root:root`.",
@@ -52,8 +52,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
@@ -73,8 +73,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the controller manager pod specification file ownership is set to `root:root`.",
@@ -94,8 +94,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the scheduler pod specification file has permissions of `600` or more restrictive.",
@@ -115,8 +115,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the scheduler pod specification file ownership is set to `root:root`.",
@@ -136,8 +136,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `/etc/kubernetes/manifests/etcd.yaml` file has permissions of `600` or more restrictive.",
@@ -157,8 +157,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `/etc/kubernetes/manifests/etcd.yaml` file ownership is set to `root:root`.",
@@ -178,8 +178,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the Container Network Interface files have permissions of `600` or more restrictive.",
@@ -199,8 +199,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the Container Network Interface files have ownership set to `root:root`.",
@@ -220,8 +220,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the etcd data directory has permissions of `700` or more restrictive.",
@@ -241,8 +241,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the etcd data directory ownership is set to `etcd:etcd`.",
@@ -262,8 +262,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `admin.conf` file (and `super-admin.conf` file, where it exists) have permissions of `600`.",
@@ -283,8 +283,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `admin.conf` (and `super-admin.conf` file, where it exists) file ownership is set to `root:root`.",
@@ -304,8 +304,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `scheduler.conf` file has permissions of `600` or more restrictive.",
@@ -325,8 +325,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `scheduler.conf` file ownership is set to `root:root`.",
@@ -346,8 +346,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `controller-manager.conf` file has permissions of 600 or more restrictive.",
@@ -367,8 +367,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `controller-manager.conf` file ownership is set to `root:root`.",
@@ -388,8 +388,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the Kubernetes PKI directory and file ownership is set to `root:root`.",
@@ -409,8 +409,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that Kubernetes PKI certificate files have permissions of `600` or more restrictive.",
@@ -430,8 +430,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.1. Control Plane Node Configuration Files",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.1 Control Plane Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that Kubernetes PKI key files have permissions of `600`.",
@@ -453,8 +453,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Disable anonymous requests to the API server.",
@@ -476,8 +476,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not use token based authentication.",
@@ -499,8 +499,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "This admission controller rejects all net-new usage of the Service field externalIPs.",
@@ -522,8 +522,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable certificate based kubelet authentication.",
@@ -545,8 +545,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Verify kubelet's certificate before establishing connection.",
@@ -568,8 +568,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not always authorize all requests.",
@@ -591,8 +591,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Restrict kubelet nodes to reading only objects associated with them.",
@@ -614,8 +614,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Turn on Role Based Access Control.",
@@ -637,8 +637,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Limit the rate at which the API server accepts requests.",
@@ -660,8 +660,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not allow all requests.",
@@ -683,8 +683,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Always pull images.",
@@ -706,8 +706,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Automate service accounts management.",
@@ -729,8 +729,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Reject creating objects in a namespace that is undergoing termination.",
@@ -752,8 +752,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Limit the `Node` and `Pod` objects that a kubelet could modify.",
@@ -775,8 +775,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Disable profiling, if not needed.",
@@ -798,8 +798,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable auditing on the Kubernetes API Server and set the desired audit log path.",
@@ -821,8 +821,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Retain the logs for at least 30 days or as appropriate.",
@@ -844,8 +844,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Retain 10 or an appropriate number of old log files.",
@@ -867,8 +867,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Rotate log files on reaching 100 MB or as appropriate.",
@@ -890,8 +890,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Set global request timeout for API server requests as appropriate.",
@@ -913,8 +913,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Validate service account before validating token.",
@@ -936,8 +936,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Explicitly set a service account public key file for service accounts on the apiserver.",
@@ -959,8 +959,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured to make use of TLS encryption for client connections.",
@@ -982,8 +982,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Setup TLS connection on the API server.",
@@ -1005,8 +1005,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Setup TLS connection on the API server.",
@@ -1028,8 +1028,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured to make use of TLS encryption for client connections.",
@@ -1051,8 +1051,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Encrypt etcd key-value store.",
@@ -1072,8 +1072,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Where `etcd` encryption is used, appropriate providers should be configured.",
@@ -1095,8 +1095,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.2. API Server",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.2 API Server",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the API server is configured to only use strong cryptographic ciphers.",
@@ -1118,8 +1118,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Activate garbage collector on pod termination, as appropriate.",
@@ -1141,8 +1141,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Disable profiling, if not needed.",
@@ -1164,8 +1164,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Use individual service account credentials for each controller.",
@@ -1187,8 +1187,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Explicitly set a service account private key file for service accounts on the controller manager.",
@@ -1210,8 +1210,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Allow pods to verify the API server's serving certificate before establishing connections.",
@@ -1233,8 +1233,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable kubelet server certificate rotation on controller-manager.",
@@ -1256,8 +1256,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.3. Controller Manager",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.3 Controller Manager",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not bind the Controller Manager service to non-loopback insecure addresses.",
@@ -1279,8 +1279,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.4. Scheduler",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.4 Scheduler",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Disable profiling, if not needed.",
@@ -1302,8 +1302,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Control Plane Components",
-          "SubSection": "1.4. Scheduler",
+          "Section": "1 Control Plane Components",
+          "SubSection": "1.4 Scheduler",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not bind the scheduler service to non-loopback insecure addresses.",
@@ -1325,7 +1325,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Configure TLS encryption for the etcd service.",
@@ -1347,7 +1347,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable client authentication on etcd service.",
@@ -1369,7 +1369,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not use self-signed certificates for TLS.",
@@ -1391,7 +1391,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured to make use of TLS encryption for peer connections.",
@@ -1413,7 +1413,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "etcd should be configured for peer authentication.",
@@ -1435,7 +1435,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not use automatically generated self-signed certificates for TLS connections between peers.",
@@ -1457,7 +1457,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. etcd",
+          "Section": "2 etcd",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Use a different certificate authority for etcd from the one used for Kubernetes.",
@@ -1477,8 +1477,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
-          "SubSection": "3.1. Authentication and Authorization",
+          "Section": "3 Control Plane Configuration",
+          "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes provides the option to use client certificates for user authentication. However as there is no way to revoke these certificates when a user leaves an organization or loses their credential, they are not suitable for this purpose.It is not possible to fully disable client certificate use within a cluster as it is used for component to component authentication.",
@@ -1498,8 +1498,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
-          "SubSection": "3.1. Authentication and Authorization",
+          "Section": "3 Control Plane Configuration",
+          "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes provides service account tokens which are intended for use by workloads running in the Kubernetes cluster, for authentication to the API server.These tokens are not designed for use by end-users and do not provide for features such as revocation or expiry, making them insecure. A newer version of the feature (Bound service account token volumes) does introduce expiry but still does not allow for specific revocation.",
@@ -1519,8 +1519,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
-          "SubSection": "3.1. Authentication and Authorization",
+          "Section": "3 Control Plane Configuration",
+          "SubSection": "3.1 Authentication and Authorization",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes provides bootstrap tokens which are intended for use by new nodes joining the clusterThese tokens are not designed for use by end-users they are specifically designed for the purpose of bootstrapping new nodes and not for general authentication",
@@ -1540,8 +1540,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
-          "SubSection": "3.2. Logging",
+          "Section": "3 Control Plane Configuration",
+          "SubSection": "3.2 Logging",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes can audit the details of requests made to the API server. The `--audit-policy-file` flag must be set for this logging to be enabled.",
@@ -1561,8 +1561,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Control Plane Configuration",
-          "SubSection": "3.2. Logging",
+          "Section": "3 Control Plane Configuration",
+          "SubSection": "3.2 Logging",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the audit policy created for the cluster covers key security concerns.",
@@ -1584,8 +1584,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `kubelet` service file has permissions of `600` or more restrictive.",
@@ -1607,8 +1607,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `kubelet` service file ownership is set to `root:root`.",
@@ -1628,8 +1628,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "If `kube-proxy` is running, and if it is using a file-based kubeconfig file, ensure that the proxy kubeconfig file has permissions of `600` or more restrictive.",
@@ -1649,8 +1649,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "If `kube-proxy` is running, ensure that the file ownership of its kubeconfig file is set to `root:root`.",
@@ -1672,8 +1672,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `kubelet.conf` file has permissions of `600` or more restrictive.",
@@ -1695,8 +1695,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the `kubelet.conf` file ownership is set to `root:root`.",
@@ -1716,8 +1716,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the certificate authorities file has permissions of `600` or more restrictive.",
@@ -1737,8 +1737,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the certificate authorities file ownership is set to `root:root`.",
@@ -1760,8 +1760,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that if the kubelet refers to a configuration file with the `--config` argument, that file has permissions of 600 or more restrictive.",
@@ -1783,8 +1783,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.1. Worker Node Configuration Files",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.1 Worker Node Configuration Files",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that if the kubelet refers to a configuration file with the `--config` argument, that file is owned by root:root.",
@@ -1806,8 +1806,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Disable anonymous requests to the Kubelet server.",
@@ -1829,8 +1829,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Do not allow all requests. Enable explicit authorization.",
@@ -1852,8 +1852,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable Kubelet authentication using certificates.",
@@ -1875,8 +1875,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Disable the read-only port.",
@@ -1898,8 +1898,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not disable timeouts on streaming connections.",
@@ -1921,8 +1921,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Allow Kubelet to manage iptables.",
@@ -1942,8 +1942,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not override node hostnames.",
@@ -1965,8 +1965,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 2 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Security relevant information should be captured. The eventRecordQPS on the Kubelet configuration can be used to limit the rate at which events are gathered and sets the maximum event creations per second. Setting this too low could result in relevant events not being logged, however the unlimited setting of `0` could result in a denial of service on the kubelet.",
@@ -1988,8 +1988,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Setup TLS connection on the Kubelets.",
@@ -2011,8 +2011,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Enable kubelet client certificate rotation.",
@@ -2032,8 +2032,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Enable kubelet server certificate rotation.",
@@ -2055,8 +2055,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the Kubelet is configured to only use strong cryptographic ciphers.",
@@ -2076,8 +2076,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.2. Kubelet",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.2 Kubelet",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the Kubelet sets limits on the number of PIDs that can be created by pods running on the node.",
@@ -2097,8 +2097,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Worker Nodes",
-          "SubSection": "4.3. kube-proxy",
+          "Section": "4 Worker Nodes",
+          "SubSection": "4.3 kube-proxy",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not bind the kube-proxy metrics port to non-loopback addresses.",
@@ -2120,8 +2120,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "The RBAC role `cluster-admin` provides wide-ranging powers over the environment and should be used only where and when needed.",
@@ -2143,8 +2143,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "The Kubernetes API stores secrets, which may be service account tokens for the Kubernetes API or credentials used by workloads in the cluster. Access to these secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.",
@@ -2166,8 +2166,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Worker Node",
           "AssessmentStatus": "Automated",
           "Description": "Kubernetes Roles and ClusterRoles provide access to resources based on sets of objects and actions that can be taken on those objects. It is possible to set either of these to be the wildcard \"*\" which matches all items. Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.",
@@ -2189,8 +2189,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "The ability to create pods in a namespace can provide a number of opportunities for privilege escalation, such as assigning privileged service accounts to these pods or mounting hostPaths with access to sensitive data (unless Pod Security Policies are implemented to restrict this access)As such, access to create new pods should be restricted to the smallest possible group of users.",
@@ -2210,8 +2210,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "The `default` service account should not be used to ensure that rights granted to applications can be more easily audited and reviewed.",
@@ -2231,8 +2231,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Automated",
           "Description": "Service accounts tokens should not be mounted in pods except where the workload running in the pod explicitly needs to communicate with the API server",
@@ -2252,8 +2252,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "The special group `system:masters` should not be used to grant permissions to any user or service account, except where strictly necessary (e.g. bootstrapping access prior to RBAC being fully available)",
@@ -2273,8 +2273,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Cluster roles and roles with the impersonate, bind or escalate permissions should not be granted unless strictly required. Each of these permissions allow a particular subject to escalate their privileges beyond those explicitly granted by cluster administrators",
@@ -2296,8 +2296,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "The ability to create persistent volumes in a cluster can provide an opportunity for privilege escalation, via the creation of `hostPath` volumes. As persistent volumes are not covered by Pod Security Admission, a user with access to create persistent volumes may be able to get access to sensitive files from the underlying host even where restrictive Pod Security Admission policies are in place.",
@@ -2319,8 +2319,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Users with access to the `Proxy` sub-resource of `Node` objects automatically have permissions to use the Kubelet API, which may allow for privilege escalation or bypass cluster security controls such as audit logs.The Kubelet provides an API which includes rights to execute commands in any container running on the node. Access to this API is covered by permissions to the main Kubernetes API via the `node` object. The proxy sub-resource specifically allows wide ranging access to the Kubelet API.Direct access to the Kubelet API bypasses controls like audit logging (there is no audit log of Kubelet API access) and admission control.",
@@ -2342,8 +2342,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Users with access to the update the `approval` sub-resource of `certificateaigningrequests` objects can approve new client certificates for the Kubernetes API effectively allowing them to create new high-privileged user accounts.This can allow for privilege escalation to full cluster administrator, depending on users configured in the cluster",
@@ -2365,8 +2365,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Users with rights to create/modify/delete `validatingwebhookconfigurations` or `mutatingwebhookconfigurations` can control webhooks that can read any object admitted to the cluster, and in the case of mutating webhooks, also mutate admitted objects. This could allow for privilege escalation or disruption of the operation of the cluster.",
@@ -2388,8 +2388,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.1. RBAC and Service Accounts",
+          "Section": "5 Policies",
+          "SubSection": "5.1 RBAC and Service Accounts",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Users with rights to create new service account tokens at a cluster level, can create long-lived privileged credentials in the cluster. This could allow for privilege escalation and persistent access to the cluster, even if the users account has been revoked.",
@@ -2409,8 +2409,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Every Kubernetes cluster should have at least one policy control mechanism in place to enforce the other requirements in this section. This could be the in-built Pod Security Admission controller, or a third party policy control system.",
@@ -2432,8 +2432,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run with the `securityContext.privileged` flag set to `true`.",
@@ -2455,8 +2455,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run with the `hostPID` flag set to true.",
@@ -2478,8 +2478,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run with the `hostIPC` flag set to true.",
@@ -2501,8 +2501,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run with the `hostNetwork` flag set to true.",
@@ -2524,8 +2524,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run with the `allowPrivilegeEscalation` flag set to true. Allowing this right can lead to a process running a container getting more rights than it started with.It's important to note that these rights are still constrained by the overall container sandbox, and this setting does not relate to the use of privileged containers.",
@@ -2547,8 +2547,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run as the root user.",
@@ -2570,8 +2570,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers with the potentially dangerous NET_RAW capability.",
@@ -2593,8 +2593,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers with capabilities assigned beyond the default set.",
@@ -2616,8 +2616,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers with capabilities",
@@ -2639,8 +2639,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit Windows containers to be run with the `hostProcess` flag set to true.",
@@ -2660,8 +2660,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally admit containers which make use of `hostPath` volumes.",
@@ -2683,8 +2683,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.2. Ensure that the cluster has at least one active policy control mechanism in place",
+          "Section": "5 Policies",
+          "SubSection": "5.2 Ensure that the cluster has at least one active policy control mechanism in place",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers which require the use of HostPorts.",
@@ -2704,8 +2704,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.3. Network Policies and CNI",
+          "Section": "5 Policies",
+          "SubSection": "5.3 Network Policies and CNI",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "There are a variety of CNI plugins available for Kubernetes. If the CNI in use does not support Network Policies it may not be possible to effectively restrict traffic in the cluster.",
@@ -2725,8 +2725,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.3. Network Policies and CNI",
+          "Section": "5 Policies",
+          "SubSection": "5.3 Network Policies and CNI",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Use network policies to isolate traffic in your cluster network.",
@@ -2748,8 +2748,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.4. Secrets Management",
+          "Section": "5 Policies",
+          "SubSection": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes supports mounting secrets as data volumes or as environment variables. Minimize the use of environment variable secrets.",
@@ -2769,8 +2769,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.4. Secrets Management",
+          "Section": "5 Policies",
+          "SubSection": "5.4 Secrets Management",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Consider the use of an external secrets storage and management system, instead of using Kubernetes Secrets directly, if you have more complex secret management needs. Ensure the solution requires authentication to access secrets, has auditing of access to and use of secrets, and encrypts secrets. Some solutions also make it easier to rotate secrets.",
@@ -2790,8 +2790,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.5. Extensible Admission Control",
+          "Section": "5 Policies",
+          "SubSection": "5.5 Extensible Admission Control",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Configure Image Provenance for your deployment.",
@@ -2811,8 +2811,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.7. General Policies",
+          "Section": "5 Policies",
+          "SubSection": "5.7 General Policies",
           "Profile": "Level 1 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Use namespaces to isolate your Kubernetes objects.",
@@ -2834,8 +2834,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.7. General Policies",
+          "Section": "5 Policies",
+          "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Enable `docker/default` seccomp profile in your pod definitions.",
@@ -2855,8 +2855,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.7. General Policies",
+          "Section": "5 Policies",
+          "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Apply Security Context to Your Pods and Containers",
@@ -2876,8 +2876,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Policies",
-          "SubSection": "5.7. General Policies",
+          "Section": "5 Policies",
+          "SubSection": "5.7 General Policies",
           "Profile": "Level 2 - Master Node",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes provides a default namespace, where objects are placed if no namespace is specified for them. Placing objects in this namespace makes application of RBAC and other controls more difficult.",
