@@ -1353,7 +1353,9 @@
     {
       "Id": "5.2.3.4",
       "Description": "Microsoft defines Multifactor authentication capable as being registered and enabled for a strong authentication method. The method must also be allowed by the authentication methods policy.Ensure all member users are `MFA capable`.",
-      "Checks": [],
+      "Checks": [
+        "entra_users_mfa_capable"
+      ],
       "Attributes": [
         {
           "Section": "5.2.3",
