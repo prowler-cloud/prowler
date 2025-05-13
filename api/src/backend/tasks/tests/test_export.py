@@ -14,8 +14,9 @@ from tasks.jobs.export import (
 
 @pytest.mark.django_db
 class TestOutputs:
-    def test_compress_output_files_creates_zip(self, tmp_path):
-        output_dir = tmp_path / "output"
+    def test_compress_output_files_creates_zip(self, tmp_path_factory):
+        base_tmp = tmp_path_factory.mktemp("compress_output")
+        output_dir = base_tmp / "output"
         output_dir.mkdir()
         file_path = output_dir / "result.csv"
         file_path.write_text("data")
@@ -54,16 +55,16 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
-    def test_upload_to_s3_success(self, mock_base, mock_get_client, tmp_path):
+    def test_upload_to_s3_success(self, mock_base, mock_get_client, tmp_path_factory):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
 
-        zip_path = tmp_path / "outputs.zip"
+        base_tmp = tmp_path_factory.mktemp("upload_success")
+        zip_path = base_tmp / "outputs.zip"
         zip_path.write_bytes(b"dummy")
 
-        compliance_dir = tmp_path / "compliance"
+        compliance_dir = base_tmp / "compliance"
         compliance_dir.mkdir()
-        compliance_file = compliance_dir / "report.csv"
-        compliance_file.write_text("ok")
+        (compliance_dir / "report.csv").write_text("ok")
 
         client_mock = MagicMock()
         mock_get_client.return_value = client_mock
@@ -72,7 +73,6 @@ class TestOutputs:
 
         expected_uri = "s3://test-bucket/tenant-id/scan-id/outputs.zip"
         assert result == expected_uri
-
         assert client_mock.upload_file.call_count == 2
 
     @patch("tasks.jobs.export.get_s3_client")
@@ -84,12 +84,16 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
-    def test_upload_to_s3_skips_non_files(self, mock_base, mock_get_client, tmp_path):
+    def test_upload_to_s3_skips_non_files(
+        self, mock_base, mock_get_client, tmp_path_factory
+    ):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
-        zip_path = tmp_path / "results.zip"
+        base_tmp = tmp_path_factory.mktemp("upload_skips_non_files")
+
+        zip_path = base_tmp / "results.zip"
         zip_path.write_bytes(b"zip")
 
-        compliance_dir = tmp_path / "compliance"
+        compliance_dir = base_tmp / "compliance"
         compliance_dir.mkdir()
         (compliance_dir / "subdir").mkdir()
 
@@ -100,7 +104,6 @@ class TestOutputs:
 
         expected_uri = "s3://test-bucket/tenant/scan/results.zip"
         assert result == expected_uri
-
         client_mock.upload_file.assert_called_once()
 
     @patch(
@@ -110,23 +113,26 @@ class TestOutputs:
     @patch("tasks.jobs.export.base")
     @patch("tasks.jobs.export.logger.error")
     def test_upload_to_s3_failure_logs_error(
-        self, mock_logger, mock_base, mock_get_client, tmp_path
+        self, mock_logger, mock_base, mock_get_client, tmp_path_factory
     ):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "bucket"
-        zip_path = tmp_path / "zipfile.zip"
+
+        base_tmp = tmp_path_factory.mktemp("upload_failure_logs")
+        zip_path = base_tmp / "zipfile.zip"
         zip_path.write_bytes(b"zip")
 
-        compliance_dir = tmp_path / "compliance"
+        compliance_dir = base_tmp / "compliance"
         compliance_dir.mkdir()
         (compliance_dir / "report.csv").write_text("csv")
 
         _upload_to_s3("tenant", str(zip_path), "scan")
         mock_logger.assert_called()
 
-    def test_generate_output_directory_creates_paths(self, tmp_path):
+    def test_generate_output_directory_creates_paths(self, tmp_path_factory):
         from prowler.config.config import output_file_timestamp
 
-        base_dir = str(tmp_path)
+        base_tmp = tmp_path_factory.mktemp("generate_output")
+        base_dir = str(base_tmp)
         tenant_id = "t1"
         scan_id = "s1"
         provider = "aws"
