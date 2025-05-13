@@ -251,7 +251,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = provider.identity.account_name
                 output_data["account_uid"] = provider.identity.account_id
-                output_data["region"] = "global"
+                output_data["region"] = check_output.repository
 
             elif provider.type == "m365":
                 output_data["auth_method"] = (
