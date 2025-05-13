@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "GitHubRepository",
   "Description": "Ensure that repositories require at least 2 code changes approvals before merging a pull request.",
   "Risk": "If repositories do not require at least 2 code changes approvals before merging a pull request, it is possible that code changes are not being reviewed by multiple people, which could lead to the introduction of bugs or security vulnerabilities.",
   "RelatedUrl": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/approving-a-pull-request-with-required-reviews",

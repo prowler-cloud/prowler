@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
   "Severity": "low",
-  "ResourceType": "Other",
+  "ResourceType": "GitHubRepository",
   "Description": "Ensure that public repositories have a SECURITY.md file",
   "Risk": "Not having a SECURITY.md file in a public repository may lead to security vulnerabilities being overlooked by users and contributors.",
   "RelatedUrl": "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository",
