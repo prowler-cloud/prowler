@@ -14,12 +14,8 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import {
-  FindingProps,
-  ProviderProps,
-  ScanProps,
-  SearchParamsProps,
-} from "@/types/components";
+import { ProviderProps } from "@/types";
+import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,

@@ -1,6 +1,12 @@
+"use client";
+
 import { Card, CardBody, Progress } from "@nextui-org/react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import React from "react";
+
+import { DownloadIconButton, toast } from "@/components/ui";
+import { downloadComplianceCsv } from "@/lib/helper";
 
 import { getComplianceIcon } from "../icons";
 
@@ -11,6 +17,8 @@ interface ComplianceCardProps {
   totalRequirements: number;
   prevPassingRequirements: number;
   prevTotalRequirements: number;
+  scanId: string;
+  complianceId: string;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -18,7 +26,12 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   version,
   passingRequirements,
   totalRequirements,
+  scanId,
+  complianceId,
 }) => {
+  const searchParams = useSearchParams();
+  const hasRegionFilter = searchParams.has("filter[region__in]");
+
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
   };
@@ -27,6 +40,8 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     (passingRequirements / totalRequirements) * 100,
   );
 
+  // Calculates the percentage change in passing requirements compared to the previous scan.
+  //
   // const prevRatingPercentage = Math.floor(
   //   (prevPassingRequirements / prevTotalRequirements) * 100,
   // );
@@ -79,13 +94,22 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               }}
               color={getRatingColor(ratingPercentage)}
             />
-            <div className="mt-2 flex justify-between">
+            <div className="mt-2 flex items-center justify-between">
               <small>
                 <span className="mr-1 text-xs font-semibold">
                   {passingRequirements} / {totalRequirements}
                 </span>
                 Passing Requirements
               </small>
+
+              <DownloadIconButton
+                paramId={complianceId}
+                onDownload={() =>
+                  downloadComplianceCsv(scanId, complianceId, toast)
+                }
+                textTooltip="Download compliance CSV report"
+                isDisabled={hasRegionFilter}
+              />
               {/* <small>{getScanChange()}</small> */}
             </div>
           </div>

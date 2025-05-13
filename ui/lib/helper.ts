@@ -1,4 +1,4 @@
-import { getExportsZip } from "@/actions/scans";
+import { getComplianceCsv, getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
@@ -81,6 +81,43 @@ export const downloadScanZip = async (
     toast({
       title: "Download Complete",
       description: "Your scan report has been downloaded successfully.",
+    });
+  } else if (result?.error) {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: result.error,
+    });
+  }
+};
+
+export const downloadComplianceCsv = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+) => {
+  const result = await getComplianceCsv(scanId, complianceId);
+
+  if (result?.success && result?.data) {
+    const binaryString = window.atob(result.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "text/csv" });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download Complete",
+      description: "The compliance report has been downloaded successfully.",
     });
   } else if (result?.error) {
     toast({

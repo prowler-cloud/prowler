@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
+  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment it secures. It is trusted by the industry leaders to uphold the highest standards in security.
 </p>
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
@@ -43,15 +43,29 @@
 
 # Description
 
-**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler Cloud</a>.
+**Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes.
+
+Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
+
+- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
+- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
+- **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
+- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
+- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
+- **National Security Standards:** ENS (Spanish National Security Scheme)
+- **Custom Security Frameworks:** Tailored to your needs
+
+## Prowler CLI and Prowler Cloud
+
+Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and an additional service built on top of it, called <a href="https://prowler.com">Prowler Cloud</a>.
 
 ## Prowler App
 
-Prowler App is a web application that allows you to run Prowler in your cloud provider accounts and visualize the results in a user-friendly interface.
+Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler App](docs/img/overview.png)
 
->More details at [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
+>For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
 ## Prowler CLI
 
@@ -60,6 +74,7 @@ prowler <provider>
 ```
 ![Prowler CLI Execution](docs/img/short-display.png)
 
+
 ## Prowler Dashboard
 
 ```console
@@ -67,7 +82,7 @@ prowler dashboard
 ```
 ![Prowler Dashboard](docs/img/dashboard.png)
 
-It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
+# Prowler at a Glance
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
@@ -75,18 +90,19 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | GCP | 79 | 13 | 7 | 3 |
 | Azure | 140 | 18 | 8 | 3 |
 | Kubernetes | 83 | 7 | 4 | 7 |
-| M365 | 44 | 2 | 1 | 0 |
+| M365 | 44 | 2 | 2 | 0 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
-> You can list the checks, services, compliance frameworks and categories with `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
+> Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
 # 💻 Installation
 
 ## Prowler App
 
-Prowler App can be installed in different ways, depending on your environment:
+Installing Prowler App
+Prowler App offers flexible installation methods tailored to various environments:
 
-> See how to use Prowler App in the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
+> For detailed instructions on using Prowler App, refer to the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
 
 ### Docker Compose
 
@@ -102,8 +118,16 @@ curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/mast
 docker compose up -d
 ```
 
-> Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
-> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+> Containers are built for `linux/amd64`.
+
+### Configuring Your Workstation for Prowler App
+
+If your workstation's architecture is incompatible, you can resolve this by:
+
+- **Setting the environment variable**: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
+- **Using the following flag in your Docker command**: `--platform linux/amd64`
+
+> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ### From GitHub
 
@@ -129,12 +153,12 @@ python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
 > [!IMPORTANT]
-> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
 >
-> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
-> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
+> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
-> Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
+> After completing the setup, access the API documentation at http://localhost:8080/api/v1/docs.
 
 **Commands to run the API Worker**
 
@@ -172,29 +196,31 @@ npm run build
 npm start
 ```
 
-> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python > 3.9.1, < 3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
 
 ```console
 pip install prowler
 prowler -v
 ```
->More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli-installation)
+>For further guidance, refer to [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli-installation)
 
 ### Containers
 
-The available versions of Prowler CLI are the following:
+**Available Versions of Prowler CLI**
 
-- `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
-- `v4-latest`: in sync with `v4` branch (bear in mind that it is not a stable version)
-- `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
-- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
-- `stable`: this tag always point to the latest release.
-- `v4-stable`: this tag always point to the latest release for v4.
-- `v3-stable`: this tag always point to the latest release for v3.
+The following versions of Prowler CLI are available, depending on your requirements:
+
+- `latest`: Synchronizes with the `master` branch. Note that this version is not stable.
+- `v4-latest`: Synchronizes with the `v4` branch. Note that this version is not stable.
+- `v3-latest`: Synchronizes with the `v3` branch. Note that this version is not stable.
+- `<x.y.z>` (release): Stable releases corresponding to specific versions. You can find the complete list of releases [here](https://github.com/prowler-cloud/prowler/releases).
+- `stable`: Always points to the latest release.
+- `v4-stable`: Always points to the latest release for v4.
+- `v3-stable`: Always points to the latest release for v3.
 
 The container images are available here:
 - Prowler CLI:
@@ -206,7 +232,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python > 3.9.1, < 3.13 is required with pip and poetry:
+Python >3.9.1, <3.13 is required with pip and Poetry:
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -216,25 +242,46 @@ poetry install
 python prowler-cli.py -v
 ```
 > [!IMPORTANT]
-> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
->
-> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
-> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+> To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
 
-> If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
-# 📐✏️ High level architecture
+> [!IMPORTANT]
+> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
+>
+> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
+> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
+
+# ✏️ High level architecture
 
 ## Prowler App
-The **Prowler App** consists of three main components:
+**Prowler App** is composed of three key components:
 
-- **Prowler UI**: A user-friendly web interface for running Prowler and viewing results, powered by Next.js.
-- **Prowler API**: The backend API that executes Prowler scans and stores the results, built with Django REST Framework.
-- **Prowler SDK**: A Python SDK that integrates with the Prowler CLI for advanced functionality.
+- **Prowler UI**: A web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
+- **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
+- **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 
 ![Prowler App Architecture](docs/img/prowler-app-architecture.png)
 
 ## Prowler CLI
-You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
+
+**Running Prowler**
+
+Prowler can be executed across various environments, offering flexibility to meet your needs. It can be run from:
+
+- Your own workstation
+
+- A Kubernetes Job
+
+- Google Compute Engine
+
+- Azure Virtual Machines (VMs)
+
+- Amazon EC2 instances
+
+- AWS Fargate or other container platforms
+
+- CloudShell
+
+And many more environments.
 
 ![Architecture](docs/img/architecture.png)
 
@@ -242,23 +289,36 @@ You can run Prowler from your workstation, a Kubernetes Job, a Google Compute En
 
 ## General
 - `Allowlist` now is called `Mutelist`.
-- The `--quiet` option has been deprecated, now use the `--status` flag to select the finding's status you want to get from PASS, FAIL or MANUAL.
-- All `INFO` finding's status has changed to `MANUAL`.
-- The CSV output format is common for all the providers.
+- The `--quiet` option has been deprecated. Use the `--status` flag to filter findings based on their status: PASS, FAIL, or MANUAL.
+- All findings with an `INFO` status have been reclassified as `MANUAL`.
+- The CSV output format is standardized across all providers.
 
-We have deprecated some of our outputs formats:
-- The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
+**Deprecated Output Formats**
+
+The following formats are now deprecated:
+- Native JSON has been replaced with JSON in [OCSF] v1.1.0 format, which is standardized across all providers (https://schema.ocsf.io/).
 
 ## AWS
-- Deprecate the AWS flag --sts-endpoint-region since we use AWS STS regional tokens.
-- To send only FAILS to AWS Security Hub, now use either `--send-sh-only-fails` or `--security-hub --status FAIL`.
+
+**AWS Flag Deprecation**
+
+The flag --sts-endpoint-region has been deprecated due to the adoption of AWS STS regional tokens.
+
+**Sending FAIL Results to AWS Security Hub**
+
+- To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
 
 
 # 📖 Documentation
 
-Install, Usage, Tutorials and Developer Guide is at https://docs.prowler.com/
+**Documentation Resources**
+
+For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
 # 📃 License
 
-Prowler is licensed as Apache License 2.0 as specified in each file. You may obtain a copy of the License at
-<http://www.apache.org/licenses/LICENSE-2.0>
+**Prowler License Information**
+
+Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
+
+A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>

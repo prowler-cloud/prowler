@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -122,8 +123,7 @@ def main() -> None:
     args = parser.parse_args()
 
     metrics_dir = Path(args.metrics_dir)
-    if not metrics_dir.is_dir():
-        sys.exit(f"Metrics directory not found: {metrics_dir}")
+    os.makedirs(metrics_dir, exist_ok=True)
 
     metrics_data: dict[str, pd.DataFrame] = {}
     for csv_file in sorted(metrics_dir.glob("*.csv")):

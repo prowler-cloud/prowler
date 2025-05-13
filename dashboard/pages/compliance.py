@@ -408,7 +408,9 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
-            data.drop_duplicates(keep="first", inplace=True)
+            data = data.drop_duplicates(
+                subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
+            )
 
             if "threatscore" in analytics_input:
                 data = get_threatscore_mean_by_pillar(data)
@@ -431,6 +433,9 @@ def display_data(
             )
 
         df = data.copy()
+        # Remove Muted rows
+        if "MUTED" in df.columns:
+            df = df[df["MUTED"] == "False"]
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
 

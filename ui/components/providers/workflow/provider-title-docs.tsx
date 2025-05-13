@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 import { getProviderName } from "@/components/ui/entities/get-provider-logo";
-import { ProviderType } from "@/components/ui/entities/get-provider-logo";
 import { getProviderLogo } from "@/components/ui/entities/get-provider-logo";
+import { ProviderType } from "@/types";
 
 export const ProviderTitleDocs = ({
   providerType,
@@ -20,6 +20,11 @@ export const ProviderTitleDocs = ({
         return {
           text: "Need help connecting your Azure subscription?",
           link: "https://goto.prowler.com/provider-azure",
+        };
+      case "m365":
+        return {
+          text: "Need help connecting your Microsoft 365 account?",
+          link: "https://goto.prowler.com/provider-m365",
         };
       case "gcp":
         return {

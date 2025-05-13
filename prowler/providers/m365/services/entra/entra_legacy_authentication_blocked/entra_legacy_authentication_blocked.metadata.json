@@ -3,10 +3,10 @@
   "CheckID": "entra_legacy_authentication_blocked",
   "CheckTitle": "Ensure that Conditional Access policy blocks legacy authentication",
   "CheckType": [],
-  "ServiceName": "critical",
+  "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
   "Description": "Ensure that Conditional Access policy blocks legacy authentication in Microsoft Entra ID to enforce modern authentication methods and protect against credential-stuffing and brute-force attacks.",
   "Risk": "Legacy authentication protocols do not support MFA, making them vulnerable to credential-stuffing and brute-force attacks. Attackers commonly exploit these protocols to bypass security controls and gain unauthorized access.",
@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

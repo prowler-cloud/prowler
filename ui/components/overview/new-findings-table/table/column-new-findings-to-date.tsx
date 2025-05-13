@@ -4,11 +4,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
+import { DeltaIndicator } from "@/components/findings/table/delta-indicator";
 import { InfoIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../../../findings/muted";
 
@@ -76,11 +77,17 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
       const {
         attributes: { muted },
       } = getFindingsData(row);
+      const { delta } = row.original.attributes;
       return (
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
-          <p className="mr-7 whitespace-normal break-words text-sm">
-            {checktitle}
-          </p>
+          <div className="flex flex-row items-center gap-4">
+            {(delta === "new" || delta === "changed") && (
+              <DeltaIndicator delta={delta} />
+            )}
+            <p className="mr-7 whitespace-normal break-words text-sm">
+              {checktitle}
+            </p>
+          </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
             <Muted isMuted={muted} />
           </span>
@@ -155,7 +162,7 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
       return (
         <>
           <EntityInfoShort
-            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+            cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
           />

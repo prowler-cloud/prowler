@@ -2,17 +2,15 @@
 
 import { Tooltip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
-import { DownloadIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { toast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
+import { DownloadIconButton, toast } from "@/components/ui";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { downloadScanZip } from "@/lib/helper";
-import { ScanProps } from "@/types";
+import { ProviderType, ScanProps } from "@/types";
 
 import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { TriggerIcon } from "../../trigger-icon";
@@ -62,7 +60,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
 
       return (
         <EntityInfoShort
-          cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+          cloudProvider={provider as ProviderType}
           entityAlias={alias}
           entityId={uid}
         />
@@ -136,19 +134,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const scanState = row.original.attributes?.state;
 
       return (
-        <div className="flex w-14 items-center justify-center">
-          <CustomButton
-            variant="ghost"
-            isDisabled={scanState !== "completed"}
-            onPress={() => downloadScanZip(scanId, toast)}
-            className="p-0 text-default-500 hover:text-primary disabled:opacity-30"
-            isIconOnly
-            ariaLabel="Download .zip"
-            size="sm"
-          >
-            <DownloadIcon size={16} />
-          </CustomButton>
-        </div>
+        <DownloadIconButton
+          paramId={scanId}
+          onDownload={() => downloadScanZip(scanId, toast)}
+          isDisabled={scanState !== "completed"}
+        />
       );
     },
   },

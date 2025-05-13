@@ -7,9 +7,11 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
+from tasks.jobs.backfill import backfill_resource_scan_summaries
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
+    COMPLIANCE_CLASS_MAP,
     OUTPUT_FORMATS_MAPPING,
     _compress_output_files,
     _generate_output_directory,
@@ -18,11 +20,14 @@ from tasks.jobs.export import (
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 from tasks.utils import batched, get_next_execution_datetime
 
+from api.compliance import get_compliance_frameworks
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -251,84 +256,118 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         logger.info(f"No findings found for scan {scan_id}")
         return {"upload": False}
 
-    # Initialize the prowler provider
-    prowler_provider = initialize_prowler_provider(Provider.objects.get(id=provider_id))
+    provider_obj = Provider.objects.get(id=provider_id)
+    prowler_provider = initialize_prowler_provider(provider_obj)
+    provider_uid = provider_obj.uid
+    provider_type = provider_obj.provider
 
-    # Get the provider UID
-    provider_uid = Provider.objects.get(id=provider_id).uid
-
-    # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(
+    frameworks_bulk = Compliance.get_bulk(provider_type)
+    frameworks_avail = get_compliance_frameworks(provider_type)
+    out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
-    # Define auxiliary variables
+    def get_writer(writer_map, name, factory, is_last):
+        """
+        Return existing writer_map[name] or create via factory().
+        In both cases set `.close_file = is_last`.
+        """
+        initialization = False
+        if name not in writer_map:
+            writer_map[name] = factory()
+            initialization = True
+        w = writer_map[name]
+        w.close_file = is_last
+
+        return w, initialization
+
     output_writers = {}
+    compliance_writers = {}
+
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    # Retrieve findings queryset
-    findings_qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid")
+    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
 
-    # Process findings in batches
-    for batch, is_last_batch in batched(
-        findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
-    ):
-        finding_outputs = [
-            FindingOutput.transform_api_finding(finding, prowler_provider)
-            for finding in batch
-        ]
-
-        # Generate output files
-        for mode, config in OUTPUT_FORMATS_MAPPING.items():
-            kwargs = dict(config.get("kwargs", {}))
+        # Outputs
+        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+            cls = cfg["class"]
+            suffix = cfg["suffix"]
+            extra = cfg.get("kwargs", {}).copy()
             if mode == "html":
-                kwargs["provider"] = prowler_provider
-                kwargs["stats"] = scan_summary
+                extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer_class = config["class"]
-            if writer_class in output_writers:
-                writer = output_writers[writer_class]
-                writer.transform(finding_outputs)
-                writer.close_file = is_last_batch
-            else:
-                writer = writer_class(
-                    findings=finding_outputs,
-                    file_path=output_directory,
-                    file_extension=config["suffix"],
+            writer, initialization = get_writer(
+                output_writers,
+                cls,
+                lambda cls=cls, fos=fos, suffix=suffix: cls(
+                    findings=fos,
+                    file_path=out_dir,
+                    file_extension=suffix,
                     from_cli=False,
-                )
-                writer.close_file = is_last_batch
-                output_writers[writer_class] = writer
+                ),
+                is_last,
+            )
+            if not initialization:
+                writer.transform(fos)
+            writer.batch_write_data_to_file(**extra)
+            writer._data.clear()
 
-            # Write the current batch using the writer
-            writer.batch_write_data_to_file(**kwargs)
+        # Compliance CSVs
+        for name in frameworks_avail:
+            compliance_obj = frameworks_bulk[name]
 
-            # TODO: Refactor the output classes to avoid this manual reset
-            writer._data = []
+            klass = GenericCompliance
+            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                if condition(name):
+                    klass = cls
+                    break
 
-    # Compress output files
-    output_directory = _compress_output_files(output_directory)
+            filename = f"{comp_dir}_{name}.csv"
 
-    # Save to configured storage
-    uploaded = _upload_to_s3(tenant_id, output_directory, scan_id)
+            writer, initialization = get_writer(
+                compliance_writers,
+                name,
+                lambda klass=klass, fos=fos: klass(
+                    findings=fos,
+                    compliance=compliance_obj,
+                    file_path=filename,
+                    from_cli=False,
+                ),
+                is_last,
+            )
+            if not initialization:
+                writer.transform(fos, compliance_obj, name)
+            writer.batch_write_data_to_file()
+            writer._data.clear()
 
-    if uploaded:
-        # Remove the local files after upload
+    compressed = _compress_output_files(out_dir)
+    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    if upload_uri:
         try:
-            rmtree(Path(output_directory).parent, ignore_errors=True)
-        except FileNotFoundError as e:
+            rmtree(Path(compressed).parent, ignore_errors=True)
+        except Exception as e:
             logger.error(f"Error deleting output files: {e}")
-
-        output_directory = uploaded
-        uploaded = True
+        final_location, did_upload = upload_uri, True
     else:
-        uploaded = False
+        final_location, did_upload = compressed, False
 
-    # Update the scan instance with the output path
-    Scan.all_objects.filter(id=scan_id).update(output_location=output_directory)
+    Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
+    logger.info(f"Scan outputs at {final_location}")
+    return {"upload": did_upload}
 
-    logger.info(f"Scan output files generated, output location: {output_directory}")
 
-    return {"upload": uploaded}
+@shared_task(name="backfill-scan-resource-summaries", queue="backfill")
+def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Tries to backfill the resource scan summaries table for a given scan.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)

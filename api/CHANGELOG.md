@@ -2,12 +2,22 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.8.0] (Prowler UNRELEASED)
 
-## [v1.7.0] (UNRELEASED)
+### Added
+- Added huge improvements to `/findings/metadata` and resource related filters for findings [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
+- Added improvements to `/overviews` endpoints [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
+- Added new queue to perform backfill background tasks [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
+
+---
+
+## [v1.7.0] (Prowler v5.6.0)
 
 ### Added
 
 - Added M365 as a new provider [(#7563)](https://github.com/prowler-cloud/prowler/pull/7563).
+- Added a `compliance/` folder and ZIP‐export functionality for all compliance reports.[(#7653)](https://github.com/prowler-cloud/prowler/pull/7653).
+- Added a new API endpoint to fetch and download any specific compliance file by name [(#7653)](https://github.com/prowler-cloud/prowler/pull/7653).
 
 ---
 

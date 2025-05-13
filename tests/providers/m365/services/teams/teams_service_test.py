@@ -5,6 +5,7 @@ from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.teams.teams_service import (
     CloudStorageSettings,
     GlobalMeetingPolicy,
+    GlobalMessagingPolicy,
     Teams,
     TeamsSettings,
     UserSettings,
@@ -36,6 +37,10 @@ def mock_get_global_meeting_policy(_):
         allow_pstn_users_to_bypass_lobby=False,
         meeting_chat_enabled_type="EnabledExceptAnonymous",
     )
+
+
+def mock_get_global_messaging_policy(_):
+    return GlobalMessagingPolicy(allow_security_end_user_reporting=True)
 
 
 def mock_get_user_settings(_):
@@ -138,3 +143,22 @@ class Test_Teams_Service:
                 meeting_chat_enabled_type="EnabledExceptAnonymous",
             )
             teams_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.teams.teams_service.Teams._get_global_messaging_policy",
+        new=mock_get_global_messaging_policy,
+    )
+    def test_get_global_messaging_policy(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_microsoft_teams"
+            ),
+        ):
+            teams_client = Teams(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert teams_client.global_messaging_policy == GlobalMessagingPolicy(
+                allow_security_end_user_reporting=True
+            )
