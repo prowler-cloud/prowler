@@ -555,6 +555,7 @@ class Check_Report_Github(Check_Report):
         self.resource_id = getattr(resource_metadata, "id", "")
         self.resource_name = getattr(resource_metadata, "name", "")
 
+
 @dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""

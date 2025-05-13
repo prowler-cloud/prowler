@@ -608,7 +608,9 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>M365 Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>M365 Tenant Domain:</b> {
+                provider.identity.tenant_domain
+            }
                             </li>
                         </ul>
                     </div>
@@ -625,9 +627,14 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>M365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
-                            {f'''<li class="list-group-item">
+                            {
+                f'''<li class="list-group-item">
                                 <b>M365 User:</b> {provider.identity.user}
-                            </li>''' if hasattr(provider.identity, 'user') and provider.identity.user is not None else ""}
+                            </li>'''
+                if hasattr(provider.identity, "user")
+                and provider.identity.user is not None
+                else ""
+            }
                         </ul>
                     </div>
                 </div>"""
@@ -698,7 +705,7 @@ class HTML(Output):
             # It is not pretty but useful
             # AWS_provider --> aws
             # GCP_provider --> gcp
-            # GitHub_provider --> github
+            # GitHub_provider --> github
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 
