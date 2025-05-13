@@ -40,7 +40,9 @@ export default async function Scans({
       connected: provider.attributes.connection.connected,
     })) || [];
 
-  const providersCountConnected = await getProviders({ filters: { "filter[connected]": true } });
+  const providersCountConnected = await getProviders({
+    filters: { "filter[connected]": true },
+  });
   const thereIsNoProviders =
     !providersCountConnected?.data || providersCountConnected.data.length === 0;
 
