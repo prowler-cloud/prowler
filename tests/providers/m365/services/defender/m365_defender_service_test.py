@@ -9,6 +9,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     Defender,
     DefenderInboundSpamPolicy,
     DkimConfig,
+    DomainServiceConfiguration,
     MalwarePolicy,
     MalwareRule,
     OutboundSpamPolicy,
@@ -156,6 +157,26 @@ def mock_defender_get_outbound_spam_filter_rule(_):
         ),
         "Policy2": OutboundSpamRule(
             state="Disabled",
+        ),
+    }
+
+
+async def mock_defender_get_domain_service_configuration(_):
+    class Record:
+        def __init__(self, record_type, txt):
+            self.record_type = record_type
+            self.txt = txt
+
+    spf_record = Record("Txt", "v=spf1 include:spf.protection.outlook.com -all")
+    mx_record = Record("Mx", "")
+    empty_txt_record = Record("Txt", "")
+
+    return {
+        "Domain1": DomainServiceConfiguration(
+            service_configuration_records=[spf_record, mx_record]
+        ),
+        "Domain2": DomainServiceConfiguration(
+            service_configuration_records=[empty_txt_record]
         ),
     }
 
@@ -442,3 +463,48 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_domain_service_configurations",
+        new=mock_defender_get_domain_service_configuration,
+    )
+    def test_get_domain_service_configuration(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(set_mocked_m365_provider())
+
+            domain_service_config = defender_client.domain_service_configurations
+            assert len(domain_service_config) == 2
+            assert (
+                domain_service_config["Domain1"]
+                .service_configuration_records[0]
+                .record_type
+                == "Txt"
+            )
+            assert (
+                domain_service_config["Domain1"].service_configuration_records[0].txt
+                == "v=spf1 include:spf.protection.outlook.com -all"
+            )
+            assert (
+                domain_service_config["Domain1"]
+                .service_configuration_records[1]
+                .record_type
+                == "Mx"
+            )
+            assert (
+                domain_service_config["Domain1"].service_configuration_records[1].txt
+                == ""
+            )
+            assert (
+                domain_service_config["Domain2"]
+                .service_configuration_records[0]
+                .record_type
+                == "Txt"
+            )
+            assert (
+                domain_service_config["Domain2"].service_configuration_records[0].txt
+                == ""
+            )

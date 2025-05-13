@@ -1,3 +1,4 @@
+from asyncio import gather, get_event_loop
 from typing import List
 
 from pydantic import BaseModel
@@ -32,6 +33,16 @@ class Defender(M365Service):
             self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
             self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
+
+        loop = get_event_loop()
+        self.tenant_domain = provider.identity.tenant_domain
+        attributes = loop.run_until_complete(
+            gather(
+                self._get_domain_service_configurations(),
+            )
+        )
+
+        self.domain_service_configurations = attributes[0]
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
@@ -276,6 +287,35 @@ class Defender(M365Service):
             )
         return report_submission_policy
 
+    async def _get_domain_service_configurations(self):
+        logger.info("Microsoft365 - Getting domain service configurations...")
+        domains_configuration = {}
+        try:
+            domains_list = await self.client.domains.get()
+            domains_configuration.update({})
+            for domain in domains_list.value:
+                if domain:
+                    domain_configuration = await self.client.domains.by_domain_id(
+                        domain.id
+                    ).service_configuration_records.get()
+                    domains_configuration.update(
+                        {
+                            domain.id: DomainServiceConfiguration(
+                                service_configuration_records=(
+                                    domain_configuration.value
+                                    if domain_configuration.value
+                                    else None
+                                ),
+                            )
+                        }
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return domains_configuration
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -344,3 +384,7 @@ class ReportSubmissionPolicy(BaseModel):
     report_phish_addresses: list[str]
     report_chat_message_enabled: bool
     report_chat_message_to_customized_address_enabled: bool
+
+
+class DomainServiceConfiguration(BaseModel):
+    service_configuration_records: List
