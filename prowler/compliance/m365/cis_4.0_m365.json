@@ -177,7 +177,9 @@
     {
       "Id": "1.3.3",
       "Description": "External calendar sharing allows an administrator to enable the ability for users to share calendars with anyone outside of the organization. Outside users will be sent a URL that can be used to view the calendar.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_external_calendar_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.3",

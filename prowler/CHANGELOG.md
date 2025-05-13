@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
+- Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)

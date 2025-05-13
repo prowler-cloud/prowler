@@ -12,9 +12,11 @@ class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
         self.organization_config = None
+        self.sharing_policy = None
         if self.powershell:
             self.powershell.connect_exchange_online()
             self.organization_config = self._get_organization_config()
+            self.sharing_policy = self._get_sharing_policy()
             self.powershell.close()
 
         loop = get_event_loop()
@@ -52,6 +54,23 @@ class AdminCenter(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return organization_config
+
+    def _get_sharing_policy(self):
+        logger.info("M365 - Getting sharing policy...")
+        sharing_policy = None
+        try:
+            sharing_policy_data = self.powershell.get_sharing_policy()
+            if sharing_policy_data:
+                sharing_policy = SharingPolicy(
+                    name=sharing_policy_data.get("Name", ""),
+                    guid=sharing_policy_data.get("Guid", ""),
+                    enabled=sharing_policy_data.get("Enabled", False),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return sharing_policy
 
     async def _get_users(self):
         logger.info("M365 - Getting users...")
@@ -193,3 +212,9 @@ class Organization(BaseModel):
     name: str
     guid: str
     customer_lockbox_enabled: bool
+
+
+class SharingPolicy(BaseModel):
+    name: str
+    guid: str
+    enabled: bool
