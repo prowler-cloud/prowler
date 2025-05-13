@@ -16,6 +16,9 @@ class Test_admincenter_users_between_two_and_four_global_admins:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
                 new=admincenter_client,
             ),
@@ -39,6 +42,9 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
@@ -90,6 +96,9 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
@@ -152,6 +161,9 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
