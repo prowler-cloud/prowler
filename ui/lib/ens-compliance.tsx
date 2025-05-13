@@ -52,7 +52,6 @@ export const mapComplianceData = (rawData: any) => {
       categoryObj.controls.set(controlKey, {
         label: groupControlLabel,
         tipo: type,
-        description: description || "",
         pass: 0,
         fail: 0,
         manual: 0,
@@ -70,20 +69,22 @@ export const mapComplianceData = (rawData: any) => {
       );
 
       if (!checkExists) {
+        const status = rawStatus === null ? "PASS" : rawStatus;
+
         controlObj.checks.push({
           checkName,
-          status: rawStatus,
+          status: status,
         });
 
-        if (rawStatus === "PASS") {
+        if (status === "PASS" || rawStatus === null) {
           controlObj.pass++;
           categoryObj.pass++;
           frameworkObj.pass++;
-        } else if (rawStatus === "FAIL") {
+        } else if (status === "FAIL") {
           controlObj.fail++;
           categoryObj.fail++;
           frameworkObj.fail++;
-        } else if (rawStatus === "MANUAL") {
+        } else if (status === "MANUAL") {
           controlObj.manual++;
           categoryObj.manual++;
           frameworkObj.manual++;
@@ -111,6 +112,7 @@ const getStatusEmoji = (status: string) => {
   if (status === "PASS") return "✅";
   if (status === "FAIL") return "❌";
   if (status === "MANUAL") return "🖐";
+  return "✅";
 };
 
 const translateType = (tipo: string) => {
@@ -160,22 +162,29 @@ export const toAccordionItems = (data: any[]): AccordionItemProps[] => {
 const renderTitle = (label: string, pass: number, fail: number) => {
   return (
     <div className="flex w-full items-center justify-between">
-      <span className="w-1/2 capitalize">{label}</span>
+      <span className="w-1/2 uppercase">{label}</span>
       <div className="w-1/2">
-        <HorizontalSplitBar
-          valueA={pass}
-          valueB={fail}
-          tooltipContentA="Passed"
-          tooltipContentB="Failed"
-          emptyText="No checks defined"
-          showZero={false}
-          ratio={2}
-          minBarWidth={15}
-        />
+        {pass === 0 && fail === 0 ? (
+          <p className="text-center text-sm text-default-500">
+            Manual requirement
+          </p>
+        ) : (
+          <HorizontalSplitBar
+            valueA={pass}
+            valueB={fail}
+            tooltipContentA="Passed"
+            tooltipContentB="Failed"
+            showZero={false}
+            ratio={2}
+            minBarWidth={15}
+          />
+        )}
       </div>
     </div>
   );
 };
+
+// Todo: change for finding table calling the api with the filter[check_id__in] and filter[scan] which is the scan id
 
 const renderTable = (checks: any[], tipo: string) => {
   const translatedType = translateType(tipo);
@@ -197,7 +206,8 @@ const renderTable = (checks: any[], tipo: string) => {
             <tr key={i} className="border-b">
               <td className="p-2">{check.checkName}</td>
               <td className="p-2 capitalize">
-                {getStatusEmoji(check.status)} &nbsp; {check.status}
+                {getStatusEmoji(check.status)} &nbsp;{" "}
+                {check.status === null ? "PASS" : check.status}
               </td>
             </tr>
           ))}

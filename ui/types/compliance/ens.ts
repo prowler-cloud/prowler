@@ -6,7 +6,6 @@ export interface Check {
 export interface Control {
   label: string;
   tipo: string;
-  description: string;
   pass: number;
   fail: number;
   manual: number;

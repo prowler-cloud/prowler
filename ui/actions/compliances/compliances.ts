@@ -79,3 +79,30 @@ export const getComplianceOverviewMetadataInfo = async ({
     return undefined;
   }
 };
+
+export const getComplianceDetails = async (id: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const url = new URL(`${apiBaseUrl}/compliance-overviews/${id}`);
+
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch compliance details: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching compliance details:", error);
+    return undefined;
+  }
+};

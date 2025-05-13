@@ -2,7 +2,7 @@
 
 import { Card, CardBody, Progress } from "@nextui-org/react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
@@ -19,6 +19,7 @@ interface ComplianceCardProps {
   prevTotalRequirements: number;
   scanId: string;
   complianceId: string;
+  id: string;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -28,8 +29,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   totalRequirements,
   scanId,
   complianceId,
+  id,
 }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
 
   const formatTitle = (title: string) => {
@@ -67,8 +70,21 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     return "success";
   };
 
+  const navigateToDetail = () => {
+    const formattedTitleForUrl = encodeURIComponent(title);
+    router.push(
+      `/compliance/${formattedTitleForUrl}?id=${id}&version=${encodeURIComponent(version)}`,
+    );
+  };
+
   return (
-    <Card fullWidth isHoverable shadow="sm">
+    <Card
+      fullWidth
+      isHoverable
+      shadow="sm"
+      isPressable
+      onPress={navigateToDetail}
+    >
       <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
         <div className="flex w-full items-center space-x-4">
           <Image
