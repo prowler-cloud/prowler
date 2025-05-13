@@ -245,6 +245,14 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
+            elif provider.type == "github":
+                output_data["auth_method"] = provider.auth_method
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["account_name"] = provider.identity.account_name
+                output_data["account_uid"] = provider.identity.account_id
+                output_data["region"] = check_output.repository
+
             elif provider.type == "m365":
                 output_data["auth_method"] = (
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"

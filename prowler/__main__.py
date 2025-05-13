@@ -79,6 +79,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
+    ProwlerThreatScoreM365,
+)
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
@@ -93,6 +96,7 @@ from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
+from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
@@ -275,6 +279,10 @@ def prowler():
         )
     elif provider == "kubernetes":
         output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "github":
+        output_options = GithubOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "m365":
@@ -726,6 +734,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_m365":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreM365(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

@@ -14,13 +14,8 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { ProviderAttributes } from "@/types";
-import {
-  FindingProps,
-  ProviderProps,
-  ScanProps,
-  SearchParamsProps,
-} from "@/types/components";
+import { ProviderAttributes, ProviderProps } from "@/types";
+import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -215,16 +210,16 @@ const SSRDataTable = async ({
   // Expand each finding with its corresponding resource, scan, and provider
   const expandedFindings = findingsData?.data
     ? findingsData.data.map((finding: FindingProps) => {
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
+      const scan = scanDict[finding.relationships?.scan?.data?.id];
+      const resource =
+        resourceDict[finding.relationships?.resources?.data?.[0]?.id];
+      const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
-        return {
-          ...finding,
-          relationships: { scan, resource, provider },
-        };
-      })
+      return {
+        ...finding,
+        relationships: { scan, resource, provider },
+      };
+    })
     : [];
 
   // Create the new object while maintaining the original structure

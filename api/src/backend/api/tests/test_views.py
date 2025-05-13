@@ -3096,7 +3096,9 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
+    def test_findings_metadata_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
+    ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
@@ -3119,14 +3121,14 @@ class TestFindingViewSet:
         )
         # assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_metadata_severity_retrieve(
-        self, authenticated_client, findings_fixture
+    def test_findings_metadata_resource_filter_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
             {
-                "filter[severity__in]": ["low", "medium"],
+                "filter[region]": "eu-west-1",
                 "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -4814,9 +4816,8 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
-            resources_fixture
-        )
+        # Since we rely on completed scans, there are only 2 resources now
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
