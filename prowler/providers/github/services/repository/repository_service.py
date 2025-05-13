@@ -21,10 +21,14 @@ class Repository(GithubService):
                     securitymd_exists = False
                     try:
                         securitymd_exists = repo.get_contents("SECURITY.md") is not None
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not find SECURITY.md for repo {repo.name}: {e}"
-                        )
+                    except Exception as error:
+                        if "404" in str(error):
+                            securitymd_exists = False
+                        else:
+                            logger.error(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                            securitymd_exists = None
 
                     require_pr = False
                     approval_cnt = 0
@@ -41,10 +45,16 @@ class Repository(GithubService):
                                     if require_pr
                                     else 0
                                 )
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not get branch protection for repo {repo.name}: {e}"
-                        )
+                    except Exception as error:
+                        if "404" in str(error):
+                            require_pr = False
+                            approval_cnt = 0
+                        else:
+                            require_pr = None
+                            approval_cnt = None
+                            logger.error(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
                     repos[repo.id] = Repo(
                         id=repo.id,
@@ -72,6 +82,6 @@ class Repo(BaseModel):
     full_name: str
     default_branch: str
     private: bool
-    securitymd: Optional[bool] = False
-    require_pull_request: Optional[bool] = False
-    approval_count: Optional[int] = 0
+    securitymd: Optional[bool]
+    require_pull_request: Optional[bool]
+    approval_count: Optional[int]

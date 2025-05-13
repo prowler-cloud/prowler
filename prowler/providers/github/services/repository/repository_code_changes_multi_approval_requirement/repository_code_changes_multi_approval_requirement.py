@@ -22,16 +22,17 @@ class repository_code_changes_multi_approval_requirement(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = CheckReportGithub(
-                metadata=self.metadata(), resource=repo, repository=repo.name
-            )
-            report.status = "FAIL"
-            report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
+            if repo.approval_count is not None:
+                report = CheckReportGithub(
+                    metadata=self.metadata(), resource=repo, repository=repo.name
+                )
+                report.status = "FAIL"
+                report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
 
-            if repo.approval_count >= 2:
-                report.status = "PASS"
-                report.status_extended = f"Repository {repo.name} does enforce at least 2 approvals for code changes."
+                if repo.approval_count >= 2:
+                    report.status = "PASS"
+                    report.status_extended = f"Repository {repo.name} does enforce at least 2 approvals for code changes."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings

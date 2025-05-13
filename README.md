@@ -90,7 +90,7 @@ prowler dashboard
 | GCP | 79 | 13 | 7 | 3 |
 | Azure | 140 | 18 | 8 | 3 |
 | Kubernetes | 83 | 7 | 4 | 7 |
-| GitHub | 1 | 1 | 1 | 0 |
+| GitHub | 2 | 1 | 1 | 0 |
 | M365 | 44 | 2 | 2 | 0 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
