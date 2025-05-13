@@ -14,9 +14,7 @@ class directoryservice_ldap_certificate_expiration(Check):
         findings = []
         for directory in directoryservice_client.directories.values():
             for certificate in directory.certificates:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=directory
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=directory)
                 report.resource_id = certificate.id
 
                 remaining_days_to_expire = (

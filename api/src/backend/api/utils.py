@@ -1,15 +1,29 @@
 from datetime import datetime, timezone
 
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Subquery
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider, Resource
+from api.v1.serializers import FindingMetadataSerializer
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
+from prowler.providers.m365.m365_provider import M365Provider
 
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Provider, Invitation
+
+class CustomOAuth2Client(OAuth2Client):
+    def __init__(self, client_id, secret, *args, **kwargs):
+        # Remove any duplicate "scope_delimiter" from kwargs
+        # Bug present in dj-rest-auth after version v7.0.1
+        # https://github.com/iMerica/dj-rest-auth/issues/673
+        kwargs.pop("scope_delimiter", None)
+        super().__init__(client_id, secret, *args, **kwargs)
 
 
 def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
@@ -41,14 +55,14 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider]:
+) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider]:
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: The corresponding provider class.
+        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -62,6 +76,8 @@ def return_prowler_provider(
             prowler_provider = AzureProvider
         case Provider.ProviderChoices.KUBERNETES.value:
             prowler_provider = KubernetesProvider
+        case Provider.ProviderChoices.M365.value:
+            prowler_provider = M365Provider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -94,15 +110,15 @@ def get_prowler_provider_kwargs(provider: Provider) -> dict:
 
 def initialize_prowler_provider(
     provider: Provider,
-) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider:
+) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider:
     """Initialize a Prowler provider instance based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, or `KubernetesProvider`) initialized with the
+        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
+            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
@@ -120,7 +136,12 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         Connection: A connection object representing the result of the connection test for the specified provider.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = provider.secret.secret
+
+    try:
+        prowler_provider_kwargs = provider.secret.secret
+    except Provider.secret.RelatedObjectDoesNotExist as secret_error:
+        return Connection(is_connected=False, error=secret_error)
+
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )
@@ -187,3 +208,33 @@ def validate_invitation(
         )
 
     return invitation
+
+
+# ToRemove after removing the fallback mechanism in /findings/metadata
+def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
+    filtered_ids = filtered_queryset.order_by().values("id")
+
+    relevant_resources = Resource.all_objects.filter(
+        tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+    ).only("service", "region", "type")
+
+    aggregation = relevant_resources.aggregate(
+        services=ArrayAgg("service", flat=True),
+        regions=ArrayAgg("region", flat=True),
+        resource_types=ArrayAgg("type", flat=True),
+    )
+
+    services = sorted(set(aggregation["services"] or []))
+    regions = sorted({region for region in aggregation["regions"] or [] if region})
+    resource_types = sorted(set(aggregation["resource_types"] or []))
+
+    result = {
+        "services": services,
+        "regions": regions,
+        "resource_types": resource_types,
+    }
+
+    serializer = FindingMetadataSerializer(data=result)
+    serializer.is_valid(raise_exception=True)
+
+    return serializer.data

@@ -7,9 +7,7 @@ class cosmosdb_account_use_aad_and_rbac(Check):
         findings = []
         for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=account
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=account)
                 report.subscription = subscription
                 report.status = "FAIL"
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} is not using AAD and RBAC"

@@ -6,9 +6,7 @@ class rds_instance_deletion_protection(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             # Check if is member of a cluster
             if db_instance.cluster_id:
                 if (

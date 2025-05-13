@@ -6,7 +6,7 @@ class efs_multi_az_enabled(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fs)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=fs)
             if fs.availability_zone_id:
                 report.status = "FAIL"
                 report.status_extended = f"EFS {fs.id} is a Single-AZ file system."

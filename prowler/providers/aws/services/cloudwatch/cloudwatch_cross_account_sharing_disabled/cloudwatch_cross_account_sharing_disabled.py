@@ -6,9 +6,7 @@ class cloudwatch_cross_account_sharing_disabled(Check):
     def execute(self):
         findings = []
         if iam_client.roles is not None:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=iam_client.roles
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
             report.status = "PASS"
             report.status_extended = "CloudWatch doesn't allow cross-account sharing."
             report.region = iam_client.region
@@ -16,7 +14,7 @@ class cloudwatch_cross_account_sharing_disabled(Check):
             report.resource_id = iam_client.audited_account
             for role in iam_client.roles:
                 if role.name == "CloudWatch-CrossAccountSharingRole":
-                    report = Check_Report_AWS(self.metadata(), role)
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=role)
                     report.region = iam_client.region
                     report.status = "FAIL"
                     report.status_extended = (

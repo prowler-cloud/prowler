@@ -1,0 +1,552 @@
+[
+  {
+    "message": "There are no AppInsight configured in subscription <subscription_name>.",
+    "metadata": {
+      "event_code": "appinsights_ensure_is_configured",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "cloud",
+        "datetime"
+      ],
+      "tenant_uid": "<tenant_uid>",
+      "version": "1.4.0"
+    },
+    "severity_id": 2,
+    "severity": "Low",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "There are no AppInsight configured in subscription <subscription_name>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Because Application Insights relies on a Log Analytics Workspace, an organization will incur additional expenses when using this service.",
+      "compliance": {
+        "CIS-2.1": [
+          "5.3.1"
+        ],
+        "ENS-RD2022": [
+          "mp.s.4.r1.az.nt.2"
+        ],
+        "CIS-3.0": [
+          "6.3.1"
+        ],
+        "CIS-2.0": [
+          "5.3.1"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539650,
+      "created_time_dt": "2025-02-14T14:27:30.710664",
+      "desc": "Application Insights within Azure act as an Application Performance Monitoring solution providing valuable data into how well an application performs and additional information when performing incident response. The types of log data collected include application metrics, telemetry data, and application trace logging data providing organizations with detailed information about application activity and application transactions. Both data sets help organizations adopt a proactive and retroactive means to handle security and performance related metrics within their modern applications.",
+      "product_uid": "prowler",
+      "title": "Ensure Application Insights are Configured.",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "cloud_partition": "AzureCloud",
+        "region": "global",
+        "data": {
+          "details": "",
+          "metadata": {}
+        },
+        "group": {
+          "name": "appinsights"
+        },
+        "labels": [],
+        "name": "AppInsights",
+        "type": "Microsoft.Insights/components",
+        "uid": "AppInsights"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "<subscription_name>",
+        "type": "Azure AD Account",
+        "type_id": 6,
+        "uid": "<subscription_uid>",
+        "labels": []
+      },
+      "org": {
+        "name": "<organization_name>",
+        "uid": "<tenant_uid>"
+      },
+      "provider": "azure",
+      "region": "global"
+    },
+    "remediation": {
+      "desc": "1. Navigate to Application Insights 2. Under the Basics tab within the PROJECT DETAILS section, select the Subscription 3. Select the Resource group 4. Within the INSTANCE DETAILS, enter a Name 5. Select a Region 6. Next to Resource Mode, select Workspace-based 7. Within the WORKSPACE DETAILS, select the Subscription for the log analytics workspace 8. Select the appropriate Log Analytics Workspace 9. Click Next:Tags > 10. Enter the appropriate Tags as Name, Value pairs. 11. Click Next:Review+Create 12. Click Create.",
+      "references": [
+        "az monitor app-insights component create --app <app name> --resource-group <resource group name> --location <location> --kind 'web' --retention-time <INT days to retain logs> --workspace <log analytics workspace ID> -- subscription <subscription ID>",
+        "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:8a7a608d180042689ad9d3f16aa359f1"
+      ]
+    },
+    "risk_details": "Configuring Application Insights provides additional data not found elsewhere within Azure as part of a much larger logging and monitoring program within an organization's Information Security practice. The types and contents of these logs will act as both a potential cost saving measure (application performance) and a means to potentially confirm the source of a potential incident (trace logging). Metrics and Telemetry data provide organizations with a proactive approach to cost savings by monitoring an application's performance, while the trace logging data provides necessary details in a reactive incident response scenario by helping organizations identify the potential source of an incident within their application.",
+    "time": 1739539650,
+    "time_dt": "2025-02-14T14:27:30.710664",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "There is not another correct email configured for subscription <subscription_name>.",
+    "metadata": {
+      "event_code": "defender_additional_email_configured_with_a_security_contact",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "cloud",
+        "datetime"
+      ],
+      "tenant_uid": "<tenant_uid>",
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "There is not another correct email configured for subscription <subscription_name>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "",
+      "compliance": {
+        "CIS-2.1": [
+          "2.1.18"
+        ],
+        "ENS-RD2022": [
+          "op.mon.3.r3.az.de.1"
+        ],
+        "CIS-3.0": [
+          "3.1.13"
+        ],
+        "CIS-2.0": [
+          "2.1.19"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539650,
+      "created_time_dt": "2025-02-14T14:27:30.710664",
+      "desc": "Microsoft Defender for Cloud emails the subscription owners whenever a high-severity alert is triggered for their subscription. You should provide a security contact email address as an additional email address.",
+      "product_uid": "prowler",
+      "title": "Ensure 'Additional email addresses' is Configured with a Security Contact Email",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "cloud_partition": "AzureCloud",
+        "region": "global",
+        "data": {
+          "details": "",
+          "metadata": {
+            "resource_id": "<resource_uid>",
+            "name": "<resource_name>",
+            "emails": "",
+            "phone": "",
+            "alert_notifications_minimal_severity": "High",
+            "alert_notifications_state": "On",
+            "notified_roles": [
+              "Owner"
+            ],
+            "notified_roles_state": "On"
+          }
+        },
+        "group": {
+          "name": "defender"
+        },
+        "labels": [],
+        "name": "<resource_name>",
+        "type": "AzureEmailNotifications",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "<subscription_name>",
+        "type": "Azure AD Account",
+        "type_id": 6,
+        "uid": "<subscription_uid>",
+        "labels": []
+      },
+      "org": {
+        "name": "<organization_name>",
+        "uid": "<tenant_uid>"
+      },
+      "provider": "azure",
+      "region": "global"
+    },
+    "remediation": {
+      "desc": "1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Click on Environment Settings 4. Click on the appropriate Management Group, Subscription, or Workspace 5. Click on Email notifications 6. Enter a valid security contact email address (or multiple addresses separated by commas) in the Additional email addresses field 7. Click Save",
+      "references": [
+        "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-security-contact-emails-is-set#terraform",
+        "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/security-contact-email.html",
+        "https://learn.microsoft.com/en-us/rest/api/defenderforcloud/security-contacts/list?view=rest-defenderforcloud-2020-01-01-preview&tabs=HTTP"
+      ]
+    },
+    "risk_details": "Microsoft Defender for Cloud emails the Subscription Owner to notify them about security alerts. Adding your Security Contact's email address to the 'Additional email addresses' field ensures that your organization's Security Team is included in these alerts. This ensures that the proper people are aware of any potential compromise in order to mitigate the risk in a timely fashion.",
+    "time": 1739539650,
+    "time_dt": "2025-02-14T14:27:30.710664",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Defender Auto Provisioning Log Analytics Agents from subscription <subscription_name> is set to OFF.",
+    "metadata": {
+      "event_code": "defender_auto_provisioning_log_analytics_agent_vms_on",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "cloud",
+        "datetime"
+      ],
+      "tenant_uid": "<tenant_uid>",
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Defender Auto Provisioning Log Analytics Agents from subscription <subscription_name> is set to OFF.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "",
+      "compliance": {
+        "CIS-2.1": [
+          "2.1.14"
+        ],
+        "ENS-RD2022": [
+          "op.mon.3.r2.az.de.1",
+          "mp.s.4.r1.az.nt.5"
+        ],
+        "MITRE-ATTACK": [
+          "T1190"
+        ],
+        "CIS-3.0": [
+          "3.1.1.1"
+        ],
+        "CIS-2.0": [
+          "2.1.15"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539650,
+      "created_time_dt": "2025-02-14T14:27:30.710664",
+      "desc": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, OS vulnerabilities, endpoint protection, and provides alerts.",
+      "product_uid": "prowler",
+      "title": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "cloud_partition": "AzureCloud",
+        "region": "global",
+        "data": {
+          "details": "",
+          "metadata": {
+            "resource_id": "<resource_uid>",
+            "resource_name": "<resource_name>",
+            "resource_type": "Microsoft.Security/autoProvisioningSettings",
+            "auto_provision": "Off"
+          }
+        },
+        "group": {
+          "name": "defender"
+        },
+        "labels": [],
+        "name": "<resource_name>",
+        "type": "AzureDefenderPlan",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "<subscription_name>",
+        "type": "Azure AD Account",
+        "type_id": 6,
+        "uid": "<subscription_uid>",
+        "labels": []
+      },
+      "org": {
+        "name": "<organization_name>",
+        "uid": "<tenant_uid>"
+      },
+      "provider": "azure",
+      "region": "global"
+    },
+    "remediation": {
+      "desc": "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture",
+      "references": [
+        "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
+        "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+      ]
+    },
+    "risk_details": "Missing critical security information about your Azure VMs, such as security alerts, security recommendations, and change tracking.",
+    "time": 1739539650,
+    "time_dt": "2025-02-14T14:27:30.710664",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Container image scan is disabled in subscription <subscription_name>.",
+    "metadata": {
+      "event_code": "defender_container_images_scan_enabled",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "cloud",
+        "datetime"
+      ],
+      "tenant_uid": "<tenant_uid>",
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Container image scan is disabled in subscription <subscription_name>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "When using an Azure container registry, you might occasionally encounter problems. For example, you might not be able to pull a container image because of an issue with Docker in your local environment. Or, a network issue might prevent you from connecting to the registry.",
+      "compliance": {
+        "MITRE-ATTACK": [
+          "T1190",
+          "T1525"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539650,
+      "created_time_dt": "2025-02-14T14:27:30.710664",
+      "desc": "Scan images being deployed to Azure (AKS) for vulnerabilities. Vulnerability scanning for images stored in Azure Container Registry is generally available in Azure Security Center. This capability is powered by Qualys, a leading provider of information security. When you push an image to Container Registry, Security Center automatically scans it, then checks for known vulnerabilities in packages or dependencies defined in the file. When the scan completes (after about 10 minutes), Security Center provides details and a security classification for each vulnerability detected, along with guidance on how to remediate issues and protect vulnerable attack surfaces.",
+      "product_uid": "prowler",
+      "title": "Ensure Image Vulnerability Scanning using Azure Defender image scanning or a third party provider",
+      "types": [],
+      "uid": "prowler-azure-defender_container_images_scan_enabled-<subscription_uid>-global-Defender plan for Containers"
+    },
+    "resources": [
+      {
+        "cloud_partition": "AzureCloud",
+        "region": "global",
+        "data": {
+          "details": "",
+          "metadata": {
+            "resource_id": "<resource_uid>",
+            "pricing_tier": "Free",
+            "free_trial_remaining_time": 2592000.0,
+            "extensions": {}
+          }
+        },
+        "group": {
+          "name": "defender"
+        },
+        "labels": [],
+        "name": "<resource_name>",
+        "type": "Microsoft.Security",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "<subscription_name>",
+        "type": "Azure AD Account",
+        "type_id": 6,
+        "uid": "<subscription_uid>",
+        "labels": []
+      },
+      "org": {
+        "name": "<organization_name>",
+        "uid": "<tenant_uid>"
+      },
+      "provider": "azure",
+      "region": "global"
+    },
+    "remediation": {
+      "desc": "",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender"
+      ]
+    },
+    "risk_details": "Vulnerabilities in software packages can be exploited by hackers or malicious users to obtain unauthorized access to local cloud resources. Azure Defender and other third party products allow images to be scanned for known vulnerabilities.",
+    "time": 1739539650,
+    "time_dt": "2025-02-14T14:27:30.710664",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Defender plan Defender for App Services from subscription <subscription_name> is set to OFF (pricing tier not standard).",
+    "metadata": {
+      "event_code": "defender_ensure_defender_for_app_services_is_on",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "cloud",
+        "datetime"
+      ],
+      "tenant_uid": "<tenant_uid>",
+      "version": "1.4.0"
+    },
+    "severity_id": 4,
+    "severity": "High",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Defender plan Defender for App Services from subscription <subscription_name> is set to OFF (pricing tier not standard).",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "",
+      "compliance": {
+        "CIS-2.1": [
+          "2.1.2"
+        ],
+        "ENS-RD2022": [
+          "mp.s.4.r1.az.nt.3"
+        ],
+        "MITRE-ATTACK": [
+          "T1190",
+          "T1059",
+          "T1204",
+          "T1552",
+          "T1486",
+          "T1499",
+          "T1496",
+          "T1087"
+        ],
+        "CIS-3.0": [
+          "3.1.6.1"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539650,
+      "created_time_dt": "2025-02-14T14:27:30.710664",
+      "desc": "Ensure That Microsoft Defender for App Services Is Set To 'On' ",
+      "product_uid": "prowler",
+      "title": "Ensure That Microsoft Defender for App Services Is Set To 'On' ",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "cloud_partition": "AzureCloud",
+        "region": "global",
+        "data": {
+          "details": "",
+          "metadata": {
+            "resource_id": "<resource_uid>",
+            "pricing_tier": "Free",
+            "free_trial_remaining_time": 2592000.0,
+            "extensions": {}
+          }
+        },
+        "group": {
+          "name": "defender"
+        },
+        "labels": [],
+        "name": "<resource_name>",
+        "type": "AzureDefenderPlan",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "<subscription_name>",
+        "type": "Azure AD Account",
+        "type_id": 6,
+        "uid": "<subscription_uid>",
+        "labels": []
+      },
+      "org": {
+        "name": "<organization_name>",
+        "uid": "<tenant_uid>"
+      },
+      "provider": "azure",
+      "region": "global"
+    },
+    "remediation": {
+      "desc": "By <resource_name>, Microsoft Defender for Cloud is not enabled for your App Service instances. Enabling the Defender security service for App Service instances allows for advanced security defense using threat detection capabilities provided by Microsoft Security Response Center.",
+      "references": [
+        "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-app-service#terraform",
+        "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html",
+        "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html"
+      ]
+    },
+    "risk_details": "Turning on Microsoft Defender for App Service enables threat detection for App Service, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+    "time": 1739539650,
+    "time_dt": "2025-02-14T14:27:30.710664",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  }
+]

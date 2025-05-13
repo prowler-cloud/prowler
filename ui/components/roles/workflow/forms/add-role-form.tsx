@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider } from "@nextui-org/react";
-import { SaveIcon } from "lucide-react";
+import { Checkbox, Divider, Tooltip } from "@nextui-org/react";
+import clsx from "clsx";
+import { InfoIcon, SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ import {
   CustomInput,
 } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { permissionFormFields } from "@/lib";
 import { addRoleFormSchema, ApiError } from "@/types";
 
 type FormValues = z.infer<typeof addRoleFormSchema>;
@@ -33,28 +35,30 @@ export const AddRoleForm = ({
     defaultValues: {
       name: "",
       manage_users: false,
-      manage_account: false,
-      manage_billing: false,
       manage_providers: false,
-      manage_integrations: false,
       manage_scans: false,
       unlimited_visibility: false,
       groups: [],
+      ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && {
+        manage_billing: false,
+      }),
     },
   });
 
-  const manageProviders = form.watch("manage_providers");
-  const unlimitedVisibility = form.watch("unlimited_visibility");
+  const { watch, setValue } = form;
+
+  const manageProviders = watch("manage_providers");
+  const unlimitedVisibility = watch("unlimited_visibility");
 
   useEffect(() => {
-    if (manageProviders) {
-      form.setValue("unlimited_visibility", true, {
+    if (manageProviders && !unlimitedVisibility) {
+      setValue("unlimited_visibility", true, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
       });
     }
-  }, [manageProviders, form]);
+  }, [manageProviders, unlimitedVisibility, setValue]);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -64,7 +68,7 @@ export const AddRoleForm = ({
       "manage_account",
       "manage_billing",
       "manage_providers",
-      "manage_integrations",
+      // "manage_integrations",
       "manage_scans",
       "unlimited_visibility",
     ];
@@ -79,17 +83,21 @@ export const AddRoleForm = ({
 
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
+
     formData.append("name", values.name);
     formData.append("manage_users", String(values.manage_users));
-    formData.append("manage_account", String(values.manage_account));
-    formData.append("manage_billing", String(values.manage_billing));
     formData.append("manage_providers", String(values.manage_providers));
-    formData.append("manage_integrations", String(values.manage_integrations));
     formData.append("manage_scans", String(values.manage_scans));
+    formData.append("manage_account", String(values.manage_account));
     formData.append(
       "unlimited_visibility",
       String(values.unlimited_visibility),
     );
+
+    // Conditionally append manage_account and manage_billing
+    if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      formData.append("manage_billing", String(values.manage_billing));
+    }
 
     if (values.groups && values.groups.length > 0) {
       values.groups.forEach((group) => {
@@ -134,21 +142,6 @@ export const AddRoleForm = ({
     }
   };
 
-  const permissions = [
-    { field: "manage_users", label: "Invite and Manage Users" },
-    ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-      ? [
-          { field: "manage_account", label: "Manage Account" },
-          { field: "manage_billing", label: "Manage Billing" },
-        ]
-      : []),
-    { field: "manage_providers", label: "Manage Cloud Providers" },
-    // TODO: Add back when we have integrations ready
-    // { field: "manage_integrations", label: "Manage Integrations" },
-    { field: "manage_scans", label: "Manage Scans" },
-    { field: "unlimited_visibility", label: "Unlimited Visibility" },
-  ];
-
   return (
     <Form {...form}>
       <form
@@ -172,7 +165,7 @@ export const AddRoleForm = ({
 
           {/* Select All Checkbox */}
           <Checkbox
-            isSelected={permissions.every((perm) =>
+            isSelected={permissionFormFields.every((perm) =>
               form.watch(perm.field as keyof FormValues),
             )}
             onChange={(e) => onSelectAllChange(e.target.checked)}
@@ -186,19 +179,37 @@ export const AddRoleForm = ({
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
-            {permissions.map(({ field, label }) => (
-              <Checkbox
-                key={field}
-                {...form.register(field as keyof FormValues)}
-                isSelected={!!form.watch(field as keyof FormValues)}
-                classNames={{
-                  label: "text-small",
-                  wrapper: "checkbox-update",
-                }}
-              >
-                {label}
-              </Checkbox>
-            ))}
+            {permissionFormFields
+              .filter(
+                (permission) =>
+                  permission.field !== "manage_billing" ||
+                  process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
+              )
+              .map(({ field, label, description }) => (
+                <div key={field} className="flex items-center gap-2">
+                  <Checkbox
+                    {...form.register(field as keyof FormValues)}
+                    isSelected={!!form.watch(field as keyof FormValues)}
+                    classNames={{
+                      label: "text-small",
+                      wrapper: "checkbox-update",
+                    }}
+                  >
+                    {label}
+                  </Checkbox>
+                  <Tooltip content={description} placement="right">
+                    <div className="flex w-fit items-center justify-center">
+                      <InfoIcon
+                        className={clsx(
+                          "cursor-pointer text-default-400 group-data-[selected=true]:text-foreground",
+                        )}
+                        aria-hidden={"true"}
+                        width={16}
+                      />
+                    </div>
+                  </Tooltip>
+                </div>
+              ))}
           </div>
         </div>
         <Divider className="my-4" />

@@ -15,9 +15,7 @@ class ec2_launch_template_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for template in ec2_client.launch_templates:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=template
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=template)
 
             versions_with_secrets = []
 
@@ -45,11 +43,23 @@ class ec2_launch_template_no_secrets(Check):
                     continue
 
                 version_secrets = detect_secrets_scan(
-                    data=user_data, excluded_secrets=secrets_ignore_patterns
+                    data=user_data,
+                    excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=ec2_client.audit_config.get(
+                        "detect_secrets_plugins"
+                    ),
                 )
 
                 if version_secrets:
-                    versions_with_secrets.append(str(version.version_number))
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} on line {secret['line_number']}"
+                            for secret in version_secrets
+                        ]
+                    )
+                    versions_with_secrets.append(
+                        f"Version {version.version_number}: {secrets_string}"
+                    )
 
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"

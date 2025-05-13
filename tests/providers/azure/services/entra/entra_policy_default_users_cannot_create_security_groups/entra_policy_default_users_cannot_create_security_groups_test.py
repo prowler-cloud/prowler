@@ -9,12 +9,15 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups import (
                 entra_policy_default_users_cannot_create_security_groups,
@@ -28,12 +31,15 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {DOMAIN: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups import (
                 entra_policy_default_users_cannot_create_security_groups,
@@ -57,18 +63,22 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client = mock.MagicMock
         id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups import (
                 entra_policy_default_users_cannot_create_security_groups,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -76,11 +86,11 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_security_groups=True
                     ),
                     guest_invite_settings="everyone",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 
@@ -102,18 +112,22 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         entra_client = mock.MagicMock
         id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_default_users_cannot_create_security_groups.entra_policy_default_users_cannot_create_security_groups import (
                 entra_policy_default_users_cannot_create_security_groups,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -121,11 +135,11 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_security_groups=False
                     ),
                     guest_invite_settings="everyone",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 

@@ -21,12 +21,15 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=RDS(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=Backup(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=RDS(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=Backup(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (
@@ -77,18 +80,23 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_client.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=backup,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_client.backup_client",
-                new=backup,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_client.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=backup,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_client.backup_client",
+                    new=backup,
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (
@@ -154,18 +162,23 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_client.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=backup,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_client.backup_client",
-                new=backup,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_client.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=backup,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_client.backup_client",
+                    new=backup,
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (
@@ -229,18 +242,23 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_client.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=backup,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_client.backup_client",
-                new=backup,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_client.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=backup,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_client.backup_client",
+                    new=backup,
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (
@@ -305,18 +323,23 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_client.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=backup,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_client.backup_client",
-                new=backup,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_client.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=backup,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_client.backup_client",
+                    new=backup,
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (
@@ -380,18 +403,23 @@ class Test_rds_cluster_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_client.rds_client",
-                new=cluster,
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
-                new=backup,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_client.backup_client",
-                new=backup,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_client.rds_client",
+                    new=cluster,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan.backup_client",
+                    new=backup,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_client.backup_client",
+                    new=backup,
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_cluster_protected_by_backup_plan.rds_cluster_protected_by_backup_plan import (

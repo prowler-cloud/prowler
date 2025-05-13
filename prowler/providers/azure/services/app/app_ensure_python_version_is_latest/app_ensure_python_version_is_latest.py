@@ -16,9 +16,7 @@ class app_ensure_python_version_is_latest(Check):
                 if "python" in framework.lower() or getattr(
                     app.configurations, "python_version", ""
                 ):
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=app
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                     report.subscription = subscription_name
                     report.status = "FAIL"
                     python_latest_version = app_client.audit_config.get(

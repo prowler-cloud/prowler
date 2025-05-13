@@ -18,9 +18,7 @@ class s3_bucket_event_notifications_enabled(Check):
         """
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             report.status = "FAIL"
             report.status_extended = (
                 f"S3 Bucket {bucket.name} does not have event notifications enabled."

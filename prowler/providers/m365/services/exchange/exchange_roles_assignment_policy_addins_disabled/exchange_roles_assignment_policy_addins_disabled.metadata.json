@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_roles_assignment_policy_addins_disabled",
+  "CheckTitle": "Ensure there is no policy with Outlook add-ins allowed.",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Role Assignment Policy",
+  "Description": "Restricting users from installing Outlook add-ins reduces the risk of data exposure or exploitation through unapproved or vulnerable add-ins.",
+  "Risk": "Allowing users to install add-ins may expose sensitive information or introduce malicious behavior through third-party integrations. Disabling this capability mitigates the risk of unauthorized data access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/add-ins-for-outlook/specify-who-can-install-and-manage-add-ins",
+  "Remediation": {
+    "Code": {
+      "CLI": "$policy = \"Role Assignment Policy - Prevent Add-ins\"; $roles = \"MyTextMessaging\", \"MyDistributionGroups\", \"MyMailSubscriptions\", \"MyBaseOptions\", \"MyVoiceMail\", \"MyProfileInformation\", \"MyContactInformation\", \"MyRetentionPolicies\", \"MyDistributionGroupMembership\"; New-RoleAssignmentPolicy -Name $policy -Roles $roles; Set-RoleAssignmentPolicy -id $policy -IsDefault; Get-EXOMailbox -ResultSize Unlimited | Set-Mailbox -RoleAssignmentPolicy $policy",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com. 2. Click to expand Roles > User roles. 3. Select Default Role Assignment Policy. 4. In the right pane, click Manage permissions. 5. Uncheck My Custom Apps, My Marketplace Apps and My ReadWriteMailboxApps under Other roles. 6. Save changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict Outlook add-in installation by updating the Role Assignment Policy to exclude roles that allow app installation.",
+      "Url": "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

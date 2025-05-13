@@ -31,7 +31,7 @@ tags
 *.DS_Store
 
 # Prowler output
-output/
+/output
 
 # Prowler found secrets
 secrets-*/
@@ -42,6 +42,9 @@ junit-reports/
 # VSCode files
 .vscode/
 
+# Cursor files
+.cursorignore
+
 # Terraform
 .terraform*
 *.tfstate
@@ -50,6 +53,7 @@ junit-reports/
 # .env
 ui/.env*
 api/.env*
+.env.local
 
 # Coverage
 .coverage*

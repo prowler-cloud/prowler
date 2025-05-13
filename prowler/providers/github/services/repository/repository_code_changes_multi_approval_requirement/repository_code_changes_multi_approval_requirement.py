@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, Check_Report_Github
+from prowler.lib.check.models import Check, CheckReportGithub
 from prowler.providers.github.services.repository.repository_client import (
     repository_client,
 )
@@ -12,18 +12,18 @@ class repository_code_changes_multi_approval_requirement(Check):
     This class verifies whether each repository enforces at least 2 approvals for code changes.
     """
 
-    def execute(self) -> List[Check_Report_Github]:
+    def execute(self) -> List[CheckReportGithub]:
         """Execute the Github Repository code changes enforce multi approval requirement check
 
         Iterates over each repository and checks if the repository enforces at least 2 approvals for code changes.
 
         Returns:
-            List[Check_Report_Github]: A list of reports for each repository
+            List[CheckReportGithub]: A list of reports for each repository
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = Check_Report_Github(
-                metadata=self.metadata(), resource_metadata=repo
+            report = CheckReportGithub(
+                metadata=self.metadata(), resource=repo, repository=repo.name
             )
             report.status = "FAIL"
             report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."

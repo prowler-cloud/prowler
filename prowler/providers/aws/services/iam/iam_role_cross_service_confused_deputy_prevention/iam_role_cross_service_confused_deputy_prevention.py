@@ -10,9 +10,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
             for role in iam_client.roles:
                 # This check should only be performed against service roles (avoid Service Linked Roles since the trust relationship cannot be changed)
                 if role.is_service_role and "aws-service-role" not in role.arn:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=role
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=role)
                     report.region = iam_client.region
                     report.status = "FAIL"
                     report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack."

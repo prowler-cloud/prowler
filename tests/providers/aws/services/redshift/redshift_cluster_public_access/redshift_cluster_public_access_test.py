@@ -26,15 +26,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,
@@ -64,15 +68,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,
@@ -108,15 +116,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,
@@ -151,15 +163,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,
@@ -190,7 +206,7 @@ class Test_redshift_cluster_public_access:
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
+        vpc_client.vpc_subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -198,15 +214,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,
@@ -240,7 +260,7 @@ class Test_redshift_cluster_public_access:
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
+        vpc_client.vpc_subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         ec2_client.security_groups = {
             f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/sg-123456": mock.MagicMock(
@@ -262,15 +282,19 @@ class Test_redshift_cluster_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
-                new=redshift_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
-                new=vpc_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
-                new=ec2_client,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.redshift_client",
+                    new=redshift_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.vpc_client",
+                    new=vpc_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access.ec2_client",
+                    new=ec2_client,
+                ),
             ):
                 from prowler.providers.aws.services.redshift.redshift_cluster_public_access.redshift_cluster_public_access import (
                     redshift_cluster_public_access,

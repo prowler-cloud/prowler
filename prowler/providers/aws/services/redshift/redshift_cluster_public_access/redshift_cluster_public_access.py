@@ -9,9 +9,7 @@ class redshift_cluster_public_access(Check):
     def execute(self):
         findings = []
         for cluster in redshift_client.clusters:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"Redshift Cluster {cluster.id} is not publicly accessible."
@@ -21,7 +19,8 @@ class redshift_cluster_public_access(Check):
                 report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible but is not publicly exposed."
                 # 2. Check if Redshift Cluster is in a public subnet
                 if any(
-                    subnet in vpc_client.subnets and vpc_client.subnets[subnet].public
+                    subnet in vpc_client.vpc_subnets
+                    and vpc_client.vpc_subnets[subnet].public
                     for subnet in cluster.subnets
                 ):
                     report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible in a public subnet but is not publicly exposed."

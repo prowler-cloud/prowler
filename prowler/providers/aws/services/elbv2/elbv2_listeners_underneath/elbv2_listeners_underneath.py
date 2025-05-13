@@ -6,7 +6,7 @@ class elbv2_listeners_underneath(Check):
     def execute(self):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "PASS"
             report.status_extended = f"ELBv2 {lb.name} has listeners underneath."
             if len(lb.listeners) == 0:

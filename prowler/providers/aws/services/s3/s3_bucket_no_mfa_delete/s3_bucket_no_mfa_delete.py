@@ -6,9 +6,7 @@ class s3_bucket_no_mfa_delete(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if bucket.mfa_delete:
                 report.status = "PASS"
                 report.status_extended = (

@@ -60,12 +60,15 @@ class Test_ses_identities_not_publicly_accessible:
         client("sesv2", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
-            new=SES(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
+                new=SES(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
                 ses_identity_not_publicly_accessible,
@@ -81,12 +84,15 @@ class Test_ses_identities_not_publicly_accessible:
         client("sesv2", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
-            new=SES(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
+                new=SES(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
                 ses_identity_not_publicly_accessible,
@@ -114,12 +120,15 @@ class Test_ses_identities_not_publicly_accessible:
         client("sesv2", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
-            new=SES(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
+                new=SES(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
                 ses_identity_not_publicly_accessible,

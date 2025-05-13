@@ -8,9 +8,7 @@ class cloudfront_distributions_s3_origin_access_control(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=distribution
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=distribution)
 
             if any(origin.s3_origin_config for origin in distribution.origins):
                 s3_buckets_with_no_oac = []

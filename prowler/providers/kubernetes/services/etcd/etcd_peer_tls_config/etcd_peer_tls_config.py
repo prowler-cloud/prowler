@@ -6,9 +6,7 @@ class etcd_peer_tls_config(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in etcd_client.etcd_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"Etcd is configured with TLS for peer connections in pod {pod.name}."

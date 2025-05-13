@@ -21,7 +21,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_ki
                 and len(security_group.network_interfaces) > 0
             ):
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=security_group
+                    metadata=self.metadata(), resource=security_group
                 )
                 report.resource_details = security_group.name
                 report.status = "PASS"

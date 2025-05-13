@@ -8,7 +8,7 @@ class elb_ssl_listeners_use_acm_certificate(Check):
         findings = []
         secure_protocols = ["SSL", "HTTPS"]
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "PASS"
             report.status_extended = f"ELB {lb.name} HTTPS/SSL listeners are using certificates managed by ACM."
             for listener in lb.listeners:

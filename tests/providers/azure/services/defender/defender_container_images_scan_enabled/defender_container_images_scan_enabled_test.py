@@ -14,12 +14,15 @@ class Test_defender_container_images_scan_enabled:
         defender_client = mock.MagicMock
         defender_client.pricings = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -33,12 +36,15 @@ class Test_defender_container_images_scan_enabled:
         defender_client = mock.MagicMock
         defender_client.pricings = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -54,18 +60,22 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "NotContainers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan Servers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -81,6 +91,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={},
@@ -88,12 +99,15 @@ class Test_defender_container_images_scan_enabled:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -112,7 +126,7 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_defender_subscription_containers_container_images_scan_off(self):
@@ -121,6 +135,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={"ContainerRegistriesVulnerabilityAssessments": False},
@@ -128,12 +143,15 @@ class Test_defender_container_images_scan_enabled:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -152,7 +170,7 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_defender_subscription_containers_container_images_scan_on(self):
@@ -161,6 +179,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={"ContainerRegistriesVulnerabilityAssessments": True},
@@ -168,12 +187,15 @@ class Test_defender_container_images_scan_enabled:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_container_images_scan_enabled.defender_container_images_scan_enabled import (
                 defender_container_images_scan_enabled,
@@ -192,5 +214,5 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID

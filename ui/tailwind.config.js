@@ -122,6 +122,7 @@ module.exports = {
           "0px -6px 24px #FFFFFF, 0px 7px 16px rgba(104, 132, 157, 0.5)",
         up: "0.3rem 0.3rem 0.6rem #c8d0e7, -0.2rem -0.2rem 0.5rem #fff",
         down: "inset 0.2rem 0.2rem 0.5rem #c8d0e7, inset -0.2rem -0.2rem 0.5rem #fff",
+        box: "rgba(0, 0, 0, 0.05) 0px 0px 0px 1px",
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out 0s 1 normal forwards running",
@@ -138,6 +139,14 @@ module.exports = {
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "collapsible-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-collapsible-content-height)" },
+        },
+        "collapsible-up": {
+          from: { height: "var(--radix-collapsible-content-height)" },
           to: { height: "0" },
         },
         advance: { from: { width: 0 }, to: { width: "100%" } },
@@ -163,8 +172,8 @@ module.exports = {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "collapsible-down": "collapsible-down 0.2s ease-out",
+        "collapsible-up": "collapsible-up 0.2s ease-out",
       },
       screens: {
         "3xl": "1920px", // Add breakpoint to optimize layouts for large screens.

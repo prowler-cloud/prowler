@@ -27,3 +27,9 @@ def init_parser(self):
         metavar="NAMESPACES",
         help="The namespaces where to scan for the Kubernetes resources. By default, Prowler will scan all namespaces available.",
     )
+    k8s_auth_subparser.add_argument(
+        "--cluster-name",
+        nargs="?",
+        metavar="CLUSTER_NAME",
+        help="Manually specify the cluster name in in-cluster mode, by default it will be 'in-cluster'",
+    )

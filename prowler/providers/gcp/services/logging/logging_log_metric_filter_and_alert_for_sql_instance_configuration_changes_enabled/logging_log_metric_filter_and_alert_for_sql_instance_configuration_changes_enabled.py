@@ -15,7 +15,7 @@ class logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes
             if 'protoPayload.methodName="cloudsql.instances.update"' in metric.filter:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=metric,
+                    resource=metric,
                     location=logging_client.region,
                 )
                 projects_with_metric.add(metric.project_id)
@@ -33,7 +33,7 @@ class logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes
             if project not in projects_with_metric:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=logging_client.projects[project],
+                    resource=logging_client.projects[project],
                     project_id=project,
                     location=logging_client.region,
                 )

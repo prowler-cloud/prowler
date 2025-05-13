@@ -8,15 +8,17 @@ import {
 } from "@internationalized/date";
 import { Button, ButtonGroup, DatePicker } from "@nextui-org/react";
 import { useLocale } from "@react-aria/i18n";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef } from "react";
 
+import { useUrlFilters } from "@/hooks/use-url-filters";
+
 export const CustomDatePicker = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { updateFilter } = useUrlFilters();
 
   const [value, setValue] = React.useState(() => {
-    const dateParam = searchParams.get("filter[updated_at]");
+    const dateParam = searchParams.get("filter[inserted_at]");
     return dateParam ? today(getLocalTimeZone()) : null;
   });
 
@@ -28,15 +30,13 @@ export const CustomDatePicker = () => {
 
   const applyDateFilter = useCallback(
     (date: any) => {
-      const params = new URLSearchParams(searchParams.toString());
       if (date) {
-        params.set("filter[updated_at]", date.toString());
+        updateFilter("inserted_at", date.toString());
       } else {
-        params.delete("filter[updated_at]");
+        updateFilter("inserted_at", null);
       }
-      router.push(`?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams],
+    [updateFilter],
   );
 
   const initialRender = useRef(true);

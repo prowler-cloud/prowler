@@ -8,9 +8,7 @@ class controllermanager_garbage_collection(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in controllermanager_client.controllermanager_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"Controller Manager has an appropriate garbage collection threshold in pod {pod.name}."
             for container in pod.containers.values():

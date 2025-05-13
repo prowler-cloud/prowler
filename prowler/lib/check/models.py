@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Set
 
@@ -95,6 +95,7 @@ class CheckMetadata(BaseModel):
         valid_category(value): Validator function to validate the categories of the check.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
         valid_severity(severity): Validator function to validate the severity of the check.
+        valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
     """
 
     Provider: str
@@ -124,15 +125,21 @@ class CheckMetadata(BaseModel):
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
-        if not re.match("^[a-z-]+$", value_lower):
+        if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
             )
         return value_lower
 
     @validator("Severity", pre=True, always=True)
     def severity_to_lower(severity):
         return severity.lower()
+
+    @validator("Remediation")
+    def valid_cli_command(remediation):
+        if re.match(r"^https?://", remediation.Code.CLI):
+            raise ValueError("CLI command cannot be an URL")
+        return remediation
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -405,36 +412,34 @@ class Check_Report:
     status: str
     status_extended: str
     check_metadata: CheckMetadata
-    resource_metadata: dict
+    resource: dict
     resource_details: str
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata: Dict, resource: Any = None) -> None:
+    def __init__(self, metadata: Dict, resource: Any) -> None:
         """Initialize the Check's finding information.
 
         Args:
             metadata: The metadata of the check.
             resource: Basic information about the resource. Defaults to None.
-                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) or objects with __dict__.
+                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) and dataclasses.
         """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
         if isinstance(resource, dict):
-            self.resource_metadata = resource
-        elif isinstance(resource, list):
-            self.resource_metadata = dict(enumerate(resource))
+            self.resource = resource
         elif hasattr(resource, "dict"):
-            self.resource_metadata = resource.dict()
+            self.resource = resource.dict()
         elif hasattr(resource, "to_dict"):
-            self.resource_metadata = resource.to_dict()
-        elif hasattr(resource, "__dict__"):
-            self.resource_metadata = resource.__dict__
+            self.resource = resource.to_dict()
+        elif is_dataclass(resource):
+            self.resource = asdict(resource)
         else:
             logger.error(
-                f"Resource metadata {type(resource)} could not be converted to dict"
+                f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
             )
-            self.resource_metadata = {}
+            self.resource = {}
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
@@ -449,20 +454,13 @@ class Check_Report_AWS(Check_Report):
     resource_arn: str
     region: str
 
-    def __init__(self, metadata, resource_metadata=None):
-        super().__init__(metadata, resource_metadata)
-        if resource_metadata:
-            self.resource_id = (
-                getattr(resource_metadata, "id", None)
-                or getattr(resource_metadata, "name", None)
-                or ""
-            )
-            self.resource_arn = getattr(resource_metadata, "arn", "")
-            self.region = getattr(resource_metadata, "region", "")
-        else:
-            self.resource_id = ""
-            self.resource_arn = ""
-            self.region = ""
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
 
 
 @dataclass
@@ -474,34 +472,20 @@ class Check_Report_Azure(Check_Report):
     subscription: str
     location: str
 
-    def __init__(self, metadata: Dict, resource_metadata: Any = None) -> None:
+    def __init__(self, metadata: Dict, resource: Any) -> None:
         """Initialize the Azure Check's finding information.
 
         Args:
             metadata: The metadata of the check.
-            resource_metadata: Basic information about the resource. Defaults to None.
+            resource: Basic information about the resource. Defaults to None.
         """
-        super().__init__(metadata, resource_metadata)
-        self.resource_name = (
-            resource_metadata.name
-            if hasattr(resource_metadata, "name")
-            else (
-                resource_metadata.resource_name
-                if hasattr(resource_metadata, "resource_name")
-                else ""
-            )
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
         )
-        self.resource_id = (
-            resource_metadata.id
-            if hasattr(resource_metadata, "id")
-            else (
-                resource_metadata.resource_id
-                if hasattr(resource_metadata, "resource_id")
-                else ""
-            )
-        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.subscription = ""
-        self.location = getattr(resource_metadata, "location", "global")
+        self.location = getattr(resource, "location", "global")
 
 
 @dataclass
@@ -515,26 +499,26 @@ class Check_Report_GCP(Check_Report):
 
     def __init__(
         self,
-        metadata,
-        resource_metadata,
+        metadata: Dict,
+        resource: Any,
         location=None,
         resource_name=None,
         resource_id=None,
         project_id=None,
-    ):
-        super().__init__(metadata, resource_metadata)
+    ) -> None:
+        super().__init__(metadata, resource)
         self.resource_id = (
             resource_id
-            or getattr(resource_metadata, "id", None)
-            or getattr(resource_metadata, "name", None)
+            or getattr(resource, "id", None)
+            or getattr(resource, "name", None)
             or ""
         )
-        self.resource_name = resource_name or getattr(resource_metadata, "name", "")
-        self.project_id = project_id or getattr(resource_metadata, "project_id", "")
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
             location
-            or getattr(resource_metadata, "location", "")
-            or getattr(resource_metadata, "region", "")
+            or getattr(resource, "location", "")
+            or getattr(resource, "region", "")
         )
 
 
@@ -547,31 +531,100 @@ class Check_Report_Kubernetes(Check_Report):
     resource_id: str
     namespace: str
 
-    def __init__(self, metadata, resource_metadata):
-        super().__init__(metadata, resource_metadata)
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
         self.resource_id = (
-            getattr(resource_metadata, "uid", None)
-            or getattr(resource_metadata, "name", None)
-            or ""
+            getattr(resource, "uid", None) or getattr(resource, "name", None) or ""
         )
-        self.resource_name = getattr(resource_metadata, "name", "")
-        self.namespace = getattr(resource_metadata, "namespace", "cluster-wide")
+        self.resource_name = getattr(resource, "name", "")
+        self.namespace = getattr(resource, "namespace", "cluster-wide")
         if not self.namespace:
             self.namespace = "cluster-wide"
 
 
 @dataclass
-class Check_Report_Github(Check_Report):
-    # TODO change class name to CheckReportGitHub
+class CheckReportGithub(Check_Report):
     """Contains the GitHub Check's finding information."""
 
     resource_name: str
     resource_id: str
+    repository: str
 
-    def __init__(self, metadata, resource_metadata):
-        super().__init__(metadata, resource_metadata)
-        self.resource_id = getattr(resource_metadata, "id", "")
-        self.resource_name = getattr(resource_metadata, "name", "")
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        repository: str = None,
+    ) -> None:
+        """Initialize the GitHub Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            repository: The repository of the resource related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.repository = repository or getattr(resource, "repository", "")
+
+
+@dataclass
+class CheckReportM365(Check_Report):
+    """Contains the M365 Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    location: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str,
+        resource_id: str,
+        resource_location: str = "global",
+    ) -> None:
+        """Initialize the M365 Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            resource_location: The location of the resource related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name
+        self.resource_id = resource_id
+        self.location = resource_location
+
+
+@dataclass
+class CheckReportNHN(Check_Report):
+    """Contains the NHN Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the NHN Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.location = getattr(resource, "location", "kr1")
 
 
 # Testing Pending

@@ -5,10 +5,10 @@ from prowler.providers.gcp.services.compute.compute_client import compute_client
 class compute_project_os_login_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        for project in compute_client.projects:
+        for project in compute_client.compute_projects:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project,
+                resource=compute_client.projects[project.id],
                 project_id=project.id,
                 location=compute_client.region,
             )

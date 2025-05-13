@@ -10,7 +10,6 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 )
 
 
-################## IAM
 class IAM(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
@@ -36,6 +35,7 @@ class IAM(GCPService):
                                 email=account["email"],
                                 display_name=account.get("displayName", ""),
                                 project_id=project_id,
+                                uniqueId=account.get("uniqueId", ""),
                             )
                         )
 
@@ -100,9 +100,9 @@ class ServiceAccount(BaseModel):
     display_name: str
     keys: list[Key] = []
     project_id: str
+    uniqueId: str
 
 
-################## AccessApproval
 class AccessApproval(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
@@ -133,7 +133,6 @@ class Setting(BaseModel):
     project_id: str
 
 
-################## EssentialContacts
 class EssentialContacts(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
