@@ -1,0 +1,7 @@
+{
+  "Framework": "CIS",
+  "Version": "1.0",
+  "Provider": "Github",
+  "Description": "This CIS Benchmark provides prescriptive guidance for establishing a secure configuration posture for securing the Software Supply Chain.",
+  "Requirements": []
+}
