@@ -543,6 +543,37 @@ class Check_Report_Kubernetes(Check_Report):
 
 
 @dataclass
+class CheckReportGithub(Check_Report):
+    """Contains the GitHub Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    repository: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        repository: str = None,
+    ) -> None:
+        """Initialize the GitHub Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            repository: The repository of the resource related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.repository = repository or getattr(resource, "repository", "")
+
+
+@dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""
 
