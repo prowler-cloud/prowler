@@ -544,7 +544,6 @@ class Check_Report_Kubernetes(Check_Report):
 
 @dataclass
 class CheckReportGithub(Check_Report):
-    # TODO change class name to CheckReportGitHub
     """Contains the GitHub Check's finding information."""
 
     resource_name: str
