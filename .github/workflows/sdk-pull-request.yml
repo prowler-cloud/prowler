@@ -167,6 +167,16 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml:kubernetes_coverage.xml tests/providers/kubernetes
 
+        # Test GitHub
+      - name: GitHub - Check if any file has changed
+        id: github-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/github/**
+            ./tests/providers/github/**
+            .poetry.lock
+
       # Test NHN
       - name: NHN - Check if any file has changed
         id: nhn-changed-files
