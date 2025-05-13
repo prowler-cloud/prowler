@@ -13,7 +13,9 @@ class AdminCenter(M365Service):
         super().__init__(provider)
         self.organization_config = None
         if self.powershell:
+            self.powershell.connect_exchange_online()
             self.organization_config = self._get_organization_config()
+            self.powershell.close()
 
         loop = get_event_loop()
 
@@ -185,6 +187,7 @@ class Group(BaseModel):
 class Domain(BaseModel):
     id: str
     password_validity_period: int
+
 
 class Organization(BaseModel):
     name: str
