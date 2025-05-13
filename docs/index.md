@@ -53,7 +53,7 @@ Prowler App can be installed in different ways, depending on your environment:
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
 
     ???+ note
-        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml to run the app in development mode.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -76,7 +76,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     docker compose up postgres valkey -d \
@@ -84,6 +84,12 @@ Prowler App can be installed in different ways, depending on your environment:
     python manage.py migrate --database admin \
     gunicorn -c config/guniconf.py config.wsgi:application
     ```
+
+    ???+ important
+        Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+
+        If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+        In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
     > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
 
@@ -93,7 +99,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     cd src/backend \
@@ -106,7 +112,7 @@ Prowler App can be installed in different ways, depending on your environment:
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
     poetry install \
-    poetry shell \
+    eval $(poetry env activate) \
     set -a \
     source .env \
     cd src/backend \
@@ -130,7 +136,7 @@ Prowler App can be installed in different ways, depending on your environment:
 
 ### Prowler CLI Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9, <= 3.12`:
 
 === "pipx"
 
@@ -138,7 +144,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
@@ -162,9 +168,9 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * `Python pip >= 21.0.0`
-    * AWS, GCP, Azure and/or Kubernetes credentials
+    * AWS, GCP, Azure, M365 and/or Kubernetes credentials
 
     _Commands_:
 
@@ -213,7 +219,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
     poetry install
-    poetry run python prowler.py -v
+    poetry run python prowler-cli.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
@@ -222,7 +228,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Python >= 3.9`
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -238,8 +244,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
-    * `Python >= 3.9`
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9, <= 3.12`.
+    * `Python >= 3.9, <= 3.12`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -377,6 +383,19 @@ Go to [http://localhost:3000](http://localhost:3000) after installing the app (s
 <img src="img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="img/sign-up.png" alt="Sign Up" width="285"/>
 
+???+ note "User creation and default tenant behavior"
+
+    When creating a new user, the behavior depends on whether an invitation is provided:
+
+    - **Without an invitation**:
+
+        - A new tenant is automatically created.
+        - The new user is assigned to this tenant.
+        - A set of **RBAC admin permissions** is generated and assigned to the user for the newly created tenant.
+    - **With an invitation**: The user is added to the specified tenant with the permissions defined in the invitation.
+
+    This mechanism ensures that the first user in a newly created tenant has administrative permissions within that tenant.
+
 #### **Log In**
 Log in with your email and password to start using the Prowler App.
 
@@ -404,7 +423,7 @@ While the scan is running, start exploring the findings in these sections:
 
 ### Prowler CLI
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365` or `kubernetes`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
@@ -535,6 +554,7 @@ prowler kubernetes --kubeconfig-file path
 
 For in-cluster execution, you can use the supplied yaml to run Prowler as a job within a new Prowler namespace:
 ```console
+kubectl apply -f kubernetes/prowler-sa.yaml
 kubectl apply -f kubernetes/job.yaml
 kubectl apply -f kubernetes/prowler-role.yaml
 kubectl apply -f kubernetes/prowler-rolebinding.yaml
@@ -544,6 +564,28 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
+
+#### Microsoft 365
+
+With M365 you need to specify which auth method is going to be used:
+
+```console
+
+# To use both service principal (for MSGraph) and user credentials (for PowerShell modules)
+prowler m365 --env-auth
+
+# To use service principal authentication
+prowler m365 --sp-env-auth
+
+# To use az cli authentication
+prowler m365 --az-cli-auth
+
+# To use browser authentication
+prowler m365 --browser-auth --tenant-id "XXXXXXXX"
+
+```
+
+See more details about M365 Authentication in [Requirements](getting-started/requirements.md#microsoft-365)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

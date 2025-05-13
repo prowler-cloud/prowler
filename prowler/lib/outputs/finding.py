@@ -1,13 +1,22 @@
+import json
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.models import Check_Report, CheckMetadata
+from prowler.lib.check.models import (
+    Check_Report,
+    CheckMetadata,
+    Code,
+    Recommendation,
+    Remediation,
+)
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
 
@@ -35,7 +44,7 @@ class Finding(BaseModel):
     status_extended: str
     muted: bool = False
     resource_uid: str
-    # resource_metadata: dict = Field(default_factory=dict) TODO: add resource_metadata to the finding
+    resource_metadata: dict = Field(default_factory=dict)
     resource_name: str
     resource_details: str
     resource_tags: dict = Field(default_factory=dict)
@@ -86,7 +95,6 @@ class Finding(BaseModel):
         Returns:
             dict: A dictionary containing the metadata with keys converted to lowercase.
         """
-
         return dict_to_lowercase(self.metadata.dict())
 
     @classmethod
@@ -112,15 +120,19 @@ class Finding(BaseModel):
         output_data = {}
         output_data.update(common_finding_data)
 
-        bulk_checks_metadata = {}
-        if hasattr(output_options, "bulk_checks_metadata"):
-            bulk_checks_metadata = output_options.bulk_checks_metadata
+        try:
+            output_data["compliance"] = check_output.compliance
+        except AttributeError:
+            bulk_checks_metadata = {}
+            if hasattr(output_options, "bulk_checks_metadata"):
+                bulk_checks_metadata = output_options.bulk_checks_metadata
 
-        output_data["compliance"] = get_check_compliance(
-            check_output, provider.type, bulk_checks_metadata
-        )
+            output_data["compliance"] = get_check_compliance(
+                check_output, provider.type, bulk_checks_metadata
+            )
         try:
             output_data["provider"] = provider.type
+            output_data["resource_metadata"] = check_output.resource
 
             if provider.type == "aws":
                 output_data["account_uid"] = get_nested_attribute(
@@ -239,19 +251,250 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = provider.identity.account_name
                 output_data["account_uid"] = provider.identity.account_id
-                # resource_metadata: dict = Field(default_factory=dict) TODO: add resource_metadata to the finding
                 output_data["region"] = "global"
+
+            elif provider.type == "m365":
+                output_data["auth_method"] = (
+                    f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "nhn":
+                output_data["auth_method"] = (
+                    f"passwordCredentials: username={get_nested_attribute(provider, '_identity.username')}, "
+                    f"tenantId={get_nested_attribute(provider, '_identity.tenant_id')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
 
             # check_output Unique ID
             # TODO: move this to a function
-            # TODO: in Azure, GCP and K8s there are fidings without resource_name
+            # TODO: in Azure, GCP and K8s there are findings without resource_name
             output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
 
+            if not output_data["resource_uid"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_uid."
+                )
+            if not output_data["resource_name"]:
+                logger.error(
+                    f"Check {check_output.check_metadata.CheckID} has no resource_name."
+                )
+
             return cls(**output_data)
+        except ValidationError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error} - {output_data}"
+            )
+            raise validation_error
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            raise error
+
+    @classmethod
+    def transform_api_finding(cls, finding, provider) -> "Finding":
+        """
+        Transform a FindingModel instance into an API-friendly Finding object.
+
+        This class method extracts data from a FindingModel instance and maps its
+        properties to a new Finding object. The transformation populates various
+        fields including authentication details, timestamp, account information,
+        check metadata (such as provider, check ID, title, type, service, severity,
+        and remediation details), as well as resource-specific data. The resulting
+        Finding object is structured for use in API responses or further processing.
+
+        Args:
+            finding (API Finding): An API Finding instance containing data from the database.
+            provider (Provider): the provider object.
+
+        Returns:
+            Finding: A new Finding instance populated with data from the provided model.
+        """
+        # Missing Finding's API values
+        resource = finding.resources.first()
+        finding.resource_arn = resource.uid
+        finding.resource_name = resource.name
+        finding.resource = json.loads(resource.metadata)
+        finding.resource_details = resource.details
+
+        finding.resource_id = resource.name if provider.type == "aws" else resource.uid
+
+        # AWS specified field
+        finding.region = resource.region
+        # Azure, GCP specified field
+        finding.location = resource.region
+        # K8s specified field
+        if provider.type == "kubernetes":
+            finding.namespace = resource.region.removeprefix("namespace: ")
+        if provider.type == "azure":
+            finding.subscription = list(provider.identity.subscriptions.keys())[0]
+        elif provider.type == "gcp":
+            finding.project_id = list(provider.projects.keys())[0]
+
+        finding.check_metadata = CheckMetadata(
+            Provider=finding.check_metadata["provider"],
+            CheckID=finding.check_metadata["checkid"],
+            CheckTitle=finding.check_metadata["checktitle"],
+            CheckType=finding.check_metadata["checktype"],
+            ServiceName=finding.check_metadata["servicename"],
+            SubServiceName=finding.check_metadata["subservicename"],
+            Severity=finding.check_metadata["severity"],
+            ResourceType=finding.check_metadata["resourcetype"],
+            Description=finding.check_metadata["description"],
+            Risk=finding.check_metadata["risk"],
+            RelatedUrl=finding.check_metadata["relatedurl"],
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.check_metadata["remediation"]["recommendation"][
+                        "text"
+                    ],
+                    Url=finding.check_metadata["remediation"]["recommendation"]["url"],
+                ),
+                Code=Code(
+                    NativeIaC=finding.check_metadata["remediation"]["code"][
+                        "nativeiac"
+                    ],
+                    Terraform=finding.check_metadata["remediation"]["code"][
+                        "terraform"
+                    ],
+                    CLI=finding.check_metadata["remediation"]["code"]["cli"],
+                    Other=finding.check_metadata["remediation"]["code"]["other"],
+                ),
+            ),
+            ResourceIdTemplate=finding.check_metadata["resourceidtemplate"],
+            Categories=finding.check_metadata["categories"],
+            DependsOn=finding.check_metadata["dependson"],
+            RelatedTo=finding.check_metadata["relatedto"],
+            Notes=finding.check_metadata["notes"],
+        )
+        finding.resource_tags = unroll_tags(
+            [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
+        )
+
+        return cls.generate_output(provider, finding, SimpleNamespace())
+
+    def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
+        """
+        Aggregate and transform scan summary data into findings statistics.
+
+        This function processes a list of scan summary objects and calculates overall
+        metrics such as the total number of passed and failed findings (including muted counts),
+        as well as a breakdown of results by severity (critical, high, medium, and low).
+        It also retrieves the unique resource count from the associated scan information.
+        The final output is a dictionary of aggregated statistics intended for reporting or
+        further analysis.
+
+        Args:
+            scan_summaries (list[dict]): A list of scan summary objects. Each object is expected
+                                        to have attributes including:
+                                        - _pass: Number of passed findings.
+                                        - fail: Number of failed findings.
+                                        - total: Total number of findings.
+                                        - muted: Number indicating if the finding is muted.
+                                        - severity: A string representing the severity level.
+                                        Additionally, the first scan summary should have an associated
+                                        `scan` attribute with a `unique_resource_count`.
+
+        Returns:
+            dict: A dictionary containing aggregated findings statistics:
+                - total_pass: Total number of passed findings.
+                - total_muted_pass: Total number of muted passed findings.
+                - total_fail: Total number of failed findings.
+                - total_muted_fail: Total number of muted failed findings.
+                - resources_count: The unique resource count extracted from the scan.
+                - findings_count: Total number of findings.
+                - total_critical_severity_fail: Failed findings with critical severity.
+                - total_critical_severity_pass: Passed findings with critical severity.
+                - total_high_severity_fail: Failed findings with high severity.
+                - total_high_severity_pass: Passed findings with high severity.
+                - total_medium_severity_fail: Failed findings with medium severity.
+                - total_medium_severity_pass: Passed findings with medium severity.
+                - total_low_severity_fail: Failed findings with low severity.
+                - total_low_severity_pass: Passed findings with low severity.
+                - all_fails_are_muted: A boolean indicating whether all failing findings are muted.
+        """
+        # Initialize overall counters
+        total_pass = 0
+        total_fail = 0
+        muted_pass = 0
+        muted_fail = 0
+        findings_count = 0
+        resources_count = scan_summaries[0].scan.unique_resource_count
+
+        # Initialize severity breakdown counters
+        critical_severity_pass = 0
+        critical_severity_fail = 0
+        high_severity_pass = 0
+        high_severity_fail = 0
+        medium_severity_pass = 0
+        medium_severity_fail = 0
+        low_severity_pass = 0
+        low_severity_fail = 0
+
+        # Loop over each row from the database
+        for row in scan_summaries:
+            # Accumulate overall totals
+            total_pass += row._pass
+            total_fail += row.fail
+            findings_count += row.total
+
+            if row.muted > 0:
+                if row._pass > 0:
+                    muted_pass += row._pass
+                if row.fail > 0:
+                    muted_fail += row.fail
+
+            sev = row.severity.lower()
+            if sev == "critical":
+                critical_severity_pass += row._pass
+                critical_severity_fail += row.fail
+            elif sev == "high":
+                high_severity_pass += row._pass
+                high_severity_fail += row.fail
+            elif sev == "medium":
+                medium_severity_pass += row._pass
+                medium_severity_fail += row.fail
+            elif sev == "low":
+                low_severity_pass += row._pass
+                low_severity_fail += row.fail
+
+        all_fails_are_muted = (total_fail > 0) and (total_fail == muted_fail)
+
+        stats = {
+            "total_pass": total_pass,
+            "total_muted_pass": muted_pass,
+            "total_fail": total_fail,
+            "total_muted_fail": muted_fail,
+            "resources_count": resources_count,
+            "findings_count": findings_count,
+            "total_critical_severity_fail": critical_severity_fail,
+            "total_critical_severity_pass": critical_severity_pass,
+            "total_high_severity_fail": high_severity_fail,
+            "total_high_severity_pass": high_severity_pass,
+            "total_medium_severity_fail": medium_severity_fail,
+            "total_medium_severity_pass": medium_severity_pass,
+            "total_low_severity_fail": low_severity_fail,
+            "total_low_severity_pass": low_severity_pass,
+            "all_fails_are_muted": all_fails_are_muted,
+        }
+        return stats

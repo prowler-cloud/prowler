@@ -16,12 +16,15 @@ class Test_guardduty_eks_audit_log_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled import (
@@ -43,12 +46,15 @@ class Test_guardduty_eks_audit_log_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled import (
@@ -72,12 +78,15 @@ class Test_guardduty_eks_audit_log_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled import (
@@ -113,12 +122,15 @@ class Test_guardduty_eks_audit_log_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.guardduty.guardduty_eks_audit_log_enabled.guardduty_eks_audit_log_enabled import (

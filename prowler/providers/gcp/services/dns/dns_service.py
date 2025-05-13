@@ -5,7 +5,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## DNS
 class DNS(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
@@ -25,11 +24,13 @@ class DNS(GCPService):
                             ManagedZone(
                                 name=managed_zone["name"],
                                 id=managed_zone["id"],
-                                dnssec=managed_zone.get("dnssecConfig", {})["state"]
+                                dnssec=managed_zone.get("dnssecConfig", {}).get(
+                                    "state", ""
+                                )
                                 == "on",
-                                key_specs=managed_zone.get("dnssecConfig", {})[
-                                    "defaultKeySpecs"
-                                ],
+                                key_specs=managed_zone.get("dnssecConfig", {}).get(
+                                    "defaultKeySpecs", []
+                                ),
                                 project_id=project_id,
                             )
                         )

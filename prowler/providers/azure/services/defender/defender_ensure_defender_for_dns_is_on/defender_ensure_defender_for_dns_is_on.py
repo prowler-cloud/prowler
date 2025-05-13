@@ -8,7 +8,7 @@ class defender_ensure_defender_for_dns_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "Dns" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["Dns"]
+                    metadata=self.metadata(), resource=pricings["Dns"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan DNS"

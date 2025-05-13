@@ -9,9 +9,7 @@ class opensearch_service_domains_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "PASS"
             report.status_extended = (
                 f"Opensearch domain {domain.name} is not publicly accessible."
@@ -19,7 +17,7 @@ class opensearch_service_domains_not_publicly_accessible(Check):
 
             if domain.vpc_id:
                 report.status_extended = f"Opensearch domain {domain.name} is in a VPC, then it is not publicly accessible."
-            elif domain.access_policy and is_policy_public(
+            elif domain.access_policy is not None and is_policy_public(
                 domain.access_policy, opensearch_client.audited_account
             ):
                 report.status = "FAIL"

@@ -18,6 +18,8 @@ default_threat_detection_llm_jacking_actions = [
     "ListFoundationModelAgreementOffers",
     "ListFoundationModels",
     "ListProvisionedModelThroughputs",
+    "SearchAgreements",
+    "AcceptAgreementRequest",
 ]
 
 
@@ -82,17 +84,17 @@ class cloudtrail_threat_detection_llm_jacking(Check):
             if len(actions) / len(llm_jacking_actions) > threshold:
                 found_potential_llm_jacking = True
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                    metadata=self.metadata(), resource=cloudtrail_client.trails
                 )
                 report.region = cloudtrail_client.region
                 report.resource_id = aws_identity_arn.split("/")[-1]
                 report.resource_arn = aws_identity_arn
                 report.status = "FAIL"
-                report.status_extended = f"Potential LLM Jacking attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
+                report.status_extended = f"Potential LLM Jacking attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with a threshold of {identity_threshold}."
                 findings.append(report)
         if not found_potential_llm_jacking:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                metadata=self.metadata(), resource=cloudtrail_client.trails
             )
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account

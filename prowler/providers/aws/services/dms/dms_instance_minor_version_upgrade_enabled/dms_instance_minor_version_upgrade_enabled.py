@@ -6,9 +6,7 @@ class dms_instance_minor_version_upgrade_enabled(Check):
     def execute(self):
         findings = []
         for instance in dms_client.instances:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
             report.status = "FAIL"
             report.status_extended = f"DMS Replication Instance {instance.id} does not have auto minor version upgrade enabled."
             if instance.auto_minor_version_upgrade:

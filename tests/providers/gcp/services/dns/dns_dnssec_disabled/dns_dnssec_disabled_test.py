@@ -1,20 +1,28 @@
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
+from tests.providers.gcp.gcp_fixtures import (
+    GCP_EU1_LOCATION,
+    GCP_PROJECT_ID,
+    set_mocked_gcp_provider,
+)
 
 
 class Test_dns_dnssec_disabled:
     def test_dns_no_managed_zones(self):
         dns_client = mock.MagicMock()
         dns_client.managed_zones = []
+        dns_client.region = GCP_EU1_LOCATION
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
-            new=dns_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
+                new=dns_client,
+            ),
         ):
             from prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled import (
                 dns_dnssec_disabled,
@@ -51,13 +59,17 @@ class Test_dns_dnssec_disabled:
         dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
+        dns_client.region = GCP_EU1_LOCATION
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
-            new=dns_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
+                new=dns_client,
+            ),
         ):
             from prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled import (
                 dns_dnssec_disabled,
@@ -101,13 +113,17 @@ class Test_dns_dnssec_disabled:
         dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
+        dns_client.region = GCP_EU1_LOCATION
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
-            new=dns_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
+                new=dns_client,
+            ),
         ):
             from prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled import (
                 dns_dnssec_disabled,

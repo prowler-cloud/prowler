@@ -8,7 +8,7 @@ class cognito_user_pool_client_prevent_user_existence_errors(Check):
         for pool in cognito_idp_client.user_pools.values():
             for user_pool_client in pool.user_pool_clients.values():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=user_pool_client
+                    metadata=self.metadata(), resource=user_pool_client
                 )
                 report.resource_tags = pool.tags
                 if user_pool_client.prevent_user_existence_errors == "ENABLED":

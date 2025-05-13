@@ -10,12 +10,12 @@
   "ResourceType": "Network",
   "Description": "Ensure that the default network does not exist",
   "Risk": "The default network has a preconfigured network configuration and automatically generates insecure firewall rules.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/default-vpc-in-use.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/default-vpc-in-use.html",
+      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7#terraform"
     },
     "Recommendation": {

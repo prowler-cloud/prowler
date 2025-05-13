@@ -8,9 +8,7 @@ class ecr_registry_scan_images_on_push_enabled(Check):
         for registry in ecr_client.registries.values():
             # We want to check the registry if it is in use, hence there are repositories
             if len(registry.repositories) != 0:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=registry
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=registry)
                 report.status = "FAIL"
                 report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning without scan on push enabled."
                 if registry.rules:

@@ -1,4 +1,5 @@
 import { Spacer } from "@nextui-org/react";
+import { format, subDays } from "date-fns";
 import { Suspense } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
@@ -19,7 +20,7 @@ import {
 } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table/skeleton-table-new-findings";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
@@ -31,8 +32,7 @@ export default function Home({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
-    <>
-      <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
+    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
       <Spacer y={4} />
       <FilterControls providers />
       <div className="mx-auto space-y-8 px-0 py-6">
@@ -66,7 +66,7 @@ export default function Home({
           </div>
         </div>
       </div>
-    </>
+    </ContentLayout>
   );
 }
 
@@ -129,11 +129,14 @@ const SSRFindingsBySeverity = async ({
 
 const SSRDataNewFindingsTable = async () => {
   const page = 1;
-  const sort = "severity,updated_at";
+  const sort = "severity,-inserted_at";
+
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
 
   const defaultFilters = {
     "filter[status__in]": "FAIL",
     "filter[delta__in]": "new",
+    "filter[inserted_at__gte]": twoDaysAgo,
   };
 
   const findingsData = await getFindings({
@@ -154,8 +157,7 @@ const SSRDataNewFindingsTable = async () => {
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider =
-          providerDict[resource?.relationships?.provider?.data?.id];
+        const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
         return {
           ...finding,
@@ -172,14 +174,21 @@ const SSRDataNewFindingsTable = async () => {
 
   return (
     <>
-      <div className="relative flex items-start justify-between">
-        <h3 className="mb-4 w-full text-sm font-bold uppercase">
-          Latest 10 failing findings to date by Severity
-        </h3>
+      <div className="relative flex w-full">
+        <div className="flex w-full items-center gap-2">
+          <h3 className="text-sm font-bold uppercase">
+            Latest new failing findings
+          </h3>
+          <p className="text-xs text-gray-500">
+            Showing the latest 10 new failing findings by severity from the last
+            2 days.
+          </p>
+        </div>
         <div className="absolute -top-6 right-0">
           <LinkToFindings />
         </div>
       </div>
+      <Spacer y={4} />
       <DataTable
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}

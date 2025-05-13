@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 
 export const getFindings = async ({
   page = 1,
@@ -13,13 +12,12 @@ export const getFindings = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1)
-    redirect("findings?include=resources.provider,scan");
+    redirect("findings?include=resources,scan.provider");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings?include=resources.provider,scan`);
+  const url = new URL(`${apiBaseUrl}/findings?include=resources,scan.provider`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
@@ -28,21 +26,12 @@ export const getFindings = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
-    if (
-      key !== "filter[search]" &&
-      !excludedFilters.some((filter) => key.includes(filter))
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
     const findings = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await findings.json();
     const parsedData = parseStringify(data);
@@ -60,10 +49,9 @@ export const getMetadataInfo = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings/metadata`);
+  const url = new URL(`${apiBaseUrl}/findings/metadata`);
 
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
@@ -81,24 +69,19 @@ export const getMetadataInfo = async ({
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch services regions: ${response.statusText}`,
-      );
+      throw new Error(`Failed to fetch metadata info: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
+    const parsedData = parseStringify(await response.json());
+
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Error fetching services regions:", error);
+    console.error("Error fetching metadata info:", error);
     return undefined;
   }
 };

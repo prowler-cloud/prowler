@@ -10,7 +10,7 @@ class iam_organization_essential_contacts_configured(Check):
         for org in essentialcontacts_client.organizations:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=org,
+                resource=org,
                 project_id=essentialcontacts_client.default_project_id,
                 location=essentialcontacts_client.region,
             )

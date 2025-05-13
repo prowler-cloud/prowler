@@ -15,7 +15,7 @@ class trustedadvisor_premium_support_plan_subscribed(Check):
         ):
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=trustedadvisor_client.premium_support,
+                resource=trustedadvisor_client.premium_support,
             )
             report.status = "FAIL"
             report.status_extended = (

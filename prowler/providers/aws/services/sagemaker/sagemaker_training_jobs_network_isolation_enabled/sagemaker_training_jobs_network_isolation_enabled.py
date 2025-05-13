@@ -6,9 +6,7 @@ class sagemaker_training_jobs_network_isolation_enabled(Check):
     def execute(self):
         findings = []
         for training_job in sagemaker_client.sagemaker_training_jobs:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=training_job
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=training_job)
             report.status = "PASS"
             report.status_extended = f"Sagemaker training job {training_job.name} has network isolation enabled."
             if not training_job.network_isolation:

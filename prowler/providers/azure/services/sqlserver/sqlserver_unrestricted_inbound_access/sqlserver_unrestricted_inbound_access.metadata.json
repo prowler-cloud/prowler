@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_unrestricted_inbound_access",
-  "CheckTitle": "Ensure that there are no firewall rules allowing traffic from 0.0.0.0-255.255.255.255",
+  "CheckTitle": "Ensure no Azure SQL Databases allow ingress from 0.0.0.0/0 (ANY IP)",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",

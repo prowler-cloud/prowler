@@ -105,10 +105,10 @@ class AwsProvider(Provider):
         self,
         retries_max_attempts: int = 3,
         role_arn: str = None,
-        session_duration: int = None,
+        session_duration: int = 3600,
         external_id: str = None,
         role_session_name: str = None,
-        mfa: bool = None,
+        mfa: bool = False,
         profile: str = None,
         regions: set = set(),
         organizations_role_arn: str = None,
@@ -193,6 +193,7 @@ class AwsProvider(Provider):
         ######## AWS Session
         logger.info("Generating original session ...")
 
+        # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
         aws_session = self.setup_session(
             mfa=mfa,
@@ -238,7 +239,6 @@ class AwsProvider(Provider):
             profile_region=profile_region,
         )
         ########
-
         ######## AWS Session with Assume Role (if needed)
         if role_arn:
             # Validate the input role

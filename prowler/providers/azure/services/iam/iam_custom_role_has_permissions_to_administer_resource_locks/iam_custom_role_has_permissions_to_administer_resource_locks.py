@@ -13,10 +13,10 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
             for custom_role in roles:
                 if exits_role_with_permission_over_locks:
                     break
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=custom_role
+                )
                 report.subscription = subscription
-                report.resource_id = custom_role.id
-                report.resource_name = custom_role.name
                 report.status = "FAIL"
                 report.status_extended = f"Role {custom_role.name} from subscription {subscription} has no permission to administer resource locks."
 
@@ -29,5 +29,5 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
                             report.status_extended = f"Role {custom_role.name} from subscription {subscription} has permission to administer resource locks."
                             exits_role_with_permission_over_locks = True
                             break
-            findings.append(report)
+                findings.append(report)
         return findings

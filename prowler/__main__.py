@@ -51,18 +51,37 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
+    KubernetesISO27001,
+)
+from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
+    ProwlerThreatScoreAWS,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azure import (
+    ProwlerThreatScoreAzure,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
+    ProwlerThreatScoreGCP,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
+    ProwlerThreatScoreM365,
+)
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
@@ -79,6 +98,8 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.m365.models import M365OutputOptions
+from prowler.providers.nhn.models import NHNOutputOptions
 
 
 def prowler():
@@ -264,6 +285,14 @@ def prowler():
         output_options = GithubOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "m365":
+        output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "nhn":
+        output_options = NHNOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -304,15 +333,26 @@ def prowler():
             print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}\n")
         sys.exit()
 
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = []
+    for finding in findings:
+        try:
+            finding_outputs.append(
+                Finding.generate_output(global_provider, finding, output_options)
+            )
+        except Exception:
+            continue
+
     # Extract findings stats
-    stats = extract_findings_statistics(findings)
+    stats = extract_findings_statistics(finding_outputs)
 
     if args.slack:
         # TODO: this should be also in a config file
         if "SLACK_API_TOKEN" in environ and (
             "SLACK_CHANNEL_NAME" in environ or "SLACK_CHANNEL_ID" in environ
         ):
-
             token = environ["SLACK_API_TOKEN"]
             channel = (
                 environ["SLACK_CHANNEL_NAME"]
@@ -329,26 +369,16 @@ def prowler():
             )
             sys.exit(1)
 
-    # Outputs
-    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
-    # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = [
-        Finding.generate_output(global_provider, finding, output_options)
-        for finding in findings
-    ]
-
     generated_outputs = {"regular": [], "compliance": []}
 
     if args.output_formats:
         for mode in args.output_formats:
             filename = (
-                f"{output_options.output_directory}/"
-                f"{output_options.output_filename}"
+                f"{output_options.output_directory}/{output_options.output_filename}"
             )
             if mode == "csv":
                 csv_output = CSV(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{csv_file_suffix}",
                 )
                 generated_outputs["regular"].append(csv_output)
@@ -358,7 +388,6 @@ def prowler():
             if mode == "json-asff":
                 asff_output = ASFF(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{json_asff_file_suffix}",
                 )
                 generated_outputs["regular"].append(asff_output)
@@ -368,7 +397,6 @@ def prowler():
             if mode == "json-ocsf":
                 json_output = OCSF(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
                 generated_outputs["regular"].append(json_output)
@@ -376,7 +404,6 @@ def prowler():
             if mode == "html":
                 html_output = HTML(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{html_file_suffix}",
                 )
                 generated_outputs["regular"].append(html_output)
@@ -399,7 +426,6 @@ def prowler():
                 cis = AWSCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -413,7 +439,6 @@ def prowler():
                 mitre_attack = AWSMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -427,7 +452,6 @@ def prowler():
                 ens = AWSENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
@@ -441,7 +465,6 @@ def prowler():
                 aws_well_architected = AWSWellArchitected(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(aws_well_architected)
@@ -455,7 +478,6 @@ def prowler():
                 iso27001 = AWSISO27001(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(iso27001)
@@ -469,11 +491,22 @@ def prowler():
                 kisa_ismsp = AWSKISAISMSP(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(kisa_ismsp)
                 kisa_ismsp.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_aws":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreAWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -482,7 +515,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -499,7 +531,6 @@ def prowler():
                 cis = AzureCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -513,7 +544,6 @@ def prowler():
                 mitre_attack = AzureMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -527,11 +557,35 @@ def prowler():
                 ens = AzureENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = AzureISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_azure":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreAzure(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -540,7 +594,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -557,7 +610,6 @@ def prowler():
                 cis = GCPCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -571,7 +623,6 @@ def prowler():
                 mitre_attack = GCPMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -585,11 +636,35 @@ def prowler():
                 ens = GCPENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = GCPISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_gcp":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreGCP(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -598,7 +673,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -615,11 +689,23 @@ def prowler():
                 cis = KubernetesCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = KubernetesISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -628,7 +714,74 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "m365":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = M365CIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_m365":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreM365(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "nhn":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = NHNISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)

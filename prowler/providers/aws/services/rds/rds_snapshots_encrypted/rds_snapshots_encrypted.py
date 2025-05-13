@@ -6,9 +6,7 @@ class rds_snapshots_encrypted(Check):
     def execute(self):
         findings = []
         for db_snap in rds_client.db_snapshots:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_snap
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_snap)
             if db_snap.encrypted:
                 report.status = "PASS"
                 report.status_extended = (
@@ -23,9 +21,7 @@ class rds_snapshots_encrypted(Check):
             findings.append(report)
 
         for db_snap in rds_client.db_cluster_snapshots:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_snap
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_snap)
             if db_snap.encrypted:
                 report.status = "PASS"
                 report.status_extended = (

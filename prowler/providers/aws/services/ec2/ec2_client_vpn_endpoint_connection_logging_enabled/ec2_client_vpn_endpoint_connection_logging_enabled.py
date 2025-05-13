@@ -6,9 +6,7 @@ class ec2_client_vpn_endpoint_connection_logging_enabled(Check):
     def execute(self):
         findings = []
         for vpn_arn, vpn_endpoint in ec2_client.vpn_endpoints.items():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=vpn_endpoint
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=vpn_endpoint)
 
             if vpn_endpoint.connection_logging:
                 report.status = "PASS"

@@ -8,14 +8,15 @@ class backup_plans_exist(Check):
         if backup_client.backup_plans:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=backup_client.backup_plans[0],
+                resource=backup_client.backup_plans[0],
             )
             report.status = "PASS"
             report.status_extended = f"At least one Backup Plan exists: {backup_client.backup_plans[0].name}."
             report.resource_id = backup_client.backup_plans[0].name
             findings.append(report)
         elif backup_client.backup_vaults:
-            report = Check_Report_AWS(self.metadata(), resource_metadata=backup_client)
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            report.region = backup_client.region
             report.status = "FAIL"
             report.status_extended = "No Backup Plan exist."
             report.resource_arn = backup_client.backup_plan_arn_template

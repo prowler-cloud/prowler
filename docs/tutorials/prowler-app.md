@@ -9,10 +9,22 @@ You can also access to the auto-generated **Prowler API** documentation at [http
     If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user you can see API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
 
 ## **Step 1: Sign Up**
+### **Sign up with Email**
 To get started, sign up using your email and password:
 
 <img src="../../img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="../../img/sign-up.png" alt="Sign Up" width="285"/>
+
+### **Sign up with Social Login**
+
+If Social Login is enabled, you can sign up using your preferred provider (e.g., Google, GitHub).
+
+???+ note "How Social Login Works"
+    - If your email is already registered, you will be logged in, and your social account will be linked.
+    - If your email is not registered, a new account will be created using your social account email.
+
+???+ note "Enable Social Login"
+    See [how to configure Social Login for Prowler](prowler-app-social-login.md) to enable this feature in your own deployments.
 
 ---
 
@@ -71,6 +83,15 @@ For AWS, enter your `AWS Account ID` and choose one of the following methods to 
 
     <img src="../../img/aws-role.png" alt="AWS Role" width="700"/>
 
+???+ note
+    check if your AWS Security Token Service (STS) has the EU (Ireland) endpoint active. If not we will not be able to connect to your AWS account.
+
+    If that is the case your STS configuration may look like this:
+
+    <img src="../../img/sts-configuration.png" alt="AWS Role" width="800"/>
+
+    To solve this issue, please activate the EU (Ireland) STS endpoint.
+
 ---
 
 ### **Step 4.2: Azure Credentials**
@@ -98,6 +119,41 @@ For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate, paste the 
 By default, the `kubeconfig` file is located at `~/.kube/config`.
 
 <img src="../../img/kubernetes-credentials.png" alt="Kubernetes Credentials" width="700"/>
+
+???+ note
+    If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these additional steps to ensure proper authentication:
+
+    ** Make sure your cluster allow traffic from the Prowler Cloud IP address `52.48.254.174/32` **
+
+    1. Apply the necessary Kubernetes resources to your EKS, GKE, AKS or external cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
+    ```console
+    kubectl apply -f kubernetes/prowler-sa.yaml
+    kubectl apply -f kubernetes/prowler-role.yaml
+    kubectl apply -f kubernetes/prowler-rolebinding.yaml
+    ```
+
+    2. Generate a long-lived token for authentication:
+    ```console
+    kubectl create token prowler-sa -n prowler-ns --duration=0
+    ```
+        - **Security Note:** The `--duration=0` option generates a non-expiring token, which may pose a security risk if not managed properly. Users should decide on an appropriate expiration time based on their security policies. If a limited-time token is preferred, set `--duration=<TIME>` (e.g., `--duration=24h`).
+        - **Important:** If the token expires, Prowler Cloud will no longer be able to authenticate with the cluster. In this case, you will need to generate a new token and **remove and re-add the provider in Prowler Cloud** with the updated `kubeconfig`.
+
+    3. Update your `kubeconfig` to use the ServiceAccount token:
+    ```console
+    kubectl config set-credentials prowler-sa --token=<SA_TOKEN>
+    kubectl config set-context <CONTEXT_NAME> --user=prowler-sa
+    ```
+    Replace <SA_TOKEN> with the generated token and <CONTEXT_NAME> with your KubeConfig Context Name of your EKS, GKE or AKS cluster.
+
+    4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then simply test the connection.
+
+---
+
+### **Step 4.5: M365 Credentials**
+For M365, Prowler App uses a service principal application with user and password to authenticate, for more information about the requirements needed for this provider check this [section](../getting-started/requirements.md#microsoft-365). Also, the detailed steps of how to add this provider to Prowler Cloud and start using it are [here](./microsoft365/getting-started-m365.md).
+
+<img src="../../img/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700"/>
 
 ---
 
@@ -133,3 +189,50 @@ While the scan is running, start exploring the findings in these sections:
 <img src="../../img/issues.png" alt="Issues" width="300" style="text-align: center;"/>
 
 - **Browse All Findings**: Detailed list of findings detected, where you can filter by severity, service, and more. <img src="../../img/findings.png" alt="Findings" width="700"/>
+
+To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.
+
+## **Step 9: Download the Outputs**
+
+Once a scan is complete, navigate to the Scan Jobs section to download the output files generated by Prowler:
+
+<img src="../../img/scan_jobs_section.png" alt="Scan Jobs section" width="700"/>
+
+These outputs are bundled into a single .zip archive containing:
+
+- CSV report
+
+- JSON-OSCF formatted results
+
+- HTML report
+
+- A folder with individual compliance reports
+
+???+ note "Note"
+    The Download button only becomes active after a scan completes successfully.
+
+<img src="../../img/download_output.png" alt="Download output" width="700"/>
+
+The `zip` file unpacks into a folder named like `prowler-output-<provider_id>-<timestamp>`, which includes all of the above outputs. In the example below, you can see the `.csv`, .`json`, and `.html` reports alongside a subfolder for detailed compliance checks.
+
+<img src="../../img/output_folder.png" alt="Output folder" width="700"/>
+
+???+ note "API Note"
+    For more information about the API endpoint used by the UI to download the ZIP archive, refer to: [Prowler API Reference - Download Scan Output](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
+
+## **Step 10: Download specified compliance report**
+
+Once your scan has finished, you don’t need to grab the entire ZIP—just pull down the specific compliance report you want:
+
+- Navigate to the **Compliance** section of the UI.
+
+<img src="../../img/compliance_section.png" alt="Compliance section" width="700"/>
+
+- Find the Framework report you need.
+
+- Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
+
+<img src="../../img/compliance_download.png" alt="Download compliance output" width="700"/>
+
+???+ note "API Note"
+    To fetch a single compliance report via API, see the Retrieve compliance report as CSV endpoint in the Prowler API Reference.[Prowler API Reference - Retrieve compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)

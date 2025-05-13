@@ -1,13 +1,30 @@
+import glob
+import os
+from datetime import datetime, timedelta, timezone
+
+import sentry_sdk
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.env import env
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.db.models.functions import JSONObject
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -31,19 +48,22 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
+from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    backfill_scan_resource_summaries_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
-    perform_scan_summary_task,
     perform_scan_task,
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
+from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
+    IntegrationFilter,
     InvitationFilter,
     MembershipFilter,
     ProviderFilter,
@@ -61,6 +81,7 @@ from api.filters import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     Provider,
@@ -68,13 +89,14 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
+    ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
     Scan,
     ScanSummary,
     SeverityChoices,
     StateChoices,
-    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -82,14 +104,22 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from api.utils import validate_invitation
-from api.uuid_utils import datetime_to_uuid7
+from api.utils import (
+    CustomOAuth2Client,
+    get_findings_metadata_no_aggregations,
+    validate_invitation,
+)
+from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
+    ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    IntegrationCreateSerializer,
+    IntegrationSerializer,
+    IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
     InvitationSerializer,
@@ -114,7 +144,9 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
+    ScanComplianceReportSerializer,
     ScanCreateSerializer,
+    ScanReportSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
@@ -122,6 +154,8 @@ from api.v1.serializers import (
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
+    TokenSocialLoginSerializer,
+    TokenSwitchTenantSerializer,
     UserCreateSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
@@ -188,13 +222,43 @@ class CustomTokenRefreshView(GenericAPIView):
         )
 
 
+@extend_schema(
+    tags=["Token"],
+    summary="Switch tenant using a valid tenant ID",
+    description="Switch tenant by providing a valid tenant ID. The authenticated user must belong to the tenant.",
+)
+class CustomTokenSwitchTenantView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    resource_name = "tokens-switch-tenant"
+    serializer_class = TokenSwitchTenantSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenSwitchTenantSerializer(
+            data=request.data, context={"request": request}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={
+                "type": "tokens-switch-tenant",
+                "attributes": serializer.validated_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 @extend_schema(exclude=True)
 class SchemaView(SpectacularAPIView):
     serializer_class = None
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.2.0"
+        spectacular_settings.VERSION = "1.8.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -250,8 +314,65 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for task management, allowing retrieval of task status and "
                 "revoking tasks that have not started.",
             },
+            {
+                "name": "Integration",
+                "description": "Endpoints for managing third-party integrations, including registration, configuration,"
+                " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
+            },
         ]
         return super().get(request, *args, **kwargs)
+
+
+@extend_schema(exclude=True)
+class GoogleSocialLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GOOGLE_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+            return Response(
+                data={
+                    "type": "google-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
+
+
+@extend_schema(exclude=True)
+class GithubSocialLoginView(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GITHUB_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+
+            return Response(
+                data={
+                    "type": "github-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
 
 
 @extend_schema_view(
@@ -277,8 +398,8 @@ class SchemaView(SpectacularAPIView):
     ),
     destroy=extend_schema(
         tags=["User"],
-        summary="Delete a user account",
-        description="Remove a user account from the system.",
+        summary="Delete the user account",
+        description="Remove the current user account from the system.",
     ),
     me=extend_schema(
         tags=["User"],
@@ -341,6 +462,12 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def destroy(self, request, *args, **kwargs):
+        if kwargs["pk"] != str(self.request.user.id):
+            raise ValidationError("Only the current user can be deleted.")
+
+        return super().destroy(request, *args, **kwargs)
 
     @extend_schema(
         parameters=[
@@ -973,6 +1100,8 @@ class ProviderViewSet(BaseRLSViewSet):
         provider = get_object_or_404(Provider, pk=pk)
         provider.is_deleted = True
         provider.save()
+        task_name = f"scan-perform-scheduled-{pk}"
+        PeriodicTask.objects.filter(name=task_name).update(enabled=False)
 
         with transaction.atomic():
             task = delete_provider_task.delay(
@@ -1020,6 +1149,39 @@ class ProviderViewSet(BaseRLSViewSet):
         request=ScanCreateSerializer,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
+    report=extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtained successfully"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(description="The scan has no reports"),
+        },
+    ),
+    compliance=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve compliance report as CSV",
+        description="Download a specific compliance report (e.g., 'cis_1.4_aws') as a CSV file.",
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="The compliance report name, like 'cis_1.4_aws'",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="CSV file containing the compliance report"
+            ),
+            404: OpenApiResponse(description="Compliance report not found"),
+        },
+        request=None,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1046,7 +1208,7 @@ class ScanViewSet(BaseRLSViewSet):
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
+            self.required_permissions = []
         else:
             # Require permission for non-GET requests
             self.required_permissions = [Permissions.MANAGE_SCANS]
@@ -1068,6 +1230,14 @@ class ScanViewSet(BaseRLSViewSet):
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
+        elif self.action == "report":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScanReportSerializer
+        elif self.action == "compliance":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScanComplianceReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1085,6 +1255,210 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
+    def _get_task_status(self, scan_instance):
+        """
+        Returns task status if the scan or its associated report-generation task is still executing.
+
+        If the scan is in an EXECUTING state or if a background task related to report generation
+        is found and also executing, this method returns a 202 Accepted response with the task
+        metadata and a `Content-Location` header pointing to the task detail endpoint.
+
+        Args:
+            scan_instance (Scan): The scan instance for which the task status is being checked.
+
+        Returns:
+            Response or None:
+                - A `Response` with HTTP 202 status and serialized task data if the task is executing.
+                - `None` if no running task is found or if the task has already completed.
+        """
+        task = None
+
+        if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
+            task = scan_instance.task
+        else:
+            try:
+                task = Task.objects.get(
+                    task_runner_task__task_name="scan-report",
+                    task_runner_task__task_args__contains=str(scan_instance.id),
+                )
+            except Task.DoesNotExist:
+                return None
+
+        self.response_serializer_class = TaskSerializer
+        serializer = self.get_serializer(task)
+
+        if serializer.data.get("state") != StateChoices.EXECUTING:
+            return None
+
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": serializer.data["id"]}
+                )
+            },
+        )
+
+    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+        """
+        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+
+        Depending on the input parameters, this method supports loading:
+        - From S3 using a direct key.
+        - From S3 by listing objects under a prefix and matching suffix.
+        - From the local filesystem using glob pattern matching.
+
+        Args:
+            path_pattern (str): The key or glob pattern representing the file location.
+            s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
+            bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
+            list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+
+        Returns:
+            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
+            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+        """
+        if s3:
+            try:
+                client = get_s3_client()
+            except (ClientError, NoCredentialsError, ParamValidationError):
+                return Response(
+                    {"detail": "There is a problem with credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if list_objects:
+                # list keys under prefix then match suffix
+                prefix = os.path.dirname(path_pattern)
+                suffix = os.path.basename(path_pattern)
+                try:
+                    resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+                except ClientError as e:
+                    sentry_sdk.capture_exception(e)
+                    return Response(
+                        {
+                            "detail": "Unable to list compliance files in S3: encountered an AWS error."
+                        },
+                        status=status.HTTP_502_BAD_GATEWAY,
+                    )
+                contents = resp.get("Contents", [])
+                keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
+                if not keys:
+                    return Response(
+                        {
+                            "detail": f"No compliance file found for name '{os.path.splitext(suffix)[0]}'."
+                        },
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                # path_pattern here is prefix, but in compliance we build correct suffix check before
+                key = keys[0]
+            else:
+                # path_pattern is exact key
+                key = path_pattern
+            try:
+                s3_obj = client.get_object(Bucket=bucket, Key=key)
+            except ClientError as e:
+                code = e.response.get("Error", {}).get("Code")
+                if code == "NoSuchKey":
+                    return Response(
+                        {"detail": "The scan has no reports."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                return Response(
+                    {"detail": "There is a problem with credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            content = s3_obj["Body"].read()
+            filename = os.path.basename(key)
+        else:
+            files = glob.glob(path_pattern)
+            if not files:
+                return Response(
+                    {"detail": "The scan has no reports."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            filepath = files[0]
+            with open(filepath, "rb") as f:
+                content = f.read()
+            filename = os.path.basename(filepath)
+
+        return content, filename
+
+    def _serve_file(self, content, filename, content_type):
+        response = HttpResponse(content, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
+
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        scan = self.get_object()
+        # Check for executing tasks
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            loader = self._load_file(
+                key_prefix, s3=True, bucket=bucket, list_objects=False
+            )
+        else:
+            loader = self._load_file(scan.output_location, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/x-zip-compressed")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)",
+        url_name="compliance",
+    )
+    def compliance(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix), "compliance", f"{name}.csv"
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "compliance", f"*_{name}.csv")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "text/csv")
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -1099,10 +1473,6 @@ class ScanViewSet(BaseRLSViewSet):
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
-                link=perform_scan_summary_task.si(
-                    tenant_id=self.request.tenant_id,
-                    scan_id=str(scan.id),
-                ),
             )
 
         scan.task_id = task.id
@@ -1266,6 +1636,14 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="List all findings",
         description="Retrieve a list of all findings with options for filtering by various criteria.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
     ),
     retrieve=extend_schema(
         tags=["Finding"],
@@ -1283,32 +1661,44 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="Retrieve metadata values from findings",
         description="Fetch unique metadata values from a set of findings. This is useful for dynamic filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
         filters=True,
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class FindingViewSet(BaseRLSViewSet):
-    queryset = Finding.objects.all()
+    queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
-    prefetch_for_includes = {
-        "__all__": [],
-        "resources": [
-            Prefetch("resources", queryset=Resource.objects.select_related("findings"))
-        ],
-        "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
-    }
-    http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["-id"]
+    http_method_names = ["get"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "status",
         "severity",
         "check_id",
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch(
+                "resources",
+                queryset=Resource.all_objects.prefetch_related("tags", "findings"),
+            )
+        ],
+        "scan": [
+            Prefetch("scan", queryset=Scan.all_objects.select_related("findings"))
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1322,48 +1712,59 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
+        tenant_id = self.request.tenant_id
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Finding.objects.filter(tenant_id=self.request.tenant_id)
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
         else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Finding.objects.filter(
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
                 scan__provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
+
+            resource_match = Resource.all_objects.filter(
+                text_search=search_query,
+                id__in=ResourceFindingMapping.objects.filter(
+                    resource_id=OuterRef("pk"),
+                    tenant_id=tenant_id,
+                ).values("resource_id"),
+            )
+
             queryset = queryset.filter(
-                Q(impact_extended__contains=search_value)
-                | Q(status_extended__contains=search_value)
-                | Q(check_id=search_value)
-                | Q(check_id__icontains=search_value)
-                | Q(text_search=search_query)
-                | Q(resources__uid=search_value)
-                | Q(resources__name=search_value)
-                | Q(resources__region=search_value)
-                | Q(resources__service=search_value)
-                | Q(resources__type=search_value)
-                | Q(resources__uid__contains=search_value)
-                | Q(resources__name__contains=search_value)
-                | Q(resources__region__contains=search_value)
-                | Q(resources__service__contains=search_value)
-                | Q(resources__tags__text_search=search_query)
-                | Q(resources__text_search=search_query)
-            ).distinct()
+                Q(text_search=search_query) | Q(Exists(resource_match))
+            )
 
         return queryset
 
-    def inserted_at_to_uuidv7(self, inserted_at):
-        if inserted_at is None:
-            return None
-        return datetime_to_uuid7(inserted_at)
+    def filter_queryset(self, queryset):
+        # Do not apply filters when retrieving specific finding
+        if self.action == "retrieve":
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def list(self, request, *args, **kwargs):
+        base_qs = self.filter_queryset(self.get_queryset())
+        paginated_ids = self.paginate_queryset(base_qs.values_list("id", flat=True))
+        if paginated_ids is not None:
+            ids = list(paginated_ids)
+            findings = (
+                Finding.all_objects.filter(tenant_id=self.request.tenant_id, id__in=ids)
+                .select_related("scan")
+                .prefetch_related("resources")
+            )
+            # Re-sort in Python to preserve ordering:
+            findings = sorted(findings, key=lambda x: ids.index(x.id))
+            serializer = self.get_serializer(findings, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(base_qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
@@ -1388,48 +1789,113 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
+        # Force filter validation
+        filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        result = filtered_queryset.aggregate(
-            services=ArrayAgg("resources__service", flat=True, distinct=True),
-            regions=ArrayAgg("resources__region", flat=True, distinct=True),
-            tags=ArrayAgg(
-                JSONObject(
-                    key=F("resources__tags__key"), value=F("resources__tags__value")
-                ),
-                distinct=True,
-                filter=Q(resources__tags__key__isnull=False),
-            ),
-            resource_types=ArrayAgg("resources__type", flat=True, distinct=True),
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        scan_based_filters = {}
+
+        if scans := query_params.get("filter[scan__in]") or query_params.get(
+            "filter[scan]"
+        ):
+            queryset = queryset.filter(scan_id__in=scans.split(","))
+            scan_based_filters = {"id__in": scans.split(",")}
+        else:
+            exact = query_params.get("filter[inserted_at]")
+            gte = query_params.get("filter[inserted_at__gte]")
+            lte = query_params.get("filter[inserted_at__lte]")
+
+            date_filters = {}
+            if exact:
+                date = parse_date(exact)
+                datetime_start = datetime.combine(
+                    date, datetime.min.time(), tzinfo=timezone.utc
+                )
+                datetime_end = datetime_start + timedelta(days=1)
+                date_filters["scan_id__gte"] = uuid7_start(
+                    datetime_to_uuid7(datetime_start)
+                )
+                date_filters["scan_id__lt"] = uuid7_start(
+                    datetime_to_uuid7(datetime_end)
+                )
+            else:
+                if gte:
+                    date_start = parse_date(gte)
+                    datetime_start = datetime.combine(
+                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                    )
+                    date_filters["scan_id__gte"] = uuid7_start(
+                        datetime_to_uuid7(datetime_start)
+                    )
+                if lte:
+                    date_end = parse_date(lte)
+                    datetime_end = datetime.combine(
+                        date_end + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
+                    )
+                    date_filters["scan_id__lt"] = uuid7_start(
+                        datetime_to_uuid7(datetime_end)
+                    )
+
+            if date_filters:
+                queryset = queryset.filter(**date_filters)
+                scan_based_filters = {
+                    key.lstrip("scan_"): value for key, value in date_filters.items()
+                }
+
+        # ToRemove: Temporary fallback mechanism
+        if not queryset.exists():
+            scan_ids = Scan.objects.filter(
+                tenant_id=tenant_id, **scan_based_filters
+            ).values_list("id", flat=True)
+            for scan_id in scan_ids:
+                backfill_scan_resource_summaries_task.apply_async(
+                    kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+                )
+            return Response(
+                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
+            )
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get(
+            "filter[resource_type]"
+        ) or query_params.get("filter[resource_type__in]"):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
         )
-        if result["services"] is None:
-            result["services"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["resource_types"] is None:
-            result["resource_types"] = []
-        if result["tags"] is None:
-            result["tags"] = []
-
-        tags_dict = {}
-        for t in result["tags"]:
-            key, value = t["key"], t["value"]
-            if key not in tags_dict:
-                tags_dict[key] = []
-            tags_dict[key].append(value)
-
-        result["tags"] = tags_dict
-
-        serializer = self.get_serializer(
-            data=result,
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .distinct()
+            .order_by("resource_type")
         )
 
+        result = {
+            "services": services,
+            "regions": regions,
+            "resource_types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
 
 @extend_schema_view(
@@ -1816,6 +2282,21 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
         "requirement information and check's status.",
     ),
+    metadata=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Retrieve metadata values from compliance overviews",
+        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
+        "filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1877,6 +2358,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ComplianceOverviewFullSerializer
+        elif self.action == "metadata":
+            return ComplianceOverviewMetadataSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
@@ -1892,6 +2375,35 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = self.request.tenant_id
+
+        regions = list(
+            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values_list("region", flat=True)
+            .order_by("region")
+            .distinct()
+        )
+        result = {"regions": regions}
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Overview"])
@@ -1950,8 +2462,8 @@ class OverviewViewSet(BaseRLSViewSet):
 
         def _get_filtered_queryset(model):
             if role.unlimited_visibility:
-                return model.objects.filter(tenant_id=self.request.tenant_id)
-            return model.objects.filter(
+                return model.all_objects.filter(tenant_id=self.request.tenant_id)
+            return model.all_objects.filter(
                 tenant_id=self.request.tenant_id, scan__provider__in=providers
             )
 
@@ -1993,68 +2505,40 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
-        # Subquery to get the most recent finding for each uid
-        latest_finding_ids = (
-            Finding.objects.filter(
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        resource_count_queryset = (
+            Resource.all_objects.filter(
                 tenant_id=tenant_id,
-                uid=OuterRef("uid"),
-                scan__provider=OuterRef("scan__provider"),
+                provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")  # Most recent by id
-            .values("id")[:1]
+            .order_by()
+            .values("provider_id")
+            .annotate(cnt=Count("id"))
+            .values("cnt")
         )
 
-        # Filter findings to only include the most recent for each uid
-        recent_findings = Finding.objects.filter(
-            tenant_id=tenant_id, id__in=Subquery(latest_finding_ids)
-        )
-
-        # Aggregate findings by provider
-        findings_aggregated = (
-            recent_findings.values("scan__provider__provider")
+        overview_queryset = (
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
-                findings_passed=Count("id", filter=Q(status=StatusChoices.PASS.value)),
-                findings_failed=Count("id", filter=Q(status=StatusChoices.FAIL.value)),
-                findings_manual=Count(
-                    "id", filter=Q(status=StatusChoices.MANUAL.value)
-                ),
-                total_findings=Count("id"),
+                findings_passed=Coalesce(Sum("_pass"), 0),
+                findings_failed=Coalesce(Sum("fail"), 0),
+                findings_muted=Coalesce(Sum("muted"), 0),
+                total_findings=Coalesce(Sum("total"), 0),
+                total_resources=Coalesce(Subquery(resource_count_queryset), 0),
             )
-            .order_by("-findings_failed")
         )
 
-        # Aggregate total resources by provider
-        resources_aggregated = (
-            Resource.objects.filter(tenant_id=tenant_id)
-            .values("provider__provider")
-            .annotate(total_resources=Count("id"))
-        )
-
-        # Combine findings and resources data
-        overview = []
-        for findings in findings_aggregated:
-            provider = findings["scan__provider__provider"]
-            total_resources = next(
-                (
-                    res["total_resources"]
-                    for res in resources_aggregated
-                    if res["provider__provider"] == provider
-                ),
-                0,
-            )
-            overview.append(
-                {
-                    "provider": provider,
-                    "total_resources": total_resources,
-                    "total_findings": findings["total_findings"],
-                    "findings_passed": findings["findings_passed"],
-                    "findings_failed": findings["findings_failed"],
-                    "findings_manual": findings["findings_manual"],
-                }
-            )
-
-        serializer = OverviewProviderSerializer(overview, many=True)
-
+        serializer = OverviewProviderSerializer(overview_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2063,21 +2547,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-id")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -2108,21 +2586,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-id")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         severity_counts = (
             filtered_queryset.values("severity")
@@ -2144,21 +2616,15 @@ class OverviewViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        latest_scan_subquery = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                provider_id=OuterRef("scan__provider_id"),
-            )
-            .order_by("-id")
-            .values("id")[:1]
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
-
-        annotated_queryset = filtered_queryset.annotate(
-            latest_scan_id=Subquery(latest_scan_subquery)
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-
-        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
 
         services_data = (
             filtered_queryset.values("service")
@@ -2228,3 +2694,67 @@ class ScheduleViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Integration"],
+        summary="List all integrations",
+        description="Retrieve a list of all configured integrations with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Integration"],
+        summary="Retrieve integration details",
+        description="Fetch detailed information about a specific integration by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Integration"],
+        summary="Create a new integration",
+        description="Register a new integration with the system, providing necessary configuration details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Integration"],
+        summary="Partially update an integration",
+        description="Modify certain fields of an existing integration without affecting other settings.",
+    ),
+    destroy=extend_schema(
+        tags=["Integration"],
+        summary="Delete an integration",
+        description="Remove an integration from the system by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class IntegrationViewSet(BaseRLSViewSet):
+    queryset = Integration.objects.all()
+    serializer_class = IntegrationSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = IntegrationFilter
+    ordering = ["integration_type", "-inserted_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    allowed_providers = None
+
+    def get_queryset(self):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all integrations
+            queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            allowed_providers = get_providers(user_roles)
+            queryset = Integration.objects.filter(providers__in=allowed_providers)
+            self.allowed_providers = allowed_providers
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return IntegrationCreateSerializer
+        elif self.action == "partial_update":
+            return IntegrationUpdateSerializer
+        return super().get_serializer_class()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["allowed_providers"] = self.allowed_providers
+        return context

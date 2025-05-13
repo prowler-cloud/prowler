@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
+import { Checkbox } from "@nextui-org/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,13 +13,14 @@ import {
   checkConnectionProvider,
   deleteCredentials,
 } from "@/actions/providers";
-import { scheduleDaily } from "@/actions/scans";
+import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
+import { ProviderType } from "@/types";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
@@ -40,7 +42,7 @@ export const TestConnectionForm = ({
           connected: boolean | null;
           last_checked_at: string | null;
         };
-        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        provider: ProviderType;
         alias: string;
         scanner_args: Record<string, any>;
       };
@@ -57,20 +59,25 @@ export const TestConnectionForm = ({
 }) => {
   const { toast } = useToast();
   const router = useRouter();
+
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-  const formSchema = testConnectionFormSchema;
+
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<{
     connected: boolean;
     error: string | null;
   } | null>(null);
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const formSchema = testConnectionFormSchema;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
+      runOnce: false,
     },
   });
 
@@ -115,9 +122,21 @@ export const TestConnectionForm = ({
           error: connected ? null : error || "Unknown error",
         });
 
-        if (connected) {
+        if (connected && isUpdated) return router.push("/providers");
+
+        if (connected && !isUpdated) {
           try {
-            const data = await scheduleDaily(formData);
+            // Check if the runOnce checkbox is checked
+            const runOnce = form.watch("runOnce");
+
+            let data;
+
+            if (runOnce) {
+              data = await scanOnDemand(formData);
+            } else {
+              data = await scheduleDaily(formData);
+            }
+
             if (data.error) {
               setApiErrorMessage(data.error);
               form.setError("providerId", {
@@ -125,19 +144,8 @@ export const TestConnectionForm = ({
                 message: data.error,
               });
             } else {
-              const urlParams = new URLSearchParams(window.location.search);
-              const isUpdated = urlParams.get("updated") === "true";
-
-              if (!isUpdated) {
-                router.push(
-                  `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-                );
-              } else {
-                setConnectionStatus({
-                  connected: true,
-                  error: null,
-                });
-              }
+              setIsRedirecting(true);
+              router.push("/scans");
             }
           } catch (error) {
             form.setError("providerId", {
@@ -191,6 +199,25 @@ export const TestConnectionForm = ({
     }
   };
 
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-6 py-12">
+        <div className="relative">
+          <div className="h-24 w-24 animate-pulse rounded-full bg-primary/20" />
+          <div className="absolute inset-0 h-24 w-24 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+        <div className="text-center">
+          <p className="text-xl font-medium text-primary">
+            Scan initiated successfully
+          </p>
+          <p className="mt-2 text-small font-bold text-gray-500">
+            Redirecting to scans job details...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form
@@ -198,13 +225,15 @@ export const TestConnectionForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-left">
-          <div className="text-2xl font-bold leading-9 text-default-foreground">
-            Test connection
+          <div className="mb-2 text-xl font-medium">
+            {!isUpdated
+              ? "Check connection and launch scan"
+              : "Check connection"}
           </div>
-          <p className="py-2 text-default-500">
-            Ensure all required credentials and configurations are completed
-            accurately. A successful connection will enable the option to
-            initiate a scan in the following step.
+          <p className="py-2 text-small text-default-500">
+            {!isUpdated
+              ? "After a successful connection, a scan will automatically run every 24 hours. To run a single scan instead, select the checkbox below."
+              : "A successful connection will redirect you to the providers page."}
           </p>
         </div>
 
@@ -224,12 +253,12 @@ export const TestConnectionForm = ({
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-danger">
+                <p className="text-small text-danger">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-md text-danger">
+            <p className="text-small text-danger">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
@@ -243,9 +272,22 @@ export const TestConnectionForm = ({
           providerUID={providerData.data.attributes.uid}
         />
 
-        {!isResettingCredentials && !connectionStatus?.error && (
-          <p className="py-2 text-default-500">
-            Test connection and launch scan
+        {!isUpdated && !connectionStatus?.error && (
+          <Checkbox
+            {...form.register("runOnce")}
+            isSelected={!!form.watch("runOnce")}
+            classNames={{
+              label: "text-small text-default-500",
+              wrapper: "checkbox-update",
+            }}
+          >
+            Run a single scan (no recurring schedule).
+          </Checkbox>
+        )}
+
+        {isUpdated && !connectionStatus?.error && (
+          <p className="py-2 text-small text-default-500">
+            Check the new credentials and test the connection.
           </p>
         )}
 
@@ -271,7 +313,7 @@ export const TestConnectionForm = ({
               className="w-1/2"
               variant="solid"
               color="warning"
-              size="lg"
+              size="md"
               isLoading={isResettingCredentials}
               startContent={!isResettingCredentials && <CheckIcon size={24} />}
               isDisabled={isResettingCredentials}
@@ -289,27 +331,18 @@ export const TestConnectionForm = ({
               type={
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
-              onPress={
-                isUpdated && connectionStatus?.connected
-                  ? () => router.push("/providers")
-                  : undefined
-              }
               ariaLabel={"Save"}
-              className="w-1/2"
+              className="w-1/3"
               variant="solid"
               color="action"
-              size="lg"
+              size="md"
               isLoading={isLoading}
-              endContent={!isLoading && <RocketIcon size={24} />}
+              endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
             >
               {isLoading ? (
                 <>Loading</>
               ) : (
-                <span>
-                  {isUpdated && connectionStatus?.connected
-                    ? "Go to providers"
-                    : "Launch"}
-                </span>
+                <span>{isUpdated ? "Check connection" : "Launch scan"}</span>
               )}
             </CustomButton>
           )}

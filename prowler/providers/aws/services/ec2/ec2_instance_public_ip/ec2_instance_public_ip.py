@@ -7,9 +7,7 @@ class ec2_instance_public_ip(Check):
         findings = []
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"
                 report.status_extended = (
                     f"EC2 Instance {instance.id} does not have a Public IP."

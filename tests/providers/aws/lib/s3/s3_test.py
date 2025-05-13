@@ -93,7 +93,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     @mock_aws
@@ -113,7 +113,6 @@ class TestS3:
         csv_file = f"test{extension}"
         csv = CSV(
             findings=[FINDING],
-            create_file_descriptor=True,
             file_path=f"{CURRENT_DIRECTORY}/{csv_file}",
         )
 
@@ -133,7 +132,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
         remove(f"{CURRENT_DIRECTORY}/{csv_file}")
@@ -172,7 +171,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "application/json"
         )
 
     @mock_aws
@@ -210,7 +209,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/html"
         )
 
     @mock_aws
@@ -291,7 +290,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     def test_get_get_object_path_with_prowler(self):
@@ -345,3 +344,46 @@ class TestS3:
             assert s3 is not None
             assert s3.is_connected is False
             assert s3.error is not None
+
+    @mock_aws
+    def test_init_without_session(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+            )
+
+        assert (
+            str(e.value)
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
+        )
+
+    @mock_aws
+    def test_init_without_session_but_role_arn(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                role_arn="arn:aws:iam::123456789012:role/role_name",
+            )
+
+        assert (
+            str(e.value)
+            == "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
+        )
+
+    @mock_aws
+    def test_init_without_session_and_role_arn_but_session_duration(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                session_duration=3600,
+            )
+        assert (
+            str(e.value)
+            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+        )

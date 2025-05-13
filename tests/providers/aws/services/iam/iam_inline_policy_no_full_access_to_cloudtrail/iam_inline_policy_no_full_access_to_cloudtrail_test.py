@@ -38,12 +38,15 @@ class Test_iam_inline_policy_no_full_access_to_cloudtrail:
             PolicyDocument=dumps(policy_document_full_access),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
-            new=IAM(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
+                new=IAM(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail import (
                 iam_inline_policy_no_full_access_to_cloudtrail,
@@ -85,12 +88,15 @@ class Test_iam_inline_policy_no_full_access_to_cloudtrail:
             PolicyDocument=dumps(policy_document_full_access),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
-            new=IAM(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
+                new=IAM(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail import (
                 iam_inline_policy_no_full_access_to_cloudtrail,
@@ -132,12 +138,15 @@ class Test_iam_inline_policy_no_full_access_to_cloudtrail:
             PolicyDocument=dumps(policy_document_full_access),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
-            new=IAM(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
+                new=IAM(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail import (
                 iam_inline_policy_no_full_access_to_cloudtrail,
@@ -183,12 +192,15 @@ class Test_iam_inline_policy_no_full_access_to_cloudtrail:
             PolicyDocument=dumps(policy_document_full_access),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
-            new=IAM(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
+                new=IAM(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail import (
                 iam_inline_policy_no_full_access_to_cloudtrail,
@@ -234,12 +246,15 @@ class Test_iam_inline_policy_no_full_access_to_cloudtrail:
             PolicyDocument=dumps(policy_document_full_access),
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
-            new=IAM(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail.iam_client",
+                new=IAM(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_full_access_to_cloudtrail.iam_inline_policy_no_full_access_to_cloudtrail import (
                 iam_inline_policy_no_full_access_to_cloudtrail,

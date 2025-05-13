@@ -358,6 +358,15 @@ def run_fixer(check_findings: list) -> int:
                                     print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
                                 else:
                                     print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
+                            elif "resource_arn" in fixer.__code__.co_varnames:
+                                print(
+                                    f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_arn}... "
+                                )
+                                if fixer(resource_arn=finding.resource_arn):
+                                    fixed_findings += 1
+                                    print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
+                                else:
+                                    print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
                             else:
                                 print(
                                     f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_id}... "
