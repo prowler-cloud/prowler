@@ -7,7 +7,10 @@ from moto import mock_aws
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
     SecretsManager,
 )
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 
 @pytest.fixture(scope="function")
@@ -19,6 +22,81 @@ def secretsmanager_client():
 
 
 class TestSecretsManagerHasRestrictiveResourcePolicy:
+
+    def test_assumed_role_identity_arn_triggers_transformation(self):
+
+        with mock_aws():
+            boto3_client = client("secretsmanager", region_name=AWS_REGION_EU_WEST_1)
+            boto3_client.create_secret(Name="mock-secret")
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            sm_client = SecretsManager(aws_provider)
+            sm_client.provider._assumed_role_configuration = None
+
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch.object(
+                    sm_client.provider.identity,
+                    "identity_arn",
+                    "arn:aws:sts::123456789012:assumed-role/TestRole/SessionName",
+                ),
+                mock.patch.object(
+                    sm_client.provider, "_assumed_role_configuration", None
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    sm_client,
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    "arn:aws:iam::123456789012:role/TestRole"
+                    in result[0].status_extended
+                )
+
+    def test_non_assumed_role_identity_arn_remains_unchanged(self):
+        with mock_aws():
+            boto3_client = client("secretsmanager", region_name=AWS_REGION_EU_WEST_1)
+            boto3_client.create_secret(Name="mock-secret")
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            sm_client = SecretsManager(aws_provider)
+            sm_client.provider._assumed_role_configuration = None
+
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch.object(
+                    sm_client.provider.identity,
+                    "identity_arn",
+                    "arn:aws:iam::123456789012:user/MyUser",
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    sm_client,
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    "arn:aws:iam::123456789012:user/MyUser" in result[0].status_extended
+                )
 
     def test_no_secrets(self):
         with mock_aws():
@@ -431,7 +509,10 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
             (
                 "Invalid wildcard in NotAction in both statements",
                 None,
-                [(2, {"NotAction": "*"}), (3, {"NotAction": "secretsmanager:*"})],
+                [
+                    (2, {"NotAction": "*"}),
+                    (3, {"NotAction": "secretsmanager:*"}),
+                ],
                 "FAIL",
             ),
             (
@@ -692,7 +773,10 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
             ),
             (
                 "Invalid Condition Key in AllowAppFlowAccess",
-                (4, {"Condition": {"StringEquals": {"aws:WrongKey": "123456789012"}}}),
+                (
+                    4,
+                    {"Condition": {"StringEquals": {"aws:WrongKey": "123456789012"}}},
+                ),
                 "FAIL",
             ),
             (
@@ -710,7 +794,11 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         ],
     )
     def test_secretsmanager_policies_for_principals_and_services(
-        self, secretsmanager_client, description, modify_element, expected_status
+        self,
+        secretsmanager_client,
+        description,
+        modify_element,
+        expected_status,
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
