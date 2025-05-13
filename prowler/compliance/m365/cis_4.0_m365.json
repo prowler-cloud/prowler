@@ -237,7 +237,9 @@
     {
       "Id": "1.3.6",
       "Description": "Customer Lockbox is a security feature that provides an additional layer of control and transparency to customer data in Microsoft 365. It offers an approval process for Microsoft support personnel to access organization data and creates an audited trail to meet compliance requirements.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_organization_customer_lockbox_enabled"
+      ],
       "Attributes": [
         {
           "Section": "1.3",
