@@ -40,7 +40,7 @@
     "server-only": "^0.0.1",
     "shadcn-ui": "^0.2.3",
     "sharp": "^0.33.5",
-    "tailwind-merge": "^2.5.3",
+    "tailwind-merge": "^3.2.0",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.5",
     "zod": "^3.23.8",
