@@ -24,12 +24,15 @@ class Test_securityhub_enabled:
                 tags=[{"test_key": "test_value"}],
             )
         ]
-        with mock.patch(
-            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
-            new=securityhub_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
-            return_value="arn:aws:securityhub:eu-west-1:0123456789012:hub/unknown",
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
+                new=securityhub_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
+                return_value="arn:aws:securityhub:eu-west-1:0123456789012:hub/unknown",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (

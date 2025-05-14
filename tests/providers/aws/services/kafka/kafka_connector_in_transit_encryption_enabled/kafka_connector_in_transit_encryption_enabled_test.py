@@ -46,12 +46,15 @@ class Test_kafka_connector_in_transit_encryption_enabled:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
-            new=KafkaConnect(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
+                new=KafkaConnect(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled import (
                 kafka_connector_in_transit_encryption_enabled,
@@ -68,12 +71,15 @@ class Test_kafka_connector_in_transit_encryption_enabled:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
-            new=KafkaConnect(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
+                new=KafkaConnect(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled import (
                 kafka_connector_in_transit_encryption_enabled,
@@ -101,12 +107,15 @@ class Test_kafka_connector_in_transit_encryption_enabled:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
-            new=KafkaConnect(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled.kafkaconnect_client",
+                new=KafkaConnect(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_connector_in_transit_encryption_enabled.kafka_connector_in_transit_encryption_enabled import (
                 kafka_connector_in_transit_encryption_enabled,

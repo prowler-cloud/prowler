@@ -13,9 +13,7 @@ class athena_workgroup_enforce_configuration(Check):
             if (
                 workgroup.state == "ENABLED" and workgroup.queries
             ) or athena_client.provider.scan_unused_services:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=workgroup
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=workgroup)
 
                 if workgroup.enforce_workgroup_configuration:
                     report.status = "PASS"

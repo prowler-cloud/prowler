@@ -7,9 +7,7 @@ class ecr_repositories_lifecycle_policy_enabled(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=repository
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repository.name} does not have a lifecycle policy configured."
                 if repository.lifecycle_policy:

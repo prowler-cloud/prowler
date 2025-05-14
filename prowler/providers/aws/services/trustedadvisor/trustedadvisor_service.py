@@ -7,7 +7,6 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ TrustedAdvisor
 class TrustedAdvisor(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__

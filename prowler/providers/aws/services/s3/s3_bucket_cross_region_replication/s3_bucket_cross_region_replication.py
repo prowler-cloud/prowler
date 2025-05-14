@@ -6,9 +6,7 @@ class s3_bucket_cross_region_replication(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             report.status = "FAIL"
             report.status_extended = f"S3 Bucket {bucket.name} does not have correct cross region replication configuration."
             if bucket.replication_rules:

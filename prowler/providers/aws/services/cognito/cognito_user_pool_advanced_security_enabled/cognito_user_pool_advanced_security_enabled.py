@@ -6,7 +6,7 @@ class cognito_user_pool_advanced_security_enabled(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=pool)
             if pool.advanced_security_mode == "ENFORCED":
                 report.status = "PASS"
                 report.status_extended = f"User pool {pool.name} has advanced security enforced with full-function mode."

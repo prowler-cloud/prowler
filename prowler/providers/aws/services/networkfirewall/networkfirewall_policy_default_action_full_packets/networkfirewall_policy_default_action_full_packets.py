@@ -8,9 +8,7 @@ class networkfirewall_policy_default_action_full_packets(Check):
     def execute(self):
         findings = []
         for firewall in networkfirewall_client.network_firewalls.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=firewall
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=firewall)
             report.status = "FAIL"
             report.status_extended = f"Network Firewall {firewall.name} policy does not drop or forward full packets by default."
 

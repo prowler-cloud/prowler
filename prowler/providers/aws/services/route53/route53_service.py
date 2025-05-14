@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Route53
 class Route53(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -87,13 +86,14 @@ class Route53(AWSService):
                 )
                 for page in list_query_logging_configs_paginator.paginate():
                     for logging_config in page["QueryLoggingConfigs"]:
-                        self.hosted_zones[hosted_zone.id].logging_config = (
-                            LoggingConfig(
-                                cloudwatch_log_group_arn=logging_config[
-                                    "CloudWatchLogsLogGroupArn"
-                                ]
+                        if logging_config["HostedZoneId"] == hosted_zone.id:
+                            self.hosted_zones[hosted_zone.id].logging_config = (
+                                LoggingConfig(
+                                    cloudwatch_log_group_arn=logging_config[
+                                        "CloudWatchLogsLogGroupArn"
+                                    ]
+                                )
                             )
-                        )
 
         except Exception as error:
             logger.error(
@@ -137,7 +137,6 @@ class RecordSet(BaseModel):
     region: str
 
 
-################## Route53Domains
 class Route53Domains(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__

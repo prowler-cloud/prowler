@@ -9,12 +9,15 @@ class Test_neptune_cluster_snapshot_encrypted:
         neptune_client = mock.MagicMock()
         neptune_client.db_cluster_snapshots = []
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted import (
@@ -40,12 +43,15 @@ class Test_neptune_cluster_snapshot_encrypted:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted import (
@@ -80,12 +86,15 @@ class Test_neptune_cluster_snapshot_encrypted:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_snapshot_encrypted.neptune_cluster_snapshot_encrypted import (

@@ -9,9 +9,7 @@ class opensearch_service_domains_fault_tolerant_data_nodes(Check):
         findings = []
 
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
 
             report.status = "FAIL"
             report.status_extended = f"Opensearch domain {domain.name} is not fault tolerant as it has less than 3 data nodes and cross-zone replication (Zone Awareness) is not enabled."

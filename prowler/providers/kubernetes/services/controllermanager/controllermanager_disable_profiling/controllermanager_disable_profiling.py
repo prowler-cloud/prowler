@@ -8,9 +8,7 @@ class controllermanager_disable_profiling(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in controllermanager_client.controllermanager_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"Controller Manager does not have profiling enabled in pod {pod.name}."

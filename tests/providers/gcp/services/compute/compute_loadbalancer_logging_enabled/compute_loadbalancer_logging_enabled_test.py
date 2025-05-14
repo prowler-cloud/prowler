@@ -10,12 +10,15 @@ class Test_compute_loadbalancer_logging_enabled:
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.load_balancers = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled import (
                 compute_loadbalancer_logging_enabled,
@@ -41,12 +44,15 @@ class Test_compute_loadbalancer_logging_enabled:
         compute_client.load_balancers = [load_balancer]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled import (
                 compute_loadbalancer_logging_enabled,
@@ -82,12 +88,15 @@ class Test_compute_loadbalancer_logging_enabled:
         compute_client.load_balancers = [load_balancer]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled import (
                 compute_loadbalancer_logging_enabled,
@@ -106,3 +115,34 @@ class Test_compute_loadbalancer_logging_enabled:
             assert result[0].resource_name == load_balancer.name
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == compute_client.region
+
+    def test_one_load_balancer_without_backend_service(self):
+        from prowler.providers.gcp.services.compute.compute_service import LoadBalancer
+
+        load_balancer = LoadBalancer(
+            name="test", id="test_id", project_id=GCP_PROJECT_ID, service=""
+        )
+
+        compute_client = mock.MagicMock()
+        compute_client.project_ids = [GCP_PROJECT_ID]
+        compute_client.load_balancers = [load_balancer]
+        compute_client.region = "global"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_loadbalancer_logging_enabled.compute_loadbalancer_logging_enabled import (
+                compute_loadbalancer_logging_enabled,
+            )
+
+            check = compute_loadbalancer_logging_enabled()
+            result = check.execute()
+
+            assert len(result) == 0

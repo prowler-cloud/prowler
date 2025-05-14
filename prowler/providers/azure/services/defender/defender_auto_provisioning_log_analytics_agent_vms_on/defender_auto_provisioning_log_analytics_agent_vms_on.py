@@ -13,7 +13,7 @@ class defender_auto_provisioning_log_analytics_agent_vms_on(Check):
             for auto_provisioning_setting in auto_provisioning_settings.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=auto_provisioning_setting,
+                    resource=auto_provisioning_setting,
                 )
                 report.subscription = subscription_name
                 report.status = "PASS"

@@ -1,26 +1,25 @@
 import { Input } from "@nextui-org/react";
 import debounce from "lodash.debounce";
 import { SearchIcon, XCircle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
-export const CustomSearchInput: React.FC = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+import { useUrlFilters } from "@/hooks/use-url-filters";
 
+export const CustomSearchInput: React.FC = () => {
+  const searchParams = useSearchParams();
+  const { updateFilter } = useUrlFilters();
   const [searchQuery, setSearchQuery] = useState("");
 
   const applySearch = useCallback(
     (query: string) => {
-      const params = new URLSearchParams(searchParams.toString());
       if (query) {
-        params.set("filter[search]", query);
+        updateFilter("search", query);
       } else {
-        params.delete("filter[search]");
+        updateFilter("search", null);
       }
-      router.push(`?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams],
+    [updateFilter],
   );
 
   const debouncedChangeHandler = useCallback(
@@ -43,6 +42,9 @@ export const CustomSearchInput: React.FC = () => {
   return (
     <Input
       variant="flat"
+      classNames={{
+        label: "tracking-tight font-light !text-default-600 text-sm !z-0 pb-1",
+      }}
       aria-label="Search"
       label="Search"
       placeholder="Search..."

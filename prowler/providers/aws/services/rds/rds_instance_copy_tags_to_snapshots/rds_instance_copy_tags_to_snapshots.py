@@ -12,7 +12,7 @@ class rds_instance_copy_tags_to_snapshots(Check):
                 "aurora-postgresql",
             ]:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=db_instance
+                    metadata=self.metadata(), resource=db_instance
                 )
                 if db_instance.copy_tags_to_snapshot:
                     report.status = "PASS"

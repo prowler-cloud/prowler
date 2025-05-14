@@ -11,9 +11,7 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
             if logging.enabled:
                 s3_encryption = True
                 cloudwatch_encryption = True
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=logging
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=logging)
                 report.region = region
                 report.resource_id = "model-invocation-logging"
                 report.resource_arn = (

@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_33#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_33#aws-cloudfront-console",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_33",
       "Terraform": ""
     },
     "Recommendation": {

@@ -6,9 +6,7 @@ class wafv2_webacl_with_rules(Check):
     def execute(self):
         findings = []
         for web_acl in wafv2_client.web_acls.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=web_acl
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=web_acl)
             report.status = "FAIL"
             report.status_extended = f"AWS WAFv2 Web ACL {web_acl.name} does not have any rules or rule groups attached."
 
