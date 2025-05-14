@@ -13,6 +13,7 @@ def mock_list_repositories(_):
             id=1,
             name="repo1",
             full_name="account-name/repo1",
+            default_branch_protection=True,
             default_branch="main",
             private=False,
             securitymd=True,
@@ -41,6 +42,7 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].name == "repo1"
         assert repository_service.repositories[1].full_name == "account-name/repo1"
         assert repository_service.repositories[1].private is False
+        assert repository_service.repositories[1].default_branch == "main"
         assert repository_service.repositories[1].securitymd
         assert repository_service.repositories[1].require_pull_request
         assert repository_service.repositories[1].approval_count == 2
