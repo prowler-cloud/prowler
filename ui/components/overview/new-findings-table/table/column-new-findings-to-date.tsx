@@ -9,7 +9,7 @@ import { InfoIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../../../findings/muted";
 
@@ -162,7 +162,7 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
       return (
         <>
           <EntityInfoShort
-            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+            cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
           />

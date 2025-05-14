@@ -1,9 +1,10 @@
 import { Tooltip } from "@nextui-org/react";
 import React from "react";
 
-import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
-import { getProviderLogo, ProviderType } from "../ui/entities";
+import { ProviderType } from "@/types";
 
+import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
+import { getProviderLogo } from "../ui/entities";
 interface ProviderInfoProps {
   connected: boolean | null;
   provider: ProviderType;

@@ -12,7 +12,7 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
@@ -215,7 +215,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return (
         <>
           <EntityInfoShort
-            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+            cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
           />
