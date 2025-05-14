@@ -18,7 +18,7 @@ class Organization(GithubService):
             for client in self.clients:
                 for org in client.get_user().get_orgs():
                     try:
-                        require_mfa = org.two_factor_requirement_enabled is not None
+                        require_mfa = org.two_factor_requirement_enabled
                     except Exception as error:
                         require_mfa = None
                         logger.error(
