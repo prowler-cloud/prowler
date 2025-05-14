@@ -7,7 +7,7 @@ class iam_password_policy_minimum_length_14(Check):
         findings = []
         if iam_client.password_policy:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=iam_client.password_policy
+                metadata=self.metadata(), resource=iam_client.password_policy
             )
             report.region = iam_client.region
             report.resource_arn = iam_client.password_policy_arn_template

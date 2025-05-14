@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export type AuthSocialProvider = "google" | "github";
+
 export const authFormSchema = (type: string) =>
   z
     .object({
@@ -24,11 +26,21 @@ export const authFormSchema = (type: string) =>
       invitationToken:
         type === "sign-in" ? z.string().optional() : z.string().optional(),
 
+      termsAndConditions:
+        type === "sign-in" || process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true"
+          ? z.boolean().optional()
+          : z.boolean().refine((value) => value === true, {
+              message: "You must accept the terms and conditions.",
+            }),
+
       // Fields for Sign In and Sign Up
       email: z.string().email(),
-      password: z.string().min(12, {
-        message: "It must contain at least 12 characters.",
-      }),
+      password:
+        type === "sign-in"
+          ? z.string()
+          : z.string().min(12, {
+              message: "It must contain at least 12 characters.",
+            }),
     })
     .refine(
       (data) => type === "sign-in" || data.password === data.confirmPassword,

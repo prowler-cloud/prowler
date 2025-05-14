@@ -15,7 +15,7 @@ class trustedadvisor_errors_and_warnings(Check):
                             check.status != "not_available"
                         ):  # avoid not_available checks since there are no resources that apply
                             report = Check_Report_AWS(
-                                metadata=self.metadata(), resource_metadata=check
+                                metadata=self.metadata(), resource=check
                             )
                             report.status = "FAIL"
                             report.status_extended = f"Trusted Advisor check {check.name} is in state {check.status}."
@@ -25,7 +25,7 @@ class trustedadvisor_errors_and_warnings(Check):
             else:
                 report = Check_Report_AWS(
                     metadata=self.metadata(),
-                    resource_metadata=trustedadvisor_client.checks,
+                    resource={},
                 )
                 report.status = "MANUAL"
                 report.status_extended = "Amazon Web Services Premium Support Subscription is required to use this service."

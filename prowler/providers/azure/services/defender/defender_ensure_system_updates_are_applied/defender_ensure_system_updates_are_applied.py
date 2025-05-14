@@ -19,7 +19,7 @@ class defender_ensure_system_updates_are_applied(Check):
             ):
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=assessments[
+                    resource=assessments[
                         "System updates should be installed on your machines"
                     ],
                 )

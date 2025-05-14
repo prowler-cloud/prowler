@@ -6,9 +6,7 @@ class neptune_cluster_copy_tags_to_snapshots(Check):
     def execute(self):
         findings = []
         for cluster in neptune_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = f"Neptune DB Cluster {cluster.id} is not configured to copy tags to snapshots."
             if cluster.copy_tags_to_snapshot:

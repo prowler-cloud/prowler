@@ -12,9 +12,7 @@ class awslambda_function_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=function
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
             report.status_extended = (
@@ -25,12 +23,17 @@ class awslambda_function_no_secrets_in_variables(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=json.dumps(function.environment, indent=2),
                     excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=awslambda_client.audit_config.get(
+                        "detect_secrets_plugins",
+                    ),
                 )
+                original_env_vars = []
+                for name, value in function.environment.items():
+                    original_env_vars.append(name)
                 if detect_secrets_output:
-                    environment_variable_names = list(function.environment.keys())
                     secrets_string = ", ".join(
                         [
-                            f"{secret['type']} in variable {environment_variable_names[int(secret['line_number']) - 2]}"
+                            f"{secret['type']} in variable {original_env_vars[secret['line_number'] - 2]}"
                             for secret in detect_secrets_output
                         ]
                     )

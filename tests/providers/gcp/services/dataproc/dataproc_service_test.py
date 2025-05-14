@@ -10,18 +10,23 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestDataprocService:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
-        ), patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.dataproc.dataproc_service.compute_client.regions",
-            new=["europe-west1-b"],
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.dataproc.dataproc_service.compute_client.regions",
+                new=["europe-west1-b"],
+            ),
         ):
             from prowler.providers.gcp.services.dataproc.dataproc_service import (
                 Dataproc,

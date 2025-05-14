@@ -286,7 +286,7 @@ class IAM(AWSService):
             return stored_password_policy
 
     def _get_users(self):
-        logger.info("IAM - List Users...")
+        logger.info("IAM - Get Users...")
         try:
             get_users_paginator = self.client.get_paginator("list_users")
             users = []
@@ -469,7 +469,7 @@ class IAM(AWSService):
             )
 
     def _list_attached_role_policies(self):
-        logger.info("IAM - List Attached User Policies...")
+        logger.info("IAM - List Attached Role Policies...")
         try:
             if self.roles:
                 for role in self.roles:
@@ -712,7 +712,7 @@ class IAM(AWSService):
             return roles
 
     def _list_entities_for_policy(self, policy_arn):
-        logger.info("IAM - List Entities Role For Policy...")
+        logger.info("IAM - List Entities For Policy...")
         try:
             entities = {
                 "Users": [],
@@ -880,9 +880,14 @@ class IAM(AWSService):
                     SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if error.response["Error"]["Code"] == "NoSuchEntityException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _get_last_accessed_services(self):
         logger.info("IAM - Getting Last Accessed Services ...")

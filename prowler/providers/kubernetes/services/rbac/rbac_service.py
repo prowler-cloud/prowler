@@ -8,7 +8,6 @@ from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
-################## Rbac ##################
 class Rbac(KubernetesService):
     def __init__(self, provider: KubernetesProvider):
         super().__init__(provider)
@@ -96,7 +95,7 @@ class Rbac(KubernetesService):
                             "resources": rule.resources,
                             "verbs": rule.verbs,
                         }
-                        for rule in role.rules
+                        for rule in (role.rules or [])
                     ],
                 }
                 roles[role.metadata.uid] = Role(**formatted_role)

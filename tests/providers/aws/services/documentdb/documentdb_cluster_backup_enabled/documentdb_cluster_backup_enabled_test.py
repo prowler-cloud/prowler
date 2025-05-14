@@ -18,12 +18,15 @@ class Test_documentdb_cluster_backup_enabled:
         documentdb_client.db_clusters = {}
 
         documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,
@@ -52,12 +55,15 @@ class Test_documentdb_cluster_backup_enabled:
             )
         }
         documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,
@@ -95,12 +101,15 @@ class Test_documentdb_cluster_backup_enabled:
             )
         }
         documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,
@@ -136,12 +145,15 @@ class Test_documentdb_cluster_backup_enabled:
             )
         }
         documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,
@@ -177,12 +189,15 @@ class Test_documentdb_cluster_backup_enabled:
             )
         }
         documentdb_client.audit_config = {"minimum_backup_retention_period": 7}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,
@@ -219,12 +234,15 @@ class Test_documentdb_cluster_backup_enabled:
         }
 
         documentdb_client.audit_config = {"minimum_backup_retention_period": 1}
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_backup_enabled.documentdb_cluster_backup_enabled import (
                 documentdb_cluster_backup_enabled,

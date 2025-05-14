@@ -14,12 +14,15 @@ class Test_redshift_cluster_automated_snapshot:
     def test_no_clusters(self):
         redshift_client = mock.MagicMock
         redshift_client.clusters = []
-        with mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
-            redshift_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
-            redshift_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_service.Redshift",
+                redshift_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
+                redshift_client,
+            ),
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,
@@ -40,12 +43,15 @@ class Test_redshift_cluster_automated_snapshot:
                 cluster_snapshots=False,
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
-            redshift_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
-            redshift_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_service.Redshift",
+                redshift_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
+                redshift_client,
+            ),
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,
@@ -72,12 +78,15 @@ class Test_redshift_cluster_automated_snapshot:
                 cluster_snapshots=True,
             )
         )
-        with mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_service.Redshift",
-            redshift_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
-            redshift_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_service.Redshift",
+                redshift_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.redshift.redshift_client.redshift_client",
+                redshift_client,
+            ),
         ):
             from prowler.providers.aws.services.redshift.redshift_cluster_automated_snapshot.redshift_cluster_automated_snapshot import (
                 redshift_cluster_automated_snapshot,

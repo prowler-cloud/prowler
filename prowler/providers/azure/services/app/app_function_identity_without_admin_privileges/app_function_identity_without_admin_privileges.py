@@ -20,7 +20,7 @@ class app_function_identity_without_admin_privileges(Check):
             for function in functions.values():
                 if function.identity:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=function
+                        metadata=self.metadata(), resource=function
                     )
                     report.subscription = subscription_name
                     report.status = "PASS"

@@ -7,7 +7,7 @@ class ecs_task_definitions_logging_enabled(Check):
         findings = []
         for task_definition in ecs_client.task_definitions.values():
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=task_definition
+                metadata=self.metadata(), resource=task_definition
             )
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
             report.status = "PASS"

@@ -11,9 +11,7 @@ class defender_ensure_notify_alerts_severity_is_high(Check):
             security_contacts,
         ) in defender_client.security_contacts.items():
             for contact in security_contacts.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=contact
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=contact)
                 report.subscription = subscription_name
                 report.status = "PASS"
                 report.status_extended = f"Notifiy alerts are enabled for severity high in subscription {subscription_name}."

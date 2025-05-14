@@ -31,18 +31,23 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_service.VPC",
-            new=vpc_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-            new=vpc_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_service.VPC",
+                new=vpc_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+                new=vpc_client,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
                 elasticache_redis_cluster_automatic_failover_enabled,
@@ -75,12 +80,15 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
                 elasticache_redis_cluster_automatic_failover_enabled,
@@ -122,12 +130,15 @@ class Test_elasticache_redis_cluster_automatic_failover_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_automatic_failover_enabled.elasticache_redis_cluster_automatic_failover_enabled import (
                 elasticache_redis_cluster_automatic_failover_enabled,

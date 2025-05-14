@@ -119,7 +119,7 @@ class TestCSV:
         assert content == expected_csv
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(CSV([]), "_file_descriptor")
+        assert not CSV([])._file_descriptor
 
     @pytest.fixture
     def mock_output_class(self):
@@ -144,9 +144,7 @@ class TestCSV:
             file_path = file.name
 
             # Instantiate the mock class
-            output_instance = mock_output_class(
-                findings, create_file_descriptor=True, file_path=file_path
-            )
+            output_instance = mock_output_class(findings, file_path=file_path)
 
             # Check that transform was called once
             output_instance.transform.assert_called_once_with(findings)

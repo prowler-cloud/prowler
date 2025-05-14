@@ -11,9 +11,7 @@ class app_client_certificates_on(Check):
             apps,
         ) in app_client.apps.items():
             for app in apps.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=app
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_name
                 report.status = "PASS"
                 report.status_extended = f"Clients are required to present a certificate for app '{app.name}' in subscription '{subscription_name}'."

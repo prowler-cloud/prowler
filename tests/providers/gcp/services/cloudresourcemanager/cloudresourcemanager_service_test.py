@@ -13,12 +13,15 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestCloudResourceManagerService:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
         ):
             api_keys_client = CloudResourceManager(
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])

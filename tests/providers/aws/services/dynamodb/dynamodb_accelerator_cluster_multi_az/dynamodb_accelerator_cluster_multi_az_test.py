@@ -20,12 +20,15 @@ class Test_dynamodb_accelerator_cluster_multi_az:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
-            new=DAX(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
+                new=DAX(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az import (
@@ -53,12 +56,15 @@ class Test_dynamodb_accelerator_cluster_multi_az:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
-            new=DAX(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
+                new=DAX(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az import (
@@ -96,13 +102,16 @@ class Test_dynamodb_accelerator_cluster_multi_az:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
-            new=DAX(aws_provider),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az.dax_client",
+                new=DAX(aws_provider),
+            ) as service_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_multi_az.dynamodb_accelerator_cluster_multi_az import (
                 dynamodb_accelerator_cluster_multi_az,

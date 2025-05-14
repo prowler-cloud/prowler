@@ -9,11 +9,8 @@ class shield_advanced_protection_in_internet_facing_load_balancers(Check):
         if shield_client.enabled:
             for elbv2_arn, elbv2 in elbv2_client.loadbalancersv2.items():
                 if elbv2.type == "application" and elbv2.scheme == "internet-facing":
-                    report = Check_Report_AWS(self.metadata())
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=elbv2)
                     report.region = shield_client.region
-                    report.resource_id = elbv2.name
-                    report.resource_arn = elbv2_arn
-                    report.resource_tags = elbv2.tags
                     report.status = "FAIL"
                     report.status_extended = f"ELBv2 ALB {elbv2.name} is not protected by AWS Shield Advanced."
 

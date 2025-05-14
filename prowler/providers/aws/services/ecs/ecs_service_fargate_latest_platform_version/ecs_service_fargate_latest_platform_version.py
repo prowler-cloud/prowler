@@ -7,9 +7,7 @@ class ecs_service_fargate_latest_platform_version(Check):
         findings = []
         for service in ecs_client.services.values():
             if service.launch_type == "FARGATE":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=service
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=service)
                 fargate_latest_linux_version = ecs_client.audit_config.get(
                     "fargate_linux_latest_version", "1.4.0"
                 )

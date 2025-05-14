@@ -122,12 +122,16 @@ class Test_rds_instance_no_public_access:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
                 new=RDS(aws_provider),
-            ):
+            ) as rds_client:
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (
                     rds_instance_no_public_access,
                 )
 
+                # Moto create db instance with a default VPC security group
+                rds_client.db_instances[
+                    next(iter(rds_client.db_instances))
+                ].security_groups = []
                 check = rds_instance_no_public_access()
                 result = check.execute()
 
@@ -185,12 +189,15 @@ class Test_rds_instance_no_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
-                new=RDS(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
+                    new=RDS(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (
@@ -351,15 +358,19 @@ class Test_rds_instance_no_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
-                new=RDS(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
-                new=EC2(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.vpc_client",
-                new=VPC(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
+                    new=RDS(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
+                    new=EC2(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.vpc_client",
+                    new=VPC(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (

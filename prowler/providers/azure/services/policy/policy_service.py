@@ -7,7 +7,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## Policy
 class Policy(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(PolicyClient, provider)
@@ -27,6 +26,7 @@ class Policy(AzureService):
                         {
                             policy_assigment.name: PolicyAssigment(
                                 id=policy_assigment.id,
+                                name=policy_assigment.name,
                                 enforcement_mode=policy_assigment.enforcement_mode,
                             )
                         }
@@ -42,4 +42,5 @@ class Policy(AzureService):
 @dataclass
 class PolicyAssigment:
     id: str
+    name: str
     enforcement_mode: str
