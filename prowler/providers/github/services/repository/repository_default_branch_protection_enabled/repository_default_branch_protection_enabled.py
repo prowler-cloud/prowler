@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_enforces_default_branch_protection(Check):
+class repository_default_branch_protection_enabled(Check):
     """Check if a repository enforces default branch protection
 
     This class verifies whether each repository enforces default branch protection.

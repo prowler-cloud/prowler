@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "repository_enforces_default_branch_protection",
+  "CheckID": "repository_default_branch_protection_enabled",
   "CheckTitle": "Check if branch protection is enforced on the default branch ",
   "CheckType": [],
   "ServiceName": "repository",
