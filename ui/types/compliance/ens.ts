@@ -3,13 +3,24 @@ export interface Check {
   status: string;
 }
 
+export interface Requirement {
+  name: string;
+  description: string;
+  status: string;
+  tipo: string;
+  pass: number;
+  fail: number;
+  manual: number;
+  checks: Check[];
+}
+
 export interface Control {
   label: string;
   tipo: string;
   pass: number;
   fail: number;
   manual: number;
-  checks: Check[];
+  requirements: Map<string, Requirement>;
 }
 
 export interface Category {

@@ -37,7 +37,7 @@ const AccordionContent = ({
   items?: AccordionItemProps[];
 }) => {
   return (
-    <div className="text-sm text-gray-700 dark:text-gray-300">
+    <div className="overflow-x-auto text-sm text-gray-700 dark:text-gray-300">
       {content}
       {items && items.length > 0 && (
         <div className="ml-2 mt-4 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
@@ -92,11 +92,11 @@ export const Accordion = ({
           indicator={<ChevronDown className="text-gray-500" />}
           classNames={{
             base: index === 0 || index === 1 ? "my-2" : "my-1",
-            title: "text-sm font-medium",
+            title: "text-sm font-medium max-w-full",
             subtitle: "text-xs text-gray-500",
             trigger:
-              "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50",
-            content: "p-2",
+              "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center overflow-hidden",
+            content: "p-2 overflow-x-auto",
           }}
         >
           <AccordionContent content={item.content} items={item.items} />
