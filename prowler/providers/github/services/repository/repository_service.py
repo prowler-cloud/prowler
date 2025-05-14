@@ -34,6 +34,7 @@ class Repository(GithubService):
                     approval_cnt = 0
                     branch_protection = False
                     required_linear_history = False
+                    allow_force_pushes = True
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -50,14 +51,21 @@ class Repository(GithubService):
                                 required_linear_history = (
                                     protection.required_linear_history
                                 )
+                                allow_force_pushes = protection.allow_force_pushes
                                 branch_protection = True
                     except Exception as error:
                         # If the branch is not found, it is not protected
-                        if "404" not in str(error):
+                        if "404" in str(error):
+                            logger.warning(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        # Any other error, we cannot know if the branch is protected or not
+                        else:
                             require_pr = None
                             approval_cnt = None
                             branch_protection = None
                             required_linear_history = None
+                            allow_force_pushes = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -72,6 +80,7 @@ class Repository(GithubService):
                         require_pull_request=require_pr,
                         approval_count=approval_cnt,
                         required_linear_history=required_linear_history,
+                        allow_force_pushes=allow_force_pushes,
                         default_branch_protection=branch_protection,
                     )
 
@@ -94,4 +103,5 @@ class Repo(BaseModel):
     securitymd: Optional[bool]
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]
+    allow_force_pushes: Optional[bool]
     approval_count: Optional[int]
