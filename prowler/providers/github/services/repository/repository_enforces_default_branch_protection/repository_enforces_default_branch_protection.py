@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, Check_Report_Github
+from prowler.lib.check.models import Check, CheckReportGithub
 from prowler.providers.github.services.repository.repository_client import (
     repository_client,
 )
@@ -12,17 +12,17 @@ class repository_enforces_default_branch_protection(Check):
     This class verifies whether each repository enforces default branch protection.
     """
 
-    def execute(self) -> List[Check_Report_Github]:
+    def execute(self) -> List[CheckReportGithub]:
         """Execute the Github Repository Enforces Default Branch Protection check
 
         Iterates over all repositories and checks if they enforce default branch protection.
 
         Returns:
-            List[Check_Report_Github]: A list of reports for each repository
+            List[CheckReportGithub]: A list of reports for each repository
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = Check_Report_Github(
+            report = CheckReportGithub(
                 metadata=self.metadata(), resource_metadata=repo
             )
             report.status = "FAIL"
