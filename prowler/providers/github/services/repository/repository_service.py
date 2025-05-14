@@ -33,6 +33,7 @@ class Repository(GithubService):
                     require_pr = False
                     approval_cnt = 0
                     branch_protection = False
+                    required_linear_history = False
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -46,16 +47,17 @@ class Repository(GithubService):
                                     if require_pr
                                     else 0
                                 )
+                                required_linear_history = (
+                                    protection.required_linear_history
+                                )
                                 branch_protection = True
                     except Exception as error:
-                        if "404" in str(error):
-                            require_pr = False
-                            approval_cnt = 0
-                            branch_protection = False
-                        else:
+                        # If the branch is not found, it is not protected
+                        if "404" not in str(error):
                             require_pr = None
                             approval_cnt = None
                             branch_protection = None
+                            required_linear_history = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -69,6 +71,7 @@ class Repository(GithubService):
                         securitymd=securitymd_exists,
                         require_pull_request=require_pr,
                         approval_count=approval_cnt,
+                        required_linear_history=required_linear_history,
                         default_branch_protection=branch_protection,
                     )
 
@@ -90,4 +93,5 @@ class Repo(BaseModel):
     private: bool
     securitymd: Optional[bool]
     require_pull_request: Optional[bool]
+    required_linear_history: Optional[bool]
     approval_count: Optional[int]

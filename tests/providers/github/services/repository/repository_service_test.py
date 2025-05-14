@@ -18,6 +18,7 @@ def mock_list_repositories(_):
             private=False,
             securitymd=True,
             require_pull_request=True,
+            required_linear_history=True,
             approval_count=2,
         ),
     }
@@ -44,5 +45,6 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].private is False
         assert repository_service.repositories[1].default_branch == "main"
         assert repository_service.repositories[1].securitymd
+        assert repository_service.repositories[1].required_linear_history
         assert repository_service.repositories[1].require_pull_request
         assert repository_service.repositories[1].approval_count == 2
