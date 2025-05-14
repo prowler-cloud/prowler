@@ -55,7 +55,12 @@ class Repository(GithubService):
                                 branch_protection = True
                     except Exception as error:
                         # If the branch is not found, it is not protected
-                        if "404" not in str(error):
+                        if "404" in str(error):
+                            logger.warning(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        # Any other error, we cannot know if the branch is protected or not
+                        else:
                             require_pr = None
                             approval_cnt = None
                             branch_protection = None
