@@ -50,10 +50,12 @@ export const EditGroupForm = ({
     try {
       const updatedFields: Partial<FormValues> = {};
 
+      // Detect changes in the name
       if (values.name !== providerGroupData.name) {
         updatedFields.name = values.name;
       }
 
+      // Detect changes in providers
       if (
         JSON.stringify(values.providers) !==
         JSON.stringify(providerGroupData.providers)
@@ -61,12 +63,14 @@ export const EditGroupForm = ({
         updatedFields.providers = values.providers;
       }
 
+      // Detect changes in roles
       if (
         JSON.stringify(values.roles) !== JSON.stringify(providerGroupData.roles)
       ) {
         updatedFields.roles = values.roles;
       }
 
+      // If no changes, notify the user and exit
       if (Object.keys(updatedFields).length === 0) {
         toast({
           title: "No changes detected",
@@ -75,6 +79,7 @@ export const EditGroupForm = ({
         return;
       }
 
+      // Create FormData dynamically
       const formData = new FormData();
       if (updatedFields.name) {
         formData.append("name", updatedFields.name);
@@ -94,6 +99,7 @@ export const EditGroupForm = ({
         formData.append("roles", JSON.stringify(rolesData));
       }
 
+      // Call the update action
       const data = await updateProviderGroup(providerGroupId, formData);
 
       if (data?.errors && data.errors.length > 0) {

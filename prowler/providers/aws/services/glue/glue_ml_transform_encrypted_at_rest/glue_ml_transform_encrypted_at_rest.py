@@ -7,9 +7,7 @@ class glue_ml_transform_encrypted_at_rest(Check):
         findings = []
 
         for ml_transform in glue_client.ml_transforms.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=ml_transform
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=ml_transform)
             report.status = "PASS"
             report.status_extended = (
                 f"Glue ML Transform {ml_transform.name} is encrypted at rest."

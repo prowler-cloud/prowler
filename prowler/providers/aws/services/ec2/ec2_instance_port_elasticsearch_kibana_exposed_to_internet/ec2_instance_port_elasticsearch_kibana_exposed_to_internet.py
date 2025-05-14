@@ -11,9 +11,7 @@ class ec2_instance_port_elasticsearch_kibana_exposed_to_internet(Check):
         findings = []
         check_ports = [9200, 9300, 5601]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
             report.status_extended = f"Instance {instance.id} does not have Elasticsearch/Kibana ports open to the Internet."
             is_open_port = False

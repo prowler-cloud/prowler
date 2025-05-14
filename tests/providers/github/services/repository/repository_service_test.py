@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 from prowler.providers.github.services.repository.repository_service import (
-    Protection,
     Repo,
     Repository,
 )
@@ -14,16 +13,15 @@ def mock_list_repositories(_):
             id=1,
             name="repo1",
             full_name="account-name/repo1",
-            private=False,
+            default_branch_protection=True,
             default_branch="main",
-            default_branch_protection=Protection(
-                require_pull_request=True,
-                approval_count=2,
-                linear_history=True,
-                allow_force_push=False,
-                allow_branch_deletion=False,
-            ),
+            private=False,
             securitymd=True,
+            require_pull_request=True,
+            required_linear_history=True,
+            allow_force_pushes=True,
+            branch_deletion=True,
+            approval_count=2,
         ),
     }
 
@@ -48,22 +46,9 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].full_name == "account-name/repo1"
         assert repository_service.repositories[1].private is False
         assert repository_service.repositories[1].default_branch == "main"
-        # Default branch protection
-        assert repository_service.repositories[
-            1
-        ].default_branch_protection.require_pull_request
-        assert (
-            repository_service.repositories[1].default_branch_protection.approval_count
-            == 2
-        )
-        assert repository_service.repositories[
-            1
-        ].default_branch_protection.linear_history
-        assert not repository_service.repositories[
-            1
-        ].default_branch_protection.allow_force_push
-        assert not repository_service.repositories[
-            1
-        ].default_branch_protection.allow_branch_deletion
-        # Repo
         assert repository_service.repositories[1].securitymd
+        assert repository_service.repositories[1].required_linear_history
+        assert repository_service.repositories[1].require_pull_request
+        assert repository_service.repositories[1].allow_force_pushes
+        assert repository_service.repositories[1].branch_deletion
+        assert repository_service.repositories[1].approval_count == 2

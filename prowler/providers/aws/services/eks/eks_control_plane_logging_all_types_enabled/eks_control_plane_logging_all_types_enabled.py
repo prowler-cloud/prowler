@@ -19,9 +19,7 @@ class eks_control_plane_logging_all_types_enabled(Check):
         required_log_types_str = ", ".join(required_log_types)
 
         for cluster in eks_client.clusters:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = f"Control plane logging is not enabled for EKS cluster {cluster.name}. Required log types: {required_log_types_str}."
             if cluster.logging and cluster.logging.enabled:

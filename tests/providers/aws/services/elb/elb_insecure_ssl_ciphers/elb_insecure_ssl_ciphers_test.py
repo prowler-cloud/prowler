@@ -19,15 +19,21 @@ class Test_elb_insecure_ssl_ciphers:
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
-            new=ELB(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -69,15 +75,21 @@ class Test_elb_insecure_ssl_ciphers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
-            new=ELB(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             from prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (
@@ -120,15 +132,21 @@ class Test_elb_insecure_ssl_ciphers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
-            new=ELB(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             from prowler.providers.aws.services.elb.elb_insecure_ssl_ciphers.elb_insecure_ssl_ciphers import (

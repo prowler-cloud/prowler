@@ -8,9 +8,7 @@ class s3_bucket_level_public_access_block(Check):
         findings = []
         for bucket in s3_client.buckets.values():
             if bucket.public_access_block:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=bucket
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
                 report.status = "PASS"
                 report.status_extended = f"Block Public Access is configured for the S3 Bucket {bucket.name}."
                 if not (

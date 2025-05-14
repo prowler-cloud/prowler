@@ -8,7 +8,7 @@ class apikeys_key_exists(Check):
         for project in apikeys_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=apikeys_client.projects[project],
+                resource=apikeys_client.projects[project],
                 project_id=project,
                 location=apikeys_client.region,
             )

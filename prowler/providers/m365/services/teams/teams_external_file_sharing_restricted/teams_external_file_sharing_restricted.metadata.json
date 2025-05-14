@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_external_file_sharing_restricted",
+  "CheckTitle": "Ensure external file sharing in Teams is enabled for only approved cloud storage services",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Teams Settings",
+  "Description": "",
+  "Risk": "Allowing unrestricted third-party cloud storage services in Teams increases the risk of data exfiltration, compliance violations, and unauthorized access to sensitive information. Users may store or share data through unapproved platforms with weaker security controls.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsClientConfiguration -AllowGoogleDrive $false -AllowShareFile $false -AllowBox $false -AllowDropBox $false -AllowEgnyte $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Teams select Teams settings. 3. Set any unauthorized providers to Off.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict external file sharing in Teams to only approved cloud storage providers, such as SharePoint Online and OneDrive. Configure Teams policies to block unauthorized services and enforce compliance with organizational data protection standards.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

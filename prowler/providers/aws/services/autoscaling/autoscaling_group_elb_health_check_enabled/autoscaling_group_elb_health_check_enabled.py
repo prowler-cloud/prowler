@@ -9,9 +9,7 @@ class autoscaling_group_elb_health_check_enabled(Check):
         findings = []
         for group in autoscaling_client.groups:
             if group.load_balancers and group.target_groups:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=group
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=group)
 
                 report.status = "FAIL"
                 report.status_extended = f"Autoscaling group {group.name} is associated with a load balancer but does not have ELB health checks enabled, instead it has {group.health_check_type} health checks."

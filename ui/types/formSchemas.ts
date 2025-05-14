@@ -6,7 +6,7 @@ export const addRoleFormSchema = z.object({
   manage_account: z.boolean().default(false),
   manage_billing: z.boolean().default(false),
   manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
+  // manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
@@ -18,7 +18,7 @@ export const editRoleFormSchema = z.object({
   manage_account: z.boolean().default(false),
   manage_billing: z.boolean().default(false),
   manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
+  // manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
@@ -63,7 +63,7 @@ export const awsCredentialsTypeSchema = z.object({
 
 export const addProviderFormSchema = z
   .object({
-    providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
+    providerType: z.enum(["aws", "azure", "gcp", "kubernetes", "m365"], {
       required_error: "Please select a provider type",
     }),
   })
@@ -76,6 +76,12 @@ export const addProviderFormSchema = z
       }),
       z.object({
         providerType: z.literal("azure"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("m365"),
         providerAlias: z.string(),
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
@@ -128,22 +134,45 @@ export const addCredentialsFormSchema = (providerType: string) =>
                   .string()
                   .nonempty("Kubeconfig Content is required"),
               }
-            : {}),
+            : providerType === "m365"
+              ? {
+                  client_id: z.string().nonempty("Client ID is required"),
+                  client_secret: z
+                    .string()
+                    .nonempty("Client Secret is required"),
+                  tenant_id: z.string().nonempty("Tenant ID is required"),
+                  user: z.string().nonempty("User is required"),
+                  encrypted_password: z
+                    .string()
+                    .nonempty("Encrypted Password is required"),
+                }
+              : {}),
   });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
   providerType === "aws"
-    ? z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-        role_arn: z.string().optional(),
-        aws_access_key_id: z.string().optional(),
-        aws_secret_access_key: z.string().optional(),
-        aws_session_token: z.string().optional(),
-        session_duration: z.number().optional(),
-        external_id: z.string().optional(),
-        role_session_name: z.string().optional(),
-      })
+    ? z
+        .object({
+          providerId: z.string(),
+          providerType: z.string(),
+          role_arn: z.string().optional(),
+          external_id: z.string().optional(),
+          aws_access_key_id: z.string().optional(),
+          aws_secret_access_key: z.string().optional(),
+          aws_session_token: z.string().optional(),
+          session_duration: z.string().optional(),
+          role_session_name: z.string().optional(),
+          credentials_type: z.string().optional(),
+        })
+        .refine(
+          (data) =>
+            data.credentials_type !== "access-secret-key" ||
+            (data.aws_access_key_id && data.aws_secret_access_key),
+          {
+            message: "AWS Access Key ID and Secret Access Key are required.",
+            path: ["aws_access_key_id"],
+          },
+        )
     : z.object({
         providerId: z.string(),
         providerType: z.string(),
@@ -151,6 +180,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
 
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
+  runOnce: z.boolean().default(false),
 });
 
 export const launchScanFormSchema = () =>

@@ -9,9 +9,7 @@ class rds_instance_no_public_access(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             report.status = "PASS"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} is not publicly accessible."

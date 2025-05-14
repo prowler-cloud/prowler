@@ -6,9 +6,7 @@ class etcd_peer_client_cert_auth(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in etcd_client.etcd_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"Etcd is configured for peer client certificate authentication in pod {pod.name}."
             for container in pod.containers.values():

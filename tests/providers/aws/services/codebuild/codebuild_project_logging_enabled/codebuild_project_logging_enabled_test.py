@@ -13,12 +13,15 @@ class Test_codebuild_project_logging_enabled:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
-            new=Codebuild(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled import (
                 codebuild_project_logging_enabled,
@@ -66,12 +69,15 @@ class Test_codebuild_project_logging_enabled:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
-            new=Codebuild(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled import (
                 codebuild_project_logging_enabled,
@@ -128,12 +134,15 @@ class Test_codebuild_project_logging_enabled:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
-            new=Codebuild(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled import (
                 codebuild_project_logging_enabled,
@@ -194,12 +203,15 @@ class Test_codebuild_project_logging_enabled:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
-            new=Codebuild(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled import (
                 codebuild_project_logging_enabled,
@@ -212,7 +224,7 @@ class Test_codebuild_project_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has enabled CloudWartch logs in log group cw-test-group and S3 logs in bucket s3://test-bucket/logs."
+                == f"CodeBuild project {project_name} has enabled CloudWatch logs in log group cw-test-group and S3 logs in bucket s3://test-bucket/logs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -255,12 +267,15 @@ class Test_codebuild_project_logging_enabled:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
-            new=Codebuild(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_logging_enabled.codebuild_project_logging_enabled import (
                 codebuild_project_logging_enabled,

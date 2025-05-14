@@ -8,9 +8,7 @@ class cognito_identity_pool_guest_access_disabled(Check):
     def execute(self):
         findings = []
         for identity_pool in cognito_identity_client.identity_pools.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=identity_pool
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=identity_pool)
             report.status = "PASS"
             report.status_extended = (
                 f"Identity pool {identity_pool.id} has guest access disabled."

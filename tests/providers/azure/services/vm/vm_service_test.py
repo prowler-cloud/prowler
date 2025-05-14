@@ -28,6 +28,7 @@ def mock_vm_get_virtual_machines(_):
                         v_tpm_enabled=True,
                     ),
                 ),
+                extensions=[],
                 storage_profile=StorageProfile(
                     os_disk=OSDisk(
                         create_option="FromImage",
@@ -36,6 +37,32 @@ def mock_vm_get_virtual_machines(_):
                     data_disks=[],
                 ),
             )
+        }
+    }
+
+
+def mock_vm_get_virtual_machines_with_none(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "vm_id-1": VirtualMachine(
+                resource_id="/subscriptions/resource_id",
+                resource_name="VMWithNoneValues",
+                location="location",
+                security_profile=None,
+                extensions=None,
+                storage_profile=None,
+            ),
+            "vm_id-2": VirtualMachine(
+                resource_id="/subscriptions/resource_id2",
+                resource_name="VMWithPartialNone",
+                location="location",
+                security_profile=None,
+                extensions=None,
+                storage_profile=StorageProfile(
+                    os_disk=None,
+                    data_disks=None,
+                ),
+            ),
         }
     }
 
@@ -136,3 +163,22 @@ class Test_VirtualMachines_Service:
             disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].encryption_type
             == "EncryptionAtRestWithPlatformKey"
         )
+
+
+@patch(
+    "prowler.providers.azure.services.vm.vm_service.VirtualMachines._get_virtual_machines",
+    new=mock_vm_get_virtual_machines_with_none,
+)
+class Test_VirtualMachines_NoneCases:
+    def test_virtual_machine_with_none_storage_profile(self):
+        virtual_machines = VirtualMachines(set_mocked_azure_provider())
+        vm_1 = virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-1"]
+        assert vm_1.storage_profile is None
+        assert vm_1.resource_name == "VMWithNoneValues"
+
+    def test_virtual_machine_with_partial_none_storage_profile(self):
+        virtual_machines = VirtualMachines(set_mocked_azure_provider())
+        vm_2 = virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-2"]
+        assert vm_2.storage_profile.os_disk is None
+        assert vm_2.storage_profile.data_disks is None
+        assert vm_2.resource_name == "VMWithPartialNone"

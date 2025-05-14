@@ -7,7 +7,9 @@ class dynamodb_table_cross_account_access(Check):
     def execute(self):
         findings = []
         for table in dynamodb_client.tables.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=table)
+            if table.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=table)
             report.status = "PASS"
             report.status_extended = (
                 f"DynamoDB table {table.name} does not have a resource-based policy."

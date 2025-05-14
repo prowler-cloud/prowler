@@ -51,7 +51,7 @@ class Test_organizations_account_part_of_organizations:
 
         # Create Organization
         conn = client("organizations")
-        response = conn.create_organization()
+        response = conn.describe_organization()
         org_id = response["Organization"]["Id"]
 
         with mock.patch(
