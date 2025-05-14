@@ -65,6 +65,7 @@ from api.filters import (
     FindingFilter,
     IntegrationFilter,
     InvitationFilter,
+    LatestFindingFilter,
     MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -110,6 +111,7 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
+from api.v1.mixins import PaginateByPkMixin
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewMetadataSerializer,
@@ -1671,10 +1673,24 @@ class ResourceViewSet(BaseRLSViewSet):
         ],
         filters=True,
     ),
+    latest=extend_schema(
+        tags=["Finding"],
+        summary="List the latest findings",
+        description="Retrieve a list of the latest findings from the latest scans for each provider with options for "
+        "filtering by various criteria.",
+        filters=True,
+    ),
+    metadata_latest=extend_schema(
+        tags=["Finding"],
+        summary="Retrieve metadata values from the latest findings",
+        description="Fetch unique metadata values from a set of findings from the latest scans for each provider. "
+        "This is useful for dynamic filtering.",
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class FindingViewSet(BaseRLSViewSet):
+class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
     filterset_class = FindingFilter
@@ -1706,10 +1722,15 @@ class FindingViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
             return FindingDynamicFilterSerializer
-        elif self.action == "metadata":
+        elif self.action in ["metadata", "metadata_latest"]:
             return FindingMetadataSerializer
 
         return super().get_serializer_class()
+
+    def get_filterset_class(self):
+        if self.action in ["latest", "metadata_latest"]:
+            return LatestFindingFilter
+        return FindingFilter
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
@@ -1750,21 +1771,14 @@ class FindingViewSet(BaseRLSViewSet):
         return super().filter_queryset(queryset)
 
     def list(self, request, *args, **kwargs):
-        base_qs = self.filter_queryset(self.get_queryset())
-        paginated_ids = self.paginate_queryset(base_qs.values_list("id", flat=True))
-        if paginated_ids is not None:
-            ids = list(paginated_ids)
-            findings = (
-                Finding.all_objects.filter(tenant_id=self.request.tenant_id, id__in=ids)
-                .select_related("scan")
-                .prefetch_related("resources")
-            )
-            # Re-sort in Python to preserve ordering:
-            findings = sorted(findings, key=lambda x: ids.index(x.id))
-            serializer = self.get_serializer(findings, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(base_qs, many=True)
-        return Response(serializer.data)
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Finding.all_objects,
+            select_related=["scan"],
+            prefetch_related=["resources"],
+        )
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
@@ -1853,6 +1867,109 @@ class FindingViewSet(BaseRLSViewSet):
                 tenant_id=tenant_id, **scan_based_filters
             ).values_list("id", flat=True)
             for scan_id in scan_ids:
+                backfill_scan_resource_summaries_task.apply_async(
+                    kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+                )
+            return Response(
+                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
+            )
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get(
+            "filter[resource_type]"
+        ) or query_params.get("filter[resource_type__in]"):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "resource_types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_name="latest")
+    def latest(self, request):
+        tenant_id = request.tenant_id
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Finding.all_objects,
+            select_related=["scan"],
+            prefetch_related=["resources"],
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="metadata_latest",
+        url_path="metadata/latest",
+    )
+    def metadata_latest(self, request):
+        # Force filter validation
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        queryset = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        # ToRemove: Temporary fallback mechanism
+        scans_with_flag = latest_scan_ids.annotate(
+            has_summary=Exists(
+                ResourceScanSummary.objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=OuterRef("pk"),
+                )
+            )
+        )
+        if missing_scan_ids := scans_with_flag.filter(has_summary=False).values_list(
+            "id", flat=True
+        ):
+            for scan_id in missing_scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
