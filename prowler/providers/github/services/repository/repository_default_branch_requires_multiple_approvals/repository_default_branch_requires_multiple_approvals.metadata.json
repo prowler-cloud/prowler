@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "repository_code_changes_multi_approval_requirement",
+  "CheckID": "repository_default_branch_requires_multiple_approvals",
   "CheckTitle": "Check if repositories require at least 2 code changes approvals",
   "CheckType": [],
   "ServiceName": "repository",

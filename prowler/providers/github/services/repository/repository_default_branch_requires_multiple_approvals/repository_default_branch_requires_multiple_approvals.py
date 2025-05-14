@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_code_changes_multi_approval_requirement(Check):
+class repository_default_branch_requires_multiple_approvals(Check):
     """Check if a repository enforces at least 2 approvals for code changes
 
     This class verifies whether each repository enforces at least 2 approvals for code changes.
