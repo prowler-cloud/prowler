@@ -3179,6 +3179,29 @@ class TestFindingViewSet:
             ]
         }
 
+    def test_findings_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # The latest scan only has one finding, in comparison with `GET /findings`
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["status"]
+            == latest_scan_finding.status
+        )
+
+    def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+
+        assert attributes["services"] == latest_scan_finding.resource_services
+        assert attributes["regions"] == latest_scan_finding.resource_regions
+        assert attributes["resource_types"] == latest_scan_finding.resource_types
+
 
 @pytest.mark.django_db
 class TestJWTFields:
