@@ -18,7 +18,7 @@ class repository_default_branch_disallows_force_push(Check):
         Iterates over all repositories and checks if they deny force push.
 
         Returns:
-            List[Check_Report_Github]: A list of reports for each repository
+            List[CheckReportGithub]: A list of reports for each repository
         """
         findings = []
         for repo in repository_client.repositories.values():
