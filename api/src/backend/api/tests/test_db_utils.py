@@ -131,9 +131,10 @@ class TestBatchDelete:
         return provider_count
 
     @pytest.mark.django_db
-    def test_batch_delete(self, create_test_providers):
+    def test_batch_delete(self, tenants_fixture, create_test_providers):
+        tenant_id = str(tenants_fixture[0].id)
         _, summary = batch_delete(
-            Provider.objects.all(), batch_size=create_test_providers // 2
+            tenant_id, Provider.objects.all(), batch_size=create_test_providers // 2
         )
         assert Provider.objects.all().count() == 0
         assert summary == {"api.Provider": create_test_providers}

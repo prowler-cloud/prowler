@@ -7,9 +7,7 @@ class cloudsql_instance_postgres_log_error_verbosity_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "POSTGRES" in instance.version:
-                report = Check_Report_GCP(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"
                 report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_error_verbosity' flag set to 'default'."
                 for flag in instance.flags:

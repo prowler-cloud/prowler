@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 
 import { getProvider } from "@/actions/providers";
+import { SkeletonProviderWorkflow } from "@/components/providers/workflow";
 import { TestConnectionForm } from "@/components/providers/workflow/forms";
 
 interface Props {
@@ -16,7 +17,7 @@ export default async function TestConnectionPage({ searchParams }: Props) {
   }
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<SkeletonProviderWorkflow />}>
       <SSRTestConnection searchParams={searchParams} />
     </Suspense>
   );

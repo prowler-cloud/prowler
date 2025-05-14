@@ -7,9 +7,7 @@ class rds_cluster_protected_by_backup_plan(Check):
     def execute(self):
         findings = []
         for db_cluster in rds_client.db_clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
             report.status = "FAIL"
             report.status_extended = (
                 f"RDS Cluster {db_cluster.id} is not protected by a backup plan."

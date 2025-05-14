@@ -4,7 +4,6 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Inspector2
 class Inspector2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -70,4 +69,4 @@ class Inspector(BaseModel):
     ecr_status: str
     lambda_status: str
     lambda_code_status: str
-    active_findings: bool = False
+    active_findings: bool = None

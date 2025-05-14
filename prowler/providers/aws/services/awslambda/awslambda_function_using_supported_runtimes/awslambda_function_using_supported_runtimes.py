@@ -8,6 +8,7 @@ default_obsolete_lambda_runtimes = [
     "python3.6",
     "python2.7",
     "python3.7",
+    "python3.8",
     "nodejs4.3",
     "nodejs4.3-edge",
     "nodejs6.10",
@@ -18,6 +19,7 @@ default_obsolete_lambda_runtimes = [
     "nodejs14.x",
     "nodejs16.x",
     "dotnet5.0",
+    "dotnet6",
     "dotnet7",
     "dotnetcore1.0",
     "dotnetcore2.0",
@@ -33,9 +35,7 @@ class awslambda_function_using_supported_runtimes(Check):
         findings = []
         for function in awslambda_client.functions.values():
             if function.runtime:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=function
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
                 if function.runtime in awslambda_client.audit_config.get(
                     "obsolete_lambda_runtimes", default_obsolete_lambda_runtimes

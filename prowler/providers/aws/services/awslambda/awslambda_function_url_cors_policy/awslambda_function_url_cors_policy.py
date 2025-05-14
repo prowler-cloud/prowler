@@ -6,9 +6,7 @@ class awslambda_function_url_cors_policy(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=function
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             if function.url_config:
                 if "*" in function.url_config.cors_config.allow_origins:

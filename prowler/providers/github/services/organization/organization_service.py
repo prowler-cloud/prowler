@@ -18,7 +18,7 @@ class Organization(GithubService):
                     try:
                         require_mfa = org.two_factor_requirement_enabled is not None
                     except Exception as error:
-                        require_mfa = False
+                        require_mfa = None
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )

@@ -26,7 +26,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                     if "*" == statement["Principal"]:
                         access_from_trusted_accounts = False
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=endpoint
+                            metadata=self.metadata(), resource=endpoint
                         )
 
                         if "Condition" in statement:
@@ -61,7 +61,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             principals = []
                         for principal_arn in principals:
                             report = Check_Report_AWS(
-                                metadata=self.metadata(), resource_metadata=endpoint
+                                metadata=self.metadata(), resource=endpoint
                             )
 
                             if principal_arn == "*":

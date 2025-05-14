@@ -12,12 +12,9 @@ class postgresql_flexible_server_log_retention_days_greater_3(Check):
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
             for server in flexible_servers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription
-                report.resource_name = server.name
-                report.resource_id = server.id
                 report.status = "FAIL"
-                report.location = server.location
                 report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has log_retention disabled"
                 if server.log_retention_days:
                     report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has log_retention set to {server.log_retention_days}"

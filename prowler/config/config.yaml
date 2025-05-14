@@ -95,6 +95,7 @@ aws:
       "python3.6",
       "python2.7",
       "python3.7",
+      "python3.8",
       "nodejs4.3",
       "nodejs4.3-edge",
       "nodejs6.10",
@@ -105,6 +106,7 @@ aws:
       "nodejs14.x",
       "nodejs16.x",
       "dotnet5.0",
+      "dotnet6",
       "dotnet7",
       "dotnetcore1.0",
       "dotnetcore2.0",
@@ -308,6 +310,8 @@ aws:
     "ListFoundationModelAgreementOffers",  # Lists available agreement offers for accessing foundation models (List).
     "ListFoundationModels",  # Lists the available foundation models in Bedrock (List).
     "ListProvisionedModelThroughputs",  # Lists the provisioned throughput for previously created models (List).
+    "SearchAgreements",  # Searches for agreements based on specified criteria (List).
+    "AcceptAgreementRequest",  # Accepts a request for an agreement to use a foundation model (Write).
     ]
 
   # AWS RDS Configuration
@@ -323,7 +327,6 @@ aws:
     [
       "RSA-1024",
       "P-192",
-      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -360,6 +363,11 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Elasticache Configuration
+  # aws.elasticache_redis_cluster_backup_enabled
+  # Minimum number of days that a Redis cluster must have backups retention period
+  minimum_snapshot_retention_period: 7
+
 
   # AWS Secrets Configuration
   # Patterns to ignore in the secrets checks
@@ -377,6 +385,37 @@ aws:
   # AWS Kinesis Configuration
   # Minimum retention period in hours for Kinesis streams
   min_kinesis_stream_retention_hours: 168 # 7 days
+
+  # Detect Secrets plugin configuration
+  detect_secrets_plugins: [
+    {"name": "ArtifactoryDetector"},
+    {"name": "AWSKeyDetector"},
+    {"name": "AzureStorageKeyDetector"},
+    {"name": "BasicAuthDetector"},
+    {"name": "CloudantDetector"},
+    {"name": "DiscordBotTokenDetector"},
+    {"name": "GitHubTokenDetector"},
+    {"name": "GitLabTokenDetector"},
+    {"name": "Base64HighEntropyString", "limit": 6.0},
+    {"name": "HexHighEntropyString", "limit": 3.0},
+    {"name": "IbmCloudIamDetector"},
+    {"name": "IbmCosHmacDetector"},
+    # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
+    {"name": "JwtTokenDetector"},
+    {"name": "KeywordDetector"},
+    {"name": "MailchimpDetector"},
+    {"name": "NpmDetector"},
+    {"name": "OpenAIDetector"},
+    {"name": "PrivateKeyDetector"},
+    {"name": "PypiTokenDetector"},
+    {"name": "SendGridDetector"},
+    {"name": "SlackDetector"},
+    {"name": "SoftlayerDetector"},
+    {"name": "SquareOAuthDetector"},
+    {"name": "StripeDetector"},
+    # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
+    {"name": "TwilioKeyDetector"},
+  ]
 
 
 # Azure Configuration
@@ -407,6 +446,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # GCP Service Account and user-managed keys unused configuration
+  # gcp.iam_service_account_unused
+  # gcp.iam_sa_user_managed_key_unused
+  max_unused_account_days: 180
 
 # Kubernetes Configuration
 kubernetes:
@@ -437,3 +480,38 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+
+# M365 Configuration
+m365:
+  # Entra
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+  # Defender Malware Policy Settings
+  # m365.defender_malware_policy_comprehensive_attachments_filter_applied
+  # The recommended list of file extensions to be blocked, this can be changed depending on the organization needs
+  default_recommended_extensions:
+    [
+      "ace", "ani", "apk", "app", "appx", "arj", "bat", "cab", "cmd", "com",
+      "deb", "dex", "dll", "docm", "elf", "exe", "hta", "img", "iso", "jar",
+      "jnlp", "kext", "lha", "lib", "library", "lnk", "lzh", "macho", "msc",
+      "msi", "msix", "msp", "mst", "pif", "ppa", "ppam", "reg", "rev", "scf",
+      "scr", "sct", "sys", "uif", "vb", "vbe", "vbs", "vxd", "wsc", "wsf",
+      "wsh", "xll", "xz", "z"
+    ]
+  # m365.exchange_mailbox_properties_auditing_enabled
+  # Maximum number of days to keep audit logs
+  audit_log_age: 90
