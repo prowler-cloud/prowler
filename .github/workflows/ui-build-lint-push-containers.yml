@@ -31,7 +31,6 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-ui
 
-
 jobs:
   repository-check:
     name: Repository check
@@ -87,7 +86,6 @@ jobs:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.SHORT_SHA }}
-
           # Set push: false for testing
           push: true
           tags: |
