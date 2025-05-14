@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "GitHubRepository",
   "Description": "Ensure that the repository denies branch deletion.",
   "Risk": "Allowing the deletion of protected branches by users with push access increases the risk of accidental or intentional branch removal, potentially resulting in significant data loss or disruption to the development process.",
   "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-deletions",
