@@ -14,7 +14,7 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { ProviderProps } from "@/types";
+import { ProviderAccountProps, ProviderProps } from "@/types";
 import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -73,13 +73,28 @@ export default async function Findings({
   // Get findings data
 
   // Extract provider UIDs
-  const providerUIDs = Array.from(
+  const providerUIDs: string[] = Array.from(
     new Set(
       providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes.uid)
+        ?.map((provider: ProviderProps) => provider.attributes?.uid)
         .filter(Boolean),
     ),
   );
+
+  const providerDetails: Array<{ [uid: string]: ProviderAccountProps }> =
+    providerUIDs.map((uid) => {
+      const provider = providersData.data.find(
+        (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
+      );
+
+      return {
+        [uid]: {
+          provider: provider?.attributes?.provider || "",
+          uid: uid,
+          alias: provider?.attributes?.alias ?? null,
+        },
+      };
+    });
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
@@ -122,6 +137,7 @@ export default async function Findings({
             key: "provider_uid__in",
             labelCheckboxGroup: "Provider UID",
             values: providerUIDs,
+            valueLabelMapping: providerDetails,
           },
           {
             key: "scan__in",
