@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  getErrorMessage,
+  parseStringify,
+} from "@/lib";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
 export const getProviderGroups = async ({
@@ -12,19 +16,22 @@ export const getProviderGroups = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }: {
   page?: number;
   query?: string;
   sort?: string;
   filters?: Record<string, string | number>;
+  pageSize?: number;
 }): Promise<ProviderGroupsResponse | undefined> => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -37,10 +44,7 @@ export const getProviderGroups = async ({
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -59,16 +63,13 @@ export const getProviderGroups = async ({
 };
 
 export const getProviderGroupInfoById = async (providerGroupId: string) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/provider-groups/${providerGroupId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -87,7 +88,7 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
 };
 
 export const createProviderGroup = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const providersJson = formData.get("providers") as string;
@@ -127,11 +128,7 @@ export const createProviderGroup = async (formData: FormData) => {
     const url = new URL(`${apiBaseUrl}/provider-groups`);
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
     const data = await response.json();
@@ -148,7 +145,7 @@ export const updateProviderGroup = async (
   providerGroupId: string,
   formData: FormData,
 ) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const providersJson = formData.get("providers") as string;
@@ -179,11 +176,7 @@ export const updateProviderGroup = async (
     const url = `${apiBaseUrl}/provider-groups/${providerGroupId}`;
     const response = await fetch(url, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body: JSON.stringify(payload),
     });
 
@@ -204,7 +197,7 @@ export const updateProviderGroup = async (
 };
 
 export const deleteProviderGroup = async (formData: FormData) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
   const providerGroupId = formData.get("id");
 
   if (!providerGroupId) {
@@ -216,9 +209,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {

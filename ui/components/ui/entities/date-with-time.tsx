@@ -23,7 +23,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
     }
 
     const formattedDate = format(date, "MMM dd, yyyy");
-    const formattedTime = format(date, "p 'UTC'");
+    const formattedTime = format(date, "p");
 
     return (
       <div className="mw-fit py-[2px]">
@@ -32,7 +32,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
         >
           <span className="text-xs font-semibold">{formattedDate}</span>
           {showTime && (
-            <span className="text-tiny text-gray-500">{formattedTime}</span>
+            <span className="text-xs text-gray-500">{formattedTime}</span>
           )}
         </div>
       </div>

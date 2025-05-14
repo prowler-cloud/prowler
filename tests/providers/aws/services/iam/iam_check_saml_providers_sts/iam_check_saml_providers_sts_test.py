@@ -123,3 +123,28 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                 assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status_extended == "No SAML Providers found."
+
+    @mock_aws
+    def test_iam_check_saml_providers_sts_none_saml_providers(self):
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts.iam_client",
+                new=IAM(aws_provider),
+            ) as iam_client:
+                # Test Check
+                from prowler.providers.aws.services.iam.iam_check_saml_providers_sts.iam_check_saml_providers_sts import (
+                    iam_check_saml_providers_sts,
+                )
+
+                iam_client.saml_providers = None
+
+                check = iam_check_saml_providers_sts()
+                result = check.execute()
+                assert len(result) == 0

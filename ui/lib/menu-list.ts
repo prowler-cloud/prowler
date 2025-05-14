@@ -26,6 +26,7 @@ import {
   CircleHelpIcon,
   DocIcon,
   GCPIcon,
+  M365Icon,
   SupportIcon,
 } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
@@ -93,6 +94,11 @@ export const getMenuList = (pathname: string): GroupProps[] => {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
               label: "Microsoft Azure",
               icon: AzureIcon,
+            },
+            {
+              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=m365&sort=severity,-inserted_at",
+              label: "Microsoft 365",
+              icon: M365Icon,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",

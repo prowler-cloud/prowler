@@ -29,5 +29,5 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
                             report.status_extended = f"Role {custom_role.name} from subscription {subscription} has permission to administer resource locks."
                             exits_role_with_permission_over_locks = True
                             break
-            findings.append(report)
+                findings.append(report)
         return findings

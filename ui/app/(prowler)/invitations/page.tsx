@@ -44,6 +44,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
@@ -54,7 +55,13 @@ const SSRDataTable = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   // Fetch invitations and roles
-  const invitationsData = await getInvitations({ query, page, sort, filters });
+  const invitationsData = await getInvitations({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize,
+  });
   const rolesData = await getRoles({});
 
   // Create a dictionary for roles by invitation ID

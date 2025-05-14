@@ -53,7 +53,7 @@ export async function GET(req: Request) {
       // eslint-disable-next-line no-console
       console.error("SignIn error:", error);
       return NextResponse.redirect(
-        new URL("/sign-in?error=AuthenticationFailed", req.url),
+        new URL("/sign-in?error=AuthenticationFailed", baseUrl),
       );
     }
   } catch (error) {

@@ -12,7 +12,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators or appropriately delegated users to create new tenants.",
@@ -32,7 +32,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra ID is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data.   Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources as a guest user.  Guest users in every subscription should be review on a regular basis to ensure that inactive and unneeded accounts are removed.",
@@ -52,7 +52,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensures that two alternate forms of identification are provided before allowing a password reset.",
@@ -72,7 +72,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Azure provides a Global Banned Password policy that applies to Azure administrative and normal user accounts. This is not applied to user accounts that are synced from an on-premise Active Directory unless Microsoft Entra ID Connect is used and you enable EnforceCloudPasswordPolicyForPasswordSyncedUsers. Please see the list in default values on the specifics of this policy. To further password security, it is recommended to further define a custom banned password policy.",
@@ -92,7 +92,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the number of days before users are asked to re-confirm their authentication information is not set to 0.",
@@ -112,7 +112,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that users are notified on their primary and secondary emails on password resets.",
@@ -132,7 +132,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that all Global Administrators are notified if any other administrator resets their password.",
@@ -154,7 +154,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for applications before use.",
@@ -176,7 +176,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Allow users to provide consent for selected permissions when a request is coming from a verified publisher.",
@@ -196,7 +196,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for the apps before use.",
@@ -218,7 +218,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators or appropriately delegated users to register third-party applications.",
@@ -240,7 +240,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Limit guest user permissions.",
@@ -262,7 +262,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict invitations to users with specific administrative roles only.",
@@ -282,7 +282,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Restrict access to the Microsoft Entra ID administration center to administrators only.  **NOTE**: This only affects access to the Entra ID administrator's web portal. This setting does not prohibit privileged users from using other methods such as Rest API or Powershell to obtain sensitive information from Microsoft Entra ID.",
@@ -302,7 +302,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict access to group web interface in the Access Panel portal.",
@@ -324,7 +324,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group creation to administrators only.",
@@ -344,7 +344,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group management to administrators only.",
@@ -366,7 +366,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict Microsoft 365 group creation to administrators only.",
@@ -386,7 +386,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Joining or registering devices to Microsoft Entra ID should require Multi-factor authentication.",
@@ -408,7 +408,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access.",
@@ -430,7 +430,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Resource locking is a powerful protection mechanism that can prevent inadvertent modification/deletion of resources within Azure subscriptions/Resource Groups and is a recommended NIST configuration.",
@@ -450,7 +450,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Users who are set as subscription owners are able to make administrative changes to the subscriptions and move them into and out of Microsoft Entra ID.",
@@ -472,7 +472,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This recommendation aims to maintain a balance between security and operational efficiency by ensuring that a minimum of 2 and a maximum of 4 users are assigned the Global Administrator role in Microsoft Entra ID. Having at least two Global Administrators ensures redundancy, while limiting the number to four reduces the risk of excessive privileged access.",
@@ -494,7 +494,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.1 Security Defaults Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -517,7 +517,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.1 Security Defaults Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -540,7 +540,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.1 Security Defaults Security Defaults",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -561,7 +561,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.1 Security Defaults Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -584,7 +584,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -605,7 +605,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -626,7 +626,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -647,7 +647,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -668,7 +668,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -691,7 +691,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -712,7 +712,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.Identity and Access Management",
+          "Section": "1. Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",

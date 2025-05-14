@@ -1,13 +1,33 @@
-FROM python:3.12.8-alpine3.20 AS build
+FROM python:3.12.10-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-# hadolint ignore=DL3018
-RUN apk --no-cache add gcc python3-dev musl-dev linux-headers curl-dev
+ARG POWERSHELL_VERSION=7.5.0
+ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-RUN apk --no-cache upgrade && \
-    addgroup -g 1000 prowler && \
-    adduser -D -u 1000 -G prowler prowler
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends wget libicu72 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PowerShell
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        wget --progress=dot:giga https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-x64.tar.gz -O /tmp/powershell.tar.gz ; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        wget --progress=dot:giga https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-arm64.tar.gz -O /tmp/powershell.tar.gz ; \
+    else \
+        echo "Unsupported architecture: $ARCH" && exit 1 ; \
+    fi && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    chmod +x /opt/microsoft/powershell/7/pwsh && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
+    rm /tmp/powershell.tar.gz
+
+# Add prowler user
+RUN addgroup --gid 1000 prowler && \
+    adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
+
 USER prowler
 
 WORKDIR /home/prowler
@@ -17,7 +37,7 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
-COPY src/backend/  ./backend/
+COPY src/backend/ ./backend/
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
@@ -27,17 +47,12 @@ RUN poetry install --no-root && \
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
+RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
+
 WORKDIR /home/prowler/backend
 
 # Development image
-# hadolint ignore=DL3006
 FROM build AS dev
-
-USER 0
-# hadolint ignore=DL3018
-RUN apk --no-cache add curl vim
-
-USER prowler
 
 ENTRYPOINT ["../docker-entrypoint.sh", "dev"]
 

@@ -34,10 +34,10 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-plugins:
-  - search
-  - git-revision-date-localized:
-      enable_creation_date: true
+# plugins:
+#   - search
+#   - git-revision-date-localized:
+#       enable_creation_date: true
 
 edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
@@ -72,6 +72,7 @@ nav:
           - Developer Guide: developer-guide/introduction.md
           - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
+          - Getting Started: tutorials/aws/getting-started-aws.md
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
           - AWS Security Hub: tutorials/aws/securityhub.md
@@ -86,11 +87,13 @@ nav:
           - Boto3 Configuration: tutorials/aws/boto3-configuration.md
           - Threat Detection: tutorials/aws/threat-detection.md
       - Azure:
+          - Getting Started: tutorials/azure/getting-started-azure.md
           - Authentication: tutorials/azure/authentication.md
           - Non default clouds: tutorials/azure/use-non-default-cloud.md
           - Subscriptions: tutorials/azure/subscriptions.md
           - Create Prowler Service Principal: tutorials/azure/create-prowler-service-principal.md
       - Google Cloud:
+          - Getting Started: tutorials/gcp/getting-started-gcp.md
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
           - Organization: tutorials/gcp/organization.md
@@ -99,8 +102,9 @@ nav:
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
           - Miscellaneous: tutorials/kubernetes/misc.md
       - Microsoft 365:
+          - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
-          - Create Prowler Service Principal: tutorials/microsoft365/create-prowler-service-principal.md
+          - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md

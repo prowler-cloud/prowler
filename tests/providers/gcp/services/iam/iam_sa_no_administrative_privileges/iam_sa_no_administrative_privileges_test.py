@@ -66,6 +66,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -122,6 +123,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -187,6 +189,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -252,6 +255,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -317,6 +321,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -382,6 +387,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -447,6 +453,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -512,6 +519,7 @@ class Test_iam_sa_no_administrative_privileges:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterControlsProps } from "@/types";
 
 import { CrossIcon } from "../icons";
@@ -24,8 +25,8 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   mutedFindings = false,
   customFilters,
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { clearAllFilters } = useUrlFilters();
   const [showClearButton, setShowClearButton] = useState(false);
 
   useEffect(() => {
@@ -34,16 +35,6 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
     );
     setShowClearButton(hasFilters);
   }, [searchParams]);
-
-  const clearAllFilters = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    Array.from(params.keys()).forEach((key) => {
-      if (key.startsWith("filter[") || key === "sort") {
-        params.delete(key);
-      }
-    });
-    router.push(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
 
   return (
     <div className="flex flex-col gap-4">

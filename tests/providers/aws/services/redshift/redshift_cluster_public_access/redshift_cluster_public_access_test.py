@@ -206,7 +206,7 @@ class Test_redshift_cluster_public_access:
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
+        vpc_client.vpc_subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -260,7 +260,7 @@ class Test_redshift_cluster_public_access:
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
+        vpc_client.vpc_subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         ec2_client.security_groups = {
             f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/sg-123456": mock.MagicMock(

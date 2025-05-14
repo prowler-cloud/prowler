@@ -37,7 +37,7 @@ class Test_network_http_internet_access_restricted:
             result = check.execute()
             assert len(result) == 0
 
-    def test_network_security_groups_no_security_rules(self):
+    def test_network_security_groups_none_destination_port_range(self):
         network_client = mock.MagicMock
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
@@ -48,7 +48,15 @@ class Test_network_http_internet_access_restricted:
                     id=security_group_id,
                     name=security_group_name,
                     location="location",
-                    security_rules=[],
+                    security_rules=[
+                        SecurityRule(
+                            destination_port_range=None,
+                            protocol="TCP",
+                            source_address_prefix="Internet",
+                            access="Allow",
+                            direction="Inbound",
+                        )
+                    ],
                 )
             ]
         }

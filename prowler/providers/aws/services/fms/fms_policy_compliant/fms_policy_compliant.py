@@ -6,9 +6,7 @@ class fms_policy_compliant(Check):
     def execute(self):
         findings = []
         if fms_client.fms_admin_account:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource=fms_client.fms_policies
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
             report.region = fms_client.region
             report.resource_arn = fms_client.policy_arn_template
             report.resource_id = fms_client.audited_account

@@ -125,9 +125,9 @@ class CheckMetadata(BaseModel):
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
-        if not re.match("^[a-z-]+$", value_lower):
+        if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
             )
         return value_lower
 
@@ -543,8 +543,39 @@ class Check_Report_Kubernetes(Check_Report):
 
 
 @dataclass
-class CheckReportMicrosoft365(Check_Report):
-    """Contains the Microsoft365 Check's finding information."""
+class CheckReportGithub(Check_Report):
+    """Contains the GitHub Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    repository: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        repository: str = "global",
+    ) -> None:
+        """Initialize the GitHub Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            repository: The repository of the resource related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.repository = repository or getattr(resource, "repository", "")
+
+
+@dataclass
+class CheckReportM365(Check_Report):
+    """Contains the M365 Check's finding information."""
 
     resource_name: str
     resource_id: str
@@ -558,7 +589,7 @@ class CheckReportMicrosoft365(Check_Report):
         resource_id: str,
         resource_location: str = "global",
     ) -> None:
-        """Initialize the Microsoft365 Check's finding information.
+        """Initialize the M365 Check's finding information.
 
         Args:
             metadata: The metadata of the check.
@@ -571,6 +602,29 @@ class CheckReportMicrosoft365(Check_Report):
         self.resource_name = resource_name
         self.resource_id = resource_id
         self.location = resource_location
+
+
+@dataclass
+class CheckReportNHN(Check_Report):
+    """Contains the NHN Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the NHN Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.location = getattr(resource, "location", "kr1")
 
 
 # Testing Pending

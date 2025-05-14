@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 
 export const getFindings = async ({
   page = 1,
@@ -13,7 +12,7 @@ export const getFindings = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1)
     redirect("findings?include=resources,scan.provider");
@@ -32,10 +31,7 @@ export const getFindings = async ({
 
   try {
     const findings = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
     const data = await findings.json();
     const parsedData = parseStringify(data);
@@ -53,7 +49,7 @@ export const getMetadataInfo = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/findings/metadata`);
 
@@ -73,10 +69,7 @@ export const getMetadataInfo = async ({
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {

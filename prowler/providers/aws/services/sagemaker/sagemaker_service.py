@@ -263,9 +263,9 @@ class SageMaker(AWSService):
                 production_variants.append(
                     ProductionVariant(
                         name=production_variant["VariantName"],
-                        initial_instance_count=production_variant[
-                            "InitialInstanceCount"
-                        ],
+                        initial_instance_count=production_variant.get(
+                            "InitialInstanceCount", 0
+                        ),
                     )
                 )
             endpoint_config.production_variants = production_variants

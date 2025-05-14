@@ -4,7 +4,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
-import { getMetadataInfo } from "@/actions/findings";
+import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
@@ -70,10 +70,10 @@ export default async function Compliance({
     searchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
 
-  const metadataInfoData = await getMetadataInfo({
+  const metadataInfoData = await getComplianceOverviewMetadataInfo({
     query,
     filters: {
-      "filter[scan]": selectedScanId,
+      "filter[scan_id]": selectedScanId,
     },
   });
 
@@ -159,6 +159,7 @@ const SSRComplianceGrid = async ({
           framework,
           version,
           requirements_status: { passed, total },
+          compliance_id,
         } = attributes;
 
         return (
@@ -170,6 +171,8 @@ const SSRComplianceGrid = async ({
             totalRequirements={total}
             prevPassingRequirements={passed}
             prevTotalRequirements={total}
+            scanId={scanId}
+            complianceId={compliance_id}
           />
         );
       })}

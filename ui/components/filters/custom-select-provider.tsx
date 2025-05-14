@@ -9,6 +9,7 @@ import {
   CustomProviderInputAzure,
   CustomProviderInputGCP,
   CustomProviderInputKubernetes,
+  CustomProviderInputM365,
 } from "./custom-provider-inputs";
 
 const dataInputsProvider = [
@@ -26,6 +27,11 @@ const dataInputsProvider = [
     key: "azure",
     label: "Microsoft Azure",
     value: <CustomProviderInputAzure />,
+  },
+  {
+    key: "m365",
+    label: "Microsoft 365",
+    value: <CustomProviderInputM365 />,
   },
   {
     key: "kubernetes",

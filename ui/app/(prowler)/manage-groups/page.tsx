@@ -163,6 +163,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Convert filters to the correct type
   const filters: Record<string, string> = {};
@@ -178,6 +179,7 @@ const SSRDataTable = async ({
     page,
     sort,
     filters,
+    pageSize,
   });
   return (
     <DataTable

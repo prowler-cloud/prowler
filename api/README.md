@@ -235,6 +235,7 @@ To view the logs for any component (e.g., Django, Celery worker), you can use th
 
 ```console
 docker logs -f $(docker ps --format "{{.Names}}" | grep 'api-')
+```
 
 ## Applying migrations
 

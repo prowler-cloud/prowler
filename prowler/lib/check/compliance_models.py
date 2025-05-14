@@ -183,6 +183,18 @@ class KISA_ISMSP_Requirement_Attribute(BaseModel):
     NonComplianceCases: Optional[list[str]]
 
 
+# Prowler ThreatScore Requirement Attribute
+class Prowler_ThreatScore_Requirement_Attribute(BaseModel):
+    """Prowler ThreatScore Requirement Attribute"""
+
+    Title: str
+    Section: str
+    SubSection: str
+    AttributeDescription: str
+    AdditionalInformation: str
+    LevelOfRisk: int
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -198,6 +210,7 @@ class Compliance_Requirement(BaseModel):
             ISO27001_2013_Requirement_Attribute,
             AWS_Well_Architected_Requirement_Attribute,
             KISA_ISMSP_Requirement_Attribute,
+            Prowler_ThreatScore_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]

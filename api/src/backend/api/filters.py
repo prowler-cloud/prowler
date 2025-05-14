@@ -287,19 +287,22 @@ class FindingFilter(FilterSet):
     status = ChoiceFilter(choices=StatusChoices.choices)
     severity = ChoiceFilter(choices=SeverityChoices)
     impact = ChoiceFilter(choices=SeverityChoices)
+    muted = BooleanFilter(
+        help_text="If this filter is not provided, muted and non-muted findings will be returned."
+    )
 
     resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
 
-    region = CharFilter(field_name="resources__region")
-    region__in = CharInFilter(field_name="resources__region", lookup_expr="in")
+    region = CharFilter(method="filter_resource_region")
+    region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
     region__icontains = CharFilter(
-        field_name="resources__region", lookup_expr="icontains"
+        field_name="resource_regions", lookup_expr="icontains"
     )
 
-    service = CharFilter(field_name="resources__service")
-    service__in = CharInFilter(field_name="resources__service", lookup_expr="in")
+    service = CharFilter(method="filter_resource_service")
+    service__in = CharInFilter(field_name="resource_services", lookup_expr="overlap")
     service__icontains = CharFilter(
-        field_name="resources__service", lookup_expr="icontains"
+        field_name="resource_services", lookup_expr="icontains"
     )
 
     resource_uid = CharFilter(field_name="resources__uid")
@@ -314,8 +317,8 @@ class FindingFilter(FilterSet):
         field_name="resources__name", lookup_expr="icontains"
     )
 
-    resource_type = CharFilter(field_name="resources__type")
-    resource_type__in = CharInFilter(field_name="resources__type", lookup_expr="in")
+    resource_type = CharFilter(method="filter_resource_type")
+    resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
     resource_type__icontains = CharFilter(
         field_name="resources__type", lookup_expr="icontains"
     )
@@ -381,6 +384,15 @@ class FindingFilter(FilterSet):
                 "filter_class": CharFilter,
             },
         }
+
+    def filter_resource_type(self, queryset, name, value):
+        return queryset.filter(resource_types__contains=[value])
+
+    def filter_resource_region(self, queryset, name, value):
+        return queryset.filter(resource_regions__contains=[value])
+
+    def filter_resource_service(self, queryset, name, value):
+        return queryset.filter(resource_services__contains=[value])
 
     def filter_queryset(self, queryset):
         if not (self.data.get("scan") or self.data.get("scan__in")) and not (
@@ -614,12 +626,6 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
-    muted_findings = BooleanFilter(method="filter_muted_findings")
-
-    def filter_muted_findings(self, queryset, name, value):
-        if not value:
-            return queryset.exclude(muted__gt=0)
-        return queryset
 
     class Meta:
         model = ScanSummary
@@ -630,8 +636,6 @@ class ScanSummaryFilter(FilterSet):
 
 
 class ServiceOverviewFilter(ScanSummaryFilter):
-    muted_findings = None
-
     def is_valid(self):
         # Check if at least one of the inserted_at filters is present
         inserted_at_filters = [

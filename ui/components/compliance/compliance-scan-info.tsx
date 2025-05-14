@@ -2,11 +2,11 @@ import { Divider } from "@nextui-org/react";
 import React from "react";
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
-
+import { ProviderType } from "@/types";
 interface ComplianceScanInfoProps {
   scan: {
     providerInfo: {
-      provider: "aws" | "azure" | "gcp" | "kubernetes";
+      provider: ProviderType;
       alias?: string;
       uid?: string;
     };

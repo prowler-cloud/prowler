@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
@@ -59,7 +60,6 @@ class StatusChoices(models.TextChoices):
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
-    MUTED = "MUTED", _("Muted")
 
 
 class StateChoices(models.TextChoices):
@@ -192,6 +192,7 @@ class Provider(RowLevelSecurityProtectedModel):
         AZURE = "azure", _("Azure")
         GCP = "gcp", _("GCP")
         KUBERNETES = "kubernetes", _("Kubernetes")
+        M365 = "m365", _("M365")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -212,6 +213,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Azure provider ID must be a valid UUID.",
                 code="azure-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_m365_uid(value):
+        if not re.match(r"^[a-zA-Z0-9-]+\.onmicrosoft\.com$", value):
+            raise ModelValidationError(
+                detail="M365 tenant ID must be a valid domain.",
+                code="m365-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -438,6 +448,11 @@ class Scan(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "provider_id", "state", "inserted_at"],
                 name="scans_prov_state_insert_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "state", "-inserted_at"],
+                condition=Q(state=StateChoices.COMPLETED),
+                name="scans_prov_state_ins_desc_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -519,6 +534,11 @@ class Resource(RowLevelSecurityProtectedModel):
         editable=False,
     )
 
+    metadata = models.TextField(blank=True, null=True)
+    details = models.TextField(blank=True, null=True)
+    partition = models.TextField(blank=True, null=True)
+
+    # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
         verbose_name="Tags associated with the resource, by provider",
@@ -559,6 +579,11 @@ class Resource(RowLevelSecurityProtectedModel):
                 name="resource_tenant_metadata_idx",
             ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
+            models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="resources_tenant_provider_idx",
+            ),
         ]
 
         constraints = [
@@ -656,6 +681,23 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     tags = models.JSONField(default=dict, null=True, blank=True)
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
+    muted = models.BooleanField(default=False, null=False)
+    compliance = models.JSONField(default=dict, null=True, blank=True)
+
+    # Denormalize resource data for performance
+    resource_regions = ArrayField(
+        models.CharField(max_length=100), blank=True, null=True
+    )
+    resource_services = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+    )
+    resource_types = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+    )
 
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
@@ -697,18 +739,6 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         ]
 
         indexes = [
-            models.Index(fields=["uid"], name="findings_uid_idx"),
-            models.Index(
-                fields=[
-                    "scan_id",
-                    "impact",
-                    "severity",
-                    "status",
-                    "check_id",
-                    "delta",
-                ],
-                name="findings_filter_idx",
-            ),
             models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
             GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
             models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
@@ -720,19 +750,38 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 condition=Q(delta="new"),
                 name="find_delta_new_idx",
             ),
+            GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
+            GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
+            GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
         ]
 
     class JSONAPIMeta:
         resource_name = "findings"
 
     def add_resources(self, resources: list[Resource] | None):
-        # Add new relationships with the tenant_id field
+        if not resources:
+            return
+
+        self.resource_regions = self.resource_regions or []
+        self.resource_services = self.resource_services or []
+        self.resource_types = self.resource_types or []
+
+        # Deduplication
+        regions = set(self.resource_regions)
+        services = set(self.resource_services)
+        types = set(self.resource_types)
+
         for resource in resources:
             ResourceFindingMapping.objects.update_or_create(
                 resource=resource, finding=self, tenant_id=self.tenant_id
             )
+            regions.add(resource.region)
+            services.add(resource.service)
+            types.add(resource.type)
 
-        # Save the instance
+        self.resource_regions = list(regions)
+        self.resource_services = list(services)
+        self.resource_types = list(types)
         self.save()
 
 
@@ -1134,7 +1183,15 @@ class ScanSummary(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id"],
                 name="scan_summaries_tenant_scan_idx",
-            )
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "service"],
+                name="ss_tenant_scan_service_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "severity"],
+                name="ss_tenant_scan_severity_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -1210,6 +1267,55 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
                 fields=["integration_id", "provider_id"],
                 name="unique_integration_provider_rel",
             ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class ResourceScanSummary(RowLevelSecurityProtectedModel):
+    scan_id = models.UUIDField(default=uuid7, db_index=True)
+    resource_id = models.UUIDField(default=uuid4, db_index=True)
+    service = models.CharField(max_length=100)
+    region = models.CharField(max_length=100)
+    resource_type = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = "resource_scan_summaries"
+        unique_together = (("tenant_id", "scan_id", "resource_id"),)
+
+        indexes = [
+            # Single-dimension lookups:
+            models.Index(
+                fields=["tenant_id", "scan_id", "service"],
+                name="rss_tenant_scan_svc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "region"],
+                name="rss_tenant_scan_reg_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "resource_type"],
+                name="rss_tenant_scan_type_idx",
+            ),
+            # Two-dimension cross-filters:
+            models.Index(
+                fields=["tenant_id", "scan_id", "region", "service"],
+                name="rss_tenant_scan_reg_svc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "service", "resource_type"],
+                name="rss_tenant_scan_svc_type_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "region", "resource_type"],
+                name="rss_tenant_scan_reg_type_idx",
+            ),
+        ]
+
+        constraints = [
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",

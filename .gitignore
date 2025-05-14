@@ -42,6 +42,9 @@ junit-reports/
 # VSCode files
 .vscode/
 
+# Cursor files
+.cursorignore
+
 # Terraform
 .terraform*
 *.tfstate
