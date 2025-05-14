@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Add GitHub provider. [(#5787)](https://github.com/prowler-cloud/prowler/pull/5787)
 - Add `repository_code_changes_multi_approval_requirement` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
+- Add `repository_enforces_default_branch_protection` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 
 ### Fixed
