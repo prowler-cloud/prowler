@@ -198,16 +198,15 @@ class M365Provider(Provider):
             sp_env_auth,
             env_auth,
             browser_auth,
-            client_id,
+            self._session,
         )
 
         # Set up PowerShell session credentials
         self._credentials = self.setup_powershell(
             env_auth=env_auth,
             m365_credentials=m365_credentials,
-            provider_id=self.identity.tenant_domain,
-            init_modules=init_modules,
             identity=self.identity,
+            init_modules=init_modules,
         )
 
         # Audit Config
@@ -381,9 +380,8 @@ class M365Provider(Provider):
     def setup_powershell(
         env_auth: bool = False,
         m365_credentials: dict = {},
-        provider_id: str = None,
-        init_modules: bool = False,
         identity: M365IdentityInfo = None,
+        init_modules: bool = False,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
@@ -404,7 +402,7 @@ class M365Provider(Provider):
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
-                provider_id=provider_id,
+                tenant_domains=identity.tenant_domains,
             )
         elif env_auth:
             m365_user = getenv("M365_USER")
@@ -422,19 +420,19 @@ class M365Provider(Provider):
                     message="Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication.",
                 )
             credentials = M365Credentials(
-                user=m365_user,
-                passwd=m365_password,
                 client_id=client_id,
                 client_secret=client_secret,
                 tenant_id=tenant_id,
-                provider_id=provider_id,
+                tenant_domains=identity.tenant_domains,
+                user=m365_user,
+                passwd=m365_password,
             )
 
         if credentials:
             if identity:
                 identity.identity_type = "Service Principal and User Credentials"
                 identity.user = credentials.user
-            test_session = M365PowerShell(credentials)
+            test_session = M365PowerShell(credentials, identity)
             try:
                 if test_session.test_credentials(credentials):
                     if init_modules:
@@ -704,7 +702,7 @@ class M365Provider(Provider):
                     )
 
             # Set up the M365 session
-            credentials = M365Provider.setup_session(
+            session = M365Provider.setup_session(
                 az_cli_auth,
                 sp_env_auth,
                 env_auth,
@@ -714,16 +712,31 @@ class M365Provider(Provider):
                 region_config,
             )
 
-            GraphServiceClient(credentials=credentials)
+            GraphServiceClient(credentials=session)
 
             logger.info("M365 provider: Connection to MSGraph successful")
+
+            # Set up Identity
+            identity = M365Provider.setup_identity(
+                az_cli_auth,
+                sp_env_auth,
+                env_auth,
+                browser_auth,
+                session,
+            )
+
+            if provider_id not in identity.tenant_domains:
+                raise M365InvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provider ID {provider_id} does not match any of the service principal tenant domains: {', '.join(identity.tenant_domains)}",
+                )
 
             # Set up PowerShell credentials
             if user and encrypted_password:
                 M365Provider.setup_powershell(
                     env_auth,
                     m365_credentials,
-                    provider_id,
+                    identity,
                 )
             else:
                 logger.info(
@@ -731,15 +744,6 @@ class M365Provider(Provider):
                 )
 
             logger.info("M365 provider: Connection to PowerShell successful")
-
-            # Check that user domain, provider_id and Graph client tenant_domain are the same
-            if user and encrypted_password:
-                user_domain = user.split("@")[1]
-                if provider_id and not provider_id.endswith(user_domain):
-                    raise M365InvalidProviderIdError(
-                        file=os.path.basename(__file__),
-                        message=f"Provider ID {provider_id} does not match Application tenant domain {user_domain}",
-                    )
 
             return Connection(is_connected=True)
 
@@ -867,13 +871,13 @@ class M365Provider(Provider):
                     message=f"Missing environment variable {env_var} required to authenticate.",
                 )
 
+    @staticmethod
     def setup_identity(
-        self,
         az_cli_auth,
         sp_env_auth,
         env_auth,
         browser_auth,
-        client_id,
+        session,
     ):
         """
         Sets up the identity for the M365 provider.
@@ -888,7 +892,6 @@ class M365Provider(Provider):
         Returns:
             M365IdentityInfo: An instance of M365IdentityInfo containing the identity information.
         """
-        credentials = self.session
         # TODO: fill this object with real values not default and set to none
         identity = M365IdentityInfo()
 
@@ -896,7 +899,7 @@ class M365Provider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, m365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if env_auth or az_cli_auth or sp_env_auth or browser_auth or client_id:
+        if env_auth or az_cli_auth or sp_env_auth or browser_auth:
 
             async def get_m365_identity():
                 # Trying to recover tenant domain info
@@ -904,12 +907,14 @@ class M365Provider(Provider):
                     logger.info(
                         "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                     )
-                    client = GraphServiceClient(credentials=credentials)
+                    client = GraphServiceClient(credentials=session)
 
                     domain_result = await client.domains.get()
                     if getattr(domain_result, "value"):
                         if getattr(domain_result.value[0], "id"):
                             identity.tenant_domain = domain_result.value[0].id
+                            for domain in domain_result.value:
+                                identity.tenant_domains.append(domain.id)
 
                 except HttpResponseError as error:
                     logger.error(
@@ -932,7 +937,7 @@ class M365Provider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth or env_auth or client_id:
+                if sp_env_auth or env_auth:
                     # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal"
@@ -945,7 +950,7 @@ class M365Provider(Provider):
                         logger.info(
                             "Trying to retrieve user information from AAD to populate identity structure ..."
                         )
-                        client = GraphServiceClient(credentials=credentials)
+                        client = GraphServiceClient(credentials=session)
 
                         me = await client.me.get()
                         if me:
@@ -958,7 +963,7 @@ class M365Provider(Provider):
                         )
 
                 # Retrieve tenant id from the client
-                client = GraphServiceClient(credentials=credentials)
+                client = GraphServiceClient(credentials=session)
                 organization_info = await client.organization.get()
                 identity.tenant_id = organization_info.value[0].id
 
