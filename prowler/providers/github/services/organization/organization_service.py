@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -39,4 +41,4 @@ class Org(BaseModel):
 
     id: int
     name: str
-    mfa_required: bool = False
+    mfa_required: Optional[bool] = False
