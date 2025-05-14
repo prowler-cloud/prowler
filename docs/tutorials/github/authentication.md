@@ -40,4 +40,4 @@ If no token is explicitly provided, Prowler will automatically attempt to authen
 2. `OAUTH_APP_TOKEN`
 3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
-???+ note Ensure the corresponding environment variables are set up before running Prowler for automatic detection if you don't plan to provide any credentials.
+???+ note Ensure the corresponding environment variables are set up before running Prowler for automatic detection if you don't plan to specify the login method.

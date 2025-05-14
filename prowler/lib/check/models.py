@@ -627,20 +627,6 @@ class CheckReportNHN(Check_Report):
         self.location = getattr(resource, "location", "kr1")
 
 
-@dataclass
-class Check_Report_Github(Check_Report):
-    # TODO change class name to CheckReportGitHub
-    """Contains the GitHub Check's finding information."""
-
-    resource_name: str
-    resource_id: str
-
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-
-
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """
