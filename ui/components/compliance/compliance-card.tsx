@@ -72,9 +72,13 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   const navigateToDetail = () => {
     const formattedTitleForUrl = encodeURIComponent(title);
-    router.push(
-      `/compliance/${formattedTitleForUrl}?id=${id}&version=${encodeURIComponent(version)}`,
-    );
+    const path = `/compliance/${formattedTitleForUrl}`;
+    const params = new URLSearchParams();
+    params.set("id", id);
+    params.set("version", version);
+    params.set("scanId", scanId);
+
+    router.push(`${path}?${params.toString()}`);
   };
 
   return (

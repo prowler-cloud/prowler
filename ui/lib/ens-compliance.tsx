@@ -1,5 +1,4 @@
-import { Chip } from "@nextui-org/react";
-
+import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   Category,
@@ -7,6 +6,8 @@ import {
   Framework,
   Requirement,
 } from "@/types/compliance/ens";
+
+import { ComplianceAccordionTitle } from "../components/compliance/compliance-accordion-title";
 
 export const mapComplianceData = (rawData: any) => {
   const requirements = rawData.attributes?.requirements || {};
@@ -187,69 +188,65 @@ export const mapComplianceData = (rawData: any) => {
   }));
 };
 
-const getStatusEmoji = (status: string) => {
-  if (status === "PASS") return "✅";
-  if (status === "FAIL") return "❌";
-  if (status === "MANUAL") return "🖐";
-  return "";
-};
-
-const translateType = (tipo: string) => {
-  switch (tipo.toLowerCase()) {
-    case "requisito":
-      return "Requirement";
-    case "recomendacion":
-      return "Recommendation";
-    case "refuerzo":
-      return "Reinforcement";
-    case "medida":
-      return "Measure";
-    default:
-      return tipo;
-  }
-};
-
-export const toAccordionItems = (data: any[]): AccordionItemProps[] => {
+export const toAccordionItems = (
+  data: any[],
+  scanId: string | undefined,
+): AccordionItemProps[] => {
   return data.map((framework) => {
     return {
       key: framework.name,
-      title: renderTitle(
-        framework.name,
-        framework.pass,
-        framework.fail,
-        framework.manual,
+      title: (
+        <ComplianceAccordionTitle
+          label={framework.name}
+          pass={framework.pass}
+          fail={framework.fail}
+          manual={framework.manual}
+        />
       ),
       content: "",
       items: framework.categories.map((category: any) => {
         return {
           key: `${framework.name}-${category.name}`,
-          title: renderTitle(
-            category.name,
-            category.pass,
-            category.fail,
-            category.manual,
+          title: (
+            <ComplianceAccordionTitle
+              label={category.name}
+              pass={category.pass}
+              fail={category.fail}
+              manual={category.manual}
+            />
           ),
           content: "",
           items: category.controls.map((control: any, i: number) => {
             return {
               key: `${framework.name}-${category.name}-control-${i}`,
-              title: renderTitle(
-                control.label,
-                control.pass,
-                control.fail,
-                control.manual,
+              title: (
+                <ComplianceAccordionTitle
+                  label={control.label}
+                  pass={control.pass}
+                  fail={control.fail}
+                  manual={control.manual}
+                />
               ),
               content: "",
               items: control.requirements.map((requirement: any, j: number) => {
+                const itemKey = `${framework.name}-${category.name}-control-${i}-req-${j}`;
+
                 return {
-                  key: `${framework.name}-${category.name}-control-${i}-req-${j}`,
-                  title: renderTitle(
-                    requirement.name,
-                    requirement.pass,
-                    requirement.fail,
-                    requirement.manual,
+                  key: itemKey,
+                  title: (
+                    <ComplianceAccordionTitle
+                      label={requirement.name}
+                      pass={requirement.pass}
+                      fail={requirement.fail}
+                      manual={requirement.manual}
+                    />
                   ),
-                  content: renderTable(requirement),
+                  content: (
+                    <ClientAccordionContent
+                      requirement={requirement}
+                      scanId={scanId || ""}
+                    />
+                  ),
                   items: [],
                   isDisabled:
                     requirement.checks.length === 0 && requirement.manual === 0,
@@ -265,111 +262,4 @@ export const toAccordionItems = (data: any[]): AccordionItemProps[] => {
       }),
     };
   });
-};
-
-const renderTitle = (
-  label: string,
-  pass: number,
-  fail: number,
-  manual: number = 0,
-) => {
-  // Determine if it's a requirement title (level 4), control (level 3) or higher level
-  // Requirement names are like "op.exp.5.aws.cm.1"
-  const isRequirementLevel = /\.\w+\.\d+$/.test(label); // Checks if it ends with .word.number
-  const isControlLevel = label.includes(" - ") && !isRequirementLevel;
-
-  let prefix = "Requirements";
-  if (isRequirementLevel) {
-    prefix = "Findings";
-  } else if (isControlLevel) {
-    prefix = "Requirements";
-  }
-
-  return (
-    <div className="flex flex-col flex-wrap items-start justify-between gap-1 md:flex-row md:items-center md:gap-0">
-      <div className="w-1/2 overflow-hidden md:min-w-0">
-        <span
-          className="block w-full overflow-hidden truncate text-ellipsis pr-2 uppercase"
-          title={label}
-        >
-          {label}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="hidden lg:block">
-          {(pass > 0 || fail > 0 || manual > 0) && (
-            <span className="mr-1 whitespace-nowrap text-xs font-medium text-gray-600">
-              {prefix}:
-            </span>
-          )}
-        </div>
-
-        <Chip
-          size="sm"
-          color="success"
-          variant="flat"
-          className="whitespace-nowrap"
-        >
-          Pass: {pass}
-        </Chip>
-
-        <Chip
-          size="sm"
-          color="danger"
-          variant="flat"
-          className="whitespace-nowrap"
-        >
-          Fail: {fail}
-        </Chip>
-
-        <Chip
-          size="sm"
-          color="default"
-          variant="bordered"
-          className="whitespace-nowrap"
-        >
-          Manual: {manual}
-        </Chip>
-      </div>
-    </div>
-  );
-};
-
-const renderTable = (requirement: any) => {
-  const translatedType = translateType(requirement.tipo);
-  const checks = requirement.checks || [];
-
-  return (
-    <div className="mt-2 w-full overflow-x-auto">
-      <div className="mb-2">
-        <span className="font-semibold">Type:</span> {translatedType}
-      </div>
-      <div className="mb-2">
-        <span className="font-semibold">Description:</span>{" "}
-        {requirement.description}
-      </div>
-      {checks.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-full border text-left text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="p-2">Check ID</th>
-                <th className="p-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {checks.map((check: any, i: number) => (
-                <tr key={i} className="border-b">
-                  <td className="break-all p-2">{check.checkName}</td>
-                  <td className="whitespace-nowrap p-2 capitalize">
-                    {getStatusEmoji(check.status)} &nbsp; {check.status}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
 };

@@ -11,10 +11,10 @@ export default async function ComplianceDetail({
   searchParams,
 }: {
   params: { compliancetitle: string };
-  searchParams: { id: string; version?: string };
+  searchParams: { id: string; version?: string; scanId?: string };
 }) {
   const { compliancetitle } = params;
-  const { id, version } = searchParams;
+  const { id, version, scanId } = searchParams;
 
   if (!id) {
     // Todo: improve error handling for no id provided
@@ -26,11 +26,11 @@ export default async function ComplianceDetail({
   const formattedTitle = compliancetitle.split("-").join(" ");
 
   const pageTitle = version
-    ? `Detalles de Compliance: ${formattedTitle} - ${version}`
-    : `Detalles de Compliance: ${formattedTitle}`;
+    ? `Compliance Details: ${formattedTitle} - ${version}`
+    : `Compliance Details: ${formattedTitle}`;
 
   const mappedData = mapComplianceData(complianceData.data);
-  const accordionItems = toAccordionItems(mappedData);
+  const accordionItems = toAccordionItems(mappedData, scanId);
 
   return (
     <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">

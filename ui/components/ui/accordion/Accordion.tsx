@@ -27,6 +27,7 @@ export interface AccordionProps {
   selectionMode?: "single" | "multiple";
   isCompact?: boolean;
   showDivider?: boolean;
+  onItemExpand?: (key: string) => void;
 }
 
 const AccordionContent = ({
@@ -61,14 +62,31 @@ export const Accordion = ({
   selectionMode = "single",
   isCompact = false,
   showDivider = true,
+  onItemExpand,
 }: AccordionProps) => {
   const [expandedKeys, setExpandedKeys] = useState<Selection>(
     new Set(defaultExpandedKeys),
   );
 
-  const handleSelectionChange = useCallback((keys: Selection) => {
-    setExpandedKeys(keys);
-  }, []);
+  const handleSelectionChange = useCallback(
+    (keys: Selection) => {
+      if (onItemExpand && keys !== expandedKeys) {
+        const currentKeys = Array.from(expandedKeys as Set<string>);
+        const newKeys = Array.from(keys as Set<string>);
+
+        const newlyExpandedKeys = newKeys.filter(
+          (key) => !currentKeys.includes(key),
+        );
+
+        newlyExpandedKeys.forEach((key) => {
+          onItemExpand(key);
+        });
+      }
+
+      setExpandedKeys(keys);
+    },
+    [expandedKeys, onItemExpand],
+  );
 
   return (
     <NextUIAccordion
@@ -92,7 +110,7 @@ export const Accordion = ({
           indicator={<ChevronDown className="text-gray-500" />}
           classNames={{
             base: index === 0 || index === 1 ? "my-2" : "my-1",
-            title: "text-sm font-medium max-w-full",
+            title: "text-sm font-medium max-w-full overflow-hidden truncate",
             subtitle: "text-xs text-gray-500",
             trigger:
               "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center overflow-hidden",
