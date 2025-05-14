@@ -31,9 +31,6 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-ui
 
-  # CloudFormation Quick Link
-  AWS_CLOUDFORMATION_QUICK_LINK: https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=ProwlerScanRole&param_AccountId=&param_IAMPrincipal=role%2Fprowler*&param_ExternalId=
-
 
 jobs:
   repository-check:
@@ -90,7 +87,6 @@ jobs:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.SHORT_SHA }}
-            NEXT_PUBLIC_AWS_CLOUDFORMATION_QUICK_LINK=${{ env.AWS_CLOUDFORMATION_QUICK_LINK }}
 
           # Set push: false for testing
           push: true
@@ -107,7 +103,6 @@ jobs:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${{ env.RELEASE_TAG }}
-            NEXT_PUBLIC_AWS_CLOUDFORMATION_QUICK_LINK=${{ env.AWS_CLOUDFORMATION_QUICK_LINK }}
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
