@@ -32,6 +32,7 @@ class Repository(GithubService):
 
                     require_pr = False
                     approval_cnt = 0
+                    branch_protection = None
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
