@@ -5,7 +5,7 @@ import Parser from "rss-parser";
 const RSS_FEED_URL = process.env.RSS_FEED_URL || "";
 
 export const fetchFeeds = async (): Promise<any | any[]> => {
-  if (RSS_FEED_URL.trim()?.length > 0) {
+  if (RSS_FEED_URL?.trim()?.length > 0) {
     const parser = new Parser();
     try {
       // TODO: Need to update return logic when actual URL is updated for RSS FEED
