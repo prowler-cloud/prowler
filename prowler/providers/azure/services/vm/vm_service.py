@@ -1,14 +1,13 @@
 from dataclasses import dataclass
+from typing import List, Optional
 
 from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import StorageProfile
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## VirtualMachines
 class VirtualMachines(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ComputeManagementClient, provider)
@@ -25,14 +24,54 @@ class VirtualMachines(AzureService):
                 virtual_machines.update({subscription_name: {}})
 
                 for vm in virtual_machines_list:
+                    storage_profile = getattr(vm, "storage_profile", None)
+                    os_disk = (
+                        getattr(storage_profile, "os_disk", None)
+                        if storage_profile
+                        else None
+                    )
+
+                    data_disks = []
+                    if storage_profile and getattr(storage_profile, "data_disks", []):
+                        data_disks = [
+                            DataDisk(
+                                lun=data_disk.lun,
+                                name=data_disk.name,
+                                managed_disk=data_disk.managed_disk,
+                            )
+                            for data_disk in getattr(storage_profile, "data_disks", [])
+                            if data_disk
+                        ]
+
+                    extensions = []
+                    if getattr(vm, "resources", []):
+                        extensions = [
+                            VirtualMachineExtension(id=extension.id)
+                            for extension in getattr(vm, "resources", [])
+                            if extension
+                        ]
+
                     virtual_machines[subscription_name].update(
                         {
-                            vm.vm_id: VirtualMachine(
+                            vm.id: VirtualMachine(
                                 resource_id=vm.id,
                                 resource_name=vm.name,
-                                storage_profile=getattr(vm, "storage_profile", None),
+                                storage_profile=(
+                                    StorageProfile(
+                                        os_disk=OSDisk(
+                                            name=getattr(os_disk, "name", None),
+                                            managed_disk=getattr(
+                                                os_disk, "managed_disk", None
+                                            ),
+                                        ),
+                                        data_disks=data_disks,
+                                    )
+                                    if storage_profile
+                                    else None
+                                ),
                                 location=vm.location,
-                                security_profile=vm.security_profile,
+                                security_profile=getattr(vm, "security_profile", None),
+                                extensions=extensions,
                             )
                         }
                     )
@@ -88,16 +127,41 @@ class UefiSettings:
 @dataclass
 class SecurityProfile:
     security_type: str
-    uefi_settings: UefiSettings
+    uefi_settings: Optional[UefiSettings]
+
+
+@dataclass
+class OSDisk:
+    name: Optional[str]
+    managed_disk: Optional[bool]
+
+
+@dataclass
+class DataDisk:
+    lun: int
+    name: str
+    managed_disk: bool
+
+
+@dataclass
+class StorageProfile:
+    os_disk: Optional[OSDisk]
+    data_disks: List[DataDisk]
+
+
+@dataclass
+class VirtualMachineExtension:
+    id: str
 
 
 @dataclass
 class VirtualMachine:
     resource_id: str
     resource_name: str
-    storage_profile: StorageProfile
     location: str
-    security_profile: SecurityProfile
+    security_profile: Optional[SecurityProfile]
+    extensions: list[VirtualMachineExtension]
+    storage_profile: Optional[StorageProfile] = None
 
 
 @dataclass

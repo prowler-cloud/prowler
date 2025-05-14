@@ -8,11 +8,9 @@ class route53_public_hosted_zones_cloudwatch_logging_enabled(Check):
 
         for hosted_zone in route53_client.hosted_zones.values():
             if not hosted_zone.private_zone:
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = hosted_zone.id
-                report.resource_arn = hosted_zone.arn
-                report.resource_tags = hosted_zone.tags
-                report.region = hosted_zone.region
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=hosted_zone
+                )
                 if (
                     hosted_zone.logging_config
                     and hosted_zone.logging_config.cloudwatch_log_group_arn

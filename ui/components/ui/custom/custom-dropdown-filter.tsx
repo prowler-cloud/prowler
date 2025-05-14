@@ -11,10 +11,11 @@ import {
   ScrollShadow,
 } from "@nextui-org/react";
 import { XCircle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { CustomDropdownFilterProps } from "@/types";
 
 const filterSelectedClass =
@@ -24,14 +25,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { clearFilter } = useUrlFilters();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
   const [pendingClearFilter, setPendingClearFilter] = useState<string | null>(
     null,
   );
 
-  const allFilterKeys = filter?.values || [];
+  const allFilterKeys = useMemo(() => filter?.values || [], [filter?.values]);
 
   const getActiveFilter = useMemo(() => {
     const currentFilters: Record<string, string> = {};
@@ -63,7 +64,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     } else {
       setGroupSelected(new Set());
     }
-  }, [getActiveFilter, filter?.key, memoizedFilterValues]);
+  }, [getActiveFilter, filter?.key, memoizedFilterValues, filter]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
@@ -114,23 +115,18 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
 
   // Execute the update in the router after the render
   useEffect(() => {
-    if (pendingClearFilter) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete(`filter[${pendingClearFilter}]`);
-      router.push(`?${params.toString()}`, { scroll: false });
+    if (pendingClearFilter && filter) {
+      clearFilter(pendingClearFilter);
       setPendingClearFilter(null); // Reset the state
     }
-  }, [pendingClearFilter, searchParams, router]);
+  }, [pendingClearFilter, clearFilter, filter]);
 
   return (
     <div className="relative flex w-full flex-col gap-2">
       <Button
         isIconOnly
         variant="light"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClearFilter(filter.key);
-        }}
+        onPress={() => onClearFilter(filter.key)}
         className={`absolute right-2 top-1/2 z-40 -translate-y-1/2 ${
           groupSelected.size === 0 ? "hidden" : ""
         }`}
@@ -181,7 +177,10 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               className="font-bold"
             >
               <Checkbox
-                className="font-normal"
+                classNames={{
+                  label: "text-small font-normal",
+                  wrapper: "checkbox-update",
+                }}
                 value="all"
                 isSelected={groupSelected.has("all")}
                 onClick={handleSelectAllClick}
@@ -194,7 +193,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
                 {memoizedFilterValues.map((value) => (
-                  <Checkbox className="font-normal" key={value} value={value}>
+                  <Checkbox
+                    classNames={{
+                      label: "text-small font-normal",
+                      wrapper: "checkbox-update",
+                    }}
+                    key={value}
+                    value={value}
+                  >
                     {value}
                   </Checkbox>
                 ))}

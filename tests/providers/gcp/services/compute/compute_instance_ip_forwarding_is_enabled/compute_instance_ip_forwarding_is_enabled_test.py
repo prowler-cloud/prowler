@@ -6,15 +6,18 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_instance_ip_forwarding_is_enabled:
     def test_compute_no_instances(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.instances = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
                 compute_instance_ip_forwarding_is_enabled,
@@ -43,16 +46,19 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
                 compute_instance_ip_forwarding_is_enabled,
@@ -91,16 +97,19 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
                 compute_instance_ip_forwarding_is_enabled,
@@ -139,16 +148,19 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
                 compute_instance_ip_forwarding_is_enabled,

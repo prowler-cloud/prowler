@@ -6,15 +6,18 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_apikeys_api_restrictions_configured:
     def test_apikeys_no_keys(self):
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.keys = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured import (
                 apikeys_api_restrictions_configured,
@@ -40,17 +43,20 @@ class Test_apikeys_api_restrictions_configured:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured import (
                 apikeys_api_restrictions_configured,
@@ -78,17 +84,20 @@ class Test_apikeys_api_restrictions_configured:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured import (
                 apikeys_api_restrictions_configured,
@@ -122,17 +131,20 @@ class Test_apikeys_api_restrictions_configured:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured import (
                 apikeys_api_restrictions_configured,

@@ -1,5 +1,6 @@
 import os
 from os import environ
+from typing import Union
 
 from colorama import Fore, Style
 from github import Auth, Github, GithubIntegration
@@ -241,7 +242,7 @@ class GithubProvider(Provider):
                 )
                 session_token = environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
                 if session_token:
-                    self._auth_method = "Environment Variable for Personal App Token"
+                    self._auth_method = "Environment Variable for Personal Access Token"
 
                 if not session_token:
                     # OAUTH
@@ -289,7 +290,7 @@ class GithubProvider(Provider):
 
     def setup_identity(
         self,
-    ) -> GithubIdentityInfo | GithubAppIdentityInfo:
+    ) -> Union[GithubIdentityInfo, GithubAppIdentityInfo]:
         """
         Returns the GitHub identity information
 

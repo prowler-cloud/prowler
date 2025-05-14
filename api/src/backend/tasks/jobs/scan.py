@@ -1,3 +1,4 @@
+import json
 import time
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -6,6 +7,7 @@ from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Sum, When
+from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -17,6 +19,7 @@ from api.models import (
     Finding,
     Provider,
     Resource,
+    ResourceScanSummary,
     ResourceTag,
     Scan,
     ScanSummary,
@@ -116,10 +119,10 @@ def perform_prowler_scan(
         ValueError: If the provider cannot be connected.
 
     """
-    generate_compliance = False
     check_status_by_region = {}
     exception = None
     unique_resources = set()
+    scan_resource_cache: set[tuple[str, str, str, str]] = set()
     start_time = time.time()
 
     with rls_transaction(tenant_id):
@@ -145,7 +148,6 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        generate_compliance = provider_instance.provider != Provider.ProviderChoices.GCP
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
         resource_cache = {}
@@ -154,6 +156,9 @@ def perform_prowler_scan(
 
         for progress, findings in prowler_scan.scan():
             for finding in findings:
+                if finding is None:
+                    logger.error(f"None finding detected on scan {scan_id}.")
+                    continue
                 for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
                     try:
                         with rls_transaction(tenant_id):
@@ -178,7 +183,10 @@ def perform_prowler_scan(
 
                         # Update resource fields if necessary
                         updated_fields = []
-                        if resource_instance.region != finding.region:
+                        if (
+                            finding.region
+                            and resource_instance.region != finding.region
+                        ):
                             resource_instance.region = finding.region
                             updated_fields.append("region")
                         if resource_instance.service != finding.service_name:
@@ -187,6 +195,17 @@ def perform_prowler_scan(
                         if resource_instance.type != finding.resource_type:
                             resource_instance.type = finding.resource_type
                             updated_fields.append("type")
+                        if resource_instance.metadata != finding.resource_metadata:
+                            resource_instance.metadata = json.dumps(
+                                finding.resource_metadata, cls=CustomEncoder
+                            )
+                            updated_fields.append("metadata")
+                        if resource_instance.details != finding.resource_details:
+                            resource_instance.details = finding.resource_details
+                            updated_fields.append("details")
+                        if resource_instance.partition != finding.partition:
+                            resource_instance.partition = finding.partition
+                            updated_fields.append("partition")
                         if updated_fields:
                             with rls_transaction(tenant_id):
                                 resource_instance.save(update_fields=updated_fields)
@@ -221,24 +240,33 @@ def perform_prowler_scan(
                 # Process finding
                 with rls_transaction(tenant_id):
                     finding_uid = finding.uid
+                    last_first_seen_at = None
                     if finding_uid not in last_status_cache:
                         most_recent_finding = (
-                            Finding.objects.filter(uid=finding_uid)
-                            .order_by("-id")
-                            .values("status")
+                            Finding.all_objects.filter(
+                                tenant_id=tenant_id, uid=finding_uid
+                            )
+                            .order_by("-inserted_at")
+                            .values("status", "first_seen_at")
                             .first()
                         )
-                        last_status = (
-                            most_recent_finding["status"]
-                            if most_recent_finding
-                            else None
-                        )
-                        last_status_cache[finding_uid] = last_status
+                        last_status = None
+                        if most_recent_finding:
+                            last_status = most_recent_finding["status"]
+                            last_first_seen_at = most_recent_finding["first_seen_at"]
+                        last_status_cache[finding_uid] = last_status, last_first_seen_at
                     else:
-                        last_status = last_status_cache[finding_uid]
+                        last_status, last_first_seen_at = last_status_cache[finding_uid]
 
                     status = FindingStatus[finding.status]
                     delta = _create_finding_delta(last_status, status)
+                    # For the findings prior to the change, when a first finding is found with delta!="new" it will be
+                    # assigned a current date as first_seen_at and the successive findings with the same UID will
+                    # always get the date of the previous finding.
+                    # For new findings, when a finding (delta="new") is found for the first time, the first_seen_at
+                    # attribute will be assigned the current date, the following findings will get that date.
+                    if not last_first_seen_at:
+                        last_first_seen_at = datetime.now(tz=timezone.utc)
 
                     # Create the finding
                     finding_instance = Finding.objects.create(
@@ -253,11 +281,14 @@ def perform_prowler_scan(
                         raw_result=finding.raw,
                         check_id=finding.check_id,
                         scan=scan_instance,
+                        first_seen_at=last_first_seen_at,
+                        muted=finding.muted,
+                        compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
 
                 # Update compliance data if applicable
-                if not generate_compliance or finding.status.value == "MUTED":
+                if finding.status.value == "MUTED":
                     continue
 
                 region_dict = check_status_by_region.setdefault(finding.region, {})
@@ -265,6 +296,16 @@ def perform_prowler_scan(
                 if current_status == "FAIL":
                     continue
                 region_dict[finding.check_id] = finding.status.value
+
+                # Update scan resource summaries
+                scan_resource_cache.add(
+                    (
+                        str(resource_instance.id),
+                        resource_instance.service,
+                        resource_instance.region,
+                        resource_instance.type,
+                    )
+                )
 
             # Update scan progress
             with rls_transaction(tenant_id):
@@ -285,56 +326,89 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None and generate_compliance:
-        try:
-            regions = prowler_provider.get_regions()
-        except AttributeError:
-            regions = set()
-
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
-        compliance_overview_by_region = {
-            region: deepcopy(compliance_template) for region in regions
-        }
-
-        for region, check_status in check_status_by_region.items():
-            compliance_data = compliance_overview_by_region.setdefault(
-                region, deepcopy(compliance_template)
-            )
-            for check_name, status in check_status.items():
-                generate_scan_compliance(
-                    compliance_data,
-                    provider_instance.provider,
-                    check_name,
-                    status,
-                )
-
-        # Prepare compliance overview objects
-        compliance_overview_objects = []
-        for region, compliance_data in compliance_overview_by_region.items():
-            for compliance_id, compliance in compliance_data.items():
-                compliance_overview_objects.append(
-                    ComplianceOverview(
-                        tenant_id=tenant_id,
-                        scan=scan_instance,
-                        region=region,
-                        compliance_id=compliance_id,
-                        framework=compliance["framework"],
-                        version=compliance["version"],
-                        description=compliance["description"],
-                        requirements=compliance["requirements"],
-                        requirements_passed=compliance["requirements_status"]["passed"],
-                        requirements_failed=compliance["requirements_status"]["failed"],
-                        requirements_manual=compliance["requirements_status"]["manual"],
-                        total_requirements=compliance["total_requirements"],
-                    )
-                )
-        with rls_transaction(tenant_id):
-            ComplianceOverview.objects.bulk_create(compliance_overview_objects)
-
     if exception is not None:
         raise exception
+
+    try:
+        regions = prowler_provider.get_regions()
+    except AttributeError:
+        regions = set()
+
+    compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+        provider_instance.provider
+    ]
+    compliance_overview_by_region = {
+        region: deepcopy(compliance_template) for region in regions
+    }
+
+    for region, check_status in check_status_by_region.items():
+        compliance_data = compliance_overview_by_region.setdefault(
+            region, deepcopy(compliance_template)
+        )
+        for check_name, status in check_status.items():
+            generate_scan_compliance(
+                compliance_data,
+                provider_instance.provider,
+                check_name,
+                status,
+            )
+
+    # Prepare compliance overview objects
+    compliance_overview_objects = []
+    for region, compliance_data in compliance_overview_by_region.items():
+        for compliance_id, compliance in compliance_data.items():
+            compliance_overview_objects.append(
+                ComplianceOverview(
+                    tenant_id=tenant_id,
+                    scan=scan_instance,
+                    region=region,
+                    compliance_id=compliance_id,
+                    framework=compliance["framework"],
+                    version=compliance["version"],
+                    description=compliance["description"],
+                    requirements=compliance["requirements"],
+                    requirements_passed=compliance["requirements_status"]["passed"],
+                    requirements_failed=compliance["requirements_status"]["failed"],
+                    requirements_manual=compliance["requirements_status"]["manual"],
+                    total_requirements=compliance["total_requirements"],
+                )
+            )
+    try:
+        with rls_transaction(tenant_id):
+            ComplianceOverview.objects.bulk_create(
+                compliance_overview_objects, batch_size=500
+            )
+    except Exception as overview_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(overview_exception)
+        logger.error(
+            f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
+        )
+
+    try:
+        resource_scan_summaries = [
+            ResourceScanSummary(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                resource_id=resource_id,
+                service=service,
+                region=region,
+                resource_type=resource_type,
+            )
+            for resource_id, service, region, resource_type in scan_resource_cache
+        ]
+        with rls_transaction(tenant_id):
+            ResourceScanSummary.objects.bulk_create(
+                resource_scan_summaries, batch_size=500, ignore_conflicts=True
+            )
+    except Exception as filter_exception:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(filter_exception)
+        logger.error(
+            f"Error storing filter values for scan {scan_id}: {filter_exception}"
+        )
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data
@@ -369,7 +443,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_changed: Muted findings with a delta of 'changed'.
     """
     with rls_transaction(tenant_id):
-        findings = Finding.objects.filter(scan_id=scan_id)
+        findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
         aggregation = findings.values(
             "check_id",
@@ -379,21 +453,21 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         ).annotate(
             fail=Sum(
                 Case(
-                    When(status="FAIL", then=1),
+                    When(status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             _pass=Sum(
                 Case(
-                    When(status="PASS", then=1),
+                    When(status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
-            muted=Sum(
+            muted_count=Sum(
                 Case(
-                    When(status="MUTED", then=1),
+                    When(muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -401,63 +475,63 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             total=Count("id"),
             new=Sum(
                 Case(
-                    When(delta="new", then=1),
+                    When(delta="new", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             changed=Sum(
                 Case(
-                    When(delta="changed", then=1),
+                    When(delta="changed", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             unchanged=Sum(
                 Case(
-                    When(delta__isnull=True, then=1),
+                    When(delta__isnull=True, muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_new=Sum(
                 Case(
-                    When(delta="new", status="FAIL", then=1),
+                    When(delta="new", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             fail_changed=Sum(
                 Case(
-                    When(delta="changed", status="FAIL", then=1),
+                    When(delta="changed", status="FAIL", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_new=Sum(
                 Case(
-                    When(delta="new", status="PASS", then=1),
+                    When(delta="new", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             pass_changed=Sum(
                 Case(
-                    When(delta="changed", status="PASS", then=1),
+                    When(delta="changed", status="PASS", muted=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_new=Sum(
                 Case(
-                    When(delta="new", status="MUTED", then=1),
+                    When(delta="new", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
             ),
             muted_changed=Sum(
                 Case(
-                    When(delta="changed", status="MUTED", then=1),
+                    When(delta="changed", muted=True, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -475,7 +549,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 region=agg["resources__region"],
                 fail=agg["fail"],
                 _pass=agg["_pass"],
-                muted=agg["muted"],
+                muted=agg["muted_count"],
                 total=agg["total"],
                 new=agg["new"],
                 changed=agg["changed"],

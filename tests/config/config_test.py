@@ -296,6 +296,7 @@ config_aws = {
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
         "RSA-1024",
+        "P-192",
     ],
     "eks_required_log_types": [
         "api",
@@ -306,6 +307,7 @@ config_aws = {
     ],
     "eks_cluster_oldest_version_supported": "1.28",
     "excluded_sensitive_environment_variables": [],
+    "minimum_snapshot_retention_period": 7,
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
     "secrets_ignore_patterns": [],
@@ -321,7 +323,7 @@ config_azure = {
     "recommended_minimal_tls_versions": ["1.2", "1.3"],
 }
 
-config_gcp = {"shodan_api_key": None}
+config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}
 
 config_kubernetes = {
     "audit_log_maxbackup": 10,

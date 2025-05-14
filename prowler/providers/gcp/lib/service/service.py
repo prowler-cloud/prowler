@@ -2,7 +2,6 @@ import threading
 
 import google_auth_httplib2
 import httplib2
-from colorama import Fore, Style
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.discovery import Resource
@@ -30,6 +29,7 @@ class GCPService:
         )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
+        self.projects = provider.projects
         self.default_project_id = provider.default_project_id
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
@@ -65,8 +65,8 @@ class GCPService:
                 if response.get("state") != "DISABLED":
                     project_ids.append(project_id)
                 else:
-                    print(
-                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
+                    logger.error(
+                        f"{self.service} API has not been used in project {project_id} before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
                 logger.error(

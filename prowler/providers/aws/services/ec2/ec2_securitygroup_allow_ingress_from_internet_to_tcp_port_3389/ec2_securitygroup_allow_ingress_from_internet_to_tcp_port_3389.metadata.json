@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#cli-command",
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <GROUP_ID> --protocol tcp --port 3389 --cidr",
       "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_2",
       "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#terraform"
     },
     "Recommendation": {

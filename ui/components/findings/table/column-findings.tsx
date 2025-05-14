@@ -12,7 +12,10 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
+
+import { Muted } from "../muted";
+import { DeltaIndicator } from "./delta-indicator";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -42,40 +45,46 @@ const getProviderData = (
   );
 };
 
-// const getScanData = (
-//   row: { original: FindingProps },
-//   field: keyof FindingProps["relationships"]["scan"]["attributes"],
-// ) => {
-//   return (
-//     row.original.relationships?.scan?.attributes?.[field] ||
-//     `No ${field} found in scan`
-//   );
-// };
+const FindingDetailsCell = ({ row }: { row: any }) => {
+  const searchParams = useSearchParams();
+  const findingId = searchParams.get("id");
+  const isOpen = findingId === row.original.id;
+
+  const handleOpenChange = (open: boolean) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (open) {
+      params.set("id", row.original.id);
+    } else {
+      params.delete("id");
+    }
+
+    window.history.pushState({}, "", `?${params.toString()}`);
+  };
+
+  return (
+    <div className="flex justify-center">
+      <TriggerSheet
+        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        title="Finding Details"
+        description="View the finding details"
+        defaultOpen={isOpen}
+        onOpenChange={handleOpenChange}
+      >
+        <DataTableRowDetails
+          entityId={row.original.id}
+          findingDetails={row.original}
+        />
+      </TriggerSheet>
+    </div>
+  );
+};
 
 export const ColumnFindings: ColumnDef<FindingProps>[] = [
   {
     id: "moreInfo",
     header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const findingId = searchParams.get("id");
-      const isOpen = findingId === row.original.id;
-      return (
-        <div className="flex justify-center">
-          <TriggerSheet
-            triggerComponent={<InfoIcon className="text-primary" size={16} />}
-            title="Finding Details"
-            description="View the finding details"
-            defaultOpen={isOpen}
-          >
-            <DataTableRowDetails
-              entityId={row.original.id}
-              findingDetails={row.original}
-            />
-          </TriggerSheet>
-        </div>
-      );
-    },
+    cell: ({ row }) => <FindingDetailsCell row={row} />,
   },
   {
     accessorKey: "check",
@@ -88,10 +97,25 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
+      const {
+        attributes: { muted },
+      } = getFindingsData(row);
+      const { delta } = row.original.attributes;
+
       return (
-        <p className="max-w-[450px] whitespace-normal break-words text-small">
-          {checktitle}
-        </p>
+        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+          <div className="flex flex-row items-center gap-4">
+            {(delta === "new" || delta === "changed") && (
+              <DeltaIndicator delta={delta} />
+            )}
+            <p className="mr-7 whitespace-normal break-words text-sm">
+              {checktitle}
+            </p>
+          </div>
+          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+            <Muted isMuted={muted} />
+          </span>
+        </div>
       );
     },
   },
@@ -121,7 +145,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         attributes: { status },
       } = getFindingsData(row);
 
-      return <StatusFindingBadge size="sm" status={status} />;
+      return <StatusFindingBadge status={status} />;
     },
   },
   {
@@ -166,7 +190,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const region = getResourceData(row, "region");
 
       return (
-        <div className="w-[80px]">
+        <div className="w-[80px] text-xs">
           {typeof region === "string" ? region : "Invalid region"}
         </div>
       );
@@ -177,7 +201,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     header: "Service",
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-small">{servicename}</p>;
+      return <p className="max-w-96 truncate text-xs">{servicename}</p>;
     },
   },
   {
@@ -191,7 +215,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return (
         <>
           <EntityInfoShort
-            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+            cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
           />

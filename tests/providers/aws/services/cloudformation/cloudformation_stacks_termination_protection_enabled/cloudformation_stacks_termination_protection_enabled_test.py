@@ -10,9 +10,15 @@ class Test_cloudformation_stacks_termination_protection_enabled:
     def test_no_stacks(self):
         cloudformation_client = mock.MagicMock
         cloudformation_client.stacks = []
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            new=cloudformation_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                new=cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
@@ -37,9 +43,15 @@ class Test_cloudformation_stacks_termination_protection_enabled:
         ]
         cloudformation_client.stacks[0].enable_termination_protection = True
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
                 cloudformation_stacks_termination_protection_enabled,
@@ -52,7 +64,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFormation {stack_name} has termination protection enabled."
+                == f"CloudFormation Stack {stack_name} has termination protection enabled."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (
@@ -75,9 +87,15 @@ class Test_cloudformation_stacks_termination_protection_enabled:
         ]
         cloudformation_client.stacks[0].enable_termination_protection = False
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
                 cloudformation_stacks_termination_protection_enabled,
@@ -90,7 +108,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFormation {stack_name} has termination protection disabled."
+                == f"CloudFormation Stack {stack_name} has termination protection disabled."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (

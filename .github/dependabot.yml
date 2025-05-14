@@ -9,96 +9,112 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 25
     target-branch: master
     labels:
       - "dependencies"
       - "pip"
 
+  # Dependabot Updates are temporary disabled - 2025/03/19
+  # - package-ecosystem: "pip"
+  #   directory: "/api"
+  #   schedule:
+  #     interval: "daily"
+  #   open-pull-requests-limit: 10
+  #   target-branch: master
+  #   labels:
+  #     - "dependencies"
+  #     - "pip"
+  #     - "component/api"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 25
     target-branch: master
     labels:
       - "dependencies"
       - "github_actions"
 
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    target-branch: master
-    labels:
-      - "dependencies"
-      - "npm"
+  # Dependabot Updates are temporary disabled - 2025/03/19
+  # - package-ecosystem: "npm"
+  #   directory: "/ui"
+  #   schedule:
+  #     interval: "daily"
+  #   open-pull-requests-limit: 10
+  #   target-branch: master
+  #   labels:
+  #     - "dependencies"
+  #     - "npm"
+  #     - "component/ui"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 25
     target-branch: master
     labels:
       - "dependencies"
       - "docker"
 
+  # Dependabot Updates are temporary disabled - 2025/04/15
   # v4.6
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    target-branch: v4.6
-    labels:
-      - "dependencies"
-      - "pip"
-      - "v4"
+  # - package-ecosystem: "pip"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 10
+  #   target-branch: v4.6
+  #   labels:
+  #     - "dependencies"
+  #     - "pip"
+  #     - "v4"
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    target-branch: v4.6
-    labels:
-      - "dependencies"
-      - "github_actions"
-      - "v4"
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 10
+  #   target-branch: v4.6
+  #   labels:
+  #     - "dependencies"
+  #     - "github_actions"
+  #     - "v4"
 
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    target-branch: v4.6
-    labels:
-      - "dependencies"
-      - "docker"
-      - "v4"
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 10
+  #   target-branch: v4.6
+  #   labels:
+  #     - "dependencies"
+  #     - "docker"
+  #     - "v4"
 
+  # Dependabot Updates are temporary disabled - 2025/03/19
   # v3
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-    target-branch: v3
-    labels:
-      - "dependencies"
-      - "pip"
-      - "v3"
+  # - package-ecosystem: "pip"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 10
+  #   target-branch: v3
+  #   labels:
+  #     - "dependencies"
+  #     - "pip"
+  #     - "v3"
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-    target-branch: v3
-    labels:
-      - "dependencies"
-      - "github_actions"
-      - "v3"
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 10
+  #   target-branch: v3
+  #   labels:
+  #     - "dependencies"
+  #     - "github_actions"
+  #     - "v3"

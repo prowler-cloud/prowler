@@ -3,9 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { getProvider } from "@/actions/providers";
 import { getScan } from "@/actions/scans";
 import { getTask } from "@/actions/task";
-import { ScanDetail, SkeletonTableScans } from "@/components/scans/table";
+import { ScanDetail } from "@/components/scans/table";
+import { Alert } from "@/components/ui/alert/Alert";
 import { checkTaskStatus } from "@/lib";
 import { ScanProps } from "@/types";
 
@@ -35,6 +37,15 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
         const result = await getScan(entityId);
 
         const taskId = result.data.relationships.task?.data?.id;
+        const providerId = result.data.relationships.provider?.data?.id;
+
+        let providerDetails = null;
+        if (providerId) {
+          const formData = new FormData();
+          formData.append("id", providerId);
+          const providerResult = await getProvider(formData);
+          providerDetails = providerResult.data;
+        }
 
         if (taskId) {
           const taskResult = await checkTaskStatus(taskId);
@@ -44,12 +55,17 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
             setScanDetails({
               ...result.data,
               taskDetails: task.data,
+              providerDetails: providerDetails,
             });
           }
         } else {
-          setScanDetails(result.data);
+          setScanDetails({
+            ...result.data,
+            providerDetails: providerDetails,
+          });
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Error in fetchScanDetails:", error);
       } finally {
         setIsLoading(false);
@@ -60,7 +76,12 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
   }, [entityId]);
 
   if (isLoading) {
-    return <SkeletonTableScans />;
+    return (
+      <Alert className="text-center text-small font-bold text-gray-500">
+        Scan details are loading and will be available once the scan is
+        completed.
+      </Alert>
+    );
   }
 
   if (!scanDetails) {

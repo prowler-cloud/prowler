@@ -9,18 +9,14 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = distribution.region
-            report.resource_arn = distribution.arn
-            report.resource_id = distribution.id
-            report.resource_tags = distribution.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=distribution)
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} does not have non-existent S3 buckets as origins."
             non_existent_buckets = []
 
             for origin in distribution.origins:
                 if origin.s3_origin_config:
-                    bucket_name = origin.domain_name.split(".")[0]
+                    bucket_name = origin.domain_name.split(".s3")[0]
                     if not s3_client._head_bucket(bucket_name):
                         non_existent_buckets.append(bucket_name)
 

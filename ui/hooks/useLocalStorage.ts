@@ -21,6 +21,7 @@ export const useLocalStorage = (
         setState(JSON.parse(value));
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(error);
     }
   }, [key]);
@@ -38,6 +39,7 @@ export const useLocalStorage = (
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
       setState(valueToStore);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(error);
     }
   };

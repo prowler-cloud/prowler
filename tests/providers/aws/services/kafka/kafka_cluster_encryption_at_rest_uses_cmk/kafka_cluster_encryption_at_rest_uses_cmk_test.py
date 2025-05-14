@@ -12,12 +12,15 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
         kafka_client = MagicMock
         kafka_client.clusters = {}
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
                 kafka_cluster_encryption_at_rest_uses_cmk,
@@ -34,6 +37,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5": Cluster(
                 id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
                 name="demo-cluster-1",
+                arn="arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
                 region=AWS_REGION_US_EAST_1,
                 tags=[],
                 state="ACTIVE",
@@ -58,15 +62,19 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             )
         ]
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
-            new=kms_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
                 kafka_cluster_encryption_at_rest_uses_cmk,
@@ -95,6 +103,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5": Cluster(
                 id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
                 name="demo-cluster-1",
+                arn="arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
                 region=AWS_REGION_US_EAST_1,
                 tags=[],
                 state="ACTIVE",
@@ -119,15 +128,19 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             )
         ]
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
-            new=kms_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
                 kafka_cluster_encryption_at_rest_uses_cmk,

@@ -74,6 +74,9 @@ gcp_provider_logo = html.Img(
 ks8_provider_logo = html.Img(
     src="assets/images/providers/k8s_provider.png", alt="k8s provider"
 )
+m365_provider_logo = html.Img(
+    src="assets/images/providers/m365_provider.png", alt="m365 provider"
+)
 
 
 def load_csv_files(csv_files):
@@ -165,9 +168,21 @@ else:
         )
 
     # For the timestamp, remove the two columns and keep only the date
-
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
-    data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Handle findings from v3 outputs
+    if "FINDING_UNIQUE_ID" in data.columns:
+        data.rename(columns={"FINDING_UNIQUE_ID": "FINDING_UID"}, inplace=True)
+    if "ACCOUNT_ID" in data.columns:
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
+    if "ASSESSMENT_START_TIME" in data.columns:
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+    if "RESOURCE_ID" in data.columns:
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
+
+    # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
+    data = data.sort_values("TIMESTAMP").drop_duplicates("FINDING_UID", keep="last")
+
+    data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
     data_valid = pd.DataFrame()
     for account in data["ACCOUNT_UID"].unique():
         all_times = data[data["ACCOUNT_UID"] == account]["ASSESSMENT_TIME"].unique()
@@ -211,6 +226,8 @@ else:
                 accounts.append(account + " - AZURE")
             if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
                 accounts.append(account + " - GCP")
+            if "m365" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                accounts.append(account + " - M365")
 
     if "ACCOUNT_UID" in data.columns:
         for account in data["ACCOUNT_UID"].unique():
@@ -261,6 +278,8 @@ else:
             services.append(service + " - AZURE")
         if "gcp" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
             services.append(service + " - GCP")
+        if "m365" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - M365")
 
     services = ["All"] + services
     services = [
@@ -473,6 +492,7 @@ else:
         Output("azure_card", "children"),
         Output("gcp_card", "children"),
         Output("k8s_card", "children"),
+        Output("m365_card", "children"),
         Output("subscribe_card", "children"),
         Output("info-file-over", "title"),
         Output("severity-filter", "value"),
@@ -487,6 +507,7 @@ else:
         Output("azure_card", "n_clicks"),
         Output("gcp_card", "n_clicks"),
         Output("k8s_card", "n_clicks"),
+        Output("m365_card", "n_clicks"),
     ],
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
@@ -501,6 +522,7 @@ else:
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
     Input("k8s_card", "n_clicks"),
+    Input("m365_card", "n_clicks"),
     Input("sort_button_check_name", "n_clicks"),
     Input("sort_button_severity", "n_clicks"),
     Input("sort_button_status", "n_clicks"),
@@ -522,6 +544,7 @@ def filter_data(
     azure_clicks,
     gcp_clicks,
     k8s_clicks,
+    m365_clicks,
     sort_button_check_name,
     sort_button_severity,
     sort_button_status,
@@ -542,6 +565,7 @@ def filter_data(
             azure_clicks = 0
             gcp_clicks = 0
             k8s_clicks = 0
+            m365_clicks = 0
     if azure_clicks > 0:
         filtered_data = data.copy()
         if azure_clicks % 2 != 0 and "azure" in list(data["PROVIDER"]):
@@ -549,6 +573,7 @@ def filter_data(
             aws_clicks = 0
             gcp_clicks = 0
             k8s_clicks = 0
+            m365_clicks = 0
     if gcp_clicks > 0:
         filtered_data = data.copy()
         if gcp_clicks % 2 != 0 and "gcp" in list(data["PROVIDER"]):
@@ -556,6 +581,7 @@ def filter_data(
             aws_clicks = 0
             azure_clicks = 0
             k8s_clicks = 0
+            m365_clicks = 0
     if k8s_clicks > 0:
         filtered_data = data.copy()
         if k8s_clicks % 2 != 0 and "kubernetes" in list(data["PROVIDER"]):
@@ -563,6 +589,15 @@ def filter_data(
             aws_clicks = 0
             azure_clicks = 0
             gcp_clicks = 0
+            m365_clicks = 0
+    if m365_clicks > 0:
+        filtered_data = data.copy()
+        if m365_clicks % 2 != 0 and "m365" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "m365"]
+            aws_clicks = 0
+            azure_clicks = 0
+            gcp_clicks = 0
+            k8s_clicks = 0
 
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
@@ -663,6 +698,8 @@ def filter_data(
                 all_account_names.append(account)
             if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
                 all_account_names.append(account)
+            if "m365" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                all_account_names.append(account)
 
     all_items = all_account_ids + all_account_names + ["All"]
 
@@ -680,6 +717,8 @@ def filter_data(
                     cloud_accounts_options.append(item + " - AZURE")
                 if "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - GCP")
+                if "m365" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - M365")
 
     # Filter ACCOUNT
     if cloud_account_values == ["All"]:
@@ -778,6 +817,7 @@ def filter_data(
     service_filter_options = ["All"]
 
     all_items = filtered_data["SERVICE_NAME"].unique()
+
     for item in all_items:
         if item not in service_filter_options and item.__class__.__name__ == "str":
             if "aws" in list(
@@ -796,6 +836,10 @@ def filter_data(
                 filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
             ):
                 service_filter_options.append(item + " - GCP")
+            if "m365" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - M365")
 
     # Filter Service
     if service_values == ["All"]:
@@ -1223,6 +1267,10 @@ def filter_data(
                     filtered_data.loc[
                         filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
                     ] = (account + " - GCP")
+                if "m365" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - M365")
 
         table_collapsible = []
         for item in filtered_data.to_dict("records"):
@@ -1290,6 +1338,9 @@ def filter_data(
     k8s_card = create_provider_card(
         "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
     )
+    m365_card = create_provider_card(
+        "m365", m365_provider_logo, "Accounts", full_filtered_data
+    )
 
     # Subscribe to prowler SaaS card
     subscribe_card = [
@@ -1334,6 +1385,7 @@ def filter_data(
             azure_card,
             gcp_card,
             k8s_card,
+            m365_card,
             subscribe_card,
             list_files,
             severity_values,
@@ -1348,6 +1400,7 @@ def filter_data(
             azure_clicks,
             gcp_clicks,
             k8s_clicks,
+            m365_clicks,
         )
     else:
         return (
@@ -1365,6 +1418,7 @@ def filter_data(
             azure_card,
             gcp_card,
             k8s_card,
+            m365_card,
             subscribe_card,
             list_files,
             severity_values,
@@ -1379,6 +1433,7 @@ def filter_data(
             azure_clicks,
             gcp_clicks,
             k8s_clicks,
+            m365_clicks,
         )
 
 
@@ -1720,7 +1775,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Recomendation: ",
+                                                                "Recommendation: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1744,7 +1799,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "RecomendationUrl: ",
+                                                                "RecommendationUrl: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },

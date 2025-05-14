@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################### EFS
 class EFS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -165,7 +164,7 @@ class FileSystem(BaseModel):
     id: str
     arn: str
     region: str
-    policy: Optional[dict] = {}
+    policy: Optional[dict]
     backup_policy: Optional[str] = "DISABLED"
     encrypted: bool
     availability_zone_id: Optional[str]

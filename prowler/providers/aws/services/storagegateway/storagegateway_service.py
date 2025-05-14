@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ StorageGateway
 class StorageGateway(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -52,7 +51,10 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe NFS FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.fs_type == "NFS":
+                if (
+                    fileshare.region == regional_client.region
+                    and fileshare.fs_type == "NFS"
+                ):
                     response = regional_client.describe_nfs_file_shares(
                         FileShareARNList=[fileshare.arn]
                     )
@@ -71,7 +73,10 @@ class StorageGateway(AWSService):
         logger.info("StorageGateway - Describe SMB FileShares...")
         try:
             for fileshare in self.fileshares:
-                if fileshare.fs_type == "SMB":
+                if (
+                    fileshare.region == regional_client.region
+                    and fileshare.fs_type == "SMB"
+                ):
                     response = regional_client.describe_smb_file_shares(
                         FileShareARNList=[fileshare.arn]
                     )

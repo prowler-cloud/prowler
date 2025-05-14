@@ -2,7 +2,6 @@ import ipaddress
 from typing import Any
 
 
-################## Security Groups
 def check_security_group(
     ingress_rule: Any, protocol: str, ports: list = [], any_address: bool = False
 ) -> bool:

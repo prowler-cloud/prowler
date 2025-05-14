@@ -13,11 +13,13 @@ import {
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
-// import clsx from "clsx";
+import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
+import { downloadScanZip } from "@/lib/helper";
 
 import { EditScanForm } from "../../forms";
 
@@ -30,9 +32,12 @@ const iconClasses =
 export function DataTableRowActions<ScanProps>({
   row,
 }: DataTableRowActionsProps<ScanProps>) {
+  const { toast } = useToast();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const scanId = (row.original as { id: string }).id;
   const scanName = (row.original as any).attributes?.name;
+  const scanState = (row.original as any).attributes?.state;
+
   return (
     <>
       <CustomAlertModal
@@ -63,13 +68,25 @@ export function DataTableRowActions<ScanProps>({
             color="default"
             variant="flat"
           >
+            <DropdownSection title="Download reports">
+              <DropdownItem
+                key="export"
+                description="Available only for completed scans"
+                textValue="Download .zip"
+                startContent={<DownloadIcon className={iconClasses} />}
+                onPress={() => downloadScanZip(scanId, toast)}
+                isDisabled={scanState !== "completed"}
+              >
+                Download .zip
+              </DropdownItem>
+            </DropdownSection>
             <DropdownSection title="Actions">
               <DropdownItem
                 key="edit"
                 description="Allows you to edit the scan name"
                 textValue="Edit Scan Name"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit scan name
               </DropdownItem>

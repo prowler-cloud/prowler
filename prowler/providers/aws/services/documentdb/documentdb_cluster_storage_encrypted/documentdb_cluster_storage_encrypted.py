@@ -8,11 +8,7 @@ class documentdb_cluster_storage_encrypted(Check):
     def execute(self):
         findings = []
         for db_cluster in documentdb_client.db_clusters.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_cluster.region
-            report.resource_id = db_cluster.id
-            report.resource_arn = db_cluster.arn
-            report.resource_tags = db_cluster.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
             if db_cluster.encrypted:
                 report.status = "PASS"
                 report.status_extended = (

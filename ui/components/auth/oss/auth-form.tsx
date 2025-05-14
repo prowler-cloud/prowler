@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@nextui-org/react";
+import { Icon } from "@iconify/react";
+import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,17 +12,30 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
   type,
   invitationToken,
   isCloudEnv,
+  googleAuthUrl,
+  githubAuthUrl,
+  isGoogleOAuthEnabled,
+  isGithubOAuthEnabled,
 }: {
   type: string;
   invitationToken?: string | null;
   isCloudEnv?: boolean;
+  googleAuthUrl?: string;
+  githubAuthUrl?: string;
+  isGoogleOAuthEnabled?: boolean;
+  isGithubOAuthEnabled?: boolean;
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
@@ -143,7 +157,7 @@ export const AuthForm = ({
 
           <Form {...form}>
             <form
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               {type === "sign-up" && (
@@ -160,13 +174,14 @@ export const AuthForm = ({
                     control={form.control}
                     name="company"
                     type="text"
-                    label="Company Name"
+                    label="Company name"
                     placeholder="Enter your company name"
                     isRequired={false}
                     isInvalid={!!form.formState.errors.company}
                   />
                 </>
               )}
+
               <CustomInput
                 control={form.control}
                 name="email"
@@ -174,13 +189,17 @@ export const AuthForm = ({
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
+                showFormMessage={type !== "sign-in"}
               />
 
               <CustomInput
                 control={form.control}
                 name="password"
                 password
-                isInvalid={!!form.formState.errors.password}
+                isInvalid={
+                  !!form.formState.errors.password ||
+                  !!form.formState.errors.email
+                }
               />
 
               {/* {type === "sign-in" && (
@@ -210,15 +229,47 @@ export const AuthForm = ({
                       defaultValue={invitationToken}
                       isRequired={false}
                       isInvalid={!!form.formState.errors.invitationToken}
+                      isDisabled={invitationToken !== null && true}
+                    />
+                  )}
+
+                  {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+                    <FormField
+                      control={form.control}
+                      name="termsAndConditions"
+                      render={({ field }) => (
+                        <>
+                          <FormControl>
+                            <Checkbox
+                              isRequired
+                              className="py-4"
+                              size="sm"
+                              checked={field.value}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                            >
+                              I agree with the&nbsp;
+                              <Link
+                                href="https://prowler.com/terms-of-service/"
+                                size="sm"
+                                target="_blank"
+                              >
+                                Terms of Service
+                              </Link>
+                              &nbsp;of Prowler
+                            </Checkbox>
+                          </FormControl>
+                          <FormMessage className="text-system-error dark:text-system-error" />
+                        </>
+                      )}
                     />
                   )}
                 </>
               )}
 
-              {form.formState.errors?.email && (
-                <div className="flex flex-row items-center gap-2 text-system-error">
+              {type === "sign-in" && form.formState.errors?.email && (
+                <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
-                  <p className="text-s">No user found</p>
+                  <p className="text-small">Invalid email or password</p>
                 </div>
               )}
 
@@ -243,7 +294,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {/* {type === "sign-in" && (
+          {!invitationToken && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -251,29 +302,79 @@ export const AuthForm = ({
                 <Divider className="flex-1" />
               </div>
               <div className="flex flex-col gap-2">
-                <Button
-                  startContent={
-                    <Icon icon="flat-color-icons:google" width={24} />
+                <Tooltip
+                  content={
+                    <div className="flex-inline text-small">
+                      Social Login with Google is not enabled.{" "}
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary"
+                      >
+                        Read the docs
+                      </Link>
+                    </div>
                   }
-                  variant="bordered"
+                  placement="right-start"
+                  shadow="sm"
+                  isDisabled={isGoogleOAuthEnabled}
+                  className="w-96"
                 >
-                  Continue with Google
-                </Button>
-                <Button
-                  startContent={
-                    <Icon
-                      className="text-default-500"
-                      icon="fe:github"
-                      width={24}
-                    />
+                  <span>
+                    <Button
+                      startContent={
+                        <Icon icon="flat-color-icons:google" width={24} />
+                      }
+                      variant="bordered"
+                      className="w-full"
+                      as="a"
+                      href={googleAuthUrl}
+                      isDisabled={!isGoogleOAuthEnabled}
+                    >
+                      Continue with Google
+                    </Button>
+                  </span>
+                </Tooltip>
+                <Tooltip
+                  content={
+                    <div className="flex-inline text-small">
+                      Social Login with Github is not enabled.{" "}
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary"
+                      >
+                        Read the docs
+                      </Link>
+                    </div>
                   }
-                  variant="bordered"
+                  placement="right-start"
+                  shadow="sm"
+                  isDisabled={isGithubOAuthEnabled}
+                  className="w-96"
                 >
-                  Continue with Github
-                </Button>
+                  <span>
+                    <Button
+                      startContent={
+                        <Icon
+                          className="text-default-500"
+                          icon="fe:github"
+                          width={24}
+                        />
+                      }
+                      variant="bordered"
+                      className="w-full"
+                      as="a"
+                      href={githubAuthUrl}
+                      isDisabled={!isGithubOAuthEnabled}
+                    >
+                      Continue with Github
+                    </Button>
+                  </span>
+                </Tooltip>
               </div>
             </>
-          )} */}
+          )}
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;

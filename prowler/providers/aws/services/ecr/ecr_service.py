@@ -10,7 +10,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ ECR
 class ECR(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -88,6 +87,7 @@ class ECR(AWSService):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+                            repository.policy = {}
 
         except Exception as error:
             if "RepositoryPolicyNotFoundException" not in str(error):

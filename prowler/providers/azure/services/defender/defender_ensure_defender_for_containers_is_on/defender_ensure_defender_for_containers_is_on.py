@@ -7,11 +7,11 @@ class defender_ensure_defender_for_containers_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "Containers" in pricings:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["Containers"]
+                )
                 report.subscription = subscription
-                report.resource_id = pricings["Containers"].resource_id
-                report.resource_name = "Defender plan Container Registries"
+                report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for Containers from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["Containers"].pricing_tier != "Standard":
                     report.status = "FAIL"

@@ -5,7 +5,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## Compute
 class Compute(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
@@ -16,12 +15,12 @@ class Compute(GCPService):
         self.subnets = []
         self.addresses = []
         self.firewalls = []
-        self.projects = []
+        self.compute_projects = []
         self.load_balancers = []
-        self._get_url_maps()
-        self._describe_backend_service()
         self._get_regions()
         self._get_projects()
+        self._get_url_maps()
+        self._describe_backend_service()
         self._get_zones()
         self.__threading_call__(self._get_instances, self.zones)
         self._get_networks()
@@ -73,7 +72,7 @@ class Compute(GCPService):
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
-                self.projects.append(
+                self.compute_projects.append(
                     Project(id=project_id, enable_oslogin=enable_oslogin)
                 )
             except Exception as error:
@@ -261,6 +260,7 @@ class Compute(GCPService):
     def _get_url_maps(self):
         for project_id in self.project_ids:
             try:
+                # Global URL maps
                 request = self.client.urlMaps().list(project=project_id)
                 while request is not None:
                     response = request.execute()
@@ -281,19 +281,59 @@ class Compute(GCPService):
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            try:
+                # Regional URL maps
+                for region in self.regions:
+                    request = self.client.regionUrlMaps().list(
+                        project=project_id, region=region
+                    )
+                    while request is not None:
+                        response = request.execute()
+                        for urlmap in response.get("items", []):
+                            self.load_balancers.append(
+                                LoadBalancer(
+                                    name=urlmap["name"],
+                                    id=urlmap["id"],
+                                    service=urlmap.get("defaultService", ""),
+                                    project_id=project_id,
+                                )
+                            )
+
+                        request = self.client.regionUrlMaps().list_next(
+                            previous_request=request, previous_response=response
+                        )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _describe_backend_service(self):
         for balancer in self.load_balancers:
             if balancer.service:
                 try:
-                    response = (
-                        self.client.backendServices()
-                        .get(
-                            project=balancer.project_id,
-                            backendService=balancer.service.split("/")[-1],
+                    backend_service_name = balancer.service.split("/")[-1]
+                    is_regional = "/regions/" in balancer.service
+                    if is_regional:
+                        region = balancer.service.split("/regions/")[1].split("/")[0]
+                        response = (
+                            self.client.regionBackendServices()
+                            .get(
+                                project=balancer.project_id,
+                                region=region,
+                                backendService=backend_service_name,
+                            )
+                            .execute()
                         )
-                        .execute()
-                    )
+                    else:
+                        response = (
+                            self.client.backendServices()
+                            .get(
+                                project=balancer.project_id,
+                                backendService=backend_service_name,
+                            )
+                            .execute()
+                        )
+
                     balancer.logging = response.get("logConfig", {}).get(
                         "enable", False
                     )

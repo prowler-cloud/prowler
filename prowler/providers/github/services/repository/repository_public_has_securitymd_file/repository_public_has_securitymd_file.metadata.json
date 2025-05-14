@@ -10,7 +10,7 @@
   "ResourceType": "Other",
   "Description": "Ensure that public repositories have a SECURITY.md file",
   "Risk": "Not having a SECURITY.md file in a public repository may lead to security vulnerabilities being overlooked by users and contributors.",
-  "RelatedUrl": "https://gist.github.com/bayudwiyansatria/3aa6a865aad8d45d69cdb80090bea7c7",
+  "RelatedUrl": "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository",
   "Remediation": {
     "Code": {
       "CLI": "",

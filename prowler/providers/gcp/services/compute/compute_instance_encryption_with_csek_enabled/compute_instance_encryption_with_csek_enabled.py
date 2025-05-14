@@ -6,11 +6,7 @@ class compute_instance_encryption_with_csek_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in compute_client.instances:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = instance.project_id
-            report.resource_id = instance.id
-            report.resource_name = instance.name
-            report.location = instance.region
+            report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
             report.status = "FAIL"
             report.status_extended = f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'."
             if all([i[1] for i in instance.disks_encryption]):

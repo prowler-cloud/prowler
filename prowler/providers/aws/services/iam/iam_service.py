@@ -112,7 +112,8 @@ class IAM(AWSService):
             [policy for policy in self.policies if policy.type == "Custom"],
         )
         self.__threading_call__(self._list_tags, self.server_certificates)
-        self.__threading_call__(self._list_tags, self.saml_providers.values())
+        if self.saml_providers is not None:
+            self.__threading_call__(self._list_tags, self.saml_providers.values())
 
     def _get_client(self):
         return self.client
@@ -285,7 +286,7 @@ class IAM(AWSService):
             return stored_password_policy
 
     def _get_users(self):
-        logger.info("IAM - List Users...")
+        logger.info("IAM - Get Users...")
         try:
             get_users_paginator = self.client.get_paginator("list_users")
             users = []
@@ -394,21 +395,38 @@ class IAM(AWSService):
         logger.info("IAM - List MFA Devices...")
         try:
             for user in self.users:
-                list_mfa_devices_paginator = self.client.get_paginator(
-                    "list_mfa_devices"
-                )
-                mfa_devices = []
-                for page in list_mfa_devices_paginator.paginate(UserName=user.name):
-                    for mfa_device in page["MFADevices"]:
-                        mfa_serial_number = mfa_device["SerialNumber"]
-                        try:
-                            mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
-                        except IndexError:
-                            mfa_type = "hardware"
-                        mfa_devices.append(
-                            MFADevice(serial_number=mfa_serial_number, type=mfa_type)
+                try:
+                    list_mfa_devices_paginator = self.client.get_paginator(
+                        "list_mfa_devices"
+                    )
+                    mfa_devices = []
+                    for page in list_mfa_devices_paginator.paginate(UserName=user.name):
+                        for mfa_device in page["MFADevices"]:
+                            mfa_serial_number = mfa_device["SerialNumber"]
+                            try:
+                                mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
+                            except IndexError:
+                                mfa_type = "hardware"
+                            mfa_devices.append(
+                                MFADevice(
+                                    serial_number=mfa_serial_number, type=mfa_type
+                                )
+                            )
+                    user.mfa_devices = mfa_devices
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                user.mfa_devices = mfa_devices
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -451,7 +469,7 @@ class IAM(AWSService):
             )
 
     def _list_attached_role_policies(self):
-        logger.info("IAM - List Attached User Policies...")
+        logger.info("IAM - List Attached Role Policies...")
         try:
             if self.roles:
                 for role in self.roles:
@@ -694,7 +712,7 @@ class IAM(AWSService):
             return roles
 
     def _list_entities_for_policy(self, policy_arn):
-        logger.info("IAM - List Entities Role For Policy...")
+        logger.info("IAM - List Entities For Policy...")
         try:
             entities = {
                 "Users": [],
@@ -862,9 +880,14 @@ class IAM(AWSService):
                     SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if error.response["Error"]["Code"] == "NoSuchEntityException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _get_last_accessed_services(self):
         logger.info("IAM - Getting Last Accessed Services ...")

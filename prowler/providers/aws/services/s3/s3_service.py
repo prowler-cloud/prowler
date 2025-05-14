@@ -60,11 +60,13 @@ class S3(AWSService):
                         if provider.identity.audited_regions:
                             if bucket_region in provider.identity.audited_regions:
                                 self.buckets[arn] = Bucket(
+                                    arn=arn,
                                     name=bucket["Name"],
                                     region=bucket_region,
                                 )
                         else:
                             self.buckets[arn] = Bucket(
+                                arn=arn,
                                 name=bucket["Name"],
                                 region=bucket_region,
                             )
@@ -494,6 +496,7 @@ class S3(AWSService):
                 )
                 return False
             else:
+                # Bucket exists but we don't have access to it
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -508,9 +511,10 @@ class S3Control(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.account_public_access_block = self._get_public_access_block()
+        self.account_public_access_block = None
         self.access_points = {}
         self.multi_region_access_points = {}
+        self._get_public_access_block()
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
         if self.audited_partition == "aws":
@@ -522,7 +526,7 @@ class S3Control(AWSService):
             public_access_block = self.client.get_public_access_block(
                 AccountId=self.audited_account
             )["PublicAccessBlockConfiguration"]
-            return PublicAccessBlock(
+            self.account_public_access_block = PublicAccessBlock(
                 block_public_acls=public_access_block["BlockPublicAcls"],
                 ignore_public_acls=public_access_block["IgnorePublicAcls"],
                 block_public_policy=public_access_block["BlockPublicPolicy"],
@@ -531,15 +535,19 @@ class S3Control(AWSService):
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
-                return PublicAccessBlock(
+                self.account_public_access_block = PublicAccessBlock(
                     block_public_acls=False,
                     ignore_public_acls=False,
                     block_public_policy=False,
                     restrict_public_buckets=False,
                 )
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _list_access_points(self, regional_client):
         logger.info("S3 - Listing account access points...")
@@ -673,12 +681,13 @@ class ReplicationRule(BaseModel):
 
 
 class Bucket(BaseModel):
+    arn: str
     name: str
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
     acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
-    policy: Dict = Field(default_factory=dict)
+    policy: Optional[dict]
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]

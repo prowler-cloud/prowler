@@ -15,6 +15,7 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { checkConnectionProvider } from "@/actions/providers/providers";
@@ -33,8 +34,10 @@ const iconClasses =
 export function DataTableRowActions<ProviderProps>({
   row,
 }: DataTableRowActionsProps<ProviderProps>) {
+  const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const providerId = (row.original as { id: string }).id;
   const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
@@ -42,10 +45,14 @@ export function DataTableRowActions<ProviderProps>({
     (row.original as any).relationships?.secret?.data?.id || null;
 
   const handleTestConnection = async () => {
+    setLoading(true);
     const formData = new FormData();
     formData.append("providerId", providerId);
     await checkConnectionProvider(formData);
+    setLoading(false);
   };
+
+  const hasSecret = (row.original as any).relationships?.secret?.data;
 
   return (
     <>
@@ -79,37 +86,50 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-default-400" />
             </Button>
           </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
+          <DropdownMenu aria-label="Actions" color="default" variant="flat">
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/providers/update-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`}
-                key="update"
-                description="Update the provider credentials"
-                textValue="Update Credentials"
+                key={hasSecret ? "update" : "add"}
+                description={
+                  hasSecret
+                    ? "Update the provider credentials"
+                    : "Add the provider credentials"
+                }
+                textValue={hasSecret ? "Update Credentials" : "Add Credentials"}
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
+                onPress={() =>
+                  router.push(
+                    `/providers/${hasSecret ? "update" : "add"}-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
+                  )
+                }
+                closeOnSelect={true}
               >
-                Update Credentials
+                {hasSecret ? "Update Credentials" : "Add Credentials"}
               </DropdownItem>
               <DropdownItem
                 key="new"
-                description="Check the connection to the provider"
+                description={
+                  hasSecret && !loading
+                    ? "Check the provider connection"
+                    : loading
+                      ? "Checking provider connection"
+                      : "Add credentials to test the connection"
+                }
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
-                onClick={handleTestConnection}
+                onPress={handleTestConnection}
+                isDisabled={!hasSecret || loading}
+                closeOnSelect={false}
               >
-                Test Connection
+                {loading ? "Testing..." : "Test Connection"}
               </DropdownItem>
               <DropdownItem
                 key="edit"
                 description="Allows you to edit the provider"
                 textValue="Edit Provider"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
+                closeOnSelect={true}
               >
                 Edit Provider Alias
               </DropdownItem>
@@ -126,7 +146,8 @@ export function DataTableRowActions<ProviderProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
+                closeOnSelect={true}
               >
                 Delete Provider
               </DropdownItem>

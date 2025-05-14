@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 
 import requests
@@ -36,7 +36,15 @@ class TestOCSF:
                 muted=False,
                 region=AWS_REGION_EU_WEST_1,
                 resource_tags={"Name": "test", "Environment": "dev"},
-            )
+            ),
+            # Test with int timestamp (UNIX timestamp)
+            generate_finding_output(
+                status="FAIL",
+                severity="medium",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=1619600000,
+            ),
         ]
 
         ocsf = OCSF(findings)
@@ -54,7 +62,6 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.product_uid == "prowler"
         assert output_data.finding_info.types == ["test-type"]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
@@ -77,7 +84,8 @@ class TestOCSF:
         assert output_data.resources[0].cloud_partition == findings[0].partition
         assert output_data.resources[0].region == findings[0].region
         assert output_data.resources[0].data == {
-            "details": findings[0].resource_details
+            "details": findings[0].resource_details,
+            "metadata": {},
         }
         assert output_data.metadata.profiles == ["cloud", "datetime"]
         assert output_data.metadata.tenant_uid == "test-organization-id"
@@ -99,6 +107,14 @@ class TestOCSF:
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
+
+        # Test with int timestamp (UNIX timestamp)
+        output_data = ocsf.data[1]
+
+        assert output_data.time == 1619600000
+        assert output_data.time_dt == datetime.fromtimestamp(
+            1619600000, tz=timezone.utc
+        )
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
@@ -158,7 +174,7 @@ class TestOCSF:
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.3.0",
+                    "version": "1.4.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
@@ -182,7 +198,6 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "product_uid": "prowler",
                     "title": "test-check-id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
@@ -191,7 +206,10 @@ class TestOCSF:
                     {
                         "cloud_partition": "aws",
                         "region": "eu-west-1",
-                        "data": {"details": "resource_details"},
+                        "data": {
+                            "details": "resource_details",
+                            "metadata": {},
+                        },
                         "group": {"name": "test-service"},
                         "labels": [],
                         "name": "resource_name",
@@ -238,7 +256,7 @@ class TestOCSF:
         assert json.loads(content) == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(OCSF([]), "_file_descriptor")
+        assert not OCSF([])._file_descriptor
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
@@ -266,7 +284,6 @@ class TestOCSF:
         assert finding_information.desc == finding_output.metadata.Description
         assert finding_information.title == finding_output.metadata.CheckTitle
         assert finding_information.uid == finding_output.uid
-        assert finding_information.product_uid == "prowler"
 
         # Event time
         assert finding_ocsf.time == int(finding_output.timestamp.timestamp())
@@ -311,11 +328,17 @@ class TestOCSF:
         assert isinstance(resource_details[0], ResourceDetails)
         assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
-        assert resource_details[0].uid == finding_output.resource_uid
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            "metadata": {},  # TODO: add metadata to the resource details
+        }
         assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region
-        assert resource_details[0].data == {"details": finding_output.resource_details}
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            "metadata": {},
+        }
 
         resource_details_group = resource_details[0].group
         assert isinstance(resource_details_group, Group)

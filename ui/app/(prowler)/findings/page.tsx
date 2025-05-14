@@ -1,7 +1,8 @@
 import { Spacer } from "@nextui-org/react";
+import { format, subDays } from "date-fns";
 import React, { Suspense } from "react";
 
-import { getFindings, getServicesRegions } from "@/actions/findings";
+import { getFindings, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { filterFindings } from "@/components/filters/data-filters";
@@ -10,15 +11,11 @@ import {
   ColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import {
-  FindingProps,
-  ProviderProps,
-  ScanProps,
-  SearchParamsProps,
-} from "@/types/components";
+import { ProviderProps } from "@/types";
+import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -26,39 +23,54 @@ export default async function Findings({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
-  const defaultSort = "severity,status";
-  const sort = searchParams.sort?.toString() || defaultSort;
+  const sort = searchParams.sort?.toString();
 
   // Make sure the sort is correctly encoded
-  const encodedSort = sort.replace(/^\+/, "");
+  const encodedSort = sort?.replace(/^\+/, "");
+
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
+
+  // Check if the searchParams contain any date or scan filter
+  const hasDateOrScanFilter = Object.keys(searchParams).some(
+    (key) => key.includes("inserted_at") || key.includes("scan__in"),
+  );
+
+  // Default filters for getMetadataInfo
+  const defaultFilters: Record<string, string> = hasDateOrScanFilter
+    ? {} // Do not apply default filters if there are date or scan filters
+    : { "filter[inserted_at__gte]": twoDaysAgo };
 
   // Extract all filter parameters and combine with default filters
-  const defaultFilters = {
-    "filter[status__in]": "FAIL, PASS",
-    "filter[delta__in]": "new",
-  };
-
   const filters: Record<string, string> = {
     ...defaultFilters,
     ...Object.fromEntries(
-      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+      Object.entries(searchParams)
+        .filter(([key]) => key.startsWith("filter["))
+        .map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(",") : value?.toString() || "",
+        ]),
     ),
   };
 
   const query = filters["filter[search]"] || "";
 
-  const servicesRegionsData = await getServicesRegions({
-    query,
-    sort: encodedSort,
-    filters,
-  });
+  const [metadataInfoData, providersData, scansData] = await Promise.all([
+    getMetadataInfo({
+      query,
+      sort: encodedSort,
+      filters,
+    }),
+    getProviders({}),
+    getScans({}),
+  ]);
 
   // Extract unique regions and services from the new endpoint
-  const uniqueRegions = servicesRegionsData?.data?.attributes?.regions || [];
-  const uniqueServices = servicesRegionsData?.data?.attributes?.services || [];
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+  const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
+  const uniqueResourceTypes =
+    metadataInfoData?.data?.attributes?.resource_types || [];
   // Get findings data
-  const providersData = await getProviders({});
-  const scansData = await getScans({});
 
   // Extract provider UIDs
   const providerUIDs = Array.from(
@@ -72,7 +84,7 @@ export default async function Findings({
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
     ?.filter(
-      (scan: any) =>
+      (scan: ScanProps) =>
         scan.attributes.state === "completed" &&
         scan.attributes.unique_resource_count > 1,
     )
@@ -85,10 +97,7 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   return (
-    <>
-      <Header title="Findings" icon="carbon:data-view-alt" />
-      <Spacer />
-      <Spacer y={4} />
+    <ContentLayout title="Findings" icon="carbon:data-view-alt">
       <FilterControls search date />
       <Spacer y={8} />
       <DataTableFilterCustom
@@ -103,6 +112,11 @@ export default async function Findings({
             key: "service__in",
             labelCheckboxGroup: "Services",
             values: uniqueServices,
+          },
+          {
+            key: "resource_type__in",
+            labelCheckboxGroup: "Resource Type",
+            values: uniqueResourceTypes,
           },
           {
             key: "provider_uid__in",
@@ -121,7 +135,7 @@ export default async function Findings({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </>
+    </ContentLayout>
   );
 }
 
@@ -131,22 +145,34 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const defaultSort = "severity,status";
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
 
   // Make sure the sort is correctly encoded
   const encodedSort = sort.replace(/^\+/, "");
 
-  // Extract all filter parameters and combine with default filters
-  const defaultFilters = {
-    "filter[status__in]": "FAIL, PASS",
-    "filter[delta__in]": "new",
-  };
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
+
+  // Check if the searchParams contain any date or scan filter
+  const hasDateOrScanFilter = Object.keys(searchParams).some(
+    (key) => key.includes("inserted_at") || key.includes("scan__in"),
+  );
+
+  // Default filters for getFindings
+  const defaultFilters: Record<string, string> = hasDateOrScanFilter
+    ? {} // Do not apply default filters if there are date or scan filters
+    : { "filter[inserted_at__gte]": twoDaysAgo };
 
   const filters: Record<string, string> = {
     ...defaultFilters,
     ...Object.fromEntries(
-      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+      Object.entries(searchParams)
+        .filter(([key]) => key.startsWith("filter["))
+        .map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(",") : value?.toString() || "",
+        ]),
     ),
   };
 
@@ -157,7 +183,7 @@ const SSRDataTable = async ({
     page,
     sort: encodedSort,
     filters,
-    pageSize: 10,
+    pageSize,
   });
 
   // Create dictionaries for resources, scans, and providers
@@ -171,8 +197,7 @@ const SSRDataTable = async ({
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider =
-          providerDict[resource?.relationships?.provider?.data?.id];
+        const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
         return {
           ...finding,
@@ -188,10 +213,18 @@ const SSRDataTable = async ({
   };
 
   return (
-    <DataTable
-      columns={ColumnFindings}
-      data={expandedResponse?.data || []}
-      metadata={findingsData?.meta}
-    />
+    <>
+      {findingsData?.errors && (
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+          <p className="mr-2 font-semibold">Error:</p>
+          <p>{findingsData.errors[0].detail}</p>
+        </div>
+      )}
+      <DataTable
+        columns={ColumnFindings}
+        data={expandedResponse?.data || []}
+        metadata={findingsData?.meta}
+      />
+    </>
   );
 };

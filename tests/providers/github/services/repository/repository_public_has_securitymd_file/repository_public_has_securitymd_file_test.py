@@ -9,12 +9,15 @@ class Test_repository_public_has_securitymd_file_test:
         repository_client = mock.MagicMock
         repository_client.repositories = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file import (
                 repository_public_has_securitymd_file,
@@ -37,12 +40,15 @@ class Test_repository_public_has_securitymd_file_test:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file import (
                 repository_public_has_securitymd_file,
@@ -72,12 +78,15 @@ class Test_repository_public_has_securitymd_file_test:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
-            new=repository_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file.repository_client",
+                new=repository_client,
+            ),
         ):
             from prowler.providers.github.services.repository.repository_public_has_securitymd_file.repository_public_has_securitymd_file import (
                 repository_public_has_securitymd_file,

@@ -39,12 +39,15 @@ class Test_s3_bucket_lifecycle_enabled:
     def test_no_lifecycle_configuration(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
-            new=S3(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+                new=S3(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled import (
@@ -56,6 +59,7 @@ class Test_s3_bucket_lifecycle_enabled:
             s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                 )
@@ -84,12 +88,15 @@ class Test_s3_bucket_lifecycle_enabled:
     def test_one_valid_lifecycle_configuration(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
-            new=S3(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+                new=S3(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled import (
@@ -101,6 +108,7 @@ class Test_s3_bucket_lifecycle_enabled:
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                     lifecycle=[
@@ -132,12 +140,15 @@ class Test_s3_bucket_lifecycle_enabled:
     def test_several_lifecycle_configurations(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
-            new=S3(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled.s3_client",
+                new=S3(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_bucket_lifecycle_enabled.s3_bucket_lifecycle_enabled import (
@@ -149,6 +160,7 @@ class Test_s3_bucket_lifecycle_enabled:
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                     lifecycle=[

@@ -14,7 +14,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## Defender
 class Defender(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SecurityCenter, provider)
@@ -40,6 +39,7 @@ class Defender(AzureService):
                         {
                             pricing.name: Pricing(
                                 resource_id=pricing.id,
+                                resource_name=pricing.name,
                                 pricing_tier=getattr(pricing, "pricing_tier", None),
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
                                 extensions=dict(
@@ -161,6 +161,7 @@ class Defender(AzureService):
                     {
                         security_contact_default.name: SecurityContacts(
                             resource_id=security_contact_default.id,
+                            name=getattr(security_contact_default, "name", "default"),
                             emails=security_contact_default.emails,
                             phone=security_contact_default.phone,
                             alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
@@ -176,6 +177,7 @@ class Defender(AzureService):
                         {
                             "default": SecurityContacts(
                                 resource_id=f"/subscriptions/{self.subscriptions[subscription_name]}/providers/Microsoft.Security/securityContacts/default",
+                                name="default",
                                 emails="",
                                 phone="",
                                 alert_notifications_minimal_severity="",
@@ -207,8 +209,9 @@ class Defender(AzureService):
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_name].update(
                         {
-                            iot_security_solution.name: IoTSecuritySolution(
+                            iot_security_solution.id: IoTSecuritySolution(
                                 resource_id=iot_security_solution.id,
+                                name=iot_security_solution.name,
                                 status=iot_security_solution.status,
                             )
                         }
@@ -222,6 +225,7 @@ class Defender(AzureService):
 
 class Pricing(BaseModel):
     resource_id: str
+    resource_name: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
     extensions: Dict[str, bool] = {}
@@ -249,6 +253,7 @@ class Setting(BaseModel):
 
 class SecurityContacts(BaseModel):
     resource_id: str
+    name: str
     emails: str
     phone: str
     alert_notifications_minimal_severity: str
@@ -259,4 +264,5 @@ class SecurityContacts(BaseModel):
 
 class IoTSecuritySolution(BaseModel):
     resource_id: str
+    name: str
     status: str

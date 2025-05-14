@@ -1,5 +1,5 @@
 from celery.utils.log import get_task_logger
-from django.db import transaction
+from django.db import DatabaseError
 
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
@@ -8,11 +8,12 @@ from api.models import Finding, Provider, Resource, Scan, ScanSummary, Tenant
 logger = get_task_logger(__name__)
 
 
-def delete_provider(pk: str):
+def delete_provider(tenant_id: str, pk: str):
     """
     Gracefully deletes an instance of a provider along with its related data.
 
     Args:
+        tenant_id (str): Tenant ID the resources belong to.
         pk (str): The primary key of the Provider instance to delete.
 
     Returns:
@@ -22,33 +23,31 @@ def delete_provider(pk: str):
     Raises:
         Provider.DoesNotExist: If no instance with the provided primary key exists.
     """
-    instance = Provider.all_objects.get(pk=pk)
-    deletion_summary = {}
+    with rls_transaction(tenant_id):
+        instance = Provider.all_objects.get(pk=pk)
+        deletion_summary = {}
+        deletion_steps = [
+            ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
+            ("Findings", Finding.all_objects.filter(scan__provider=instance)),
+            ("Resources", Resource.all_objects.filter(provider=instance)),
+            ("Scans", Scan.all_objects.filter(provider=instance)),
+        ]
 
-    with transaction.atomic():
-        # Delete Scan Summaries
-        scan_summaries_qs = ScanSummary.all_objects.filter(scan__provider=instance)
-        _, scans_summ_summary = batch_delete(scan_summaries_qs)
-        deletion_summary.update(scans_summ_summary)
+    for step_name, queryset in deletion_steps:
+        try:
+            _, step_summary = batch_delete(tenant_id, queryset)
+            deletion_summary.update(step_summary)
+        except DatabaseError as db_error:
+            logger.error(f"Error deleting {step_name}: {db_error}")
+            raise
 
-        # Delete Findings
-        findings_qs = Finding.all_objects.filter(scan__provider=instance)
-        _, findings_summary = batch_delete(findings_qs)
-        deletion_summary.update(findings_summary)
-
-        # Delete Resources
-        resources_qs = Resource.all_objects.filter(provider=instance)
-        _, resources_summary = batch_delete(resources_qs)
-        deletion_summary.update(resources_summary)
-
-        # Delete Scans
-        scans_qs = Scan.all_objects.filter(provider=instance)
-        _, scans_summary = batch_delete(scans_qs)
-        deletion_summary.update(scans_summary)
-
-        provider_deleted_count, provider_summary = instance.delete()
+    try:
+        with rls_transaction(tenant_id):
+            _, provider_summary = instance.delete()
         deletion_summary.update(provider_summary)
-
+    except DatabaseError as db_error:
+        logger.error(f"Error deleting Provider: {db_error}")
+        raise
     return deletion_summary
 
 
@@ -66,9 +65,8 @@ def delete_tenant(pk: str):
     deletion_summary = {}
 
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
-        with rls_transaction(pk):
-            summary = delete_provider(provider.id)
-            deletion_summary.update(summary)
+        summary = delete_provider(pk, provider.id)
+        deletion_summary.update(summary)
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

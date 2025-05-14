@@ -102,6 +102,7 @@ class EC2(AWSService):
                                     security_groups=[
                                         sg["GroupId"]
                                         for sg in instance.get("SecurityGroups", [])
+                                        if isinstance(sg, dict) and "GroupId" in sg
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
                                     network_interfaces=enis,
@@ -137,6 +138,7 @@ class EC2(AWSService):
                             name=sg["GroupName"],
                             region=regional_client.region,
                             id=sg["GroupId"],
+                            arn=arn,
                             ingress_rules=sg["IpPermissions"],
                             egress_rules=sg["IpPermissionsEgress"],
                             associated_sgs=associated_sgs,
@@ -626,6 +628,7 @@ class EC2(AWSService):
                         self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
                             TransitGateway(
                                 id=transit_gateway["TransitGatewayId"],
+                                arn=transit_gateway["TransitGatewayArn"],
                                 auto_accept_shared_attachments=(
                                     transit_gateway["Options"][
                                         "AutoAcceptSharedAttachments"
@@ -708,6 +711,7 @@ class NetworkInterface(BaseModel):
 class SecurityGroup(BaseModel):
     name: str
     region: str
+    arn: str
     id: str
     vpc_id: str
     associated_sgs: list
@@ -788,6 +792,7 @@ class LaunchTemplate(BaseModel):
 
 class VpnEndpoint(BaseModel):
     id: str
+    arn: str
     connection_logging: bool
     region: str
     tags: Optional[list] = []
@@ -795,6 +800,7 @@ class VpnEndpoint(BaseModel):
 
 class TransitGateway(BaseModel):
     id: str
+    arn: str
     auto_accept_shared_attachments: bool
     region: str
     tags: Optional[list] = []

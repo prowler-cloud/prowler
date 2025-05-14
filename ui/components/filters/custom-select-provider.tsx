@@ -9,6 +9,7 @@ import {
   CustomProviderInputAzure,
   CustomProviderInputGCP,
   CustomProviderInputKubernetes,
+  CustomProviderInputM365,
 } from "./custom-provider-inputs";
 
 const dataInputsProvider = [
@@ -26,6 +27,11 @@ const dataInputsProvider = [
     key: "azure",
     label: "Microsoft Azure",
     value: <CustomProviderInputAzure />,
+  },
+  {
+    key: "m365",
+    label: "Microsoft 365",
+    value: <CustomProviderInputM365 />,
   },
   {
     key: "kubernetes",
@@ -66,6 +72,9 @@ export const CustomSelectProvider: React.FC = () => {
       items={dataInputsProvider}
       aria-label="Select a Provider"
       placeholder="Select a provider"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       label="Provider"
       labelPlacement="inside"
       size="sm"

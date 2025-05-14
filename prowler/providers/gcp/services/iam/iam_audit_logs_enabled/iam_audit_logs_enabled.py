@@ -7,11 +7,13 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 class iam_audit_logs_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        for project in cloudresourcemanager_client.projects:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project.id
-            report.location = cloudresourcemanager_client.region
-            report.resource_id = project.id
+        for project in cloudresourcemanager_client.cloud_resource_manager_projects:
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=cloudresourcemanager_client.projects[project.id],
+                project_id=project.id,
+                location=cloudresourcemanager_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"Audit Logs are enabled for project {project.id}."
             if not project.audit_logging:

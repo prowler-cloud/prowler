@@ -10,9 +10,16 @@ class Test_cloudformation_stack_outputs_find_secrets:
     def test_no_stacks(self):
         cloudformation_client = mock.MagicMock
         cloudformation_client.stacks = []
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            new=cloudformation_client,
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                new=cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
@@ -36,9 +43,17 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -51,7 +66,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Stack {stack_name} Outputs -> Secret Keyword in Output 1."
+                == f"Potential secret found in CloudFormation Stack {stack_name} Outputs -> Secret Keyword in Output 1."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (
@@ -75,9 +90,17 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -90,7 +113,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Stack {stack_name} Outputs."
+                == f"No secrets found in CloudFormation Stack {stack_name} Outputs."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (
@@ -112,9 +135,17 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -127,7 +158,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Stack {stack_name} Outputs."
+                == f"No secrets found in CloudFormation Stack {stack_name} Outputs."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (
@@ -149,9 +180,17 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
-        with mock.patch(
-            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
-            cloudformation_client,
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+                cloudformation_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+                new=cloudformation_client,
+            ),
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -164,7 +203,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFormation {stack_name} has no Outputs."
+                == f"CloudFormation Stack {stack_name} has no Outputs."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (

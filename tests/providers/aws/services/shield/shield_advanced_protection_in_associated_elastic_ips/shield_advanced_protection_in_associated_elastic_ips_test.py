@@ -35,15 +35,23 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -80,15 +88,23 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -124,15 +140,23 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -168,15 +192,23 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (

@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import (
     GCP_EU1_LOCATION,
     GCP_PROJECT_ID,
@@ -11,12 +12,15 @@ class Test_logging_sink_created:
     def test_no_projects(self):
         logging_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-            new=logging_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
                 logging_sink_created,
@@ -32,12 +36,15 @@ class Test_logging_sink_created:
     def test_no_sinks(self):
         logging_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-            new=logging_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
                 logging_sink_created,
@@ -46,6 +53,15 @@ class Test_logging_sink_created:
             logging_client.project_ids = [GCP_PROJECT_ID]
             logging_client.region = GCP_EU1_LOCATION
             logging_client.sinks = []
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
 
             check = logging_sink_created()
             result = check.execute()
@@ -56,19 +72,22 @@ class Test_logging_sink_created:
                 == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == ""
+            assert result[0].resource_name == "test"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
 
     def test_sink_all(self):
         logging_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-            new=logging_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_service import Sink
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
@@ -102,12 +121,15 @@ class Test_logging_sink_created:
     def test_sink_not_all(self):
         logging_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-            new=logging_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_service import Sink
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
@@ -124,6 +146,15 @@ class Test_logging_sink_created:
                     project_id=GCP_PROJECT_ID,
                 )
             ]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
 
             check = logging_sink_created()
             result = check.execute()
@@ -131,9 +162,9 @@ class Test_logging_sink_created:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Sink sink1 is enabled but not exporting copies of all the log entries in project {GCP_PROJECT_ID}."
+                == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
             )
-            assert result[0].resource_id == "sink1"
-            assert result[0].resource_name == "sink1"
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == "test"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION

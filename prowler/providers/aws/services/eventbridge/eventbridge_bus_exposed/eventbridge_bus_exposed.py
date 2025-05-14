@@ -9,15 +9,13 @@ class eventbridge_bus_exposed(Check):
     def execute(self):
         findings = []
         for bus in eventbridge_client.buses.values():
-            report = Check_Report_AWS(self.metadata())
+            if bus.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bus)
             report.status = "PASS"
             report.status_extended = (
                 f"EventBridge event bus {bus.name} is not exposed to everyone."
             )
-            report.resource_id = bus.name
-            report.resource_arn = bus.arn
-            report.resource_tags = bus.tags
-            report.region = bus.region
             if is_policy_public(bus.policy, eventbridge_client.audited_account):
                 report.status = "FAIL"
                 report.status_extended = (

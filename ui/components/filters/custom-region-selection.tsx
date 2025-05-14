@@ -4,12 +4,10 @@ import { Select, SelectItem } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 
-import { regions } from "@/lib/helper";
-
 export const CustomRegionSelection: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  const region = "none";
   // Memoize selected keys based on the URL
   const selectedKeys = useMemo(() => {
     const params = searchParams.get("filter[regions]");
@@ -34,15 +32,17 @@ export const CustomRegionSelection: React.FC = () => {
       label="Region"
       aria-label="Select a Region"
       placeholder="Select a region"
-      selectionMode="multiple"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       className="w-full"
       size="sm"
       selectedKeys={selectedKeys}
-      onSelectionChange={(keys) => applyRegionFilter(Array.from(keys))}
+      onSelectionChange={(keys) =>
+        applyRegionFilter(Array.from(keys) as string[])
+      }
     >
-      {regions.map((region) => (
-        <SelectItem key={region.key}>{region.label}</SelectItem>
-      ))}
+      <SelectItem key={region}>{region}</SelectItem>
     </Select>
   );
 };

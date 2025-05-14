@@ -1,6 +1,10 @@
-# How to create Prowler Service Principal
+# How to create Prowler Service Principal Application
 
-To allow Prowler assume an identity to start the scan with the required privileges is necesary to create a Service Principal. To create one follow the next steps:
+To allow Prowler assume an identity to start the scan with the required privileges is necesary to create a Service Principal. This Service Principal is going to be used to authenticate against Azure and retrieve the metadata needed to perform the checks.
+
+To create a Service Principal Application you can use the Azure Portal or the Azure CLI.
+
+## From Azure Portal / Entra Admin Center
 
 1. Access to Microsoft Entra ID
 2. In the left menu bar, go to "App registrations"
@@ -13,9 +17,39 @@ To allow Prowler assume an identity to start the scan with the required privileg
 
 ![Register an Application page](../img/create-sp.gif)
 
-## Assigning the proper permissions
+## From Azure CLI
 
-To allow Prowler to retrieve metadata from the identity assumed and specific Entra checks, it is needed to assign the following permissions:
+To create a Service Principal using the Azure CLI, follow the next steps:
+
+1. Open a terminal and execute the following command to create a new Service Principal application:
+```console
+az ad sp create-for-rbac --name "ProwlerApp"
+```
+2. The output of the command is going to be similar to the following:
+```json
+{
+"appId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+"displayName": "ProwlerApp",
+"password": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"tenant": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
+3. Save the values of `appId`, `password` and `tenant` to be used as credentials in Prowler.
+
+# Assigning the proper permissions
+
+To allow Prowler to retrieve metadata from the identity assumed and run specific Entra checks, it is needed to assign the following permissions:
+
+- `Directory.Read.All`
+- `Policy.Read.All`
+- `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+
+To assign the permissions you can make it from the Azure Portal or using the Azure CLI.
+
+???+ note
+    Once you have created and assigned the proper Entra permissions to the application, you can go to this [tutorial](../azure/subscriptions.md) to add the subscription permissions to the application and start scanning your resources.
+
+## From Azure Portal
 
 1. Access to Microsoft Entra ID
 2. In the left menu bar, go to "App registrations"
@@ -28,7 +62,18 @@ To allow Prowler to retrieve metadata from the identity assumed and specific Ent
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 8. Click on "Add permissions" to apply the new permissions.
-9. Finally, click on "Grant admin consent for [your tenant]" to apply the permissions.
+9. Finally, an admin should click on "Grant admin consent for [your tenant]" to apply the permissions.
 
 
 ![EntraID Permissions](../../img/AAD-permissions.png)
+
+## From Azure CLI
+
+1. Open a terminal and execute the following command to assign the permissions to the Service Principal:
+```console
+az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role
+```
+2. The admin consent is needed to apply the permissions, an admin should execute the following command:
+```console
+az ad app permission admin-consent --id {appId}
+```

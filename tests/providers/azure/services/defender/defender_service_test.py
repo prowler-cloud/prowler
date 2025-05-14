@@ -21,6 +21,7 @@ def mock_defender_get_pricings(_):
         AZURE_SUBSCRIPTION_ID: {
             "Standard": Pricing(
                 resource_id="resource_id",
+                resource_name="resource_name",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
                 extensions={},
@@ -57,8 +58,9 @@ def mock_defender_get_assessments(_):
 def mock_defender_get_security_contacts(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "default": SecurityContacts(
+            "/subscriptions/resource_id": SecurityContacts(
                 resource_id="/subscriptions/resource_id",
+                name="default",
                 emails="user@user.com, test@test.es",
                 phone="666666666",
                 alert_notifications_minimal_severity="High",
@@ -86,8 +88,9 @@ def mock_defender_get_settings(_):
 def mock_defender_get_iot_security_solutions(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "iot_sec_solution": IoTSecuritySolution(
+            "/subscriptions/resource_id": IoTSecuritySolution(
                 resource_id="/subscriptions/resource_id",
+                name="iot_sec_solution",
                 status="Enabled",
             )
         }
@@ -137,6 +140,10 @@ class Test_Defender_Service:
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_id
             == "resource_id"
+        )
+        assert (
+            defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_name
+            == "resource_name"
         )
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].pricing_tier
@@ -211,35 +218,47 @@ class Test_Defender_Service:
         defender = Defender(set_mocked_azure_provider())
         assert len(defender.security_contacts) == 1
         assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].resource_id
+            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].emails
+            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].name
+            == "default"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].emails
             == "user@user.com, test@test.es"
         )
         assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].phone
+            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].phone
             == "666666666"
         )
         assert (
             defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
+                "/subscriptions/resource_id"
             ].alert_notifications_minimal_severity
             == "High"
         )
         assert (
             defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
+                "/subscriptions/resource_id"
             ].alert_notifications_state
             == "On"
         )
         assert defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-            "default"
+            "/subscriptions/resource_id"
         ].notified_roles == ["Owner", "Contributor"]
         assert (
             defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
+                "/subscriptions/resource_id"
             ].notified_roles_state
             == "On"
         )
@@ -249,13 +268,19 @@ class Test_Defender_Service:
         assert len(defender.iot_security_solutions) == 1
         assert (
             defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
-                "iot_sec_solution"
+                "/subscriptions/resource_id"
             ].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
             defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
-                "iot_sec_solution"
+                "/subscriptions/resource_id"
+            ].name
+            == "iot_sec_solution"
+        )
+        assert (
+            defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
             ].status
             == "Enabled"
         )

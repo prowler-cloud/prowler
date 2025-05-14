@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.db.models import Q
@@ -24,6 +24,7 @@ from api.db_utils import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     PermissionChoices,
@@ -286,19 +287,22 @@ class FindingFilter(FilterSet):
     status = ChoiceFilter(choices=StatusChoices.choices)
     severity = ChoiceFilter(choices=SeverityChoices)
     impact = ChoiceFilter(choices=SeverityChoices)
+    muted = BooleanFilter(
+        help_text="If this filter is not provided, muted and non-muted findings will be returned."
+    )
 
     resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
 
-    region = CharFilter(field_name="resources__region")
-    region__in = CharInFilter(field_name="resources__region", lookup_expr="in")
+    region = CharFilter(method="filter_resource_region")
+    region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
     region__icontains = CharFilter(
-        field_name="resources__region", lookup_expr="icontains"
+        field_name="resource_regions", lookup_expr="icontains"
     )
 
-    service = CharFilter(field_name="resources__service")
-    service__in = CharInFilter(field_name="resources__service", lookup_expr="in")
+    service = CharFilter(method="filter_resource_service")
+    service__in = CharInFilter(field_name="resource_services", lookup_expr="overlap")
     service__icontains = CharFilter(
-        field_name="resources__service", lookup_expr="icontains"
+        field_name="resource_services", lookup_expr="icontains"
     )
 
     resource_uid = CharFilter(field_name="resources__uid")
@@ -313,19 +317,47 @@ class FindingFilter(FilterSet):
         field_name="resources__name", lookup_expr="icontains"
     )
 
-    resource_type = CharFilter(field_name="resources__type")
-    resource_type__in = CharInFilter(field_name="resources__type", lookup_expr="in")
+    resource_type = CharFilter(method="filter_resource_type")
+    resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
     resource_type__icontains = CharFilter(
         field_name="resources__type", lookup_expr="icontains"
     )
+
+    # Temporarily disabled until we implement tag filtering in the UI
+    # resource_tag_key = CharFilter(field_name="resources__tags__key")
+    # resource_tag_key__in = CharInFilter(
+    #     field_name="resources__tags__key", lookup_expr="in"
+    # )
+    # resource_tag_key__icontains = CharFilter(
+    #     field_name="resources__tags__key", lookup_expr="icontains"
+    # )
+    # resource_tag_value = CharFilter(field_name="resources__tags__value")
+    # resource_tag_value__in = CharInFilter(
+    #     field_name="resources__tags__value", lookup_expr="in"
+    # )
+    # resource_tag_value__icontains = CharFilter(
+    #     field_name="resources__tags__value", lookup_expr="icontains"
+    # )
+    # resource_tags = CharInFilter(
+    #     method="filter_resource_tag",
+    #     lookup_expr="in",
+    #     help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
+    #     "separated by commas.",
+    # )
 
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(method="filter_inserted_at_gte")
-    inserted_at__lte = DateFilter(method="filter_inserted_at_lte")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
 
     class Meta:
         model = Finding
@@ -353,6 +385,61 @@ class FindingFilter(FilterSet):
             },
         }
 
+    def filter_resource_type(self, queryset, name, value):
+        return queryset.filter(resource_types__contains=[value])
+
+    def filter_resource_region(self, queryset, name, value):
+        return queryset.filter(resource_regions__contains=[value])
+
+    def filter_resource_service(self, queryset, name, value):
+        return queryset.filter(resource_services__contains=[value])
+
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            datetime.strptime(self.data.get("inserted_at__gte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            datetime.strptime(self.data.get("inserted_at__lte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
         try:
@@ -373,9 +460,7 @@ class FindingFilter(FilterSet):
             )
 
         return (
-            queryset.filter(id__gte=start)
-            .filter(id__lt=end)
-            .filter(scan__id=value_uuid)
+            queryset.filter(id__gte=start).filter(id__lt=end).filter(scan_id=value_uuid)
         )
 
     def filter_scan_id_in(self, queryset, name, value):
@@ -400,31 +485,42 @@ class FindingFilter(FilterSet):
                 ]
             )
         if start == end:
-            return queryset.filter(id__gte=start).filter(scan__id__in=uuid_list)
+            return queryset.filter(id__gte=start).filter(scan_id__in=uuid_list)
         else:
             return (
                 queryset.filter(id__gte=start)
                 .filter(id__lt=end)
-                .filter(scan__id__in=uuid_list)
+                .filter(scan_id__in=uuid_list)
             )
 
     def filter_inserted_at(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__date=value)
+        return queryset.filter(id__gte=start, id__lt=end)
 
     def filter_inserted_at_gte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__gte=value)
+        return queryset.filter(id__gte=start)
 
     def filter_inserted_at_lte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        end = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__lte=end).filter(inserted_at__lte=value)
+        return queryset.filter(id__lt=end)
+
+    def filter_resource_tag(self, queryset, name, value):
+        overall_query = Q()
+        for key_value_pair in value:
+            tag_key, tag_value = key_value_pair.split(":", 1)
+            overall_query |= Q(
+                resources__tags__key__icontains=tag_key,
+                resources__tags__value__icontains=tag_value,
+            )
+        return queryset.filter(overall_query).distinct()
 
     @staticmethod
     def maybe_date_to_datetime(value):
@@ -530,12 +626,6 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
-    muted_findings = BooleanFilter(method="filter_muted_findings")
-
-    def filter_muted_findings(self, queryset, name, value):
-        if not value:
-            return queryset.exclude(muted__gt=0)
-        return queryset
 
     class Meta:
         model = ScanSummary
@@ -546,8 +636,6 @@ class ScanSummaryFilter(FilterSet):
 
 
 class ServiceOverviewFilter(ScanSummaryFilter):
-    muted_findings = None
-
     def is_valid(self):
         # Check if at least one of the inserted_at filters is present
         inserted_at_filters = [
@@ -565,3 +653,19 @@ class ServiceOverviewFilter(ScanSummaryFilter):
                 }
             )
         return super().is_valid()
+
+
+class IntegrationFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    integration_type = ChoiceFilter(choices=Integration.IntegrationChoices.choices)
+    integration_type__in = ChoiceInFilter(
+        choices=Integration.IntegrationChoices.choices,
+        field_name="integration_type",
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = Integration
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+        }

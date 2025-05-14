@@ -1,4 +1,7 @@
+import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
+
+import { ProviderType } from "./providers";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -8,6 +11,50 @@ export type IconProps = {
   icon: React.FC<IconSvgProps>;
   style?: React.CSSProperties;
 };
+
+export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
+
+export type SubmenuProps = {
+  href: string;
+  target?: string;
+  label: string;
+  active?: boolean;
+  icon: IconComponent;
+};
+
+export type MenuProps = {
+  href: string;
+  label: string;
+  active?: boolean;
+  icon: IconComponent;
+  submenus?: SubmenuProps[];
+  defaultOpen?: boolean;
+};
+
+export type GroupProps = {
+  groupLabel: string;
+  menus: MenuProps[];
+};
+
+export interface CollapseMenuButtonProps {
+  icon: IconComponent;
+  label: string;
+  submenus: SubmenuProps[];
+  defaultOpen: boolean;
+  isOpen: boolean | undefined;
+}
+
+export interface SelectScanComplianceDataProps {
+  scans: (ScanProps & {
+    providerInfo: {
+      provider: ProviderType;
+      uid: string;
+      alias: string;
+    };
+  })[];
+  selectedScanId: string;
+  onSelectionChange: (selectedKey: string) => void;
+}
 
 export type NextUIVariants =
   | "solid"
@@ -26,6 +73,11 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface PermissionInfo {
+  field: string;
+  label: string;
+  description: string;
+}
 export interface FindingsByStatusData {
   data: {
     type: "findings-overview";
@@ -43,6 +95,69 @@ export interface FindingsByStatusData {
     version: string;
   };
 }
+export interface ManageGroupPayload {
+  data: {
+    type: "provider-groups";
+    id: string;
+    attributes?: {
+      name: string;
+    };
+    relationships?: {
+      providers?: { data: Array<{ id: string; type: string }> };
+      roles?: { data: Array<{ id: string; type: string }> };
+    };
+  };
+}
+export interface ProviderGroup {
+  type: "provider-groups";
+  id: string;
+  attributes: {
+    name: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    providers: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
+export interface ProviderGroupsResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ProviderGroup[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
 
 export interface FindingsSeverityOverview {
   data: {
@@ -56,27 +171,6 @@ export interface FindingsSeverityOverview {
       informational: number;
     };
   };
-  meta: {
-    version: string;
-  };
-}
-
-export interface ProviderOverviewProps {
-  data: {
-    type: "provider-overviews";
-    id: "aws" | "gcp" | "azure" | "kubernetes";
-    attributes: {
-      findings: {
-        pass: number;
-        fail: number;
-        manual: number;
-        total: number;
-      };
-      resources: {
-        total: number;
-      };
-    };
-  }[];
   meta: {
     version: string;
   };
@@ -114,12 +208,23 @@ export type AWSCredentialsRole = {
   external_id?: string;
   role_session_name?: string;
   session_duration?: number;
+  credentials_type?: "aws-sdk-default" | "access-secret-key";
 };
 
 export type AzureCredentials = {
   client_id: string;
   client_secret: string;
   tenant_id: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type M365Credentials = {
+  client_id: string;
+  client_secret: string;
+  tenant_id: string;
+  user: string;
+  encrypted_password: string;
   secretName: string;
   providerId: string;
 };
@@ -142,7 +247,8 @@ export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPCredentials
-  | KubernetesCredentials;
+  | KubernetesCredentials
+  | M365Credentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -222,11 +328,100 @@ export interface InvitationProps {
         id: string;
       };
     };
+    role?: {
+      data: {
+        type: "roles";
+        id: string;
+      };
+      attributes?: {
+        name: string;
+        manage_users?: boolean;
+        manage_account?: boolean;
+        manage_billing?: boolean;
+        manage_providers?: boolean;
+        manage_integrations?: boolean;
+        manage_scans?: boolean;
+        permission_state?: "unlimited" | "limited" | "none";
+      };
+    };
+  };
+  links: {
+    self: string;
+  };
+  roles?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface Role {
+  type: "roles";
+  id: string;
+  attributes: {
+    name: string;
+    manage_users: boolean;
+    manage_account: boolean;
+    manage_billing: boolean;
+    manage_providers: boolean;
+    manage_integrations: boolean;
+    manage_scans: boolean;
+    unlimited_visibility: boolean;
+    permission_state: "unlimited" | "limited" | "none";
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    users: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    invitations: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
   };
   links: {
     self: string;
   };
 }
+
+export interface RolesProps {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: Role[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
+
 export interface UserProfileProps {
   data: {
     type: "users";
@@ -236,6 +431,9 @@ export interface UserProfileProps {
       email: string;
       company_name: string;
       date_joined: string;
+      role: {
+        name: string;
+      };
     };
     relationships: {
       memberships: {
@@ -262,6 +460,9 @@ export interface UserProps {
     email: string;
     company_name: string;
     date_joined: string;
+    role: {
+      name: string;
+    };
   };
   relationships: {
     memberships: {
@@ -273,34 +474,20 @@ export interface UserProps {
         id: string;
       }>;
     };
-  };
-}
-
-export interface ProviderProps {
-  id: string;
-  type: "providers";
-  attributes: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
-    uid: string;
-    alias: string;
-    status: "completed" | "pending" | "cancelled";
-    resources: number;
-    connection: {
-      connected: boolean;
-      last_checked_at: string;
-    };
-    scanner_args: {
-      only_logs: boolean;
-      excluded_checks: string[];
-      aws_retries_max_attempts: number;
-    };
-    inserted_at: string;
-    updated_at: string;
-    created_by: {
-      object: string;
-      id: string;
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: "roles";
+        id: string;
+      }>;
     };
   };
+  roles: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface ScanProps {
@@ -325,6 +512,7 @@ export interface ScanProps {
     } | null;
     duration: number;
     started_at: string;
+    inserted_at: string;
     completed_at: string;
     scheduled_at: string;
     next_scan_at: string;
@@ -344,7 +532,7 @@ export interface ScanProps {
     };
   };
   providerInfo?: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    provider: ProviderType;
     uid: string;
     alias: string;
   };
@@ -356,10 +544,11 @@ export interface FindingProps {
   attributes: {
     uid: string;
     delta: "new" | "changed" | null;
-    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status: "PASS" | "FAIL" | "MANUAL";
     status_extended: string;
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
+    muted: boolean;
     check_metadata: {
       risk: string;
       notes: string;
@@ -395,6 +584,7 @@ export interface FindingProps {
     raw_result: object | null;
     inserted_at: string;
     updated_at: string;
+    first_seen_at: string | null;
   };
   relationships: {
     resources: {
@@ -419,8 +609,10 @@ export interface FindingProps {
         };
         duration: number;
         started_at: string;
+        inserted_at: string;
         completed_at: string;
         scheduled_at: string | null;
+        next_scan_at: string;
       };
     };
     resource: {
@@ -499,6 +691,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

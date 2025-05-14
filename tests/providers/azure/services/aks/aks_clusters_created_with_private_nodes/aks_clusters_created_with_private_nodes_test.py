@@ -13,12 +13,15 @@ class Test_aks_clusters_created_with_private_nodes:
         aks_client = mock.MagicMock
         aks_client.clusters = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
-            new=aks_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
+                new=aks_client,
+            ),
         ):
             from prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes import (
                 aks_clusters_created_with_private_nodes,
@@ -32,12 +35,15 @@ class Test_aks_clusters_created_with_private_nodes:
         aks_client = mock.MagicMock
         aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
-            new=aks_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
+                new=aks_client,
+            ),
         ):
             from prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes import (
                 aks_clusters_created_with_private_nodes,
@@ -53,6 +59,7 @@ class Test_aks_clusters_created_with_private_nodes:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn="",
@@ -64,12 +71,15 @@ class Test_aks_clusters_created_with_private_nodes:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
-            new=aks_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
+                new=aks_client,
+            ),
         ):
             from prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes import (
                 aks_clusters_created_with_private_nodes,
@@ -94,6 +104,7 @@ class Test_aks_clusters_created_with_private_nodes:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn="private_fqdn",
@@ -105,12 +116,15 @@ class Test_aks_clusters_created_with_private_nodes:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
-            new=aks_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
+                new=aks_client,
+            ),
         ):
             from prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes import (
                 aks_clusters_created_with_private_nodes,
@@ -135,6 +149,7 @@ class Test_aks_clusters_created_with_private_nodes:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn="private_fqdn",
@@ -150,12 +165,15 @@ class Test_aks_clusters_created_with_private_nodes:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
-            new=aks_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes.aks_client",
+                new=aks_client,
+            ),
         ):
             from prowler.providers.azure.services.aks.aks_clusters_created_with_private_nodes.aks_clusters_created_with_private_nodes import (
                 aks_clusters_created_with_private_nodes,

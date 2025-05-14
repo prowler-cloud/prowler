@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "admincenter_users_between_two_and_four_global_admins",
+  "CheckTitle": "Ensure that between two and four global admins are designated",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Active users",
+  "Description": "Ensure that there are between two and four global administrators designated in your tenant. This ensures monitoring, redundancy, and reduces the risk associated with having too many privileged accounts.",
+  "Risk": "Having only one global administrator increases the risk of unmonitored actions and operational disruptions if that administrator is unavailable. Having more than four increases the likelihood of a breach through one of these highly privileged accounts.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center https://admin.microsoft.com 2. Select Users > Active Users. 3. In the Search field enter the name of the user to be made a Global Administrator. 4. To create a new Global Admin: 1. Select the user's name. 2. A window will appear to the right. 3. Select Manage roles. 4. Select Admin center access. 5. Check Global Administrator. 6. Click Save changes. 5. To remove Global Admins: 1. Select User. 2. Under Roles select Manage roles. 3. De-Select the appropriate role. 4. Click Save changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the number of global administrators in your tenant. Add or remove global admins as necessary to ensure compliance with the recommended range of two to four.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

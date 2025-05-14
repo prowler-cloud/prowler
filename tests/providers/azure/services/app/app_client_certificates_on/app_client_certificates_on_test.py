@@ -12,12 +12,15 @@ class Test_app_client_certificates_on:
         app_client = mock.MagicMock
         app_client.apps = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on import (
                 app_client_certificates_on,
@@ -31,12 +34,15 @@ class Test_app_client_certificates_on:
         app_client = mock.MagicMock
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on import (
                 app_client_certificates_on,
@@ -50,12 +56,15 @@ class Test_app_client_certificates_on:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on import (
                 app_client_certificates_on,
@@ -64,8 +73,9 @@ class Test_app_client_certificates_on:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Required",
@@ -92,12 +102,15 @@ class Test_app_client_certificates_on:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_client_certificates_on.app_client_certificates_on import (
                 app_client_certificates_on,
@@ -106,8 +119,9 @@ class Test_app_client_certificates_on:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
