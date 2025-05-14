@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -15,9 +17,17 @@ class Organization(GithubService):
         try:
             for client in self.clients:
                 for org in client.get_user().get_orgs():
+                    try:
+                        require_mfa = org.two_factor_requirement_enabled
+                    except Exception as error:
+                        require_mfa = None
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                     organizations[org.id] = Org(
                         id=org.id,
                         name=org.login,
+                        mfa_required=require_mfa,
                     )
         except Exception as error:
             logger.error(
@@ -31,3 +41,4 @@ class Org(BaseModel):
 
     id: int
     name: str
+    mfa_required: Optional[bool] = False
