@@ -799,7 +799,6 @@ def prowler():
                 cis = GithubCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
