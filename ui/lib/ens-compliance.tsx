@@ -1,3 +1,5 @@
+import { Chip } from "@nextui-org/react";
+
 import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
@@ -8,6 +10,21 @@ import {
 } from "@/types/compliance/ens";
 
 import { ComplianceAccordionTitle } from "../components/compliance/compliance-accordion-title";
+
+export const translateType = (type: string) => {
+  switch (type.toLowerCase()) {
+    case "requisito":
+      return "Requirement";
+    case "recomendacion":
+      return "Recommendation";
+    case "refuerzo":
+      return "Reinforcement";
+    case "medida":
+      return "Measure";
+    default:
+      return type;
+  }
+};
 
 export const mapComplianceData = (rawData: any) => {
   const requirements = rawData.attributes?.requirements || {};
@@ -72,7 +89,7 @@ export const mapComplianceData = (rawData: any) => {
     if (!categoryObj.controls.has(controlKey)) {
       categoryObj.controls.set(controlKey, {
         label: groupControlLabel,
-        tipo: type,
+        type,
         pass: 0,
         fail: 0,
         manual: 0,
@@ -88,7 +105,7 @@ export const mapComplianceData = (rawData: any) => {
         name: requirementName,
         description: controlDescription,
         status: isManual ? "MANUAL" : status, // Force MANUAL status for requirements without checks
-        tipo: type,
+        type,
         checks: [],
         pass: checksStatus.pass || 0,
         fail: checksStatus.fail || 0,
@@ -178,7 +195,7 @@ export const mapComplianceData = (rawData: any) => {
       manual: category.manual,
       controls: Array.from(category.controls.values()).map((control) => ({
         label: control.label,
-        tipo: control.tipo,
+        type: control.type,
         pass: control.pass,
         fail: control.fail,
         manual: control.manual,
@@ -234,12 +251,29 @@ export const toAccordionItems = (
                 return {
                   key: itemKey,
                   title: (
-                    <ComplianceAccordionTitle
-                      label={requirement.name}
-                      pass={requirement.pass}
-                      fail={requirement.fail}
-                      manual={requirement.manual}
-                    />
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <div className="flex w-3/4 items-center gap-1">
+                        <span className="whitespace-nowrap text-sm font-bold capitalize">
+                          {translateType(requirement.type)}:
+                        </span>
+                        <span className="whitespace-nowrap text-sm uppercase">
+                          {requirement.name}
+                        </span>
+                      </div>
+                      <Chip
+                        color={
+                          requirement.status === "PASS"
+                            ? "success"
+                            : requirement.status === "FAIL"
+                              ? "danger"
+                              : "default"
+                        }
+                        variant="flat"
+                        size="sm"
+                      >
+                        {requirement.status}
+                      </Chip>
+                    </div>
                   ),
                   content: (
                     <ClientAccordionContent

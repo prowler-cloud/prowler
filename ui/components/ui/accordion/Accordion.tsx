@@ -113,7 +113,7 @@ export const Accordion = ({
             title: "text-sm font-medium max-w-full overflow-hidden truncate",
             subtitle: "text-xs text-gray-500",
             trigger:
-              "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center overflow-hidden",
+              "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center",
             content: "p-2 overflow-x-auto",
           }}
         >

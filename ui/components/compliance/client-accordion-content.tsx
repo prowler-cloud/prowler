@@ -3,32 +3,15 @@
 import { useEffect, useState } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
+import { ColumnFindings } from "@/components/findings/table";
+import { Accordion } from "@/components/ui/accordion/Accordion";
+import { DataTable, StatusFindingBadge } from "@/components/ui/table";
+import { createDict } from "@/lib";
+import { FindingProps } from "@/types/components";
 
 interface ClientAccordionContentProps {
   requirement: any;
   scanId: string;
-}
-
-function getStatusEmoji(status: string) {
-  if (status === "PASS") return "✅";
-  if (status === "FAIL") return "❌";
-  if (status === "MANUAL") return "🖐";
-  return "";
-}
-
-function translateType(tipo: string) {
-  switch (tipo.toLowerCase()) {
-    case "requisito":
-      return "Requirement";
-    case "recomendacion":
-      return "Recommendation";
-    case "refuerzo":
-      return "Reinforcement";
-    case "medida":
-      return "Measure";
-    default:
-      return tipo;
-  }
 }
 
 export function ClientAccordionContent({
@@ -36,6 +19,7 @@ export function ClientAccordionContent({
   scanId,
 }: ClientAccordionContentProps) {
   const [findings, setFindings] = useState<any>(null);
+  const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,9 +41,35 @@ export function ClientAccordionContent({
           },
         });
 
-        console.log("ATRIBUTES", findingsData.data[0].attributes);
+        console.log("FINDINGS", findingsData);
 
         setFindings(findingsData);
+
+        if (findingsData?.data) {
+          // Create dictionaries for resources, scans, and providers
+          const resourceDict = createDict("resources", findingsData);
+          const scanDict = createDict("scans", findingsData);
+          const providerDict = createDict("providers", findingsData);
+
+          // Expand each finding with its corresponding resource, scan, and provider
+          const expandedData = findingsData.data.map(
+            (finding: FindingProps) => {
+              const scan = scanDict[finding.relationships?.scan?.data?.id];
+              const resource =
+                resourceDict[finding.relationships?.resources?.data?.[0]?.id];
+              const provider =
+                providerDict[scan?.relationships?.provider?.data?.id];
+
+              return {
+                ...finding,
+                relationships: { scan, resource, provider },
+              };
+            },
+          );
+
+          setExpandedFindings(expandedData);
+        }
+
         setIsLoading(false);
       }
     }
@@ -68,73 +78,62 @@ export function ClientAccordionContent({
   }, [requirement, scanId, isExpanded]);
 
   // Reuse the renderTable logic but now with dynamically loaded findings
-  const translatedType = translateType(requirement.tipo);
+
   const checks = requirement.checks || [];
 
+  // Prepare the checks table as content for the accordion
+  const checksTable = (
+    <div className="overflow-x-auto">
+      {checks.map((check: any, i: number) => (
+        <div key={i} className="flex items-center justify-between">
+          <span>{check.checkName}</span>
+          <StatusFindingBadge status={check.status} />
+        </div>
+      ))}
+    </div>
+  );
+
+  // Create a single accordion item for the checks
+  const accordionItems = [
+    {
+      key: "checks",
+      title: (
+        <div className="flex items-center gap-2">
+          <span className="text-primary">{checks.length}</span>
+          <span>Checks</span>
+        </div>
+      ),
+      content: checksTable,
+    },
+  ];
+
   return (
-    <div className="mt-2 w-full overflow-x-auto">
-      <div className="mb-2">
-        <span className="font-semibold">Type:</span> {translatedType}
-      </div>
-      <div className="mb-2">
-        <span className="font-semibold">Description:</span>{" "}
+    <div className="w-full overflow-x-auto">
+      <div className="mb-4 text-sm text-gray-600">
         {requirement.description}
       </div>
-      {checks.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-full border text-left text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="p-2">Check ID</th>
-                <th className="p-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {checks.map((check: any, i: number) => (
-                <tr key={i} className="border-b">
-                  <td className="break-all p-2">{check.checkName}</td>
-                  <td className="whitespace-nowrap p-2 capitalize">
-                    {getStatusEmoji(check.status)} &nbsp; {check.status}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {/* Sección de findings cargados dinámicamente */}
-      {isLoading && (
-        <div className="mt-4 p-2 text-gray-500">
-          Cargando detalles adicionales...
+      {checks.length > 0 && (
+        <div className="mb-6 mt-2">
+          <Accordion
+            items={accordionItems}
+            variant="bordered"
+            defaultExpandedKeys={["checks"]}
+            className="rounded-lg bg-white shadow-sm dark:bg-prowler-blue-400"
+          />
         </div>
       )}
 
       {!isLoading && findings && findings.data && findings.data.length > 0 && (
         <div className="mt-4">
-          <h3 className="mb-2 font-medium">Findings Details</h3>
-          <table className="w-full min-w-full border text-left text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="p-2">ID</th>
-                <th className="p-2">Resource</th>
-                <th className="p-2">Region</th>
-                <th className="p-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {findings.data.map((finding: any) => (
-                <tr key={finding.id} className="border-b">
-                  <td className="p-2">{finding.id}</td>
-                  <td className="p-2">
-                    {finding.attributes?.resource_name || "N/A"}
-                  </td>
-                  <td className="p-2">{finding.attributes?.region || "N/A"}</td>
-                  <td className="p-2">{finding.attributes?.status || "N/A"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <h3 className="mb-2 font-medium">Findings</h3>
+          <div className="overflow-x-auto p-1">
+            <DataTable
+              columns={ColumnFindings}
+              data={expandedFindings || []}
+              metadata={findings?.meta}
+            />
+          </div>
         </div>
       )}
     </div>

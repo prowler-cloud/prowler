@@ -7,7 +7,7 @@ export interface Requirement {
   name: string;
   description: string;
   status: string;
-  tipo: string;
+  type: string;
   pass: number;
   fail: number;
   manual: number;
@@ -16,7 +16,7 @@ export interface Requirement {
 
 export interface Control {
   label: string;
-  tipo: string;
+  type: string;
   pass: number;
   fail: number;
   manual: number;
