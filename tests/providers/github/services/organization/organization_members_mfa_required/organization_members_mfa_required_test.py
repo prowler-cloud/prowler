@@ -9,12 +9,15 @@ class Test_organization_members_mfa_required:
         organization_client = mock.MagicMock
         organization_client.organizations = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
-            new=organization_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
+                new=organization_client,
+            ),
         ):
             from prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required import (
                 organization_members_mfa_required,
@@ -35,12 +38,15 @@ class Test_organization_members_mfa_required:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
-            new=organization_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
+                new=organization_client,
+            ),
         ):
             from prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required import (
                 organization_members_mfa_required,
@@ -68,12 +74,15 @@ class Test_organization_members_mfa_required:
             ),
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_github_provider(),
-        ), mock.patch(
-            "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
-            new=organization_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required.organization_client",
+                new=organization_client,
+            ),
         ):
             from prowler.providers.github.services.organization.organization_members_mfa_required.organization_members_mfa_required import (
                 organization_members_mfa_required,
