@@ -9,7 +9,7 @@ import {
   ColumnProviders,
   SkeletonTableProviders,
 } from "@/components/providers/table";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { ProviderProps, SearchParamsProps } from "@/types";
 
@@ -21,11 +21,8 @@ export default async function Providers({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <>
-      <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
-
-      <Spacer y={4} />
-      <FilterControls search providers />
+    <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
+      <FilterControls search />
       <Spacer y={8} />
       <div className="flex items-center gap-4 md:justify-end">
         <ManageGroupsButton />
@@ -42,7 +39,7 @@ export default async function Providers({
           </Suspense>
         </div>
       </div>
-    </>
+    </ContentLayout>
   );
 }
 
@@ -53,6 +50,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
@@ -62,7 +60,13 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const providersData = await getProviders({ query, page, sort, filters });
+  const providersData = await getProviders({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize,
+  });
 
   const providerGroupDict =
     providersData?.included

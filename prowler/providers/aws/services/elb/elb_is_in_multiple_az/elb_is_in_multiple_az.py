@@ -9,7 +9,7 @@ class elb_is_in_multiple_az(Check):
         findings = []
         ELB_MIN_AZS = elb_client.audit_config.get("elb_min_azs", 2)
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "FAIL"
             report.status_extended = f"Classic Load Balancer {lb.name} is not in at least {ELB_MIN_AZS} availability zones, it is only in {', '.join(lb.availability_zones)}."
 

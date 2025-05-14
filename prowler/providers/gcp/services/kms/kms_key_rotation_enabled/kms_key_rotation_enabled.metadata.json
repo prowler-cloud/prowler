@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_4#cli-command",
+      "CLI": "gcloud kms keys update new --keyring=<KEY_RING> --location=<LOCATION> --nextrotation-time=<NEXT_ROTATION_TIME> --rotation-period=<ROTATION_PERIOD>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_4#terraform"

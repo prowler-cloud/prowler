@@ -398,12 +398,15 @@ class Test_EC2_Service:
         ec2_client.audited_account = AWS_ACCOUNT_NUMBER
         ec2_client.region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ),
         ):
             assert (
                 ec2_client.ebs_block_public_access_snapshots_states[0].status
@@ -474,12 +477,15 @@ class Test_EC2_Service:
         ec2_client.audited_account = AWS_ACCOUNT_NUMBER
         ec2_client.region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ),
         ):
             assert ec2_client.instance_metadata_defaults[0].http_tokens == "required"
 

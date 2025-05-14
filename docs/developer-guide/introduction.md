@@ -19,8 +19,13 @@ For isolation and to avoid conflicts with other environments, we recommend using
 Then install all dependencies including the ones for developers:
 ```
 poetry install --with dev
-poetry shell
+eval $(poetry env activate) \
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
 ## Contributing with your code or fixes to Prowler
 

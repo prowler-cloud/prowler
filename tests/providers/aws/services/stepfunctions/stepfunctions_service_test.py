@@ -184,7 +184,9 @@ class TestStepFunctionsService:
         ]
 
         for error_code, operation in error_scenarios:
-            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1], create_default_organization=False
+            )
 
             def mock_make_api_call(self, operation_name, kwarg):
                 if operation_name == operation:
@@ -250,7 +252,9 @@ class TestStepFunctionsService:
         ]
 
         for error_code, operation in error_scenarios:
-            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1], create_default_organization=False
+            )
 
             def mock_make_api_call(self, operation_name, kwarg):
                 if operation_name == operation:

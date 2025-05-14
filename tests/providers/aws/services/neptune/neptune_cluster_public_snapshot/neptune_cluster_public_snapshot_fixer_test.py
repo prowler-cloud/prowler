@@ -50,12 +50,15 @@ class Test_neptune_cluster_public_snapshot_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer.neptune_client",
-                new=Neptune(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer.neptune_client",
+                    new=Neptune(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer import (
                     fixer,
@@ -73,12 +76,15 @@ class Test_neptune_cluster_public_snapshot_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer.neptune_client",
-                new=Neptune(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer.neptune_client",
+                    new=Neptune(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer import (
                     fixer,

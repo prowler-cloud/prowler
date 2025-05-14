@@ -38,12 +38,14 @@ class Test_repository_code_changes_multi_approval_requirement:
                 id=1,
                 name=repo_name,
                 full_name="account-name/repo1",
-                private=False,
-                default_branch="main",
                 default_branch_protection=Protection(
                     require_pull_request=False, approval_count=0
                 ),
+                default_branch="main",
+                private=False,
                 securitymd=False,
+                require_pull_request=False,
+                approval_count=0,
             ),
         }
 
@@ -80,12 +82,14 @@ class Test_repository_code_changes_multi_approval_requirement:
                 id=1,
                 name=repo_name,
                 full_name="account-name/repo1",
-                private=False,
-                default_branch="master",
                 default_branch_protection=Protection(
                     require_pull_request=True, approval_count=0
                 ),
+                default_branch="master",
+                private=False,
                 securitymd=False,
+                require_pull_request=True,
+                approval_count=0,
             ),
         }
 
@@ -122,12 +126,14 @@ class Test_repository_code_changes_multi_approval_requirement:
                 id=1,
                 name=repo_name,
                 full_name="account-name/repo1",
-                private=False,
-                default_branch="master",
                 default_branch_protection=Protection(
                     require_pull_request=True, approval_count=2
                 ),
+                default_branch="master",
+                private=False,
                 securitymd=True,
+                require_pull_request=True,
+                approval_count=2,
             ),
         }
 

@@ -16,9 +16,7 @@ class mq_broker_logging_enabled(Check):
         """
         findings = []
         for broker in mq_client.brokers.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=broker
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=broker)
             report.status = "FAIL"
             report.status_extended = (
                 f"MQ Broker {broker.name} does not have logging enabled."

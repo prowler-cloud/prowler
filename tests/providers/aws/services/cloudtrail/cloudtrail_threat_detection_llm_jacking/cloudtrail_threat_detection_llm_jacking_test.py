@@ -173,7 +173,7 @@ class Test_cloudtrail_threat_detection_llm_jacking:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential LLM Jacking attack detected from AWS IAMUser Attacker with an threshold of 1.0."
+                == "Potential LLM Jacking attack detected from AWS IAMUser Attacker with a threshold of 1.0."
             )
             assert result[0].resource_id == "Attacker"
             assert result[0].region == AWS_REGION_US_EAST_1

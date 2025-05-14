@@ -6,9 +6,7 @@ class wafv2_webacl_logging_enabled(Check):
     def execute(self):
         findings = []
         for web_acl in wafv2_client.web_acls.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=web_acl
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=web_acl)
 
             if web_acl.logging_enabled:
                 report.status = "PASS"

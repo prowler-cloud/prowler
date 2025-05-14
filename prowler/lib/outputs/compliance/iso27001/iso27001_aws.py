@@ -13,7 +13,7 @@ class AWSISO27001(ComplianceOutput):
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into AWS ENS compliance format.
+        - transform: Transforms findings into AWS ISO 27001 compliance format.
     """
 
     def transform(
@@ -23,7 +23,7 @@ class AWSISO27001(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into AWS ENS compliance format.
+        Transforms a list of findings into AWS ISO 27001 compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -46,6 +46,7 @@ class AWSISO27001(ComplianceOutput):
                             Region=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
+                            Requirements_Name=requirement.Name,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_Category=attribute.Category,
                             Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
@@ -70,6 +71,7 @@ class AWSISO27001(ComplianceOutput):
                         Region="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
+                        Requirements_Name=requirement.Name,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_Category=attribute.Category,
                         Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,

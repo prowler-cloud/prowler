@@ -7,9 +7,7 @@ class cloudsql_instance_mysql_local_infile_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "MYSQL" in instance.version:
-                report = Check_Report_GCP(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
                 report.status = "FAIL"
                 report.status_extended = f"MySQL Instance {instance.name} does not have 'local_infile' flag set to 'off'."
                 for flag in instance.flags:

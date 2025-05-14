@@ -7,7 +7,7 @@ class elb_ssl_listeners(Check):
         findings = []
         secure_protocols = ["SSL", "HTTPS"]
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "PASS"
             report.status_extended = f"ELB {lb.name} has HTTPS listeners only."
             for listener in lb.listeners:

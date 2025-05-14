@@ -6,7 +6,7 @@ class glue_database_connections_ssl_enabled(Check):
     def execute(self):
         findings = []
         for conn in glue_client.connections:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=conn)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=conn)
             report.status = "FAIL"
             report.status_extended = (
                 f"Glue connection {conn.name} has SSL connection disabled."

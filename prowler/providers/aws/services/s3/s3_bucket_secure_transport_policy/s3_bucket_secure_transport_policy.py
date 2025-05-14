@@ -6,9 +6,7 @@ class s3_bucket_secure_transport_policy(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             # Check if bucket policy enforces SSL
             if not bucket.policy:
                 report.status = "FAIL"

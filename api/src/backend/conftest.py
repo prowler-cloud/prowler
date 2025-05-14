@@ -10,11 +10,14 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
+from tasks.jobs.backfill import backfill_resource_scan_summaries
 
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
+    IntegrationProviderRelationship,
     Invitation,
     Membership,
     Provider,
@@ -486,7 +489,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         name="Scan 1",
         provider=provider,
         trigger=Scan.TriggerChoices.MANUAL,
-        state=StateChoices.AVAILABLE,
+        state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
         started_at="2024-01-02T00:00:00Z",
     )
@@ -653,6 +656,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "Description": "test description orange juice",
         },
         first_seen_at="2024-01-02T00:00:00Z",
+        muted=True,
     )
 
     finding2.add_resources([resource2])
@@ -875,6 +879,54 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         muted_changed=0,
         scan=scan,
     )
+
+
+@pytest.fixture
+def integrations_fixture(providers_fixture):
+    provider1, provider2, *_ = providers_fixture
+    tenant_id = provider1.tenant_id
+    integration1 = Integration.objects.create(
+        tenant_id=tenant_id,
+        enabled=True,
+        connected=True,
+        integration_type="amazon_s3",
+        configuration={"key": "value"},
+        credentials={"psswd": "1234"},
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration1,
+        provider=provider1,
+    )
+
+    integration2 = Integration.objects.create(
+        tenant_id=tenant_id,
+        enabled=True,
+        connected=True,
+        integration_type="amazon_s3",
+        configuration={"key": "value"},
+        credentials={"psswd": "1234"},
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration2,
+        provider=provider1,
+    )
+    IntegrationProviderRelationship.objects.create(
+        tenant_id=tenant_id,
+        integration=integration2,
+        provider=provider2,
+    )
+
+    return integration1, integration2
+
+
+@pytest.fixture
+def backfill_scan_metadata_fixture(scans_fixture, findings_fixture):
+    for scan_instance in scans_fixture:
+        tenant_id = scan_instance.tenant_id
+        scan_id = scan_instance.id
+        backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 def get_authorization_header(access_token: str) -> dict:

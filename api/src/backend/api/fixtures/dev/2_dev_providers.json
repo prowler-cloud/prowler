@@ -123,6 +123,22 @@
     }
   },
   {
+    "model": "api.provider",
+    "pk": "7791914f-d646-4fe2-b2ed-73f2c6499a36",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:45:26.352Z",
+      "updated_at": "2024-10-18T11:16:23.533Z",
+      "provider": "kubernetes",
+      "uid": "gke_lucky-coast-419309_us-central1_autopilot-cluster-2",
+      "alias": "k8s_testing_2",
+      "connected": true,
+      "connection_last_checked_at": "2024-10-18T11:16:23.503Z",
+      "metadata": {},
+      "scanner_args": {}
+    }
+  },
+  {
     "model": "api.providersecret",
     "pk": "11491b47-75ae-4f71-ad8d-3e630a72182e",
     "fields": {
