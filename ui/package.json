@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@nextui-org/react": "^2.6.11",
+    "@nextui-org/react": "2.4.8",
     "@nextui-org/system": "2.2.1",
     "@nextui-org/theme": "2.2.5",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -23,23 +23,25 @@
     "cmdk": "^1.0.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.16.0",
+    "immer": "^10.1.1",
     "intl-messageformat": "^10.5.0",
     "jose": "^5.9.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.471.0",
-    "next": "^14.2.22",
+    "next": "^14.2.26",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.2.1",
+    "radix-ui": "^1.1.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.52.2",
-    "recharts": "^2.13.0-alpha.4",
+    "recharts": "^2.15.2",
     "server-only": "^0.0.1",
     "shadcn-ui": "^0.2.3",
     "sharp": "^0.33.5",
-    "tailwind-merge": "^2.5.3",
+    "tailwind-merge": "^3.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^10.0.0",
+    "uuid": "^11.0.5",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },
@@ -88,6 +90,9 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky"
+  },
+  "overrides": {
+    "@react-types/shared": "3.26.0"
   },
   "version": "0.0.1"
 }

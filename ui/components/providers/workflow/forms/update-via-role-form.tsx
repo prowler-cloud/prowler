@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Control, useForm } from "react-hook-form";
+import { useSession } from "next-auth/react";
+import { Control, useForm, UseFormSetValue } from "react-hook-form";
 import * as z from "zod";
 
 import { updateCredentialsProvider } from "@/actions/providers/providers";
@@ -25,78 +26,117 @@ export const UpdateViaRoleForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
 
   const searchParamsObj = useSearchParams();
 
-  // Handler for back button
-  const handleBackStep = () => {
-    const currentParams = new URLSearchParams(window.location.search);
-    currentParams.delete("via");
-    router.push(`?${currentParams.toString()}`);
-  };
-
+  // Extract values from searchParams
   const providerType = searchParams.type;
   const providerId = searchParams.id;
   const providerSecretId = searchParams.secretId || "";
+  const externalId = session?.tenantId;
 
   const formSchema = addCredentialsRoleFormSchema(providerType);
-  type FormSchemaType = z.infer<typeof formSchema>;
+  type FormSchemaType = z.infer<typeof formSchema> & {
+    credentials_type: "aws-sdk-default" | "access-secret-key";
+  };
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
       providerType,
-      ...(providerType === "aws"
-        ? {
-            role_arn: "",
-            aws_access_key_id: "",
-            aws_secret_access_key: "",
-            aws_session_token: "",
-            session_duration: 3600,
-            external_id: "",
-            role_session_name: "",
-          }
-        : {}),
+      credentials_type: "aws-sdk-default",
+      ...(providerType === "aws" && {
+        role_arn: "",
+        external_id: externalId,
+        aws_access_key_id: "",
+        aws_secret_access_key: "",
+        aws_session_token: "",
+        role_session_name: "",
+        session_duration: "3600",
+      }),
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
+  // Handle form submission
   const onSubmitClient = async (values: FormSchemaType) => {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    Object.entries(values).forEach(
-      ([key, value]) =>
-        value !== undefined && formData.append(key, String(value)),
-    );
+      Object.entries(values).forEach(([key, value]) => {
+        if (key === "credentials_type") return;
 
-    const data = await updateCredentialsProvider(providerSecretId, formData);
+        if (
+          values.credentials_type === "access-secret-key" &&
+          [
+            "aws_access_key_id",
+            "aws_secret_access_key",
+            "aws_session_token",
+          ].includes(key)
+        ) {
+          if (value !== undefined && value !== "") {
+            formData.append(key, String(value));
+          }
+          return;
+        }
 
-    if (data?.errors && data.errors.length > 0) {
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
-        switch (error.source.pointer) {
-          case "/data/attributes/secret/role_arn":
-            form.setError("role_arn" as keyof FormSchemaType, {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-
-          default:
-            toast({
-              variant: "destructive",
-              title: "Oops! Something went wrong",
-              description: errorMessage,
-            });
+        if (value !== undefined && value !== "") {
+          formData.append(key, String(value));
         }
       });
-    } else {
-      router.push(
-        `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
-      );
+
+      const data = await updateCredentialsProvider(providerSecretId, formData);
+
+      // Handle errors
+      if (data?.errors?.length) {
+        data.errors.forEach((error: ApiError) => {
+          const errorMessage = error.detail;
+          switch (error.source.pointer) {
+            case "/data/attributes/secret/role_arn":
+              form.setError("role_arn" as keyof FormSchemaType, {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data/attributes/secret/external_id":
+              form.setError("external_id" as keyof FormSchemaType, {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            default:
+              toast({
+                variant: "destructive",
+                title: "Oops! Something went wrong",
+                description: errorMessage,
+              });
+          }
+        });
+      } else {
+        // Redirect on success
+        router.push(
+          `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
+        );
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error during submission:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: "An error occurred while processing your request.",
+      });
     }
+  };
+
+  // Handle back navigation
+  const handleBackStep = () => {
+    const currentParams = new URLSearchParams(window.location.search);
+    currentParams.delete("via");
+    router.push(`?${currentParams.toString()}`);
   };
 
   return (
@@ -108,12 +148,18 @@ export const UpdateViaRoleForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
+        {/* Conditional AWS Form */}
         {providerType === "aws" && (
           <AWSCredentialsRoleForm
             control={form.control as unknown as Control<AWSCredentialsRole>}
+            setValue={
+              form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
+            }
+            externalId={externalId || ""}
           />
         )}
 
+        {/* Action Buttons */}
         <div className="flex w-full justify-end sm:space-x-6">
           {searchParamsObj.get("via") === "role" && (
             <CustomButton
@@ -132,7 +178,7 @@ export const UpdateViaRoleForm = ({
           )}
           <CustomButton
             type="submit"
-            ariaLabel={"Save"}
+            ariaLabel="Save"
             className="w-1/2"
             variant="solid"
             color="action"

@@ -9,9 +9,9 @@ class secretsmanager_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for secret in secretsmanager_client.secrets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=secret
-            )
+            if secret.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=secret)
             report.status = "PASS"
             report.status_extended = (
                 f"SecretsManager secret {secret.name} is not publicly accessible."

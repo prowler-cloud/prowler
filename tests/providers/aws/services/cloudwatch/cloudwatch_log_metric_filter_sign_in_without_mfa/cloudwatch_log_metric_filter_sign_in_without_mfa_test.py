@@ -36,18 +36,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -99,18 +104,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -168,18 +178,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -249,18 +264,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -279,7 +299,7 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -342,18 +362,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -372,7 +397,7 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -435,18 +460,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -465,7 +495,7 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -528,18 +558,23 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_sign_in_without_mfa.cloudwatch_log_metric_filter_sign_in_without_mfa import (
@@ -558,6 +593,6 @@ class Test_cloudwatch_log_metric_filter_sign_in_without_mfa:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1

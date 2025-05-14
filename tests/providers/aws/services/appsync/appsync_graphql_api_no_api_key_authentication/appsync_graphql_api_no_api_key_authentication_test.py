@@ -75,12 +75,15 @@ class Test_appsync_graphql_api_no_api_key_authentication:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
-            new=AppSync(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
+                new=AppSync(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication import (
@@ -98,12 +101,15 @@ class Test_appsync_graphql_api_no_api_key_authentication:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
-            new=AppSync(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
+                new=AppSync(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication import (
@@ -121,12 +127,15 @@ class Test_appsync_graphql_api_no_api_key_authentication:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
-            new=AppSync(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
+                new=AppSync(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication import (
@@ -156,12 +165,15 @@ class Test_appsync_graphql_api_no_api_key_authentication:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
-            new=AppSync(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication.appsync_client",
+                new=AppSync(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_api_key_authentication.appsync_graphql_api_no_api_key_authentication import (

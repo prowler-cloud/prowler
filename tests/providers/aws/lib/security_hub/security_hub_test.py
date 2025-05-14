@@ -2,6 +2,7 @@ import re
 from logging import WARNING
 
 import botocore
+import pytest
 from boto3 import session
 from botocore.client import ClientError
 from mock import patch
@@ -521,3 +522,47 @@ class TestSecurityHub:
 
         assert connection.is_connected is False
         assert isinstance(connection.error, SecurityHubNoEnabledRegionsError)
+
+    def test_init_without_session(self):
+        with pytest.raises(ValueError) as e:
+            SecurityHub(
+                aws_session=None,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
+            )
+
+        assert (
+            str(e.value)
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
+        )
+
+    def test_init_without_session_but_role_arn(self):
+        with pytest.raises(ValueError) as e:
+            SecurityHub(
+                aws_session=None,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
+                role_arn="arn:aws:iam::123456789012:role/my-role",
+            )
+
+        assert (
+            str(e.value)
+            == "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
+        )
+
+    def test_init_without_session_and_role_arn_but_session_duration(self):
+        with pytest.raises(ValueError) as e:
+            SecurityHub(
+                aws_session=None,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                aws_security_hub_available_regions=[AWS_REGION_EU_WEST_1],
+                session_duration=3600,
+            )
+
+        assert (
+            str(e.value)
+            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+        )

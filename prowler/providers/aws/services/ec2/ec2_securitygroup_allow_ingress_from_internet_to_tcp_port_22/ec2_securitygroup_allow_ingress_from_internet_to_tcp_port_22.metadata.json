@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#cli-command",
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <GROUP_ID> --protocol tcp --port 22 --cidr",
       "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security",
       "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#terraform"
     },
     "Recommendation": {

@@ -6,6 +6,8 @@ from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from rest_framework_json_api.serializers import ValidationError
 from tasks.beat import schedule_provider_scan
 
+from api.models import Scan
+
 
 @pytest.mark.django_db
 class TestScheduleProviderScan:
@@ -15,9 +17,11 @@ class TestScheduleProviderScan:
         with patch(
             "tasks.tasks.perform_scheduled_scan_task.apply_async"
         ) as mock_apply_async:
+            assert Scan.all_objects.count() == 0
             result = schedule_provider_scan(provider_instance)
 
             assert result is not None
+            assert Scan.all_objects.count() == 1
 
             mock_apply_async.assert_called_once_with(
                 kwargs={

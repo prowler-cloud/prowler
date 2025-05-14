@@ -7,7 +7,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## KMS
 class KMS(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("cloudkms", provider)

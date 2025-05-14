@@ -17,12 +17,15 @@ class Test_documentdb_cluster_storage_encrypted:
         documentdb_client = mock.MagicMock
         documentdb_client.db_clusters = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_storage_encrypted.documentdb_cluster_storage_encrypted import (
                 documentdb_cluster_storage_encrypted,
@@ -51,12 +54,15 @@ class Test_documentdb_cluster_storage_encrypted:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_storage_encrypted.documentdb_cluster_storage_encrypted import (
                 documentdb_cluster_storage_encrypted,
@@ -92,12 +98,15 @@ class Test_documentdb_cluster_storage_encrypted:
                 tags=[],
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_storage_encrypted.documentdb_cluster_storage_encrypted import (
                 documentdb_cluster_storage_encrypted,

@@ -11,9 +11,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=distribution
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=distribution)
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} is not using a deprecated SSL protocol."
 

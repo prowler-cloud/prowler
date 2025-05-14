@@ -25,6 +25,16 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "GetAuthorizers":
         return {"Items": [{"AuthorizerId": "authorizer-id", "Name": "test-authorizer"}]}
     elif operation_name == "GetStages":
+        if kwarg["ApiId"] == "not-found-api":
+            raise botocore.exceptions.ClientError(
+                {
+                    "Error": {
+                        "Code": "NotFoundException",
+                        "Message": "API not found",
+                    }
+                },
+                "GetStages",
+            )
         return {
             "Items": [
                 {
@@ -120,3 +130,24 @@ class Test_ApiGatewayV2_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.apis[0].stages[0].logging is True
+
+    # Test ApiGatewayV2 Get Stages with NotFoundException
+    @mock_aws
+    @patch("prowler.providers.aws.services.apigatewayv2.apigatewayv2_service.logger")
+    def test_get_stages_not_found_exception(self, mock_logger):
+        # Generate ApiGatewayV2 Client
+        apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
+        # Create ApiGatewayV2 Rest API
+        apigatewayv2_client.create_api(Name="test-api", ProtocolType="HTTP")
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
+
+        # Force API ID to trigger NotFoundException
+        apigatewayv2.apis[0].id = "not-found-api"
+
+        # Call _get_stages to trigger the exception
+        apigatewayv2._get_stages()
+
+        mock_logger.warning.assert_called_once()
+        assert "NotFoundException" in mock_logger.warning.call_args[0][0]

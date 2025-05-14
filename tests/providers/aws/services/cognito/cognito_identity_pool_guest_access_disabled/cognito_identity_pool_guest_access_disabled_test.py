@@ -11,12 +11,15 @@ class Test_cognito_identity_pool_guest_access_disabled:
     def test_cognito_no_identity_pools(self):
         cognito_identity_client = mock.MagicMock
         cognito_identity_client.identity_pools = {}
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
-            cognito_identity_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
-            new=cognito_identity_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+                cognito_identity_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+                new=cognito_identity_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_disabled.cognito_identity_pool_guest_access_disabled import (
                 cognito_identity_pool_guest_access_disabled,
@@ -41,12 +44,15 @@ class Test_cognito_identity_pool_guest_access_disabled:
                 name=identity_pool_name,
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
-            cognito_identity_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
-            new=cognito_identity_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+                cognito_identity_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+                new=cognito_identity_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_disabled.cognito_identity_pool_guest_access_disabled import (
                 cognito_identity_pool_guest_access_disabled,
@@ -81,12 +87,15 @@ class Test_cognito_identity_pool_guest_access_disabled:
                 roles=IdentityPoolRoles(unauthenticated=unauthenticated_role),
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
-            cognito_identity_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
-            new=cognito_identity_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+                cognito_identity_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+                new=cognito_identity_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_identity_pool_guest_access_disabled.cognito_identity_pool_guest_access_disabled import (
                 cognito_identity_pool_guest_access_disabled,

@@ -17,12 +17,15 @@ class Test_keyvault_private_endpoints:
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
-            new=keyvault_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
+                new=keyvault_client,
+            ),
         ):
             from prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints import (
                 keyvault_private_endpoints,
@@ -37,12 +40,15 @@ class Test_keyvault_private_endpoints:
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
-            new=keyvault_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
+                new=keyvault_client,
+            ),
         ):
             from prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints import (
                 keyvault_private_endpoints,
@@ -91,12 +97,15 @@ class Test_keyvault_private_endpoints:
             id="id",
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
-            new=keyvault_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints.keyvault_client",
+                new=keyvault_client,
+            ),
         ):
             from prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints import (
                 keyvault_private_endpoints,

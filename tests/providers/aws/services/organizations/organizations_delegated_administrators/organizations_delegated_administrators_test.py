@@ -45,7 +45,7 @@ class Test_organizations_delegated_administrators:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        response = conn.create_organization()
+        response = conn.describe_organization()
         org_id = response["Organization"]["Id"]
 
         with mock.patch(
@@ -80,7 +80,7 @@ class Test_organizations_delegated_administrators:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        response = conn.create_organization()
+        response = conn.describe_organization()
         # Create Dummy Account
         account = conn.create_account(
             Email="test@test.com",
@@ -133,7 +133,7 @@ class Test_organizations_delegated_administrators:
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        response = conn.create_organization()
+        response = conn.describe_organization()
         # Create Dummy Account
         account = conn.create_account(
             Email="test@test.com",

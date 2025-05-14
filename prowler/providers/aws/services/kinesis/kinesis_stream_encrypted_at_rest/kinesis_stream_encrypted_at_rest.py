@@ -7,9 +7,7 @@ class kinesis_stream_encrypted_at_rest(Check):
     def execute(self):
         findings = []
         for stream in kinesis_client.streams.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=stream
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=stream)
             report.status = "FAIL"
             report.status_extended = (
                 f"Kinesis Stream {stream.name} is not encrypted at rest."

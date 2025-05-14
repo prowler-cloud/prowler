@@ -6,7 +6,7 @@ class sagemaker_models_network_isolation_enabled(Check):
     def execute(self):
         findings = []
         for model in sagemaker_client.sagemaker_models:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=model)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=model)
             report.status = "PASS"
             report.status_extended = f"Sagemaker notebook instance {model.name} has network isolation enabled."
             if not model.network_isolation:

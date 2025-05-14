@@ -7,9 +7,7 @@ class kafka_cluster_uses_latest_version(Check):
         findings = []
 
         for cluster in kafka_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"Kafka cluster '{cluster.name}' is using the latest version."

@@ -1292,7 +1292,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "6.1. MySQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.1. MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "It is recommended to set a password for the administrative user (`root` by default) to prevent unauthorized access to the SQL database instances.  This recommendation is applicable only for MySQL Instances. PostgreSQL does not offer any setting for No Password from the cloud console.",
@@ -1313,7 +1314,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. MySQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.1. MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `skip_show_database` database flag for Cloud SQL Mysql instance to `on`",
@@ -1334,7 +1336,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. MySQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.1. MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set the `local_infile` database flag for a Cloud SQL MySQL instance to `off`.",
@@ -1355,7 +1358,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The `log_error_verbosity` flag controls the verbosity/details of messages logged. Valid values are: - `TERSE` - `DEFAULT` - `VERBOSE`  `TERSE` excludes the logging of `DETAIL`, `HINT`, `QUERY`, and `CONTEXT` error information.  `VERBOSE` output includes the `SQLSTATE` error code, source code file name, function name, and line number that generated the error.  Ensure an appropriate value is set to 'DEFAULT' or stricter.",
@@ -1376,7 +1380,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_error_statement` flag defines the minimum message severity level that are considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include `DEBUG5`, `DEBUG4`, `DEBUG3`, `DEBUG2`, `DEBUG1`, `INFO`, `NOTICE`, `WARNING`, `ERROR`, `LOG`, `FATAL`, and `PANIC`. Each severity level includes the subsequent levels mentioned above. Ensure a value of `ERROR` or stricter is set.",
@@ -1397,7 +1402,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The value of `log_statement` flag determined the SQL statements that are logged. Valid values are: - `none` - `ddl` - `mod` - `all`  The value `ddl` logs all data definition statements. The value `mod` logs all ddl statements, plus data-modifying statements.  The statements are logged after a basic parsing is done and statement type is determined, thus this does not logs statements with errors. When using extended query protocol, logging occurs after an Execute message is received and values of the Bind parameters are included.  A value of 'ddl' is recommended unless otherwise directed by your organization's logging policy.",
@@ -1418,7 +1424,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Instance addresses can be public IP or private IP. Public IP means that the instance is accessible through the public internet. In contrast, instances using only private IP are not accessible through the public internet, but are accessible through a Virtual Private Cloud (VPC).  Limiting network access to your database will limit potential attacks.",
@@ -1439,7 +1446,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure `cloudsql.enable_pgaudit` database flag for Cloud SQL PostgreSQL instance is set to `on` to allow for centralized logging.",
@@ -1460,7 +1468,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enabling the `log_connections` setting causes each attempted connection to the server to be logged, along with successful completion of client authentication. This parameter cannot be changed after the session starts.",
@@ -1481,7 +1490,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enabling the `log_disconnections` setting logs the end of each session, including the session duration.",
@@ -1502,7 +1512,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_duration_statement` flag defines the minimum amount of execution time of a statement in milliseconds where the total duration of the statement is logged. Ensure that `log_min_duration_statement` is disabled, i.e., a value of `-1` is set.",
@@ -1523,7 +1534,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. PostgreSQL Database",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.2. PostgreSQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The `log_min_messages` flag defines the minimum message severity level that is considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include `DEBUG5`, `DEBUG4`, `DEBUG3`, `DEBUG2`, `DEBUG1`, `INFO`, `NOTICE`, `WARNING`, `ERROR`, `LOG`, `FATAL`, and `PANIC`. Each severity level includes the subsequent levels mentioned above. ERROR is considered the best practice setting. Changes should only be made in accordance with the organization's logging policy.",
@@ -1544,7 +1556,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `3625 (trace flag)` database flag for Cloud SQL SQL Server instance to `on`.",
@@ -1565,7 +1578,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `external scripts enabled` database flag for Cloud SQL SQL Server instance to `off`",
@@ -1586,7 +1600,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `remote access` database flag for Cloud SQL SQL Server instance to `off`.",
@@ -1607,7 +1622,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to check the `user connections` for a Cloud SQL SQL Server instance to ensure that it is not artificially limiting connections.",
@@ -1628,7 +1644,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended that, `user options` database flag for Cloud SQL SQL Server instance should not be configured.",
@@ -1649,7 +1666,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `contained database authentication` database flag for Cloud SQL on the SQL Server instance to `off`.",
@@ -1670,7 +1688,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. SQL Server",
+          "Section": "6. Cloud SQL Database Services",
+          "SubSection": "6.3. SQL Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "It is recommended to set `cross db ownership chaining` database flag for Cloud SQL SQL Server instance to `off`.",

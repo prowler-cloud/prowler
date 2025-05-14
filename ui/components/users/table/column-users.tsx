@@ -46,7 +46,7 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Company Name"}
+        title={"Company name"}
         param="company_name"
       />
     ),

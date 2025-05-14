@@ -1,5 +1,5 @@
 {
-  "Provider": "compute",
+  "Provider": "gcp",
   "CheckID": "compute_public_address_shodan",
   "CheckTitle": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
   "CheckType": [

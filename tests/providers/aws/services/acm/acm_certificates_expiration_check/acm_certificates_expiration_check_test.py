@@ -135,12 +135,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
@@ -159,12 +162,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,
@@ -195,12 +201,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,
@@ -240,12 +249,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
@@ -276,12 +288,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         aws_mocked_provider._scan_unused_services = False
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,
@@ -299,12 +314,15 @@ class Test_acm_certificates_expiration_check:
 
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_mocked_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
-            new=ACM(aws_mocked_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
         ):
             from prowler.providers.aws.services.acm.acm_certificates_expiration_check.acm_certificates_expiration_check import (
                 acm_certificates_expiration_check,

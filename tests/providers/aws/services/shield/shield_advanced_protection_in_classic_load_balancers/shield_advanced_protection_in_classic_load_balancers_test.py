@@ -20,15 +20,23 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
-            new=ELB(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
@@ -79,15 +87,23 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
-            new=ELB(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
@@ -137,15 +153,23 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
-            new=ELB(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (
@@ -195,15 +219,23 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
         from prowler.providers.aws.services.elb.elb_service import ELB
 
-        with mock.patch(
-            "prowler.providers.aws.services.shield.shield_service.Shield",
-            new=shield_client,
-        ), mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
-            new=ELB(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_service.Shield",
+                new=shield_client,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers.elb_client",
+                new=ELB(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_classic_load_balancers.shield_advanced_protection_in_classic_load_balancers import (

@@ -11,7 +11,7 @@ class shield_advanced_protection_in_global_accelerators(Check):
         if shield_client.enabled:
             for accelerator in globalaccelerator_client.accelerators.values():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=accelerator
+                    metadata=self.metadata(), resource=accelerator
                 )
                 report.region = shield_client.region
                 report.status = "FAIL"

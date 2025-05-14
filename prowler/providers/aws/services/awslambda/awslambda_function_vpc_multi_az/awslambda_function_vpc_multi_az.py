@@ -16,9 +16,7 @@ class awslambda_function_vpc_multi_az(Check):
                 awslambda_function_inside_vpc.__name__,
                 function_arn,
             ):
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=function
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
                 report.status = "FAIL"
                 report.status_extended = (

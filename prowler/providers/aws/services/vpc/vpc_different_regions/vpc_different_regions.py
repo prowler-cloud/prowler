@@ -12,7 +12,7 @@ class vpc_different_regions(Check):
                     vpc_regions.add(vpc.region)
 
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=vpc_client.vpcs
+                metadata=self.metadata(), resource=vpc_client.vpcs
             )
             report.region = vpc_client.region
             report.resource_id = vpc_client.audited_account

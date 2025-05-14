@@ -11,7 +11,7 @@ class iam_sa_no_administrative_privileges(Check):
         for account in iam_client.service_accounts:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=account,
+                resource=account,
                 resource_id=account.email,
                 location=iam_client.region,
             )
@@ -24,7 +24,6 @@ class iam_sa_no_administrative_privileges(Check):
                     "admin" in binding.role.lower()
                     or binding.role.lower() in ["roles/editor", "roles/owner"]
                 ):
-
                     report.status = "FAIL"
                     report.status_extended = f"Account {account.email} has administrative privileges with {binding.role}."
             findings.append(report)

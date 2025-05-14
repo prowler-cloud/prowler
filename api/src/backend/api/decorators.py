@@ -7,7 +7,7 @@ from rest_framework_json_api.serializers import ValidationError
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 
 
-def set_tenant(func):
+def set_tenant(func=None, *, keep_tenant=False):
     """
     Decorator to set the tenant context for a Celery task based on the provided tenant_id.
 
@@ -40,20 +40,29 @@ def set_tenant(func):
         # The tenant context will be set before the task logic executes.
     """
 
-    @wraps(func)
-    @transaction.atomic
-    def wrapper(*args, **kwargs):
-        try:
-            tenant_id = kwargs.pop("tenant_id")
-        except KeyError:
-            raise KeyError("This task requires the tenant_id")
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-        with connection.cursor() as cursor:
-            cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+    def decorator(func):
+        @wraps(func)
+        @transaction.atomic
+        def wrapper(*args, **kwargs):
+            try:
+                if not keep_tenant:
+                    tenant_id = kwargs.pop("tenant_id")
+                else:
+                    tenant_id = kwargs["tenant_id"]
+            except KeyError:
+                raise KeyError("This task requires the tenant_id")
+            try:
+                uuid.UUID(tenant_id)
+            except ValueError:
+                raise ValidationError("Tenant ID must be a valid UUID")
+            with connection.cursor() as cursor:
+                cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
 
-        return func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)

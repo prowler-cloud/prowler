@@ -14,7 +14,7 @@ class ec2_ebs_snapshot_account_block_public_access(Check):
             ):
                 report = Check_Report_AWS(
                     metadata=self.metadata(),
-                    resource_metadata=ebs_snapshot_block_status,
+                    resource=ebs_snapshot_block_status,
                 )
                 report.resource_arn = ec2_client.account_arn_template
                 report.resource_id = ec2_client.audited_account

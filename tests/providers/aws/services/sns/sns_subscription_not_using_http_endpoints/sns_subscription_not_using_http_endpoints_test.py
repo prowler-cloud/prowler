@@ -65,6 +65,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -100,6 +101,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -131,6 +133,7 @@ class Test_sns_subscription_not_using_http_endpoints:
             )
             assert result[0].resource_id == subscription_id_1
             assert result[0].resource_arn == subscription_arn_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_subscriptions_with_http(self):
         sns_client = mock.MagicMock
@@ -142,6 +145,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="http",
                 endpoint="http://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -173,6 +177,7 @@ class Test_sns_subscription_not_using_http_endpoints:
             )
             assert result[0].resource_id == subscription_id_2
             assert result[0].resource_arn == subscription_arn_2
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_subscriptions_with_http_and_https(self):
         sns_client = mock.MagicMock
@@ -184,6 +189,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         subscriptions.append(
@@ -193,6 +199,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="http",
                 endpoint="http://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -224,6 +231,7 @@ class Test_sns_subscription_not_using_http_endpoints:
             )
             assert result[0].resource_id == subscription_id_1
             assert result[0].resource_arn == subscription_arn_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
             assert result[1].status == "FAIL"
             assert (
@@ -232,3 +240,4 @@ class Test_sns_subscription_not_using_http_endpoints:
             )
             assert result[1].resource_id == subscription_id_2
             assert result[1].resource_arn == subscription_arn_2
+            assert result[1].region == AWS_REGION_EU_WEST_1

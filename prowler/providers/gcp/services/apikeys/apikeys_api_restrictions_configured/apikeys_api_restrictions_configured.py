@@ -8,7 +8,7 @@ class apikeys_api_restrictions_configured(Check):
         for key in apikeys_client.keys:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=key,
+                resource=key,
                 location=apikeys_client.region,
             )
             report.status = "PASS"

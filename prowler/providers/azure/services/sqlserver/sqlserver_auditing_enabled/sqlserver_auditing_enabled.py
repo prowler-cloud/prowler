@@ -7,13 +7,12 @@ class sqlserver_auditing_enabled(Check):
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=sql_server
+                )
                 report.subscription = subscription
                 report.status = "PASS"
                 report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has a auditing policy configured."
-                report.resource_name = sql_server.name
-                report.resource_id = sql_server.id
-                report.location = sql_server.location
                 for auditing_policy in sql_server.auditing_policies:
                     if auditing_policy.state == "Disabled":
                         report.status = "FAIL"

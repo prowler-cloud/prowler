@@ -17,7 +17,7 @@ class servicecatalog_portfolio_shared_within_organization_only(Check):
             for portfolio in servicecatalog_client.portfolios.values():
                 if portfolio.shares is not None:
                     report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=portfolio
+                        metadata=self.metadata(), resource=portfolio
                     )
                     report.status = "PASS"
                     report.status_extended = f"ServiceCatalog Portfolio {portfolio.name} is shared within your AWS Organization."

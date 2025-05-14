@@ -9,7 +9,7 @@ class elbv2_is_in_multiple_az(Check):
         findings = []
         elbv2_min_azs = elbv2_client.audit_config.get("elbv2_min_azs", 2)
         for lb in elbv2_client.loadbalancersv2.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "FAIL"
             report.status_extended = f"ELBv2 {lb.name} is not in at least {elbv2_min_azs} AZs. Is only in {', '.join(lb.availability_zones.keys())}."
 

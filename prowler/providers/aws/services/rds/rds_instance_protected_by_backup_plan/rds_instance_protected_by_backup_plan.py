@@ -7,9 +7,7 @@ class rds_instance_protected_by_backup_plan(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             # Makes sure the instance is not running with an Aurora engine
             # Aurora backup plans require enabling it separately from RDS
             if db_instance.engine not in [
