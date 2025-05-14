@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_default_branch_requires_multiple_approvals` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
 - Add `repository_default_branch_protection_enabled` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
 - Add `repository_default_branch_requires_linear_history` check for GitHub provider. [(#6162)](https://github.com/prowler-cloud/prowler/pull/6162)
+- Add `repository_default_branch_disallows_force_push` check for GitHub provider. [(#6197)](https://github.com/prowler-cloud/prowler/pull/6197)
 - Add `organization_members_mfa_required` check for GitHub provider. [(#6304)](https://github.com/prowler-cloud/prowler/pull/6304)
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 
