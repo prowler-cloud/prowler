@@ -468,6 +468,7 @@ The required modules are:
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
 
 ## GitHub
+### Authentication
 
 Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
 
@@ -480,4 +481,4 @@ This flexibility allows you to scan and analyze your GitHub account, including r
 The provided credentials must have the appropriate permissions to perform all the required checks.
 
 ???+ note
-    GitHub app credentials support less checks than other authentication methods.
+    GitHub App Credentials support less checks than other authentication methods.
