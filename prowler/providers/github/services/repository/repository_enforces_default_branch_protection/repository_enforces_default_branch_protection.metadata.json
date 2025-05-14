@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
   "Severity": "critical",
-  "ResourceType": "Other",
+  "ResourceType": "GitHubRepository",
   "Description": "Ensure branch protection is enforced on the default branch",
   "Risk": "The absence of branch protection on the default branch increases the risk of unauthorized, unreviewed, or untested changes being merged. This can compromise the stability, security, and reliability of the codebase, which is especially critical for production deployments.",
   "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",

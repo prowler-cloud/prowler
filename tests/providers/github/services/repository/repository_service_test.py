@@ -46,7 +46,7 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].full_name == "account-name/repo1"
         assert repository_service.repositories[1].private is False
         assert repository_service.repositories[1].default_branch == "main"
-        # Default branch protection
+        assert repository_service.repositories[1].securitymd
         assert repository_service.repositories[
             1
         ].default_branch_protection.require_pull_request
@@ -54,5 +54,3 @@ class Test_Repository_Service:
             repository_service.repositories[1].default_branch_protection.approval_count
             == 2
         )
-        # Repo
-        assert repository_service.repositories[1].securitymd
