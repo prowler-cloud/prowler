@@ -32,7 +32,7 @@ class Repository(GithubService):
 
                     require_pr = False
                     approval_cnt = 0
-                    branch_protection = None
+                    branch_protection = False
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -46,17 +46,16 @@ class Repository(GithubService):
                                     if require_pr
                                     else 0
                                 )
-                                branch_protection = Protection(
-                                    require_pull_request=require_pr,
-                                    approval_count=approval_cnt,
-                                )
+                                branch_protection = True
                     except Exception as error:
                         if "404" in str(error):
                             require_pr = False
                             approval_cnt = 0
+                            branch_protection = False
                         else:
                             require_pr = None
                             approval_cnt = None
+                            branch_protection = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -80,20 +79,13 @@ class Repository(GithubService):
         return repos
 
 
-class Protection(BaseModel):
-    """Model for Github Branch Protection"""
-
-    require_pull_request: Optional[bool] = False
-    approval_count: Optional[int] = 0
-
-
 class Repo(BaseModel):
     """Model for Github Repository"""
 
     id: int
     name: str
     full_name: str
-    default_branch_protection: Optional[Protection]
+    default_branch_protection: Optional[bool]
     default_branch: str
     private: bool
     securitymd: Optional[bool]

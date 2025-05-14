@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 from prowler.providers.github.services.repository.repository_service import (
-    Protection,
     Repo,
     Repository,
 )
@@ -14,9 +13,7 @@ def mock_list_repositories(_):
             id=1,
             name="repo1",
             full_name="account-name/repo1",
-            default_branch_protection=Protection(
-                require_pull_request=True, approval_count=2
-            ),
+            default_branch_protection=True,
             default_branch="main",
             private=False,
             securitymd=True,
@@ -47,10 +44,5 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].private is False
         assert repository_service.repositories[1].default_branch == "main"
         assert repository_service.repositories[1].securitymd
-        assert repository_service.repositories[
-            1
-        ].default_branch_protection.require_pull_request
-        assert (
-            repository_service.repositories[1].default_branch_protection.approval_count
-            == 2
-        )
+        assert repository_service.repositories[1].require_pull_request
+        assert repository_service.repositories[1].approval_count == 2

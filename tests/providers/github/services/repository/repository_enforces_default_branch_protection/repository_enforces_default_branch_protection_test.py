@@ -1,9 +1,6 @@
 from unittest import mock
 
-from prowler.providers.github.services.repository.repository_service import (
-    Protection,
-    Repo,
-)
+from prowler.providers.github.services.repository.repository_service import Repo
 from tests.providers.github.github_fixtures import set_mocked_github_provider
 
 
@@ -41,6 +38,7 @@ class Test_repository_enforces_default_branch_protection_test:
                 full_name="account-name/repo1",
                 default_branch=default_branch,
                 private=False,
+                default_branch_protection=False,
                 securitymd=False,
             ),
         }
@@ -81,9 +79,7 @@ class Test_repository_enforces_default_branch_protection_test:
                 full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,
-                default_branch_protection=Protection(
-                    require_pull_request=True, approval_count=2
-                ),
+                default_branch_protection=True,
                 securitymd=True,
             ),
         }

@@ -22,16 +22,17 @@ class repository_enforces_default_branch_protection(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = CheckReportGithub(
-                metadata=self.metadata(), resource=repo, repository=repo.name
-            )
-            report.status = "FAIL"
-            report.status_extended = f"Repository {repo.name} does not enforce branch protection on default branch ({repo.default_branch})."
+            if repo.default_branch_protection is not None:
+                report = CheckReportGithub(
+                    metadata=self.metadata(), resource=repo, repository=repo.name
+                )
+                report.status = "FAIL"
+                report.status_extended = f"Repository {repo.name} does not enforce branch protection on default branch ({repo.default_branch})."
 
-            if repo.default_branch_protection:
-                report.status = "PASS"
-                report.status_extended = f"Repository {repo.name} does enforce branch protection on default branch ({repo.default_branch})."
+                if repo.default_branch_protection:
+                    report.status = "PASS"
+                    report.status_extended = f"Repository {repo.name} does enforce branch protection on default branch ({repo.default_branch})."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
