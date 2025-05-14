@@ -590,7 +590,7 @@ See more details about M365 Authentication in [Requirements](getting-started/req
 
 #### GitHub
 
-Prowler allows allows you to scan your GitHub account, including your repositories, organizations or applications.
+Prowler allows you to scan your GitHub account, including your repositories, organizations or applications.
 
 There are several supported login methods:
 
