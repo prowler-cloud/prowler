@@ -211,14 +211,12 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                       value={value}
                     >
                       {entity ? (
-                        <div>
-                          <EntityInfoShort
-                            cloudProvider={entity.provider}
-                            entityAlias={entity.alias}
-                            entityId={entity.uid}
-                            hideCopyButton
-                          />
-                        </div>
+                        <EntityInfoShort
+                          cloudProvider={entity.provider}
+                          entityAlias={entity.alias}
+                          entityId={entity.uid}
+                          hideCopyButton
+                        />
                       ) : (
                         value
                       )}
