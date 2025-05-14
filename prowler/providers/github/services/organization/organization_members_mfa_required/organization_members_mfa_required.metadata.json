@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "Other",
+  "ResourceType": "GitHubOrganization",
   "Description": "Ensure that all organization members are required to have multi-factor authentication (MFA) enabled. Enforcing MFA for all organization members helps protect the organization's resources and data from unauthorized access and security breaches.",
   "Risk": "Without Multi-Factor Authentication (MFA), user accounts are vulnerable to unauthorized access if their passwords are compromised. This can lead to unauthorized actions such as data theft, malicious code commits, and repository manipulation, potentially compromising the organization's source code and intellectual property.",
   "RelatedUrl": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization",
@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
