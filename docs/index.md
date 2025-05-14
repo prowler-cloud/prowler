@@ -606,7 +606,7 @@ prowler github --github-app-id app_id --github-app-key app_key
 ```
 
 ???+ note
-    If no token is explicitly provided, Prowler will automatically search for environment variables corresponding to these tokens, in the following order:
+    If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
       1. `GITHUB_PERSONAL_ACCESS_TOKEN`
       2. `OAUTH_APP_TOKEN`
