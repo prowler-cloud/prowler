@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Add a new chart to show the split between passed and failed findings. [(#7680)](https://github.com/prowler-cloud/prowler/pull/7680)
 - Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
+- Added an AWS CloudFormation Quick Link to the IAM Role credentials step [(#7735)](https://github.com/prowler-cloud/prowler/pull/7735)
 
 ### 🐞 Fixes
 
