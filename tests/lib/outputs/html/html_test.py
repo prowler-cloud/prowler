@@ -12,6 +12,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
+from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
 html_stats = {
     "total_pass": 25,
@@ -217,6 +218,38 @@ kubernetes_html_assessment_summary = """
                         list-group-flush">
                             <li class="list-group-item">
                                 <b>Kubernetes Context:</b> None
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+m365_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            M365 Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>M365 Tenant Domain:</b> user.onmicrosoft.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        M365 Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>M365 Identity Type:</b> Application
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 Identity ID:</b> 00000000-0000-0000-0000-000000000000
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 User:</b> user@email.com
                             </li>
                         </ul>
                     </div>
@@ -554,3 +587,13 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == kubernetes_html_assessment_summary
+
+    def test_m365_get_assessment_summary(self):
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_m365_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        expected_summary = m365_html_assessment_summary
+        assert summary == expected_summary

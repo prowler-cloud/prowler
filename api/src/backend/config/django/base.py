@@ -111,6 +111,7 @@ SPECTACULAR_SETTINGS = {
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
     ],
+    "TITLE": "API Reference - Prowler",
 }
 
 WSGI_APPLICATION = "config.wsgi.application"

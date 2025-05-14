@@ -545,10 +545,54 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_github_assessment_summary(provider: Provider) -> str:
+        """
+        get_github_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> {provider.identity.account_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_m365_assessment_summary(provider: Provider) -> str:
         """
         get_m365_assessment_summary gets the HTML assessment summary for the provider
-
         Args:
             provider (Provider): the provider object
 
@@ -564,7 +608,9 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>M365 Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>M365 Tenant Domain:</b> {
+                provider.identity.tenant_domain
+            }
                             </li>
                         </ul>
                     </div>
@@ -581,6 +627,14 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>M365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
+                            {
+                f'''<li class="list-group-item">
+                                <b>M365 User:</b> {provider.identity.user}
+                            </li>'''
+                if hasattr(provider.identity, "user")
+                and provider.identity.user is not None
+                else ""
+            }
                         </ul>
                     </div>
                 </div>"""
@@ -651,6 +705,7 @@ class HTML(Output):
             # It is not pretty but useful
             # AWS_provider --> aws
             # GCP_provider --> gcp
+            # GitHub_provider --> github
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 

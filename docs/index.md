@@ -565,6 +565,7 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
+
 #### Microsoft 365
 
 With M365 you need to specify which auth method is going to be used:
@@ -586,6 +587,30 @@ prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 ```
 
 See more details about M365 Authentication in [Requirements](getting-started/requirements.md#microsoft-365)
+
+#### GitHub
+
+Prowler allows you to scan your GitHub account, including your repositories, organizations or applications.
+
+There are several supported login methods:
+
+```console
+# Personal Access Token (PAT):
+prowler github --personal-access-token pat
+
+# OAuth App Token:
+prowler github --oauth-app-token oauth_token
+
+# GitHub App Credentials:
+prowler github --github-app-id app_id --github-app-key app_key
+```
+
+???+ note
+    If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
+
+      1. `GITHUB_PERSONAL_ACCESS_TOKEN`
+      2. `OAUTH_APP_TOKEN`
+      3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

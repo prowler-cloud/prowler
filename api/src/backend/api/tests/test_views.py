@@ -2,7 +2,9 @@ import glob
 import io
 import json
 import os
+import tempfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
@@ -2318,35 +2320,34 @@ class TestScanViewSet:
         assert response.status_code == 404
         assert response.json()["errors"]["detail"] == "The scan has no reports."
 
-    def test_report_local_file(
-        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
-    ):
-        """
-        When output_location is a local file path, the view should read the file from disk
-        and return it with proper headers.
-        """
+    def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
-        file_content = b"local zip file content"
-        file_path = tmp_path / "report.zip"
-        file_path.write_bytes(file_content)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base_tmp = tmp_path / "report_local_file"
+            base_tmp.mkdir(parents=True, exist_ok=True)
 
-        scan.output_location = str(file_path)
-        scan.state = StateChoices.COMPLETED
-        scan.save()
+            file_content = b"local zip file content"
+            file_path = base_tmp / "report.zip"
+            file_path.write_bytes(file_content)
 
-        monkeypatch.setattr(
-            glob,
-            "glob",
-            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
-        )
+            scan.output_location = str(file_path)
+            scan.state = StateChoices.COMPLETED
+            scan.save()
 
-        url = reverse("scan-report", kwargs={"pk": scan.id})
-        response = authenticated_client.get(url)
-        assert response.status_code == 200
-        assert response.content == file_content
-        content_disposition = response.get("Content-Disposition")
-        assert content_disposition.startswith('attachment; filename="')
-        assert f'filename="{file_path.name}"' in content_disposition
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+            )
+
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == 200
+            assert response.content == file_content
+            content_disposition = response.get("Content-Disposition")
+            assert content_disposition.startswith('attachment; filename="')
+            assert f'filename="{file_path.name}"' in content_disposition
 
     def test_compliance_invalid_framework(self, authenticated_client, scans_fixture):
         scan = scans_fixture[0]
@@ -2481,31 +2482,36 @@ class TestScanViewSet:
         )
 
     def test_compliance_local_file(
-        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+        self, authenticated_client, scans_fixture, monkeypatch
     ):
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
-        base = tmp_path / "reports"
-        comp_dir = base / "compliance"
-        comp_dir.mkdir(parents=True)
-        fname = comp_dir / "scan_cis.csv"
-        fname.write_bytes(b"ignored")
 
-        scan.output_location = str(base / "scan.zip")
-        scan.save()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            comp_dir = base / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+            fname = comp_dir / "scan_cis.csv"
+            fname.write_bytes(b"ignored")
 
-        monkeypatch.setattr(
-            glob,
-            "glob",
-            lambda p: [str(fname)] if p.endswith("*_cis_1.4_aws.csv") else [],
-        )
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
 
-        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
-        resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_200_OK
-        cd = resp["Content-Disposition"]
-        assert cd.startswith('attachment; filename="')
-        assert cd.endswith(f'filename="{fname.name}"')
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(fname)] if p.endswith("*_cis_1.4_aws.csv") else [],
+            )
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
 
     @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.TaskSerializer")
@@ -3096,7 +3102,9 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
+    def test_findings_metadata_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
+    ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
@@ -3119,14 +3127,14 @@ class TestFindingViewSet:
         )
         # assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_metadata_severity_retrieve(
-        self, authenticated_client, findings_fixture
+    def test_findings_metadata_resource_filter_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
             {
-                "filter[severity__in]": ["low", "medium"],
+                "filter[region]": "eu-west-1",
                 "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -4814,9 +4822,8 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
-            resources_fixture
-        )
+        # Since we rely on completed scans, there are only 2 resources now
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture

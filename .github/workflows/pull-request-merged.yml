@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - name: Set short git commit SHA
         id: vars
@@ -30,5 +32,6 @@ jobs:
             "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
             "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
             "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},
-            "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }}
+            "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }},
+            "PROWLER_PR_URL":${{ toJson(github.event.pull_request.html_url) }}
           }'
