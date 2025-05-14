@@ -47,7 +47,10 @@ export const FeedsClient: React.FC<FeedsClientProps> = ({
             )}
           >
             <Icon size={18} />
-            <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-500"></span>
+            {/* TODO: Update this condition once the RSS data response structure is finalized */}
+            {feed.length > 0 && (
+              <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-500 dark:bg-gray-400"></span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" forceMount>
