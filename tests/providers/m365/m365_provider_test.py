@@ -318,6 +318,7 @@ class TestM365Provider:
                 tenant_id=str(uuid4()),
                 region="M365Global",
                 raise_on_exception=False,
+                provider_id="test.onmicrosoft.com",
             )
 
             assert isinstance(test_connection, Connection)
@@ -332,6 +333,17 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            ),
         ):
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
@@ -346,6 +358,7 @@ class TestM365Provider:
                 raise_on_exception=False,
                 client_id=str(uuid4()),
                 client_secret=str(uuid4()),
+                provider_id="test.onmicrosoft.com",
             )
 
             assert isinstance(test_connection, Connection)
