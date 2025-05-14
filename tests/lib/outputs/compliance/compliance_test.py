@@ -330,3 +330,55 @@ class TestCompliance:
             "CIS-2.0": ["2.1.3"],
             "CIS-2.1": ["2.1.3"],
         }
+
+    def test_get_check_compliance_github(self):
+        check_compliance = [
+            Compliance(
+                Framework="CIS",
+                Provider="Github",
+                Version="1.0",
+                Description="This document provides prescriptive guidance for establishing a secure configuration posture for securing GitHub.",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="1.1.11",
+                        Description="Ensure all open comments are resolved before allowing code change merging",
+                        Attributes=[
+                            CIS_Requirement_Attribute(
+                                Section="1.1",
+                                Profile="Level 2",
+                                AssessmentStatus="Manual",
+                                Description='Organizations should enforce a "no open comments" policy before allowing code change merging.',
+                                RationaleStatement="In an open code change proposal, reviewers can leave comments containing their questions and suggestions. These comments can also include potential bugs and security issues. Requiring all comments on a code change proposal to be resolved before it can be merged ensures that every concern is properly addressed or acknowledged before the new code changes are introduced to the code base.",
+                                ImpactStatement="Code change proposals containing open comments would not be able to be merged into the code base.",
+                                RemediationProcedure='For each code repository in use, require open comments to be resolved before the relevant code change can be merged by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the "Code and automation" section of the sidebar, click **Branches**.\n 4. Next to "Branch protection rules", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn\'t, click **Add rule**.\n 5. If you add the rule, under "Branch name pattern", type the branch name or pattern you want to protect.\n 6. Select **Require conversation resolution before merging**.\n 7. Click **Create** or **Save changes**.',
+                                AuditProcedure='For every code repository in use, verify that each merged code change does not contain open, unattended comments by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the "Code and automation" section of the sidebar, click **Branches**.\n 4. Next to "Branch protection rules", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn\'t, you are not compliant.\n 5. Ensure that **Require conversation resolution before merging** is checked.',
+                                AdditionalInformation="",
+                                References="",
+                            )
+                        ],
+                    )
+                ],
+            )
+        ]
+
+        finding = Check_Report(
+            metadata=load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
+            ).json(),
+            resource={},
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        bulk_checks_metadata = {}
+        bulk_checks_metadata["iam_user_accesskey_unused"] = mock.MagicMock()
+        bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = check_compliance
+
+        assert get_check_compliance(finding, "github", bulk_checks_metadata) == {
+            "CIS-1.0": ["1.1.11"],
+        }
