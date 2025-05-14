@@ -735,7 +735,7 @@ class M365Provider(Provider):
             # Check that user domain, provider_id and Graph client tenant_domain are the same
             if user and encrypted_password:
                 user_domain = user.split("@")[1]
-                if provider_id and user_domain != provider_id:
+                if provider_id and not provider_id.endswith(user_domain):
                     raise M365InvalidProviderIdError(
                         file=os.path.basename(__file__),
                         message=f"Provider ID {provider_id} does not match Application tenant domain {user_domain}",
