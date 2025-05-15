@@ -19,10 +19,10 @@ interface ClientAccordionContentProps {
   scanId: string;
 }
 
-export function ClientAccordionContent({
+export const ClientAccordionContent = ({
   requirement,
   scanId,
-}: ClientAccordionContentProps) {
+}: ClientAccordionContentProps) => {
   const [findings, setFindings] = useState<any>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const { isLoading, startLoading, stopLoading } = useLoadingState({
@@ -171,4 +171,4 @@ export function ClientAccordionContent({
       {renderContent()}
     </div>
   );
-}
+};

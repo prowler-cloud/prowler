@@ -146,9 +146,9 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             </PieChart>
           </ChartContainer>
 
-          <div className="grid w-full grid-cols-2 justify-items-center gap-6">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2 self-end">
+              <div className="flex items-center space-x-2">
                 <Link
                   href="/findings?filter[status]=PASS"
                   className="flex items-center space-x-2"
