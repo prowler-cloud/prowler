@@ -31,7 +31,10 @@ export function ClientAccordionContent({
   });
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
+  const defaultSort = "severity,status,-inserted_at";
+  const sort = searchParams.get("sort") || defaultSort;
   const loadedPageRef = useRef<string | null>(null);
+  const loadedSortRef = useRef<string | null>(null);
   const isExpandedRef = useRef(false);
 
   useEffect(() => {
@@ -39,56 +42,65 @@ export function ClientAccordionContent({
       if (
         requirement.checks?.length > 0 &&
         requirement.status !== "No findings" &&
-        (loadedPageRef.current !== pageNumber || !isExpandedRef.current)
+        (loadedPageRef.current !== pageNumber ||
+          loadedSortRef.current !== sort ||
+          !isExpandedRef.current)
       ) {
         loadedPageRef.current = pageNumber;
+        loadedSortRef.current = sort;
         isExpandedRef.current = true;
 
         startLoading();
 
-        const checkIds = requirement.checks.map(
-          (check: any) => check.checkName,
-        );
-
-        const findingsData = await getFindings({
-          filters: {
-            "filter[check_id__in]": checkIds.join(","),
-            "filter[scan]": scanId,
-          },
-          page: parseInt(pageNumber, 10),
-        });
-
-        setFindings(findingsData);
-
-        if (findingsData?.data) {
-          // Create dictionaries for resources, scans, and providers
-          const resourceDict = createDict("resources", findingsData);
-          const scanDict = createDict("scans", findingsData);
-          const providerDict = createDict("providers", findingsData);
-
-          // Expand each finding with its corresponding resource, scan, and provider
-          const expandedData = findingsData.data.map(
-            (finding: FindingProps) => {
-              const scan = scanDict[finding.relationships?.scan?.data?.id];
-              const resource =
-                resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-              const provider =
-                providerDict[scan?.relationships?.provider?.data?.id];
-
-              return {
-                ...finding,
-                relationships: { scan, resource, provider },
-              };
-            },
+        try {
+          const checkIds = requirement.checks.map(
+            (check: any) => check.checkName,
           );
-          setExpandedFindings(expandedData);
+          const encodedSort = sort.replace(/^\+/, "");
+          const findingsData = await getFindings({
+            filters: {
+              "filter[check_id__in]": checkIds.join(","),
+              "filter[scan]": scanId,
+            },
+            page: parseInt(pageNumber, 10),
+            sort: encodedSort,
+          });
+
+          setFindings(findingsData);
+
+          if (findingsData?.data) {
+            // Create dictionaries for resources, scans, and providers
+            const resourceDict = createDict("resources", findingsData);
+            const scanDict = createDict("scans", findingsData);
+            const providerDict = createDict("providers", findingsData);
+
+            // Expand each finding with its corresponding resource, scan, and provider
+            const expandedData = findingsData.data.map(
+              (finding: FindingProps) => {
+                const scan = scanDict[finding.relationships?.scan?.data?.id];
+                const resource =
+                  resourceDict[finding.relationships?.resources?.data?.[0]?.id];
+                const provider =
+                  providerDict[scan?.relationships?.provider?.data?.id];
+
+                return {
+                  ...finding,
+                  relationships: { scan, resource, provider },
+                };
+              },
+            );
+            setExpandedFindings(expandedData);
+          }
+        } catch (error) {
+          console.error("Error loading findings:", error);
+        } finally {
+          stopLoading();
         }
-        stopLoading();
       }
     }
 
     loadFindings();
-  }, [requirement, scanId, pageNumber, startLoading, stopLoading]);
+  }, [requirement, scanId, pageNumber, sort, startLoading, stopLoading]);
 
   const checks = requirement.checks || [];
   const checksTable = (
