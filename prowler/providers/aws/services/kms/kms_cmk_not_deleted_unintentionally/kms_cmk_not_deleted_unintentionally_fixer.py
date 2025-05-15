@@ -54,6 +54,9 @@ class KmsCmkNotDeletedUnintentionallyFixer(AWSFixer):
             if not region or not resource_id:
                 raise ValueError("Region and resource_id are required")
 
+            # Show the fixing message
+            super().fix(finding, **kwargs)
+
             # Get the client for this region
             regional_client = kms_client.regional_clients[region]
 

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from colorama import Fore, Style
+from colorama import Style
 
+from prowler.config.config import orange_color
 from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.fix.fixer import Fixer, FixerMetadata
 from prowler.lib.logger import logger
@@ -23,14 +24,10 @@ class AWSFixer(Fixer, ABC):
     def _get_metadata(self) -> FixerMetadata:
         """Each fixer must define its metadata"""
 
-    @abstractmethod
-    def fix(self, finding: Optional[Check_Report_AWS] = None, **kwargs) -> bool:
-        """Main method that all fixers must implement"""
-
     def fix(self, finding: Optional[Check_Report_AWS] = None, **kwargs) -> bool:
         """
         AWS specific method to execute the fixer.
-        Determines what type of fixer is needed based on the required parameters.
+        This method handles the printing of fixing status messages.
 
         Args:
             finding (Check_Report_AWS): Finding to fix
@@ -40,34 +37,27 @@ class AWSFixer(Fixer, ABC):
             bool: True if fixing was successful, False otherwise
         """
         try:
-            check_module_path = f"prowler.providers.aws.services.{finding.check_metadata.ServiceName}.{finding.check_metadata.CheckID}.{finding.check_metadata.CheckID}_fixer"
-            lib = __import__(
-                check_module_path, fromlist=[f"{finding.check_metadata.CheckID}_fixer"]
-            )
-            fixer = getattr(lib, "fixer")
+            if not finding:
+                logger.error("Finding is required")
+                return False
 
-            # Determine what type of fixer it is based on its parameters
-            fixer_params = fixer.__code__.co_varnames
+            # Print the appropriate message based on available information
+            if hasattr(finding, "region") and hasattr(finding, "resource_id"):
+                print(
+                    f"\t{orange_color}FIXING {finding.resource_id} in {finding.region}...{Style.RESET_ALL}"
+                )
+            elif hasattr(finding, "region"):
+                print(f"\t{orange_color}FIXING {finding.region}...{Style.RESET_ALL}")
+            elif hasattr(finding, "resource_arn"):
+                print(
+                    f"\t{orange_color}FIXING Resource {finding.resource_arn}...{Style.RESET_ALL}"
+                )
+            elif hasattr(finding, "resource_id"):
+                print(
+                    f"\t{orange_color}FIXING Resource {finding.resource_id}...{Style.RESET_ALL}"
+                )
 
-            # Prepare the arguments for the fixer
-            if "region" in fixer_params and "resource_id" in fixer_params:
-                print(
-                    f"\t{Fore.YELLOW}FIXING{Style.RESET_ALL} {finding.resource_id} in {finding.region}... "
-                )
-                return fixer(resource_id=finding.resource_id, region=finding.region)
-            elif "region" in fixer_params:
-                print(f"\t{Fore.YELLOW}FIXING{Style.RESET_ALL} {finding.region}... ")
-                return fixer(region=finding.region)
-            elif "resource_arn" in fixer_params:
-                print(
-                    f"\t{Fore.YELLOW}FIXING{Style.RESET_ALL} Resource {finding.resource_arn}... "
-                )
-                return fixer(resource_arn=finding.resource_arn)
-            else:
-                print(
-                    f"\t{Fore.YELLOW}FIXING{Style.RESET_ALL} Resource {finding.resource_id}... "
-                )
-                return fixer(resource_id=finding.resource_id)
+            return True
 
         except Exception as error:
             logger.error(
