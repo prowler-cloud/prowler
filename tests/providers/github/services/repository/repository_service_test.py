@@ -23,6 +23,7 @@ def mock_list_repositories(_):
             default_branch_deletion=True,
             status_checks=True,
             approval_count=2,
+            codeowners_exists=True,
         ),
     }
 
@@ -54,3 +55,4 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].default_branch_deletion
         assert repository_service.repositories[1].status_checks
         assert repository_service.repositories[1].approval_count == 2
+        assert repository_service.repositories[1].codeowners_exists is True
