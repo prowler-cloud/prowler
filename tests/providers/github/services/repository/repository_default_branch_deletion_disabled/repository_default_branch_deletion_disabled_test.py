@@ -65,7 +65,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does allow branch deletion."
+                == f"Repository {repo_name} does allow default branch deletion."
             )
 
     def test_allow_branch_deletion_disabled(self):
@@ -106,5 +106,5 @@ class Test_repository_default_branch_deletion_disabled_test:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does deny branch deletion."
+                == f"Repository {repo_name} does deny default branch deletion."
             )
