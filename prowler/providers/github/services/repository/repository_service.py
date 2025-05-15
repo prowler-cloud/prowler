@@ -84,7 +84,7 @@ class Repository(GithubService):
                         approval_count=approval_cnt,
                         required_linear_history=required_linear_history,
                         allow_force_pushes=allow_force_pushes,
-                        branch_deletion=branch_deletion,
+                        default_branch_deletion=branch_deletion,
                         default_branch_protection=branch_protection,
                     )
 
@@ -108,5 +108,5 @@ class Repo(BaseModel):
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]
     allow_force_pushes: Optional[bool]
-    branch_deletion: Optional[bool]
+    default_branch_deletion: Optional[bool]
     approval_count: Optional[int]

@@ -37,7 +37,7 @@ class Test_repository_default_branch_deletion_disabled_test:
                 name=repo_name,
                 full_name="account-name/repo1",
                 default_branch=default_branch,
-                branch_deletion=True,
+                default_branch_deletion=True,
                 private=False,
                 securitymd=False,
             ),
@@ -79,7 +79,7 @@ class Test_repository_default_branch_deletion_disabled_test:
                 full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,
-                branch_deletion=False,
+                default_branch_deletion=False,
                 securitymd=True,
             ),
         }

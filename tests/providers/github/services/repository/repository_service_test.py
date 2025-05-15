@@ -20,7 +20,7 @@ def mock_list_repositories(_):
             require_pull_request=True,
             required_linear_history=True,
             allow_force_pushes=True,
-            branch_deletion=True,
+            default_branch_deletion=True,
             approval_count=2,
         ),
     }
@@ -50,5 +50,5 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].required_linear_history
         assert repository_service.repositories[1].require_pull_request
         assert repository_service.repositories[1].allow_force_pushes
-        assert repository_service.repositories[1].branch_deletion
+        assert repository_service.repositories[1].default_branch_deletion
         assert repository_service.repositories[1].approval_count == 2
