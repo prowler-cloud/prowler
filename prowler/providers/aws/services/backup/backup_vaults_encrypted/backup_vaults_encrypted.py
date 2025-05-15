@@ -8,7 +8,7 @@ class backup_vaults_encrypted(Check):
         if backup_client.backup_vaults:
             for backup_vault in backup_client.backup_vaults:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=backup_vault
+                    metadata=self.metadata(), resource=backup_vault
                 )
                 report.status = "FAIL"
                 report.status_extended = (

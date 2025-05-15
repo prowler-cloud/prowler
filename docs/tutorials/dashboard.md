@@ -36,7 +36,7 @@ In this page you can do multiple functions:
     * Severity
     * Service
     * Status
-* See wich files has been scanned to generate the dashboard placing your mouse on the `?` icon:
+* See which files has been scanned to generate the dashboard placing your mouse on the `?` icon:
     <img src="../img/dashboard/dashboard-files-scanned.png">
 * Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
 * Click on the provider cards to filter by provider.

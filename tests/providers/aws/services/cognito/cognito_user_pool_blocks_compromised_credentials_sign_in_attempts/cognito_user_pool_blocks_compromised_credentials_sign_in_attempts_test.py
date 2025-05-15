@@ -13,12 +13,15 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
     def test_cognito_no_user_pools(self):
         cognito_client = mock.MagicMock
         cognito_client.user_pools = {}
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            new=cognito_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
+                new=cognito_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts import (
                 cognito_user_pool_blocks_compromised_credentials_sign_in_attempts,
@@ -52,12 +55,15 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 status="ACTIVE",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            new=cognito_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
+                new=cognito_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts import (
                 cognito_user_pool_blocks_compromised_credentials_sign_in_attempts,
@@ -97,12 +103,15 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 status="ACTIVE",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            new=cognito_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
+                new=cognito_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts import (
                 cognito_user_pool_blocks_compromised_credentials_sign_in_attempts,
@@ -142,12 +151,15 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 status="ACTIVE",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            new=cognito_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
+                new=cognito_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts import (
                 cognito_user_pool_blocks_compromised_credentials_sign_in_attempts,
@@ -187,12 +199,15 @@ class Test_cognito_user_pool_blocks_compromised_credentials_sign_in_attempts:
                 status="ACTIVE",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
-            new=cognito_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
-            new=cognito_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
+                new=cognito_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+                new=cognito_client,
+            ),
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts.cognito_user_pool_blocks_compromised_credentials_sign_in_attempts import (
                 cognito_user_pool_blocks_compromised_credentials_sign_in_attempts,

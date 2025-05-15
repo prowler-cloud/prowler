@@ -8,7 +8,7 @@ class elb_cross_zone_load_balancing_enabled(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "FAIL"
             report.status_extended = (
                 f"ELB {lb.name} does not have cross-zone load balancing enabled."

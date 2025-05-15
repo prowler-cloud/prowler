@@ -20,9 +20,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             configuration_arn,
             configuration,
         ) in autoscaling_client.launch_configurations.items():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=configuration
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=configuration)
 
             if configuration.user_data:
                 user_data = b64decode(configuration.user_data)
@@ -45,7 +43,11 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     continue
 
                 has_secrets = detect_secrets_scan(
-                    data=user_data, excluded_secrets=secrets_ignore_patterns
+                    data=user_data,
+                    excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=autoscaling_client.audit_config.get(
+                        "detect_secrets_plugins"
+                    ),
                 )
 
                 if has_secrets:

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "GithubRepository",
   "Description": "Ensure that the repository enforces branch protection rules for administrators.",
   "Risk": "Excluding administrators from branch protection rules introduces a significant risk of unauthorized or unreviewed changes being pushed to protected branches. This can lead to vulnerabilities, including the potential insertion of malicious code, especially if an administrator account is compromised.",
   "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#do-not-allow-bypassing-the-above-settings",

@@ -35,15 +35,19 @@ class Test_neptune_cluster_uses_public_subnet:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
-            new=vpc_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+                new=Neptune(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
+                new=vpc_client,
+            ),
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
                 neptune_cluster_uses_public_subnet,
@@ -107,15 +111,19 @@ class Test_neptune_cluster_uses_public_subnet:
         cluster_id = cluster["DbClusterResourceId"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
-            new=vpc_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+                new=Neptune(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
+                new=vpc_client,
+            ),
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
                 neptune_cluster_uses_public_subnet,
@@ -188,15 +196,19 @@ class Test_neptune_cluster_uses_public_subnet:
         cluster_id = cluster["DbClusterResourceId"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
-            new=vpc_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+                new=Neptune(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
+                new=vpc_client,
+            ),
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
                 neptune_cluster_uses_public_subnet,

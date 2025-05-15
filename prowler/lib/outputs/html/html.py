@@ -74,12 +74,15 @@ class HTML(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                HTML.write_header(self._file_descriptor, provider, stats)
+                if self._file_descriptor.tell() == 0:
+                    HTML.write_header(
+                        self._file_descriptor, provider, stats, self._from_cli
+                    )
                 for finding in self._data:
                     self._file_descriptor.write(finding)
-                HTML.write_footer(self._file_descriptor)
-                # Close file descriptor
-                self._file_descriptor.close()
+                if self.close_file or self._from_cli:
+                    HTML.write_footer(self._file_descriptor)
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -87,7 +90,10 @@ class HTML(Output):
 
     @staticmethod
     def write_header(
-        file_descriptor: TextIOWrapper, provider: Provider, stats: dict
+        file_descriptor: TextIOWrapper,
+        provider: Provider,
+        stats: dict,
+        from_cli: bool = True,
     ) -> None:
         """
         Writes the header of the HTML file.
@@ -96,11 +102,11 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the header
             provider (Provider): the provider object
             stats (dict): the statistics of the findings
+            from_cli (bool): whether the request is from the CLI or not
         """
         try:
             file_descriptor.write(
-                f"""
-<!DOCTYPE html>
+                f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -153,7 +159,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:])}
+                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -205,7 +211,7 @@ class HTML(Output):
                     <th scope="col">Resource Tags</th>
                     <th scope="col">Status Extended</th>
                     <th scope="col">Risk</th>
-                    <th scope="col">Recomendation</th>
+                    <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
@@ -584,6 +590,106 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_m365_assessment_summary(provider: Provider) -> str:
+        """
+        get_m365_assessment_summary gets the HTML assessment summary for the provider
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            M365 Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>M365 Tenant Domain:</b> {
+                provider.identity.tenant_domain
+            }
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        M365 Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>M365 Identity Type:</b> {provider.identity.identity_type}
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 Identity ID:</b> {provider.identity.identity_id}
+                            </li>
+                            {
+                f'''<li class="list-group-item">
+                                <b>M365 User:</b> {provider.identity.user}
+                            </li>'''
+                if hasattr(provider.identity, "user")
+                and provider.identity.user is not None
+                else ""
+            }
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    def get_nhn_assessment_summary(provider: Provider) -> str:
+        """
+        get_nhn_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            NHN Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>NHN Tenant Domain:</b> {provider.identity.tenant_domain}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        NHN Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>NHN Identity Type:</b> {provider.identity.identity_type}
+                            </li>
+                            <li class="list-group-item">
+                                <b>NHN Identity ID:</b> {provider.identity.identity_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider
@@ -599,6 +705,7 @@ class HTML(Output):
             # It is not pretty but useful
             # AWS_provider --> aws
             # GCP_provider --> gcp
+            # GitHub_provider --> github
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 

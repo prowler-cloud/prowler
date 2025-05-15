@@ -3,6 +3,8 @@ from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from api.models import Membership, User
+
 
 @pytest.mark.django_db
 def test_basic_authentication():
@@ -177,3 +179,122 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
     user2_me = client.get(reverse("user-me"), headers=user2_headers)
     assert user2_me.status_code == 200
     assert user2_me.json()["data"]["attributes"]["email"] == user2_email
+
+
+@pytest.mark.django_db
+class TestTokenSwitchTenant:
+    def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
+        client = APIClient()
+
+        test_user = "test_email@prowler.com"
+        test_password = "test_password"
+
+        # Check that we can create a new user without any kind of authentication
+        user_creation_response = client.post(
+            reverse("user-list"),
+            data={
+                "data": {
+                    "type": "users",
+                    "attributes": {
+                        "name": "test",
+                        "email": test_user,
+                        "password": test_password,
+                    },
+                }
+            },
+            format="vnd.api+json",
+        )
+        assert user_creation_response.status_code == 201
+
+        # Create a new relationship between this user and another tenant
+        tenant_id = tenants_fixture[0].id
+        user_instance = User.objects.get(email=test_user)
+        Membership.objects.create(user=user_instance, tenant_id=tenant_id)
+
+        # Check that using our new user's credentials we can authenticate and get the providers
+        access_token, _ = get_api_tokens(client, test_user, test_password)
+        auth_headers = get_authorization_header(access_token)
+
+        user_me_response = client.get(
+            reverse("user-me"),
+            headers=auth_headers,
+        )
+        assert user_me_response.status_code == 200
+        # Assert this user belongs to two tenants
+        assert (
+            user_me_response.json()["data"]["relationships"]["memberships"]["meta"][
+                "count"
+            ]
+            == 2
+        )
+
+        provider_response = client.get(
+            reverse("provider-list"),
+            headers=auth_headers,
+        )
+        assert provider_response.status_code == 200
+        # Empty response since there are no providers in this tenant
+        assert not provider_response.json()["data"]
+
+        switch_tenant_response = client.post(
+            reverse("token-switch"),
+            data={
+                "data": {
+                    "type": "tokens-switch-tenant",
+                    "attributes": {"tenant_id": tenant_id},
+                }
+            },
+            headers=auth_headers,
+        )
+        assert switch_tenant_response.status_code == 200
+        new_access_token = switch_tenant_response.json()["data"]["attributes"]["access"]
+        new_auth_headers = get_authorization_header(new_access_token)
+
+        provider_response = client.get(
+            reverse("provider-list"),
+            headers=new_auth_headers,
+        )
+        assert provider_response.status_code == 200
+        # Now it must be data because we switched to another tenant with providers
+        assert provider_response.json()["data"]
+
+    def test_switch_tenant_with_invalid_token(self, create_test_user, tenants_fixture):
+        client = APIClient()
+
+        access_token, refresh_token = get_api_tokens(
+            client, create_test_user.email, TEST_PASSWORD
+        )
+        auth_headers = get_authorization_header(access_token)
+
+        invalid_token_response = client.post(
+            reverse("token-switch"),
+            data={
+                "data": {
+                    "type": "tokens-switch-tenant",
+                    "attributes": {"tenant_id": "invalid_tenant_id"},
+                }
+            },
+            headers=auth_headers,
+        )
+        assert invalid_token_response.status_code == 400
+        assert invalid_token_response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            invalid_token_response.json()["errors"][0]["detail"]
+            == "Must be a valid UUID."
+        )
+
+        invalid_tenant_response = client.post(
+            reverse("token-switch"),
+            data={
+                "data": {
+                    "type": "tokens-switch-tenant",
+                    "attributes": {"tenant_id": tenants_fixture[-1].id},
+                }
+            },
+            headers=auth_headers,
+        )
+        assert invalid_tenant_response.status_code == 400
+        assert invalid_tenant_response.json()["errors"][0]["code"] == "invalid"
+        assert invalid_tenant_response.json()["errors"][0]["detail"] == (
+            "Tenant does not exist or user is not a " "member."
+        )

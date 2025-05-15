@@ -1,5 +1,6 @@
 import os
 from os import environ
+from typing import Union
 
 from colorama import Fore, Style
 from github import Auth, Github, GithubIntegration
@@ -289,7 +290,7 @@ class GithubProvider(Provider):
 
     def setup_identity(
         self,
-    ) -> GithubIdentityInfo | GithubAppIdentityInfo:
+    ) -> Union[GithubIdentityInfo, GithubAppIdentityInfo]:
         """
         Returns the GitHub identity information
 

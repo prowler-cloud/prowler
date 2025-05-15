@@ -120,117 +120,147 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
 
 ```json
 [{
-    "metadata": {
-        "event_code": "cloudtrail_multi_region_enabled",
-        "product": {
-            "name": "Prowler",
-            "vendor_name": "Prowler",
-            "version": "4.2.4"
-        },
-        "version": "1.1.0"
-    },
-    "severity_id": 4,
-    "severity": "High",
-    "status": "New",
-    "status_code": "FAIL",
-    "status_detail": "No CloudTrail trails enabled and logging were found.",
-    "status_id": 1,
-    "activity_name": "Create",
-    "activity_id": 1,
-    "finding_info": {
-        "created_time": "2024-04-08T11:33:51.870861",
-        "desc": "Ensure CloudTrail is enabled in all regions",
-        "product_uid": "prowler",
-        "title": "Ensure CloudTrail is enabled in all regions",
-        "uid": "prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012",
-        "types": ["Software and Configuration Checks","Industry and Regulatory Standards","CIS AWS Foundations Benchmark"],
-    },
-    "resources": [
-        {
-            "cloud_partition": "aws",
-            "region": "ap-northeast-1",
-            "group": {
-                "name": "cloudtrail"
-            },
-            "labels": [],
-            "name": "123456789012",
-            "type": "AwsCloudTrailTrail",
-            "uid": "arn:aws:cloudtrail:ap-northeast-1:123456789012:trail",
-            "data": {
-                "details": ""
-            },
-        }
-    ],
-    "category_name": "Findings",
-    "category_uid": 2,
-    "class_name": "DetectionFinding",
-    "class_uid": 2004,
-    "cloud": {
-        "account": {
-            "name": "test-account",
-            "type": "AWS_Account",
-            "type_id": 10,
-            "uid": "123456789012"
-        },
-        "org": {
-            "name": "",
-            "uid": ""
-        },
-        "provider": "aws",
-        "region": "ap-northeast-1"
-    },
-    "event_time": "2024-04-08T11:33:51.870861",
-    "remediation": {
-        "desc": "Ensure Logging is set to ON on all regions (even if they are not being used at the moment.",
-        "references": [
-            "aws cloudtrail create-trail --name <trail_name> --bucket-name <s3_bucket_for_cloudtrail> --is-multi-region-trail aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail ",
-            "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events"
-        ]
-    },
-    "type_uid": 200401,
-    "type_name": "Create",
-    "unmapped": {
-        "related_url": "",
-        "categories": ["forensics-ready"],
-        "depends_on": [],
-        "related_to": [],
-        "notes": "",
-        "compliance": {
-            "CISA": [
-                "your-systems-3",
-                "your-data-2"
-            ],
-            "SOC2": [
-                "cc_2_1",
-                "cc_7_2",
-                "cc_a_1_2"
-            ],
-            "CIS-1.4": [
-                "3.1"
-            ],
-            "CIS-1.5": [
-                "3.1"
-            ],
-            "GDPR": [
-                "article_25",
-                "article_30"
-            ],
-            "AWS-Foundational-Security-Best-Practices": [
-                "cloudtrail"
-            ],
-            "ISO27001-2013": [
-                "A.12.4"
-            ],
-            "HIPAA": [
-                "164_308_a_1_ii_d",
-                "164_308_a_3_ii_a",
-                "164_308_a_6_ii",
-                "164_312_b",
-                "164_312_e_2_i"
-            ],
-        }
-    },
-}]
+     "message": "Potential secrets found in ECS task definition manufacturer-api with revision 7: Secrets in container manufacturer-api -> Secret Keyword on the environment variable DB_PASSWORD.",
+     "metadata": {
+         "event_code": "ecs_task_definitions_no_environment_secrets",
+         "product": {
+             "name": "Prowler",
+             "uid": "prowler",
+             "vendor_name": "Prowler",
+             "version": "5.3.0"
+         },
+         "profiles": [
+             "cloud",
+             "datetime"
+         ],
+         "tenant_uid": "",
+         "version": "1.3.0"
+     },
+     "severity_id": 5,
+     "severity": "Critical",
+     "status": "New",
+     "status_code": "FAIL",
+     "status_detail": "Potential secrets found in ECS task definition manufacturer-api with revision 7: Secrets in container manufacturer-api -> Secret Keyword on the environment variable DB_PASSWORD.",
+     "status_id": 1,
+     "unmapped": {
+         "related_url": "",
+         "categories": [
+             "secrets"
+         ],
+         "depends_on": [],
+         "related_to": [],
+         "notes": "",
+         "compliance": {
+             "MITRE-ATTACK": [
+                 "T1552"
+             ],
+             "AWS-Foundational-Security-Best-Practices": [
+                 "ecs"
+             ],
+             "KISA-ISMS-P-2023": [
+                 "2.7.1",
+                 "2.11.2"
+             ],
+             "KISA-ISMS-P-2023-korean": [
+                 "2.7.1",
+                 "2.11.2"
+             ],
+             "AWS-Well-Architected-Framework-Security-Pillar": [
+                 "SEC02-BP03"
+             ]
+         }
+     },
+     "activity_name": "Create",
+     "activity_id": 1,
+     "finding_info": {
+         "created_time": 1737995806,
+         "created_time_dt": "2025-01-27T17:36:46.855898",
+         "desc": "Check if secrets exists in ECS task definitions environment variables.",
+         "product_uid": "prowler",
+         "title": "Check if secrets exists in ECS task definitions environment variables",
+         "types": [
+             "Protect",
+             "Secure development",
+             "Credentials not hard-coded"
+         ],
+         "uid": "prowler-aws-ecs_task_definitions_no_environment_secrets-123456789012-eu-central-1-manufacturer-api:7"
+     },
+     "resources": [
+         {
+             "cloud_partition": "aws",
+             "region": "eu-central-1",
+             "data": {
+                 "details": "",
+                 "metadata": {
+                     "name": "manufacturer-api",
+                     "arn": "arn:aws:ecs:eu-central-1:123456789012:task-definition/manufacturer-api:7",
+                     "revision": "7",
+                     "region": "eu-central-1",
+                     "container_definitions": [
+                         {
+                             "name": "manufacturer-api",
+                             "privileged": false,
+                             "readonly_rootfilesystem": false,
+                             "user": "",
+                             "environment": [
+                                 {
+                                     "name": "DB_HOST",
+                                     "value": "some.cluster.eu-central-1.rds.amazonaws.com"
+                                 },
+                                 {
+                                     "name": "DB_PASSWORD",
+                                     "value": "somePassword"
+                                 }
+                             ],
+                             "log_driver": "",
+                             "log_option": ""
+                         }
+                     ],
+                     "pid_mode": "",
+                     "tags": [],
+                     "network_mode": "awsvpc"
+                 }
+             },
+             "group": {
+                 "name": "ecs"
+             },
+             "labels": [],
+             "name": "manufacturer-api:7",
+             "type": "AwsEcsTaskDefinition",
+             "uid": "arn:aws:ecs:eu-central-1:123456789012:task-definition/manufacturer-api:7"
+         }
+     ],
+     "category_name": "Findings",
+     "category_uid": 2,
+     "class_name": "Detection Finding",
+     "class_uid": 2004,
+     "cloud": {
+         "account": {
+             "name": "",
+             "type": "AWS Account",
+             "type_id": 10,
+             "uid": "123456789012",
+             "labels": []
+         },
+         "org": {
+             "name": "",
+             "uid": ""
+         },
+         "provider": "aws",
+         "region": "eu-central-1"
+     },
+     "remediation": {
+         "desc": "Use Secrets Manager or Parameter Store to securely provide credentials to containers without hardcoding the secrets in code or passing them through environment variables. It is currently not possible to delete task definition revisions which contain plaintext secrets. AWS is looking into implementing this feature in 2023, and it is therefore recommended that all plaintext secrets are rotated at the same time as moving the secrets to Secrets Manager or Parameter Store.",
+         "references": [
+             "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html"
+         ]
+     },
+     "risk_details": "The use of a hard-coded password increases the possibility of password guessing. If hard-coded passwords are used, it is possible that malicious users gain access through the account in question.",
+     "time": 1737995806,
+     "time_dt": "2025-01-27T17:36:46.855898",
+     "type_uid": 200401,
+     "type_name": "Detection Finding: Create"
+ }]
 ```
 
 ???+ note
@@ -331,7 +361,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 
 | Native JSON Prowler v3 | JSON-OCSF v.1.1.0 |
 | --- |---|
-| AssessmentStartTime | event_time |
+| AssessmentStartTime | time_dt |
 | FindingUniqueId | finding_info.uid |
 | Provider | cloud.provider |
 | CheckID | metadata.event_code |

@@ -19,12 +19,15 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (
@@ -71,12 +74,15 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (
@@ -156,15 +162,19 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (
@@ -249,15 +259,19 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (
@@ -345,15 +359,19 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (
@@ -410,18 +428,23 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
-            new=VPC(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awslambda_function_inside_vpc.awslambda_client",
-            new=Lambda(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
+                new=VPC(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_inside_vpc.awslambda_function_inside_vpc.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
         ):
             # Test check inside_vpc first
 
@@ -516,15 +539,19 @@ class Test_awslambda_function_vpc_is_in_multi_azs:
         # Filter the resource in the provider, this is like the --resource-arn option
         aws_provider._audit_resources = [function["FunctionArn"]]
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
-            new=Lambda(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_vpc_multi_az.awslambda_function_vpc_multi_az import (

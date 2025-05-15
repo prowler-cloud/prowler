@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress and egress from ide-open IP address with a mask between 0 and 24.",
+  "Description": "Ensure no security groups allow ingress and egress from wide-open IP address with a mask between 0 and 24.",
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",
   "Remediation": {

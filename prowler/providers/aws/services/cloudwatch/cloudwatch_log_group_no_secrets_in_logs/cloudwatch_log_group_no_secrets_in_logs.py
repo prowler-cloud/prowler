@@ -16,9 +16,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 "secrets_ignore_patterns", []
             )
             for log_group in logs_client.log_groups.values():
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=log_group
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
                 report.status = "PASS"
                 report.status_extended = (
                     f"No secrets found in {log_group.name} log group."
@@ -36,6 +34,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         log_stream_secrets_output = detect_secrets_scan(
                             data=log_stream_data,
                             excluded_secrets=secrets_ignore_patterns,
+                            detect_secrets_plugins=logs_client.audit_config.get(
+                                "detect_secrets_plugins",
+                            ),
                         )
 
                         if log_stream_secrets_output:
@@ -68,7 +69,10 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                     # Can get more informative output if there is more than 1 line.
                                     # Will rescan just this event to get the type of secret and the line number
                                     event_detect_secrets_output = detect_secrets_scan(
-                                        data=log_event_data
+                                        data=log_event_data,
+                                        detect_secrets_plugins=logs_client.audit_config.get(
+                                            "detect_secrets_plugins"
+                                        ),
                                     )
                                     if event_detect_secrets_output:
                                         for secret in event_detect_secrets_output:

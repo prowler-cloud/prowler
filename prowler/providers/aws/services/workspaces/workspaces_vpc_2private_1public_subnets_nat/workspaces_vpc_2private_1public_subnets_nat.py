@@ -9,9 +9,7 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
     def execute(self):
         findings = []
         for workspace in workspaces_client.workspaces:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=workspace
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=workspace)
             report.status = "PASS"
             report.status_extended = f"Workspace {workspace.id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached."
             vpc_object = None

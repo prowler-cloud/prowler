@@ -31,66 +31,50 @@ export const CustomDropdownSelection: React.FC<
   const [selectedValues, setSelectedValues] = useState<Set<string>>(
     new Set(selectedKeys),
   );
-  const allValues = values.map((item) => item.id);
 
-  const memoizedValues = useMemo(() => values, [values]);
+  const allValues = useMemo(() => values.map((item) => item.id), [values]);
 
-  // Update the internal state when selectedKeys changes from props
+  // Update internal state when selectedKeys changes
   useEffect(() => {
     const newSelection = new Set(selectedKeys);
-    if (
-      JSON.stringify(Array.from(selectedValues)) !==
-      JSON.stringify(Array.from(newSelection))
-    ) {
-      if (selectedKeys.length === allValues.length) {
-        newSelection.add("all");
-      }
-      setSelectedValues(newSelection);
+    if (selectedKeys.length === allValues.length) {
+      newSelection.add("all");
     }
-  }, [selectedKeys, allValues.length, selectedValues]);
+    setSelectedValues(newSelection);
+  }, [selectedKeys, allValues]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
-      setSelectedValues((prevSelected) => {
-        const newSelection = new Set(keys);
+      const newSelection = new Set(keys);
 
-        // If all values are selected and "all" is not included,
-        // add "all" automatically
-        if (
-          newSelection.size === allValues.length &&
-          !newSelection.has("all")
-        ) {
-          return new Set(["all", ...allValues]);
-        } else if (prevSelected.has("all")) {
-          // If "all" was previously selected, remove it
+      if (newSelection.has("all")) {
+        // Handle "Select All" behavior
+        if (newSelection.size === allValues.length + 1) {
+          setSelectedValues(new Set(["all", ...allValues]));
+          onChange(name, allValues); // Exclude "all" in the callback
+        } else {
           newSelection.delete("all");
-          return new Set(allValues.filter((key) => newSelection.has(key)));
+          setSelectedValues(newSelection);
+          onChange(name, Array.from(newSelection));
         }
-        return newSelection;
-      });
-
-      // Notify the change without including "all"
-      const selectedValues = keys.filter((key) => key !== "all");
-      onChange(name, selectedValues);
+      } else {
+        setSelectedValues(newSelection);
+        onChange(name, Array.from(newSelection));
+      }
     },
     [allValues, name, onChange],
   );
 
   const handleSelectAllClick = useCallback(() => {
-    setSelectedValues((prevSelected: Set<string>) => {
-      const newSelection: Set<string> = prevSelected.has("all")
-        ? new Set()
-        : new Set(["all", ...allValues]);
-
-      // Notify the change without including "all"
-      const selectedValues = Array.from(newSelection).filter(
-        (key) => key !== "all",
-      );
-      onChange(name, selectedValues);
-
-      return newSelection;
-    });
-  }, [allValues, name, onChange]);
+    if (selectedValues.has("all")) {
+      setSelectedValues(new Set());
+      onChange(name, []);
+    } else {
+      const newSelection = new Set(["all", ...allValues]);
+      setSelectedValues(newSelection);
+      onChange(name, allValues);
+    }
+  }, [allValues, name, onChange, selectedValues]);
 
   return (
     <div className="relative flex w-full flex-col gap-2">
@@ -119,7 +103,8 @@ export const CustomDropdownSelection: React.FC<
                   wrapper: "checkbox-update",
                 }}
                 value="all"
-                onClick={handleSelectAllClick}
+                isSelected={selectedValues.has("all")}
+                onChange={handleSelectAllClick}
               >
                 Select All
               </Checkbox>
@@ -128,7 +113,7 @@ export const CustomDropdownSelection: React.FC<
                 hideScrollBar
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
-                {memoizedValues.map(({ id, name }) => (
+                {values.map(({ id, name }) => (
                   <Checkbox
                     classNames={{
                       label: "text-small font-normal",

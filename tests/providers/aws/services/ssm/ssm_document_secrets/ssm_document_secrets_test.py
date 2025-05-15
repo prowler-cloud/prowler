@@ -27,6 +27,7 @@ class Test_ssm_documents_secrets:
         document_name = "test-document"
         document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{document_name}"
         ssm_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssm_client.audit_config = {"detect_secrets_plugins": None}
         ssm_client.documents = {
             document_name: Document(
                 arn=document_arn,

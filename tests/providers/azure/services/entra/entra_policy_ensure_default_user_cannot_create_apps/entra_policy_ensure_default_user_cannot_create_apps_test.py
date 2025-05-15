@@ -8,12 +8,15 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps import (
                 entra_policy_ensure_default_user_cannot_create_apps,
@@ -28,12 +31,15 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps import (
                 entra_policy_ensure_default_user_cannot_create_apps,
@@ -57,18 +63,22 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
         id = str(uuid4())
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps import (
                 entra_policy_ensure_default_user_cannot_create_apps,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -76,11 +86,11 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_apps=False
                     ),
                     guest_invite_settings="none",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 
@@ -100,18 +110,22 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
         id = str(uuid4())
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_apps.entra_policy_ensure_default_user_cannot_create_apps import (
                 entra_policy_ensure_default_user_cannot_create_apps,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -119,11 +133,11 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_apps=True
                     ),
                     guest_invite_settings="none",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 

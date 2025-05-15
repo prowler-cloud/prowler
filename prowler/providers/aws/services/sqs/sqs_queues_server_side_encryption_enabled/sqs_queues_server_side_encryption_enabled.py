@@ -6,7 +6,7 @@ class sqs_queues_server_side_encryption_enabled(Check):
     def execute(self):
         findings = []
         for queue in sqs_client.queues:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=queue)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=queue)
             report.status = "PASS"
             report.status_extended = (
                 f"SQS queue {queue.id} is using Server Side Encryption."

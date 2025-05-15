@@ -7,9 +7,7 @@ class rds_instance_critical_event_subscription(Check):
         findings = []
         if rds_client.provider.scan_unused_services or rds_client.db_instances:
             for db_event in rds_client.db_event_subscriptions:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=db_event
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=db_event)
                 report.status = "FAIL"
                 report.status_extended = "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
                 report.resource_id = rds_client.audited_account
@@ -18,7 +16,7 @@ class rds_instance_critical_event_subscription(Check):
                 report.resource_tags = db_event.tags
                 if db_event.source_type == "db-instance" and db_event.enabled:
                     report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=db_event
+                        metadata=self.metadata(), resource=db_event
                     )
                     if db_event.event_list == [] or set(db_event.event_list) == {
                         "maintenance",
@@ -56,6 +54,9 @@ class rds_instance_critical_event_subscription(Check):
                     }:
                         report.status = "FAIL"
                         report.status_extended = "RDS instance event category of maintenance is not subscribed."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
                 findings.append(report)
 
         return findings

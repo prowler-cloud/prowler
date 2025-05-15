@@ -6,9 +6,7 @@ class core_minimize_net_raw_capability_admission(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} does not have NET_RAW capability."
             for container in pod.containers.values():
