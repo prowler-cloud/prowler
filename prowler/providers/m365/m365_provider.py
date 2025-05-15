@@ -194,10 +194,8 @@ class M365Provider(Provider):
 
         # Set up the identity
         self._identity = self.setup_identity(
-            az_cli_auth,
             sp_env_auth,
             env_auth,
-            browser_auth,
             self._session,
         )
 
@@ -430,7 +428,6 @@ class M365Provider(Provider):
 
         if credentials:
             if identity:
-                identity.identity_type = "Service Principal and User Credentials"
                 identity.user = credentials.user
             test_session = M365PowerShell(credentials, identity)
             try:
@@ -718,10 +715,8 @@ class M365Provider(Provider):
 
             # Set up Identity
             identity = M365Provider.setup_identity(
-                az_cli_auth,
                 sp_env_auth,
                 env_auth,
-                browser_auth,
                 session,
             )
 
@@ -879,10 +874,8 @@ class M365Provider(Provider):
 
     @staticmethod
     def setup_identity(
-        az_cli_auth,
         sp_env_auth,
         env_auth,
-        browser_auth,
         session,
     ):
         """
@@ -898,6 +891,7 @@ class M365Provider(Provider):
         Returns:
             M365IdentityInfo: An instance of M365IdentityInfo containing the identity information.
         """
+        logger.info("M365 provider: Setting up identity ...")
         # TODO: fill this object with real values not default and set to none
         identity = M365IdentityInfo()
 
@@ -906,7 +900,7 @@ class M365Provider(Provider):
         # With cli also should be possible but right now it does not work, m365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
 
-        async def get_m365_identity():
+        async def get_m365_identity(identity):
             # Trying to recover tenant domain info
             try:
                 logger.info(
@@ -942,14 +936,14 @@ class M365Provider(Provider):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
             # since that exception is not considered as critical, we keep filling another identity fields
-            if sp_env_auth or env_auth:
-                # The id of the sp can be retrieved from environment variables
-                identity.identity_id = getenv("AZURE_CLIENT_ID")
+            identity.identity_id = (
+                getenv("AZURE_CLIENT_ID") or "Unknown user id (Missing AAD permissions)"
+            )
+            if sp_env_auth:
                 identity.identity_type = "Service Principal"
-            # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
-            # should work but it doesn't, pending issue
+            elif env_auth:
+                identity.identity_type = "Service Principal and User Credentials"
             else:
-                identity.identity_id = "Unknown user id (Missing AAD permissions)"
                 identity.identity_type = "User"
                 try:
                     logger.info(
@@ -972,7 +966,7 @@ class M365Provider(Provider):
             organization_info = await client.organization.get()
             identity.tenant_id = organization_info.value[0].id
 
-        asyncio.get_event_loop().run_until_complete(get_m365_identity())
+        asyncio.get_event_loop().run_until_complete(get_m365_identity(identity))
         return identity
 
     @staticmethod

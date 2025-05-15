@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 from prowler.config.config import output_file_timestamp
@@ -11,7 +9,7 @@ class M365IdentityInfo(BaseModel):
     identity_type: str = ""
     tenant_id: str = ""
     tenant_domain: str = "Unknown tenant domain (missing Entra permissions)"
-    tenant_domains: List[str] = []
+    tenant_domains: list[str] = []
     location: str = ""
     user: str = None
 
@@ -27,7 +25,7 @@ class M365Credentials(BaseModel):
     client_id: str = ""
     client_secret: str = ""
     tenant_id: str = ""
-    tenant_domains: List[str] = []
+    tenant_domains: list[str] = []
     user: str = ""
     passwd: str = ""
 
