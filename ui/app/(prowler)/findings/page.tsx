@@ -132,6 +132,7 @@ export default async function Findings({
         defaultOpen={true}
       />
       <Spacer y={8} />
+
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>

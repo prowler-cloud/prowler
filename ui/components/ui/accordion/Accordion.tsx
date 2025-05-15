@@ -38,7 +38,7 @@ const AccordionContent = ({
   items?: AccordionItemProps[];
 }) => {
   return (
-    <div className="overflow-x-auto text-sm text-gray-700 dark:text-gray-300">
+    <div className="text-sm text-gray-700 dark:text-gray-300">
       {content}
       {items && items.length > 0 && (
         <div className="ml-2 mt-4 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
@@ -114,7 +114,7 @@ export const Accordion = ({
             subtitle: "text-xs text-gray-500",
             trigger:
               "p-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center",
-            content: "p-2 overflow-x-auto",
+            content: "p-2",
           }}
         >
           <AccordionContent content={item.content} items={item.items} />

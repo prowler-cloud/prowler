@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
-import { ColumnFindings } from "@/components/findings/table";
+import {
+  ColumnFindings,
+  SkeletonTableFindings,
+} from "@/components/findings/table";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable, StatusFindingBadge } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { useLoadingState } from "@/lib/hooks/useLoadingState";
 import { FindingProps } from "@/types/components";
 
 interface ClientAccordionContentProps {
@@ -20,15 +25,26 @@ export function ClientAccordionContent({
 }: ClientAccordionContentProps) {
   const [findings, setFindings] = useState<any>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, startLoading, stopLoading } = useLoadingState({
+    minimumLoadingTime: 500,
+    showLoadingDelay: 100,
+  });
+  const searchParams = useSearchParams();
+  const pageNumber = searchParams.get("page") || "1";
+  const loadedPageRef = useRef<string | null>(null);
+  const isExpandedRef = useRef(false);
 
-  // When the component is mounted (which means it is expanded)
   useEffect(() => {
     async function loadFindings() {
-      if (!isExpanded && requirement.checks && requirement.checks.length > 0) {
-        setIsExpanded(true);
-        setIsLoading(true);
+      if (
+        requirement.checks?.length > 0 &&
+        requirement.status !== "No findings" &&
+        (loadedPageRef.current !== pageNumber || !isExpandedRef.current)
+      ) {
+        loadedPageRef.current = pageNumber;
+        isExpandedRef.current = true;
+
+        startLoading();
 
         const checkIds = requirement.checks.map(
           (check: any) => check.checkName,
@@ -39,9 +55,8 @@ export function ClientAccordionContent({
             "filter[check_id__in]": checkIds.join(","),
             "filter[scan]": scanId,
           },
+          page: parseInt(pageNumber, 10),
         });
-
-        console.log("FINDINGS", findingsData);
 
         setFindings(findingsData);
 
@@ -66,23 +81,20 @@ export function ClientAccordionContent({
               };
             },
           );
-
           setExpandedFindings(expandedData);
         }
-
-        setIsLoading(false);
+        stopLoading();
       }
     }
 
     loadFindings();
-  }, [requirement, scanId, isExpanded]);
+  }, [requirement, scanId, pageNumber, startLoading, stopLoading]);
 
   const checks = requirement.checks || [];
-  // Prepare the checks table as content for the accordion
   const checksTable = (
-    <div className="overflow-x-auto">
+    <div>
       {checks.map((check: any, i: number) => (
-        <div key={i} className="flex items-center justify-between">
+        <div key={i} className="mb-2 flex items-center justify-between">
           <span>{check.checkName}</span>
           <StatusFindingBadge status={check.status} />
         </div>
@@ -90,8 +102,7 @@ export function ClientAccordionContent({
     </div>
   );
 
-  // Create a single accordion item for the checks
-  const accordionItems = [
+  const accordionChecksItems = [
     {
       key: "checks",
       title: (
@@ -104,8 +115,32 @@ export function ClientAccordionContent({
     },
   ];
 
+  const renderContent = () => {
+    if (isLoading) {
+      return <SkeletonTableFindings />;
+    }
+
+    if (findings?.data?.length > 0) {
+      return (
+        <div className="p-1">
+          <DataTable
+            // Remove the updated_at column as compliance is for the last scan
+            columns={ColumnFindings.filter(
+              (_, index) => index !== 4 && index !== 7,
+            )}
+            data={expandedFindings || []}
+            metadata={findings?.meta}
+            disableScroll={true}
+          />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full">
       <div className="mb-4 text-sm text-gray-600">
         {requirement.description}
       </div>
@@ -113,27 +148,15 @@ export function ClientAccordionContent({
       {checks.length > 0 && (
         <div className="mb-6 mt-2">
           <Accordion
-            items={accordionItems}
-            variant="bordered"
-            defaultExpandedKeys={["checks"]}
-            className="rounded-lg bg-white shadow-sm dark:bg-prowler-blue-400"
+            items={accordionChecksItems}
+            variant="light"
+            defaultExpandedKeys={[""]}
+            className="rounded-lg bg-white dark:bg-prowler-blue-400"
           />
         </div>
       )}
 
-      {!isLoading && findings && findings.data && findings.data.length > 0 && (
-        <div className="mt-4">
-          <h3 className="mb-2 font-medium">Findings</h3>
-          <div className="overflow-x-auto p-1">
-            <DataTable
-              // Remove the updated_at column as compliance is for the last scan
-              columns={ColumnFindings.filter((_, index) => index !== 4)}
-              data={expandedFindings || []}
-              metadata={findings?.meta}
-            />
-          </div>
-        </div>
-      )}
+      {renderContent()}
     </div>
   );
 }

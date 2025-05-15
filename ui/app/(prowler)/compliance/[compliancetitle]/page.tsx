@@ -51,7 +51,7 @@ const SSRComplianceDetail = async ({
   return (
     <Accordion
       items={accordionItems}
-      variant="bordered"
+      variant="light"
       selectionMode="multiple"
       defaultExpandedKeys={[]}
     />
