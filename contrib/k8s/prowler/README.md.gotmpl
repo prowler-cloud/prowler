@@ -1,0 +1,89 @@
+---
+title: "Helm installation"
+linkTitle: "Helm installation"
+---
+
+{{ template "chart.header" . }}
+
+[prowler](https://github.com/prowler-cloud/prowler)
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+## Installation
+
+This is a OCI helm chart, helm started support OCI in version 3.8.0.
+
+```shell
+helm upgrade -i prowler oci://ghcr.io/prowler-cloud/helm-charts/prowler --version {{ template "chart.appVersion" . }}
+```
+
+## Getting started
+
+As described in the documentation, Prowler requiers Valkey and a postgres instance to be deployed in server mode.
+This helm chart does not support the deployment of these services.
+There are to many ways to configure those resources and we don't want to be in charge of making your postgres intance production ready.
+
+But to easily get started we have included some instructions on how to install the required services in a Kubernetes cluster.
+These settings are **NOT** for production.
+For production level postgres instance, we recommend looking in to [cloudnative-pg](https://github.com/cloudnative-pg/cloudnative-pg).
+
+### Postgres
+
+```postgres-values.yaml
+auth:
+    database: prowler_db
+    username: prowler
+    postgresPassword: postgres
+    password: postgres
+```
+
+Save this file as `postgres-values.yaml` and run the following command to install the postgres instance.
+
+```shell
+helm upgrade -i postgres oci://registry-1.docker.io/bitnamicharts/postgresql --create-namespace --namespace prowler --version 16.4.14 -f postgres-values.yaml
+```
+
+### Valkey
+
+In this example we run valkey as a standalone instance, to make it as easy as possible to get started.
+Once again, not for production.
+
+```shell
+helm upgrade -i valkey oci://registry-1.docker.io/bitnamicharts/valkey -n prowler --version 2.3.0 --set architecture=standalone
+```
+
+### Secrets
+
+You should never write secrets directly in the values file.
+How you choose to manage your connection infromation is up to you.
+But something like [external-secrets](https://external-secrets.io/latest/) is worth looking in to and store your connection strings in a KMS.
+You can create those resources trough the helm chart with "extraObjects".
+
+But to make it easy to try out the helm chart here is a ready secret that matches the above values to connect to the postgres instance.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: prowler
+type: Opaque
+data:
+  database: cHJvd2xlcl9kYg==  # prowler_db
+  username: cHJvd2xlcg== # prowler
+  password: cHJvd2xlcg== # prowler
+  postgresPassword: cG9zdGdyZXM= # postgres
+```
+
+### Prowler config
+
+On top of the values file you need to add your own custom values.
+This is to add secrets infromation that is needed.
+
+[values-example.yaml](values-example.yaml)
+
+{{ template "chart.requirementsSection" . }}
+
+
+{{ template "chart.valuesSection" . }}
+
