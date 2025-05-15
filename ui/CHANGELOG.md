@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 - Added filter to retrieve only connected providers on the scan page. [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
+- Removed the alias if not added from findings detail page. [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
 
 ---
 
