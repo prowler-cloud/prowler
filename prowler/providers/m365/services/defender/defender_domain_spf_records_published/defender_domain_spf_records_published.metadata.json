@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_domain_spf_records_published",
+  "CheckTitle": "Ensure that SPF records are published for all Exchange Online Domains",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Exchange Online Domain",
+  "Description": "Ensure that each configured Exchange domain has a corresponding SPF (Sender Policy Framework) record published in DNS to validate authorized email senders.",
+  "Risk": "Without SPF records, messages from your domain could be spoofed, increasing the risk of phishing attacks and reducing the credibility of your email communications.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/email-authentication-spf-configure?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. If all email is sent from Exchange Online, add the following TXT DNS record to each accepted domain: v=spf1 include:spf.protection.outlook.com -all. 2. If other systems send email on your behalf, refer to the Microsoft documentation for SPF configuration guidance.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Publish SPF records for each Exchange domain to help prevent spoofing and unauthorized sending.",
+      "Url": "https://learn.microsoft.com/en-us/office365/SecurityCompliance/set-up-spf-in-office-365-to-help-prevent-spoofing"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

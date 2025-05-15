@@ -445,7 +445,9 @@
     {
       "Id": "2.1.8",
       "Description": "For each domain that is configured in Exchange, a corresponding Sender Policy Framework (SPF) record should be created.",
-      "Checks": [],
+      "Checks": [
+        "defender_domain_spf_records_published"
+      ],
       "Attributes": [
         {
           "Section": "2.1",

@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update the compliance list supported for each provider from docs. [(#7694)](https://github.com/prowler-cloud/prowler/pull/7694)
 - Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
+- Add new check `defender_domain_spf_records_published`. [(#7724)](https://github.com/prowler-cloud/prowler/pull/7724)
 - Add GitHub provider. [(#5787)](https://github.com/prowler-cloud/prowler/pull/5787)
 - Add `repository_default_branch_requires_multiple_approvals` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
 - Add `repository_default_branch_protection_enabled` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
@@ -19,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
+- Enhance defender policies checks logic. [(#7719)](https://github.com/prowler-cloud/prowler/pull/7719)
 
 ---
 
