@@ -1,4 +1,4 @@
-import { Chip } from "@nextui-org/react";
+import { StatusFindingBadge } from "@/components/ui/table";
 
 interface ComplianceAccordionTitleProps {
   label: string;
@@ -32,32 +32,9 @@ export const ComplianceAccordionTitle = ({
           )}
         </div>
 
-        <Chip
-          size="sm"
-          color="success"
-          variant="flat"
-          className="whitespace-nowrap"
-        >
-          PASS: {pass}
-        </Chip>
-
-        <Chip
-          size="sm"
-          color="danger"
-          variant="flat"
-          className="whitespace-nowrap"
-        >
-          FAIL: {fail}
-        </Chip>
-
-        <Chip
-          size="sm"
-          color="default"
-          variant="flat"
-          className="whitespace-nowrap"
-        >
-          MANUAL: {manual}
-        </Chip>
+        <StatusFindingBadge status="PASS" value={pass} />
+        <StatusFindingBadge status="FAIL" value={fail} />
+        <StatusFindingBadge status="MANUAL" value={manual} />
       </div>
     </div>
   );

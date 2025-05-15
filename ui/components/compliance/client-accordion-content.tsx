@@ -100,7 +100,7 @@ export function ClientAccordionContent({
       title: (
         <div className="flex items-center gap-2">
           <span className="text-primary">{checks.length}</span>
-          <span>Checks</span>
+          {checks.length > 1 ? <span>Checks</span> : <span>Check</span>}
         </div>
       ),
       content: checksTable,

@@ -1,7 +1,6 @@
-import { Chip } from "@nextui-org/react";
-
 import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
+import { StatusFindingBadge } from "@/components/ui/table";
 import {
   Category,
   Control,
@@ -260,19 +259,7 @@ export const toAccordionItems = (
                           {requirement.name}
                         </span>
                       </div>
-                      <Chip
-                        color={
-                          requirement.status === "PASS"
-                            ? "success"
-                            : requirement.status === "FAIL"
-                              ? "danger"
-                              : "default"
-                        }
-                        variant="flat"
-                        size="sm"
-                      >
-                        {requirement.status}
-                      </Chip>
+                      <StatusFindingBadge status={requirement.status} />
                     </div>
                   ),
                   content: (
