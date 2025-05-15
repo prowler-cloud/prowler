@@ -1,4 +1,5 @@
 from ipaddress import ip_address, ip_network
+import re
 
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
@@ -579,6 +580,55 @@ def is_condition_block_restrictive_organization(
                     ):
                         if "*" not in condition_statement[condition_operator][value]:
                             is_condition_valid = True
+
+    return is_condition_valid
+
+
+def is_condition_block_restrictive_sns_endpoint(
+    condition_statement: dict,
+):
+    """
+    is_condition_block_restrictive_sns_endpoint parses the IAM Condition policy block and returns True if the condition_statement is restrictive for an endpoint, False if not.
+
+    @param condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "SNS:Endpoint": "https://events.pagerduty.com/integration/<api-key>/enqueue"
+            }
+        }
+
+    """
+    is_condition_valid = False
+
+    # The conditions must be defined in lowercase since the context key names are not case-sensitive.
+    # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+    valid_condition_options = {
+        "StringEquals": [
+            "sns:endpoint",
+        ],
+        "StringLike": [
+            "sns:endpoint",
+        ],
+    }
+
+    for condition_operator, condition_operator_key in valid_condition_options.items():
+        if condition_operator in condition_statement:
+            # https://docs.aws.amazon.com/sns/latest/dg/sns-using-identity-based-policies.html#sns-policy-keys
+            # sns:endpoint - The URL, email address, or ARN from a Subscribe request or a previously confirmed subscription.
+            pattern = re.compile(r".+@[^*]+|^https:\/\/[^*]+|^arn:aws:sns:[^*]+")
+            for value in condition_operator_key:
+                # We need to transform the condition_statement into lowercase
+                condition_statement[condition_operator] = {
+                    k.lower(): v
+                    for k, v in condition_statement[condition_operator].items()
+                }
+
+                if value in condition_statement[condition_operator]:
+                    if pattern.fullmatch(
+                        condition_statement[condition_operator][value]
+                    ):
+                        is_condition_valid = True
 
     return is_condition_valid
 

@@ -3,9 +3,11 @@ from prowler.providers.aws.services.iam.lib.policy import (
     check_full_service_access,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
+    is_condition_block_restrictive_sns_endpoint,
     is_condition_restricting_from_private_ip,
     is_policy_public,
 )
+import pytest
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
@@ -1441,6 +1443,39 @@ class Test_Policy:
     def test_condition_parser_string_equals_aws_All_Orgs_str(self):
         condition_statement = {"StringEquals": {"aws:PrincipalOrgID": ALL_ORGS}}
         assert not is_condition_block_restrictive_organization(condition_statement)
+
+    @pytest.mark.parametrize(
+        "condition_value,expected",
+        [
+            ("*@example.com", True),
+            ("https://events.pagerduty.com/integration/<api-key>/enqueue", True),
+            (
+                "arn:aws:sns:eu-west-2:123456789012:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7",
+                True,
+            ),
+            ("*@*.com", False),
+            ("*@*", False),
+            ("*@example.*", False),
+            ("https://events.pagerduty.com/integration/*/enqueue", False),
+            ("arn:aws:sns:eu-west-2:123456789012:example-topic:*", False),
+            (
+                "arn:aws:sns:eu-west-2:*:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7",
+                False,
+            ),
+        ],
+    )
+    def test_condition_parser_string_equals_sns_endpoint_str(
+        self, condition_value: str, expected: bool
+    ):
+        condition_statement = {"StringEquals": {"SNS:Endpoint": condition_value}}
+        assert (
+            is_condition_block_restrictive_sns_endpoint(condition_statement) == expected
+        )
+
+        condition_statement = {"StringLike": {"SNS:Endpoint": condition_value}}
+        assert (
+            is_condition_block_restrictive_sns_endpoint(condition_statement) == expected
+        )
 
     def test_policy_allows_cross_account_access_with_root_and_wildcard_principal(self):
         policy_allow_root_and_wildcard_principal = {
