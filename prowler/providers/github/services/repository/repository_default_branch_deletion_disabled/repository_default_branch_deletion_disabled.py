@@ -9,13 +9,13 @@ from prowler.providers.github.services.repository.repository_client import (
 class repository_default_branch_deletion_disabled(Check):
     """Check if a repository denies branch deletion
 
-    This class verifies whether each repository denies branch deletion.
+    This class verifies whether each repository denies default branch deletion.
     """
 
     def execute(self) -> List[CheckReportGithub]:
-        """Execute the Github Repository Denies Branch Deletion check
+        """Execute the Github Repository Denies Default Branch Deletion check
 
-        Iterates over all repositories and checks if they deny branch deletion.
+        Iterates over all repositories and checks if they deny default branch deletion.
 
         Returns:
             List[CheckReportGithub]: A list of reports for each repository
@@ -28,13 +28,13 @@ class repository_default_branch_deletion_disabled(Check):
                 )
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Repository {repo.name} does allow branch deletion."
+                    f"Repository {repo.name} does allows default branch deletion."
                 )
 
                 if not repo.default_branch_deletion:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Repository {repo.name} does deny branch deletion."
+                        f"Repository {repo.name} does denies default branch deletion."
                     )
 
                 findings.append(report)
