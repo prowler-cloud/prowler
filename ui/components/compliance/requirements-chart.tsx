@@ -82,9 +82,10 @@ export function RequirementsChart({
             data={totalRequirements > 0 ? chartData : emptyChartData}
             dataKey="value"
             nameKey="name"
-            innerRadius={55}
-            outerRadius={80}
+            innerRadius={70}
+            outerRadius={100}
             paddingAngle={2}
+            cornerRadius={6}
           >
             {(totalRequirements > 0 ? chartData : emptyChartData).map(
               (entry, index) => (
@@ -126,15 +127,15 @@ export function RequirementsChart({
 
       <div className="mt-2 grid grid-cols-3 gap-4">
         <div className="flex flex-col items-center">
-          <div className="text-muted-foreground text-xs">Pass</div>
+          <div className="text-muted-foreground text-sm">Pass</div>
           <div className="font-semibold text-success">{pass}</div>
         </div>
         <div className="flex flex-col items-center">
-          <div className="text-muted-foreground text-xs">Fail</div>
+          <div className="text-muted-foreground text-sm">Fail</div>
           <div className="font-semibold text-danger">{fail}</div>
         </div>
         <div className="flex flex-col items-center">
-          <div className="text-muted-foreground text-xs">Manual</div>
+          <div className="text-muted-foreground text-sm">Manual</div>
           <div className="font-semibold text-warning">{manual}</div>
         </div>
       </div>

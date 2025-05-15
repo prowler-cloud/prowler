@@ -12,10 +12,8 @@ import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
 } from "@/components/compliance";
-import { DataCompliance } from "@/components/compliance/data-compliance";
-import { FilterControls } from "@/components/filters";
+import { ComplianceHeader } from "@/components/compliance/compliance-header";
 import { ContentLayout } from "@/components/ui";
-import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
@@ -83,21 +81,10 @@ export default async function Compliance({
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       {selectedScanId ? (
         <>
-          <FilterControls search />
-          <Spacer y={8} />
-          <DataCompliance scans={expandedScansData} />
-          <Spacer y={8} />
-          <DataTableFilterCustom
-            filters={[
-              {
-                key: "region__in",
-                labelCheckboxGroup: "Regions",
-                values: uniqueRegions,
-              },
-            ]}
-            defaultOpen={true}
+          <ComplianceHeader
+            scans={expandedScansData}
+            uniqueRegions={uniqueRegions}
           />
-          <Spacer y={12} />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid searchParams={searchParams} />
           </Suspense>

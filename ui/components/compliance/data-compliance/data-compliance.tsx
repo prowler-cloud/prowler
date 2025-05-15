@@ -33,13 +33,11 @@ export const DataCompliance = ({ scans }: DataComplianceProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-        <SelectScanComplianceData
-          scans={scans}
-          selectedScanId={selectedScanId}
-          onSelectionChange={handleScanChange}
-        />
-      </div>
+      <SelectScanComplianceData
+        scans={scans}
+        selectedScanId={selectedScanId}
+        onSelectionChange={handleScanChange}
+      />
     </div>
   );
 };

@@ -2,12 +2,17 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 import { getComplianceDetails } from "@/actions/compliances";
+import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
+import { getProvider } from "@/actions/providers";
+import { getScans } from "@/actions/scans";
+import { ComplianceHeader } from "@/components/compliance/compliance-header";
 import FailedSectionsList from "@/components/compliance/failed-sections-list";
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { SkeletonAccordion } from "@/components/compliance/skeleton-compliance-accordion";
 import { ContentLayout } from "@/components/ui";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { mapComplianceData, toAccordionItems } from "@/lib/ens-compliance";
+import { ScanProps } from "@/types";
 
 export default async function ComplianceDetail({
   params,
@@ -25,13 +30,68 @@ export default async function ComplianceDetail({
   }
 
   const formattedTitle = compliancetitle.split("-").join(" ");
-
   const pageTitle = version
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
+  // Fetch scans data
+  const scansData = await getScans({
+    filters: {
+      "filter[state]": "completed",
+    },
+  });
+
+  if (!scansData?.data) {
+    throw new Error("No scans data available");
+  }
+
+  // Expand scans with provider information
+  const expandedScansData = await Promise.all(
+    scansData.data.map(async (scan: ScanProps) => {
+      const providerId = scan.relationships?.provider?.data?.id;
+
+      if (!providerId) {
+        return { ...scan, providerInfo: null };
+      }
+
+      const formData = new FormData();
+      formData.append("id", providerId);
+
+      const providerData = await getProvider(formData);
+
+      return {
+        ...scan,
+        providerInfo: providerData?.data
+          ? {
+              provider: providerData.data.attributes.provider,
+              uid: providerData.data.attributes.uid,
+              alias: providerData.data.attributes.alias,
+            }
+          : null,
+      };
+    }),
+  );
+
+  const selectedScanId =
+    searchParams.scanId || expandedScansData[0]?.id || null;
+
+  // Fetch metadata info for regions
+  const metadataInfoData = await getComplianceOverviewMetadataInfo({
+    filters: {
+      "filter[scan_id]": selectedScanId,
+    },
+  });
+
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+
   return (
     <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">
+      <ComplianceHeader
+        scans={expandedScansData}
+        uniqueRegions={uniqueRegions}
+        showSearch={false}
+      />
+
       <div className="mb-8 flex gap-4">
         <div className="flex flex-1 gap-4">
           {/* Requirements Chart */}
