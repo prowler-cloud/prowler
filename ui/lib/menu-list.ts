@@ -168,16 +168,6 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       ],
     },
     {
-      groupLabel: "Prowler Hub",
-      menus: [
-        {
-          href: "https://hub.prowler.com/",
-          label: "Prowler Hub",
-          icon: DocIcon,
-        },
-      ],
-    },
-    {
       groupLabel: "",
       menus: [
         {
