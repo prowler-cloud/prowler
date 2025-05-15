@@ -35,6 +35,7 @@ class Repository(GithubService):
                     branch_protection = False
                     required_linear_history = False
                     allow_force_pushes = True
+                    branch_deletion = True
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -52,6 +53,7 @@ class Repository(GithubService):
                                     protection.required_linear_history
                                 )
                                 allow_force_pushes = protection.allow_force_pushes
+                                branch_deletion = protection.allow_deletions
                                 branch_protection = True
                     except Exception as error:
                         # If the branch is not found, it is not protected
@@ -66,6 +68,7 @@ class Repository(GithubService):
                             branch_protection = None
                             required_linear_history = None
                             allow_force_pushes = None
+                            branch_deletion = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -81,6 +84,7 @@ class Repository(GithubService):
                         approval_count=approval_cnt,
                         required_linear_history=required_linear_history,
                         allow_force_pushes=allow_force_pushes,
+                        default_branch_deletion=branch_deletion,
                         default_branch_protection=branch_protection,
                     )
 
@@ -104,4 +108,5 @@ class Repo(BaseModel):
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]
     allow_force_pushes: Optional[bool]
+    default_branch_deletion: Optional[bool]
     approval_count: Optional[int]
