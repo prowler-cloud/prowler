@@ -36,6 +36,7 @@ class Repository(GithubService):
                     required_linear_history = False
                     allow_force_pushes = True
                     branch_deletion = True
+                    status_checks = False
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -54,6 +55,9 @@ class Repository(GithubService):
                                 )
                                 allow_force_pushes = protection.allow_force_pushes
                                 branch_deletion = protection.allow_deletions
+                                status_checks = (
+                                    protection.required_status_checks is not None
+                                )
                                 branch_protection = True
                     except Exception as error:
                         # If the branch is not found, it is not protected
@@ -69,6 +73,7 @@ class Repository(GithubService):
                             required_linear_history = None
                             allow_force_pushes = None
                             branch_deletion = None
+                            status_checks = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -85,6 +90,7 @@ class Repository(GithubService):
                         required_linear_history=required_linear_history,
                         allow_force_pushes=allow_force_pushes,
                         default_branch_deletion=branch_deletion,
+                        status_checks=status_checks,
                         default_branch_protection=branch_protection,
                     )
 
@@ -109,4 +115,5 @@ class Repo(BaseModel):
     required_linear_history: Optional[bool]
     allow_force_pushes: Optional[bool]
     default_branch_deletion: Optional[bool]
+    status_checks: Optional[bool]
     approval_count: Optional[int]
