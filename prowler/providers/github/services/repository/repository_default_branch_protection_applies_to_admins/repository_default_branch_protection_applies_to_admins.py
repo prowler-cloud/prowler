@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_enforces_admin_branch_protection(Check):
+class repository_default_branch_protection_applies_to_admins(Check):
     """Check if a repository enforces administrators to be subject to the same branch protection rules as other users
 
     This class verifies whether each repository enforces administrators to be subject to the same branch protection rules as other users.

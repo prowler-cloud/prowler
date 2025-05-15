@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "repository_enforces_admin_branch_protection",
+  "CheckID": "repository_default_branch_protection_applies_to_admins",
   "CheckTitle": "Check if repository enforces admin branch protection",
   "CheckType": [],
   "ServiceName": "repository",

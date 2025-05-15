@@ -7,7 +7,7 @@ from prowler.providers.github.services.repository.repository_service import (
 from tests.providers.github.github_fixtures import set_mocked_github_provider
 
 
-class Test_repository_enforces_admin_branch_protection_test:
+class Test_repository_default_branch_protection_applies_to_admins_test:
     def test_no_repositories(self):
         repository_client = mock.MagicMock
         repository_client.repositories = {}
@@ -18,15 +18,15 @@ class Test_repository_enforces_admin_branch_protection_test:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection import (
-                repository_enforces_admin_branch_protection,
+            from prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins import (
+                repository_default_branch_protection_applies_to_admins,
             )
 
-            check = repository_enforces_admin_branch_protection()
+            check = repository_default_branch_protection_applies_to_admins()
             result = check.execute()
             assert len(result) == 0
 
@@ -51,15 +51,15 @@ class Test_repository_enforces_admin_branch_protection_test:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection import (
-                repository_enforces_admin_branch_protection,
+            from prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins import (
+                repository_default_branch_protection_applies_to_admins,
             )
 
-            check = repository_enforces_admin_branch_protection()
+            check = repository_default_branch_protection_applies_to_admins()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
@@ -96,15 +96,15 @@ class Test_repository_enforces_admin_branch_protection_test:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_enforces_admin_branch_protection.repository_enforces_admin_branch_protection import (
-                repository_enforces_admin_branch_protection,
+            from prowler.providers.github.services.repository.repository_default_branch_protection_applies_to_admins.repository_default_branch_protection_applies_to_admins import (
+                repository_default_branch_protection_applies_to_admins,
             )
 
-            check = repository_enforces_admin_branch_protection()
+            check = repository_default_branch_protection_applies_to_admins()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
