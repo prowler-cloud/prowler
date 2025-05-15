@@ -31,7 +31,6 @@ from prowler.lib.check.check import (
     print_fixers,
     print_services,
     remove_custom_checks_module,
-    run_fixer,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
@@ -42,6 +41,7 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.lib.fix.fixer import Fixer
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
@@ -321,7 +321,7 @@ def prowler():
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):
-            fixed_findings = run_fixer(findings)
+            fixed_findings = Fixer.run_fixer(findings)
             if not fixed_findings:
                 print(
                     f"{Style.BRIGHT}{Fore.RED}\nThere were findings to fix, but the fixer failed or it is not implemented for those findings yet. {Style.RESET_ALL}\n"
