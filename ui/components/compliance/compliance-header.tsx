@@ -23,31 +23,24 @@ export const ComplianceHeader = ({
 }: ComplianceHeaderProps) => {
   return (
     <>
-      {showSearch && (
+      {showSearch && <FilterControls search />}
+      <Spacer y={8} />
+      <DataCompliance scans={scans} />
+      {showRegionFilter && (
         <>
-          <FilterControls search />
           <Spacer y={8} />
+          <DataTableFilterCustom
+            filters={[
+              {
+                key: "region__in",
+                labelCheckboxGroup: "Regions",
+                values: uniqueRegions,
+              },
+            ]}
+            defaultOpen={true}
+          />
         </>
       )}
-      <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-center lg:justify-start">
-        <div className="w-full lg:w-1/3">
-          <DataCompliance scans={scans} />
-        </div>
-        {showRegionFilter && (
-          <div className="w-2/3">
-            <DataTableFilterCustom
-              filters={[
-                {
-                  key: "region__in",
-                  labelCheckboxGroup: "Regions",
-                  values: uniqueRegions,
-                },
-              ]}
-              defaultOpen={true}
-            />
-          </div>
-        )}
-      </div>
       <Spacer y={12} />
     </>
   );
