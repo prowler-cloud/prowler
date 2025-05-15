@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "GithubRepository",
   "Description": "Ensure that the repository enforces status checks to pass before merging code into the main branch.",
   "Risk": "Merging code without requiring all checks to pass increases the risk of introducing bugs, vulnerabilities, or unstable changes into the codebase. This can compromise the quality, security, and functionality of the application.",
   "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
