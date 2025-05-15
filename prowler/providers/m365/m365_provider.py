@@ -725,6 +725,12 @@ class M365Provider(Provider):
                 session,
             )
 
+            if not identity:
+                raise M365GetTokenIdentityError(
+                    file=os.path.basename(__file__),
+                    message="Failed to retrieve M365 identity",
+                )
+
             if provider_id not in identity.tenant_domains:
                 raise M365InvalidProviderIdError(
                     file=os.path.basename(__file__),
@@ -899,76 +905,75 @@ class M365Provider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, m365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if env_auth or az_cli_auth or sp_env_auth or browser_auth:
 
-            async def get_m365_identity():
-                # Trying to recover tenant domain info
+        async def get_m365_identity():
+            # Trying to recover tenant domain info
+            try:
+                logger.info(
+                    "Trying to retrieve tenant domain from AAD to populate identity structure ..."
+                )
+                client = GraphServiceClient(credentials=session)
+
+                domain_result = await client.domains.get()
+                if getattr(domain_result, "value"):
+                    if getattr(domain_result.value[0], "id"):
+                        identity.tenant_domain = domain_result.value[0].id
+                        for domain in domain_result.value:
+                            identity.tenant_domains.append(domain.id)
+
+            except HttpResponseError as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise M365HTTPResponseError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            except ClientAuthenticationError as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise M365GetTokenIdentityError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+            # since that exception is not considered as critical, we keep filling another identity fields
+            if sp_env_auth or env_auth:
+                # The id of the sp can be retrieved from environment variables
+                identity.identity_id = getenv("AZURE_CLIENT_ID")
+                identity.identity_type = "Service Principal"
+            # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
+            # should work but it doesn't, pending issue
+            else:
+                identity.identity_id = "Unknown user id (Missing AAD permissions)"
+                identity.identity_type = "User"
                 try:
                     logger.info(
-                        "Trying to retrieve tenant domain from AAD to populate identity structure ..."
+                        "Trying to retrieve user information from AAD to populate identity structure ..."
                     )
                     client = GraphServiceClient(credentials=session)
 
-                    domain_result = await client.domains.get()
-                    if getattr(domain_result, "value"):
-                        if getattr(domain_result.value[0], "id"):
-                            identity.tenant_domain = domain_result.value[0].id
-                            for domain in domain_result.value:
-                                identity.tenant_domains.append(domain.id)
+                    me = await client.me.get()
+                    if me:
+                        if getattr(me, "user_principal_name"):
+                            identity.identity_id = me.user_principal_name
 
-                except HttpResponseError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise M365HTTPResponseError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
-                except ClientAuthenticationError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise M365GetTokenIdentityError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
                 except Exception as error:
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
-                # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth or env_auth:
-                    # The id of the sp can be retrieved from environment variables
-                    identity.identity_id = getenv("AZURE_CLIENT_ID")
-                    identity.identity_type = "Service Principal"
-                # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
-                # should work but it doesn't, pending issue
-                else:
-                    identity.identity_id = "Unknown user id (Missing AAD permissions)"
-                    identity.identity_type = "User"
-                    try:
-                        logger.info(
-                            "Trying to retrieve user information from AAD to populate identity structure ..."
-                        )
-                        client = GraphServiceClient(credentials=session)
 
-                        me = await client.me.get()
-                        if me:
-                            if getattr(me, "user_principal_name"):
-                                identity.identity_id = me.user_principal_name
+            # Retrieve tenant id from the client
+            client = GraphServiceClient(credentials=session)
+            organization_info = await client.organization.get()
+            identity.tenant_id = organization_info.value[0].id
 
-                    except Exception as error:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                        )
-
-                # Retrieve tenant id from the client
-                client = GraphServiceClient(credentials=session)
-                organization_info = await client.organization.get()
-                identity.tenant_id = organization_info.value[0].id
-
-            asyncio.get_event_loop().run_until_complete(get_m365_identity())
-            return identity
+        asyncio.get_event_loop().run_until_complete(get_m365_identity())
+        return identity
 
     @staticmethod
     def validate_static_credentials(
