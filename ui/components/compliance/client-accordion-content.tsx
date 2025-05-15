@@ -77,10 +77,7 @@ export function ClientAccordionContent({
     loadFindings();
   }, [requirement, scanId, isExpanded]);
 
-  // Reuse the renderTable logic but now with dynamically loaded findings
-
   const checks = requirement.checks || [];
-
   // Prepare the checks table as content for the accordion
   const checksTable = (
     <div className="overflow-x-auto">
@@ -129,7 +126,8 @@ export function ClientAccordionContent({
           <h3 className="mb-2 font-medium">Findings</h3>
           <div className="overflow-x-auto p-1">
             <DataTable
-              columns={ColumnFindings}
+              // Remove the updated_at column as compliance is for the last scan
+              columns={ColumnFindings.filter((_, index) => index !== 4)}
               data={expandedFindings || []}
               metadata={findings?.meta}
             />

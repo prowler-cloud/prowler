@@ -14,14 +14,12 @@ export default async function ComplianceDetail({
   searchParams: { id: string; version?: string; scanId?: string };
 }) {
   const { compliancetitle } = params;
-  const { id, version, scanId } = searchParams;
+  const { id, version } = searchParams;
 
   if (!id) {
     // Todo: improve error handling for no id provided
     throw new Error("No id provided");
   }
-
-  const complianceData = await getComplianceDetails(id);
 
   const formattedTitle = compliancetitle.split("-").join(" ");
 
@@ -29,19 +27,33 @@ export default async function ComplianceDetail({
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
-  const mappedData = mapComplianceData(complianceData.data);
-  const accordionItems = toAccordionItems(mappedData, scanId);
-
   return (
     <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">
       <Suspense key={id} fallback={<SkeletonAccordion />}>
-        <Accordion
-          items={accordionItems}
-          variant="bordered"
-          selectionMode="multiple"
-          defaultExpandedKeys={[]}
-        />
+        <SSRComplianceDetail id={id} scanId={searchParams.scanId} />
       </Suspense>
     </ContentLayout>
   );
 }
+
+const SSRComplianceDetail = async ({
+  id,
+  scanId,
+}: {
+  id: string;
+  scanId?: string;
+}) => {
+  const complianceData = await getComplianceDetails(id);
+
+  const mappedData = mapComplianceData(complianceData.data);
+  const accordionItems = toAccordionItems(mappedData, scanId);
+
+  return (
+    <Accordion
+      items={accordionItems}
+      variant="bordered"
+      selectionMode="multiple"
+      defaultExpandedKeys={[]}
+    />
+  );
+};

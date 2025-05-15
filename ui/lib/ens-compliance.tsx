@@ -1,6 +1,6 @@
 import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
+import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion-requeriment-title";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { StatusFindingBadge } from "@/components/ui/table";
 import {
   Category,
   Control,
@@ -250,17 +250,11 @@ export const toAccordionItems = (
                 return {
                   key: itemKey,
                   title: (
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <div className="flex w-3/4 items-center gap-1">
-                        <span className="whitespace-nowrap text-sm font-bold capitalize">
-                          {translateType(requirement.type)}:
-                        </span>
-                        <span className="whitespace-nowrap text-sm uppercase">
-                          {requirement.name}
-                        </span>
-                      </div>
-                      <StatusFindingBadge status={requirement.status} />
-                    </div>
+                    <ComplianceAccordionRequirementTitle
+                      type={requirement.type}
+                      name={requirement.name}
+                      status={requirement.status}
+                    />
                   ),
                   content: (
                     <ClientAccordionContent
