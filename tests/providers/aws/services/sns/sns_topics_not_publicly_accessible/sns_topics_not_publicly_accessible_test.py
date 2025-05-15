@@ -397,12 +397,15 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].resource_tags == []
 
     @pytest.mark.parametrize(
-        "endpoint", [
+        "endpoint",
+        [
             ("*@example.com"),
             ("user@example.com"),
             ("https://events.pagerduty.com/integration/987654321/enqueue"),
-            ("arn:aws:sns:eu-west-2:123456789012:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7"),
-        ]
+            (
+                "arn:aws:sns:eu-west-2:123456789012:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7"
+            ),
+        ],
     )
     def test_topic_public_with_sns_endpoint(self, endpoint: str):
         sns_client = mock.MagicMock
@@ -441,11 +444,12 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].resource_tags == []
 
     @pytest.mark.parametrize(
-        "endpoint", [
+        "endpoint",
+        [
             ("*@*"),
             ("https://events.pagerduty.com/integration/*/enqueue"),
             ("arn:aws:sns:eu-west-2:*:example-topic:*"),
-        ]
+        ],
     )
     def test_topic_public_with_unrestricted_sns_endpoint(self, endpoint: str):
         sns_client = mock.MagicMock
