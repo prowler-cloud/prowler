@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
+- Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 
 ---
 
