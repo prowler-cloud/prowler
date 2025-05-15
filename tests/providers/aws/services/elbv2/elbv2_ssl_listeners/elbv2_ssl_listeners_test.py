@@ -17,15 +17,21 @@ class Test_elbv2_ssl_listeners:
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
-            new=ELBv2(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
+                new=ELBv2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -90,15 +96,21 @@ class Test_elbv2_ssl_listeners:
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
-            new=ELBv2(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
+                new=ELBv2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners import (
@@ -168,15 +180,21 @@ class Test_elbv2_ssl_listeners:
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
-            new=ELBv2(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
+                new=ELBv2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners import (
@@ -238,15 +256,21 @@ class Test_elbv2_ssl_listeners:
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+                ),
             ),
-        ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
-            new=ELBv2(
-                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            mock.patch(
+                "prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners.elbv2_client",
+                new=ELBv2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                        create_default_organization=False,
+                    )
+                ),
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_ssl_listeners.elbv2_ssl_listeners import (

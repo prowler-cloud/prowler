@@ -15,7 +15,7 @@ class rbac_minimize_csr_approval_access(Check):
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
                     report = Check_Report_Kubernetes(
-                        metadata=self.metadata(), resource_metadata=subject
+                        metadata=self.metadata(), resource=subject
                     )
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to update the CSR approval sub-resource."

@@ -7,12 +7,11 @@ class network_flow_log_captured_sent(Check):
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
             for network_watcher in network_watchers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=network_watcher
+                )
                 report.subscription = subscription
-                report.resource_name = network_watcher.name
-                report.resource_id = network_watcher.id
                 report.status = "FAIL"
-                report.location = network_watcher.location
                 report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has no flow logs"
                 if network_watcher.flow_logs:
                     report.status = "FAIL"

@@ -13,6 +13,7 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
+    Prowler_ThreatScore_Requirement_Attribute,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
@@ -28,7 +29,8 @@ CIS_1_4_AWS = Compliance(
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1. Simple Storage Service (S3)",
+                    Section="2. Storage",
+                    SubSection="2.1. Simple Storage Service (S3)",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
@@ -47,7 +49,8 @@ CIS_1_4_AWS = Compliance(
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1. Simple Storage Service (S3)",
+                    Section="2. Storage",
+                    SubSection="2.1. Simple Storage Service (S3)",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
@@ -75,7 +78,8 @@ CIS_2_0_AZURE = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1 Microsoft Defender for Cloud",
+                    Section="2. Defender",
+                    SubSection="2.1 Microsoft Defender for Cloud",
                     Profile="Level 2",
                     AssessmentStatus="Manual",
                     Description="Turning on Microsoft Defender for Databases enables threat detection for the instances running your database software. This provides threat intelligence, anomaly detection, and behavior analytics in the Azure Microsoft Defender for Cloud. Instead of being enabled on services like Platform as a Service (PaaS), this implementation will run within your instances as Infrastructure as a Service (IaaS) on the Operating Systems hosting your databases.",
@@ -95,7 +99,8 @@ CIS_2_0_AZURE = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1 Microsoft Defender for Cloud",
+                    Section="2. Defender",
+                    SubSection="2.1 Microsoft Defender for Cloud",
                     Profile="Level 2",
                     AssessmentStatus="Manual",
                     Description="Turning on Microsoft Defender for Databases enables threat detection for the instances running your database software. This provides threat intelligence, anomaly detection, and behavior analytics in the Azure Microsoft Defender for Cloud. Instead of being enabled on services like Platform as a Service (PaaS), this implementation will run within your instances as Infrastructure as a Service (IaaS) on the Operating Systems hosting your databases.",
@@ -124,7 +129,8 @@ CIS_2_0_GCP = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2. Logging and Monitoring",
+                    Section="2. Logging",
+                    SubSection="2.1. Logging and Monitoring",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
@@ -143,7 +149,7 @@ CIS_2_0_GCP = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2. Logging and Monitoring",
+                    Section="2. Logging",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
@@ -171,7 +177,8 @@ CIS_1_8_KUBERNETES = Compliance(
             Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="1.1 Control Plane Node Configuration Files",
+                    Section="1. Control Plane",
+                    SubSection="1.1 Control Plane Node Configuration Files",
                     Profile="Level 1 - Master Node",
                     AssessmentStatus="Automated",
                     Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
@@ -791,6 +798,132 @@ KISA_ISMSP_AWS = Compliance(
                         "Case 1: Insufficient authentication when accessing information systems externally.",
                         "Case 2: No limitation on login failure attempts.",
                     ],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+PROWLER_THREATSCORE_AWS_NAME = "prowler_threatscore_aws"
+PROWLER_THREATSCORE_AWS = Compliance(
+    Framework="ProwlerThreatScore",
+    Version="1.0",
+    Provider="AWS",
+    Description="Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Requirements=[
+        Compliance_Requirement(
+            Id="1.1.1",
+            Description="Ensure MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="MFA enabled for 'root'",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
+                    LevelOfRisk=5,
+                )
+            ],
+            Checks=[
+                "iam_root_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="1.1.2",
+            Description="Ensure hardware MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="CloudTrail logging enabled",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
+                    LevelOfRisk=3,
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+PROWLER_THREATSCORE_AZURE_NAME = "prowler_threatscore_azure"
+PROWLER_THREATSCORE_AZURE = Compliance(
+    Framework="ProwlerThreatScore",
+    Version="1.0",
+    Provider="Azure",
+    Description="Prowler ThreatScore Compliance Framework for Azure ensures that the Azure account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Requirements=[
+        Compliance_Requirement(
+            Id="1.1.1",
+            Description="Ensure MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="MFA enabled for 'root'",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
+                    LevelOfRisk=5,
+                )
+            ],
+            Checks=[
+                "iam_root_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="1.1.2",
+            Description="Ensure hardware MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="CloudTrail logging enabled",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
+                    LevelOfRisk=3,
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+PROWLER_THREATSCORE_GCP_NAME = "prowler_threatscore_gcp"
+PROWLER_THREATSCORE_GCP = Compliance(
+    Framework="ProwlerThreatScore",
+    Version="1.0",
+    Provider="GCP",
+    Description="Prowler ThreatScore Compliance Framework for GCP ensures that the GCP account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Requirements=[
+        Compliance_Requirement(
+            Id="1.1.1",
+            Description="Ensure MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="MFA enabled for 'root'",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
+                    LevelOfRisk=5,
+                )
+            ],
+            Checks=[
+                "iam_root_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="1.1.2",
+            Description="Ensure hardware MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="CloudTrail logging enabled",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
+                    LevelOfRisk=3,
                 )
             ],
             Checks=[],

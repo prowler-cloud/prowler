@@ -8,7 +8,7 @@ class iam_administrator_access_with_mfa(Check):
         response = iam_client.groups
 
         for group in response:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=group)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=group)
             report.region = iam_client.region
             report.status = "PASS"
             report.status_extended = f"Group {group.name} has no policies."

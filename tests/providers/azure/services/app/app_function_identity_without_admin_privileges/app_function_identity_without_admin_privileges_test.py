@@ -12,12 +12,15 @@ class Test_app_function_identity_without_admin_privileges:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges import (
                 app_function_identity_without_admin_privileges,
@@ -32,12 +35,15 @@ class Test_app_function_identity_without_admin_privileges:
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges import (
                 app_function_identity_without_admin_privileges,
@@ -52,12 +58,15 @@ class Test_app_function_identity_without_admin_privileges:
     def test_app_function_no_identity(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges import (
                 app_function_identity_without_admin_privileges,
@@ -91,15 +100,19 @@ class Test_app_function_identity_without_admin_privileges:
         app_client = mock.MagicMock
         iam_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
-            new=app_client,
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
+                new=app_client,
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges import (
                 app_function_identity_without_admin_privileges,
@@ -168,15 +181,19 @@ class Test_app_function_identity_without_admin_privileges:
         app_client = mock.MagicMock
         iam_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
-            new=app_client,
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.app_client",
+                new=app_client,
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_identity_without_admin_privileges.app_function_identity_without_admin_privileges import (
                 app_function_identity_without_admin_privileges,

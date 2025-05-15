@@ -12,7 +12,6 @@ from prowler.providers.aws.lib.service.service import AWSService
 # Because we need to do a get_replication_set to describe it and we don't know the region, we iterate across all regions until we find it, once we find it, we stop iterating.
 
 
-################## SSMIncidents
 class SSMIncidents(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__

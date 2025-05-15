@@ -433,8 +433,8 @@ class Mutelist(ABC):
                 if tag:
                     is_item_matched = True
                 for item in matched_items:
-                    if item.startswith("*"):
-                        item = ".*" + item[1:]
+                    if "*" in item:
+                        item = item.replace("*", ".*")
                     if tag:
                         if not re.search(item, finding_items):
                             is_item_matched = False

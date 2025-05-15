@@ -36,18 +36,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -99,18 +104,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -168,18 +178,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -255,18 +270,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -285,15 +305,10 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [
-                {
-                    "tag_key_1": "tag_value_1",
-                    "tag_key_2": "tag_value_2",
-                }
-            ]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
@@ -359,18 +374,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -389,15 +409,10 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [
-                {
-                    "tag_key_1": "tag_value_1",
-                    "tag_key_2": "tag_value_2",
-                }
-            ]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
@@ -463,18 +478,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -493,15 +513,10 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [
-                {
-                    "tag_key_1": "tag_value_1",
-                    "tag_key_2": "tag_value_2",
-                }
-            ]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):
@@ -567,18 +582,23 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
@@ -597,15 +617,10 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [
-                {
-                    "tag_key_1": "tag_value_1",
-                    "tag_key_2": "tag_value_2",
-                }
-            ]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_access_denied(self):
@@ -631,19 +646,24 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
-        ) as cloudtrail_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ) as cloudtrail_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_acls_alarm_configured.cloudwatch_changes_to_network_acls_alarm_configured import (
                 cloudwatch_changes_to_network_acls_alarm_configured,

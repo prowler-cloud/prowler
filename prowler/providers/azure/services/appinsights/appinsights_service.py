@@ -6,7 +6,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## AppInsights
 class AppInsights(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ApplicationInsightsManagementClient, provider)

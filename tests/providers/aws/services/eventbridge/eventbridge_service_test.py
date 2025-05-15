@@ -135,7 +135,7 @@ class Test_EventBridge_Service:
         )
         aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
-        assert len(eventbridge.buses) == 31  # 1 per region
+        assert len(eventbridge.buses) == 33  # 1 per region
         for bus in eventbridge.buses.values():
             if bus.name == "test":
                 assert (

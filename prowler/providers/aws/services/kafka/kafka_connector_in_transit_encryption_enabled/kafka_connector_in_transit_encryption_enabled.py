@@ -7,9 +7,7 @@ class kafka_connector_in_transit_encryption_enabled(Check):
         findings = []
 
         for connector in kafkaconnect_client.connectors.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=connector
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=connector)
             report.status = "FAIL"
             report.status_extended = f"Kafka connector {connector.name} does not have encryption in transit enabled."
 

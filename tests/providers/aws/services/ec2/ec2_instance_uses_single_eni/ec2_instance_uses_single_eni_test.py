@@ -170,12 +170,15 @@ class Test_ec2_instance_uses_single_eni:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
                 ec2_instance_uses_single_eni,
@@ -193,12 +196,15 @@ class Test_ec2_instance_uses_single_eni:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
                 ec2_instance_uses_single_eni,
@@ -223,12 +229,15 @@ class Test_ec2_instance_uses_single_eni:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
                 ec2_instance_uses_single_eni,
@@ -260,12 +269,15 @@ class Test_ec2_instance_uses_single_eni:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
                 ec2_instance_uses_single_eni,
@@ -290,12 +302,15 @@ class Test_ec2_instance_uses_single_eni:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_uses_single_eni.ec2_instance_uses_single_eni import (
                 ec2_instance_uses_single_eni,

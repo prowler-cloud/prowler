@@ -760,7 +760,7 @@ export const AddIcon: React.FC<IconSvgProps> = ({
 };
 
 export const ScheduleIcon: React.FC<IconSvgProps> = ({
-  size,
+  size = 24,
   height,
   width,
   ...props
@@ -768,8 +768,9 @@ export const ScheduleIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size || width || 24}
-      height={size || height || 24}
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 24 24" // <- AÑADÍ ESTO
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -808,3 +809,272 @@ export const InfoIcon: React.FC<IconSvgProps> = ({
     <path d="M12 16v-4M12 8h.01" />
   </svg>
 );
+
+export const ManualIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="10 8 16 12 10 16 10 8" />
+  </svg>
+);
+
+export const SpinnerIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2"
+    className={className}
+    {...props}
+  >
+    <path d="M20 4v5h-.582m0 0a8.001 8.001 0 00-15.356 2m15.356-2H15M4 20v-5h.581m0 0a8.003 8.003 0 0015.357-2M4.581 15H9" />
+  </svg>
+);
+
+export const DocIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
+      <path d="M5 15v6h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2z" />
+      <path d="M20 16.5a1.5 1.5 0 0 0-3 0v3a1.5 1.5 0 0 0 3 0" />
+      <path d="M12.5 15a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-3 0v-3a1.5 1.5 0 0 1 1.5-1.5" />
+    </svg>
+  );
+};
+
+export const APIdocIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M4 13h5m3 3V8h3a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-3m8-5v8M9 16v-5.5a2.5 2.5 0 0 0-5 0V16" />
+    </svg>
+  );
+};
+
+export const SupportIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7h.01" strokeLinecap="round" />
+      <path
+        d="M10 11h2v5m-2 0h4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+export const CircleHelpIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+};
+
+export const AWSIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M15.626 14.62c-1.107 1.619-2.728 2.384-4.625 2.384c-2.304 0-4.277-1.773-3.993-4.124c.314-2.608 2.34-3.73 5.708-4.143c.601-.073.85-.094 2.147-.19l.138-.01v-.215C15 6.526 13.933 5.3 12.5 5.3c-1.437 0-2.44.747-3.055 2.526l-1.89-.652C8.442 4.604 10.193 3.3 12.5 3.3c2.602 0 4.5 2.178 4.5 5.022c0 2.649.163 4.756.483 5.557c.356.893.486 1.117.884 1.613l-1.56 1.251c-.524-.652-.753-1.048-1.182-2.122m5.631 5.925c-.27.2-.741.081-.528-.44c.264-.648.547-1.408.262-1.752c-.21-.255-.468-.382-1.027-.382c-.46 0-.69.06-.995.08c-.204.014-.294-.297-.091-.44c.261-.185.544-.33.87-.428c1.15-.344 2.505-.155 2.67.083c.365.53-.2 2.569-1.16 3.28m-1.182-1.084a8 8 0 0 1-.829.695c-2.122 1.616-4.871 2.46-7.258 2.46c-3.843 0-7.28-1.793-9.888-4.795c-.224-.23-.039-.566.223-.384c2.81 2.077 6.288 3.333 9.888 3.333c2.266 0 4.708-.537 7.035-1.692c.163-.077.345-.182.504-.255c.367-.21.69.306.325.638m-5.064-8.92c-1.259.094-1.496.113-2.052.181c-2.553.313-3.797 1.003-3.966 2.398c-.125 1.043.81 1.884 2.008 1.884c2.039 0 3.517-1.228 4.022-4.463z" />
+    </svg>
+  );
+};
+
+export const AzureIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M11.001 5h-6v6h6zm2 0v6h6V5zm6 8h-6v6h6zm-8 6v-6h-6v6zm-8-16h18v18h-18z" />
+    </svg>
+  );
+};
+
+export const M365Icon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M17.5 21H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+      <path d="M22 10a3 3 0 0 0-3-3h-2.207a5.502 5.502 0 0 0-10.702.5" />
+    </svg>
+  );
+};
+
+export const GCPIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M12 11h8.533q.066.578.067 1.184c0 2.734-.98 5.036-2.678 6.6c-1.485 1.371-3.518 2.175-5.942 2.175A8.976 8.976 0 0 1 3 11.98A8.976 8.976 0 0 1 11.98 3c2.42 0 4.453.89 6.008 2.339L16.526 6.8C15.368 5.681 13.803 5 12 5a7 7 0 0 0 0 14c3.527 0 6.144-2.608 6.577-6H12z" />
+    </svg>
+  );
+};
+
+export const MutedIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 24}
+      width={size || width || 24}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+      <path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742" />
+      <path d="m2 2 20 20" />
+      <path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05" />
+    </svg>
+  );
+};

@@ -921,7 +921,7 @@ class AzureProvider(Provider):
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if sp_env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
-                    identity.identity_id = getenv("AZURE_CLIENT_ID")
+                    identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
                     identity.identity_type = "Service Principal"
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue

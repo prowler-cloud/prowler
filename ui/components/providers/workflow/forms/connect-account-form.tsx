@@ -9,18 +9,50 @@ import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import {
-  getProviderLogo,
-  getProviderName,
-  ProviderType,
-} from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
+import { ProviderType } from "@/types";
 
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
-
+import { ProviderTitleDocs } from "../provider-title-docs";
 export type FormValues = z.infer<typeof addProviderFormSchema>;
+
+// Helper function for labels and placeholders
+const getProviderFieldDetails = (providerType?: string) => {
+  switch (providerType) {
+    case "aws":
+      return {
+        label: "Account ID",
+        placeholder: "e.g. 123456789012",
+      };
+    case "gcp":
+      return {
+        label: "Project ID",
+        placeholder: "e.g. my-gcp-project",
+      };
+    case "azure":
+      return {
+        label: "Subscription ID",
+        placeholder: "e.g. fc94207a-d396-4a14-a7fd-12ab34cd56ef",
+      };
+    case "kubernetes":
+      return {
+        label: "Kubernetes Context",
+        placeholder: "e.g. my-cluster-context",
+      };
+    case "m365":
+      return {
+        label: "Domain ID",
+        placeholder: "e.g. your-domain.onmicrosoft.com",
+      };
+    default:
+      return {
+        label: "Provider UID",
+        placeholder: "Enter the provider UID",
+      };
+  }
+};
 
 export const ConnectAccountForm = () => {
   const { toast } = useToast();
@@ -39,6 +71,8 @@ export const ConnectAccountForm = () => {
   });
 
   const providerType = form.watch("providerType");
+  const providerFieldDetails = getProviderFieldDetails(providerType);
+
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
@@ -107,7 +141,12 @@ export const ConnectAccountForm = () => {
     }
   };
 
-  const handleBackStep = () => setPrevStep((prev) => prev - 1);
+  const handleBackStep = () => {
+    setPrevStep((prev) => prev - 1);
+    // Reset the providerUid and providerAlias fields when going back
+    form.setValue("providerUid", "");
+    form.setValue("providerAlias", "");
+  };
 
   useEffect(() => {
     if (providerType) {
@@ -132,21 +171,14 @@ export const ConnectAccountForm = () => {
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
-            <div className="mb-4 flex items-center space-x-4">
-              {providerType && getProviderLogo(providerType as ProviderType)}
-              <span className="text-lg font-semibold">
-                {providerType
-                  ? getProviderName(providerType as ProviderType)
-                  : "Unknown Provider"}
-              </span>
-            </div>
+            <ProviderTitleDocs providerType={providerType as ProviderType} />
             <CustomInput
               control={form.control}
               name="providerUid"
               type="text"
-              label="Provider UID"
+              label={providerFieldDetails.label}
               labelPlacement="inside"
-              placeholder="Enter the provider UID"
+              placeholder={providerFieldDetails.placeholder}
               variant="bordered"
               isRequired
               isInvalid={!!form.formState.errors.providerUid}

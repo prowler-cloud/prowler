@@ -6,7 +6,7 @@ class waf_global_webacl_with_rules(Check):
     def execute(self):
         findings = []
         for acl in waf_client.web_acls.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=acl)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=acl)
             report.status = "FAIL"
             report.status_extended = f"AWS WAF Global Web ACL {acl.name} does not have any rules or rule groups."
 
