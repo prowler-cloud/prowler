@@ -11,6 +11,19 @@ class Repository(GithubService):
         super().__init__(__class__.__name__, provider)
         self.repositories = self._list_repositories()
 
+    def _file_exists(self, repo, filename):
+        """Check if a file exists in the repository. Returns True if exists, False if not, None if error."""
+        try:
+            return repo.get_contents(filename) is not None
+        except Exception as error:
+            if "404" in str(error):
+                return False
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+
     def _list_repositories(self):
         logger.info("Repository - Listing Repositories...")
         repos = {}
@@ -18,18 +31,19 @@ class Repository(GithubService):
             for client in self.clients:
                 for repo in client.get_user().get_repos():
                     default_branch = repo.default_branch
-                    securitymd_exists = False
-                    try:
-                        securitymd_exists = repo.get_contents("SECURITY.md") is not None
-                    except Exception as error:
-                        if "404" in str(error):
-                            securitymd_exists = False
-                        else:
-                            logger.error(
-                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                            securitymd_exists = None
-
+                    securitymd_exists = self._file_exists(repo, "SECURITY.md")
+                    # CODEOWNERS file can be in .github/, root, or docs/
+                    # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-file-location
+                    codeowners_paths = [
+                        ".github/CODEOWNERS",
+                        "CODEOWNERS",
+                        "docs/CODEOWNERS",
+                    ]
+                    codeowners_exists = False
+                    for path in codeowners_paths:
+                        if self._file_exists(repo, path):
+                            codeowners_exists = True
+                            break
                     require_pr = False
                     approval_cnt = 0
                     branch_protection = False
@@ -86,6 +100,7 @@ class Repository(GithubService):
                         allow_force_pushes=allow_force_pushes,
                         default_branch_deletion=branch_deletion,
                         default_branch_protection=branch_protection,
+                        codeowners_exists=codeowners_exists,
                     )
 
         except Exception as error:
@@ -110,3 +125,4 @@ class Repo(BaseModel):
     allow_force_pushes: Optional[bool]
     default_branch_deletion: Optional[bool]
     approval_count: Optional[int]
+    codeowners_exists: Optional[bool]

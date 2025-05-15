@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_default_branch_deletion_disabled` check for GitHub provider. [(#6200)](https://github.com/prowler-cloud/prowler/pull/6200)
 - Add `organization_members_mfa_required` check for GitHub provider. [(#6304)](https://github.com/prowler-cloud/prowler/pull/6304)
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
+- Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
