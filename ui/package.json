@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@iconify/react": "^5.2.0",
+    "@playwright/test": "^1.52.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "20.5.7",
     "@types/react": "18.3.3",

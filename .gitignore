@@ -44,6 +44,7 @@ junit-reports/
 
 # Cursor files
 .cursorignore
+.cursor/
 
 # Terraform
 .terraform*
@@ -65,3 +66,10 @@ node_modules
 
 # Persistent data
 _data/
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
