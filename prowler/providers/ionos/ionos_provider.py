@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+import subprocess
 from typing import Any, Optional, Tuple
 
 import ionoscloud
@@ -116,13 +117,36 @@ class IonosProvider(Provider):
         """
         Reads the IONOS token from the ionosctl configuration file across different platforms.
         """
+        platform = sys.platform
+        
+        is_wsl = False
+        try:
+            with open('/proc/version') as f:
+                is_wsl = 'microsoft' in f.read().lower()
+        except:
+            pass
+
         config_paths = {
             "darwin": os.path.join(os.path.expanduser("~"), "Library", "Application Support", "ionosctl", "config.json"),
-            "linux": os.path.join(os.path.expanduser("~"), ".config", "ionosctl", "config.json"),
+            "linux": os.path.join(os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "ionosctl", "config.json"),
             "win32": os.path.join(os.getenv("APPDATA", ""), "ionosctl", "config.json")
         }
         
-        platform = sys.platform
+        if is_wsl:
+            try:
+                windows_config = "/mnt/c/Users/{}/AppData/Roaming/ionosctl/config.json".format(
+                    os.getenv("USER")
+                )
+                try:
+                    with open(windows_config, "r") as config_file:
+                        config = json.load(config_file)
+                        logger.info("Loaded IONOS token from Windows ionosctl config file in WSL.")
+                        return config.get("userdata.token")
+                except Exception as e:
+                    logger.debug(f"Could not load Windows config file in WSL, trying Linux path... {e}")
+            except Exception as e:
+                logger.debug(f"Failed to access Windows config file: {e}")
+        
         config_path = config_paths.get(platform)
         
         if not config_path:
