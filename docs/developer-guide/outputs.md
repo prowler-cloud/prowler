@@ -4,19 +4,19 @@
 
 Prowler supports multiple output formats, allowing users to tailor findings presentation to their needs. Custom output formats are valuable when integrating Prowler with third-party tools, generating specialized reports, or adapting data for specific workflows. By defining a custom output format, users can refine how findings are structured, extracting and displaying only the most relevant information.
 
-* Output Organization in Prowler  
+* Output Organization in Prowler
 
 Prowler outputs are managed within the `/lib/outputs` directory. Each format—such as JSON, CSV, HTML—is implemented as a Python class.
 
-* Outputs are generated based on scan findings, which are stored as structured dictionaries containing details such as: Resource IDs  
-  
-Severities  
-  
-Descriptions  
-  
+* Outputs are generated based on scan findings, which are stored as structured dictionaries containing details such as: Resource IDs
+
+Severities
+
+Descriptions
+
 Other relevant metadata
 
-* Creation Guidelines  
+* Creation Guidelines
 
 Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) for insights into Prowler’s architecture and best practices for creating custom outputs.
 
@@ -27,36 +27,36 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 ### Schema
 
 * Output Class:
-  
+
   * The class must inherit from `Output`. Review the [Output Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/outputs/output.py).
-  
+
   * Create a class that encapsulates the required attributes and methods for interacting with the target platform. Below the code for the `CSV` class is presented:
-  
+
   ```python title="CSV Class"
   class CSV(Output):
       def transform(self, findings: List[Finding]) -> None:
           """Transforms the findings into the CSV format.
-  
+
           Args:
               findings (list[Finding]): a list of Finding objects
-  
+
           """
       ...
   ```
 * Transform Method:
-  
-  * This method will transform the findings provided by Prowler to a specific format. 
-  
-  Method Implementation  
+
+  * This method will transform the findings provided by Prowler to a specific format.
+
+  #### Method Implementation
     The following example demonstrates the `transform` method for the `CSV` class:
-  
+
   ```python title="Transform"
   def transform(self, findings: List[Finding]) -> None:
       """Transforms the findings into the CSV format.
-  
+
       Args:
           findings (list[Finding]): a list of Finding objects
-  
+
       """
       try:
           for finding in findings:
@@ -129,13 +129,13 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
           )
   ```
 * Batch Write Data To File Method:
-  
-  * This method will write the modeled object to a file. 
-  
-    Method Implementation  
+
+  * This method will write the modeled object to a file.
+
+    #### Method Implementation
 
     The following example demonstrates the `batch_write_data_to_file` method for the `CSV` class:
-  
+
   ```python title="Batch Write Data To File"
   def batch_write_data_to_file(self) -> None:
       """Writes the findings to a file using the CSV format using the `Output._file_descriptor`."""
@@ -162,9 +162,9 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 
 ### Integrating the Custom Output Format into Prowler
 
-Once the custom output format is created, it must be integrated into Prowler to ensure compatibility with the existing architecture. 
+Once the custom output format is created, it must be integrated into Prowler to ensure compatibility with the existing architecture.
 
-Reviewing Current Supported Outputs  
+#### Reviewing Current Supported Outputs
 
 Before implementing the new output format, examine the usage of currently supported formats to understand their structure and integration approach. Example: CSV Output Creation in Prowler
 
@@ -190,10 +190,10 @@ if mode == "csv":
 ### Documentation
 
 * Ensure the following elements are included:
-  
+
   * Setup Instructions – List all necessary dependencies and installation steps.
   * Configuration details.
-  * Example Use Cases – Provide practical scenarios demonstrating functionality.  
+  * Example Use Cases – Provide practical scenarios demonstrating functionality.
   * Troubleshooting Guide – Document common issues and resolution steps.
-  
+
 * Comprehensive and clear documentation improves maintainability and simplifies onboarding of new users.

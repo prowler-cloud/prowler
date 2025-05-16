@@ -6,7 +6,7 @@ Debugging in Prowler simplifies the development process, allowing developers to 
 
 Visual Studio Code (also referred to as VSCode) provides an integrated debugger for executing and analyzing Prowler code. Refer to the official VSCode debugger [documentation](https://code.visualstudio.com/docs/editor/debugging) for detailed instructions.
 
-Debugging Configuration Example  
+### Debugging Configuration Example
 
 The following file is an example of a [debugging configuration](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) file for [Virtual Studio Code](https://code.visualstudio.com/).
 

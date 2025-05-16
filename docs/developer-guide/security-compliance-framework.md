@@ -2,13 +2,13 @@
 
 ## Introduction
 
-To create or contribute a custom security framework for Prowler—or to integrate a public framework—you must ensure the necessary checks are available. If they are missing, they must be implemented before proceeding. 
+To create or contribute a custom security framework for Prowler—or to integrate a public framework—you must ensure the necessary checks are available. If they are missing, they must be implemented before proceeding.
 
 Each framework is defined in a compliance file per provider. The file should follow the structure used in `prowler/compliance/<provider>/` and be named `<framework>_<version>_<provider>.json`. Follow the format below to create your own.
 
 ## Compliance Framework
 
-Compliance Framework Structure  
+### Compliance Framework Structure
 
 Each compliance framework file consists of structured metadata that identifies the framework and maps security checks to requirements or controls. Please note that a single requirement can be linked to multiple Prowler checks:
 

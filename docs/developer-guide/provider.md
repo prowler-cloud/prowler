@@ -4,20 +4,20 @@ Below are instructions for creating new providers in Prowler with all the releva
 
 ## Introduction
 
-Providers form the backbone of Prowler, enabling security assessments across various cloud environments. 
+Providers form the backbone of Prowler, enabling security assessments across various cloud environments.
 
-A cloud provider is a third-party company that offers on-demand IT resources via its platform. Prowler currently supports the most widely used cloud providers, including:  
-  
-Amazon Web Services (AWS)  
-  
-Microsoft Azure  
-  
-Google Cloud Platform (GCP)
+A cloud provider is a third-party company that offers on-demand IT resources via its platform. Prowler currently supports the most widely used cloud providers, including:
 
-Adding a New Provider  
+- Amazon Web Services (AWS)
 
-To integrate a cloud provider not yet supported by Prowler and implement security checks, follow these steps: Create a dedicated folder to store all related files (services, checks, etc.).  
-  
+- Microsoft Azure
+
+- Google Cloud Platform (GCP)
+
+## Adding a New Provider
+
+To integrate a cloud provider not yet supported by Prowler and implement security checks, follow these steps: Create a dedicated folder to store all related files (services, checks, etc.).
+
 This folder must be placed within `prowler/providers/<new_provider_name>/`.
 
 Within this folder the following folders are also to be created:
@@ -26,7 +26,7 @@ Within this folder the following folders are also to be created:
 - `services` – Stores all [services](./services.md) to audit.
 - `__init__.py` (empty) – Ensures Python recognizes this folder as a package.
 - `<new_provider_name>_provider.py` – Defines authentication logic, configurations, and other provider-specific data.
-- `models.py` – Contains necessary models for the new provider.  
+- `models.py` – Contains necessary models for the new provider.
 By adhering to this structure, Prowler can effectively support security checks for additional cloud providers.
 
 ## Provider Structure in Prowler
@@ -35,9 +35,9 @@ Prowler's provider architecture is designed to facilitate security audits throug
 
 ### Base Class
 
-All Prowler providers inherit from the same [base class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py). It is an [abstract base class](https://docs.python.org/3/library/abc.html) that defines the interface for all provider classes. 
+All Prowler providers inherit from the same [base class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py). It is an [abstract base class](https://docs.python.org/3/library/abc.html) that defines the interface for all provider classes.
 
-Class Definition:
+#### Class Definition:
 
 ```python title="Provider Base Class"
 
@@ -183,7 +183,7 @@ class Provider(ABC):
 
 ### Provider Class
 
-Provider Implementation Guidance  
+#### Provider Implementation Guidance
 
 Given the complexity and variability of cloud providers, use existing provider implementations as templates when developing new integrations.
 
@@ -193,7 +193,7 @@ Given the complexity and variability of cloud providers, use existing provider i
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
 - [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
 
-Basic Provider Implementation: Pseudocode Example  
+### Basic Provider Implementation: Pseudocode Example
 
 To simplify understanding, the following pseudocode outlines the fundamental structure of a provider, including library imports necessary for authentication.
 
@@ -201,7 +201,7 @@ To simplify understanding, the following pseudocode outlines the fundamental str
 
 # Library Imports for Authentication
 
-When implementing authentication for a provider, import the required libraries.
+# When implementing authentication for a provider, import the required libraries.
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
@@ -238,8 +238,8 @@ class NewProvider(Provider):
 
 # Steps:
 
-# Retrieve Cloud Account Information 
-# Extract relevant account identifiers (subscriptions, projects, or other service references) from the provided arguments.
+# - Retrieve Cloud Account Information
+# - Extract relevant account identifiers (subscriptions, projects, or other service references) from the provided arguments.
 
 # Establish a Session
 

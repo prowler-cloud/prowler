@@ -8,29 +8,29 @@ This guide explains how to create new checks in Prowler.
 
 Checks are the core component of Prowler. A check is a simple piece of code designed to validate whether a configuration aligns with cybersecurity best practices. Once executed, the check generates a finding, providing the result along with metadata that offers contextual information regarding the outcome, associated risks, and recommended remediation steps.
 
-### Creating a Check for a Provider 
+### Creating a Check for a Provider
 
-To create a new check for a supported Prowler provider:  
-  
-- Navigate to the specific service directory associated with the provider.  
-  
-- Create a folder named after the check within this directory.  
-  
+To create a new check for a supported Prowler provider:
+
+- Navigate to the specific service directory associated with the provider.
+
+- Create a folder named after the check within this directory.
+
 - Implement the necessary logic to evaluate the targeted security configuration.
 
-For this example, we will use the `ec2_ami_public` check from the `AWS` provider. 
+For this example, we will use the `ec2_ami_public` check from the `AWS` provider.
 
 ### Naming Format for Folders
 
-The corresponding folder must be named following the format:`prowler/providers/<provider>/services/<service>/<check_name>`. Consequently, the folder will be named as follows: `prowler/providers/aws/services/ec2/ec2_ami_public`.  
+The corresponding folder must be named following the format:`prowler/providers/<provider>/services/<service>/<check_name>`. Consequently, the folder will be named as follows: `prowler/providers/aws/services/ec2/ec2_ami_public`.
 
-### Naming Format for Checks  
+### Naming Format for Checks
 
 Checks must be named following the format: `service_subservice_resource_action`.
 
 ???+ note A subservice represents an individual component of a service that undergoes auditing. In some cases, it may correspond to a shortened version of the class attribute accessed within the check.
 
-File Creation
+### File Creation
 
 Each check in Prowler follows a straightforward structure. Within the newly created folder, three files must be added to implement the check logic:
 
@@ -51,9 +51,11 @@ Below the code for the `ec2_ami_public` check is presented:
 # At the beginning of the check implementation file, import the following modules:
 
 # - Check class: Handles metadata retrieval
+
 #   - Exposes the `metadata()` method, which
-#       returns a JSON representation of the check’s metadata.
-#       Refer to the Check Metadata Model section below for details.
+#     returns a JSON representation of the check’s metadata.
+#     Refer to the Check Metadata Model section below for details.
+
 #   - Each must be enforced to require the `execute()` function
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -68,9 +70,9 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 # Defining the Check Class
 
-# Each check must be implemented as a Python class with the same name as its corresponding file.
+#-  Each check must be implemented as a Python class with the same name as its corresponding file.
 
-# The class must inherit from the Check base class to ensure proper execution within Prowler.
+# - The class must inherit from the Check base class to ensure proper execution within Prowler.
 
 class ec2_ami_public(Check):
 
@@ -79,9 +81,10 @@ class ec2_ami_public(Check):
     # Implementing the execute() Method
 
 Within the check class, define the execute(self) method.
-    
+
     # This method is required by the Check base class.
-    # It ensures compliance with Prowler’s check structure, enabling 
+
+    # It ensures compliance with Prowler’s check structure, enabling
     # dynamic execution.
 
     def execute(self):
@@ -94,53 +97,55 @@ Within the check class, define the execute(self) method.
 
         findings = []
 
-        # Next, iterate over the target resources using the provider service client.
+        # next, iterate over the target resources using the provider service client.
 
         # In this case, the check will process EC2 AMIs retrieved from the # ec2_client.images object: "ec2_client.images" object.
-        
+
         for image in ec2_client.images:
 
             # For each resource, initialize an instance of the Check_Report_AWS class,
             # passing the check’s metadata retrieved using the metadata() function:
-            
+
             report = Check_Report_AWS(self.metadata())
-            
+
             # Please see Required Imports above for details.
 
             # Required Fields for Prowler Checks
+
             # Each Prowler check must include the following required fields to ensure proper execution and reporting:
-            
+
             # Check_Report_AWS fields:
+
             # - region
             # - resource_id
             # - resource_arn
             # - resource_tags
             # - status
             # - status_extended
-            
+
             report.region = image.region
             report.resource_id = image.id
             report.resource_arn = image.arn
-            
+
             # Setting Resource Tags and Check Logic
-            
+
             # When implementing a check, ensure that resource tags (resource_tags) are populated if the resource supports tagging.
             # Verify this capability within the respective service documentation:
-            
+
             report.resource_tags = image.tags
 
             # Next, define the check business logic.
             # The logic should remain simple, as Prowler handles the core processing.
             # The check is responsible only for
             # parsing and interpreting the provided data:
-            
+
             report.status = "PASS"
             report.status_extended = f"EC2 AMI {image.id} is not public."
 
             # Evaluating Public Visibility and Reporting Findings
             # Each image object includes a boolean attribute, public, indicating whether the AMI is publicly shared.
             # To assess its status, implement the following logic:
-            
+
             if image.public:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -149,39 +154,39 @@ Within the check class, define the execute(self) method.
 
             # Once the check is performed,
             # append the report object to the findings list at the same level:
-            
+
             findings.append(report)
 
         # Finally, return the findings list to Prowler for processing:
-        
+
         return findings
 ```
 
 ### Check Statuses
 
-Required Fields: status and status\_extended  
+Required Fields: status and status\_extended
 
 Each check **must** populate the `report.status` and `report.status_extended` fields according to the following criteria:
 
 - Status field: `report.status`
-  
+
   - `PASS` – Assigned when the check confirms compliance with the configured value.
   - `FAIL` – Assigned when the check detects non-compliance with the configured value.
   - `MANUAL` – This status must not be used unless manual verification is necessary to determine whether the status (`report.status`) passes (`PASS`) or fails (`FAIL`).
 
 - Status extended field: `report.status_extended`
-  
+
   - It **must** end with a period (`.`).
   - It **must** include the audited service, the resource, and a concise explanation of the check result, for instance: `EC2 AMI ami-0123456789 is not public.`.
 
 ### Check Regions
 
-Required Field: report.region  
-E
-ach check **must** populate the `report.region` field according to the following criteria:
+Required Field: report.region
 
-- Regional Resources: Use the `region` attribute from the resource object. Note that the attribute name varies by provider: Azure \& GCP: `location`  
-  
+Each check **must** populate the `report.region` field according to the following criteria:
+
+- Regional Resources: Use the `region` attribute from the resource object. Note that the attribute name varies by provider: Azure \& GCP: `location`
+
 Kubernetes (K8s): `namespace`.
 
 - Global Resources: Use the `service_client.region` attribute from the service client object.
@@ -225,36 +230,41 @@ else:
 
 ### Resource ID, Name and ARN
 
-Required Fields: status and status\_extended  
+Required Fields: status and status\_extended
 
 Each check **must** populate the `report.resource_id` and `report.resource_arn` fields according to the following criteria:
 
 - AWS
-  
+
   - Resouce ID and ARN:
     - When auditing an AWS account, the following identifiers must be included:
       - `resource_id` — AWS Account Number
       - `resource_arn` — AWS Account Root ARN
-    - If the ARN cannot be retrieved directly from the audited resource, construct a valid ARN using the `resource_id` component as the audited entity. Examples:
+    -
+    If the ARN cannot be retrieved directly from the audited resource, construct a valid ARN using the `resource_id` component as the audited entity. Examples:
+
       - Bedrock — `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`
       - DirectConnect — `arn:<partition>:directconnect:<region>:<account-id>:dxcon`
+
     - If no actual resource to audit exists, proceed as follows:
+
       - resource\_id — `resource_type/unknown`
       - resource\_arn — `arn:<partition>:<service>:<region>:<account-id>:<resource_type>/unknown`
       - Examples:
+
         - AWS Security Hub — `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`
         - Access Analyzer — `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`
         - GuardDuty — `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`
 
 - GCP
-  
+
   - Resource ID — `report.resource_id`
     - GCP Resource — Resource ID
   - Resource Name — `report.resource_name`
     - GCP Resource — Resource Name
 
 - Azure
-  
+
   - Resource ID — `report.resource_id`
     - Azure Resource — Resource ID
   - Resource Name — `report.resource_name`
@@ -311,20 +321,20 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
 # AWS Configuration
 
   aws:
-  
+
   # AWS EC2 Configuration
 
   # aws.ec2_securitygroup_with_many_ingress_egress_rules
   # The default value is 50 rules
-  
+
   max_security_group_rules: 50
 ```
 
-Using Configuration Values in the Service Client  
+### Using Configuration Values in the Service Client
 
 As in the above code, within the service client (e.g., `ec2_client`),the object `audit_config` is a Python dictionary that stores values read from the configuration file.
 
-Checking and Using Configuration Values  
+### Checking and Using Configuration Values
 
 Verify whether the required value is present in the configuration file before using it. If the value is missing, add it to the `config.yaml` and retrieve it within the check implementation.
 
@@ -413,14 +423,14 @@ For guidance on managing AMI sharing permissions, refer to the official AWS docu
 To populate the Remediation Code, reference the following knowledge sources:
 
 - Official documentation for the provider
-- Prowler Checks Index:  
+- Prowler Checks Index:
 https://docs.prowler.com/checks/checks-index
-- TrendMicro Cloud One Conformity:  
+- TrendMicro Cloud One Conformity:
 https://www.trendmicro.com/cloudoneconformity
-- CloudMatos Remediation Repository:  
+- CloudMatos Remediation Repository:
 https://github.com/cloudmatos/matos/tree/master/remediations
 
-### The RelatedURL and Recommendation Fields  
+### The RelatedURL and Recommendation Fields
 
 The RelatedURL field must reference an official provider documentation page, such as: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html
 

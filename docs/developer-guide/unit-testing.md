@@ -24,35 +24,37 @@ Below are key resources and insights gained throughout the testing process.
 
 When writing tests for Prowler provider checks, follow these guidelines to maximize coverage across test scenarios:
 
-1. Zero Findings Scenario:  
+1. Zero Findings Scenario:
 Develop tests where no resources exist. Prowler returns zero findings if the audited service lacks the required resources.
-2. Positive and Negative Outcomes:  
+
+2. Positive and Negative Outcomes:
 Create tests that generate both a passing (`PASS`) and a failing (`FAIL`) result.
-3. Multi-Resource Evaluations:  
+
+3. Multi-Resource Evaluations:
 Design tests with multiple resources to verify check behavior and ensure the correct number of findings.
 
 ## Running Prowler Tests
 
-To execute the Prowler test suite, install the necessary dependencies listed in the `pyproject.toml` file. 
+To execute the Prowler test suite, install the necessary dependencies listed in the `pyproject.toml` file.
 
-Prerequisites  
+### Prerequisites
 
 If you haven’t installed Prowler yet, refer to the [developer guide introduction](./introduction.md#get-the-code-and-install-all-dependencies).
 
-Executing Tests  
+### Executing Tests
 
-Navigate to the project's root directory and execute: `pytest -n auto -vvv -s -x`  
+Navigate to the project's root directory and execute: `pytest -n auto -vvv -s -x`
 
-Alternatively, use:  
+Alternatively, use:
 `Makefile` with `make test`.
 
 Other Commands for Running Tests
 
-- Running tests for a provider:  
+- Running tests for a provider:
 `pytest -n auto -vvv -s -x tests/providers/<provider>/services`
-- Running tests for a provider service:  
+- Running tests for a provider service:
 `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>`
-- Running tests for a provider check:  
+- Running tests for a provider check:
 `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>/<check>`
 
 ???+ note Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) for more details.
@@ -64,27 +66,27 @@ For AWS providers, different testing approaches apply based on API coverage base
 ???+ note Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests. ****
 
 - AWS API Calls Covered by [Moto](https://github.com/getmoto/moto):
- 
-  - Service Tests:  
+
+  - Service Tests:
 `@mock_aws`
-  - Checks Tests:  
+  - Checks Tests:
 `@mock_aws`
 - AWS API Calls Not Covered by Moto:
-  - Service Tests:  
+  - Service Tests:
 `mock_make_api_call`
-  - Checks Tests:  
+  - Checks Tests:
 [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
 
 - AWS API Calls Partially Covered by Moto:
-  
-  - Service Tests:  
-`@mock_aws`  
+
+  - Service Tests:
+`@mock_aws`
 `mock_make_api_call`
-  - Check Tests:  
-`@mock_aws`  
+  - Check Tests:
+`@mock_aws`
 `mock_make_api_call`
 
-AWS Check Testing Scenarios  
+#### AWS Check Testing Scenarios
 
 The following section provides examples for each testing scenario. The primary distinction between these scenarios depends on whether the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can review the supported API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
@@ -122,38 +124,38 @@ class Test_iam_password_policy_uppercase:
   # Test naming convention: test_<service>_<check_name>_<test_action>
   def test_iam_password_policy_no_uppercase_flag(self):
     Steps
-    
+
     # Step 1: Create an IAM client for API calls in the specified region
     iam_client = client("iam", region_name=AWS_REGION)
 
     # Step 2: Modify the account password policy to disable uppercase character enforcement
-    
+
     # Action: Setting RequireUppercaseCharacters to False
-    
+
     iam_client.update_account_password_policy(RequireUppercaseCharacters=False)
 
     # Step 3: Mock the AWS provider to ensure isolated testing
-    
+
     # Using 'set_mocked_aws_provider' allows overriding the provider response
     # This mocked provider is defined in test fixtures
-    
+
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # Step 4: Ensure Prowler service imports occur within the decorated function
     # This prevents accidental real API calls to AWS during test execution
-    
+
     from prowler.providers.aws.services.iam.iam_service import IAM
 
     # Mocking AWS Provider and IAM Client for Prowler Tests
 
     #Prowler for AWS relies on a shared object, aws_provider, which stores provider-related information.
-    
+
     # To ensure proper test isolation and prevent shared objects between tests, we apply mocking techniques.
 
     # Mocking Global AWS Provider
-    
+
     #To mock the global provider, we use mock.patch() to override the get_global_provider() method, ensuring aws_provider is the return value.
-    
+
     with mock.patch(
         "prowler.providers.common.provider.Provider.get_global_provider",
         return_value=aws_provider,
@@ -166,19 +168,19 @@ class Test_iam_password_policy_uppercase:
     # ⚠️ Important:
 
     # patch != import—simply importing does not ensure proper isolation.
-    
+
     # Running tests in parallel may cause unintended object initialization, impacting test integrity.
-      
+
       with mock.patch(
         "prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase.iam_client",
         new=IAM(aws_provider),
     ):
         # Importing the IAM Check
-    
+
     # To prevent initialization issues, import the check inside the two-mock context.
 
         # This ensures the IAM client does not retain shared data from aws_provider or the IAM service.
-        
+
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
@@ -196,7 +198,7 @@ class Test_iam_password_policy_uppercase:
 
         # Validating the Check Results
         # Finally, assert all fields to verify expected results.
-        
+
         assert len(results) == 1
         assert result[0].status == "FAIL"
         assert result[0].status_extended == "IAM password policy does not srequire at least one uppercase letter."
@@ -212,7 +214,7 @@ If the IAM service required for testing is not supported by the Moto library, us
 
 ???+ note The example below demonstrates the IAM GetAccountPasswordPolicy API, which is covered by Moto, but is used for instructional purposes only.
 
-Mocking Service Objects Using MagicMock  
+#### Mocking Service Objects Using MagicMock
 
 The following code demonstrates how to use MagicMock to create service objects.
 
@@ -233,19 +235,19 @@ AWS_REGION = "us-east-1"
 class Test_iam_password_policy_uppercase:
 
   # Test naming convention: test_<service>_<check_name>_<test_action>
-  
+
   def test_iam_password_policy_no_uppercase_flag(self):
-    
+
     # Mock IAM client with MagicMock
-    
+
     mocked_iam_client = mock.MagicMock
 
     # Import IAM PasswordPolicy model, as it has its own model
-    
+
     from prowler.providers.aws.services.iam.iam_service import PasswordPolicy
 
     # Create a mock PasswordPolicy object with predefined attributes
-    
+
     mocked_iam_client.password_policy = PasswordPolicy(
         length=5,
         symbols=True,
@@ -263,11 +265,11 @@ class Test_iam_password_policy_uppercase:
 
     # If tests are executed in parallel, objects may already be initialized,
     # leading to unintended shared state and breaking test isolation.
-    
+
     # Unlike other cases, we do not use the Moto decorator here.
 
     # Instead, we mock the IAM client for both objects to prevent real AWS API interactions.
-    
+
     with mock.patch(
         "prowler.providers.aws.services.iam.iam_service.IAM",
         new=mocked_iam_client,
@@ -276,29 +278,30 @@ class Test_iam_password_policy_uppercase:
         new=mocked_iam_client,
     ):
         # Importing the IAM Check
-        
+
         # To prevent initialization issues, import the check inside the two-mock context.
-        
+
         # This ensures the IAM client does not retain shared data from aws_provider or the IAM service.
-        
+
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
 
         # Executing the IAM Check
+
         # Once imported, instantiate the check’s class.
 
         check = iam_password_policy_uppercase()
 
         # Then run the execute function()
         # against the set up IAM client.
-        
+
         result = check.execute()
 
         # Validating the Check Results
-        
+
         # Finally, assert all fields to verify expected results.
-        
+
         assert len(results) == 1
         assert result[0].status == "FAIL"
         assert result[0].status_extended == "IAM password policy does not require at least one uppercase letter."
@@ -308,7 +311,7 @@ class Test_iam_password_policy_uppercase:
         assert result[0].region == AWS_REGION
 ```
 
-Ensuring Test Isolation with Mocked/Patched Objects  
+#### Ensuring Test Isolation with Mocked/Patched Objects
 
 In all above scenarios, check execution must occur within the context of mocked or patched objects. This guarantees that the test only evaluates objects explicitly created within its scope, preventing interference from shared state or external dependencies.
 
@@ -332,12 +335,12 @@ orig = botocore.client.BaseClient._make_api_call
 # Mocked botocore _make_api_call function
 
 def mock_make_api_call(self, operation_name, kwarg):
-    
+
     # The 'operation_name' follows the snake_case format (get_account_password_policy),
     # but we use the PascalCase form (GetAccountPasswordPolicy) for consistency with Boto3 conventions.
-    
-    # Reference: https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816  
-    
+
+    # Reference: https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+
     if operation_name == 'GetAccountPasswordPolicy':
         return {
             'PasswordPolicy': {
@@ -353,9 +356,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                 'HardExpiry': True|False
             }
         }
-    
+
     # If API call patching is not required, return the original method execution.
-    
+
     return orig(self, operation_name, kwarg)
 
 # Test class naming convention: Test_<check_name>
@@ -363,24 +366,24 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_iam_password_policy_uppercase:
 
   # Apply custom API call mock decorator for the required service
-  
+
   @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-  
+
   # Also include IAM Moto decorator for supported API calls
-  
+
   @mock_iam
-  
+
   # Test naming convention: test_<service>_<check_name>_<test_action>
-  
+
   def test_iam_password_policy_no_uppercase_flag(self):
-    
+
     # Refer to the previous section for the check test, as the implementation remains unchanged.
 ```
 
-\# This example does not use Moto to simplify the setup.  
+\# This example does not use Moto to simplify the setup.
 \# However, if additional `moto` decorators are applied alongside the patch,Moto will automatically intercept the call to `orig(self, operation_name, kwarg)`.
 
-???+ note The source of the above implementation can be found here:   
+???+ note The source of the above implementation can be found here:
 \[Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching\_other\_services.html)
 
 #### Mocking Several Services
@@ -457,7 +460,7 @@ Due to the import path structure, patching certain objects does not always ensur
 - `<service>_client` initialised at `<service>_client.py`
 - `<SERVICE>` imported at `<service>_client.py`
 
-Additional Resources on Mocking Imports  
+#### Additional Resources on Mocking Imports
 
 For a deeper understanding of mocking imports in Python, refer to the following article: https://stackoverflow.com/questions/8658043/how-to-mock-an-import
 
@@ -482,15 +485,16 @@ with mock.patch(
 will cause that the service will be initialised twice:
 
 1. When `<SERVICE>(set_mocked_aws_provider([<region>]))` is mocked out using `mock.patch`, it must be properly prepared before patching to ensure test consistency.
+
 2. At the point of patching, in `<service>_client.py`, and since `mock.patch` needs to access said object and initialise it, `<SERVICE>(set_mocked_aws_provider([<region>]))` will be called again.
 
 Later, when importing `<service>_client.py` at `<check>.py`, Python uses the mocked instance since the patch was applied at the correct reference point.
 
 In the [next section](./unit-testing.md#mocking-the-service-and-the-service-client-at-the-service-client-level) we will explore an improved approach to mock objects.
 
-##### 1\. Mocking the Service and the Service Client at the Service Client Level
+##### Mocking the Service and the Service Client at the Service Client Level
 
-2\. Mocking a Service Client via Below Code Implementation
+##### Mocking a Service Client via Below Code Implementation
 
 ```python title="Mocking the service and the service_client"
 with mock.patch(
@@ -511,9 +515,9 @@ Later, when Python attempts to import the client at the check level, the executi
 
 ### Testing AWS Services
 
-AWS service testing follows the same methodology as AWS checks:  
-Verify whether the AWS API calls made by the service are covered by Moto.  
-  
+AWS service testing follows the same methodology as AWS checks:
+Verify whether the AWS API calls made by the service are covered by Moto.
+
 Execute tests on the service `__init__` to ensure correct information retrieval.
 
 While service tests resemble *Integration Tests*, as they assess how the service interacts with the provider, they ultimately fall under *Unit Tests*, due to the use of Moto or custom mock objects.
@@ -526,7 +530,7 @@ For detailed guidance on test creation and existing service tests, refer to the 
 
 Currently the GCP Provider does not have a dedicated library for mocking API calls. To ensure proper test isolation, objects must be manually injected into the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
-Mocking Service Objects Using MagicMock  
+Mocking Service Objects Using MagicMock
 
 The following code demonstrates how to use MagicMock to create service objects for a GCP check test. This is a real-world implementation, adapted for instructional clarity.
 
@@ -567,23 +571,23 @@ class Test_compute_project_os_login_enabled:
             new=compute_client,
         ):
             # Import the check within the two mocks
-            
+
             from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
                 compute_project_os_login_enabled,
             )
 
             # Executing the IAM Check
             # Once imported, instantiate the check’s class.
-            
+
             check = compute_project_os_login_enabled()
-            
+
             # Then run the execute function()
             # against the set up Compute client.
-            
+
             result = check.execute()
-            
+
             # Assert the expected results
-            
+
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
@@ -595,9 +599,9 @@ class Test_compute_project_os_login_enabled:
             assert result[0].project_id == GCP_PROJECT_ID
 
     # Complementary Test
-    
+
     # The following is an additional test for a wider scenario coverage
-    
+
     def test_one_non_compliant_project(self):
         from prowler.providers.gcp.services.compute.compute_service import Project
 
@@ -638,7 +642,7 @@ class Test_compute_project_os_login_enabled:
 
 ### Testing AWS Services
 
-Testing Google Cloud Services  
+Testing Google Cloud Services
 
 The testing of Google Cloud Services follows the same principles as the one of Google Cloud checks. While all API calls must be mocked, attribute setup for API calls in this scenario is defined in the fixtures file, specifically within the [fixtures file](https://github.com/prowler-cloud/prowler/blob/master/tests/providers/gcp/gcp_fixtures.py) in the `mock_api_client` function.
 
@@ -718,24 +722,24 @@ class TestBigQueryService:
             assert bigquery_client.tables[1].project_id == GCP_PROJECT_ID
 ```
 
-Clarifying Value Origins with an Example  
+Clarifying Value Origins with an Example
 
-Understanding where specific values originate can be challenging, so the following example provides clarity. 
+Understanding where specific values originate can be challenging, so the following example provides clarity.
 
-- Step 1: Identify the API Call for Dataset Retrieval 
+- Step 1: Identify the API Call for Dataset Retrieval
 
 To determine how datasets are obtained, examine the API call used by the service. In this case, the relevant service call is: `self.client.datasets().list(projectId=project_id)`.
 
-- Step 2: Mocking the API Call in the Fixture File  
+- Step 2: Mocking the API Call in the Fixture File
 
-In the fixture file, mock this call in the `MagicMock` client, in the function `mock_api_client`. 
+In the fixture file, mock this call in the `MagicMock` client, in the function `mock_api_client`.
 
-- Step 3: Structuring the Mock Function  
+- Step 3: Structuring the Mock Function
 
-The best approach for mocking is to adhere to the service’s existing format:  
-  
-Define a dedicated function that modifies the client.  
-  
+The best approach for mocking is to adhere to the service’s existing format:
+
+Define a dedicated function that modifies the client.
+
 Follow the naming convention: `mock_api_<endpoint>_calls` (*endpoint* refers to the first attribute pointed after *client*).
 
 For BigQuery, the mock function is called `mock_api_dataset_calls`. Within this function, an assignment is made for use in the `_get_datasets` method of the BigQuery class:
@@ -773,7 +777,7 @@ client.datasets().list().execute.return_value = {
 
 Currently the Azure Provider does not have a dedicated library for mocking API calls. To ensure proper test isolation, objects must be manually injected into the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
-Mocking Service Objects Using MagicMock  
+Mocking Service Objects Using MagicMock
 
 The following code demonstrates how to use MagicMock to create service objects for an Azure check test. This is a real-world implementation, adapted for instructional clarity.
 
@@ -804,7 +808,7 @@ class Test_app_ensure_http_is_redirected_to_https:
         app_client = mock.MagicMock
 
         # In this scenario, the app_client from the check must be mocked to ensure that the app_client used in the test is the explicitly created instance.
-        
+
         # Additionally, the return value of the get_global_provider function is mocked to return the predefined Azure mocked provider from the test fixtures.
 
         with mock.patch(
@@ -904,7 +908,7 @@ class Test_app_ensure_http_is_redirected_to_https:
 
 ### Testing AWS Services
 
-Testing Azure Services  
+Testing Azure Services
 
 The testing of Azure Services follows the same principles as the one of Google Cloud checks. All API calls are still mocked, but for methods that initialize attributes via an API call, use the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class to ensure proper mocking.
 

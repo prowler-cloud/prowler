@@ -18,7 +18,7 @@ Within this folder the following files are also to be created:
 
 ## Service
 
-Service Structure and Initialisation  
+Service Structure and Initialisation
 
 The Prowler's service structure is as outlined below. To initialise it, just import the service client in a check.
 
@@ -31,9 +31,9 @@ All the Prowler provider's services inherits from a base class depending on the 
 - [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/lib/service/service.py)
 - [Kubernetes Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/lib/service/service.py)
 
-Each service class is responsible for:  
-  
-Initializing credentials required for authentication. Implementing threading logic where applicable. 
+Each service class is responsible for:
+
+Initializing credentials required for authentication. Implementing threading logic where applicable.
 
 Note: If using threading, it must be coded here.
 
@@ -66,7 +66,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 # Provider parent class.
 
 from prowler.providers.<provider>.lib.service.service import ServiceParentClass
-
 
 # Create a class for the Service.
 
@@ -201,11 +200,9 @@ class <Service>(ServiceParentClass):
 
 #### Service Models
 
-Service Models  
-
 Service models define structured classes used within services to store and process data extracted from API calls.
 
-Using Pydantic for Data Validation  
+Using Pydantic for Data Validation
 
 Prowler leverages Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to enforce data validation.
 
@@ -231,18 +228,18 @@ class <Item>(BaseModel):
     """<Items>[].public"""
 
     # Optional attributes can be created set to None by default.
-    
+
     tags: Optional[list]
      """<Items>[].tags"""
 ```
 
 #### Service Objects
 
-Optimized Data Storage with Python Dictionaries  
+*Optimized Data Storage with Python Dictionaries*
 
 Each group of resources within a service should be structured as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries) to enable efficient lookups. The dictionary lookup operation has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions), and lookups are constantly executed.
 
-Assigning Unique Identifiers  
+*Assigning Unique Identifiers*
 
 Each dictionary key must be a unique ID, such as a resource Unique ID or Amazon Resource Name (ARN).
 
@@ -268,8 +265,8 @@ from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>
 
 ## Provider Permissions in Prowler
 
-Before implementing a new service, verify that Prowler’s existing permissions for each provider are sufficient. If additional permissions are required, refer to the relevant documentation and update accordingly.  
-  
+Before implementing a new service, verify that Prowler’s existing permissions for each provider are sufficient. If additional permissions are required, refer to the relevant documentation and update accordingly.
+
 Provider-Specific Permissions Documentation:
 
 - AWS: https://docs.prowler.cloud/en/latest/getting-started/requirements/#aws-authentication
