@@ -4,8 +4,8 @@ import React, { Suspense } from "react";
 import {
   getFindings,
   getLatestFindings,
-  getMetadataInfo,
   getLatestMetadataInfo,
+  getMetadataInfo,
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
