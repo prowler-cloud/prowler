@@ -8,9 +8,7 @@ class wellarchitected_workload_no_high_or_medium_risks(Check):
     def execute(self):
         findings = []
         for workload in wellarchitected_client.workloads:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=workload
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=workload)
             report.status = "PASS"
             report.status_extended = f"Well Architected workload {workload.name} does not contain high or medium risks."
             if "HIGH" in workload.risks or "MEDIUM" in workload.risks:

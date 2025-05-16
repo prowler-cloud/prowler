@@ -16,7 +16,7 @@ class rds_instance_iam_authentication_enabled(Check):
         for db_instance in rds_client.db_instances.values():
             if any(engine in db_instance.engine for engine in supported_engines):
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=db_instance
+                    metadata=self.metadata(), resource=db_instance
                 )
                 # Check if is member of a cluster
                 if db_instance.cluster_id:

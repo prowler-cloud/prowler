@@ -8,7 +8,7 @@ class fsx_windows_file_system_multi_az_enabled(Check):
         for file_system in fsx_client.file_systems.values():
             if file_system.type == "WINDOWS":
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=file_system
+                    metadata=self.metadata(), resource=file_system
                 )
                 if len(file_system.subnet_ids) > 1:
                     report.status = "PASS"

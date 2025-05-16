@@ -253,12 +253,15 @@ class TestCheckLoader:
         bulk_checks_metatada = {
             S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
-            return_value=bulk_checks_metatada,
-        ), patch(
-            "prowler.lib.check.checks_loader.Compliance.get_bulk",
-            return_value=bulk_compliance_frameworks,
+        with (
+            patch(
+                "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+                return_value=bulk_checks_metatada,
+            ),
+            patch(
+                "prowler.lib.check.checks_loader.Compliance.get_bulk",
+                return_value=bulk_compliance_frameworks,
+            ),
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
                 compliance_frameworks=compliance_frameworks,
@@ -299,6 +302,20 @@ class TestCheckLoader:
 
         assert set() == load_checks_to_execute(
             bulk_checks_metadata=bulk_checks_metatada,
+            categories=categories,
+            provider=self.provider,
+        )
+
+    def test_threat_detection_single_check(self):
+        bulk_checks_metatada = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        categories = {}
+        check_list = [CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME]
+
+        assert {CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            check_list=check_list,
             categories=categories,
             provider=self.provider,
         )

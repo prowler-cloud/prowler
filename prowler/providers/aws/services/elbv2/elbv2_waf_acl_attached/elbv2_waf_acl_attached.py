@@ -9,9 +9,7 @@ class elbv2_waf_acl_attached(Check):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
             if lb.type == "application":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=lb
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"ELBv2 ALB {lb.name} is not protected by WAF Web ACL."

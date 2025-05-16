@@ -81,12 +81,15 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         client("glue", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
-            new=Glue(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
+                new=Glue(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
@@ -104,12 +107,15 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         client("glue", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
-            new=Glue(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
+                new=Glue(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
@@ -138,12 +144,15 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         client("glue", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         aws_provider._scan_unused_services = False
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
-            new=Glue(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
+                new=Glue(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
@@ -161,12 +170,15 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         client("glue", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         aws_provider._scan_unused_services = False
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
-            new=Glue(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
+                new=Glue(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
@@ -195,12 +207,15 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         client("glue", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
-            new=Glue(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled.glue_client",
+                new=Glue(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (

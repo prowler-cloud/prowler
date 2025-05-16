@@ -106,7 +106,7 @@ def uuid7_end(uuid_obj: UUID, offset_months: int = 1) -> UUID:
 
     Args:
         uuid_obj: A UUIDv7 object.
-        offset_days: Number of months to offset from the given UUID's date. Defaults to 1 to handle if
+        offset_months: Number of months to offset from the given UUID's date. Defaults to 1 to handle if
         partitions are not being used, if so the value will be the one set at FINDINGS_TABLE_PARTITION_MONTHS.
 
     Returns:

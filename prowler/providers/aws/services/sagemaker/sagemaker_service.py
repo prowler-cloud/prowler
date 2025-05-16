@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ SageMaker
 class SageMaker(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -264,9 +263,9 @@ class SageMaker(AWSService):
                 production_variants.append(
                     ProductionVariant(
                         name=production_variant["VariantName"],
-                        initial_instance_count=production_variant[
-                            "InitialInstanceCount"
-                        ],
+                        initial_instance_count=production_variant.get(
+                            "InitialInstanceCount", 0
+                        ),
                     )
                 )
             endpoint_config.production_variants = production_variants

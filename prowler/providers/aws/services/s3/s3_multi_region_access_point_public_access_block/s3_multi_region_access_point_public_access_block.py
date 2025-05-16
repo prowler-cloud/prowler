@@ -19,7 +19,7 @@ class s3_multi_region_access_point_public_access_block(Check):
         findings = []
         for mr_access_point in s3control_client.multi_region_access_points.values():
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=mr_access_point
+                metadata=self.metadata(), resource=mr_access_point
             )
             report.status = "PASS"
             report.status_extended = f"S3 Multi Region Access Point {mr_access_point.name} of buckets {', '.join(mr_access_point.buckets)} does have Public Access Block enabled."

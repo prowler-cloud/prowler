@@ -15,15 +15,25 @@ Description: |
 Parameters:
   ExternalId:
     Description: |
-      DO NOT CHANGE THIS.
       This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role.
     Type: String
+    MinLength: 1
+    AllowedPattern: ".+"
+    ConstraintDescription: "ExternalId must not be empty."
   AccountId:
     Description: |
-      AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud
-      please use the default AWS Account ID.
+      AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: "232136659152"
+    MinLength: 12
+    MaxLength: 12
+    AllowedPattern: "[0-9]{12}"
+    ConstraintDescription: "AccountId must be a valid AWS Account ID."
+  IAMPrincipal:
+    Description: |
+      The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
+    Type: String
+    Default: role/prowler*
 
 Resources:
   ProwlerScan:
@@ -41,7 +51,7 @@ Resources:
               StringEquals:
                 "sts:ExternalId": !Sub ${ExternalId}
               StringLike:
-                "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:role/prowler*"
+                "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
       MaxSessionDuration: 3600
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/SecurityAudit"

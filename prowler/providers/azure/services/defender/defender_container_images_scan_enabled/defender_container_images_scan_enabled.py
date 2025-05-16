@@ -8,10 +8,9 @@ class defender_container_images_scan_enabled(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "Containers" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["Containers"]
+                    metadata=self.metadata(), resource=pricings["Containers"]
                 )
                 report.subscription = subscription
-                report.resource_name = "Dender plan for Containers"
                 report.status = "PASS"
                 report.status_extended = (
                     f"Container image scan is enabled in subscription {subscription}."

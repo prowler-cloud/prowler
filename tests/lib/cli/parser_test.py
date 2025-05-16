@@ -1,3 +1,4 @@
+import sys
 import uuid
 from argparse import ArgumentTypeError
 
@@ -17,12 +18,12 @@ prowler_command = "prowler"
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
 prowler_default_usage_error = (
-    "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,dashboard} ..."
+    "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,nhn,dashboard} ..."
 )
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes"]
+    return ["aws", "azure", "gcp", "kubernetes", "m365", "nhn"]
 
 
 @pytest.mark.arg_parser
@@ -1322,9 +1323,11 @@ class Test_Parser:
     def test_validate_bucket_invalid_bucket_names(self):
         bad_bucket_names = [
             "xn--bucket-name",
+            "sthree-bucket-name",
+            "amzn-s3-demo-bucket-name",
             "mrryadfpcwlscicvnrchmtmyhwrvzkgfgdxnlnvaaummnywciixnzvycnzmhhpwb",
             "192.168.5.4",
-            "bucket-name-s3alias",
+            "bucket-name--table-s3",
             "bucket-name-s3alias-",
             "bucket-n$ame",
             "bu",
@@ -1340,7 +1343,9 @@ class Test_Parser:
             )
 
     def test_validate_bucket_valid_bucket_names(self):
-        valid_bucket_names = ["bucket-name" "test" "test-test-test"]
+        valid_bucket_names = [
+            "bucket-name" "test" "test-test-test" "test.test.test" "abc"
+        ]
         for bucket_name in valid_bucket_names:
             assert validate_bucket(bucket_name) == bucket_name
 
@@ -1365,3 +1370,13 @@ class Test_Parser:
         valid_role_names = ["prowler-role" "test@" "test=test+test,."]
         for role_name in valid_role_names:
             assert validate_role_session_name(role_name) == role_name
+
+    def test_microsoft365_alias_conversion(self):
+        original_argv = sys.argv.copy()
+        try:
+            sys.argv = ["prowler", "microsoft365"]
+            parser = ProwlerArgumentParser()
+            args = parser.parse()
+            assert args.provider == "m365"
+        finally:
+            sys.argv = original_argv

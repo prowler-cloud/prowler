@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
+      "CLI": "",
       "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#cloudformation",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
       "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#terraform"
     },
     "Recommendation": {

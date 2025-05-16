@@ -26,9 +26,7 @@ class dms_endpoint_mongodb_authentication_enabled(Check):
         findings = []
         for endpoint in dms_client.endpoints.values():
             if endpoint.engine_name == "mongodb":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=endpoint
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=endpoint)
                 report.status = "FAIL"
                 report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB does not have an authentication mechanism enabled."
                 if endpoint.mongodb_auth_type != "no":

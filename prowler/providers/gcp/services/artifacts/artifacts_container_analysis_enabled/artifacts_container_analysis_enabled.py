@@ -10,7 +10,7 @@ class artifacts_container_analysis_enabled(Check):
         for project_id in serviceusage_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=serviceusage_client.projects[project_id],
+                resource=serviceusage_client.projects[project_id],
                 resource_id="containeranalysis.googleapis.com",
                 resource_name="AR Container Analysis",
                 project_id=project_id,

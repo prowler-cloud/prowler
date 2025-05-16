@@ -1,13 +1,8 @@
 from asyncio import gather, get_event_loop
-from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
-from msgraph.generated.models.default_user_role_permissions import (
-    DefaultUserRolePermissions,
-)
-from msgraph.generated.models.setting_value import SettingValue
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -53,14 +48,20 @@ class Entra(AzureService):
                 for user in users_list.value:
                     users[tenant].update(
                         {
-                            user.user_principal_name: User(
+                            user.id: User(
                                 id=user.id,
                                 name=user.display_name,
-                                authentication_methods=(
-                                    await client.users.by_user_id(
-                                        user.id
-                                    ).authentication.methods.get()
-                                ).value,
+                                authentication_methods=[
+                                    AuthMethod(
+                                        id=auth_method.id,
+                                        type=getattr(auth_method, "odata_type", None),
+                                    )
+                                    for auth_method in (
+                                        await client.users.by_user_id(
+                                            user.id
+                                        ).authentication.methods.get()
+                                    ).value
+                                ],
                             )
                         }
                     )
@@ -86,14 +87,54 @@ class Entra(AzureService):
         try:
             for tenant, client in self.clients.items():
                 auth_policy = await client.policies.authorization_policy.get()
+
+                default_user_role_permissions = getattr(
+                    auth_policy, "default_user_role_permissions", None
+                )
+
                 authorization_policy.update(
                     {
                         tenant: AuthorizationPolicy(
                             id=auth_policy.id,
                             name=auth_policy.display_name,
                             description=auth_policy.description,
-                            default_user_role_permissions=getattr(
-                                auth_policy, "default_user_role_permissions", None
+                            default_user_role_permissions=DefaultUserRolePermissions(
+                                allowed_to_create_apps=getattr(
+                                    default_user_role_permissions,
+                                    "allowed_to_create_apps",
+                                    None,
+                                ),
+                                allowed_to_create_security_groups=getattr(
+                                    default_user_role_permissions,
+                                    "allowed_to_create_security_groups",
+                                    None,
+                                ),
+                                allowed_to_create_tenants=getattr(
+                                    default_user_role_permissions,
+                                    "allowed_to_create_tenants",
+                                    None,
+                                ),
+                                allowed_to_read_bitlocker_keys_for_owned_device=getattr(
+                                    default_user_role_permissions,
+                                    "allowed_to_read_bitlocker_keys_for_owned_device",
+                                    None,
+                                ),
+                                allowed_to_read_other_users=getattr(
+                                    default_user_role_permissions,
+                                    "allowed_to_read_other_users",
+                                    None,
+                                ),
+                                odata_type=getattr(
+                                    default_user_role_permissions, "odata_type", None
+                                ),
+                                permission_grant_policies_assigned=[
+                                    policy_assigned
+                                    for policy_assigned in getattr(
+                                        default_user_role_permissions,
+                                        "permission_grant_policies_assigned",
+                                        [],
+                                    )
+                                ],
                             ),
                             guest_invite_settings=(
                                 auth_policy.allow_invites_from.value
@@ -128,7 +169,14 @@ class Entra(AzureService):
                             group_setting.id: GroupSetting(
                                 name=getattr(group_setting, "display_name", None),
                                 template_id=getattr(group_setting, "template_id", None),
-                                settings=getattr(group_setting, "values", []),
+                                settings=[
+                                    SettingValue(
+                                        name=setting.name,
+                                        odata_type=setting.odata_type,
+                                        value=setting.value,
+                                    )
+                                    for setting in getattr(group_setting, "values", [])
+                                ],
                             )
                         }
                     )
@@ -176,6 +224,7 @@ class Entra(AzureService):
                     named_locations[tenant].update(
                         {
                             named_location.id: NamedLocation(
+                                id=named_location.id,
                                 name=named_location.display_name,
                                 ip_ranges_addresses=[
                                     getattr(ip_range, "cidr_address", None)
@@ -212,11 +261,9 @@ class Entra(AzureService):
                             directory_role.display_name: DirectoryRole(
                                 id=directory_role.id,
                                 members=[
-                                    self.users[tenant][member.user_principal_name]
+                                    self.users[tenant][member.id]
                                     for member in directory_role_members.value
-                                    if self.users[tenant].get(
-                                        member.user_principal_name, None
-                                    )
+                                    if self.users[tenant].get(member.id, None)
                                 ],
                             )
                         }
@@ -274,6 +321,7 @@ class Entra(AzureService):
                     conditional_access_policy[tenant].update(
                         {
                             policy.id: ConditionalAccessPolicy(
+                                id=policy.id,
                                 name=policy.display_name,
                                 state=getattr(policy, "state", "None"),
                                 users={
@@ -307,14 +355,28 @@ class Entra(AzureService):
         return conditional_access_policy
 
 
+class AuthMethod(BaseModel):
+    id: str
+    type: str
+
+
 class User(BaseModel):
     id: str
     name: str
-    authentication_methods: List[Any] = []
+    authentication_methods: List[AuthMethod] = []
 
 
-@dataclass
-class AuthorizationPolicy:
+class DefaultUserRolePermissions(BaseModel):
+    allowed_to_create_apps: Optional[bool]
+    allowed_to_create_security_groups: Optional[bool]
+    allowed_to_create_tenants: Optional[bool]
+    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool]
+    allowed_to_read_other_users: Optional[bool]
+    odata_type: Optional[str]
+    permission_grant_policies_assigned: Optional[List[str]] = None
+
+
+class AuthorizationPolicy(BaseModel):
     id: str
     name: str
     description: str
@@ -323,8 +385,13 @@ class AuthorizationPolicy:
     guest_user_role_id: UUID
 
 
-@dataclass
-class GroupSetting:
+class SettingValue(BaseModel):
+    name: Optional[str]
+    odata_type: Optional[str]
+    value: Optional[str]
+
+
+class GroupSetting(BaseModel):
     name: Optional[str]
     template_id: Optional[str]
     settings: List[SettingValue]
@@ -337,6 +404,7 @@ class SecurityDefault(BaseModel):
 
 
 class NamedLocation(BaseModel):
+    id: str
     name: str
     ip_ranges_addresses: List[str]
     is_trusted: bool
@@ -348,6 +416,7 @@ class DirectoryRole(BaseModel):
 
 
 class ConditionalAccessPolicy(BaseModel):
+    id: str
     name: str
     state: str
     users: dict[str, List[str]]

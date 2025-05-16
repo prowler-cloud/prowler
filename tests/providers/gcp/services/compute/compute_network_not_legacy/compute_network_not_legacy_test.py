@@ -11,12 +11,15 @@ class Test_compute_network_not_legacy:
         compute_client.networks = []
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy import (
                 compute_network_not_legacy,
@@ -41,12 +44,15 @@ class Test_compute_network_not_legacy:
         compute_client.networks = [network]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy import (
                 compute_network_not_legacy,
@@ -81,12 +87,15 @@ class Test_compute_network_not_legacy:
         compute_client.networks = [network]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_not_legacy.compute_network_not_legacy import (
                 compute_network_not_legacy,
