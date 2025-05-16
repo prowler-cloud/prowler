@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getComplianceDetails } from "@/actions/compliances";
@@ -23,10 +24,10 @@ export default async function ComplianceDetail({
 }) {
   const { compliancetitle } = params;
   const { id, version } = searchParams;
+  const logoPath = `/${compliancetitle.toLowerCase()}.png`;
 
   if (!id) {
-    // Todo: improve error handling for no id provided
-    throw new Error("No id provided");
+    redirect("/");
   }
 
   const formattedTitle = compliancetitle.split("-").join(" ");
@@ -92,20 +93,11 @@ export default async function ComplianceDetail({
         showSearch={false}
       />
 
-      <div className="mb-8 flex justify-start gap-8">
-        <div className="relative hidden h-[200px] w-[200px] md:block lg:hidden xl:block">
-          <Image
-            src="/ens.png"
-            alt="ENS Logo"
-            fill
-            priority
-            className="object-contain"
-          />
-        </div>
-
+      <div className="mb-8 flex w-full">
+        {/* Requirements and Failed Sections Charts */}
         <div className="flex gap-4">
           {/* Requirements Chart */}
-          <div className="w-1/2">
+          <div className="">
             <Suspense
               key={id}
               fallback={
@@ -117,7 +109,7 @@ export default async function ComplianceDetail({
           </div>
 
           {/* Failed Sections List */}
-          <div className="w-1/2 min-w-[400px]">
+          <div className="w-[400px]">
             <Suspense
               key={`failed-sections-${id}`}
               fallback={
@@ -128,6 +120,18 @@ export default async function ComplianceDetail({
             </Suspense>
           </div>
         </div>
+
+        {logoPath && (
+          <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
+            <Image
+              src={logoPath}
+              alt="Compliance Logo"
+              fill
+              priority
+              className="object-contain"
+            />
+          </div>
+        )}
       </div>
 
       <Suspense key={id} fallback={<SkeletonAccordion />}>
