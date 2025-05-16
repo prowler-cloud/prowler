@@ -1941,42 +1941,38 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         url_path="metadata/latest",
     )
     def metadata_latest(self, request):
-        # Force filter validation
-        filtered_queryset = self.filter_queryset(self.get_queryset())
-
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scan_queryset = (
+        latest_scans_queryset = (
             Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
         )
+        latest_scans_ids = list(latest_scans_queryset.values_list("id", flat=True))
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
-            scan_id__in=latest_scan_queryset.values_list("id", flat=True),
+            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
         )
         # ToRemove: Temporary fallback mechanism
-        scans_with_flag = latest_scan_queryset.annotate(
-            has_summary=Exists(
-                ResourceScanSummary.objects.filter(
-                    tenant_id=tenant_id,
-                    scan_id=OuterRef("pk"),
-                )
+        present_ids = set(
+            ResourceScanSummary.objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scans_ids
             )
+            .values_list("scan_id", flat=True)
+            .distinct()
         )
-        missing_scan_ids = list(
-            scans_with_flag.filter(has_summary=False).values_list("id", flat=True)
-        )
-
+        missing_scan_ids = [sid for sid in latest_scans_ids if sid not in present_ids]
         if missing_scan_ids:
             for scan_id in missing_scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
             return Response(
-                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
+                get_findings_metadata_no_aggregations(
+                    tenant_id, self.filter_queryset(self.get_queryset())
+                )
             )
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
