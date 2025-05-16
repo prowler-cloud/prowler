@@ -1947,18 +1947,18 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scan_ids = (
+        latest_scan_queryset = (
             Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
-            .values_list("id", flat=True)
         )
 
         queryset = ResourceScanSummary.objects.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            tenant_id=tenant_id,
+            scan_id__in=latest_scan_queryset.values_list("id", flat=True),
         )
         # ToRemove: Temporary fallback mechanism
-        scans_with_flag = latest_scan_ids.annotate(
+        scans_with_flag = latest_scan_queryset.annotate(
             has_summary=Exists(
                 ResourceScanSummary.objects.filter(
                     tenant_id=tenant_id,
@@ -1966,9 +1966,11 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
             )
         )
-        if missing_scan_ids := scans_with_flag.filter(has_summary=False).values_list(
-            "id", flat=True
-        ):
+        missing_scan_ids = list(
+            scans_with_flag.filter(has_summary=False).values_list("id", flat=True)
+        )
+
+        if missing_scan_ids:
             for scan_id in missing_scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
