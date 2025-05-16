@@ -7,10 +7,9 @@ import {
   DateWithTime,
   getProviderLogo,
   InfoField,
-  ProviderType,
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { ResourceApiResponse, ResourceProps } from "@/types";
+import { ProviderType, ResourceApiResponse, ResourceProps } from "@/types";
 
 import { SkeletonFindingSummary } from "../skeleton/skeleton-finding-summary";
 
