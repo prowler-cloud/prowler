@@ -238,9 +238,8 @@ export const getExportsZip = async (scanId: string) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData?.errors?.[0]?.detail || "Failed to fetch report",
-      );
+      // TODO: Updated the getting of error message from `errors[0]?.` to `errors?.` to support currently, but need to be updated in backend to make it consistent
+      throw new Error(errorData?.errors?.detail || "Failed to fetch report");
     }
 
     // Get the blob data as an array buffer
@@ -277,8 +276,9 @@ export const getComplianceCsv = async (
 
     if (!response.ok) {
       const errorData = await response.json();
+      // TODO: Updated the getting of error message from `errors[0]?.` to `errors?.` to support currently, but need to be updated in backend to make it consistent
       throw new Error(
-        errorData?.errors?.[0]?.detail || "Failed to fetch compliance report",
+        errorData?.errors?.detail || "Failed to fetch compliance report",
       );
     }
 
