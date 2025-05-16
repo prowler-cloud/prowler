@@ -39,6 +39,7 @@ export const getUsers = async ({
     const users = await fetch(url.toString(), {
       headers,
     });
+
     const data = await users.json();
     const parsedData = parseStringify(data);
     revalidatePath("/users");
