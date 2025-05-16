@@ -18,6 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 - Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
 - Add `repository_codeowners_change_requires_approval` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
+- Add `repository_sensitive_data_scanner_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
