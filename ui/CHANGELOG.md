@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
 - Improve `Provider UID` filter by adding more context and enhancing the UI/UX. [(#7741)](https://github.com/prowler-cloud/prowler/pull/7741)
 - Added an AWS CloudFormation Quick Link to the IAM Role credentials step [(#7735)](https://github.com/prowler-cloud/prowler/pull/7735)
+– Use `getLatestFindings` on findings page when no scan or date filters are applied. [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
 
 ### 🐞 Fixes
 
