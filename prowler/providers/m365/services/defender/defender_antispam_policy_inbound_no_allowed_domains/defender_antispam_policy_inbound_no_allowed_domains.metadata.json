@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/configure-the-allowed-sender-domains?view=o365-worldwide"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

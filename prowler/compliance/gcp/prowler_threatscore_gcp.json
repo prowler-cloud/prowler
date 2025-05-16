@@ -17,7 +17,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "Service account keys consist of a key ID (private_key_id) and a private key, which are used to authenticate programmatic requests to Google Cloud services. It is recommended to regularly rotate service account keys to enhance security and reduce the risk of unauthorized access.",
           "AdditionalInformation": "Regularly rotating service account keys minimizes the risk of a compromised, lost, or stolen key being used to access cloud resources. Google-managed keys are automatically rotated daily for internal authentication, ensuring strong security. For user-managed (external) keys, users are responsible for key security, storage, and rotation. Since Google does not retain private keys once generated, proper key management practices must be followed. Google Cloud allows up to 10 external keys per service account, making it easier to rotate them without disruption. Implementing regular key rotation ensures that old keys are not left active, reducing the potential attack surface.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 1
         }
       ]
     },
@@ -34,7 +34,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "API keys should only be used when no other authentication method is available, as they pose significant security risks. Unused API keys with active permissions may still exist within a project, potentially exposing resources to unauthorized access. It is recommended to use standard authentication flows such as OAuth 2.0 or service account authentication instead.",
           "AdditionalInformation": "API keys are inherently insecure because they: Are simple encrypted strings that can be easily exposed in browsers, client-side applications, or devices. Do not authenticate users or applications making API requests. Can be accidentally leaked in logs, repositories, or web traffic.To enhance security, API keys should be avoided when possible, and unused keys should be deleted to minimize the risk of unauthorized access.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -51,7 +51,7 @@
           "SubSection": "1.1 Authentication",
           "AttributeDescription": "API keys should only be used when no other authentication method is available. If API keys are in use, it is recommended to rotate them every 90 days to minimize security risks.",
           "AdditionalInformation": "API keys are inherently insecure because: They are simple encrypted strings that can be easily exposed. They do not authenticate users or applications making API requests. They are often accessible to clients, increasing the risk of theft and misuse. Unlike credentials with expiration policies, stolen API keys remain valid indefinitely unless revoked or regenerated. Regularly rotating API keys reduces the risk of unauthorized access by ensuring that compromised keys cannot be used for extended periods. To enhance security, API keys should be rotated every 90 days or as part of a proactive security policy.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -68,7 +68,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Service accounts should not use user-managed keys, as they introduce security risks and require manual management. Instead, use Google Cloud-managed keys, which are automatically rotated and secured by Google.",
           "AdditionalInformation": "User-managed keys are downloadable and manually managed, making them vulnerable to leaks, mismanagement, and unauthorized access. In contrast, GCP-managed keys are non-downloadable, automatically rotated weekly, and securely handled by Google Cloud services like App Engine and Compute Engine. Managing user-generated keys requires key storage, distribution, rotation, revocation, and protectionall of which introduce potential security gaps. Common risks include keys being exposed in source code repositories, left in unsecured locations, or unintentionally shared. To minimize security risks, it is recommended to disable user-managed service account keys and rely on GCP-managed keys instead.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -85,7 +85,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "A service account is a special Google account assigned to an application or virtual machine (VM) rather than an individual user. It is used to authenticate API requests on behalf of the application. Service accounts should not be granted admin privileges to minimize security risks.",
           "AdditionalInformation": "Service accounts control resource access based on their assigned roles. Granting admin privileges to a service account allows full control over applications or VMs, enabling actions like deletion, updates, and configuration changes without user intervention. This increases the risk of misconfigurations, privilege escalation, or potential security breaches. To follow the principle of least privilege, it is recommended to restrict admin access for service accounts and assign only the necessary permissions.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -102,7 +102,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "The IAM policy on Cloud KMS cryptographic keys should not allow anonymous (allUsers) or public (allAuthenticatedUsers) access to prevent unauthorized key usage.",
           "AdditionalInformation": "Granting permissions to allUsers or allAuthenticatedUsers allows anyone to access the cryptographic keys, which can lead to data exposure, unauthorized encryption/decryption operations, or potential key compromise. This is particularly critical if sensitive data is protected using these keys. To maintain data security and compliance, ensure that Cloud KMS cryptographic keys are only accessible to authorized users, groups, or service accounts and do not have public or anonymous access permissions.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -119,7 +119,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "Google Cloud Key Management Service (KMS) organizes cryptographic keys in a hierarchical structure to facilitate secure and efficient access control. Keys should be configured with a defined rotation schedule to ensure their cryptographic strength is maintained over time.",
           "AdditionalInformation": "Key rotation ensures that new key versions are automatically generated at regular intervals, reducing the risk of key compromise and unauthorized access. The key material (actual encryption bits) changes over time, even though the keys logical identity remains the same. Since cryptographic keys protect sensitive data, setting a specific rotation period ensures that encrypted data remains secure, minimizes the impact of a potential key leak, and aligns with best security practices.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 1
         }
       ]
     },
@@ -136,7 +136,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "The principle of Separation of Duties should be enforced when assigning Google Cloud Key Management Service (KMS) roles to users. This prevents excessive privileges and reduces security risks.",
           "AdditionalInformation": "The Cloud KMS Admin role grants the ability to create, delete, and manage keys, while the Cloud KMS CryptoKey Encrypter/Decrypter, Encrypter, and Decrypter roles control encryption and decryption of data. Granting both administrative and cryptographic privileges to the same user violates the Separation of Duties principle, potentially allowing unauthorized access to sensitive data. To mitigate risks and prevent privilege escalation, no user should hold the Cloud KMS Admin role along with any of the CryptoKey Encrypter/Decrypter roles. Enforcing Separation of Duties helps ensure secure key management and aligns with security best practices.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -153,7 +153,7 @@
           "SubSection": "1.2 Authorization",
           "AttributeDescription": "API keys should only be used when no other authentication method is available, as they pose a higher security risk due to their public visibility. To minimize exposure, API keys should be restricted to access only the specific APIs required by an application.",
           "AdditionalInformation": "API keys present several security risks, including: They are simple encrypted strings that can be easily exposed in client-side applications or browsers. They do not authenticate the user or application making API requests. They are often accessible to clients, making them susceptible to discovery and theft. Google recommends using standard authentication methods instead of API keys whenever possible. However, in limited scenarios where API keys are necessary (e.g., mobile applications using Google Cloud Translation API without a backend server), restricting API key access to only the required APIs helps enforce least privilege access and reduces attack surfaces.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -170,7 +170,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "It is recommended to assign the Service Account User (iam.serviceAccountUser) and Service Account Token Creator (iam.serviceAccountTokenCreator) roles to users at the service account level rather than granting them project-wide access.",
           "AdditionalInformation": "Service accounts are identities used by applications and virtual machines (VMs) to interact with Google Cloud APIs. They also function as resources with IAM policies defining who can use them. Granting service account permissions at the project level allows users to access all service accounts within the project, including any created in the future. This increases the risk of privilege escalation, as users with Compute Instance Admin or App Engine Deployer roles could execute code as a service account, gaining access to additional resources. To enforce the principle of least privilege, users should be assigned service account roles at the specific service account level rather than at the project level. This ensures that each user has access only to the necessary service accounts while preventing unintended privilege escalation.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -187,7 +187,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "It is recommended to enforce the principle of Separation of Duties when assigning service account-related IAM roles to users to prevent excessive privileges and security risks.",
           "AdditionalInformation": "The Service Account Admin role allows a user to create, delete, and manage service accounts, while the Service Account User role allows a user to assign service accounts to applications or compute instances. Granting both roles to the same user violates the Separation of Duties principle, as it would allow an individual to create and assign service accounts, potentially leading to unauthorized access or privilege escalation. To minimize security risks, no user should be assigned both Service Account Admin and Service Account User roles simultaneously. Enforcing Separation of Duties ensures better access control, reduces the risk of privilege abuse, and aligns with security best practices.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -204,7 +204,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Cloud Audit Logging should be configured to track all administrative activities and read/write access to user data. This ensures comprehensive visibility into who accessed or modified resources within a project, folder, or organization.",
           "AdditionalInformation": "Cloud Audit Logging maintains two types of audit logs: 1. Admin Activity Logs  Captures API calls and administrative actions that modify configurations or metadata. These logs are enabled by default and cannot be disabled. 2. Data Access Logs  Tracks API calls that create, modify, or read user data. These logs are disabled by default and should be enabled for better monitoring. Data Access Logs provide three types of visibility: Admin Read  Tracks metadata or configuration reads. Data Read  Logs operations where user-provided data is accessed. Data Write  Captures modifications to user-provided data.To ensure effective logging, it is recommended to: 1. Enable DATA_READ logs (for user activity tracking) and DATA_WRITE logs (to track modifications). 2. Apply audit logging to all supported services where Data Access logs are available. 3.Avoid exempting users from audit logs to maintain full tracking capabilities. Properly configuring Cloud Audit Logging helps strengthen security, detect unauthorized access, and ensure compliance with security policies.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -221,7 +221,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "In order to prevent unnecessary project ownership assignments to users or service accounts and mitigate potential misuse of projects and resources, all role assignments to roles/Owner should be monitored. Users or service accounts assigned the roles/Owner primitive role are considered project owners. The Owner role grants full control over the project, including: full viewer permissions on all GCP services, permissions to modify the state of all services, manage roles and permissions for the project and its resources, and set up billing for the project. Granting the Owner role allows the member to modify the IAM policy, which contains sensitive access control data. To minimize security risks, the Owner role should only be assigned when strictly necessary, and the number of users with this role should be kept to a minimum.",
           "AdditionalInformation": "Project ownership has the highest level of privileges within a project, making it a high-risk role if misused. To reduce potential security risks, all project ownership assignments and changes should be monitored and alerted to security teams or relevant recipients. Critical events to monitor include: sending project ownership invitations, acceptance or rejection of ownership invites, assigning the roles/Owner role to a user or service account, and removing a user or service account from the roles/Owner role. Monitoring these activities helps prevent unauthorized access, enforces least privilege principles, and improves security auditing and compliance.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -238,7 +238,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "Google Cloud Platform (GCP) services generate audit log entries in the Admin Activity and Data Access logs, providing visibility into who performed what action, where, and when within GCP projects. These logs capture key details such as the identity of the API caller, timestamp, source IP address, request parameters, and response data. Cloud audit logging records API calls made through the GCP Console, SDKs, command-line tools, and other GCP services, offering a comprehensive activity history for security monitoring and compliance.",
           "AdditionalInformation": "Admin activity and data access logs play a critical role in security analysis, resource change tracking, and compliance auditing. Configuring metric filters and alerts for audit configuration changes ensures that audit logging remains in its recommended state, allowing organizations to detect and respond to unauthorized modifications while ensuring all project activities remain fully auditable at any time.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -255,7 +255,7 @@
           "SubSection": "1.3 Privilege Escalation Prevention",
           "AttributeDescription": "It is recommended to set up a metric filter and alarm to track changes to Identity and Access Management (IAM) roles, including their creation, deletion, and updates. Google Cloud IAM provides predefined roles for granular access control but also allows organizations to create custom roles to meet specific needs.",
           "AdditionalInformation": "IAM role modifications can impact security by granting excessive privileges if not properly managed. Monitoring role creation, deletion, and updates helps detect potential misconfigurations or over-privileged roles early, ensuring that only intended access permissions are assigned within the organization.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -272,7 +272,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "A project should not have a default network to prevent the use of preconfigured and potentially insecure network settings.",
           "AdditionalInformation": "The default network automatically creates permissive firewall rules, including unrestricted internal traffic, SSH, RDP, and ICMP access, which increases the risk of unauthorized access. Additionally, it is an auto mode network, limiting flexibility in subnet configuration and restricting the use of Cloud VPN or VPC Network Peering. Organizations should create a custom network tailored to their security and networking needs and remove the default network to minimize exposure.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -289,7 +289,7 @@
           "SubSection": "2.1 Network",
           "AttributeDescription": "Projects should not have a legacy network configured to prevent the use of outdated and inflexible networking models. While new projects can no longer create legacy networks, older projects should be checked to ensure they are not still using them.",
           "AdditionalInformation": "Legacy networks use a single global IPv4 prefix and a single gateway IP for the entire network, lacking subnetting capabilities. This design limits flexibility, prevents migration to auto or custom subnet networks, and can create performance bottlenecks or single points of failure for high-traffic workloads. Removing legacy networks and transitioning to modern networking models improves scalability, security, and resilience.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -340,7 +340,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "IAM policies on Cloud Storage buckets should not allow anonymous or public access to prevent unauthorized data exposure.",
           "AdditionalInformation": "Granting public or anonymous access allows anyone to access the buckets contents, posing a security risk, especially if sensitive data is stored. Restricting access ensures that only authorized users can interact with the bucket, reducing the risk of data breaches.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -374,7 +374,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Disable the remote access database flag for Cloud SQL SQL Server instances to prevent execution of stored procedures from remote servers.",
           "AdditionalInformation": "The remote access option allows stored procedures to be executed from or on remote SQL Server instances. By default, this setting is enabled, which could be exploited for unauthorized query execution or Denial-of-Service (DoS) attacks by offloading processing to a target server. Disabling remote access enhances security by restricting stored procedure execution to the local server, reducing potential attack vectors. This recommendation applies to SQL Server database instances.",
-          "LevelOfRisk": 2
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -391,7 +391,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Restrict database server access to only trusted networks and IP addresses, preventing connections from public IPs.",
           "AdditionalInformation": "Allowing unrestricted access to a database server increases the risk of unauthorized access and attacks. To minimize the attack surface, only trusted and necessary IP addresses should be whitelisted. Authorized networks should not be set to 0.0.0.0/0, which permits connections from anywhere. This control applies specifically to instances with public IP addresses.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -408,7 +408,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Configure Second Generation Cloud SQL instances to use private IPs instead of public IPs.",
           "AdditionalInformation": "Using private IPs for Cloud SQL databases enhances security by reducing exposure to external threats. It also improves network performance and lowers latency by keeping traffic within the internal network, minimizing the attack surface of the database.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -425,7 +425,7 @@
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Ensure that IAM policies on BigQuery datasets do not allow anonymous or public access.",
           "AdditionalInformation": "Granting access to allUsers or allAuthenticatedUsers permits unrestricted access to the dataset, which can lead to unauthorized data exposure. To protect sensitive information, public or anonymous access should be strictly prohibited.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -442,7 +442,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "To enforce the principle of least privilege and prevent potential privilege escalation, instances should not be assigned the Compute Engine default service account with the scope Allow full access to all Cloud APIs.",
           "AdditionalInformation": "Google Compute Engine provides a default service account for instances to access necessary cloud services. This default service account has the Project Editor role, granting broad permissions over most cloud services except billing. When assigned to an instance, it can operate in three modes: 1.Allow default access  Grants minimal required permissions (recommended). 2.Allow full access to all Cloud APIs  Grants excessive access to all cloud services (not recommended). 3.Set access for each API  Allows administrators to specify required APIs (preferred for least privilege). Assigning an instance the Compute Engine default service account with full access to all APIs can expose cloud operations to unauthorized users based on IAM roles. To reduce security risks, instances should use custom service accounts with minimal required permissions.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -459,7 +459,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Instances should use instance-specific SSH keys instead of project-wide SSH keys to enhance security and reduce the risk of unauthorized access.",
           "AdditionalInformation": "Project-wide SSH keys are stored in Compute Project metadata and can be used to access all instances within a project. While this simplifies SSH key management, it also increases security risksif a project-wide SSH key is compromised, all instances in the project could be affected. Using instance-specific SSH keys provides better security by limiting access to individual instances, reducing the attack surface in case of key compromise.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -476,7 +476,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "The interactive serial console allows direct access to a virtual machines serial ports, similar to using a terminal window. When enabled, it allows connections from any IP address, creating a potential security risk. It is recommended to disable interactive serial console support.",
           "AdditionalInformation": "A virtual machine instance has four virtual serial ports, often used by the operating system, BIOS, or other system-level entities for input and output. The first serial port (serial port 1) is commonly referred to as the serial console. Unlike SSH, the interactive serial console does not support IP-based access restrictions, meaning anyone with the correct SSH key, username, project ID, zone, and instance name could gain access. This exposes the instance to unauthorized access. To mitigate this risk, interactive serial console support should be disabled unless absolutely necessary.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -493,7 +493,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Google Compute Engine instances should not forward data packets unless explicitly required for routing purposes. By default, an instance cannot forward packets unless the source IP matches the instances IP address. Similarly, GCP wont deliver packets if the destination IP does not match the instance. To prevent unauthorized data forwarding, it is recommended to disable IP forwarding.",
           "AdditionalInformation": "When IP forwarding is enabled (canIpForward field), an instance can send and receive packets with non-matching source or destination IPs, effectively allowing it to act as a network router. This can lead to data loss, information disclosure, or unauthorized traffic routing. To maintain security and prevent misuse, IP forwarding should be disabled unless explicitly required for network routing configurations.",
-          "LevelOfRisk": 2
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -510,7 +510,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Shielded VMs are hardened virtual machines on Google Cloud Platform (GCP) designed to protect against rootkits, bootkits, and other low-level attacks. They ensure verifiable integrity using Secure Boot, virtual Trusted Platform Module (vTPM)-enabled Measured Boot, and integrity monitoring.",
           "AdditionalInformation": "Shielded VMs use signed and verified firmware from Googles Certificate Authority to establish a root of trust. Secure Boot ensures only authentic software runs by verifying digital signatures, preventing unauthorized modifications. Integrity monitoring helps detect unexpected changes in the VMs boot process, while vTPM-enabled Measured Boot provides a baseline to compare against future boots. Enabling Shielded VMs enhances security by protecting against malware, unauthorized firmware changes, and persistent threats.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -527,7 +527,7 @@
           "SubSection": "2.3 Application",
           "AttributeDescription": "Compute instances should not be assigned external IP addresses to minimize exposure to the internet and reduce security risks.",
           "AdditionalInformation": "Public IP addresses increase the attack surface of Compute instances, making them more vulnerable to threats. Instead, instances should be placed behind load balancers or use private networking to control access and reduce the risk of unauthorized exposure.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -544,7 +544,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to create a log sink to export and store copies of all log entries. This enables log aggregation across multiple projects and allows integration with a Security Information and Event Management (SIEM) system for centralized monitoring.",
           "AdditionalInformation": "Cloud Logging retains logs for a limited period. To ensure long-term storage and better security analysis, logs should be exported to a destination such as Cloud Storage, BigQuery, or Cloud Pub/Sub. A log sink allows you to: Aggregate logs from multiple projects, folders, or billing accounts. Extend log retention beyond Cloud Loggings default retention period. Send logs to a SIEM system for real-time monitoring and threat detection. To ensure all logs are captured and exported: 1.Create a sink without filters to capture all log entries. 2.Choose an appropriate destination (e.g., Cloud Storage for long-term storage, BigQuery for analysis, or Pub/Sub for real-time processing). 3.Apply logging at the organization level to cover all associated projects. Implementing log sinks enhances security visibility, forensic capabilities, and compliance adherence across cloud environments.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -561,7 +561,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to configure a metric filter and alarm to monitor Virtual Private Cloud (VPC) Network Firewall rule changes. Tracking modifications to firewall rules helps ensure that unauthorized or unintended changes do not compromise network security.",
           "AdditionalInformation": "Firewall rules control ingress and egress traffic within a VPC. Monitoring create or update events provides visibility into network access changes and helps quickly detect potential security threats or misconfigurations, reducing the risk of unauthorized access.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -578,7 +578,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to configure a metric filter and alarm to monitor Virtual Private Cloud (VPC) network route changes. Keeping track of modifications ensures that unauthorized or unintended changes do not disrupt expected network traffic flow.",
           "AdditionalInformation": "GCP routes define how network traffic is directed between VM instances and external destinations. Monitoring route table changes helps ensure that traffic follows the intended path, preventing misconfigurations or malicious alterations that could lead to data exposure or connectivity issues.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -595,7 +595,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to configure a metric filter and alarm to monitor Virtual Private Cloud (VPC) network changes. This helps track modifications to VPC configurations and peer connections, ensuring that network traffic remains secure and follows the intended paths.",
           "AdditionalInformation": "It is recommended to configure a metric filter and alarm to monitor Virtual Private Cloud (VPC) network changes. This helps track modifications to VPC configurations and peer connections, ensuring that network traffic remains secure and follows the intended paths.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -612,7 +612,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to set up a metric filter and alarm to monitor Cloud Storage Bucket IAM changes. This ensures that any modifications to bucket permissions are tracked and reviewed in a timely manner.",
           "AdditionalInformation": "Monitoring changes to Cloud Storage IAM policies helps detect and correct unauthorized access or overly permissive configurations. This reduces the risk of data exposure or breaches by ensuring that sensitive storage buckets and their contents remain properly secured.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -629,7 +629,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "It is recommended to configure a metric filter and alarm to track SQL instance configuration changes. This helps in detecting and addressing misconfigurations that may impact security, availability, and compliance.",
           "AdditionalInformation": "Monitoring SQL instance configuration changes ensures that critical security settings remain properly configured. Misconfigurations, such as disabling auto backups, allowing untrusted networks, or modifying high availability settings, can lead to data loss, security vulnerabilities, or operational disruptions. Early detection of such changes helps maintain a secure and resilient SQL environment.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -646,7 +646,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Enabling logging on an HTTPS Load Balancer captures all network traffic and its destination, providing visibility into requests made to your web applications.",
           "AdditionalInformation": "Logging HTTPS network traffic helps monitor access patterns, troubleshoot issues, and enhance security by detecting suspicious activity or unauthorized access attempts.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -663,7 +663,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Flow Logs capture and record IP traffic to and from network interfaces within VPC subnets. These logs are stored in Stackdriver Logging, allowing users to analyze traffic patterns, detect anomalies, and optimize network performance. It is recommended to enable Flow Logs for all critical VPC subnets to enhance network visibility and security.",
           "AdditionalInformation": "VPC Flow Logs provide detailed insights into inbound and outbound traffic for virtual machines (VMs), whether they communicate with other VMs, on-premises data centers, Google services, or external networks. Enabling Flow Logs supports: Network monitoring Traffic analysis and cost optimization Incident investigation and forensics Real-time security threat detection For effective monitoring, Flow Logs should be configured to capture all traffic, use granular logging intervals, avoid log filtering, and include metadata for detailed investigations. Note that subnets reserved for internal HTTP(S) load balancing do not support Flow Logs.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -680,7 +680,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The log_connections setting should be enabled to log all attempted connections to the PostgreSQL server, including successful client authentication.",
           "AdditionalInformation": "By default, PostgreSQL does not log connection attempts, making it harder to detect unauthorized access. Enabling log_connections provides visibility into all connection attempts, aiding in troubleshooting and identifying unusual or suspicious access patterns. This is particularly useful for security monitoring and incident response.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -697,7 +697,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The log_disconnections setting should be enabled to log the end of each PostgreSQL session, including session duration.",
           "AdditionalInformation": "By default, PostgreSQL does not log session termination details, making it difficult to track session activity. Enabling log_disconnections helps monitor session durations and detect unusual activity. Combined with log_connections, it provides a complete audit trail of user access, aiding in troubleshooting and security monitoring.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -714,7 +714,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The log_statement setting in PostgreSQL determines which SQL statements are logged. Acceptable values include none, ddl, mod, and all. A recommended setting is ddl, which logs all data definition statements unless otherwise specified by the organizations logging policy.",
           "AdditionalInformation": "Proper SQL statement logging is crucial for auditing and forensic analysis. If too many statements are logged, it can become difficult to extract relevant information; if too few are logged, critical details may be missing. Setting log_statement to an appropriate value, such as ddl, ensures a balance between comprehensive auditing and log manageability, aiding in database security and compliance.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -731,7 +731,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The log_min_messages setting in PostgreSQL defines the minimum severity level for messages to be logged as errors. Accepted values range from DEBUG5 (least severe) to PANIC (most severe). Best practice is to set this value to ERROR, ensuring that only critical issues are logged unless an organizations policy requires a different threshold.",
           "AdditionalInformation": "Proper logging is essential for troubleshooting and forensic analysis. If log_min_messages is not configured correctly, important error messages may be missed or unnecessary logs may clutter records. Setting this parameter to ERROR helps maintain a balance between capturing relevant issues and avoiding excessive log noise, improving system monitoring and security.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -782,7 +782,7 @@
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Ensure that the cloudsql.enable_pgaudit database flag is set to on for Cloud SQL PostgreSQL instances to enable centralized logging and auditing.",
           "AdditionalInformation": "Enabling the pgaudit extension provides detailed session and object-level logging, which helps organizations comply with security standards such as government, financial, and ISO regulations. This logging capability enhances threat detection by monitoring security events on the database instance. Additionally, enabling this flag allows logs to be sent to Google Logs Explorer for centralized access and monitoring. This recommendation applies specifically to PostgreSQL database instances.",
-          "LevelOfRisk": 4
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -799,7 +799,7 @@
           "SubSection": "3.2 Retention",
           "AttributeDescription": "Enabling retention policies on log storage buckets prevents logs from being overwritten or accidentally deleted. It is recommended to configure retention policies and enable Bucket Lock for all storage buckets used as log sinks.",
           "AdditionalInformation": "Cloud Logging allows logs to be exported to storage buckets through sinks. Without a retention policy, logs can be altered or deleted, making it difficult to perform security investigations or comply with audit requirements. To ensure logs remain intact for forensics and security analysis: 1.Set a retention policy on log storage buckets to prevent early deletion. 2.Enable Bucket Lock to make the policy immutable, ensuring logs cannot be altered even by privileged users. 3.Apply appropriate access controls to protect logs from unauthorized access. By implementing retention policies and Bucket Lock, organizations preserve critical security logs, prevent attackers from covering their tracks, and enhance compliance with security regulations.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -833,7 +833,7 @@
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "GCP Access Approval allows organizations to require explicit approval before Google support personnel can access their projects. Administrators can assign security roles in IAM to specific users who can review and approve these requests. Notifications of access requests, including the requesting Google employees details, are sent via email or Pub/Sub messages, providing transparency and control.",
           "AdditionalInformation": "Managing who accesses your organizations data is critical for information security. While Google support may require access for troubleshooting, Access Approval ensures that access is only granted when explicitly authorized. This feature adds an additional layer of security and logging, ensuring that only approved Google personnel can access sensitive information.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -850,7 +850,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Cloud DNS provides a scalable and reliable domain name system (DNS) service. Domain Name System Security Extensions (DNSSEC) enhance DNS security by protecting domains against DNS hijacking, man-in-the-middle attacks, and other threats.",
           "AdditionalInformation": "DNSSEC cryptographically signs DNS records, ensuring the integrity and authenticity of DNS responses. Without DNSSEC, attackers can manipulate DNS lookups, redirecting users to malicious websites through DNS hijacking or spoofing attacks. Enabling DNSSEC helps prevent unauthorized modifications to DNS records, reducing the risk of phishing, malware distribution, and other cyber threats.",
-          "LevelOfRisk": 1
+          "LevelOfRisk": 2
         }
       ]
     },
@@ -867,7 +867,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Require all incoming connections to SQL database instances to use SSL encryption.",
           "AdditionalInformation": "Unencrypted SQL database connections are vulnerable to man-in-the-middle (MITM) attacks, which can expose sensitive data such as credentials, queries, and results. Enforcing SSL ensures secure communication by encrypting data in transit, protecting against interception and unauthorized access. This recommendation applies to PostgreSQL, MySQL (Generation 1 and 2), and SQL Server 2017 instances.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -884,7 +884,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "DNSSEC (Domain Name System Security Extensions) relies on cryptographic algorithms to ensure the integrity and authenticity of DNS responses. It is important to use strong and recommended algorithms for key signing to maintain robust security. SHA-1 is deprecated and requires explicit approval from Google if used.",
           "AdditionalInformation": "DNSSEC signing algorithms play a critical role in securing DNS transactions. Using weak or outdated algorithms can expose DNS infrastructure to spoofing, hijacking, and other attacks. Organizations should select recommended and secure algorithms when enabling DNSSEC to protect DNS records from unauthorized modifications. If adjustments to DNSSEC settings are required, DNSSEC must be disabled and re-enabled with the updated configurations.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -901,7 +901,7 @@
           "SubSection": "4.1 In-Transit",
           "AttributeDescription": "DNSSEC (Domain Name System Security Extensions) enhances DNS security by using cryptographic algorithms for zone signing and transaction security. It is essential to use strong and recommended algorithms for key signing. SHA-1 has been deprecated and requires Googles explicit approval and a support contract if used.",
           "AdditionalInformation": "Using weak or outdated cryptographic algorithms compromises DNS integrity and exposes systems to threats like spoofing and hijacking. Organizations should ensure that DNSSEC settings use strong, recommended algorithms. If DNSSEC is already enabled and changes are needed, it must be disabled and re-enabled with updated configurations to apply the changes effectively.",
-          "LevelOfRisk": 2
+          "LevelOfRisk": 3
         }
       ]
     },
@@ -918,7 +918,7 @@
           "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Customer-Supplied Encryption Keys (CSEK) is a feature available in Google Cloud Storage and Google Compute Engine, allowing users to supply their own encryption keys. When you provide your key, Google uses it to protect the Google-generated keys that are responsible for encrypting and decrypting your data. By default, Google Compute Engine encrypts all data at rest automatically, managing this encryption for you with no additional action required. However, if you wish to have full control over the encryption process, you can choose to supply your own encryption keys.",
           "AdditionalInformation": "By default, Compute Engine automatically encrypts all data at rest, with the service managing the encryption without any further input required from you or your application. However, if you require complete control over encryption, you have the option to provide your own encryption keys to manage the encryption of instance disks.",
-          "LevelOfRisk": 5
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -952,7 +952,7 @@
           "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Ensure that BigQuery datasets are encrypted using Customer-Managed Keys (CMKs) to gain more granular control over the data encryption and decryption process.",
           "AdditionalInformation": "For enhanced control over encryption, Customer-Managed Encryption Keys (CMEK) can be implemented as a key management solution for BigQuery datasets.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     },
@@ -969,7 +969,7 @@
           "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Ensure that BigQuery tables are encrypted using Customer-Managed Keys (CMKs) for more granular control over the data encryption and decryption process.",
           "AdditionalInformation": "For greater control over encryption, Customer-Managed Encryption Keys (CMEK) can be utilized as the key management solution for BigQuery tables.",
-          "LevelOfRisk": 3
+          "LevelOfRisk": 4
         }
       ]
     }

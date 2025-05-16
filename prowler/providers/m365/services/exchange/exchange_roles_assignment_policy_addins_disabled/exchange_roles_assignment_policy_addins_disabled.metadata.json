@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

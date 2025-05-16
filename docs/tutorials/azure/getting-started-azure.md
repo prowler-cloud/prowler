@@ -1,15 +1,15 @@
-# Getting Started with Azure on Prowler Cloud
+# Getting Started with Azure on Prowler Cloud/App
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding Azure" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
-Set up your Azure subscription to enable security scanning using Prowler Cloud.
+Set up your Azure subscription to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
 To configure your Azure subscription, you’ll need:
 
 1. Get the `Subscription ID`
-2. Access to Prowler Cloud
+2. Access to Prowler Cloud/App
 3. Configure authentication in Azure:
 
     3.1 Create a Service Principal
@@ -18,7 +18,7 @@ To configure your Azure subscription, you’ll need:
 
     3.3 Assign permissions at the subscription level
 
-4. Add the credentials to Prowler Cloud
+4. Add the credentials to Prowler Cloud/App
 
 ---
 
@@ -32,9 +32,9 @@ To configure your Azure subscription, you’ll need:
 
 ---
 
-## Step 2: Access Prowler Cloud
+## Step 2: Access Prowler Cloud/App
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/)
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
@@ -148,13 +148,13 @@ Assign the following Microsoft Graph permissions:
 
 ---
 
-## Step 4: Add Credentials to Prowler Cloud
+## Step 4: Add Credentials to Prowler Cloud/App
 
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
 
-2. Go to Prowler Cloud and paste:
+2. Go to Prowler Cloud/App and paste:
 
     - `Client ID`
     - `Tenant ID`

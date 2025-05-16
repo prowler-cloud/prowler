@@ -7,8 +7,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "@/components/icons/providers-badge";
-
-export type ProviderType = "aws" | "azure" | "gcp" | "kubernetes" | "m365";
+import { ProviderType } from "@/types";
 
 export const getProviderLogo = (provider: ProviderType) => {
   switch (provider) {

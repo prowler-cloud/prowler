@@ -180,13 +180,27 @@ class APIUser(APIUserBase):
         )
 
         endpoint = (
-            f"/findings?filter[{filter_name}]={filter_value}"
+            f"/findings/metadata?filter[{filter_name}]={filter_value}"
             f"&filter[inserted_at]={TARGET_INSERTED_AT}"
             f"&{get_sort_value(FINDINGS_UI_SORT_VALUES)}"
         )
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
-    @task
+    @task(3)
+    def findings_metadata_resource_filter_scan_large(self):
+        name = "/findings/metadata?filter[resource_filter]&filter[scan_id] - 500k"
+        filter_name, filter_value = get_next_resource_filter(
+            self.available_resource_filters
+        )
+
+        endpoint = (
+            f"/findings/metadata?filter[{filter_name}]={filter_value}"
+            f"&filter[scan]={self.l_scan_id}"
+            f"&{get_sort_value(FINDINGS_UI_SORT_VALUES)}"
+        )
+        self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
+
+    @task(2)
     def findings_resource_filter_large_scan_include(self):
         name = "/findings?filter[resource_filter][scan]&include - 500k"
         filter_name, filter_value = get_next_resource_filter(

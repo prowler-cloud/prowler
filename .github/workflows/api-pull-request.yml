@@ -85,12 +85,26 @@ jobs:
             api/README.md
             api/mkdocs.yml
 
+      - name: Replace @master with current branch in pyproject.toml
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using branch: $BRANCH_NAME"
+          sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+
       - name: Install poetry
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
+
+      - name: Update poetry.lock after the branch name change
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry lock
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'

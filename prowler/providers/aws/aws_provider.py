@@ -193,6 +193,7 @@ class AwsProvider(Provider):
         ######## AWS Session
         logger.info("Generating original session ...")
 
+        # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
         aws_session = self.setup_session(
             mfa=mfa,

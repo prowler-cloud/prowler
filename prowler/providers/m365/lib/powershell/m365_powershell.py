@@ -178,6 +178,26 @@ class M365PowerShell(PowerShellSession):
             json_parse=True,
         )
 
+    def get_global_messaging_policy(self) -> dict:
+        """
+        Get Teams Global Messaging Policy.
+
+        Retrieves the current Microsoft Teams global messaging policy settings.
+
+        Returns:
+            dict: Teams global messaging policy settings in JSON format.
+
+        Example:
+            >>> get_global_meeting_policy()
+            {
+                "AllowAnonymousUsersToJoinMeeting": true
+            }
+        """
+        return self.execute(
+            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
+        )
+
     def get_user_settings(self) -> dict:
         """
         Get Teams User Settings.
@@ -248,6 +268,24 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json", json_parse=True)
+
+    def get_malware_filter_rule(self) -> dict:
+        """
+        Get Defender Malware Filter Rule.
+
+        Retrieves the current Defender anti-malware filter rule settings.
+
+        Returns:
+            dict: Malware filter rule settings in JSON format.
+
+        Example:
+            >>> get_malware_filter_rule()
+            {
+                "Name": "Default",
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-MalwareFilterRule | ConvertTo-Json", json_parse=True)
 
     def get_outbound_spam_filter_policy(self) -> dict:
         """
@@ -485,6 +523,57 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
+        )
+
+    def get_inbound_spam_filter_rule(self) -> dict:
+        """
+        Get Inbound Spam Filter Rule.
+
+        Retrieves the current inbound spam filter rule settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_rule()
+            {
+                "Name": "Rule1",
+                "State": "Enabled"
+            }
+        """
+        return self.execute(
+            "Get-HostedContentFilterRule | ConvertTo-Json", json_parse=True
+        )
+
+    def get_report_submission_policy(self) -> dict:
+        """
+        Get Exchange Online Report Submission Policy.
+
+        Retrieves the current Exchange Online report submission policy settings.
+
+        Returns:
+            dict: Report submission policy settings in JSON format.
+
+        Example:
+            >>> get_report_submission_policy()
+            {
+                "Id": "DefaultReportSubmissionPolicy",
+                "Identity": "DefaultReportSubmissionPolicy",
+                "Name": "DefaultReportSubmissionPolicy",
+                "ReportChatMessageEnabled": true,
+                "ReportChatMessageToCustomizedAddressEnabled": true,
+                "ReportJunkAddresses": [],
+                "ReportJunkToCustomizedAddress": true,
+                "ReportNotJunkAddresses": [],
+                "ReportNotJunkToCustomizedAddress": true,
+                "ReportPhishAddresses": [],
+                "ReportPhishToCustomizedAddress": true,
+                "ThirdPartyReportAddresses": [],
+                ...
+            }
+        """
+        return self.execute(
+            "Get-ReportSubmissionPolicy | ConvertTo-Json", json_parse=True
         )
 
     def get_role_assignment_policies(self) -> dict:
