@@ -44,7 +44,7 @@ export const getFindings = async ({
   }
 };
 
-export const getFindingsLatest = async ({
+export const getLatestFindings = async ({
   page = 1,
   pageSize = 10,
   query = "",
@@ -127,7 +127,7 @@ export const getMetadataInfo = async ({
   }
 };
 
-export const getMetadataInfoLatest = async ({
+export const getLatestMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},

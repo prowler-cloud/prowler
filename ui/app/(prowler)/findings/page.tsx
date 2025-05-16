@@ -3,9 +3,9 @@ import React, { Suspense } from "react";
 
 import {
   getFindings,
-  getFindingsLatest,
+  getLatestFindings,
   getMetadataInfo,
-  getMetadataInfoLatest,
+  getLatestMetadataInfo,
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
@@ -38,7 +38,7 @@ export default async function Findings({
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
   const [metadataInfoData, providersData, scansData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getMetadataInfoLatest)({
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
       query,
       sort: encodedSort,
       filters,
@@ -155,7 +155,7 @@ const SSRDataTable = async ({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  const fetchFindings = hasDateOrScan ? getFindings : getFindingsLatest;
+  const fetchFindings = hasDateOrScan ? getFindings : getLatestFindings;
 
   const findingsData = await fetchFindings({
     query,
