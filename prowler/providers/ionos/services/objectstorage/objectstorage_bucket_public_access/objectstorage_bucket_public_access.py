@@ -7,21 +7,18 @@ class objectstorage_bucket_public_access(Check):
     def execute(self):
         findings = []
         
-        buckets = ionos_objectstorage_client.get_buckets_by_region("eu-south-2")
-
-        #print(len(buckets))
+        buckets = ionos_objectstorage_client.get_all_buckets()
         
         for bucket in buckets:
-            logger.info("Checking bucket: %s", bucket["Name"])
+            logger.info("Checking bucket: %s", bucket)
+            logger.info("Bucket Region: %s", buckets[bucket])
             report = Check_Report_IONOS(self.metadata())
-            report.resource_id = bucket["Name"]
-            report.resource_name = bucket["Name"]
+            report.resource_id = bucket
+            report.resource_name = bucket
 
             is_public = False
             
-            bucket_acl = ionos_objectstorage_client.get_bucket_acl(bucket["Name"])
-
-            #print(f"Bucket ACL: {bucket_acl}")
+            bucket_acl = ionos_objectstorage_client.get_bucket_acl(bucket)
             
             if bucket_acl:
                 for grant in bucket_acl.get("Grants", []):
@@ -29,7 +26,6 @@ class objectstorage_bucket_public_access(Check):
                     grantee_type = grantee.get("Type", "").lower()
                     permission = grant.get("Permission", "")
 
-                    # Check for different types of public access
                     if (
                         grantee_type == "group" or 
                         grantee_type == "anonymous" or
@@ -39,7 +35,7 @@ class objectstorage_bucket_public_access(Check):
                         ]
                     ):
                         logger.warning(
-                            f"Bucket {bucket['Name']} has public access - "
+                            f"Bucket {bucket} has public access - "
                             f"Type: {grantee_type}, Permission: {permission}"
                         )
                         is_public = True
@@ -59,10 +55,9 @@ class objectstorage_bucket_public_access(Check):
                 )
             
             bucket_details = {
-                "name": bucket["Name"],
+                "name": bucket,
                 "is_public": is_public,
-                "acl": bucket_acl,  # Include full ACL for reference
-                "creation_date": str(bucket.get("CreationDate", "N/A"))
+                "acl": bucket_acl,
             }
             report.resource_details = json.dumps(bucket_details)
             findings.append(report)

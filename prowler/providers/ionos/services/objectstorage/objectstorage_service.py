@@ -4,6 +4,7 @@ from botocore.config import Config
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
 from ionoscloud.api import UserS3KeysApi, UserManagementApi
+import boto3
 
 class IonosObjectStorage(IonosService):
     """
@@ -30,6 +31,7 @@ class IonosObjectStorage(IonosService):
         self.access_key = None
         self.secret_key = None
         self.users_client = UserManagementApi(self.session)
+        self.bucket_regions = {}
 
         self.user_uuid = self.__get_user_uuid__()
 
@@ -38,20 +40,16 @@ class IonosObjectStorage(IonosService):
         if not self.access_key or not self.secret_key or not self.user_uuid:
             logger.warning("Missing credentials (access key, secret key, or user UUID). S3 client initialization skipped.")
             self.client = None
-            self.buckets = []
             return
 
         self.client = boto3.client(
             's3',
             endpoint_url='https://s3-eu-south-2.ionoscloud.com',
-            #endpoint_url='https://s3-eu-central-2.ionoscloud.com',
-            #endpoint_url='https://s3-eu-central-1.ionoscloud.com',
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
             config=Config(signature_version='s3v4')
         )
         
-        self.buckets = []
         self.region_clients = {}
         self._initialize_region_clients()
         self.__get_objectstorage_resources__()
@@ -64,7 +62,6 @@ class IonosObjectStorage(IonosService):
                 endpoint_url=endpoint,
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
-                config=Config(signature_version='s3v4')
             )
 
     def __get_objectstorage_resources__(self):
@@ -86,12 +83,19 @@ class IonosObjectStorage(IonosService):
             return
         logger.info("Getting buckets from IONOS Object Storage")
         try:
-            response = self.client.list_buckets()
-            #for bucket in response['Buckets']:
-            #    print(f"- {bucket['Name']} (Created: {bucket['CreationDate']})")
-            self.buckets = response.get('Buckets', [])
-            #print("Cantidad:", len(self.buckets))
-            #print(f"Buckets: {self.buckets}")
+            buckets = [b['Name'] for b in self.client.list_buckets()['Buckets']]
+
+            for bucket in buckets:
+                for region_code, endpoint in self.REGIONS.items():
+                    try:
+                        self.region_clients[region_code].head_bucket(Bucket=bucket)
+                        self.bucket_regions[bucket] = region_code
+                        break
+                    except RecursionError as e:
+                        pass
+                else:
+                    logger.warning(f"Could not determine region for bucket: {bucket}")
+
         except Exception as error:
             logger.error(
                 f"Object Storage -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -104,7 +108,19 @@ class IonosObjectStorage(IonosService):
         Returns:
             list: List of bucket resources
         """
-        return self.buckets
+        return self.bucket_regions
+
+    def get_region_client(self, region: str) -> Optional[boto3.client]:
+        """
+        Get the S3 client for a specific region
+        
+        Args:
+            region: Region name (e.g., 'eu-south-2')
+            
+        Returns:
+            boto3.client: S3 client for the specified region or None if not found
+        """
+        return self.region_clients.get(region)
 
     def get_bucket_by_name(self, bucket_name: str) -> Optional[dict]:
         """
@@ -131,12 +147,13 @@ class IonosObjectStorage(IonosService):
         Returns:
             str: Location of the bucket or None if not found
         """
+
+        s3 = self.get_region_client(self.bucket_regions[bucket_name])
+
         try:
-            response = self.client.get_bucket_location(Bucket=bucket_name)
+            response = s3.get_bucket_location(Bucket=bucket_name)
             location = response.get('LocationConstraint')
-            #print(f"Bucket {bucket_name} is in location: {location}")
-            # En IONOS, None significa que está en la región por defecto (eu-south-2)
-            return location if location else "eu-south-2"
+            return location if location else "None"
         except Exception as error:
             logger.error(
                 f"{bucket_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -153,9 +170,11 @@ class IonosObjectStorage(IonosService):
         Returns:
             dict: Cleaned ACL configuration or None if not found
         """
+
+        s3 = self.get_region_client(self.bucket_regions[bucket_name])
+
         try:
-            response = self.client.get_bucket_acl(Bucket=bucket_name)
-            # Clean up the response to include only relevant ACL information
+            response = s3.get_bucket_acl(Bucket=bucket_name)
             cleaned_acl = {
                 'Owner': response.get('Owner', {}),
                 'Grants': response.get('Grants', [])
@@ -202,27 +221,6 @@ class IonosObjectStorage(IonosService):
                 f"{bucket_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
-
-    def get_buckets_by_region(self, region: str) -> list:
-        """
-        Get buckets filtered by region
-        
-        Args:
-            region: Region name (e.g., 'eu-south-2')
-            
-        Returns:
-            list: List of buckets in the specified region
-        """
-        if not self.buckets:
-            return []
-            
-        region_buckets = []
-        for bucket in self.buckets:
-            location = self.get_bucket_location(bucket['Name'])
-            if location == region:
-                region_buckets.append(bucket)
-        
-        return region_buckets
 
     def __get_credentials__(self) -> dict:
         try:
