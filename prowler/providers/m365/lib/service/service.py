@@ -15,5 +15,7 @@ class M365Service:
 
         # Initialize PowerShell client only if credentials are available
         self.powershell = (
-            M365PowerShell(provider.credentials) if provider.credentials else None
+            M365PowerShell(provider.credentials, provider.identity)
+            if provider.credentials and provider.identity
+            else None
         )
