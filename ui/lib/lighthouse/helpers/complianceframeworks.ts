@@ -34,6 +34,7 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
       "nist_csf_1.1_aws",
       "pci_3.2.1_aws",
       "pci_4.0_aws",
+      "prowler_threatscore_aws",
       "rbi_cyber_security_framework_aws",
       "soc2_aws",
     ],
@@ -45,6 +46,7 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
       "iso27001_2022_azure",
       "mitre_attack_azure",
       "pci_4.0_azure",
+      "prowler_threatscore_azure",
       "soc2_azure",
     ],
     gcp: [
@@ -54,6 +56,7 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
       "iso27001_2022_gcp",
       "mitre_attack_gcp",
       "pci_4.0_gcp",
+      "prowler_threatscore_gcp",
       "soc2_gcp",
     ],
     kubernetes: [
@@ -62,7 +65,7 @@ export const complianceFrameworksByProvider = async (provider_type: string) => {
       "iso27001_2022_kubernetes",
       "pci_4.0_kubernetes",
     ],
-    m365: ["cis_4.0_microsoft365"],
+    m365: ["cis_4.0_m365", "prowler_threatscore_m365"],
   };
   return complianceFrameworks[provider_type as ProviderType] || [];
 };

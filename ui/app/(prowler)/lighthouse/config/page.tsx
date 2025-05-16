@@ -87,7 +87,6 @@ export default function ChatbotConfig() {
             apiKey: attrs.api_key || "",
             businessContext: attrs.business_context || "",
           });
-
         }
       } catch (error) {
         if (isMounted) {
@@ -150,7 +149,8 @@ export default function ChatbotConfig() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save lighthouse configuration: " + String(error),
+        description:
+          "Failed to save lighthouse configuration: " + String(error),
         variant: "destructive",
       });
       console.error(error);
