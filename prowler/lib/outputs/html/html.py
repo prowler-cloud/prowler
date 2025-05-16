@@ -24,32 +24,70 @@ class HTML(Output):
         """
         try:
             for finding in findings:
-                row_class = "p-3 mb-2 bg-success-custom"
-                finding_status = finding.status.value
-                # Change the status of the finding if it's muted
+                # Badge for severity
+                severity = finding.metadata.Severity.value
+                if severity.upper() == "CRITICAL":
+                    severity_badge = '<span class="badge-critical"><i class="fas fa-exclamation-triangle"></i> Critical</span>'
+                elif severity.upper() == "HIGH":
+                    severity_badge = '<span class="badge-warning"><i class="fas fa-exclamation-circle"></i> High</span>'
+                elif severity.upper() == "MEDIUM":
+                    severity_badge = '<span class="badge-warning"><i class="fas fa-exclamation"></i> Medium</span>'
+                elif severity.upper() == "LOW":
+                    severity_badge = '<span class="badge-muted"><i class="fas fa-info-circle"></i> Low</span>'
+                else:
+                    severity_badge = f'<span class="badge-muted">{severity}</span>'
+
+                # Badge for status
+                status = finding.status.value.upper()
                 if finding.muted:
-                    finding_status = f"MUTED ({finding_status})"
-                    row_class = "table-warning"
-                if finding.status == "MANUAL":
-                    row_class = "table-info"
-                elif finding.status == "FAIL":
-                    row_class = "table-danger"
+                    status_badge = '<span class="badge-muted">Muted</span>'
+                elif status == "FAIL":
+                    status_badge = '<span class="badge-fail">Fail</span>'
+                elif status == "PASS":
+                    status_badge = '<span class="badge-pass">Pass</span>'
+                elif status == "MANUAL":
+                    status_badge = '<span class="badge-manual">Manual</span>'
+                else:
+                    status_badge = f'<span class="badge-muted">{status}</span>'
+
+                # Chips for resource tags
+                tags_html = ""
+                tags = finding.resource_tags or {}
+                for k, v in tags.items():
+                    tags_html += f'<span class="chip-badge">{html.escape(str(k))}: {html.escape(str(v))}</span>'
+                if not tags_html:
+                    tags_html = "-"
+
+                # Chips for compliance
+                compliance_html = ""
+                compliance = finding.compliance or {}
+                if isinstance(compliance, dict):
+                    for k, v in compliance.items():
+                        compliance_html += f'<span class="chip-badge">{html.escape(str(k))}: {html.escape(str(v))}</span>'
+                elif isinstance(compliance, list):
+                    for v in compliance:
+                        compliance_html += f'<span class="chip-badge">{html.escape(str(v))}</span>'
+                else:
+                    if compliance:
+                        compliance_html = f'<span class="chip-badge">{html.escape(str(compliance))}</span>'
+                if not compliance_html:
+                    compliance_html = "-"
 
                 self._data.append(
                     f"""
-                        <tr class="{row_class}">
-                            <td>{finding_status}</td>
-                            <td>{finding.metadata.Severity.value}</td>
+                        <tr>
+                            <td>{status_badge}</td>
+                            <td>{severity_badge}</td>
                             <td>{finding.metadata.ServiceName}</td>
                             <td>{finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
+                            <td>{tags_html}</td>
                             <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                             <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
                             <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
+                            <td>{compliance_html}</td>
                         </tr>
                         """
                 )
@@ -114,10 +152,104 @@ class HTML(Output):
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <style>
         .read-more {{color: #00f;}}
-
         .bg-success-custom {{background-color: #98dea7 !important;}}
-
         .bg-danger {{background-color: #f28484 !important;}}
+        /* Custom badge styles for findings */
+        .badge-critical {{
+            background-color: #D13B6B;
+            color: #fff;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .badge-fail {{
+            background-color: #4B2B36;
+            color: #fff;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .badge-manual {{
+            background-color: #3A3A5A;
+            color: #fff;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .badge-pass {{
+            background-color: #2E8B57;
+            color: #fff;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .badge-muted {{
+            background-color: #B0B0B0;
+            color: #fff;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .badge-warning {{
+            background-color: #F6C244;
+            color: #222;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 0.45em 1.2em 0.45em 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+        }}
+        .table-findings tbody tr {{
+            background-color: #23263A;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+            margin-bottom: 8px;
+            border: none;
+        }}
+        .table-findings td {{
+            vertical-align: middle;
+            border-top: none;
+            border-bottom: 1px solid #23263A;
+        }}
+        .table-findings {{
+            background-color: #181B2A;
+            border-radius: 16px;
+            overflow: hidden;
+        }}
+        .chip-badge {{
+            display: inline-block;
+            background: #2A2D3E;
+            color: #fff;
+            border-radius: 12px;
+            padding: 0.2em 0.8em;
+            font-size: 0.92em;
+            margin: 0 0.2em 0.2em 0;
+            font-weight: 500;
+            line-height: 1.7;
+            border: 1px solid #35395a;
+        }}
     </style>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -198,7 +330,7 @@ class HTML(Output):
         </div>
         <div class="row-mt-3">
         <div class="col-md-12">
-            <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
+            <table class="table table-findings compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
             <thead class="thead-light">
                 <tr>
                     <th scope="col">Status</th>
