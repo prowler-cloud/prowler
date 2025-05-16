@@ -23,6 +23,7 @@ def mock_list_repositories(_):
             default_branch_deletion=True,
             status_checks=True,
             approval_count=2,
+            enforce_admins=True,
         ),
     }
 
@@ -53,4 +54,5 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].allow_force_pushes
         assert repository_service.repositories[1].default_branch_deletion
         assert repository_service.repositories[1].status_checks
+        assert repository_service.repositories[1].enforce_admins
         assert repository_service.repositories[1].approval_count == 2
