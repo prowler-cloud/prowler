@@ -1,6 +1,4 @@
 export const dynamic = "force-dynamic";
-
-import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";

@@ -6,7 +6,7 @@ import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { ComplianceHeader } from "@/components/compliance/compliance-header";
-import FailedSectionsList from "@/components/compliance/failed-sections-list";
+import { FailedSectionsChart } from "@/components/compliance/failed-sections-chart";
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { SkeletonAccordion } from "@/components/compliance/skeleton-compliance-accordion";
 import { ContentLayout } from "@/components/ui";
@@ -92,8 +92,18 @@ export default async function ComplianceDetail({
         showSearch={false}
       />
 
-      <div className="mb-8 flex gap-4">
-        <div className="flex flex-1 gap-4">
+      <div className="mb-8 flex justify-start gap-8">
+        <div className="relative hidden h-[200px] w-[200px] md:block lg:hidden xl:block">
+          <Image
+            src="/ens.png"
+            alt="ENS Logo"
+            fill
+            priority
+            className="object-contain"
+          />
+        </div>
+
+        <div className="flex gap-4">
           {/* Requirements Chart */}
           <div className="w-1/2">
             <Suspense
@@ -114,19 +124,9 @@ export default async function ComplianceDetail({
                 <div className="bg-muted h-[350px] w-full animate-pulse rounded-lg"></div>
               }
             >
-              <SSRFailedSectionsList id={id} />
+              <SSRFailedSectionsChart id={id} />
             </Suspense>
           </div>
-        </div>
-
-        <div className="relative hidden h-[200px] w-[200px] md:block lg:hidden xl:block">
-          <Image
-            src="/ens.png"
-            alt="ENS Logo"
-            fill
-            priority
-            className="object-contain"
-          />
         </div>
       </div>
 
@@ -169,12 +169,12 @@ const getTopFailedSections = (mappedData: any[]) => {
     .slice(0, 5); // Top 5
 };
 
-const SSRFailedSectionsList = async ({ id }: { id: string }) => {
+const SSRFailedSectionsChart = async ({ id }: { id: string }) => {
   const complianceData = await getComplianceDetails(id);
   const mappedData = mapComplianceData(complianceData.data);
   const topFailedSections = getTopFailedSections(mappedData);
 
-  return <FailedSectionsList sections={topFailedSections} />;
+  return <FailedSectionsChart sections={topFailedSections} />;
 };
 
 const SSRRequirementsChart = async ({ id }: { id: string }) => {

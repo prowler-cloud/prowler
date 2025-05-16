@@ -33,26 +33,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function RequirementsChart({
+export const RequirementsChart = ({
   pass,
   fail,
   manual,
-}: RequirementsChartProps) {
+}: RequirementsChartProps) => {
   const chartData = [
     {
       name: "Pass",
       value: pass,
-      fill: "#09BF3D",
+      fill: "#3CEC6D",
     },
     {
       name: "Fail",
       value: fail,
-      fill: "#E11D48",
+      fill: "#FB718F",
     },
     {
       name: "Manual",
       value: manual,
-      fill: "#FBBF24",
+      fill: "#868994",
     },
   ];
 
@@ -67,8 +67,8 @@ export function RequirementsChart({
   ];
 
   return (
-    <div className="flex h-[400px] flex-col items-center justify-between rounded-lg border-2 border-gray-200 p-4 dark:border-gray-700">
-      <h3 className="whitespace-nowrap text-lg font-medium">
+    <div className="flex h-[320px] flex-col items-center justify-between">
+      <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
         Requirements Status
       </h3>
 
@@ -85,7 +85,7 @@ export function RequirementsChart({
             innerRadius={70}
             outerRadius={100}
             paddingAngle={2}
-            cornerRadius={6}
+            cornerRadius={4}
           >
             {(totalRequirements > 0 ? chartData : emptyChartData).map(
               (entry, index) => (
@@ -128,19 +128,17 @@ export function RequirementsChart({
       <div className="mt-2 grid grid-cols-3 gap-4">
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Pass</div>
-          <div className="font-semibold text-success">{pass}</div>
+          <div className="font-semibold text-system-success-medium">{pass}</div>
         </div>
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Fail</div>
-          <div className="font-semibold text-danger">{fail}</div>
+          <div className="font-semibold text-system-error-medium">{fail}</div>
         </div>
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Manual</div>
-          <div className="font-semibold text-warning">{manual}</div>
+          <div className="font-semibold text-prowler-grey-light">{manual}</div>
         </div>
       </div>
     </div>
   );
-}
-
-export default RequirementsChart;
+};
