@@ -88,12 +88,6 @@ export default function ChatbotConfig() {
             businessContext: attrs.business_context || "",
           });
 
-          if (isMounted) {
-            toast({
-              title: "Configuration Loaded",
-              description: `Loaded model: ${attrs.model}`,
-            });
-          }
         }
       } catch (error) {
         if (isMounted) {
@@ -148,7 +142,7 @@ export default function ChatbotConfig() {
 
         toast({
           title: "Success",
-          description: `Chatbot configuration ${configExists ? "updated" : "created"} successfully`,
+          description: `Lighthouse configuration ${configExists ? "updated" : "created"} successfully`,
         });
       } else {
         throw new Error("Failed to save configuration");
@@ -156,7 +150,7 @@ export default function ChatbotConfig() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save chatbot configuration: " + String(error),
+        description: "Failed to save lighthouse configuration: " + String(error),
         variant: "destructive",
       });
       console.error(error);
