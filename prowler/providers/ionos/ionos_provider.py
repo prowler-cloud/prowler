@@ -114,15 +114,21 @@ class IonosProvider(Provider):
     @staticmethod
     def load_ionosctl_token() -> Optional[str]:
         """
-        Lee el token de IONOS desde el archivo de configuración de ionosctl.
+        Reads the IONOS token from the ionosctl configuration file across different platforms.
         """
-        config_path = os.path.join(
-            os.path.expanduser("~"),
-            "Library",
-            "Application Support",
-            "ionosctl",
-            "config.json"
-        )
+        config_paths = {
+            "darwin": os.path.join(os.path.expanduser("~"), "Library", "Application Support", "ionosctl", "config.json"),
+            "linux": os.path.join(os.path.expanduser("~"), ".config", "ionosctl", "config.json"),
+            "win32": os.path.join(os.getenv("APPDATA", ""), "ionosctl", "config.json")
+        }
+        
+        platform = sys.platform
+        config_path = config_paths.get(platform)
+        
+        if not config_path:
+            logger.warning(f"Unsupported platform: {platform}")
+            return None
+            
         try:
             with open(config_path, "r") as config_file:
                 config = json.load(config_file)
