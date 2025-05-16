@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { Suspense } from "react";
 
 import { getResourceFields, getResources } from "@/actions/resources";
-import { getScansByFields } from "@/actions/scans";
+import { getScans } from "@/actions/scans";
 import { FilterControls } from "@/components/filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ColumnResources } from "@/components/resources/table/column-resources";
@@ -41,9 +41,11 @@ export default async function Resources({
     ),
   };
 
-  // Fetch scans data latest date not fully done
-  const scansData = await getScansByFields("inserted_at", {
-    "filter[state]": "completed",
+  const scansData = await getScans({
+    filters: {
+      "filter[state]": "completed",
+      "fields[scans]": "inserted_at",
+    },
   });
 
   if (scansData.data?.length !== 0) {
@@ -161,8 +163,11 @@ const SSRDataTable = async ({
   };
 
   // Fetch scans data latest date
-  const scansData = await getScansByFields("inserted_at", {
-    "filter[state]": "completed",
+  const scansData = await getScans({
+    filters: {
+      "filter[state]": "completed",
+      "fields[scans]": "inserted_at",
+    },
   });
 
   if (scansData.data?.length !== 0) {

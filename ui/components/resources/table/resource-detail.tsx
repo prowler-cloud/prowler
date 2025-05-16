@@ -131,10 +131,10 @@ export const ResourceDetail = ({
         </div>
       </Section>
 
-      {/* Finding Details section */}
+      {/* Finding associated with this resource section */}
       <div>
-        <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
-          Findings Details
+        <h2 className="text-md line-clamp-2 font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+          Findings associated with this resource
         </h2>
       </div>
       {isLoading ? (
