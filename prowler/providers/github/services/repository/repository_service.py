@@ -18,6 +18,11 @@ class Repository(GithubService):
             for client in self.clients:
                 for repo in client.get_user().get_repos():
                     default_branch = repo.default_branch
+                    delete_branch_on_merge = (
+                        repo.delete_branch_on_merge
+                        if repo.delete_branch_on_merge is not None
+                        else False
+                    )
                     securitymd_exists = False
                     try:
                         securitymd_exists = repo.get_contents("SECURITY.md") is not None
@@ -102,6 +107,7 @@ class Repository(GithubService):
                         enforce_admins=enforce_admins,
                         conversation_resolution=conversation_resolution,
                         default_branch_protection=branch_protection,
+                        delete_branch_on_merge=delete_branch_on_merge,
                     )
 
         except Exception as error:
@@ -128,4 +134,5 @@ class Repo(BaseModel):
     status_checks: Optional[bool]
     enforce_admins: Optional[bool]
     approval_count: Optional[int]
+    delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
