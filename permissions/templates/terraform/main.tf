@@ -2,13 +2,29 @@
 ###################################
 variable "external_id" {
   type        = string
-  description = "IAM Role External ID - Please input your External ID here below"
+  description = "This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role."
+
+  validation {
+    condition     = length(var.external_id) > 0
+    error_message = "ExternalId must not be empty."
+  }
 }
 
 variable "account_id" {
   type        = string
-  description = "AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please use the default AWS Account ID"
+  description = "AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this."
   default     = "232136659152"
+
+  validation {
+    condition     = length(var.account_id) == 12
+    error_message = "AccountId must be a valid AWS Account ID."
+  }
+}
+
+variable "iam_principal" {
+  type        = string
+  description = "The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this."
+  default     = "role/prowler*"
 }
 
 ##### PLEASE, DO NOT EDIT BELOW THIS LINE #####
@@ -61,7 +77,7 @@ data "aws_iam_policy_document" "prowler_assume_role_policy" {
       test     = "StringLike"
       variable = "aws:PrincipalArn"
       values = [
-        "arn:${data.aws_partition.current.partition}:iam::${var.account_id}:role/prowler*",
+        "arn:${data.aws_partition.current.partition}:iam::${var.account_id}:${var.iam_principal}",
       ]
     }
   }

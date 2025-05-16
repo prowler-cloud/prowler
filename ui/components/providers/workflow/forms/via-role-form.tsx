@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Control, useForm } from "react-hook-form";
+import { useSession } from "next-auth/react";
+import { Control, useForm, UseFormSetValue } from "react-hook-form";
 import * as z from "zod";
 
 import { addCredentialsProvider } from "@/actions/providers/providers";
@@ -25,8 +26,9 @@ export const ViaRoleForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
-
+  const { data: session } = useSession();
   const searchParamsObj = useSearchParams();
+  const externalId = session?.tenantId;
 
   // Handler for back button
   const handleBackStep = () => {
@@ -39,22 +41,25 @@ export const ViaRoleForm = ({
   const providerId = searchParams.id;
 
   const formSchema = addCredentialsRoleFormSchema(providerType);
-  type FormSchemaType = z.infer<typeof formSchema>;
+  type FormSchemaType = z.infer<typeof formSchema> & {
+    credentials_type: "aws-sdk-default" | "access-secret-key";
+  };
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
       providerType,
+      credentials_type: "aws-sdk-default",
       ...(providerType === "aws"
         ? {
             role_arn: "",
+            external_id: externalId,
             aws_access_key_id: "",
             aws_secret_access_key: "",
             aws_session_token: "",
-            session_duration: 3600,
-            external_id: "",
             role_session_name: "",
+            session_duration: "3600",
           }
         : {}),
     },
@@ -65,36 +70,72 @@ export const ViaRoleForm = ({
   const onSubmitClient = async (values: FormSchemaType) => {
     const formData = new FormData();
 
-    Object.entries(values).forEach(
-      ([key, value]) =>
-        value !== undefined && formData.append(key, String(value)),
-    );
+    Object.entries(values).forEach(([key, value]) => {
+      // Do not include credentials_type
+      if (key === "credentials_type") return;
 
-    const data = await addCredentialsProvider(formData);
-
-    if (data?.errors && data.errors.length > 0) {
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
-        switch (error.source.pointer) {
-          case "/data/attributes/secret/role_arn":
-            form.setError("role_arn" as keyof FormSchemaType, {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-
-          default:
-            toast({
-              variant: "destructive",
-              title: "Oops! Something went wrong",
-              description: errorMessage,
-            });
+      // If credentials_type is "access-secret-key", include the relevant fields
+      if (
+        values.credentials_type === "access-secret-key" &&
+        [
+          "aws_access_key_id",
+          "aws_secret_access_key",
+          "aws_session_token",
+        ].includes(key)
+      ) {
+        if (value !== undefined && value !== "") {
+          formData.append(key, String(value));
         }
+        return;
+      }
+
+      // Add any other valid field
+      if (value !== undefined && value !== "") {
+        formData.append(key, String(value));
+      }
+    });
+
+    try {
+      const data = await addCredentialsProvider(formData);
+
+      if (data?.errors && data.errors.length > 0) {
+        data.errors.forEach((error: ApiError) => {
+          const errorMessage = error.detail;
+
+          switch (error.source.pointer) {
+            case "/data/attributes/secret/role_arn":
+              form.setError("role_arn" as keyof FormSchemaType, {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data/attributes/secret/external_id":
+              form.setError("external_id" as keyof FormSchemaType, {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            default:
+              toast({
+                variant: "destructive",
+                title: "Oops! Something went wrong",
+                description: errorMessage,
+              });
+          }
+        });
+      } else {
+        router.push(
+          `/providers/test-connection?type=${providerType}&id=${providerId}`,
+        );
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error during submission:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: "An error occurred while processing your request.",
       });
-    } else {
-      router.push(
-        `/providers/test-connection?type=${providerType}&id=${providerId}`,
-      );
     }
   };
 
@@ -110,6 +151,10 @@ export const ViaRoleForm = ({
         {providerType === "aws" && (
           <AWSCredentialsRoleForm
             control={form.control as unknown as Control<AWSCredentialsRole>}
+            setValue={
+              form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
+            }
+            externalId={externalId || ""}
           />
         )}
 

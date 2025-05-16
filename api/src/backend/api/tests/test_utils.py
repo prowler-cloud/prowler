@@ -1,25 +1,25 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
+from api.utils import (
+    get_prowler_provider_kwargs,
+    initialize_prowler_provider,
+    merge_dicts,
+    prowler_provider_connection_test,
+    return_prowler_provider,
+    validate_invitation,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
-
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation
-from api.models import Provider
-from api.utils import (
-    merge_dicts,
-    return_prowler_provider,
-    initialize_prowler_provider,
-    prowler_provider_connection_test,
-    get_prowler_provider_kwargs,
-)
-from api.utils import validate_invitation
+from prowler.providers.m365.m365_provider import M365Provider
 
 
 class TestMergeDicts:
@@ -105,6 +105,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.GCP.value, GcpProvider),
             (Provider.ProviderChoices.AZURE.value, AzureProvider),
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
+            (Provider.ProviderChoices.M365.value, M365Provider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -144,6 +145,18 @@ class TestProwlerProviderConnectionTest:
             key="value", provider_id="1234567890", raise_on_exception=False
         )
 
+    @pytest.mark.django_db
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_without_secret(
+        self, mock_return_prowler_provider, providers_fixture
+    ):
+        mock_return_prowler_provider.return_value = MagicMock()
+        connection = prowler_provider_connection_test(providers_fixture[0])
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
+        assert str(connection.error) == "Provider has no secret."
+
 
 class TestGetProwlerProviderKwargs:
     @pytest.mark.parametrize(
@@ -164,6 +177,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.KUBERNETES.value,
                 {"context": "provider_uid"},
+            ),
+            (
+                Provider.ProviderChoices.M365.value,
+                {},
             ),
         ],
     )
@@ -274,9 +291,10 @@ class TestValidateInvitation:
         expired_time = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.expires_at = expired_time
 
-        with patch("api.utils.Invitation.objects.using") as mock_using, patch(
-            "api.utils.datetime"
-        ) as mock_datetime:
+        with (
+            patch("api.utils.Invitation.objects.using") as mock_using,
+            patch("api.utils.datetime") as mock_datetime,
+        ):
             mock_db = mock_using.return_value
             mock_db.get.return_value = invitation
             mock_datetime.now.return_value = datetime.now(timezone.utc)

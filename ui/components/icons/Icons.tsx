@@ -760,7 +760,7 @@ export const AddIcon: React.FC<IconSvgProps> = ({
 };
 
 export const ScheduleIcon: React.FC<IconSvgProps> = ({
-  size,
+  size = 24,
   height,
   width,
   ...props
@@ -768,8 +768,9 @@ export const ScheduleIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size || width || 24}
-      height={size || height || 24}
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 24 24" // <- AÑADÍ ESTO
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -808,3 +809,311 @@ export const InfoIcon: React.FC<IconSvgProps> = ({
     <path d="M12 16v-4M12 8h.01" />
   </svg>
 );
+
+export const ManualIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="10 8 16 12 10 16 10 8" />
+  </svg>
+);
+
+export const SpinnerIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size || width}
+    height={size || height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2"
+    className={className}
+    {...props}
+  >
+    <path d="M20 4v5h-.582m0 0a8.001 8.001 0 00-15.356 2m15.356-2H15M4 20v-5h.581m0 0a8.003 8.003 0 0015.357-2M4.581 15H9" />
+  </svg>
+);
+
+export const DocIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
+      <path d="M5 15v6h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2z" />
+      <path d="M20 16.5a1.5 1.5 0 0 0-3 0v3a1.5 1.5 0 0 0 3 0" />
+      <path d="M12.5 15a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-3 0v-3a1.5 1.5 0 0 1 1.5-1.5" />
+    </svg>
+  );
+};
+
+export const APIdocIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M4 13h5m3 3V8h3a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-3m8-5v8M9 16v-5.5a2.5 2.5 0 0 0-5 0V16" />
+    </svg>
+  );
+};
+
+export const SupportIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7h.01" strokeLinecap="round" />
+      <path
+        d="M10 11h2v5m-2 0h4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+export const CircleHelpIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+};
+
+export const AWSIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M15.626 14.62c-1.107 1.619-2.728 2.384-4.625 2.384c-2.304 0-4.277-1.773-3.993-4.124c.314-2.608 2.34-3.73 5.708-4.143c.601-.073.85-.094 2.147-.19l.138-.01v-.215C15 6.526 13.933 5.3 12.5 5.3c-1.437 0-2.44.747-3.055 2.526l-1.89-.652C8.442 4.604 10.193 3.3 12.5 3.3c2.602 0 4.5 2.178 4.5 5.022c0 2.649.163 4.756.483 5.557c.356.893.486 1.117.884 1.613l-1.56 1.251c-.524-.652-.753-1.048-1.182-2.122m5.631 5.925c-.27.2-.741.081-.528-.44c.264-.648.547-1.408.262-1.752c-.21-.255-.468-.382-1.027-.382c-.46 0-.69.06-.995.08c-.204.014-.294-.297-.091-.44c.261-.185.544-.33.87-.428c1.15-.344 2.505-.155 2.67.083c.365.53-.2 2.569-1.16 3.28m-1.182-1.084a8 8 0 0 1-.829.695c-2.122 1.616-4.871 2.46-7.258 2.46c-3.843 0-7.28-1.793-9.888-4.795c-.224-.23-.039-.566.223-.384c2.81 2.077 6.288 3.333 9.888 3.333c2.266 0 4.708-.537 7.035-1.692c.163-.077.345-.182.504-.255c.367-.21.69.306.325.638m-5.064-8.92c-1.259.094-1.496.113-2.052.181c-2.553.313-3.797 1.003-3.966 2.398c-.125 1.043.81 1.884 2.008 1.884c2.039 0 3.517-1.228 4.022-4.463z" />
+    </svg>
+  );
+};
+
+export const AzureIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path
+        fill-rule="evenodd"
+        d="m15.37 13.68l-4-12a1 1 0 0 0-1-.68H5.63a1 1 0 0 0-.95.68l-4.05 12a1 1 0 0 0 1 1.32h2.93a1 1 0 0 0 .94-.68l.61-1.78l3 2.27a1 1 0 0 0 .6.19h4.68a1 1 0 0 0 .98-1.32m-5.62.66a.32.32 0 0 1-.2-.07L3.9 10.08l-.09-.07h3l.08-.21l1-2.53l2.24 6.63a.34.34 0 0 1-.38.44m4.67 0H10.7a1 1 0 0 0 0-.66l-4.05-12h3.72a.34.34 0 0 1 .32.23l4.05 12a.34.34 0 0 1-.32.43"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const M365Icon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  strokeWidth = 2,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size || width}
+      height={size || height}
+      viewBox="0 0 48 48"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      {...props}
+    >
+      <path
+        strokeLinejoin="round"
+        d="M20.507 3.241L8.443 9.74a8.6 8.6 0 0 0-4.508 7.563V30.7a8.6 8.6 0 0 0 4.508 7.564m15.668-5.597l-2.826-1.557a8.6 8.6 0 0 1-4.45-7.532v-4.072"
+        strokeWidth={strokeWidth}
+      ></path>
+      <path
+        strokeLinejoin="round"
+        d="M31.166 19.275v4.45a8.6 8.6 0 0 1-4.508 7.564l-11.466 6.202a8.6 8.6 0 0 1-7.435.358q.33.222.687.414l11.465 6.202a8.6 8.6 0 0 0 8.182 0l11.465-6.202a8.6 8.6 0 0 0 4.508-7.563"
+        strokeWidth={strokeWidth}
+      ></path>
+      <path
+        strokeLinejoin="round"
+        d="M39.557 9.739L28.092 3.536a8.6 8.6 0 0 0-7.585-.295a8.6 8.6 0 0 0-3.673 7.048v8.986l3.288-1.661a8.6 8.6 0 0 1 7.756 0l11.465 5.793a8.6 8.6 0 0 1 4.72 7.484l.001-.191V17.302a8.6 8.6 0 0 0-4.507-7.563"
+        strokeWidth={strokeWidth}
+      ></path>
+    </svg>
+  );
+};
+
+export const GCPIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M12.19 2.38a9.344 9.344 0 0 0-9.234 6.893c.053-.02-.055.013 0 0c-3.875 2.551-3.922 8.11-.247 10.941l.006-.007l-.007.03a6.7 6.7 0 0 0 4.077 1.356h5.173l.03.03h5.192c6.687.053 9.376-8.605 3.835-12.35a9.37 9.37 0 0 0-2.821-4.552l-.043.043l.006-.05A9.34 9.34 0 0 0 12.19 2.38m-.358 4.146c1.244-.04 2.518.368 3.486 1.15a5.19 5.19 0 0 1 1.862 4.078v.518c3.53-.07 3.53 5.262 0 5.193h-5.193l-.008.009v-.04H6.785a2.6 2.6 0 0 1-1.067-.23h.001a2.597 2.597 0 1 1 3.437-3.437l3.013-3.012A6.75 6.75 0 0 0 8.11 8.24c.018-.01.04-.026.054-.023a5.2 5.2 0 0 1 3.67-1.69z" />
+    </svg>
+  );
+};
+
+export const MutedIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      height={size || height || 24}
+      width={size || width || 24}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+      <path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742" />
+      <path d="m2 2 20 20" />
+      <path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05" />
+    </svg>
+  );
+};
+
+export const KubernetesIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      width={size || width}
+      height={size || height}
+      fill="currentColor"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="m29.223 17.964l-3.304-.754a9.78 9.78 0 0 0-1.525-6.624l2.54-2.026l-1.247-1.564l-2.539 2.024A9.97 9.97 0 0 0 17 6.05V3h-2v3.05a9.97 9.97 0 0 0-6.148 2.97l-2.54-2.024L5.066 8.56l2.54 2.025a9.78 9.78 0 0 0-1.524 6.625l-3.304.754l.446 1.95l3.297-.753a10.04 10.04 0 0 0 4.269 5.358l-1.33 2.763l1.802.867l1.329-2.76a9.8 9.8 0 0 0 6.82 0l1.33 2.76l1.802-.868l-1.33-2.762a10.04 10.04 0 0 0 4.269-5.358l3.297.752ZM24 16q-.002.385-.039.763l-5-1.142a3 3 0 0 0-.137-.594l3.996-3.187A7.94 7.94 0 0 1 24 16m-9 0a1 1 0 1 1 1 1a1 1 0 0 1-1-1m6.576-5.726l-3.996 3.187a3 3 0 0 0-.58-.277V8.07a7.98 7.98 0 0 1 4.576 2.205M15 8.07v5.115a3 3 0 0 0-.58.277l-3.996-3.187A7.98 7.98 0 0 1 15 8.07M8 16a7.94 7.94 0 0 1 1.18-4.16l3.996 3.187a3 3 0 0 0-.137.594l-5 1.141A8 8 0 0 1 8 16m.484 2.712l4.975-1.136a3 3 0 0 0 .414.537L11.66 22.71a8.03 8.03 0 0 1-3.176-3.998M16 24a8 8 0 0 1-2.54-.42l2.22-4.612A3 3 0 0 0 16 19a3 3 0 0 0 .319-.032l2.221 4.612A8 8 0 0 1 16 24m4.34-1.29l-2.213-4.598a3 3 0 0 0 .414-.536l4.976 1.136a8.03 8.03 0 0 1-3.176 3.998"
+      />
+    </svg>
+  );
+};

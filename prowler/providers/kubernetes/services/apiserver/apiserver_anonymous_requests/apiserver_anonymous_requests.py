@@ -8,9 +8,7 @@ class apiserver_anonymous_requests(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"API Server does not have anonymous-auth enabled in pod {pod.name}."

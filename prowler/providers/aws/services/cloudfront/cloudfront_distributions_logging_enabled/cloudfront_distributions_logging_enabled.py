@@ -8,9 +8,7 @@ class cloudfront_distributions_logging_enabled(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=distribution
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=distribution)
             if distribution.logging_enabled or (
                 distribution.default_cache_config
                 and distribution.default_cache_config.realtime_log_config_arn

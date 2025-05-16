@@ -9,12 +9,15 @@ class Test_rds_cluster_minor_version_upgrade_enabled:
         rds_client = mock.MagicMock
         rds_client.db_clusters = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
                 rds_cluster_minor_version_upgrade_enabled,
@@ -50,12 +53,15 @@ class Test_rds_cluster_minor_version_upgrade_enabled:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
                 rds_cluster_minor_version_upgrade_enabled,
@@ -91,12 +97,15 @@ class Test_rds_cluster_minor_version_upgrade_enabled:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
                 rds_cluster_minor_version_upgrade_enabled,
@@ -144,12 +153,15 @@ class Test_rds_cluster_minor_version_upgrade_enabled:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.rds.rds_service.RDS",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_minor_version_upgrade_enabled.rds_cluster_minor_version_upgrade_enabled import (
                 rds_cluster_minor_version_upgrade_enabled,

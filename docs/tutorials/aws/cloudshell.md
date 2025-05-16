@@ -27,7 +27,12 @@ cd prowler
 pip install poetry
 mkdir /tmp/poetry
 poetry config cache-dir /tmp/poetry
-poetry shell
+eval $(poetry env activate)
 poetry install
-python prowler.py -v
+python prowler-cli.py -v
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment

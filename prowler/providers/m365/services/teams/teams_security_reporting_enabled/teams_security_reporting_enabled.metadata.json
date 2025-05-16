@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_security_reporting_enabled",
+  "CheckTitle": "Ensure users can report security concerns in Teams",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Teams Global Messaging Policy",
+  "Description": "Ensure Teams user reporting settings allow a user to report a message as malicious for further analysis",
+  "Risk": "Without proper security reporting enabled, users cannot effectively report suspicious or malicious messages, potentially allowing security threats to go unnoticed.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMessagingPolicy -Identity Global -AllowSecurityEndUserReporting $true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center (https://admin.teams.microsoft.com). 2. Click to expand Messaging and select Messaging policies. 3. Click Global (Org-wide default). 4. Ensure Report a security concern is On.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable security reporting in Teams messaging policy.",
+      "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -45,7 +45,7 @@ class Redshift(AWSService):
                                 "AllowVersionUpgrade", False
                             ),
                             encrypted=cluster.get("Encrypted", False),
-                            multi_az=cluster.get("MultiAZ", False),
+                            multi_az=cluster.get("MultiAZ", ""),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
                             master_username=cluster.get("MasterUsername", ""),
@@ -124,7 +124,7 @@ class Redshift(AWSService):
         try:
             regional_client = self.regional_clients[cluster.region]
             cluster_parameter_groups = regional_client.describe_cluster_parameters(
-                ClusterParameterGroupName=cluster.parameter_group_name
+                ParameterGroupName=cluster.parameter_group_name
             )
             for parameter_group in cluster_parameter_groups["Parameters"]:
                 if parameter_group["ParameterName"].lower() == "require_ssl":
@@ -145,7 +145,7 @@ class Cluster(BaseModel):
     vpc_security_groups: list = []
     public_access: bool = False
     encrypted: bool = False
-    multi_az: bool = False
+    multi_az: str = None
     master_username: str = None
     database_name: str = None
     endpoint_address: str = None

@@ -16,9 +16,7 @@ class iam_avoid_root_usage(Check):
 
         for user in response:
             if user["user"] == "<root_account>":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=user
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                 report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]

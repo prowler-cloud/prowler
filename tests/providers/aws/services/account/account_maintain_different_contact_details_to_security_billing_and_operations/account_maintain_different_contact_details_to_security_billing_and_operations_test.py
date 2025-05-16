@@ -56,6 +56,7 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource == {}
 
     def test_contacts_different(self):
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -109,6 +110,7 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource == {}
 
     def test_access_denied(self):
         aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])

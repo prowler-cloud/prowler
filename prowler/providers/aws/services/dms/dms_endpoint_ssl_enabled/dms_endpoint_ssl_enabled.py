@@ -6,9 +6,7 @@ class dms_endpoint_ssl_enabled(Check):
     def execute(self):
         findings = []
         for endpoint in dms_client.endpoints.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=endpoint
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=endpoint)
 
             if endpoint.ssl_mode == "none":
                 report.status = "FAIL"

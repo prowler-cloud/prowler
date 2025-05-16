@@ -8,9 +8,7 @@ class kafka_cluster_encryption_at_rest_uses_cmk(Check):
         findings = []
 
         for cluster in kafka_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = f"Kafka cluster '{cluster.name}' does not have encryption at rest enabled with a CMK."
 

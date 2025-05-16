@@ -13,9 +13,7 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
         findings = []
         for repository in codeartifact_client.repositories.values():
             for package in repository.packages:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=repository
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
                 report.resource_id = f"{repository.domain_name}/{package.name}"
                 report.resource_arn = f"{repository.arn}/{package.namespace + ':' if package.namespace else ''}{package.name}"
 

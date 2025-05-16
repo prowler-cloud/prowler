@@ -7,9 +7,7 @@ class elbv2_desync_mitigation_mode(Check):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
             if lb.type == "application":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=lb
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.status = "PASS"
                 report.status_extended = f"ELBv2 ALB {lb.name} is configured with correct desync mitigation mode."
                 if (

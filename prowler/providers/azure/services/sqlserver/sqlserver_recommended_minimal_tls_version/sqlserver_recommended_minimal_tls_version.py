@@ -12,12 +12,11 @@ class sqlserver_recommended_minimal_tls_version(Check):
         )
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=sql_server
+                )
                 report.subscription = subscription
-                report.resource_name = sql_server.name
-                report.resource_id = sql_server.id
                 report.status = "FAIL"
-                report.location = sql_server.location
                 report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} is using TLS version {sql_server.minimal_tls_version} as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(recommended_minimal_tls_versions)}."
                 if sql_server.minimal_tls_version in recommended_minimal_tls_versions:
                     report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} is using version {sql_server.minimal_tls_version} as minimal accepted which is recommended."
