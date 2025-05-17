@@ -123,7 +123,13 @@ const SSRDataTableScans = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   // Fetch scans data
-  const scansData = await getScans({ query, page, sort, filters, pageSize });
+  const scansData = await getScans({
+    query,
+    page,
+    sort,
+    filters: filters as Record<string, string | number | boolean>,
+    pageSize,
+  });
 
   // Handle expanded scans data
   const expandedScansData = await Promise.all(
