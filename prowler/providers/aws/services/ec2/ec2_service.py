@@ -59,6 +59,11 @@ class EC2(AWSService):
             f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:volume"
         )
 
+    def _get_account_arn_template(self, region):
+        return (
+            f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:account"
+        )
+
     def _describe_instances(self, regional_client):
         try:
             describe_instances_paginator = regional_client.get_paginator(

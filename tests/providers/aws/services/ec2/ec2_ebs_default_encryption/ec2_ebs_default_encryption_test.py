@@ -55,7 +55,7 @@ class Test_ec2_ebs_default_encryption:
                     assert result.resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -66,7 +66,7 @@ class Test_ec2_ebs_default_encryption:
                     assert result.resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
 
     @mock_aws
@@ -97,6 +97,7 @@ class Test_ec2_ebs_default_encryption:
 
             # One result per region
             assert len(results) == 2
+            print(results)
             for result in results:
                 if result.region == AWS_REGION_US_EAST_1:
                     assert result.status == "FAIL"
@@ -107,7 +108,7 @@ class Test_ec2_ebs_default_encryption:
                     assert result.resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -118,7 +119,7 @@ class Test_ec2_ebs_default_encryption:
                     assert result.resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
 
     @mock_aws
@@ -191,5 +192,5 @@ class Test_ec2_ebs_default_encryption:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
                 result[0].resource_arn
-                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
             )

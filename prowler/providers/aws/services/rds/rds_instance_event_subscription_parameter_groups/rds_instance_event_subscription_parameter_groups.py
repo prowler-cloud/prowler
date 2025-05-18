@@ -22,8 +22,6 @@ class rds_instance_event_subscription_parameter_groups(Check):
                 report = Check_Report_AWS(metadata=self.metadata(), resource={})
                 report.status = "FAIL"
                 report.status_extended = "RDS parameter group event categories of configuration change is not subscribed."
-                report.resource_id = rds_client.audited_account
-                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 report.region = db_event.region
                 if db_event.source_type == "db-parameter-group":
                     report = Check_Report_AWS(
@@ -43,5 +41,9 @@ class rds_instance_event_subscription_parameter_groups(Check):
                     else:
                         report.status = "FAIL"
                         report.status_extended = "RDS parameter group event category of configuration change is not subscribed."
+
+                report.resource_id = rds_client.audited_account
+                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
+
                 findings.append(report)
         return findings

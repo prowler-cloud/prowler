@@ -22,6 +22,9 @@ class EMR(AWSService):
     def _get_cluster_arn_template(self, region):
         return f"arn:{self.audited_partition}:elasticmapreduce:{region}:{self.audited_account}:cluster"
 
+    def _get_account_arn_template(self, region):
+        return f"arn:{self.audited_partition}:elasticmapreduce:{region}:{self.audited_account}:account"
+
     def _list_clusters(self, regional_client):
         logger.info("EMR - Listing Clusters...")
         try:
