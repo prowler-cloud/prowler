@@ -218,7 +218,11 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_m365_uid(value):
-        if not re.match(r"^[a-zA-Z0-9-]+\.com$", value):
+        if not re.match(
+            r"""^(?!-)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.(?!-)[A-Za-z0-9]"""
+            r"""(?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$""",
+            value,
+        ):
             raise ModelValidationError(
                 detail="M365 domain ID must be a valid domain.",
                 code="m365-uid",
@@ -426,6 +430,7 @@ class Scan(RowLevelSecurityProtectedModel):
         PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
+
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
