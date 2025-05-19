@@ -217,9 +217,9 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_m365_uid(value):
-        if not re.match(r"^[a-zA-Z0-9-]+\.onmicrosoft\.com$", value):
+        if not re.match(r"^[a-zA-Z0-9-]+\.com$", value):
             raise ModelValidationError(
-                detail="M365 tenant ID must be a valid domain.",
+                detail="M365 domain ID must be a valid domain.",
                 code="m365-uid",
                 pointer="/data/attributes/uid",
             )
