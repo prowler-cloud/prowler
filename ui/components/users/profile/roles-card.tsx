@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 
-import { RoleData, RoleDetailData } from "@/types/users/profile";
+import { Role, RoleDetail } from "@/types/users/users";
 
 import { RoleCard } from "./role-card";
 
@@ -8,8 +8,8 @@ export const RolesCard = ({
   roles,
   roleDetails,
 }: {
-  roles: RoleData[];
-  roleDetails: Record<string, RoleDetailData>;
+  roles: Role[];
+  roleDetails: Record<string, RoleDetail>;
 }) => {
   return (
     <Card className="dark:bg-prowler-blue-400">

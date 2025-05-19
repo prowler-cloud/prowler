@@ -4,52 +4,53 @@ import { getRolesByIds } from "@/actions/roles/roles";
 import { getProfileInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
 import { ContentLayout } from "@/components/ui";
+import { UserBasicInfoCard } from "@/components/users/profile";
+import { MembershipsCard } from "@/components/users/profile/memberships-card";
+import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
-import { UserInfo } from "@/components/users/profile/user-info";
+import { RoleDetail } from "@/types/users/users";
 
 export default async function Profile() {
   return (
     <ContentLayout title="User Profile" icon="ci:users">
-      <div className="min-h-screen">
-        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/3">
-          <h2 className="mb-4 text-xl font-bold">My Profile</h2>
-          <p className="mb-6 text-sm text-gray-500">
-            Information about your account and memberships in Prowler.
-          </p>
-          <Suspense fallback={<SkeletonUserInfo />}>
-            <SSRDataUser />
-          </Suspense>
-        </div>
+      <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/3 2xl:w-1/4">
+        <Suspense fallback={<SkeletonUserInfo />}>
+          <SSRDataUser />
+        </Suspense>
       </div>
     </ContentLayout>
   );
 }
 
 const SSRDataUser = async () => {
-  // Get user profile information
   const userProfile = await getProfileInfo();
   if (!userProfile?.data) {
-    return <UserInfo user={null} />;
+    return null;
   }
 
-  // Extract the role IDs from the user profile
   const roleIds =
     userProfile.data.relationships?.roles?.data?.map(
       (role: { id: string }) => role.id,
     ) || [];
 
-  // Fetch role details if there are any role IDs
   const roleDetails =
     roleIds.length > 0 ? await getRolesByIds(roleIds) : { data: [] };
 
-  // Fetch user membership details
   const memberships = await getUserMemberships(userProfile.data.id);
 
+  const roleDetailsMap = roleDetails.data.reduce(
+    (acc: Record<string, RoleDetail>, role: RoleDetail) => {
+      acc[role.id] = role;
+      return acc;
+    },
+    {} as Record<string, RoleDetail>,
+  );
+
   return (
-    <UserInfo
-      user={userProfile?.data}
-      roleDetails={roleDetails?.data || []}
-      membershipDetails={memberships?.data || []}
-    />
+    <div className="flex flex-col gap-6">
+      <UserBasicInfoCard user={userProfile?.data} />
+      <RolesCard roles={roleDetails?.data || []} roleDetails={roleDetailsMap} />
+      <MembershipsCard memberships={memberships?.data || []} />
+    </div>
   );
 };

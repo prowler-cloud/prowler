@@ -1,7 +1,7 @@
 import { Chip } from "@nextui-org/react";
 
 import { DateWithTime } from "@/components/ui/entities";
-import { MembershipDetailData } from "@/types/users/profile";
+import { MembershipDetailData } from "@/types/users/users";
 
 export const MembershipItem = ({
   membership,

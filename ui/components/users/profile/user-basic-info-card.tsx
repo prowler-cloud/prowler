@@ -1,13 +1,13 @@
 "use client";
 
 import { Card, CardBody, Divider, Tooltip } from "@nextui-org/react";
+import { CircleUserRound } from "lucide-react";
 import { useState } from "react";
 
 import { CopyIcon, DoneIcon } from "@/components/icons";
 import { DateWithTime } from "@/components/ui/entities";
-import { UserDataWithRoles } from "@/types/users/profile";
+import { UserDataWithRoles } from "@/types/users/users";
 
-// Tenant ID with Copy Button Component
 const TenantIdCopy = ({ id }: { id: string }) => {
   const [copied, setCopied] = useState(false);
 
@@ -48,6 +48,7 @@ export const UserBasicInfoCard = ({ user }: { user: UserDataWithRoles }) => {
     <Card className="dark:bg-prowler-blue-400">
       <CardBody>
         <div className="space-y-3">
+          <CircleUserRound className="h-8 w-8" />
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-default-600">Name:</p>
             <span className="text-sm">{name}</span>
