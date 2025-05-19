@@ -35,8 +35,11 @@ class Test_repository_public_has_securitymd_file_test:
                 id=1,
                 name=repo_name,
                 full_name="account-name/repo1",
+                default_branch="main",
                 private=False,
                 securitymd=False,
+                require_pull_request=False,
+                approval_count=0,
             ),
         }
 
@@ -73,8 +76,11 @@ class Test_repository_public_has_securitymd_file_test:
                 id=1,
                 name=repo_name,
                 full_name="account-name/repo1",
+                default_branch="main",
                 private=False,
                 securitymd=True,
+                require_pull_request=False,
+                approval_count=0,
             ),
         }
 

@@ -556,7 +556,7 @@ class CheckReportGithub(Check_Report):
         resource: Any,
         resource_name: str = None,
         resource_id: str = None,
-        repository: str = None,
+        repository: str = "global",
     ) -> None:
         """Initialize the GitHub Check's finding information.
 

@@ -13,8 +13,19 @@ def mock_list_repositories(_):
             id=1,
             name="repo1",
             full_name="account-name/repo1",
+            default_branch_protection=True,
+            default_branch="main",
             private=False,
-            securitymd=False,
+            securitymd=True,
+            require_pull_request=True,
+            required_linear_history=True,
+            allow_force_pushes=True,
+            default_branch_deletion=True,
+            status_checks=True,
+            approval_count=2,
+            enforce_admins=True,
+            delete_branch_on_merge=True,
+            conversation_resolution=True,
         ),
     }
 
@@ -38,4 +49,14 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].name == "repo1"
         assert repository_service.repositories[1].full_name == "account-name/repo1"
         assert repository_service.repositories[1].private is False
-        assert repository_service.repositories[1].securitymd is False
+        assert repository_service.repositories[1].default_branch == "main"
+        assert repository_service.repositories[1].securitymd
+        assert repository_service.repositories[1].required_linear_history
+        assert repository_service.repositories[1].require_pull_request
+        assert repository_service.repositories[1].allow_force_pushes
+        assert repository_service.repositories[1].default_branch_deletion
+        assert repository_service.repositories[1].status_checks
+        assert repository_service.repositories[1].enforce_admins
+        assert repository_service.repositories[1].delete_branch_on_merge
+        assert repository_service.repositories[1].conversation_resolution
+        assert repository_service.repositories[1].approval_count == 2

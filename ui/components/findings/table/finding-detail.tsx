@@ -307,7 +307,9 @@ export const FindingDetail = ({
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Alias">{provider.alias}</InfoField>
+          {provider.alias && (
+            <InfoField label="Alias">{provider.alias}</InfoField>
+          )}
           <InfoField label="Connection Status">
             <span
               className={`${provider.connection.connected ? "text-green-500" : "text-red-500"}`}

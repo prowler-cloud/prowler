@@ -45,6 +45,12 @@ export interface ProviderProps {
   groupNames?: string[];
 }
 
+export interface ProviderAccountProps {
+  provider: ProviderType;
+  uid: string;
+  alias: string;
+}
+
 export interface ProviderOverviewProps {
   data: {
     type: "provider-overviews";

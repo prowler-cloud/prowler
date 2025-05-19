@@ -8,12 +8,16 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Add a new chart to show the split between passed and failed findings. [(#7680)](https://github.com/prowler-cloud/prowler/pull/7680)
 - Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
+- Improve `Provider UID` filter by adding more context and enhancing the UI/UX. [(#7741)](https://github.com/prowler-cloud/prowler/pull/7741)
+- Added an AWS CloudFormation Quick Link to the IAM Role credentials step [(#7735)](https://github.com/prowler-cloud/prowler/pull/7735)
+– Use `getLatestFindings` on findings page when no scan or date filters are applied. [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
 
 ### 🐞 Fixes
 
 - Fix form validation in launch scan workflow. [(#7693)](https://github.com/prowler-cloud/prowler/pull/7693)
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 - Added filter to retrieve only connected providers on the scan page. [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
+- Removed the alias if not added from findings detail page. [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
 
 ---
 
