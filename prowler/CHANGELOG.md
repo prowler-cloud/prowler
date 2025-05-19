@@ -10,9 +10,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Add GitHub provider. [(#5787)](https://github.com/prowler-cloud/prowler/pull/5787)
 - Add a level for Prowler ThreatScore in the accordion from Prowler Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
+- Add `repository_default_branch_requires_multiple_approvals` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
+- Add `repository_default_branch_protection_enabled` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
+- Add `repository_default_branch_requires_linear_history` check for GitHub provider. [(#6162)](https://github.com/prowler-cloud/prowler/pull/6162)
+- Add `repository_default_branch_disallows_force_push` check for GitHub provider. [(#6197)](https://github.com/prowler-cloud/prowler/pull/6197)
+- Add `repository_default_branch_deletion_disabled` check for GitHub provider. [(#6200)](https://github.com/prowler-cloud/prowler/pull/6200)
+- Add `repository_default_branch_status_checks_required` check for GitHub provider. [(#6204)](https://github.com/prowler-cloud/prowler/pull/6204)
+- Add `repository_default_branch_protection_applies_to_admins` check for GitHub provider. [(#6205)](https://github.com/prowler-cloud/prowler/pull/6205)
+- Add `repository_branch_delete_on_merge_enabled` check for GitHub provider. [(#6209)](https://github.com/prowler-cloud/prowler/pull/6209)
+- Add `repository_default_branch_requires_conversation_resolution` check for GitHub provider. [(#6208)](https://github.com/prowler-cloud/prowler/pull/6208)
+- Add `organization_members_mfa_required` check for GitHub provider. [(#6304)](https://github.com/prowler-cloud/prowler/pull/6304)
+- Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
+- Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
+- Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
 
 ---
 
