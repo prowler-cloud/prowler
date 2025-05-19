@@ -51,6 +51,7 @@ class Repository(GithubService):
                     allow_force_pushes = True
                     branch_deletion = True
                     require_code_owner_reviews = False
+                    require_signed_commits = False
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -75,6 +76,9 @@ class Repository(GithubService):
                                     if require_pr
                                     else False
                                 )
+                                require_signed_commits = (
+                                    branch.get_required_signatures()
+                                )
                     except Exception as error:
                         # If the branch is not found, it is not protected
                         if "404" in str(error):
@@ -90,6 +94,7 @@ class Repository(GithubService):
                             allow_force_pushes = None
                             branch_deletion = None
                             require_code_owner_reviews = None
+                            require_signed_commits = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -122,6 +127,7 @@ class Repository(GithubService):
                         codeowners_exists=codeowners_exists,
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
+                        require_signed_commits=require_signed_commits,
                     )
 
         except Exception as error:
@@ -149,3 +155,4 @@ class Repo(BaseModel):
     codeowners_exists: Optional[bool]
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
+    require_signed_commits: Optional[bool]
