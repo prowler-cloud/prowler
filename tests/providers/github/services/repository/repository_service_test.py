@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.github.services.repository.repository_service import (
     Repo,
@@ -62,3 +62,25 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].conversation_resolution
         assert repository_service.repositories[1].approval_count == 2
         assert repository_service.repositories[1].codeowners_exists is True
+
+
+class Test_Repository_FileExists:
+    def setup_method(self):
+        self.repository = Repository(set_mocked_github_provider())
+        self.mock_repo = MagicMock()
+
+    def test_file_exists_returns_true(self):
+        self.mock_repo.get_contents.return_value = object()
+        assert self.repository._file_exists(self.mock_repo, "somefile.txt") is True
+
+    def test_file_not_found_returns_false(self):
+        self.mock_repo.get_contents.side_effect = Exception("404 Not Found")
+        assert self.repository._file_exists(self.mock_repo, "nofile.txt") is False
+
+    def test_other_error_returns_none_and_logs(self):
+        self.mock_repo.get_contents.side_effect = Exception("Some other error")
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert self.repository._file_exists(self.mock_repo, "errorfile.txt") is None
+            assert mock_logger.error.called
