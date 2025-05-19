@@ -6,12 +6,9 @@ import Link from "next/link";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import {
-  getProviderLogo,
-  type ProviderType,
-} from "@/components/ui/entities/get-provider-logo";
+import { getProviderLogo } from "@/components/ui/entities/get-provider-logo";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
