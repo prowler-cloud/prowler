@@ -95,17 +95,40 @@ class Repository(GithubService):
                             )
 
                     secret_scanning_enabled = False
+                    dependabot_alerts_enabled = False
                     try:
                         if repo.security_and_analysis:
                             secret_scanning_enabled = (
                                 repo.security_and_analysis.secret_scanning.status
                                 == "enabled"
                             )
+                        try:
+                            # Use get_dependabot_alerts to check if Dependabot alerts are enabled,
+                            #   but this is slow because it retries 403 errors.
+                            repo.get_dependabot_alerts()[0]
+                            # If the call succeeds, Dependabot is enabled (even if no alerts)
+                            dependabot_alerts_enabled = True
+                        except Exception as dependabot_error:
+                            error_str = str(dependabot_error)
+                            if (
+                                "403" in error_str
+                                and "Dependabot alerts are disabled for this repository."
+                                in error_str
+                            ):
+                                dependabot_alerts_enabled = False
+                            elif "403" in error_str or "404" in error_str:
+                                dependabot_alerts_enabled = None
+                            else:
+                                logger.error(
+                                    f"Dependabot detection error in repo {repo.name}: {dependabot_error}"
+                                )
+                                dependabot_alerts_enabled = None
                     except Exception as error:
                         logger.error(
-                            f"Secret scanning detection error in repo {repo.name}: {error}"
+                            f"Secret scanning or Dependabot detection error in repo {repo.name}: {error}"
                         )
                         secret_scanning_enabled = None
+                        dependabot_alerts_enabled = None
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
@@ -122,6 +145,7 @@ class Repository(GithubService):
                         codeowners_exists=codeowners_exists,
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
+                        dependabot_alerts_enabled=dependabot_alerts_enabled,
                     )
 
         except Exception as error:
@@ -149,3 +173,4 @@ class Repo(BaseModel):
     codeowners_exists: Optional[bool]
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
+    dependabot_alerts_enabled: Optional[bool]
