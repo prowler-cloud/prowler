@@ -37,7 +37,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
           delta === "new"
             ? "bg-system-severity-high"
             : delta === "changed"
-              ? "bg-system-severity-medium"
+              ? "bg-system-severity-low"
               : "bg-gray-500",
         )}
       />
