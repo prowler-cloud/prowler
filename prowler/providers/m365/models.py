@@ -8,7 +8,8 @@ class M365IdentityInfo(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
     tenant_id: str = ""
-    tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
+    tenant_domain: str = "Unknown tenant domain (missing Entra permissions)"
+    tenant_domains: list[str] = []
     location: str = ""
     user: str = None
 
@@ -27,7 +28,7 @@ class M365Credentials(BaseModel):
     client_id: str = ""
     client_secret: str = ""
     tenant_id: str = ""
-    provider_id: str = ""
+    tenant_domains: list[str] = []
 
 
 class M365OutputOptions(ProviderOutputOptions):

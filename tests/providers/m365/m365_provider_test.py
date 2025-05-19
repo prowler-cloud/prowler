@@ -286,6 +286,17 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.GraphServiceClient"
             ) as mock_graph_client,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            ),
         ):
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
@@ -298,7 +309,7 @@ class TestM365Provider:
             mock_session = MagicMock()
             mock_setup_session.return_value = mock_session
 
-            # Mock GraphServiceClient to avoid real API calls
+            # Mock GraphServiceClient
             mock_client = MagicMock()
             mock_graph_client.return_value = mock_client
 
@@ -307,6 +318,7 @@ class TestM365Provider:
                 tenant_id=str(uuid4()),
                 region="M365Global",
                 raise_on_exception=False,
+                provider_id="test.onmicrosoft.com",
             )
 
             assert isinstance(test_connection, Connection)
@@ -321,6 +333,17 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            ),
         ):
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
@@ -335,6 +358,7 @@ class TestM365Provider:
                 raise_on_exception=False,
                 client_id=str(uuid4()),
                 client_secret=str(uuid4()),
+                provider_id="test.onmicrosoft.com",
             )
 
             assert isinstance(test_connection, Connection)
@@ -458,9 +482,15 @@ class TestM365Provider:
             result = M365Provider.setup_powershell(
                 env_auth=False,
                 m365_credentials=credentials_dict,
-                provider_id="test_provider_id",
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
             )
-
             assert result.user == credentials_dict["user"]
             assert result.passwd == credentials_dict["encrypted_password"]
 
@@ -595,6 +625,17 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain="contoso.com",
+                    tenant_domains=["contoso.com"],
+                    location=LOCATION,
+                ),
+            ),
         ):
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
@@ -620,7 +661,7 @@ class TestM365Provider:
 
             assert exception.type == M365InvalidProviderIdError
             assert (
-                f"Provider ID {provider_id} does not match Application tenant domain {user_domain}"
+                f"The provider ID {provider_id} does not match any of the service principal tenant domains: {user_domain}"
                 in str(exception.value)
             )
 
@@ -646,7 +687,14 @@ class TestM365Provider:
             M365Provider.setup_powershell(
                 env_auth=False,
                 m365_credentials=credentials_dict,
-                provider_id="test_provider_id",
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
                 init_modules=False,
             )
             mock_init_modules.assert_not_called()
@@ -673,7 +721,14 @@ class TestM365Provider:
             M365Provider.setup_powershell(
                 env_auth=False,
                 m365_credentials=credentials_dict,
-                provider_id="test_provider_id",
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
                 init_modules=True,
             )
             mock_init_modules.assert_called_once()
@@ -702,8 +757,63 @@ class TestM365Provider:
                 M365Provider.setup_powershell(
                     env_auth=False,
                     m365_credentials=credentials_dict,
-                    provider_id="test_provider_id",
+                    identity=M365IdentityInfo(
+                        identity_id=IDENTITY_ID,
+                        identity_type="User",
+                        tenant_id=TENANT_ID,
+                        tenant_domain=DOMAIN,
+                        tenant_domains=["test.onmicrosoft.com"],
+                        location=LOCATION,
+                    ),
                     init_modules=True,
                 )
 
             assert str(exc_info.value) == "Module initialization failed"
+
+    def test_test_connection_provider_id_not_in_tenant_domains(self):
+        """Test that an exception is raised when provider_id is not in tenant_domains"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain="contoso.onmicrosoft.com",
+                    tenant_domains=["contoso.onmicrosoft.com", "contoso.com"],
+                    location=LOCATION,
+                ),
+            ),
+        ):
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ValidateStaticCredentials to avoid real API calls
+            mock_validate_static_credentials.return_value = None
+
+            provider_id = "test.onmicrosoft.com"
+
+            with pytest.raises(M365InvalidProviderIdError) as exception:
+                M365Provider.test_connection(
+                    tenant_id=str(uuid4()),
+                    region="M365Global",
+                    raise_on_exception=True,
+                    client_id=str(uuid4()),
+                    client_secret=str(uuid4()),
+                    user="user@contoso.onmicrosoft.com",
+                    encrypted_password="test_password",
+                    provider_id=provider_id,
+                )
+
+            assert exception.type == M365InvalidProviderIdError
+            assert (
+                f"The provider ID {provider_id} does not match any of the service principal tenant domains: contoso.onmicrosoft.com, contoso.com"
+                in str(exception.value)
+            )

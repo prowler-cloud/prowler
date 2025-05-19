@@ -918,6 +918,26 @@ class TestProviderViewSet:
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onMirosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
             ]
         ),
     )
@@ -985,6 +1005,51 @@ class TestProviderViewSet:
                     },
                     "invalid_choice",
                     "provider",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "https://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "thisisnotadomain",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "http://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"{'a' * 64}.domain.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"subdomain.{'a' * 64}.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
                 ),
             ]
         ),
