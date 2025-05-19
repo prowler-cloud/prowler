@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.8.0] (Prowler UNRELEASED)
+## [v1.8.0] (Prowler v5.7.0)
 
 ### Added
 - Added huge improvements to `/findings/metadata` and resource related filters for findings [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
