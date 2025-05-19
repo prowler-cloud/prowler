@@ -31,11 +31,12 @@ class Test_repository_public_has_securitymd_file_test:
     def test_one_repository_no_securitymd(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
+        repo_full_name = "account-name/repo1"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name="account-name/repo1",
+                full_name=repo_full_name,
                 default_branch="main",
                 private=False,
                 securitymd=False,
@@ -64,21 +65,22 @@ class Test_repository_public_has_securitymd_file_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does not have a SECURITY.md file."
+                == f"Repository {repo_full_name} does not have a SECURITY.md file."
             )
 
     def test_one_repository_securitymd(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
+        repo_full_name = "account-name/repo1"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name="account-name/repo1",
+                full_name=repo_full_name,
                 default_branch="main",
                 private=False,
                 securitymd=True,
@@ -107,9 +109,9 @@ class Test_repository_public_has_securitymd_file_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does have a SECURITY.md file."
+                == f"Repository {repo_full_name} does have a SECURITY.md file."
             )

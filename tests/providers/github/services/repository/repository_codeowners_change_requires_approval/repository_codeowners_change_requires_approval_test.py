@@ -31,11 +31,12 @@ class Test_repository_codeowners_change_requires_approval:
     def test_one_repository_no_codeowner_approval(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
+        repo_full_name = "account-name/repo1"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name="account-name/repo1",
+                full_name=repo_full_name,
                 default_branch="main",
                 private=False,
                 securitymd=True,
@@ -69,17 +70,18 @@ class Test_repository_codeowners_change_requires_approval:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does not require code owner approval for changes to owned code."
+                == f"Repository {repo_full_name} does not require code owner approval for changes to owned code."
             )
 
     def test_one_repository_with_codeowner_approval(self):
         repository_client = mock.MagicMock
         repo_name = "repo2"
+        repo_full_name = "account-name/repo2"
         repository_client.repositories = {
             2: Repo(
                 id=2,
                 name=repo_name,
-                full_name="account-name/repo2",
+                full_name=repo_full_name,
                 default_branch="main",
                 private=False,
                 securitymd=True,
@@ -113,5 +115,5 @@ class Test_repository_codeowners_change_requires_approval:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} requires code owner approval for changes to owned code."
+                == f"Repository {repo_full_name} requires code owner approval for changes to owned code."
             )

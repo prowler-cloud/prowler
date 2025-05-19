@@ -27,11 +27,11 @@ class repository_default_branch_requires_linear_history(Check):
                     metadata=self.metadata(), resource=repo, repository=repo.name
                 )
                 report.status = "FAIL"
-                report.status_extended = f"Repository {repo.name} does not require linear history on default branch ({repo.default_branch})."
+                report.status_extended = f"Repository {repo.full_name} does not require linear history on default branch ({repo.default_branch})."
 
                 if repo.required_linear_history:
                     report.status = "PASS"
-                    report.status_extended = f"Repository {repo.name} does require linear history on default branch ({repo.default_branch})."
+                    report.status_extended = f"Repository {repo.full_name} does require linear history on default branch ({repo.default_branch})."
 
                 findings.append(report)
 

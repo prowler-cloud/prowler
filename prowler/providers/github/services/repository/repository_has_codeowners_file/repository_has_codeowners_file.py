@@ -29,12 +29,12 @@ class repository_has_codeowners_file(Check):
                 if repo.codeowners_exists:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Repository {repo.name} does have a CODEOWNERS file."
+                        f"Repository {repo.full_name} does have a CODEOWNERS file."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Repository {repo.name} does not have a CODEOWNERS file."
+                        f"Repository {repo.full_name} does not have a CODEOWNERS file."
                     )
 
                 findings.append(report)

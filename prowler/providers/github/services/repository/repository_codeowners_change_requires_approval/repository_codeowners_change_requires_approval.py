@@ -28,10 +28,10 @@ class repository_codeowners_change_requires_approval(Check):
                 )
                 if repo.require_code_owner_reviews:
                     report.status = "PASS"
-                    report.status_extended = f"Repository {repo.name} requires code owner approval for changes to owned code."
+                    report.status_extended = f"Repository {repo.full_name} requires code owner approval for changes to owned code."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Repository {repo.name} does not require code owner approval for changes to owned code."
+                    report.status_extended = f"Repository {repo.full_name} does not require code owner approval for changes to owned code."
 
                 findings.append(report)
 

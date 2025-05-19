@@ -28,10 +28,10 @@ class repository_sensitive_data_scanner_enabled(Check):
                 )
                 if getattr(repo, "secret_scanning_enabled", None):
                     report.status = "PASS"
-                    report.status_extended = f"Repository {repo.name} has secret scanning enabled to detect sensitive data."
+                    report.status_extended = f"Repository {repo.full_name} has secret scanning enabled to detect sensitive data."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Repository {repo.name} does not have secret scanning enabled to detect sensitive data."
+                    report.status_extended = f"Repository {repo.full_name} does not have secret scanning enabled to detect sensitive data."
 
                 findings.append(report)
 

@@ -31,12 +31,13 @@ class Test_repository_default_branch_disallows_force_push_test:
     def test_allow_force_push_enabled(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
+        repo_full_name = "account-name/repo1"
         default_branch = "main"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name="account-name/repo1",
+                full_name=repo_full_name,
                 default_branch=default_branch,
                 allow_force_pushes=True,
                 private=False,
@@ -64,22 +65,23 @@ class Test_repository_default_branch_disallows_force_push_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does allow force push."
+                == f"Repository {repo_full_name} does allow force push."
             )
 
     def test_allow_force_push_disabled(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
+        repo_full_name = "account-name/repo1"
         default_branch = "main"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name="account-name/repo1",
+                full_name=repo_full_name,
                 private=False,
                 default_branch=default_branch,
                 allow_force_pushes=False,
@@ -107,9 +109,9 @@ class Test_repository_default_branch_disallows_force_push_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} does deny force push."
+                == f"Repository {repo_full_name} does deny force push."
             )
