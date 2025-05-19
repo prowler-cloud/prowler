@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.8.0] (Prowler v5.8.0) – Not released
+
+### 🚀 Added
+
+- New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
+
 ## [v1.7.0] (Prowler v5.7.0) – Not released
 
 ### 🚀 Added
