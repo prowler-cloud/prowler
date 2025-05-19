@@ -565,3 +565,45 @@ class Testm365PowerShell:
             )
             # Verify no info messages were logged
             mock_info.assert_not_called()
+
+    @patch("subprocess.Popen")
+    def test_encrypt_password(self, mock_popen):
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Test non-Windows system (should use utf-16le hex encoding)
+        from unittest import mock
+
+        with mock.patch("os.system", "Linux"):
+            result = session.encrypt_password("password123")
+            expected = "password123".encode("utf-16le").hex()
+            assert result == expected
+
+        # Test Windows system (should use win32crypt)
+        with mock.patch("os.system", "Windows"):
+            # Simula la importación de win32crypt aunque no esté instalado
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.return_value = (None, b"encrypted_bytes")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            result = session.encrypt_password("password123")
+            assert result == b"encrypted_bytes".hex()
+
+            # Limpia el mock para no afectar otros tests
+            del sys.modules["win32crypt"]
+
+        # Test empty password raises ValueError
+        with pytest.raises(ValueError):
+            session.encrypt_password("")
+
+        session.close()
