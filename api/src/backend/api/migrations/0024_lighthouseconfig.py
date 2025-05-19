@@ -10,7 +10,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0016_finding_compliance_resource_details_and_more"),
+        ("api", "0023_resources_lookup_optimization"),
     ]
     operations = [
         migrations.CreateModel(
