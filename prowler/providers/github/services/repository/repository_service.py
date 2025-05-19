@@ -44,6 +44,12 @@ class Repository(GithubService):
                         if self._file_exists(repo, path):
                             codeowners_exists = True
                             break
+                    delete_branch_on_merge = (
+                        repo.delete_branch_on_merge
+                        if repo.delete_branch_on_merge is not None
+                        else False
+                    )
+
                     require_pr = False
                     approval_cnt = 0
                     branch_protection = False
@@ -51,6 +57,9 @@ class Repository(GithubService):
                     allow_force_pushes = True
                     branch_deletion = True
                     require_code_owner_reviews = False
+                    status_checks = False
+                    enforce_admins = False
+                    conversation_resolution = False
                     try:
                         branch = repo.get_branch(default_branch)
                         if branch.protected:
@@ -69,6 +78,13 @@ class Repository(GithubService):
                                 )
                                 allow_force_pushes = protection.allow_force_pushes
                                 branch_deletion = protection.allow_deletions
+                                status_checks = (
+                                    protection.required_status_checks is not None
+                                )
+                                enforce_admins = protection.enforce_admins
+                                conversation_resolution = (
+                                    protection.required_conversation_resolution
+                                )
                                 branch_protection = True
                                 require_code_owner_reviews = (
                                     protection.required_pull_request_reviews.require_code_owner_reviews
@@ -90,6 +106,9 @@ class Repository(GithubService):
                             allow_force_pushes = None
                             branch_deletion = None
                             require_code_owner_reviews = None
+                            status_checks = None
+                            enforce_admins = None
+                            conversation_resolution = None
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
@@ -141,11 +160,15 @@ class Repository(GithubService):
                         required_linear_history=required_linear_history,
                         allow_force_pushes=allow_force_pushes,
                         default_branch_deletion=branch_deletion,
+                        status_checks=status_checks,
+                        enforce_admins=enforce_admins,
+                        conversation_resolution=conversation_resolution,
                         default_branch_protection=branch_protection,
                         codeowners_exists=codeowners_exists,
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
                         dependabot_alerts_enabled=dependabot_alerts_enabled,
+                        delete_branch_on_merge=delete_branch_on_merge,
                     )
 
         except Exception as error:
@@ -169,8 +192,12 @@ class Repo(BaseModel):
     required_linear_history: Optional[bool]
     allow_force_pushes: Optional[bool]
     default_branch_deletion: Optional[bool]
+    status_checks: Optional[bool]
+    enforce_admins: Optional[bool]
     approval_count: Optional[int]
     codeowners_exists: Optional[bool]
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
     dependabot_alerts_enabled: Optional[bool]
+    delete_branch_on_merge: Optional[bool]
+    conversation_resolution: Optional[bool]
