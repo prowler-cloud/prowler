@@ -94,9 +94,6 @@ class M365PowerShell(PowerShellSession):
         Raises:
             ValueError: If password is None or empty
         """
-        if not password:
-            raise ValueError("Password cannot be None or empty")
-
         try:
             if os.system == "Windows":
                 import win32crypt
