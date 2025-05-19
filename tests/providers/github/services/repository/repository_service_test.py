@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.github.services.repository.repository_service import (
     Repo,
@@ -22,6 +22,7 @@ def mock_list_repositories(_):
             required_linear_history=True,
             allow_force_pushes=True,
             default_branch_deletion=True,
+            status_checks=True,
             approval_count=2,
             codeowners_exists=True,
             require_code_owner_reviews=True,
@@ -29,6 +30,9 @@ def mock_list_repositories(_):
             require_signed_commits=True,
             archived=False,
             pushed_at=datetime.now(timezone.utc),
+            enforce_admins=True,
+            delete_branch_on_merge=True,
+            conversation_resolution=True,
         ),
     }
 
@@ -58,6 +62,10 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].require_pull_request
         assert repository_service.repositories[1].allow_force_pushes
         assert repository_service.repositories[1].default_branch_deletion
+        assert repository_service.repositories[1].status_checks
+        assert repository_service.repositories[1].enforce_admins
+        assert repository_service.repositories[1].delete_branch_on_merge
+        assert repository_service.repositories[1].conversation_resolution
         assert repository_service.repositories[1].approval_count == 2
         assert repository_service.repositories[1].codeowners_exists is True
         assert repository_service.repositories[1].require_code_owner_reviews is True
@@ -65,3 +73,25 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].require_signed_commits is True
         assert repository_service.repositories[1].archived is False
         assert repository_service.repositories[1].pushed_at is not None
+
+
+class Test_Repository_FileExists:
+    def setup_method(self):
+        self.repository = Repository(set_mocked_github_provider())
+        self.mock_repo = MagicMock()
+
+    def test_file_exists_returns_true(self):
+        self.mock_repo.get_contents.return_value = object()
+        assert self.repository._file_exists(self.mock_repo, "somefile.txt") is True
+
+    def test_file_not_found_returns_false(self):
+        self.mock_repo.get_contents.side_effect = Exception("404 Not Found")
+        assert self.repository._file_exists(self.mock_repo, "nofile.txt") is False
+
+    def test_other_error_returns_none_and_logs(self):
+        self.mock_repo.get_contents.side_effect = Exception("Some other error")
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert self.repository._file_exists(self.mock_repo, "errorfile.txt") is None
+            assert mock_logger.error.called
