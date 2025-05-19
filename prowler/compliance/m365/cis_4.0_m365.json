@@ -12,7 +12,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.1 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Administrative accounts are special privileged accounts that could have varying levels of access to data, users, and settings. Regular user accounts should never be utilized for administrative tasks and care should be taken, in the case of a hybrid environment, to keep Administrative accounts separated from on-prem accounts. Administrative accounts should not have applications assigned so that they have no access to potentially vulnerable services (EX. email, Teams, SharePoint, etc.) and only access to perform tasks as needed for administrative purposes.Ensure administrative accounts are not `On-premises sync enabled`.",
@@ -32,7 +33,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.1",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.1 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Emergency access or \"break glass\" accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. These emergencies could be due to several things, including:- Technical failures of a cellular provider or Microsoft related service such as MFA.- The last remaining Global Administrator account is inaccessible.Ensure two `Emergency Access` accounts have been defined.**Note:** Microsoft provides several recommendations for these accounts and how to configure them. For more information on this, please refer to the references section. The CIS Benchmark outlines the more critical things to consider.",
@@ -54,7 +56,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.1 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "More than one global administrator should be designated so a single admin can be monitored and to provide redundancy should a single admin leave an organization. Additionally, there should be no more than four global admins set for any tenant. Ideally global administrators will have no licenses assigned to them.",
@@ -76,7 +79,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.1 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Administrative accounts are special privileged accounts that could have varying levels of access to data, users, and settings. A license can enable an account to gain access to a variety of different applications, depending on the license assigned.The recommended state is to not license a privileged account or use `Microsoft Entra ID P1` or `Microsoft Entra ID P2` licenses.",
@@ -98,7 +102,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.2 Teams & groups",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft 365 Groups is the foundational membership service that drives all teamwork across Microsoft 365. With Microsoft 365 Groups, you can give a group of people access to a collection of shared resources. While there are several different group types this recommendation concerns **Microsoft 365 Groups**.In the Administration panel, when a group is created, the default privacy value is \"Public\".",
@@ -118,7 +123,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.2 Teams & groups",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Shared mailboxes are used when multiple people need access to the same mailbox, such as a company information or support email address, reception desk, or other function that might be shared by multiple people.Users with permissions to the group mailbox can send as or send on behalf of the mailbox email address if the administrator has given that user permissions to do that. This is particularly useful for help and support mailboxes because users can send emails from \"Contoso Support\" or \"Building A Reception Desk.\"Shared mailboxes are created with a corresponding user account using a system generated password that is unknown at the time of creation.The recommended state is `Sign in blocked` for `Shared mailboxes`.",
@@ -140,7 +146,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft cloud-only accounts have a pre-defined password policy that cannot be changed. The only items that can change are the number of days until a password expires and whether or whether passwords expire at all.",
@@ -160,7 +167,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Idle session timeout allows the configuration of a setting which will timeout inactive users after a pre-determined amount of time. When a user reaches the set idle timeout session, they'll get a notification that they're about to be signed out. They have to select to stay signed in or they'll be automatically signed out of all Microsoft 365 web apps. Combined with a Conditional Access rule this will only impact unmanaged devices. A managed device is considered a device managed that is compliant or joined to a domain and using a supported browser like Microsoft Edge or Google Chrome (with the Microsoft Single Sign On) extension.The following Microsoft 365 web apps are supported.- Outlook Web App- OneDrive- SharePoint- Microsoft Fabric- Microsoft365.com and other start pages- Microsoft 365 web apps (Word, Excel, PowerPoint)- Microsoft 365 Admin Center- M365 Defender Portal- Microsoft Purview Compliance PortalThe recommended setting is `3 hours` (or less) for unmanaged devices. **Note:** Idle session timeout doesn't affect Microsoft 365 desktop and mobile apps.",
@@ -180,7 +188,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "External calendar sharing allows an administrator to enable the ability for users to share calendars with anyone outside of the organization. Outside users will be sent a URL that can be used to view the calendar.",
@@ -200,7 +209,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "By default, users can install add-ins in their Microsoft Word, Excel, and PowerPoint applications, allowing data access within the application.Do not allow users to install add-ins in Word, Excel, or PowerPoint.",
@@ -220,7 +230,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Forms can be used for phishing attacks by asking personal or sensitive information and collecting the results. Microsoft 365 has built-in protection that will proactively scan for phishing attempt in forms such personal information request.",
@@ -240,7 +251,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Customer Lockbox is a security feature that provides an additional layer of control and transparency to customer data in Microsoft 365. It offers an approval process for Microsoft support personnel to access organization data and creates an audited trail to meet compliance requirements.",
@@ -260,7 +272,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Third-party storage can be enabled for users in Microsoft 365, allowing them to store and share documents using services such as Dropbox, alongside OneDrive and team sites.Ensure `Microsoft 365 on the web` third-party storage services are restricted.",
@@ -280,7 +293,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.3",
+          "Section": "1 Microsoft 365 admin center",
+          "SubSection": "1.3 Settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Sway is a Microsoft 365 app that lets organizations create interactive, web-based presentations using images, text, videos and other media. Its design engine simplifies the process, allowing for quick customization. Presentations can then be shared via a link.This setting controls user Sway sharing capability, both within and outside of the organization. By default, Sway is enabled for everyone in the organization.",
@@ -300,7 +314,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enabling Safe Links policy for Office applications allows URL's that exist inside of Office documents and email applications opened by Office, Office Online and Office mobile to be processed against Defender for Office time-of-click verification and rewritten if required.**Note:** E5 Licensing includes a number of Built-in Protection policies. When auditing policies note which policy you are viewing, and keep in mind CIS recommendations often extend the Default or Build-in Policies provided by MS. In order to **Pass** the highest priority policy must match all settings recommended.",
@@ -322,7 +337,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The Common Attachment Types Filter lets a user block known and custom malicious file types from being attached to emails.",
@@ -344,7 +360,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Exchange Online Protection (EOP) is the cloud-based filtering service that protects organizations against spam, malware, and other email threats. EOP is included in all Microsoft 365 organizations with Exchange Online mailboxes.EOP uses flexible anti-malware policies for malware protection settings. These policies can be set to notify Admins of malicious activity.",
@@ -364,7 +381,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
@@ -384,7 +402,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
@@ -406,7 +425,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In Microsoft 365 organizations with mailboxes in Exchange Online or standalone Exchange Online Protection (EOP) organizations without Exchange Online mailboxes, email messages are automatically protected against spam (junk email) by EOP.Configure Exchange Online Spam Policies to copy emails and notify someone when a sender in the organization has been blocked for sending spam emails.",
@@ -428,7 +448,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "By default, Office 365 includes built-in features that help protect users from phishing attacks. Set up anti-phishing polices to increase this protection, for example by refining settings to better detect and prevent impersonation and spoofing attacks. The default policy applies to all users within the organization and is a single view to fine-tune anti-phishing protection. Custom policies can be created and configured for specific users, groups or domains within the organization and will take precedence over the default policy for the scoped users.",
@@ -448,7 +469,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For each domain that is configured in Exchange, a corresponding Sender Policy Framework (SPF) record should be created.",
@@ -470,7 +492,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "DKIM is one of the trio of Authentication methods (SPF, DKIM and DMARC) that help prevent attackers from sending messages that look like they come from your domain. DKIM lets an organization add a digital signature to outbound email messages in the message header. When DKIM is configured, the organization authorizes it's domain to associate, or sign, its name to an email message using cryptographic authentication. Email systems that get email from this domain can use a digital signature to help verify whether incoming email is legitimate.Use of DKIM in addition to SPF and DMARC to help prevent malicious actors using spoofing techniques from sending messages that look like they are coming from your domain.",
@@ -490,7 +513,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "DMARC, or Domain-based Message Authentication, Reporting, and Conformance, assists recipient mail systems in determining the appropriate action to take when messages from a domain fail to meet SPF or DKIM authentication criteria.",
@@ -512,7 +536,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The Common Attachment Types Filter lets a user block known and custom malicious file types from being attached to emails. The policy provided by Microsoft covers 53 extensions, and an additional custom list of extensions can be defined.The list of 186 extensions provided in this recommendation is comprehensive but not exhaustive.",
@@ -534,7 +559,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In Microsoft 365 organizations with Exchange Online mailboxes or standalone Exchange Online Protection (EOP) organizations without Exchange Online mailboxes, connection filtering and the default connection filter policy identify good or bad source email servers by IP addresses. The key components of the default connection filter policy are **IP Allow List**, **IP Block List** and **Safe list**.The recommended state is `IP Allow List` empty or undefined.",
@@ -556,7 +582,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In Microsoft 365 organizations with Exchange Online mailboxes or standalone Exchange Online Protection (EOP) organizations without Exchange Online mailboxes, connection filtering and the default connection filter policy identify good or bad source email servers by IP addresses. The key components of the default connection filter policy are **IP Allow List**, **IP Block List** and **Safe list**.The safe list is a pre-configured allow list that is dynamically updated by Microsoft.The recommended safe list state is: `Off` or `False`",
@@ -578,7 +605,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.1 Email & collaboration",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Anti-spam protection is a feature of Exchange Online that utilizes policies to help to reduce the amount of junk email, bulk and phishing emails a mailbox receives. These policies contain lists to allow or block specific senders or domains. - The allowed senders list- The allowed domains list- The blocked senders list- The blocked domains listThe recommended state is: Do not define any `Allowed domains`",
@@ -598,7 +626,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.4",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.4 System",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Identify _priority accounts_ to utilize Microsoft 365's advanced custom security features. This is an essential tool to bolster protection for users who are frequently targeted due to their critical positions, such as executives, leaders, managers, or others who have access to sensitive, confidential, financial, or high-priority information.Once these accounts are identified, several services and features can be enabled, including threat policies, enhanced sign-in protection through conditional access policies, and alert policies, enabling faster response times for incident response teams.",
@@ -618,7 +647,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.4",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.4 System",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Preset security policies have been established by Microsoft, utilizing observations and experiences within datacenters to strike a balance between the exclusion of malicious content from users and limiting unwarranted disruptions. These policies can apply to all, or select users and encompass recommendations for addressing spam, malware, and phishing threats. The policy parameters are pre-determined and non-adjustable.`Strict protection` has the most aggressive protection of the 3 presets.- EOP: Anti-spam, Anti-malware and Anti-phishing- Defender: Spoof protection, Impersonation protection and Advanced phishing- Defender: Safe Links and Safe Attachments**NOTE: The preset security polices cannot target Priority account TAGS currently, groups should be used instead.**",
@@ -638,7 +668,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.4",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.4 System",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for Cloud Apps is a Cloud Access Security Broker (CASB). It provides visibility into suspicious activity in Microsoft 365, enabling investigation into potential security issues and facilitating the implementation of remediation measures if necessary.Some risk detection methods provided by Entra Identity Protection also require Microsoft Defender for Cloud Apps:- Suspicious manipulation of inbox rules- Suspicious inbox forwarding- New country detection- Impossible travel detection- Activity from anonymous IP addresses- Mass access to sensitive files",
@@ -658,7 +689,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.4",
+          "Section": "2 Microsoft 365 Defender",
+          "SubSection": "2.4 System",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes malware and high confidence phishing. When ZAP for Teams protection blocks a message, the message is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP occurs up to 48 hours after delivery.",
@@ -680,7 +712,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1",
+          "Section": "3 Microsoft Purview",
+          "SubSection": "3.1 Audit",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "When audit log search is enabled in the Microsoft Purview compliance portal, user and admin activity within the organization is recorded in the audit log and retained for 90 days. However, some organizations may prefer to use a third-party security information and event management (SIEM) application to access their auditing data. In this scenario, a global admin can choose to turn off audit log search in Microsoft 365.",
@@ -700,7 +733,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.2",
+          "Section": "3 Microsoft Purview",
+          "SubSection": "3.1 Audit",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Data Loss Prevention (DLP) policies allow Exchange Online and SharePoint Online content to be scanned for specific types of data like social security numbers, credit card numbers, or passwords.",
@@ -720,7 +754,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.2",
+          "Section": "3 Microsoft Purview",
+          "SubSection": "3.1 Audit",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "The default Teams Data Loss Prevention (DLP) policy rule in Microsoft 365 is a preconfigured rule that is automatically applied to all Teams conversations and channels. The default rule helps prevent accidental sharing of sensitive information by detecting and blocking certain types of content that are deemed sensitive or inappropriate by the organization. By default, the rule includes a check for the sensitive info type _Credit Card Number_ which is pre-defined by Microsoft.",
@@ -740,7 +775,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.3",
+          "Section": "3 Microsoft Purview",
+          "SubSection": "3.3 Information protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "SharePoint Online Data Classification Policies enables organizations to classify and label content in SharePoint Online based on its sensitivity and business impact. This setting helps organizations to manage and protect sensitive data by automatically applying labels to content, which can then be used to apply policy-based protection and governance controls.",
@@ -760,7 +796,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.1",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Security defaults in Microsoft Entra ID make it easier to be secure and help protect the organization. Security defaults contain preconfigured security settings for common attacks.By default, Microsoft enables security defaults. The goal is to ensure that all organizations have a basic level of security enabled. The security default setting is manipulated in the Entra admin center.The use of security defaults, however, will prohibit custom settings which are being set with more advanced settings from this benchmark.",
@@ -780,7 +817,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Legacy per-user Multi-Factor Authentication (MFA) can be configured to require individual users to provide multiple authentication factors, such as passwords and additional verification codes, to access their accounts. It was introduced in earlier versions of Office 365, prior to the more comprehensive implementation of Conditional Access (CA).",
@@ -802,7 +840,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "App registration allows users to register custom-developed applications for use within the directory.",
@@ -824,7 +863,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Non-privileged users can create tenants in the Entra administration portal under Manage tenant. The creation of a tenant is recorded in the Audit log as category \"DirectoryManagement\" and activity \"Create Company\". Anyone who creates a tenant becomes the Global Administrator of that tenant. The newly created tenant doesn't inherit any settings or configurations.",
@@ -844,7 +884,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Restrict non-privileged users from signing into the Microsoft Entra admin center.**Note:** This recommendation only affects access to the web portal. It does not prevent privileged users from using other methods such as Rest API or PowerShell to obtain information. Those channels are addressed elsewhere in this document.",
@@ -864,7 +905,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "The option for the user to `Stay signed in`, or the `Keep me signed in` option, will prompt a user after a successful login. When the user selects this option, a persistent refresh token is created. The refresh token lasts for 90 days by default and does not prompt for sign-in or multifactor.",
@@ -884,7 +926,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "LinkedIn account connections allow users to connect their Microsoft work or school account with LinkedIn. After a user connects their accounts, information and highlights from LinkedIn are available in some Microsoft apps and services.",
@@ -906,7 +949,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "A dynamic group is a dynamic configuration of security group membership for Microsoft Entra ID. Administrators can set rules to populate groups that are created in Entra ID based on user attributes (such as userType, department, or country/region). Members can be automatically added to or removed from a security group based on their attributes.The recommended state is to create a dynamic group that includes guest accounts.",
@@ -928,7 +972,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.5",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Control when end users and group owners are allowed to grant consent to applications, and when they will be required to request administrator review and approval. Allowing users to grant apps access to data helps them acquire useful applications and be productive but can represent a risk in some situations if it's not monitored and controlled carefully.",
@@ -950,7 +995,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.5",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "The admin consent workflow gives admins a secure way to grant access to applications that require admin approval. When a user tries to access an application but is unable to provide consent, they can send a request for admin approval. The request is sent via email to admins who have been designated as reviewers. A reviewer takes action on the request, and the user is notified of the action.",
@@ -970,7 +1016,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1.6",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "B2B collaboration is a feature within Microsoft Entra External ID that allows for guest invitations to an organization.Ensure users can only send invitations to `specified domains`.**Note:** This list works independently from OneDrive for Business and SharePoint Online allow/block lists. To restrict individual file sharing in SharePoint Online, set up an allow or blocklist for OneDrive for Business and SharePoint Online. For instance, in SharePoint or OneDrive users can still share with external users from prohibited domains by using Anyone links if they haven't been disabled.",
@@ -992,7 +1039,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.6",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Entra ID, part of Microsoft Entra, allows you to restrict what external guest users can see in their organization in Microsoft Entra ID. Guest users are set to a limited permission level by default in Microsoft Entra ID, while the default for member users is the full set of user permissions. These directory level permissions are enforced across Microsoft Entra services including Microsoft Graph, PowerShell v2, the Azure portal, and My Apps portal. Microsoft 365 services leveraging Microsoft 365 groups for collaboration scenarios are also affected, specifically Outlook, Microsoft Teams, and SharePoint. They do not override the SharePoint or Microsoft Teams guest settings.The recommended state is at least `Guest users have limited access to properties and memberships of directory objects` or more restrictive.",
@@ -1014,7 +1062,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.6",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "By default, all users in the organization, including B2B collaboration guest users, can invite external users to B2B collaboration. The ability to send invitations can be limited by turning it on or off for everyone, or by restricting invitations to certain roles.The recommended state for guest invite restrictions is `Only users assigned to specific admin roles can invite guest users`.",
@@ -1036,7 +1085,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1.8",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.1 Identity",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Password hash synchronization is one of the sign-in methods used to accomplish hybrid identity synchronization. Microsoft Entra Connect synchronizes a hash, of the hash, of a user's password from an on-premises Active Directory instance to a cloud-based Entra ID instance.**Note:** Audit and remediation procedures in this recommendation only apply to Microsoft 365 tenants operating in a hybrid configuration using Entra Connect sync, and does not apply to federated domains.",
@@ -1058,7 +1108,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Multifactor authentication is a process that requires an additional form of identification during the sign-in process, such as a code from a mobile device or a fingerprint scan, to enhance security.Ensure users in administrator roles have MFA capabilities enabled.",
@@ -1080,7 +1131,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enable multifactor authentication for all users in the Microsoft 365 tenant. Users will be prompted to authenticate with a second factor upon logging in to Microsoft 365 services. The second factor is most commonly a text message to a registered mobile phone number where they type in an authorization code, or with a mobile application like Microsoft Authenticator.",
@@ -1102,7 +1154,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Entra ID supports the most widely used authentication and authorization protocols including legacy authentication. This authentication pattern includes basic authentication, a widely used industry-standard method for collecting username and password information.The following messaging protocols support legacy authentication:- Authenticated SMTP - Used to send authenticated email messages.- Autodiscover - Used by Outlook and EAS clients to find and connect to mailboxes in Exchange Online.- Exchange ActiveSync (EAS) - Used to connect to mailboxes in Exchange Online.- Exchange Online PowerShell - Used to connect to Exchange Online with remote PowerShell. If you block Basic authentication for Exchange Online PowerShell, you need to use the Exchange Online PowerShell Module to connect. For instructions, see Connect to Exchange Online PowerShell using multifactor authentication.- Exchange Web Services (EWS) - A programming interface that's used by Outlook, Outlook for Mac, and third-party apps.- IMAP4 - Used by IMAP email clients.- MAPI over HTTP (MAPI/HTTP) - Primary mailbox access protocol used by Outlook 2010 SP2 and later.- Offline Address Book (OAB) - A copy of address list collections that are downloaded and used by Outlook.- Outlook Anywhere (RPC over HTTP) - Legacy mailbox access protocol supported by all current Outlook versions.- POP3 - Used by POP email clients.- Reporting Web Services - Used to retrieve report data in Exchange Online.- Universal Outlook - Used by the Mail and Calendar app for Windows 10.- Other clients - Other protocols identified as utilizing legacy authentication.",
@@ -1124,7 +1177,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "In complex deployments, organizations might have a need to restrict authentication sessions. Conditional Access policies allow for the targeting of specific user accounts. Some scenarios might include:- Resource access from an unmanaged or shared device- Access to sensitive information from an external network- High-privileged users- Business-critical applicationsEnsure Sign-in frequency periodic reauthentication does not exceed `4 hours` for E3 tenants, or `24 hours` for E5 tenants using Privileged Identity Management.Ensure `Persistent browser session` is set to `Never persistent`**Note:** This CA policy can be added to the previous CA policy in this benchmark \"Ensure multifactor authentication is enabled for all users in administrative roles\"",
@@ -1146,7 +1200,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Authentication strength is a Conditional Access control that allows administrators to specify which combination of authentication methods can be used to access a resource. For example, they can make only phishing-resistant authentication methods available to access a sensitive resource. But to access a non-sensitive resource, they can allow less secure multifactor authentication (MFA) combinations, such as password + SMS.Microsoft has 3 built-in authentication strengths. MFA strength, Passwordless MFA strength, and Phishing-resistant MFA strength. Ensure administrator roles are using a CA policy with `Phishing-resistant MFA strength`.Administrators can then enroll using one of 3 methods:- FIDO2 Security Key- Windows Hello for Business- Certificate-based authentication (Multi-Factor)**Note:** Additional steps to configure methods such as FIDO2 keys are not covered here but can be found in related MS articles in the references section. The Conditional Access policy only ensures 1 of the 3 methods is used.**Warning:** Administrators should be pre-registered for a strong authentication mechanism before this Conditional Access Policy is enforced. Additionally, as stated elsewhere in the CIS Benchmark a break-glass administrator account should be excluded from this policy to ensure unfettered access in the case of an emergency.",
@@ -1168,7 +1223,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra ID Protection user risk policies detect the probability that a user account has been compromised. **Note:** While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits:- Enhanced diagnostic data- Report-only mode integration- Graph API support- Use more Conditional Access attributes like sign-in frequency in the policy",
@@ -1190,7 +1246,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra ID Protection sign-in risk detects risks in real-time and offline. A risky sign-in is an indicator for a sign-in attempt that might not have been performed by the legitimate owner of a user account.**Note:** While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits:- Enhanced diagnostic data- Report-only mode integration- Graph API support- Use more Conditional Access attributes like sign-in frequency in the policy",
@@ -1212,7 +1269,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "When a Conditional Access policy targets the Microsoft Admin Portals cloud app, the policy is enforced for tokens issued to application IDs of the following Microsoft administrative portals:- Azure portal- Exchange admin center- Microsoft 365 admin center- Microsoft 365 Defender portal- Microsoft Entra admin center- Microsoft Intune admin center- Microsoft Purview compliance portal- Power Platform admin center- SharePoint admin center- Microsoft Teams admin center`Microsoft Admin Portals` should be restricted to specific pre-determined administrative roles.",
@@ -1232,7 +1290,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra ID Protection sign-in risk detects risks in real-time and offline. A risky sign-in is an indicator for a sign-in attempt that might not have been performed by the legitimate owner of a user account.**Note:** While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits:- Enhanced diagnostic data- Report-only mode integration- Graph API support- Use more Conditional Access attributes like sign-in frequency in the policy",
@@ -1254,7 +1313,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Conditional Access (CA) can be configured to enforce access based on the device's compliance status or whether it is Entra hybrid joined. Collectively this allows CA to classify devices as managed or unmanaged, providing more granular control over authentication policies.When using `Require device to be marked as compliant`, the device must pass checks configured in **Compliance** policies defined within Intune (Endpoint Manager). Before these checks can be applied, the device must first be enrolled in Intune MDM.By selecting `Require Microsoft Entra hybrid joined device` this means the device must first be synchronized from an on-premises Active Directory to qualify for authentication.When configured to the recommended state below only one condition needs to be met for the user to authenticate from the device. This functions as an \"OR\" operator.The recommended state is:- `Require device to be marked as compliant`- `Require Microsoft Entra hybrid joined device`- `Require one of the selected controls`",
@@ -1276,7 +1336,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2.2",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Conditional Access (CA) can be configured to enforce access based on the device's compliance status or whether it is Entra hybrid joined. Collectively this allows CA to classify devices as managed or not, providing more granular control over whether or not a user can register MFA on a device.When using `Require device to be marked as compliant`, the device must pass checks configured in **Compliance** policies defined within Intune (Endpoint Manager). Before these checks can be applied, the device must first be enrolled in Intune MDM.By selecting `Require Microsoft Entra hybrid joined device` this means the device must first be synchronized from an on-premises Active Directory to qualify for authentication.When configured to the recommended state below only one condition needs to be met for the user to register MFA from the device. This functions as an \"OR\" operator.The recommended state is to restrict `Register security information` to a device that is marked as compliant or Entra hybrid joined.",
@@ -1296,7 +1357,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft has released additional settings to enhance the configuration of the Microsoft Authenticator application. These settings provide additional information and context to users who receive MFA passwordless and push requests, such as geographic location the request came from, the requesting application and requiring a number match.Ensure the following are `Enabled`.- `Require number matching for push notifications`- `Show application name in push and passwordless notifications`- `Show geographic location in push and passwordless notifications`**NOTE:** On February 27, 2023 Microsoft started enforcing number matching tenant-wide for all users using Microsoft Authenticator.",
@@ -1316,7 +1378,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "With Entra Password Protection, default global banned password lists are automatically applied to all users in an Entra ID tenant. To support business and security needs, custom banned password lists can be defined. When users change or reset their passwords, these banned password lists are checked to enforce the use of strong passwords.A custom banned password list should include some of the following examples:- Brand names- Product names- Locations, such as company headquarters- Company-specific internal terms- Abbreviations that have specific company meaning",
@@ -1336,7 +1399,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra Password Protection provides a global and custom banned password list. A password change request fails if there's a match in these banned password list. To protect on-premises Active Directory Domain Services (AD DS) environment, install and configure Entra Password Protection.**Note**: This recommendation applies to Hybrid deployments only and will have no impact unless working with on-premises Active Directory.",
@@ -1356,7 +1420,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft defines Multifactor authentication capable as being registered and enabled for a strong authentication method. The method must also be allowed by the authentication methods policy.Ensure all member users are `MFA capable`.",
@@ -1376,7 +1441,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Authentication methods support a wide variety of scenarios for signing in to Microsoft 365 resources. Some of these methods are inherently more secure than others but require more investment in time to get users enrolled and operational.SMS and Voice Call rely on telephony carrier communication methods to deliver the authenticating factor.The email one-time passcode feature is a way to authenticate B2B collaboration users when they can't be authenticated through other means, such as Microsoft Entra ID, Microsoft account (MSA), or social identity providers. When a B2B guest user tries to redeem your invitation or sign in to your shared resources, they can request a temporary passcode, which is sent to their email address. Then they enter this passcode to continue signing in.The recommended state is to `Disable` these methods:- SMS- Voice Call- Email OTP",
@@ -1396,7 +1462,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2.4",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.2 Protection",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enabling self-service password reset allows users to reset their own passwords in Entra ID. When users sign in to Microsoft 365, they will be prompted to enter additional contact information that will help them reset their password in the future. If combined registration is enabled additional information, outside of multi-factor, will not be needed. **Note:** Effective Oct. 1st, 2022, Microsoft will begin to enable combined registration for all users in Entra ID tenants created before August 15th, 2020. Tenants created after this date are enabled with combined registration by default.",
@@ -1416,7 +1483,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.3 Identity Governance",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Organizations should remove permanent members from privileged Office 365 roles and instead make them eligible, through a JIT activation workflow.",
@@ -1436,7 +1504,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.3 Identity Governance",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Access reviews enable administrators to establish an efficient automated process for reviewing group memberships, access to enterprise applications, and role assignments. These reviews can be scheduled to recur regularly, with flexible options for delegating the task of reviewing membership to different members of the organization.Ensure `Access reviews` for Guest Users are configured to be performed no less frequently than `monthly`.",
@@ -1456,7 +1525,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.3 Identity Governance",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Access reviews enable administrators to establish an efficient automated process for reviewing group memberships, access to enterprise applications, and role assignments. These reviews can be scheduled to recur regularly, with flexible options for delegating the task of reviewing membership to different members of the organization.Ensure `Access reviews` for high privileged Entra ID roles are done `monthly` or more frequently. These reviews should include **at a minimum** the roles listed below:- Global Administrator- Exchange Administrator- SharePoint Administrator- Teams Administrator- Security Administrator**Note:** An access review is created for each role selected after completing the process.",
@@ -1476,7 +1546,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3",
+          "Section": "5 Microsoft Entra admin center",
+          "SubSection": "5.3 Identity Governance",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Requiring approval before activation allows one of the selected approvers to first review and then approve the activation prior to PIM granted the role. The approver doesn't have to be a group member or owner.The recommended state is `Require approval to activate` for the Global Administrator role.",
@@ -1498,7 +1569,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.1 Audit",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The value False indicates that mailbox auditing on by default is turned on for the organization. Mailbox auditing on by default in the organization overrides the mailbox auditing settings on individual mailboxes. For example, if mailbox auditing is turned off for a mailbox (the AuditEnabled property on the mailbox is False), the default mailbox actions are still audited for the mailbox, because mailbox auditing on by default is turned on for the organization.Turning off mailbox auditing on by default ($true) has the following results:- Mailbox auditing is turned off for your organization.- From the time you turn off mailbox auditing on by default, no mailbox actions are audited, even if mailbox auditing is enabled on a mailbox (the AuditEnabled property on the mailbox is True).- Mailbox auditing isn't turned on for new mailboxes and setting the AuditEnabled property on a new or existing mailbox to True is ignored.- Any mailbox audit bypass association settings (configured by using the Set-MailboxAuditBypassAssociation cmdlet) are ignored.- Existing mailbox audit records are retained until the audit log age limit for the record expires.The recommended state for this setting is `False` at the organization level. This will enable auditing and enforce the default.",
@@ -1520,7 +1592,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.1 Audit",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Mailbox audit logging is turned on by default in all organizations. This effort started in January 2019, and means that certain actions performed by mailbox owners, delegates, and admins are automatically logged. The corresponding mailbox audit records are available for admins to search in the mailbox audit log. Mailboxes and shared mailboxes have actions assigned to them individually in order to audit the data the organization determines valuable at the mailbox level.The recommended state is `AuditEnabled` to `True` on all user mailboxes along with additional audit actions beyond the Microsoft defaults.**Note:** Due to some differences in defaults for audit actions this recommendation is specific to users assigned an E3 license only.",
@@ -1542,7 +1615,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.1 Audit",
           "Profile": "E5 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Mailbox audit logging is turned on by default in all organizations. This effort started in January 2019, and means that certain actions performed by mailbox owners, delegates, and admins are automatically logged. The corresponding mailbox audit records are available for admins to search in the mailbox audit log. Mailboxes and shared mailboxes have actions assigned to them individually in order to audit the data the organization determines valuable at the mailbox level.The recommended state is `AuditEnabled` to `True` on all user mailboxes along with additional audit actions beyond the Microsoft defaults.Note: Due to some differences in defaults for audit actions this recommendation is specific to users assigned an E5 license, or auditing addon license, only.",
@@ -1564,7 +1638,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.1 Audit",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "When configuring a user or computer account to bypass mailbox audit logging, the system will not record any access, or actions performed by the said user or computer account on any mailbox. Administratively this was introduced to reduce the volume of entries in the mailbox audit logs on trusted user or computer accounts.Ensure `AuditBypassEnabled` is not enabled on accounts without a written exception.",
@@ -1587,7 +1662,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.2 Mail Flow",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Exchange Online offers several methods of managing the flow of email messages. These are Remote domain, Transport Rules, and Anti-spam outbound policies. These methods work together to provide comprehensive coverage for potential automatic forwarding channels:- Outlook forwarding using inbox rules.- Outlook forwarding configured using OOF rule.- OWA forwarding setting (ForwardingSmtpAddress).- Forwarding set by the admin using EAC (ForwardingAddress).- Forwarding using Power Automate / Flow.Ensure a `Transport rule` and `Anti-spam outbound policy` are used to block mail forwarding.**NOTE:** Any exclusions should be implemented based on organizational policy.",
@@ -1609,7 +1685,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.2 Mail Flow",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Mail flow rules (transport rules) in Exchange Online are used to identify and take action on messages that flow through the organization.",
@@ -1631,7 +1708,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.2 Mail Flow",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "External callouts provide a native experience to identify emails from senders outside the organization. This is achieved by presenting a new tag on emails called \"External\" (the string is localized based on the client language setting) and exposing related user interface at the top of the message reading view to see and verify the real sender's email address.Once this feature is enabled via PowerShell, it might take 24-48 hours for users to start seeing the External sender tag in email messages received from external sources (outside of your organization), providing their Outlook version supports it.The recommended state is `ExternalInOutlook` set to `Enabled` `True`**Note:** Mail flow rules are often used by Exchange administrators to accomplish the External email tagging by appending a tag to the front of a subject line. There are limitations to this outlined [here.](https://techcommunity.microsoft.com/t5/exchange-team-blog/native-external-sender-callouts-on-email-in-outlook/ba-p/2250098) The preferred method in the CIS Benchmark is to use the native experience.",
@@ -1653,7 +1731,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.3 Roles",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Specify the administrators and users who can install and manage add-ins for Outlook in Exchange OnlineBy default, users can install add-ins in their Microsoft Outlook Desktop client, allowing data access within the client application.",
@@ -1675,7 +1754,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.5",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.5 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Modern authentication in Microsoft 365 enables authentication features like multifactor authentication (MFA) using smart cards, certificate-based authentication (CBA), and third-party SAML identity providers. When you enable modern authentication in Exchange Online, Outlook 2016 and Outlook 2013 use modern authentication to log in to Microsoft 365 mailboxes. When you disable modern authentication in Exchange Online, Outlook 2016 and Outlook 2013 use basic authentication to log in to Microsoft 365 mailboxes.When users initially configure certain email clients, like Outlook 2013 and Outlook 2016, they may be required to authenticate using enhanced authentication mechanisms, such as multifactor authentication. Other Outlook clients that are available in Microsoft 365 (for example, Outlook Mobile and Outlook for Mac 2016) always use modern authentication to log in to Microsoft 365 mailboxes.",
@@ -1697,7 +1777,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.5",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.5 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "MailTips are informative messages displayed to users while they're composing a message. While a new message is open and being composed, Exchange analyzes the message (including recipients). If a potential problem is detected, the user is notified with a MailTip prior to sending the message. Using the information in the MailTip, the user can adjust the message to avoid undesirable situations or non-delivery reports (also known as NDRs or bounce messages).",
@@ -1719,7 +1800,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.5",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.5 Settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This setting allows users to open certain external files while working in Outlook on the web. If allowed, keep in mind that ",
@@ -1741,7 +1823,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.5",
+          "Section": "6 Exchange admin center",
+          "SubSection": "6.5 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting enables or disables authenticated client SMTP submission (SMTP AUTH) at an organization level in Exchange Online. The recommended state is `Turn off SMTP AUTH protocol for your organization` (checked).",
@@ -1763,7 +1846,8 @@
       ],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Modern authentication in Microsoft 365 enables authentication features like multifactor authentication (MFA) using smart cards, certificate-based authentication (CBA), and third-party SAML identity providers.",
@@ -1783,7 +1867,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Entra ID B2B provides authentication and management of guests. Authentication happens via one-time passcode when they don't already have a work or school account or a Microsoft account. Integration with SharePoint and OneDrive allows for more granular control of how guest user accounts are managed in the organization's AAD, unifying a similar guest experience already deployed in other Microsoft 365 services such as Teams.**Note:** Global Reader role currently can't access SharePoint using PowerShell.",
@@ -1805,7 +1890,8 @@
       ],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The external sharing settings govern sharing for the organization overall. Each site has its own sharing setting that can be set independently, though it must be at the same or more restrictive setting as the organization. The new and existing guests option requires people who have received invitations to sign in with their work or school account (if their organization uses Microsoft 365) or a Microsoft account, or to provide a code to verify their identity. Users can share with guests already in your organization's directory, and they can send invitations to people who will be added to the directory if they sign in.The recommended state is `New and existing guests` or less permissive.",
@@ -1825,7 +1911,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This setting governs the global permissiveness of OneDrive content sharing in the organization. OneDrive content sharing can be restricted independent of SharePoint but can never be more permissive than the level established with SharePoint.The recommended state is `Only people in your organization`.",
@@ -1847,7 +1934,8 @@
       ],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "SharePoint gives users the ability to share files, folders, and site collections. Internal users can share with external collaborators, and with the right permissions could share to other external parties.",
@@ -1869,7 +1957,8 @@
       ],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Control sharing of documents to external domains by either blocking domains or only allowing sharing with specific named domains.",
@@ -1889,7 +1978,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting sets the default link type that a user will see when sharing content in OneDrive or SharePoint. It does not restrict or exclude any other options.The recommended state is `Specific people (only the people the user specifies)`",
@@ -1909,7 +1999,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "External sharing of content can be restricted to specific security groups. This setting is global, applies to sharing in both SharePoint and OneDrive and cannot be set at the site level in SharePoint.The recommended state is `Enabled` or `Checked`.**Note:** Users in these security groups must be allowed to invite guests in the guest invite settings in Microsoft Entra. Identity > External Identities > External collaboration settings",
@@ -1929,7 +2020,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting configures the expiration time for each guest that is invited to the SharePoint site or with whom users share individual files and folders with.The recommended state is `30` or less.",
@@ -1949,7 +2041,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting configures if guests who use a verification code to access the site or links are required to reauthenticate after a set number of days.The recommended state is `15` or less.",
@@ -1969,7 +2062,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.2",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.2 Policies",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting configures the permission that is selected by default for sharing link from a SharePoint site.The recommended state is `View`.",
@@ -1989,7 +2083,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.3",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.3 Settings",
           "Profile": "E5 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "By default, SharePoint online allows files that Defender for Office 365 has detected as infected to be downloaded.",
@@ -2011,7 +2106,8 @@
       ],
       "Attributes": [
         {
-          "Section": "7.3",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.3 Settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft OneDrive allows users to sign in their cloud tenant account and begin syncing select folders or the entire contents of OneDrive to a local computer. By default, this includes any computer with OneDrive already installed, whether it is Entra Joined , Entra Hybrid Joined or Active Directory Domain joined.The recommended state for this setting is `Allow syncing only on computers joined to specific domains` `Enabled: Specify the AD domain GUID(s)`",
@@ -2031,7 +2127,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.3",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This setting controls custom script execution on self-service created sites.Custom scripts can allow users to change the look, feel and behavior of sites and pages. Every script that runs in a SharePoint page (whether it's an HTML page in a document library or a JavaScript in a Script Editor Web Part) always runs in the context of the user visiting the page and the SharePoint application. This means:- Scripts have access to everything the user has access to.- Scripts can access content across several Microsoft 365 services and even beyond with Microsoft Graph integration.The recommended state is `Prevent users from running custom script on self-service created sites`.",
@@ -2051,7 +2148,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7.3",
+          "Section": "7 SharePoint admin center",
+          "SubSection": "7.3 Settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting controls custom script execution on a particular site (previously called \"site collection\").Custom scripts can allow users to change the look, feel and behavior of sites and pages. Every script that runs in a SharePoint page (whether it's an HTML page in a document library or a JavaScript in a Script Editor Web Part) always runs in the context of the user visiting the page and the SharePoint application. This means:- Scripts have access to everything the user has access to.- Scripts can access content across several Microsoft 365 services and even beyond with Microsoft Graph integration.The recommended state is `DenyAddAndCustomizePages` set to `$true`.",
@@ -2073,7 +2171,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.1",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.1 Teams",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Teams enables collaboration via file sharing. This file sharing is conducted within Teams, using SharePoint Online, by default; however, third-party cloud services are allowed as well.**Note:** Skype for business is deprecated as of July 31, 2021 although these settings may still be valid for a period of time. See the link in the references section for more information.",
@@ -2095,7 +2194,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.1",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.1 Teams",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Teams channel email addresses are an optional feature that allows users to email the Teams channel directly.",
@@ -2117,7 +2217,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.2",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.2 Users",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This policy controls whether external domains are allowed, blocked or permitted based on an allowlist or denylist. When external domains are allowed, users in your organization can chat, add users to meetings, and use audio video conferencing with users in external organizations.The recommended state is `Allow only specific external domains` or `Block all external domains`.",
@@ -2139,7 +2240,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.2",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.2 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls chats and meetings with external unmanaged Teams users (those not managed by an organization, such as Microsoft Teams (free)). The recommended state is: `People in my organization can communicate with Teams users whose accounts aren't managed by an organization` set to `Off`.",
@@ -2161,7 +2263,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.2",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.2 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This setting prevents external users who are not managed by an organization from initiating contact with users in the protected organization.The recommended state is to uncheck `External users with Teams accounts not managed by an organization can contact users in my organization`.**Note:** Disabling this setting is used as an additional stop gap for the previous setting which disables communication with unmanaged Teams users entirely. If an organization chooses to have an exception to **(L1) Ensure communication with unmanaged Teams users is disabled** they can do so while also disabling the ability for the same group of users to initiate contact. Disabling communication entirely will also disable the ability for unmanaged users to initiate contact.",
@@ -2181,7 +2284,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "8.2",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.2 Users",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls chat with external unmanaged Skype users.**Note:** Skype for business is deprecated as of July 31, 2021, although these settings may still be valid for a period of time. See the link in the reference section for more information.",
@@ -2201,7 +2305,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "8.4",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.4 Teams apps",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This policy setting controls which class of apps are available for users to install.",
@@ -2223,7 +2328,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting can prevent anyone other than invited attendees (people directly invited by the organizer, or to whom an invitation was forwarded) from bypassing the lobby and entering the meeting.For more information on how to setup a sensitive meeting, please visit **Configure Teams meetings with protection for sensitive data - Microsoft Teams:** https://learn.microsoft.com/en-us/MicrosoftTeams/configure-meetings-sensitive-protection",
@@ -2245,7 +2351,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls if an anonymous participant can start a Microsoft Teams meeting without someone in attendance. Anonymous users and dial-in callers must wait in the lobby until the meeting is started by someone in the organization or an external user from a trusted organization.Anonymous participants are classified as:- Participants who are not logged in to Teams with a work or school account.- Participants from non-trusted organizations (as configured in external access).- Participants from organizations where there is not mutual trust.**Note:** This setting only applies when `Who can bypass the lobby` is set to `Everyone`. If the `anonymous users can join a meeting` organization-level setting or meeting policy is `Off`, this setting only applies to dial-in callers.",
@@ -2267,7 +2374,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls who can join a meeting directly and who must wait in the lobby until they're admitted by an organizer, co-organizer, or presenter of the meeting.",
@@ -2289,7 +2397,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls if users who dial in by phone can join the meeting directly or must wait in the lobby. Admittance to the meeting from the lobby is authorized by the meeting organizer, co-organizer, or presenter of the meeting.",
@@ -2311,7 +2420,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls who has access to read and write chat messages during a meeting.",
@@ -2333,7 +2443,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting controls who can present in a Teams meeting. **Note:** Organizers and co-organizers can change this setting when the meeting is set up.",
@@ -2355,7 +2466,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "This policy setting allows control of who can present in meetings and who can request control of the presentation while a meeting is underway.",
@@ -2377,7 +2489,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This meeting policy setting controls whether users can read or write messages in external meeting chats with untrusted organizations. If an external organization is on the list of trusted organizations this setting will be ignored.",
@@ -2399,7 +2512,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.5",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.5 Meetings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This setting controls the ability for a user to initiate a recording of a meeting in progress.The recommended state is `Off` for the `Global (Org-wide default)` meeting policy.",
@@ -2422,7 +2536,8 @@
       ],
       "Attributes": [
         {
-          "Section": "8.6",
+          "Section": "8 Microsoft Teams admin center",
+          "SubSection": "8.6 Messaging",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Automated",
           "Description": "User reporting settings allow a user to report a message as malicious for further analysis. This recommendation is composed of 3 different settings and all be configured to pass:- **In the Teams admin center:** On by default and controls whether users are able to report messages from Teams. When this setting is turned off, users can't report messages within Teams, so the corresponding setting in the Microsoft 365 Defender portal is irrelevant.- **In the Microsoft 365 Defender portal:** On by default for new tenants. Existing tenants need to enable it. If user reporting of messages is turned on in the Teams admin center, it also needs to be turned on the Defender portal for user reported messages to show up correctly on the User reported tab on the Submissions page.- **Defender - Report message destinations:** This applies to more than just Microsoft Teams and allows for an organization to keep their reports contained. Due to how the parameters are configured on the backend it is included in this assessment as a requirement.",
@@ -2442,7 +2557,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This setting allows business-to-business (B2B) guests access to Microsoft Fabric, and contents that they have permissions to. With the setting turned off, B2B guest users receive an error when trying to access Power BI.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2462,7 +2578,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This setting helps organizations choose whether new external users can be invited to the organization through Power BI sharing, permissions, and subscription experiences. This setting only controls the ability to invite through Power BI.The recommended state is `Enabled for a subset of the organization` or `Disabled`.**Note:** To invite external users to the organization, the user must also have the Microsoft Entra Guest Inviter role.",
@@ -2482,7 +2599,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This setting allows Microsoft Entra B2B guest users to have full access to the browsing experience using the left-hand navigation pane in the organization. Guest users who have been assigned workspace roles or specific item permissions will continue to have those roles and/or permissions, even if this setting is disabled.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2502,7 +2620,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Power BI enables users to share reports and materials directly on the internet from both the application's desktop version and its web user interface. This functionality generates a publicly reachable web link that doesn't necessitate authentication or the need to be an Entra ID user in order to access and view it.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2522,7 +2641,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Power BI allows the integration of R and Python scripts directly into visuals. This feature allows data visualizations by incorporating custom calculations, statistical analyses, machine learning models, and more using R or Python scripts. Custom visuals can be created by embedding them directly into Power BI reports. Users can then interact with these visuals and see the results of the custom code within the Power BI interface.",
@@ -2542,7 +2662,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Information protection tenant settings help to protect sensitive information in the Power BI tenant. Allowing and applying sensitivity labels to content ensures that information is only seen and accessed by the appropriate users.The recommended state is `Enabled` or `Enabled for a subset of the organization`.**Note:** Sensitivity labels and protection are only applied to files exported to Excel, PowerPoint, or PDF files, that are controlled by \"Export to Excel\" and \"Export reports as PowerPoint presentation or PDF documents\" settings. All other export and sharing options do not support the application of sensitivity labels and protection.**Note 2:** There are some prerequisite steps that need to be completed in order to fully utilize labeling. See [here](https://learn.microsoft.com/en-us/power-bi/enterprise/service-security-enable-data-sensitivity-labels#licensing-and-requirements).",
@@ -2562,7 +2683,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Creating a shareable link allows a user to create a link to a report or dashboard, then add that link to an email or another messaging application. There are 3 options that can be selected when creating a shareable link:- People in your organization- People with existing access- Specific peopleThis setting solely deals with restrictions to `People in the organization`. External users by default are not included in any of these categories, and therefore cannot use any of these links regardless of the state of this setting.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2582,7 +2704,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Power BI admins can specify which users or user groups can share datasets externally with guests from a different tenant through the in-place mechanism. Disabling this setting prevents any user from sharing datasets externally by restricting the ability of users to turn on external sharing for datasets they own or manage.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2602,7 +2725,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "This setting blocks the use of resource key based authentication. The Block ResourceKey Authentication setting applies to streaming and PUSH datasets. If blocked users will not be allowed send data to streaming and PUSH datasets using the API with a resource key.The recommended state is `Enabled`.",
@@ -2622,7 +2746,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Web apps registered in Microsoft Entra ID use an assigned service principal to access Power BI APIs without a signed-in user. This setting allows an app to use service principal authentication.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
@@ -2642,7 +2767,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9.1",
+          "Section": "9 Microsoft Fabric",
+          "SubSection": "9.1 Teams settings",
           "Profile": "E3 Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Service principal profiles provide a flexible solution for apps used in a multitenancy deployment. The profiles enable customer data isolation and tighter security boundaries between customers that are utilizing the app.The recommended state is `Enabled for a subset of the organization` or `Disabled`.",
