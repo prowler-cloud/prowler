@@ -81,6 +81,114 @@ class ChoiceInFilter(BaseInFilter, ChoiceFilter):
     pass
 
 
+class CommonFindingFilters(FilterSet):
+    # We filter providers from the scan in findings
+    provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+    )
+    provider_uid = CharFilter(field_name="scan__provider__uid", lookup_expr="exact")
+    provider_uid__in = CharInFilter(field_name="scan__provider__uid", lookup_expr="in")
+    provider_uid__icontains = CharFilter(
+        field_name="scan__provider__uid", lookup_expr="icontains"
+    )
+    provider_alias = CharFilter(field_name="scan__provider__alias", lookup_expr="exact")
+    provider_alias__in = CharInFilter(
+        field_name="scan__provider__alias", lookup_expr="in"
+    )
+    provider_alias__icontains = CharFilter(
+        field_name="scan__provider__alias", lookup_expr="icontains"
+    )
+
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    uid = CharFilter(field_name="uid")
+    delta = ChoiceFilter(choices=Finding.DeltaChoices.choices)
+    status = ChoiceFilter(choices=StatusChoices.choices)
+    severity = ChoiceFilter(choices=SeverityChoices)
+    impact = ChoiceFilter(choices=SeverityChoices)
+    muted = BooleanFilter(
+        help_text="If this filter is not provided, muted and non-muted findings will be returned."
+    )
+
+    resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
+
+    region = CharFilter(method="filter_resource_region")
+    region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
+    region__icontains = CharFilter(
+        field_name="resource_regions", lookup_expr="icontains"
+    )
+
+    service = CharFilter(method="filter_resource_service")
+    service__in = CharInFilter(field_name="resource_services", lookup_expr="overlap")
+    service__icontains = CharFilter(
+        field_name="resource_services", lookup_expr="icontains"
+    )
+
+    resource_uid = CharFilter(field_name="resources__uid")
+    resource_uid__in = CharInFilter(field_name="resources__uid", lookup_expr="in")
+    resource_uid__icontains = CharFilter(
+        field_name="resources__uid", lookup_expr="icontains"
+    )
+
+    resource_name = CharFilter(field_name="resources__name")
+    resource_name__in = CharInFilter(field_name="resources__name", lookup_expr="in")
+    resource_name__icontains = CharFilter(
+        field_name="resources__name", lookup_expr="icontains"
+    )
+
+    resource_type = CharFilter(method="filter_resource_type")
+    resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
+    resource_type__icontains = CharFilter(
+        field_name="resources__type", lookup_expr="icontains"
+    )
+
+    # Temporarily disabled until we implement tag filtering in the UI
+    # resource_tag_key = CharFilter(field_name="resources__tags__key")
+    # resource_tag_key__in = CharInFilter(
+    #     field_name="resources__tags__key", lookup_expr="in"
+    # )
+    # resource_tag_key__icontains = CharFilter(
+    #     field_name="resources__tags__key", lookup_expr="icontains"
+    # )
+    # resource_tag_value = CharFilter(field_name="resources__tags__value")
+    # resource_tag_value__in = CharInFilter(
+    #     field_name="resources__tags__value", lookup_expr="in"
+    # )
+    # resource_tag_value__icontains = CharFilter(
+    #     field_name="resources__tags__value", lookup_expr="icontains"
+    # )
+    # resource_tags = CharInFilter(
+    #     method="filter_resource_tag",
+    #     lookup_expr="in",
+    #     help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
+    #     "separated by commas.",
+    # )
+
+    def filter_resource_service(self, queryset, name, value):
+        return queryset.filter(resource_services__contains=[value])
+
+    def filter_resource_region(self, queryset, name, value):
+        return queryset.filter(resource_regions__contains=[value])
+
+    def filter_resource_type(self, queryset, name, value):
+        return queryset.filter(resource_types__contains=[value])
+
+    def filter_resource_tag(self, queryset, name, value):
+        overall_query = Q()
+        for key_value_pair in value:
+            tag_key, tag_value = key_value_pair.split(":", 1)
+            overall_query |= Q(
+                resources__tags__key__icontains=tag_key,
+                resources__tags__value__icontains=tag_value,
+            )
+        return queryset.filter(overall_query).distinct()
+
+
 class TenantFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
@@ -257,94 +365,7 @@ class ResourceFilter(ProviderRelationshipFilterSet):
         return queryset.filter(tags__text_search=value)
 
 
-class FindingFilter(FilterSet):
-    # We filter providers from the scan in findings
-    provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
-    provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
-    provider_type = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
-    )
-    provider_type__in = ChoiceInFilter(
-        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
-    )
-    provider_uid = CharFilter(field_name="scan__provider__uid", lookup_expr="exact")
-    provider_uid__in = CharInFilter(field_name="scan__provider__uid", lookup_expr="in")
-    provider_uid__icontains = CharFilter(
-        field_name="scan__provider__uid", lookup_expr="icontains"
-    )
-    provider_alias = CharFilter(field_name="scan__provider__alias", lookup_expr="exact")
-    provider_alias__in = CharInFilter(
-        field_name="scan__provider__alias", lookup_expr="in"
-    )
-    provider_alias__icontains = CharFilter(
-        field_name="scan__provider__alias", lookup_expr="icontains"
-    )
-
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
-
-    uid = CharFilter(field_name="uid")
-    delta = ChoiceFilter(choices=Finding.DeltaChoices.choices)
-    status = ChoiceFilter(choices=StatusChoices.choices)
-    severity = ChoiceFilter(choices=SeverityChoices)
-    impact = ChoiceFilter(choices=SeverityChoices)
-    muted = BooleanFilter(
-        help_text="If this filter is not provided, muted and non-muted findings will be returned."
-    )
-
-    resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
-
-    region = CharFilter(method="filter_resource_region")
-    region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
-    region__icontains = CharFilter(
-        field_name="resource_regions", lookup_expr="icontains"
-    )
-
-    service = CharFilter(method="filter_resource_service")
-    service__in = CharInFilter(field_name="resource_services", lookup_expr="overlap")
-    service__icontains = CharFilter(
-        field_name="resource_services", lookup_expr="icontains"
-    )
-
-    resource_uid = CharFilter(field_name="resources__uid")
-    resource_uid__in = CharInFilter(field_name="resources__uid", lookup_expr="in")
-    resource_uid__icontains = CharFilter(
-        field_name="resources__uid", lookup_expr="icontains"
-    )
-
-    resource_name = CharFilter(field_name="resources__name")
-    resource_name__in = CharInFilter(field_name="resources__name", lookup_expr="in")
-    resource_name__icontains = CharFilter(
-        field_name="resources__name", lookup_expr="icontains"
-    )
-
-    resource_type = CharFilter(method="filter_resource_type")
-    resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
-    resource_type__icontains = CharFilter(
-        field_name="resources__type", lookup_expr="icontains"
-    )
-
-    # Temporarily disabled until we implement tag filtering in the UI
-    # resource_tag_key = CharFilter(field_name="resources__tags__key")
-    # resource_tag_key__in = CharInFilter(
-    #     field_name="resources__tags__key", lookup_expr="in"
-    # )
-    # resource_tag_key__icontains = CharFilter(
-    #     field_name="resources__tags__key", lookup_expr="icontains"
-    # )
-    # resource_tag_value = CharFilter(field_name="resources__tags__value")
-    # resource_tag_value__in = CharInFilter(
-    #     field_name="resources__tags__value", lookup_expr="in"
-    # )
-    # resource_tag_value__icontains = CharFilter(
-    #     field_name="resources__tags__value", lookup_expr="icontains"
-    # )
-    # resource_tags = CharInFilter(
-    #     method="filter_resource_tag",
-    #     lookup_expr="in",
-    #     help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
-    #     "separated by commas.",
-    # )
-
+class FindingFilter(CommonFindingFilters):
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
@@ -512,22 +533,37 @@ class FindingFilter(FilterSet):
 
         return queryset.filter(id__lt=end)
 
-    def filter_resource_tag(self, queryset, name, value):
-        overall_query = Q()
-        for key_value_pair in value:
-            tag_key, tag_value = key_value_pair.split(":", 1)
-            overall_query |= Q(
-                resources__tags__key__icontains=tag_key,
-                resources__tags__value__icontains=tag_value,
-            )
-        return queryset.filter(overall_query).distinct()
-
     @staticmethod
     def maybe_date_to_datetime(value):
         dt = value
         if isinstance(value, date):
             dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
         return dt
+
+
+class LatestFindingFilter(CommonFindingFilters):
+    class Meta:
+        model = Finding
+        fields = {
+            "id": ["exact", "in"],
+            "uid": ["exact", "in"],
+            "delta": ["exact", "in"],
+            "status": ["exact", "in"],
+            "severity": ["exact", "in"],
+            "impact": ["exact", "in"],
+            "check_id": ["exact", "in", "icontains"],
+        }
+        filter_overrides = {
+            FindingDeltaEnumField: {
+                "filter_class": CharFilter,
+            },
+            StatusEnumField: {
+                "filter_class": CharFilter,
+            },
+            SeverityEnumField: {
+                "filter_class": CharFilter,
+            },
+        }
 
 
 class ProviderSecretFilter(FilterSet):
