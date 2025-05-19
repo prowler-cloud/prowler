@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -111,6 +112,10 @@ class Repository(GithubService):
                             f"Secret scanning detection error in repo {repo.name}: {error}"
                         )
                         secret_scanning_enabled = None
+
+                    pushed_at = repo.pushed_at
+                    archived = repo.archived
+
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
@@ -128,6 +133,8 @@ class Repository(GithubService):
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
                         require_signed_commits=require_signed_commits,
+                        archived=archived,
+                        pushed_at=pushed_at,
                     )
 
         except Exception as error:
@@ -156,3 +163,5 @@ class Repo(BaseModel):
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
     require_signed_commits: Optional[bool]
+    archived: bool
+    pushed_at: datetime

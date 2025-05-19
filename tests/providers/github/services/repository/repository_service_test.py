@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from prowler.providers.github.services.repository.repository_service import (
@@ -25,6 +26,9 @@ def mock_list_repositories(_):
             codeowners_exists=True,
             require_code_owner_reviews=True,
             secret_scanning_enabled=True,
+            require_signed_commits=True,
+            archived=False,
+            pushed_at=datetime.now(timezone.utc),
         ),
     }
 
@@ -58,3 +62,6 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].codeowners_exists is True
         assert repository_service.repositories[1].require_code_owner_reviews is True
         assert repository_service.repositories[1].secret_scanning_enabled is True
+        assert repository_service.repositories[1].require_signed_commits is True
+        assert repository_service.repositories[1].archived is False
+        assert repository_service.repositories[1].pushed_at is not None

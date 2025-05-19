@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -41,6 +42,8 @@ class Test_repository_sensitive_data_scanner_enabled:
                 require_pull_request=False,
                 approval_count=0,
                 secret_scanning_enabled=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -83,6 +86,8 @@ class Test_repository_sensitive_data_scanner_enabled:
                 require_pull_request=False,
                 approval_count=0,
                 secret_scanning_enabled=True,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
