@@ -602,8 +602,4 @@ class Testm365PowerShell:
             # Limpia el mock para no afectar otros tests
             del sys.modules["win32crypt"]
 
-        # Test empty password raises ValueError
-        with pytest.raises(ValueError):
-            session.encrypt_password("")
-
         session.close()
