@@ -2,7 +2,7 @@ import { Card, CardBody, CardHeader } from "@nextui-org/react";
 
 import { Role, RoleDetail } from "@/types/users/users";
 
-import { RoleCard } from "./role-card";
+import { RoleItem } from "./role-item";
 
 export const RolesCard = ({
   roles,
@@ -27,7 +27,7 @@ export const RolesCard = ({
         ) : (
           <div className="space-y-2">
             {roles.map((role) => (
-              <RoleCard
+              <RoleItem
                 key={role.id}
                 role={role}
                 roleDetail={roleDetails[role.id]}
