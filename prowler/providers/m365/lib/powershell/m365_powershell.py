@@ -63,16 +63,53 @@ class M365PowerShell(PowerShellSession):
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
+
+        credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
+
         # Sanitize user and password
-        user = self.sanitize(credentials.user)
-        passwd = self.sanitize(credentials.passwd)
+        sanitized_user = self.sanitize(credentials.user)
+        sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
 
         # Securely convert encrypted password to SecureString
-        self.execute(f'$user = "{user}"')
-        self.execute(f'$secureString = "{passwd}" | ConvertTo-SecureString')
+        self.execute(f'$user = "{sanitized_user}"')
+        self.execute(
+            f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
+        )
         self.execute(
             "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
         )
+
+    def encrypt_password(self, password: str) -> str:
+        """
+        Encrypts a password using Windows CryptProtectData on Windows systems
+        or UTF-16LE encoding on other systems.
+
+        Args:
+            password (str): The password to encrypt
+
+        Returns:
+            str: The encrypted password in hexadecimal format
+
+        Raises:
+            ValueError: If password is None or empty
+        """
+        if not password:
+            raise ValueError("Password cannot be None or empty")
+
+        try:
+            if os.system == "Windows":
+                import win32crypt
+
+                return win32crypt.CryptProtectData(
+                    password.encode("utf-16le"), None, None, None, None, 0
+                )[1].hex()
+            else:
+                return password.encode("utf-16le").hex()
+        except Exception as error:
+            raise Exception(
+                file=os.path.basename(__file__),
+                message=f"Error encrypting password {str(error)}",
+            )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
@@ -86,13 +123,10 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         self.execute(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
         )
         self.execute(
             f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
-        )
-        decrypted_password = self.execute(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"'
         )
 
         app = msal.ConfidentialClientApplication(
@@ -103,7 +137,7 @@ class M365PowerShell(PowerShellSession):
 
         result = app.acquire_token_by_username_password(
             username=credentials.user,
-            password=decrypted_password,  # Needs to be in plain text
+            password=credentials.passwd,
             scopes=["https://graph.microsoft.com/.default"],
         )
 
