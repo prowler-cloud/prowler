@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixes
 
 - Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
+- Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
   
 ---
 
@@ -26,7 +27,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase. [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 - Added filter to retrieve only connected providers on the scan page. [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
 - Removed the alias if not added from findings detail page. [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
-- Updated compliance and scan page Toast Error message. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
 
 ---
 
