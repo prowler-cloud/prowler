@@ -74,7 +74,7 @@ def get_prowler_threatscore_table(
         pillar_table["Provider"].append(compliance.Provider)
         pillar_table["Pillar"].append(pillar)
         pillar_table["Score"].append(
-            f"{Style.BRIGHT}{Fore.RED}{(score_per_pillar[pillar] / max_score_per_pillar[pillar])*100:.2f}%{Style.RESET_ALL}"
+            f"{Style.BRIGHT}{Fore.RED}{(score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100:.2f}%{Style.RESET_ALL}"
         )
         if pillars[pillar]["FAIL"] > 0:
             pillar_table["Status"].append(
