@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "admincenter_external_calendar_sharing_disabled",
-  "CheckTitle": "Ensure that customer lockbox is enabled for the organization",
+  "CheckTitle": "Ensure External Sharing of Calendars is Disabled",
   "CheckType": [],
   "ServiceName": "admincenter",
   "SubServiceName": "",
