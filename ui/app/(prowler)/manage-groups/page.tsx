@@ -58,7 +58,7 @@ export default function ManageGroupsPage({
 }
 
 const SSRAddGroupForm = async () => {
-  const providersResponse = await getProviders({ pageSize: 100 });
+  const providersResponse = await getProviders({ pageSize: 50 });
   const rolesResponse = await getRoles({});
 
   const providersData =
@@ -95,7 +95,7 @@ const SSRDataEditGroup = async ({
     return <div>Provider group not found</div>;
   }
 
-  const providersResponse = await getProviders({ pageSize: 100 });
+  const providersResponse = await getProviders({ pageSize: 50 });
   const rolesResponse = await getRoles({});
 
   const providersList =
