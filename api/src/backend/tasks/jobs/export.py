@@ -45,6 +45,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
+    ProwlerThreatScoreM365,
+)
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
@@ -85,6 +88,7 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
+        (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
     ],
 }
 
