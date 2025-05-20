@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
 
+### 🐞 Fixes
+
+- Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
+  
 
 ## [v1.7.0] (Prowler v5.7.0)
 
