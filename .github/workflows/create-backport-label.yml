@@ -23,8 +23,10 @@ jobs:
           if [[ "$VERSION_ONLY" =~ ^[0-9]+\.[0-9]+\.0$ ]]; then
             echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is a minor version. Proceeding to create backport label."
 
-            FINAL_LABEL_NAME="backport-to-v${VERSION_ONLY}"
-            FINAL_DESCRIPTION="Backport PR to the v${VERSION_ONLY} branch"
+            TWO_DIGIT_VERSION=${VERSION_ONLY%.0} # Extract X.Y from X.Y.0 (e.g., 5.6 from 5.6.0)
+
+            FINAL_LABEL_NAME="backport-to-v${TWO_DIGIT_VERSION}"
+            FINAL_DESCRIPTION="Backport PR to the v${TWO_DIGIT_VERSION} branch"
 
             echo "Effective label name will be: ${FINAL_LABEL_NAME}"
             echo "Effective description will be: ${FINAL_DESCRIPTION}"
@@ -46,7 +48,7 @@ jobs:
               "https://api.github.com/repos/${OWNER_REPO}/labels")
 
               CREATE_RESPONSE_BODY=$(cat /tmp/curl_create_response.json)
-              rm -f /tmp/curl_create_response.json # Clean up temporary file
+              rm -f /tmp/curl_create_response.json
 
               if [ "$CREATE_STATUS_CODE" -eq 201 ]; then
                 echo "Label '${FINAL_LABEL_NAME}' created successfully."
@@ -57,11 +59,9 @@ jobs:
               fi
             else
               echo "Error checking for label '${FINAL_LABEL_NAME}'. HTTP Status: ${STATUS_CODE}"
-              # If you want to see the response for other errors, you can add a curl call here, e.g.:
-              # curl -s -i -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${OWNER_REPO}/labels/${FINAL_LABEL_NAME}"
               exit 1
             fi
           else
             echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is not a minor version. Skipping backport label creation."
-            exit 0 # Exit successfully as this is not an error for the workflow
+            exit 0
           fi
