@@ -45,7 +45,13 @@ const TenantIdCopy = ({ id }: { id: string }) => {
   );
 };
 
-export const UserBasicInfoCard = ({ user }: { user: UserDataWithRoles }) => {
+export const UserBasicInfoCard = ({
+  user,
+  tenantId,
+}: {
+  user: UserDataWithRoles;
+  tenantId: string;
+}) => {
   const { name, email, company_name, date_joined } = user.attributes;
 
   return (
@@ -74,7 +80,7 @@ export const UserBasicInfoCard = ({ user }: { user: UserDataWithRoles }) => {
             </span>
           </div>
           <Divider className="my-2" />
-          <TenantIdCopy id={user.id} />
+          <TenantIdCopy id={tenantId} />
         </div>
       </CardBody>
     </Card>

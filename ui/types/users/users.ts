@@ -5,7 +5,7 @@ export interface UserAttributes {
   date_joined: string;
 }
 
-export interface Membership {
+export interface MembershipData {
   type: string;
   id: string;
 }
@@ -17,7 +17,7 @@ export interface MembershipMeta {
 export interface UserRelationships {
   memberships: {
     meta: MembershipMeta;
-    data: Membership[];
+    data: MembershipData[];
   };
 }
 

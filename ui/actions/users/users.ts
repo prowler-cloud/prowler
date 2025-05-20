@@ -184,7 +184,7 @@ export const deleteUser = async (formData: FormData) => {
   }
 };
 
-export const getProfileInfo = async () => {
+export const getUserInfo = async () => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 

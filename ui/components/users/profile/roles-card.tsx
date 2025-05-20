@@ -15,7 +15,7 @@ export const RolesCard = ({
     <Card className="dark:bg-prowler-blue-400">
       <CardHeader className="gap-2">
         <div className="flex flex-col gap-1">
-          <h4 className="text-lg font-bold">User Roles</h4>
+          <h4 className="text-lg font-bold">Roles</h4>
           <p className="text-xs text-gray-500">
             Roles assigned to this user account
           </p>
