@@ -75,7 +75,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@example.com",
             passwd="test_password",
-            encrypted_passwd="test_encrypted_password",
+            encrypted_passwd="test_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
