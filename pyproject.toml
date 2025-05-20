@@ -50,6 +50,7 @@ dependencies = [
   "pandas==2.2.3",
   "py-ocsf-models==0.3.1",
   "pydantic==1.10.21",
+  "pygithub==2.5.0",
   "python-dateutil (>=2.9.0.post0,<3.0.0)",
   "pytz==2025.1",
   "schema==0.7.7",

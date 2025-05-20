@@ -12,7 +12,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -35,7 +35,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -58,7 +58,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.1 Security Defaults",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -79,7 +79,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -102,7 +102,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -123,7 +123,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -144,7 +144,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -165,7 +165,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -186,7 +186,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -207,7 +207,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -230,7 +230,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Require administrators or appropriately delegated users to create new tenants.",
@@ -250,7 +250,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "This recommendation extends guest access review by utilizing the Azure AD Privileged Identity Management feature provided in Azure AD Premium P2. Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources a a guest user.",
@@ -270,7 +270,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources as a guest user. Guest users in every subscription should be review on a regular basis to ensure that inactive and unneeded accounts are removed.",
@@ -290,7 +290,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensures that two alternate forms of identification are provided before allowing a password reset.",
@@ -310,7 +310,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Azure provides a Global Banned Password policy that applies to Azure administrative and normal user accounts. This is not applied to user accounts that are synced from an on-premise Active Directory unless Azure AD Connect is used and you enable EnforceCloudPasswordPolicyForPasswordSyncedUsers. Please see the list in default values on the specifics of this policy. To further password security, it is recommended to further define a custom banned password policy.",
@@ -330,7 +330,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the number of days before users are asked to re-confirm their authentication information is not set to 0.",
@@ -350,7 +350,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that users are notified on their primary and secondary emails on password resets.",
@@ -370,7 +370,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that all Global Administrators are notified if any other administrator resets their password.",
@@ -392,7 +392,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for applications before use.",
@@ -414,7 +414,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Allow users to provide consent for selected permissions when a request is coming from a verified publisher.",
@@ -434,7 +434,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for the apps before use.",
@@ -456,7 +456,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators or appropriately delegated users to register third-party applications.",
@@ -478,7 +478,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Limit guest user permissions.",
@@ -500,7 +500,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict invitations to users with specific administrative roles only.",
@@ -520,7 +520,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Restrict access to the Azure AD administration portal to administrators only. NOTE: This only affects access to the Azure AD administrator's web portal. This setting does not prohibit privileged users from using other methods such as Rest API or Powershell to obtain sensitive information from Azure AD.",
@@ -540,7 +540,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restricts group creation to administrators with permissions only.",
@@ -562,7 +562,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group creation to administrators only.",
@@ -582,7 +582,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group management to administrators only.",
@@ -604,7 +604,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict Microsoft 365 group creation to administrators only.",
@@ -624,7 +624,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Joining or registering devices to the active directory should require Multi-factor authentication.",
@@ -646,7 +646,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access.",
@@ -668,7 +668,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Resource locking is a powerful protection mechanism that can prevent inadvertent modification/deletion of resources within Azure subscriptions/Resource Groups and is a recommended NIST configuration.",
@@ -688,7 +688,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1. Identity and Access Management",
+          "Section": "1 Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Users who are set as subscription owners are able to make administrative changes to the subscriptions and move them into and out of Azure Active Directories.",
@@ -710,7 +710,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -733,7 +733,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -756,7 +756,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -779,7 +779,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -802,7 +802,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -825,7 +825,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -848,7 +848,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -871,7 +871,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -894,7 +894,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -917,7 +917,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -940,7 +940,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -963,7 +963,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -986,7 +986,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -1009,7 +1009,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -1032,7 +1032,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -1055,7 +1055,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -1076,7 +1076,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -1099,7 +1099,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1122,7 +1122,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1145,7 +1145,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1168,7 +1168,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1191,7 +1191,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -1214,7 +1214,7 @@
       ],
       "Attributes": [
         {
-          "Section": "2. Microsoft Defender",
+          "Section": "2 Microsoft Defender",
           "SubSection": "2.2 Microsoft Defender for IoT",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -1237,7 +1237,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable data encryption in transit.",
@@ -1259,7 +1259,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enabling encryption at the hardware level on top of the default software encryption for Storage Accounts accessing Azure storage solutions.",
@@ -1279,7 +1279,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Access Keys authenticate application access requests to data contained in Storage Accounts. A periodic rotation of these keys is recommended to ensure that potentially compromised keys cannot result in a long-term exploitable credential. The 'Rotation Reminder' is an automatic reminder feature for a manual procedure.",
@@ -1301,7 +1301,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "For increased security, regenerate storage account access keys periodically.",
@@ -1321,7 +1321,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The Storage Queue service stores messages that may be read by any client who has access to the storage account. A queue can contain an unlimited number of messages, each of which can be up to 64KB in size using version 2011-08-18 or newer. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the queues. Storage Logging log entries contain the following information about individual requests: Timing information such as start time, end-to-end latency, and server latency, authentication details, concurrency information, and the sizes of the request and response messages.",
@@ -1341,7 +1341,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Expire shared access signature tokens within an hour.",
@@ -1363,7 +1363,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Disallowing public access for a storage account overrides the public access settings for individual containers in that storage account.",
@@ -1385,7 +1385,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Restricting default network access helps to provide a new layer of security, since storage accounts accept connections from clients on any network. To limit access to selected networks, the default action must be changed.",
@@ -1407,7 +1407,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Some Azure services that interact with storage accounts operate from networks that can't be granted access through network rules. To help this type of service work as intended, allow the set of trusted Azure services to bypass the network rules. These services will then use strong authentication to access the storage account. If the Allow trusted Azure services exception is enabled, the following services are granted access to the storage account: Azure Backup, Azure Site Recovery, Azure DevTest Labs, Azure Event Grid, Azure Event Hubs, Azure Networking, Azure Monitor, and Azure SQL Data Warehouse (when registered in the subscription).",
@@ -1429,7 +1429,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Use private endpoints for your Azure Storage accounts to allow clients and services to securely access data located over a network via an encrypted Private Link. To do this, the private endpoint uses an IP address from the VNet for each service. Network traffic between disparate services securely traverses encrypted over the VNet. This VNet can also link addressing space, extending your network and accessing resources on it. Similarly, it can be a tunnel through public networks to connect remote infrastructures together. This creates further security through segmenting network traffic and preventing outside sources from accessing it.",
@@ -1451,7 +1451,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The Azure Storage blobs contain data like ePHI or Financial, which can be secret or personal. Data that is erroneously modified or deleted by an application or other storage account user will cause data loss or unavailability. It is recommended that both Azure Containers with attached Blob Storage and standalone containers with Blob Storage be made recoverable by enabling the soft delete configuration. This is to save and recover data when blobs or blob snapshots are deleted.",
@@ -1473,7 +1473,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable sensitive data encryption at rest using Customer Managed Keys rather than Microsoft Managed keys.",
@@ -1493,7 +1493,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The Storage Blob service provides scalable, cost-efficient object storage in the cloud. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the blobs. Storage Logging log entries contain the following information about individual requests: timing information such as start time, end-to-end latency, and server latency; authentication details; concurrency information; and the sizes of the request and response messages.",
@@ -1513,7 +1513,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Azure Table storage is a service that stores structured NoSQL data in the cloud, providing a key/attribute store with a schema-less design. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the tables. Storage Logging log entries contain the following information about individual requests: timing information such as start time, end-to-end latency, and server latency; authentication details; concurrency information; and the sizes of the request and response messages.",
@@ -1535,7 +1535,7 @@
       ],
       "Attributes": [
         {
-          "Section": "3. Storage Accounts",
+          "Section": "3 Storage Accounts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "In some cases, Azure Storage sets the minimum TLS versio n to be version 1.0 by default. TLS 1.0 is a legacy version and has known vulnerabilities. This minimum TLSversion can be configured to be later protocols such as TLS 1.2.",
@@ -1557,7 +1557,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1580,7 +1580,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1603,7 +1603,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1626,7 +1626,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1649,7 +1649,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1672,7 +1672,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1695,7 +1695,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1718,7 +1718,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1741,7 +1741,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1764,7 +1764,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -1787,7 +1787,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1810,7 +1810,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1833,7 +1833,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1856,7 +1856,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1879,7 +1879,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1902,7 +1902,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1925,7 +1925,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1948,7 +1948,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1969,7 +1969,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -1992,7 +1992,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.4 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2015,7 +2015,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.4 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2038,7 +2038,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.4 MySQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2061,7 +2061,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.4 MySQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2084,7 +2084,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -2107,7 +2107,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2130,7 +2130,7 @@
       ],
       "Attributes": [
         {
-          "Section": "4. Database Services",
+          "Section": "4 Database Services",
           "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2153,7 +2153,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
@@ -2176,7 +2176,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2199,7 +2199,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2222,7 +2222,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -2245,7 +2245,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2268,7 +2268,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2291,7 +2291,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
@@ -2314,7 +2314,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2337,7 +2337,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2360,7 +2360,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2383,7 +2383,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2406,7 +2406,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2429,7 +2429,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2452,7 +2452,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2475,7 +2475,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2498,7 +2498,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2521,7 +2521,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
@@ -2542,7 +2542,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Resource Logs capture activity to the data access plane while the Activity log is a subscription-level log for the control plane. Resource-level diagnostic logs provide insight into operations that were performed within that resource itself; for example, reading or updating a secret from a Key Vault. Currently, 95 Azure resources support Azure Monitoring (See the more information section for a complete list), including Network Security Groups, Load Balancers, Key Vault, AD, Logic Apps, and CosmosDB. The content of these logs varies by resource type. A number of back-end services were not configured to log and store Resource Logs for certain activities or for a sufficient length. It is crucial that monitoring is correctly configured to log all relevant activities and retain those logs for a sufficient length of time. Given that the mean time to detection in an enterprise is 240 days, a minimum retention period of two years is recommended.",
@@ -2562,7 +2562,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The use of Basic or Free SKUs in Azure whilst cost effective have significant limitations in terms of what can be monitored and what support can be realized from Microsoft. Typically, these SKU’s do not have a service SLA and Microsoft will usually refuse to provide support for them. Consequently Basic/Free SKUs should never be used for production workloads.",
@@ -2584,7 +2584,7 @@
       ],
       "Attributes": [
         {
-          "Section": "5. Logging and Monitoring",
+          "Section": "5 Logging and Monitoring",
           "SubSection": "5.3 Configuring Application Insights",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
@@ -2607,7 +2607,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
@@ -2629,7 +2629,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
@@ -2651,7 +2651,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
@@ -2673,7 +2673,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required and narrowly configured.",
@@ -2695,7 +2695,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Network Security Group Flow Logs should be enabled and the retention period set to greater than or equal to 90 days.",
@@ -2717,7 +2717,7 @@
       ],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable Network Watcher for Azure subscriptions.",
@@ -2737,7 +2737,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "6. Networking",
+          "Section": "6 Networking",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Public IP Addresses provide tenant accounts with Internet connectivity for resources contained within the tenant. During the creation of certain resources in Azure, a Public IP Address may be created. All Public IP Addresses within the tenant should be periodically reviewed for accuracy and necessity.",
@@ -2759,7 +2759,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The Azure Bastion service allows secure remote access to Azure Virtual Machines over the Internet without exposing remote access protocol ports and services directly to the Internet. The Azure Bastion service provides this access using TLS over 443/TCP, and subscribes to hardened configurations within an organization's Azure Active Directory service.",
@@ -2781,7 +2781,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Migrate blob-based VHDs to Managed Disks on Virtual Machines to exploit the default features of this configuration. The features include: 1. Default Disk Encryption 2. Resilience, as Microsoft will managed the disk storage and move around if underlying hardware goes faulty 3. Reduction of costs over storage accounts",
@@ -2803,7 +2803,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that OS disks (boot volumes) and data disks  (non-boot volumes) are encrypted with CMK (Customer Managed Keys). Customer Managed keys can be either ADE orServer Side Encryption (SSE).",
@@ -2825,7 +2825,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that unattached disks in a subscription are encrypted with a Customer Managed Key (CMK).",
@@ -2845,7 +2845,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For added security, only install organization-approved extensions on VMs.",
@@ -2867,7 +2867,7 @@
       ],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Install endpoint protection for all virtual machines.",
@@ -2887,7 +2887,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "7. Virtual Machines",
+          "Section": "7 Virtual Machines",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "NOTE: This is a legacy recommendation. Managed Disks are encrypted by default and recommended for all new VM implementations. VHD (Virtual Hard Disks) are stored in blob storage and are the old-style disks that were attached to Virtual Machines. The blob VHD was then leased to the VM. By default, storage accounts are not encrypted, and Microsoft Defender will then recommend that the OS disks should be encrypted. Storage accounts can be encrypted as a whole using PMK or CMK. This should be turned on for storage accounts containing VHDs",
@@ -2909,7 +2909,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Keys in Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -2931,7 +2931,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Keys in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -2953,7 +2953,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Secrets in Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -2975,7 +2975,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Secrets in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -2997,7 +2997,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The Key Vault contains object keys, secrets, and certificates. Accidental unavailability of a Key Vault can cause immediate data loss or loss of security functions (authentication, validation, verification, non-repudiation, etc.) supported by the Key Vault objects. It is recommended the Key Vault be made recoverable by enabling the 'Do Not Purge' and 'Soft Delete' functions. This is in order to prevent loss of encrypted data, including storage accounts, SQL databases, and/or dependent services provided by Key Vault objects (Keys, Secrets, Certificates) etc. This may happen in the case of accidental deletion by a user or from disruptive activity by a malicious user. WARNING: A current limitation of the soft-delete feature across all Azure services is role assignments disappearing when Key Vault is deleted. All role assignments will need to be recreated after recovery.",
@@ -3019,7 +3019,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "WARNING: Role assignments disappear when a Key Vault has been deleted (soft-delete) and recovered. Afterwards it will be required to recreate all role assignments. This is a limitation of the soft-delete feature across all Azure services.",
@@ -3041,7 +3041,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Private endpoints will secure network traffic from Azure Key Vault to the resources requesting secrets and keys.",
@@ -3063,7 +3063,7 @@
       ],
       "Attributes": [
         {
-          "Section": "8. Key Vault",
+          "Section": "8 Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Automatic Key Rotation is available in Public Preview. The currently supported applications are Key Vault, Managed Disks, and Storage accounts accessing keys within Key Vault. The number of supported applications will incrementally increased.",
@@ -3085,7 +3085,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Azure App Service Authentication is a feature that can prevent anonymous HTTP requests from reaching a Web Application or authenticate those with tokens before they reach the app. If an anonymous request is received from a browser, App Service will redirect to a logon page. To handle the logon process, a choice from a set of identity providers can be made, or a custom authentication mechanism can be implemented.",
@@ -3107,7 +3107,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Azure Web Apps allows sites to run under both HTTP and HTTPS by default. Web apps can be accessed by anyone using non-secure HTTP links by default. Non-secure HTTP requests can be restricted and all HTTP requests redirected to the secure HTTPS port. It is recommended to enforce HTTPS-only traffic.",
@@ -3129,7 +3129,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The TLS (Transport Layer Security) protocol secures transmission of data over the internet using standard encryption technology. Encryption should be set with the latest version of TLS. App service allows TLS 1.2 by default, which is the recommended TLS level by industry standards such as PCI DSS.",
@@ -3151,7 +3151,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Client certificates allow for the app to request a certificate for incoming requests. Only clients that have a valid certificate will be able to reach the app.",
@@ -3173,7 +3173,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Managed service identity in App Service provides more security by eliminating secrets from the app, such as credentials in the connection strings. When registering with Azure Active Directory in App Service, the app will connect to other Azure services securely without the need for usernames and passwords.",
@@ -3195,7 +3195,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Periodically newer versions are released for PHP software either due to security flaws or to include additional functionality. Using the latest PHP version for web apps is recommended in order to take advantage of security fixes, if any, and/or additional functionalities of the newer version.",
@@ -3217,7 +3217,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Periodically, newer versions are released for Python software either due to security flaws or to include additional functionality. Using the latest full Python version for web apps is recommended in order to take advantage of security fixes, if any, and/or additional functionalities of the newer version.",
@@ -3239,7 +3239,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Periodically, newer versions are released for Java software either due to security flaws or to include additional functionality. Using the latest Java version for web apps is recommended in order to take advantage of security fixes, if any, and/or new functionalities of the newer version.",
@@ -3261,7 +3261,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Periodically, newer versions are released for HTTP either due to security flaws or to include additional functionality. Using the latest HTTP version for web apps to takeadvantage of security fixes, if any, and/or new functionalities of the newer version.",
@@ -3283,7 +3283,7 @@
       ],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "By default, Azure Functions, Web, and API Services can be deployed over FTP. If FTP is required for an essential deployment workflow, FTPS should be required for FTP login for all App Service Apps and Functions.",
@@ -3303,7 +3303,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "9. AppService",
+          "Section": "9 AppService",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Azure Key Vault will store multiple types of sensitive information such as encryption keys, certificate thumbprints, and Managed Identity Credentials. Access to these 'Secrets' can be controlled through granular permissions.",
@@ -3323,7 +3323,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "10. Miscellaneous",
+          "Section": "10 Miscellaneous",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Resource Manager Locks provide a way for administrators to lock down Azure resources to prevent deletion of, or modifications to, a resource. These locks sit outside of the Role Based Access Controls (RBAC) hierarchy and, when applied, will place restrictions on the resource for all users. These locks are very useful when there is an important resource in a subscription that users should not be able to delete or change. Locks can help prevent accidental and malicious changes or deletion.",
