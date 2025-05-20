@@ -243,6 +243,58 @@ CIS_1_5_AWS = Compliance(
     ],
 )
 
+CIS_4_0_M365_NAME = "cis_4.0_m365"
+CIS_4_0_M365 = Compliance(
+    Framework="CIS",
+    Provider="M365",
+    Version="4.0",
+    Description="The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for configuring security options for Microsoft 365 with an emphasis on foundational, testable, and architecture agnostic settings.",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=[
+                "mfa_delete_enabled",
+            ],
+            Id="2.1.3",
+            Description="Ensure MFA Delete is enabled on S3 buckets",
+            Attributes=[
+                CIS_Requirement_Attribute(
+                    Section="2.1. Simple Storage Service (S3)",
+                    Profile="Level 1",
+                    AssessmentStatus="Automated",
+                    Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
+                    RationaleStatement="Adding MFA delete to an S3 bucket, requires additional authentication when you change the version state of your bucket or you delete and object version adding another layer of security in the event your security credentials are compromised or unauthorized access is granted.",
+                    ImpactStatement="",
+                    RemediationProcedure="Perform the steps below to enable MFA delete on an S3 bucket.Note:-You cannot enable MFA Delete using the AWS Management Console. You must use the AWS CLI or API.-You must use your 'root' account to enable MFA Delete on S3 buckets.**From Command line:**1. Run the s3api put-bucket-versioning command aws s3api put-bucket-versioning --profile my-root-profile --bucket Bucket_Name --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa arn:aws:iam::aws_account_id:mfa/root-account-mfa-device passcode",
+                    AuditProcedure="Perform the steps below to confirm MFA delete is configured on an S3 Bucket**From Console:**1. Login to the S3 console at `https://console.aws.amazon.com/s3/`2. Click the `Check` box next to the Bucket name you want to confirm3. In the window under `Properties`4. Confirm that Versioning is `Enabled`5. Confirm that MFA Delete is `Enabled`**From Command Line:**1. Run the `get-bucket-versioning aws s3api get-bucket-versioning --bucket my-bucket Output example: <VersioningConfiguration xmlns=`http://s3.amazonaws.com/doc/2006-03-01/`>  <Status>Enabled</Status> <MfaDelete>Enabled</MfaDelete></VersioningConfiguration>\ If the Console or the CLI output does not show Versioning and MFA Delete `enabled` refer to the remediation below.",
+                    AdditionalInformation="",
+                    References="https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html#MultiFactorAuthenticationDelete:https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMFADelete.html:https://aws.amazon.com/blogs/security/securing-access-to-aws-using-mfa-part-3/:https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_lost-or-broken.html",
+                    DefaultValue="By default, MFA Delete is not enabled on S3 buckets.",
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="2.1.4",
+            Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
+            Attributes=[
+                CIS_Requirement_Attribute(
+                    Section="1.1 Control Plane Node Configuration Files",
+                    Profile="Level 1 - Master Node",
+                    AssessmentStatus="Automated",
+                    Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
+                    RationaleStatement="The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.",
+                    ImpactStatement="",
+                    RemediationProcedure="Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` chmod 600 /etc/kubernetes/manifests/kube-controller-manager.yaml ```",
+                    AuditProcedure="Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` stat -c %a /etc/kubernetes/manifests/kube-controller-manager.yaml ```  Verify that the permissions are `600` or more restrictive.",
+                    AdditionalInformation="",
+                    References="https://kubernetes.io/docs/admin/kube-apiserver/",
+                    DefaultValue="By default, the `kube-controller-manager.yaml` file has permissions of `640`.",
+                )
+            ],
+        ),
+    ],
+)
+
 MITRE_ATTACK_AWS_NAME = "mitre_attack_aws"
 MITRE_ATTACK_AWS = Compliance(
     Framework="MITRE-ATTACK",

@@ -631,7 +631,10 @@ def execute(
                 )
             elif global_provider.type == "kubernetes":
                 is_finding_muted_args["cluster"] = global_provider.identity.cluster
-
+            elif global_provider.type == "github":
+                is_finding_muted_args["account_name"] = (
+                    global_provider.identity.account_name
+                )
             for finding in check_findings:
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(
