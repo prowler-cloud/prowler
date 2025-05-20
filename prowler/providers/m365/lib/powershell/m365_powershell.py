@@ -1,4 +1,5 @@
 import os
+import platform
 
 import msal
 
@@ -86,27 +87,35 @@ class M365PowerShell(PowerShellSession):
         or UTF-16LE encoding on other systems.
 
         Args:
-            password (str): The password to encrypt
+        password (str): The password to encrypt
 
         Returns:
-            str: The encrypted password in hexadecimal format
+        str: The encrypted password in hexadecimal format
 
         Raises:
-            ValueError: If password is None or empty
+        ValueError: If password is None or empty
         """
         try:
-            if os.system == "Windows":
+            if platform.system() == "Windows":
                 import win32crypt
 
-                return win32crypt.CryptProtectData(
+                encrypted_blob = win32crypt.CryptProtectData(
                     password.encode("utf-16le"), None, None, None, None, 0
-                )[1].hex()
+                )
+
+                encrypted_bytes = encrypted_blob
+                if isinstance(encrypted_blob, tuple):
+                    encrypted_bytes = encrypted_blob[1]
+                elif hasattr(encrypted_blob, "data"):
+                    encrypted_bytes = encrypted_blob.data
+
+                return encrypted_bytes.hex()
+
             else:
                 return password.encode("utf-16le").hex()
         except Exception as error:
             raise Exception(
-                file=os.path.basename(__file__),
-                message=f"Error encrypting password {str(error)}",
+                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
             )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:

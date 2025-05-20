@@ -582,14 +582,13 @@ class Testm365PowerShell:
         # Test non-Windows system (should use utf-16le hex encoding)
         from unittest import mock
 
-        with mock.patch("os.system", "Linux"):
+        with mock.patch("platform.system", return_value="Linux"):
             result = session.encrypt_password("password123")
             expected = "password123".encode("utf-16le").hex()
             assert result == expected
 
-        # Test Windows system (should use win32crypt)
-        with mock.patch("os.system", "Windows"):
-            # Simula la importación de win32crypt aunque no esté instalado
+        # Test Windows system with tuple return
+        with mock.patch("platform.system", return_value="Windows"):
             import sys
 
             win32crypt_mock = mock.MagicMock()
@@ -599,7 +598,22 @@ class Testm365PowerShell:
             result = session.encrypt_password("password123")
             assert result == b"encrypted_bytes".hex()
 
-            # Limpia el mock para no afectar otros tests
+            # Clean up mock
+            del sys.modules["win32crypt"]
+
+        # Test error handling
+        with mock.patch("platform.system", return_value="Windows"):
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.side_effect = Exception("Test error")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            with pytest.raises(Exception) as exc_info:
+                session.encrypt_password("password123")
+            assert "Error encrypting password: Test error" in str(exc_info.value)
+
+            # Clean up mock
             del sys.modules["win32crypt"]
 
         session.close()
