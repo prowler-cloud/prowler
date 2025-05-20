@@ -317,7 +317,7 @@ def prowler():
         )
 
     # Prowler Fixer
-    if output_options.fixer:
+    if args.fixer:
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):
