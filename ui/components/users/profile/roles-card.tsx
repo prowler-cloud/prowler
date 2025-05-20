@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 
-import { Role, RoleDetail } from "@/types/users/users";
+import { RoleData, RoleDetail } from "@/types/users/users";
 
 import { RoleItem } from "./role-item";
 
@@ -8,7 +8,7 @@ export const RolesCard = ({
   roles,
   roleDetails,
 }: {
-  roles: Role[];
+  roles: RoleData[];
   roleDetails: Record<string, RoleDetail>;
 }) => {
   return (

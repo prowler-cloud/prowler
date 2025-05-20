@@ -51,7 +51,7 @@ export interface SignInResponse {
   data: TokenData;
 }
 
-export interface Role {
+export interface RoleData {
   type: "roles";
   id: string;
 }
@@ -106,7 +106,7 @@ export interface UserDataWithRoles
       meta: {
         count: number;
       };
-      data: Role[];
+      data: RoleData[];
     };
   };
 }

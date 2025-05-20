@@ -5,6 +5,7 @@ import { CircleUserRound } from "lucide-react";
 import { useState } from "react";
 
 import { CopyIcon, DoneIcon } from "@/components/icons";
+import { CustomButton } from "@/components/ui/custom/custom-button";
 import { DateWithTime } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users/users";
 
@@ -22,9 +23,12 @@ const TenantIdCopy = ({ id }: { id: string }) => {
       <p className="text-sm font-semibold text-default-600">Tenant ID:</p>
       <div className="flex items-center">
         <Tooltip content={copied ? "Copied!" : "Copy ID"}>
-          <button
-            onClick={handleCopyTenantId}
-            className="ml-2 flex items-center text-sm text-default-500 hover:text-default-800"
+          <CustomButton
+            ariaLabel="Copy Tenant ID"
+            onPress={handleCopyTenantId}
+            variant="light"
+            color="primary"
+            size="sm"
           >
             <span className="mr-2 max-w-[120px] overflow-hidden overflow-ellipsis whitespace-nowrap">
               {id}
@@ -34,7 +38,7 @@ const TenantIdCopy = ({ id }: { id: string }) => {
             ) : (
               <CopyIcon size={16} />
             )}
-          </button>
+          </CustomButton>
         </Tooltip>
       </div>
     </div>

@@ -4,7 +4,9 @@ import { Chip } from "@nextui-org/react";
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 
-import { Role, RoleDetail } from "@/types/users/users";
+import { CustomButton } from "@/components/ui/custom/custom-button";
+import { getRolePermissions } from "@/lib/permissions";
+import { RoleData, RoleDetail } from "@/types/users/users";
 
 interface PermissionItemProps {
   enabled: boolean;
@@ -30,7 +32,7 @@ export const RoleItem = ({
   role,
   roleDetail,
 }: {
-  role: Role;
+  role: RoleData;
   roleDetail?: RoleDetail;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -48,39 +50,7 @@ export const RoleItem = ({
   const permissionState = attributes?.permission_state || "";
   const detailsId = `role-details-${role.id}`;
 
-  const permissions = [
-    {
-      key: "manage_users",
-      label: "Manage Users",
-      enabled: attributes.manage_users,
-    },
-    {
-      key: "manage_account",
-      label: "Manage Account",
-      enabled: attributes.manage_account,
-    },
-    {
-      key: "manage_providers",
-      label: "Manage Providers",
-      enabled: attributes.manage_providers,
-    },
-    {
-      key: "manage_scans",
-      label: "Manage Scans",
-      enabled: attributes.manage_scans,
-    },
-
-    {
-      key: "manage_integrations",
-      label: "Manage Integrations",
-      enabled: attributes.manage_integrations,
-    },
-    {
-      key: "unlimited_visibility",
-      label: "Unlimited Visibility",
-      enabled: attributes.unlimited_visibility,
-    },
-  ];
+  const permissions = getRolePermissions(attributes);
 
   return (
     <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
@@ -93,15 +63,16 @@ export const RoleItem = ({
             {permissionState}
           </span>
         </div>
-        <button
-          className="rounded text-xs text-blue-500 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-expanded={isExpanded}
-          aria-controls={detailsId}
-          type="button"
+
+        <CustomButton
+          ariaLabel={isExpanded ? "Hide Details" : "Show Details"}
+          onPress={() => setIsExpanded(!isExpanded)}
+          className="text-blue-500"
+          color="transparent"
+          size="sm"
         >
-          {isExpanded ? "Hide Details" : "Show Details"}
-        </button>
+          {isExpanded ? "Hide details" : "Show details"}
+        </CustomButton>
       </div>
 
       {isExpanded && (
