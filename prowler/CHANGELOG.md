@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `organization_members_mfa_required` check for GitHub provider. [(#6304)](https://github.com/prowler-cloud/prowler/pull/6304)
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 - Add CIS 5.0 compliance framework for AWS. [(7766)](https://github.com/prowler-cloud/prowler/pull/7766)
+- Add Weight field for Prowler ThreatScore and change scoring. [(7795)](https://github.com/prowler-cloud/prowler/pull/7795)
 
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
