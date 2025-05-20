@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { getCompliancesOverview } from "@/actions/compliances";
 import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
+import { getScan, getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
@@ -131,6 +131,9 @@ const SSRComplianceGrid = async ({
     query,
   });
 
+  const specificScanData = await getScan(scanId);
+  const taskId = specificScanData?.data?.relationships.task?.data?.id;
+
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
     return (
@@ -173,6 +176,7 @@ const SSRComplianceGrid = async ({
             prevTotalRequirements={total}
             scanId={scanId}
             complianceId={compliance_id}
+            taskId={taskId}
           />
         );
       })}

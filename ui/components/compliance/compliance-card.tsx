@@ -3,10 +3,10 @@
 import { Card, CardBody, Progress } from "@nextui-org/react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
-import { downloadComplianceCsv } from "@/lib/helper";
+import { checkTaskStatus, downloadComplianceCsv } from "@/lib/helper";
 
 import { getComplianceIcon } from "../icons";
 
@@ -19,6 +19,7 @@ interface ComplianceCardProps {
   prevTotalRequirements: number;
   scanId: string;
   complianceId: string;
+  taskId: string;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -28,9 +29,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   totalRequirements,
   scanId,
   complianceId,
+  taskId,
 }) => {
   const searchParams = useSearchParams();
   const hasRegionFilter = searchParams.has("filter[region__in]");
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
@@ -65,6 +68,22 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       return "warning";
     }
     return "success";
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    const taskResult = await checkTaskStatus(taskId);
+
+    if (taskResult.completed) {
+      downloadComplianceCsv(scanId, complianceId, toast);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: taskResult.error || "Unknown error",
+      });
+    }
+    setIsDownloading(false);
   };
 
   return (
@@ -104,11 +123,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
               <DownloadIconButton
                 paramId={complianceId}
-                onDownload={() =>
-                  downloadComplianceCsv(scanId, complianceId, toast)
-                }
+                onDownload={handleDownload}
                 textTooltip="Download compliance CSV report"
                 isDisabled={hasRegionFilter}
+                isDownloading={isDownloading}
               />
               {/* <small>{getScanChange()}</small> */}
             </div>
