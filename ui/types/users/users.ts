@@ -116,3 +116,22 @@ export interface UserInfoProps {
   roleDetails?: RoleDetail[];
   membershipDetails?: MembershipDetailData[];
 }
+
+export interface TenantDetailData {
+  type: string;
+  id: string;
+  attributes: {
+    name: string;
+  };
+  relationships: {
+    memberships: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: string;
+        id: string;
+      }>;
+    };
+  };
+}

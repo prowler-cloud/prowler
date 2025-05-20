@@ -5,8 +5,10 @@ import { MembershipDetailData } from "@/types/users/users";
 
 export const MembershipItem = ({
   membership,
+  tenantName,
 }: {
   membership: MembershipDetailData;
+  tenantName: string;
 }) => (
   <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
     <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -14,9 +16,7 @@ export const MembershipItem = ({
         <Chip size="sm" variant="flat" color="secondary">
           {membership.attributes.role}
         </Chip>
-        <p className="text-xs font-medium">
-          {membership.relationships.tenant.data.id}
-        </p>
+        <p className="text-xs font-medium">{tenantName}</p>
       </div>
     </div>
     <div className="flex items-center gap-2 text-xs text-gray-500">

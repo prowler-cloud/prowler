@@ -4,10 +4,32 @@ import { MembershipDetailData } from "@/types/users/users";
 
 import { MembershipItem } from "./membership-item";
 
+// Definir interfaz para Tenant
+interface Tenant {
+  type: string;
+  id: string;
+  attributes: {
+    name: string;
+  };
+  relationships: {
+    memberships: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: string;
+        id: string;
+      }>;
+    };
+  };
+}
+
 export const MembershipsCard = ({
   memberships,
+  tenantsMap,
 }: {
   memberships: MembershipDetailData[];
+  tenantsMap: Record<string, Tenant>;
 }) => {
   return (
     <Card className="dark:bg-prowler-blue-400">
@@ -15,7 +37,7 @@ export const MembershipsCard = ({
         <div className="flex flex-col gap-1">
           <h4 className="text-lg font-bold">Memberships</h4>
           <p className="text-xs text-gray-500">
-            Organizations this user is associated with
+            Tenants this user is associated with
           </p>
         </div>
       </CardHeader>
@@ -25,7 +47,14 @@ export const MembershipsCard = ({
         ) : (
           <div className="space-y-2">
             {memberships.map((membership) => (
-              <MembershipItem key={membership.id} membership={membership} />
+              <MembershipItem
+                key={membership.id}
+                membership={membership}
+                tenantName={
+                  tenantsMap[membership.relationships.tenant.data.id]
+                    ?.attributes.name
+                }
+              />
             ))}
           </div>
         )}
