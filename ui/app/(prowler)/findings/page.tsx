@@ -43,7 +43,7 @@ export default async function Findings({
       sort: encodedSort,
       filters,
     }),
-    getProviders({}),
+    getProviders({ pageSize: 100 }),
     getScans({}),
   ]);
 
