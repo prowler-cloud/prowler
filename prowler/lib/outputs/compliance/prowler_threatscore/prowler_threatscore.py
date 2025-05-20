@@ -74,7 +74,7 @@ def get_prowler_threatscore_table(
         pillar_table["Provider"].append(compliance.Provider)
         pillar_table["Pillar"].append(pillar)
         pillar_table["Score"].append(
-            f"{Style.BRIGHT}{Fore.RED}{(score_per_pillar[pillar] / max_score_per_pillar[pillar])*100:.2f}%/100%{Style.RESET_ALL}"
+            f"{Style.BRIGHT}{Fore.RED}{(score_per_pillar[pillar] / max_score_per_pillar[pillar])*100:.2f}%{Style.RESET_ALL}"
         )
         if pillars[pillar]["FAIL"] > 0:
             pillar_table["Status"].append(
@@ -121,7 +121,7 @@ def get_prowler_threatscore_table(
                     f"{Style.BRIGHT}\n=== Risk Score Guide ===\nScore ranges from 0% to 100%, meaning that 0% is the highest risk and 100% is the lowest risk.{Style.RESET_ALL}"
                 )
                 print(
-                    f"{Style.BRIGHT}(Only sections containing results appear, the score is calculated as the sum of the level of risk * weight of the passed findings divided by the sum of the weight of all the findings){Style.RESET_ALL}"
+                    f"{Style.BRIGHT}(Only sections containing results appear, the score is calculated as the sum of the level of risk * weight of the passed findings divided by the sum of the risk * weight of all the findings){Style.RESET_ALL}"
                 )
                 print(f"\nDetailed results of {compliance_framework.upper()} are in:")
                 print(
