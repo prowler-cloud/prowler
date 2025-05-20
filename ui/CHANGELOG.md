@@ -4,7 +4,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
+### 🐞 Fixes
+
+- Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
+  
 ---
+
 ## [v1.7.0] (Prowler v5.7.0)
 
 ### 🚀 Added
