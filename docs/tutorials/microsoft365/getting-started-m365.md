@@ -119,6 +119,7 @@ Follow these steps to assign the permissions:
 3. Search and select every permission below and once all are selected click on `Add permissions`:
 
     - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `Sites.Read.All`
     - `SharePointTenantSettings.Read.All`
