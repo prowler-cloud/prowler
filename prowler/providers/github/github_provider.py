@@ -247,7 +247,7 @@ class GithubProvider(Provider):
                 if not session_token:
                     # OAUTH
                     logger.info(
-                        "Looking for GITHUB_OAUTH_TOKEN environment variable as user has not provided any token...."
+                        "Looking for GITHUB_OAUTH_APP_TOKEN environment variable as user has not provided any token...."
                     )
                     session_token = environ.get("GITHUB_OAUTH_APP_TOKEN", "")
                     if session_token:

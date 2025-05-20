@@ -467,3 +467,19 @@ The required modules are:
 
 - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): Minimum version 3.6.0. Required for several checks across Exchange, Defender, and Purview.
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
+
+## GitHub
+### Authentication
+
+Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
+
+- **Personal Access Token (PAT)**
+- **OAuth App Token**
+- **GitHub App Credentials**
+
+This flexibility allows you to scan and analyze your GitHub account, including repositories, organizations, and applications, using the method that best suits your use case.
+
+The provided credentials must have the appropriate permissions to perform all the required checks.
+
+???+ note
+    GitHub App Credentials support less checks than other authentication methods.

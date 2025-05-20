@@ -34,6 +34,7 @@ Available Cloud Providers:
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
+    github              GitHub Provider
     m365                Microsoft 365 Provider
     nhn                 NHN Provider (Unofficial)
 
