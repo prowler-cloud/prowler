@@ -269,23 +269,3 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
-
-export function replaceFilterFieldKey(
-  obj: Record<string, string>,
-  oldField: string,
-  newField: string,
-): Record<string, string> {
-  const fieldObj: Record<string, string> = {};
-
-  for (const key in obj) {
-    const match = key.match(/^filter\[(.+)\]$/);
-    if (match && match[1] === oldField) {
-      const newKey = `filter[${newField}]`;
-      fieldObj[newKey] = obj[key];
-    } else {
-      fieldObj[key] = obj[key];
-    }
-  }
-
-  return fieldObj;
-}
