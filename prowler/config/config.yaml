@@ -515,3 +515,21 @@ m365:
   # m365.exchange_mailbox_properties_auditing_enabled
   # Maximum number of days to keep audit logs
   audit_log_age: 90
+
+ionos:
+  # IONOS Cloud API Configuration
+  # Get your API token from the IONOS Cloud portal
+  api_token: "YOUR_API_TOKEN_HERE"
+
+  # IONOS Cloud API base URL (for version 6)
+  base_url: "https://api.ionos.com/cloudapi/v6"
+
+  # (Optional) Default datacenter, in case your checks need to reference it
+  datacenter_id: "YOUR_DATACENTER_ID_HERE"
+
+  # (Optional) Maximum timeout for API requests (in seconds)
+  timeout: 60
+
+  # (Optional) Threshold or specific configurations for your checks, for example:
+  # Maximum number of days without using an access key, similar to AWS configuration
+  max_unused_access_keys_days: 45
