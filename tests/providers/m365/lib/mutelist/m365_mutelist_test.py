@@ -1,6 +1,7 @@
 import yaml
 from mock import MagicMock
 
+from prowler.lib.mutelist.mutelist import validate_mutelist
 from prowler.providers.m365.lib.mutelist.mutelist import M365Mutelist
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
@@ -34,7 +35,7 @@ class TestM365Mutelist:
 
         mutelist = M365Mutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist()
+        assert not validate_mutelist(mutelist_fixture)[0]
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
