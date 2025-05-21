@@ -10,7 +10,8 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="finding",
             index=models.Index(
-                fields=["tenant_id", "uid", "-inserted_at"], name="find_tenant_uid_inserted_idx"
+                fields=["tenant_id", "uid", "-inserted_at"],
+                name="find_tenant_uid_inserted_idx",
             ),
         ),
     ]
