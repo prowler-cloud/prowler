@@ -9240,7 +9240,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -9248,7 +9248,7 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -10485,7 +10485,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10493,7 +10493,7 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -10694,7 +10694,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -10702,7 +10702,7 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -10919,7 +10919,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10927,7 +10927,7 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
