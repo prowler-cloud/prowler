@@ -55,4 +55,4 @@ class M365OutputOptions(ProviderOutputOptions):
             self.output_filename = arguments.output_filename
 
         # Add fixer mode to the output options
-        self.fixer = arguments.fixer
+        self.fixer = arguments.fixer if hasattr(arguments, "fixer") else False

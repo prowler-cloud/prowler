@@ -290,6 +290,7 @@ def prowler():
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+        global_provider.set_output_options(output_options)
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity

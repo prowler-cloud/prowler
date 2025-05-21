@@ -16,7 +16,6 @@ class PurviewAuditLogSearchEnabledFixer(M365Fixer):
         """
         Initialize Purview audit log search fixer.
         """
-        print("Inicializando PurviewAuditLogSearchEnabledFixer")
         super().__init__(
             description="Enable Purview audit log search",
             cost_impact=False,
@@ -37,36 +36,14 @@ class PurviewAuditLogSearchEnabledFixer(M365Fixer):
             bool: True if the operation is successful (audit log search is enabled), False otherwise
         """
         try:
-            print("Iniciando fix de Purview Audit Log")
-            # Show the fixing message
             super().fix()
 
-            print(f"Estado de purview_client: {purview_client}")
-            print(f"Estado de purview_client.powershell: {purview_client.powershell}")
-
-            # Connect to Exchange Online
-            if purview_client.powershell:
-                print("Conectando a Exchange Online")
-                purview_client.powershell.connect_exchange_online()
-                try:
-                    # Execute the command to enable audit log search
-                    print("Ejecutando comando pwsh")
-                    purview_client.powershell.execute(
-                        "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true"
-                    )
-                    return True
-                finally:
-                    # Always close the PowerShell session
-                    print("Cerrando sesión de PowerShell")
-                    purview_client.powershell.close()
-            else:
-                logger.error("PowerShell session could not be initialized")
-                print("Error al inicializar la sesión de PowerShell")
-                return False
-
+            purview_client.powershell.set_audit_log_config()
+            purview_client.powershell.close()
+            return True
         except Exception as error:
-            print(f"Error en el fixer: {str(error)}")
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            purview_client.powershell.close()
             return False

@@ -685,6 +685,20 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
 
+    def set_audit_log_config(self):
+        """
+        Set Purview Admin Audit Log Settings.
+
+        Sets the audit log configuration settings for Microsoft Purview.
+
+        Args:
+            enabled (bool): Whether to enable or disable the audit log.
+
+        """
+        return self.execute(
+            "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true"
+        )
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
