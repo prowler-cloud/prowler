@@ -145,7 +145,7 @@ class Testm365PowerShell:
             f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
         session.execute.assert_any_call(
             'Write-Output "$($credential.GetNetworkCredential().Password)"'
