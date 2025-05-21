@@ -9,7 +9,7 @@ import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton
 import { ColumnResources } from "@/components/resources/table/column-resources";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { createDict } from "@/lib";
+import { createDict, extractFiltersAndQuery, extractSortAndKey, hasDateOrScanFilter, replaceFilterFieldKey } from "@/lib";
 import { ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
@@ -20,46 +20,31 @@ export default async function Resources({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   // Check if the searchParams contain any date or filter
-  const hasDateOrScanFilter = Object.keys(searchParams).some((key) =>
-    key.includes("inserted_at"),
-  );
+  const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  // Default filters for getFindings
-  const defaultFilters: Record<string, string> = hasDateOrScanFilter
-    ? {} // Do not apply default filters if there are date or filters
-    : { "page[size]": "100" }; // TODO: Remove page[size] 100 when metadata endpoint implemented
+  const { filters } = extractFiltersAndQuery(searchParams);
+  filters["page[size]"] = "100"; // TODO: Remove page[size] 100 when metadata endpoint implemented
 
-  const filters: Record<string, string> = {
-    ...defaultFilters,
-    ...Object.fromEntries(
-      Object.entries(searchParams)
-        .filter(([key]) => key.startsWith("filter["))
-        .map(([key, value]) => [
-          key,
-          Array.isArray(value) ? value.join(",") : value?.toString() || "",
-        ]),
-    ),
-  };
+  if (!hasDateOrScan) {
+    const scansData = await getScans({
+      filters: {
+        "fields[scans]": "inserted_at",
+      },
+    });
 
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-      "fields[scans]": "inserted_at",
-    },
-  });
-
-  if (scansData.data?.length !== 0) {
-    const latestScandate = scansData.data[0].attributes.inserted_at;
-    const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
-    if (!hasDateOrScanFilter) {
-      filters["filter[inserted_at]"] = formattedDate;
+    if (scansData.data?.length !== 0) {
+      const latestScandate = scansData.data?.[0]?.attributes?.inserted_at;
+      const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
+      filters["filter[updated_at]"] = formattedDate;
     }
   }
+
+  const outputFilters = replaceFilterFieldKey(filters, 'inserted_at', 'updated_at');
 
   // Resource call for filters
   const resourcesData = await getResourceFields(
     "name,type,region,service",
-    filters,
+    outputFilters,
   );
 
   let resourceNameList: string[] = [];
@@ -71,14 +56,14 @@ export default async function Resources({
     resourceNameList = Array.from(
       new Set(
         resourcesData.data.map((item: ResourceProps) => item.attributes.name) ||
-          [],
+        [],
       ),
     );
 
     typeList = Array.from(
       new Set(
         resourcesData.data.map((item: ResourceProps) => item.attributes.type) ||
-          [],
+        [],
       ),
     );
 
@@ -142,49 +127,40 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const defaultSort = "name";
-  const sort = searchParams.sort?.toString() || defaultSort;
-
-  // Check if the searchParams contain any date or filter
-  const hasDateOrScanFilter = Object.keys(searchParams).some((key) =>
-    key.includes("inserted_at"),
-  );
-
-  const filters: Record<string, string> = {
-    ...Object.fromEntries(
-      Object.entries(searchParams)
-        .filter(([key]) => key.startsWith("filter["))
-        .map(([key, value]) => [
-          key,
-          Array.isArray(value) ? value.join(",") : value?.toString() || "",
-        ]),
-    ),
-  };
-
-  // Fetch scans data latest date
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-      "fields[scans]": "inserted_at",
-    },
+  const { encodedSort } = extractSortAndKey({
+    ...searchParams,
+    sort: searchParams.sort ?? defaultSort,
   });
 
-  if (scansData.data?.length !== 0) {
-    const latestScandate = scansData.data[0].attributes.inserted_at;
-    const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
-    if (!hasDateOrScanFilter) {
-      filters["filter[inserted_at]"] = formattedDate;
+  // Check if the searchParams contain any date or filter
+  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+
+  const { filters, query } = extractFiltersAndQuery(searchParams);
+
+  if (!hasDateOrScan) {
+    // Fetch scans data latest date
+    const scansData = await getScans({
+      filters: {
+        "fields[scans]": "inserted_at",
+      },
+    });
+
+    if (scansData.data?.length !== 0) {
+      const latestScandate = scansData?.data?.[0]?.attributes?.inserted_at;
+      const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
+      filters["filter[updated_at]"] = formattedDate;
     }
   }
 
-  const query = filters["filter[search]"] || "";
+  const outputFilters = replaceFilterFieldKey(filters, 'inserted_at', 'updated_at');
   const resourcesData = await getResources({
     query,
     page,
-    filters,
-    sort,
-    pageSize: 10,
+    filters: outputFilters,
+    sort: encodedSort,
+    pageSize,
   });
 
   const findingsDict = createDict("findings", resourcesData);
@@ -193,22 +169,22 @@ const SSRDataTable = async ({
   // Expand each resources with its corresponding findings and provider
   const expandedResources = resourcesData?.data
     ? resourcesData.data.map((resource: ResourceProps) => {
-        const findings = {
-          meta: resource.relationships.findings.meta,
-          data: resource.relationships.findings.data?.map(
-            (finding) => findingsDict[finding.id],
-          ),
-        };
+      const findings = {
+        meta: resource.relationships.findings.meta,
+        data: resource.relationships.findings.data?.map(
+          (finding) => findingsDict[finding.id],
+        ),
+      };
 
-        const provider = {
-          data: providerDict[resource.relationships.provider.data.id],
-        };
+      const provider = {
+        data: providerDict[resource.relationships.provider.data.id],
+      };
 
-        return {
-          ...resource,
-          relationships: { findings, provider },
-        };
-      })
+      return {
+        ...resource,
+        relationships: { findings, provider },
+      };
+    })
     : [];
 
   const expandedResponse = {

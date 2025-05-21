@@ -1,7 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
-import { ProviderProps, ProviderType } from "./providers";
+import { ProviderType } from "./providers";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;

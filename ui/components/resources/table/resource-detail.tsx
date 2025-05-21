@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 
 import {
   DateWithTime,
-  getProviderLogo,
+  EntityInfoShort,
   InfoField,
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { ProviderType, ResourceApiResponse, ResourceProps } from "@/types";
+import { ResourceApiResponse, ResourceProps } from "@/types";
 
 import { SkeletonFindingSummary } from "../skeleton/skeleton-finding-summary";
 
@@ -70,13 +70,35 @@ export const ResourceDetail = ({
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Resource Details section */}
       <Section title="Resource Details">
-        <InfoField label="Resource ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="whitespace-pre-line text-xs">
-              {renderValue(resourceData?.attributes.uid)}
-            </span>
-          </Snippet>
-        </InfoField>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Resource ID" variant="simple">
+            <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
+              <span className="whitespace-pre-line text-xs">
+                {renderValue(resourceData?.attributes.uid)}
+              </span>
+            </Snippet>
+          </InfoField>
+          <InfoField label="Provider Details">
+            <EntityInfoShort
+              cloudProvider={
+                resourceData.relationships.provider.data.attributes.provider as
+                  | "aws"
+                  | "azure"
+                  | "gcp"
+                  | "kubernetes"
+              }
+              entityAlias={
+                resourceData.relationships.provider.data.attributes
+                  .alias as string
+              }
+              entityId={
+                resourceData.relationships.provider.data.attributes
+                  .uid as string
+              }
+            />
+          </InfoField>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource Name">
             {renderValue(resourceData.attributes.name)}
@@ -105,28 +127,6 @@ export const ResourceDetail = ({
               inline
               dateTime={resourceData.attributes.updated_at}
             />
-          </InfoField>
-        </div>
-      </Section>
-
-      {/* Provider Details section */}
-      <Section title="Provider Details">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {resourceData.relationships.provider.data.attributes.alias && (
-            <InfoField label="Alias">
-              {resourceData.relationships.provider.data.attributes.alias}
-            </InfoField>
-          )}
-          <InfoField label="Account ID">
-            {resourceData.relationships.provider.data.attributes.uid}
-          </InfoField>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Provider" variant="simple">
-            {getProviderLogo(
-              resourceData.relationships.provider.data.attributes
-                .provider as ProviderType,
-            )}
           </InfoField>
         </div>
       </Section>

@@ -46,6 +46,7 @@ export const getScans = async ({
     revalidatePath("/scans");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching scans:", error);
     return undefined;
   }

@@ -42,7 +42,7 @@ export const InfoField = ({
       </span>
 
       {variant === "simple" ? (
-        <div className="text-small text-gray-900 dark:text-prowler-theme-pale">
+        <div className="break-all text-small text-gray-900 dark:text-prowler-theme-pale">
           {children}
         </div>
       ) : (
