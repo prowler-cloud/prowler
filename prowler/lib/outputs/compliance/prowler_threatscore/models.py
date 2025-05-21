@@ -21,6 +21,7 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -47,6 +48,7 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -73,6 +75,7 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -99,6 +102,7 @@ class ProwlerThreatScoreM365Model(BaseModel):
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
