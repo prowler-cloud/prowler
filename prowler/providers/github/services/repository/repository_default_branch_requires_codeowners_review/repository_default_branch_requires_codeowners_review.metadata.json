@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "repository_codeowners_change_requires_approval",
+  "CheckID": "repository_default_branch_requires_codeowners_review",
   "CheckTitle": "Check if code owner approval is required for changes to owned code",
   "CheckType": [],
   "ServiceName": "repository",
