@@ -56,6 +56,19 @@ export interface RoleData {
   id: string;
 }
 
+export type PermissionKey =
+  | "manage_users"
+  | "manage_account"
+  | "manage_providers"
+  | "manage_scans"
+  | "manage_integrations"
+  | "unlimited_visibility";
+
+export type RolePermissionAttributes = Pick<
+  RoleDetail["attributes"],
+  PermissionKey
+>;
+
 export interface RoleDetail {
   id: string;
   type: "roles";
@@ -70,7 +83,6 @@ export interface RoleDetail {
     permission_state?: string;
     inserted_at?: string;
     updated_at?: string;
-    [key: string]: any;
   };
 }
 

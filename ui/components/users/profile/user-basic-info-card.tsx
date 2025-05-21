@@ -21,7 +21,7 @@ const TenantIdCopy = ({ id }: { id: string }) => {
   return (
     <div className="flex items-center justify-between">
       <p className="text-sm font-semibold text-default-600">
-        Current Tenant ID:
+        Active organization ID:
       </p>
       <div className="flex items-center">
         <Tooltip content={copied ? "Copied!" : "Copy ID"}>

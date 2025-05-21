@@ -1,9 +1,11 @@
+import { RolePermissionAttributes } from "@/types/users/users";
+
 /**
  * Get the permissions for a user role
  * @param attributes - The attributes of the user role
  * @returns The permissions for the user role
  */
-export const getRolePermissions = (attributes: any) => {
+export const getRolePermissions = (attributes: RolePermissionAttributes) => {
   const permissions = [
     {
       key: "manage_users",
