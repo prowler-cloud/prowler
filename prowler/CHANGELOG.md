@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - Add CIS 4.0 compliance framework for GCP. [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
 - Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
+- Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)

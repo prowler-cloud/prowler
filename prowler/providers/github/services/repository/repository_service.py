@@ -60,6 +60,7 @@ class Repository(GithubService):
                     required_linear_history = False
                     allow_force_pushes = True
                     branch_deletion = True
+                    require_code_owner_reviews = False
                     status_checks = False
                     enforce_admins = False
                     conversation_resolution = False
@@ -89,6 +90,11 @@ class Repository(GithubService):
                                     protection.required_conversation_resolution
                                 )
                                 branch_protection = True
+                                require_code_owner_reviews = (
+                                    protection.required_pull_request_reviews.require_code_owner_reviews
+                                    if require_pr
+                                    else False
+                                )
                     except Exception as error:
                         # If the branch is not found, it is not protected
                         if "404" in str(error):
@@ -103,6 +109,7 @@ class Repository(GithubService):
                             required_linear_history = None
                             allow_force_pushes = None
                             branch_deletion = None
+                            require_code_owner_reviews = None
                             status_checks = None
                             enforce_admins = None
                             conversation_resolution = None
@@ -127,6 +134,7 @@ class Repository(GithubService):
                         conversation_resolution=conversation_resolution,
                         default_branch_protection=branch_protection,
                         codeowners_exists=codeowners_exists,
+                        require_code_owner_reviews=require_code_owner_reviews,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
 
@@ -155,5 +163,6 @@ class Repo(BaseModel):
     enforce_admins: Optional[bool]
     approval_count: Optional[int]
     codeowners_exists: Optional[bool]
+    require_code_owner_reviews: Optional[bool]
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
