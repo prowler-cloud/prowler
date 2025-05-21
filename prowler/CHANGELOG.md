@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.8.0] (Prowler v5.8.0)
+
+### Added
+- Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
+- Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
+- Add new check `entra_users_mfa_capable`. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
+- Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
+- Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
+
+### Fixed
+- Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
+
+---
+
 ## [v5.7.0] (Prowler v5.7.0)
 
 ### Added

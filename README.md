@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment it secures. It is trusted by the industry leaders to uphold the highest standards in security.
+  <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
@@ -89,7 +89,7 @@ prowler dashboard
 | AWS | 564 | 82 | 34 | 10 |
 | GCP | 79 | 13 | 9 | 3 |
 | Azure | 140 | 18 | 8 | 3 |
-| Kubernetes | 83 | 7 | 4 | 7 |
+| Kubernetes | 83 | 7 | 5 | 7 |
 | GitHub | 3 | 2 | 1 | 0 |
 | M365 | 44 | 2 | 2 | 0 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
