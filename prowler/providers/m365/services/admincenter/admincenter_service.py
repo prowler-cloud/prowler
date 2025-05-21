@@ -11,6 +11,9 @@ from prowler.providers.m365.m365_provider import M365Provider
 class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        if self.powershell:
+            self.powershell.close()
+
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
