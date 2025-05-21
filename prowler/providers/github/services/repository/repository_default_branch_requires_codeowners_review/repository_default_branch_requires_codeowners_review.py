@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_codeowners_change_requires_approval(Check):
+class repository_default_branch_requires_codeowners_review(Check):
     """Check if code owner approval is required for changes to owned code
 
     This class verifies whether each repository requires code owner review for changes to code they own.

@@ -5,7 +5,7 @@ from prowler.providers.github.services.repository.repository_service import Repo
 from tests.providers.github.github_fixtures import set_mocked_github_provider
 
 
-class Test_repository_codeowners_change_requires_approval:
+class Test_repository_default_branch_requires_codeowners_review:
     def test_no_repositories(self):
         repository_client = mock.MagicMock
         repository_client.repositories = {}
@@ -16,15 +16,15 @@ class Test_repository_codeowners_change_requires_approval:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval import (
-                repository_codeowners_change_requires_approval,
+            from prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review import (
+                repository_default_branch_requires_codeowners_review,
             )
 
-            check = repository_codeowners_change_requires_approval()
+            check = repository_default_branch_requires_codeowners_review()
             result = check.execute()
             assert len(result) == 0
 
@@ -54,15 +54,15 @@ class Test_repository_codeowners_change_requires_approval:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval import (
-                repository_codeowners_change_requires_approval,
+            from prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review import (
+                repository_default_branch_requires_codeowners_review,
             )
 
-            check = repository_codeowners_change_requires_approval()
+            check = repository_default_branch_requires_codeowners_review()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
@@ -99,15 +99,15 @@ class Test_repository_codeowners_change_requires_approval:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval.repository_client",
+                "prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_codeowners_change_requires_approval.repository_codeowners_change_requires_approval import (
-                repository_codeowners_change_requires_approval,
+            from prowler.providers.github.services.repository.repository_default_branch_requires_codeowners_review.repository_default_branch_requires_codeowners_review import (
+                repository_default_branch_requires_codeowners_review,
             )
 
-            check = repository_codeowners_change_requires_approval()
+            check = repository_default_branch_requires_codeowners_review()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 2
