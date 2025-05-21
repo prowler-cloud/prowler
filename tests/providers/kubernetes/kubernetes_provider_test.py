@@ -1,5 +1,5 @@
 from argparse import Namespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from kubernetes.config.config_exception import ConfigException
 
@@ -353,3 +353,59 @@ class TestKubernetesProvider:
             )
             assert isinstance(session, KubernetesSession)
             assert session.context["context"]["cluster"] == "cli-cluster-name"
+
+    def test_kubernetes_provider_proxy_from_env(self, monkeypatch):
+        monkeypatch.setenv("HTTPS_PROXY", "http://my.internal.proxy:8888")
+
+        captured = {}
+
+        def fake_api_client(configuration):
+            captured["proxy"] = getattr(configuration, "proxy", None)
+            return MagicMock()
+
+        with (
+            patch(
+                "kubernetes.config.load_kube_config",
+                side_effect=ConfigException("No kubeconfig"),
+            ),
+            patch("kubernetes.config.load_incluster_config", return_value=None),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.ApiClient",
+                side_effect=fake_api_client,
+            ),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
+                return_value=["default"],
+            ),
+        ):
+            KubernetesProvider.setup_session()
+
+        assert captured["proxy"] == "http://my.internal.proxy:8888"
+
+    def test_kubernetes_provider_disable_tls_verification(self, monkeypatch):
+        monkeypatch.setenv("K8S_SKIP_TLS_VERIFY", "true")
+
+        captured = {}
+
+        def fake_api_client(configuration):
+            captured["verify_ssl"] = getattr(configuration, "verify_ssl", True)
+            return MagicMock()
+
+        with (
+            patch(
+                "kubernetes.config.load_kube_config",
+                side_effect=ConfigException("No kubeconfig"),
+            ),
+            patch("kubernetes.config.load_incluster_config", return_value=None),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.ApiClient",
+                side_effect=fake_api_client,
+            ),
+            patch(
+                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
+                return_value=["default"],
+            ),
+        ):
+            KubernetesProvider.setup_session()
+
+        assert captured["verify_ssl"] is False
