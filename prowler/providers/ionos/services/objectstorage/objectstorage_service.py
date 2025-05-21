@@ -1,5 +1,4 @@
 from typing import Optional, List
-import boto3
 from botocore.config import Config
 from prowler.lib.logger import logger
 from prowler.providers.ionos.lib.service import IonosService
