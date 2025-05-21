@@ -11,6 +11,19 @@ class Repository(GithubService):
         super().__init__(__class__.__name__, provider)
         self.repositories = self._list_repositories()
 
+    def _file_exists(self, repo, filename):
+        """Check if a file exists in the repository. Returns True if exists, False if not, None if error."""
+        try:
+            return repo.get_contents(filename) is not None
+        except Exception as error:
+            if "404" in str(error):
+                return False
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+
     def _list_repositories(self):
         logger.info("Repository - Listing Repositories...")
         repos = {}
@@ -18,22 +31,28 @@ class Repository(GithubService):
             for client in self.clients:
                 for repo in client.get_user().get_repos():
                     default_branch = repo.default_branch
+                    securitymd_exists = self._file_exists(repo, "SECURITY.md")
+                    # CODEOWNERS file can be in .github/, root, or docs/
+                    # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-file-location
+                    codeowners_paths = [
+                        ".github/CODEOWNERS",
+                        "CODEOWNERS",
+                        "docs/CODEOWNERS",
+                    ]
+                    codeowners_files = [
+                        self._file_exists(repo, path) for path in codeowners_paths
+                    ]
+                    if True in codeowners_files:
+                        codeowners_exists = True
+                    elif all(file is None for file in codeowners_files):
+                        codeowners_exists = None
+                    else:
+                        codeowners_exists = False
                     delete_branch_on_merge = (
                         repo.delete_branch_on_merge
                         if repo.delete_branch_on_merge is not None
                         else False
                     )
-                    securitymd_exists = False
-                    try:
-                        securitymd_exists = repo.get_contents("SECURITY.md") is not None
-                    except Exception as error:
-                        if "404" in str(error):
-                            securitymd_exists = False
-                        else:
-                            logger.error(
-                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                            securitymd_exists = None
 
                     require_pr = False
                     approval_cnt = 0
@@ -41,6 +60,7 @@ class Repository(GithubService):
                     required_linear_history = False
                     allow_force_pushes = True
                     branch_deletion = True
+                    require_code_owner_reviews = False
                     status_checks = False
                     enforce_admins = False
                     conversation_resolution = False
@@ -70,6 +90,11 @@ class Repository(GithubService):
                                     protection.required_conversation_resolution
                                 )
                                 branch_protection = True
+                                require_code_owner_reviews = (
+                                    protection.required_pull_request_reviews.require_code_owner_reviews
+                                    if require_pr
+                                    else False
+                                )
                     except Exception as error:
                         # If the branch is not found, it is not protected
                         if "404" in str(error):
@@ -84,6 +109,7 @@ class Repository(GithubService):
                             required_linear_history = None
                             allow_force_pushes = None
                             branch_deletion = None
+                            require_code_owner_reviews = None
                             status_checks = None
                             enforce_admins = None
                             conversation_resolution = None
@@ -107,6 +133,8 @@ class Repository(GithubService):
                         enforce_admins=enforce_admins,
                         conversation_resolution=conversation_resolution,
                         default_branch_protection=branch_protection,
+                        codeowners_exists=codeowners_exists,
+                        require_code_owner_reviews=require_code_owner_reviews,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
 
@@ -134,5 +162,7 @@ class Repo(BaseModel):
     status_checks: Optional[bool]
     enforce_admins: Optional[bool]
     approval_count: Optional[int]
+    codeowners_exists: Optional[bool]
+    require_code_owner_reviews: Optional[bool]
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
