@@ -53,10 +53,13 @@ class KeyVault(AzureService):
                                 ),
                                 private_endpoint_connections=[
                                     PrivateEndpointConnection(id=conn.id)
-                                    for conn in getattr(
-                                        keyvault_properties,
-                                        "private_endpoint_connections",
-                                        [],
+                                    for conn in (
+                                        getattr(
+                                            keyvault_properties,
+                                            "private_endpoint_connections",
+                                            [],
+                                        )
+                                        or []
                                     )
                                 ],
                                 enable_soft_delete=getattr(

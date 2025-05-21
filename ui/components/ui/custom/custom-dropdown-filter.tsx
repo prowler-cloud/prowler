@@ -11,11 +11,14 @@ import {
   ScrollShadow,
 } from "@nextui-org/react";
 import { XCircle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { CustomDropdownFilterProps } from "@/types";
+
+import { EntityInfoShort } from "../entities";
 
 const filterSelectedClass =
   "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
@@ -24,8 +27,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { clearFilter } = useUrlFilters();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
   const [pendingClearFilter, setPendingClearFilter] = useState<string | null>(
     null,
@@ -114,13 +117,11 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
 
   // Execute the update in the router after the render
   useEffect(() => {
-    if (pendingClearFilter) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete(`filter[${pendingClearFilter}]`);
-      router.push(`?${params.toString()}`, { scroll: false });
+    if (pendingClearFilter && filter) {
+      clearFilter(pendingClearFilter);
       setPendingClearFilter(null); // Reset the state
     }
-  }, [pendingClearFilter, searchParams, router]);
+  }, [pendingClearFilter, clearFilter, filter]);
 
   return (
     <div className="relative flex w-full flex-col gap-2">
@@ -193,18 +194,35 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 hideScrollBar
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
-                {memoizedFilterValues.map((value) => (
-                  <Checkbox
-                    classNames={{
-                      label: "text-small font-normal",
-                      wrapper: "checkbox-update",
-                    }}
-                    key={value}
-                    value={value}
-                  >
-                    {value}
-                  </Checkbox>
-                ))}
+                {memoizedFilterValues.map((value) => {
+                  // Find the corresponding entity from valueLabelMapping
+                  const matchingEntry = filter.valueLabelMapping?.find(
+                    (entry) => entry[value],
+                  );
+                  const entity = matchingEntry?.[value];
+
+                  return (
+                    <Checkbox
+                      classNames={{
+                        label: "text-small font-normal",
+                        wrapper: "checkbox-update",
+                      }}
+                      key={value}
+                      value={value}
+                    >
+                      {entity ? (
+                        <EntityInfoShort
+                          cloudProvider={entity.provider}
+                          entityAlias={entity.alias}
+                          entityId={entity.uid}
+                          hideCopyButton
+                        />
+                      ) : (
+                        value
+                      )}
+                    </Checkbox>
+                  );
+                })}
               </ScrollShadow>
             </CheckboxGroup>
           </div>

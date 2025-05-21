@@ -1,10 +1,12 @@
 import React from "react";
 
+import { ProviderType } from "@/types";
+
 import { getProviderLogo } from "./get-provider-logo";
 import { SnippetId } from "./snippet-id";
 
 interface EntityInfoProps {
-  cloudProvider: "aws" | "azure" | "gcp" | "kubernetes";
+  cloudProvider: ProviderType;
   entityAlias?: string;
   entityId?: string;
   hideCopyButton?: boolean;

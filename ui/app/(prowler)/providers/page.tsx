@@ -50,6 +50,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
@@ -59,7 +60,13 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const providersData = await getProviders({ query, page, sort, filters });
+  const providersData = await getProviders({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize,
+  });
 
   const providerGroupDict =
     providersData?.included

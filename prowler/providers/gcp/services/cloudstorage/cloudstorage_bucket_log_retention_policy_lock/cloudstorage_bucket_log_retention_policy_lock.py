@@ -23,7 +23,7 @@ class cloudstorage_bucket_log_retention_policy_lock(Check):
                 if bucket.retention_policy:
                     report.status = "FAIL"
                     report.status_extended = f"Log Sink Bucket {bucket.name} has no Retention Policy but without Bucket Lock."
-                    if bucket.retention_policy["isLocked"]:
+                    if bucket.retention_policy.get("isLocked", False):
                         report.status = "PASS"
                         report.status_extended = f"Log Sink Bucket {bucket.name} has a Retention Policy with Bucket Lock."
                 findings.append(report)

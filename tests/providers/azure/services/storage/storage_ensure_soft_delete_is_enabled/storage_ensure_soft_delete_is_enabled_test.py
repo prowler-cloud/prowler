@@ -1,11 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.storage.v2023_01_01.models import DeleteRetentionPolicy
-
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
+    DeleteRetentionPolicy,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -90,7 +89,9 @@ class Test_storage_ensure_soft_delete_is_enabled:
             name=None,
             type=None,
             default_service_version=None,
-            container_delete_retention_policy=DeleteRetentionPolicy(enabled=False),
+            container_delete_retention_policy=DeleteRetentionPolicy(
+                enabled=False, days=7
+            ),
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -150,7 +151,9 @@ class Test_storage_ensure_soft_delete_is_enabled:
             name=None,
             type=None,
             default_service_version=None,
-            container_delete_retention_policy=DeleteRetentionPolicy(enabled=True),
+            container_delete_retention_policy=DeleteRetentionPolicy(
+                enabled=True, days=7
+            ),
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [

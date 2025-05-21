@@ -11,6 +11,7 @@ from prowler.config.config import (
     orange_color,
 )
 from prowler.lib.logger import logger
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 def display_summary_table(
@@ -40,7 +41,17 @@ def display_summary_table(
         elif provider.type == "kubernetes":
             entity_type = "Context"
             audited_entities = provider.identity.context
-        elif provider.type == "microsoft365":
+        elif provider.type == "github":
+            if isinstance(provider.identity, GithubIdentityInfo):
+                entity_type = "User Name"
+                audited_entities = provider.identity.account_name
+            elif isinstance(provider.identity, GithubAppIdentityInfo):
+                entity_type = "App ID"
+                audited_entities = provider.identity.app_id
+        elif provider.type == "m365":
+            entity_type = "Tenant Domain"
+            audited_entities = provider.identity.tenant_domain
+        elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
 

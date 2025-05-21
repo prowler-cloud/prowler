@@ -42,7 +42,8 @@ junit-reports/
 # VSCode files
 .vscode/
 
-# Cursor
+# Cursor files
+.cursorignore
 .cursor/
 
 # Terraform
@@ -53,6 +54,7 @@ junit-reports/
 # .env
 ui/.env*
 api/.env*
+.env.local
 
 # Coverage
 .coverage*

@@ -60,6 +60,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "NotContainers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan Servers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                 )
@@ -90,6 +91,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={},
@@ -124,7 +126,7 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_defender_subscription_containers_container_images_scan_off(self):
@@ -133,6 +135,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={"ContainerRegistriesVulnerabilityAssessments": False},
@@ -167,7 +170,7 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_defender_subscription_containers_container_images_scan_on(self):
@@ -176,6 +179,7 @@ class Test_defender_container_images_scan_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
                     resource_id=str(uuid4()),
+                    resource_name="Defender plan for Containers",
                     pricing_tier="Free",
                     free_trial_remaining_time=timedelta(days=1),
                     extensions={"ContainerRegistriesVulnerabilityAssessments": True},
@@ -210,5 +214,5 @@ class Test_defender_container_images_scan_enabled:
                     "Containers"
                 ].resource_id
             )
-            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].resource_name == "Defender plan for Containers"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID

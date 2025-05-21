@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.6.0
+  version: 1.8.1
   description: |-
     Prowler API specification.
 
@@ -83,11 +83,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -99,6 +101,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -106,6 +109,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -233,6 +237,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComplianceOverviewFullResponse'
           description: ''
+  /api/v1/compliance-overviews/metadata:
+    get:
+      operationId: compliance_overviews_metadata_retrieve
+      description: Fetch unique metadata values from a set of compliance overviews.
+        This is useful for dynamic filtering.
+      summary: Retrieve metadata values from compliance overviews
+      parameters:
+      - in: query
+        name: fields[compliance-overviews-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - regions
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Related scan ID.
+        required: true
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ComplianceOverviewMetadataResponse'
+          description: ''
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -258,6 +298,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -367,6 +408,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -407,11 +454,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -423,6 +472,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -430,6 +480,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -597,13 +648,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -720,6 +769,7 @@ paths:
             - inserted_at
             - updated_at
             - first_seen_at
+            - muted
             - url
             - scan
             - resources
@@ -874,6 +924,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -914,11 +970,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -930,6 +988,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -937,6 +996,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -1104,13 +1164,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -1179,6 +1237,416 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/FindingDynamicFilterResponse'
+          description: ''
+  /api/v1/findings/latest:
+    get:
+      operationId: findings_latest_retrieve
+      description: Retrieve a list of the latest findings from the latest scans for
+        each provider with options for filtering by various criteria.
+      summary: List the latest findings
+      parameters:
+      - in: query
+        name: fields[findings]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - uid
+            - delta
+            - status
+            - status_extended
+            - severity
+            - check_id
+            - check_metadata
+            - raw_result
+            - inserted_at
+            - updated_at
+            - first_seen_at
+            - muted
+            - url
+            - scan
+            - resources
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - scan
+            - resources
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - status
+            - -status
+            - severity
+            - -severity
+            - check_id
+            - -check_id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Finding
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingResponse'
           description: ''
   /api/v1/findings/metadata:
     get:
@@ -1303,6 +1771,12 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
         name: filter[provider]
         schema:
           type: string
@@ -1343,11 +1817,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1359,6 +1835,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -1366,6 +1843,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -1533,13 +2011,11 @@ paths:
           enum:
           - FAIL
           - MANUAL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
           * `MANUAL` - Manual
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -1577,6 +2053,392 @@ paths:
         schema:
           type: string
           format: date-time
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - status
+            - -status
+            - severity
+            - -severity
+            - check_id
+            - -check_id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Finding
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingMetadataResponse'
+          description: ''
+  /api/v1/findings/metadata/latest:
+    get:
+      operationId: findings_metadata_latest_retrieve
+      description: Fetch unique metadata values from a set of findings from the latest
+        scans for each provider. This is useful for dynamic filtering.
+      summary: Retrieve metadata values from the latest findings
+      parameters:
+      - in: query
+        name: fields[findings-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+            - resource_types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
       - name: sort
         required: false
         in: query
@@ -1984,10 +2846,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
-      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2001,11 +2859,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2017,6 +2877,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2024,6 +2885,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2145,10 +3007,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[muted_findings]
-        schema:
-          type: boolean
-      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2162,11 +3020,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2178,6 +3038,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2185,6 +3046,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2335,11 +3197,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2351,6 +3215,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -2358,6 +3223,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -2821,11 +3687,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider__in]
         schema:
@@ -3399,11 +4267,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3415,6 +4285,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -3422,6 +4293,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -3674,6 +4546,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -3792,6 +4665,8 @@ paths:
             - -manage_users
             - manage_account
             - -manage_account
+            - manage_integrations
+            - -manage_integrations
             - manage_providers
             - -manage_providers
             - manage_scans
@@ -3867,6 +4742,7 @@ paths:
             - name
             - manage_users
             - manage_account
+            - manage_integrations
             - manage_providers
             - manage_scans
             - permission_state
@@ -4121,11 +4997,13 @@ paths:
           - azure
           - gcp
           - kubernetes
+          - m365
         description: |-
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4137,6 +5015,7 @@ paths:
             - azure
             - gcp
             - kubernetes
+            - m365
         description: |-
           Multiple values may be separated by commas.
 
@@ -4144,6 +5023,7 @@ paths:
           * `azure` - Azure
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
+          * `m365` - M365
         explode: false
         style: form
       - in: query
@@ -4236,6 +5116,17 @@ paths:
         description: |-
           * `scheduled` - Scheduled
           * `manual` - Manual
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -4350,6 +5241,17 @@ paths:
           format: uuid
         description: A UUID string identifying this scan.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Scan
       security:
@@ -4397,6 +5299,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/compliance/{name}:
+    get:
+      operationId: scans_compliance_retrieve
+      description: Download a specific compliance report (e.g., 'cis_1.4_aws') as
+        a CSV file.
+      summary: Retrieve compliance report as CSV
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: path
+        name: name
+        schema:
+          type: string
+        description: The compliance report name, like 'cis_1.4_aws'
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: CSV file containing the compliance report
+        '404':
+          description: Compliance report not found
   /api/v1/scans/{id}/report:
     get:
       operationId: scans_report_retrieve
@@ -6105,6 +7048,40 @@ components:
           $ref: '#/components/schemas/ComplianceOverviewFull'
       required:
       - data
+    ComplianceOverviewMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ComplianceOverviewMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            regions:
+              type: array
+              items:
+                type: string
+          required:
+          - regions
+    ComplianceOverviewMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ComplianceOverviewMetadata'
+      required:
+      - data
+    ComplianceOverviewMetadataTypeEnum:
+      type: string
+      enum:
+      - compliance-overviews-metadata
     Finding:
       type: object
       required:
@@ -6142,13 +7119,11 @@ components:
               - FAIL
               - PASS
               - MANUAL
-              - MUTED
               type: string
               description: |-
                 * `FAIL` - Fail
                 * `PASS` - Pass
                 * `MANUAL` - Manual
-                * `MUTED` - Muted
             status_extended:
               type: string
               nullable: true
@@ -6184,6 +7159,8 @@ components:
               format: date-time
               readOnly: true
               nullable: true
+            muted:
+              type: boolean
           required:
           - uid
           - status
@@ -8246,6 +9223,33 @@ components:
                     - client_secret
                     - tenant_id
                   - type: object
+                    title: M365 Static Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      user:
+                        type: email
+                        description: User microsoft email address.
+                      encrypted_password:
+                        type: string
+                        description: User encrypted password.
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - encrypted_password
+                  - type: object
                     title: GCP Static Credentials
                     properties:
                       client_id:
@@ -8397,6 +9401,8 @@ components:
                 manage_users:
                   type: boolean
                 manage_account:
+                  type: boolean
+                manage_integrations:
                   type: boolean
                 manage_providers:
                   type: boolean
@@ -8710,12 +9716,14 @@ components:
               - azure
               - gcp
               - kubernetes
+              - m365
               type: string
               description: |-
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
+                * `m365` - M365
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -8822,12 +9830,14 @@ components:
               - azure
               - gcp
               - kubernetes
+              - m365
               type: string
               description: |-
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
+                * `m365` - M365
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -8865,12 +9875,14 @@ components:
                   - azure
                   - gcp
                   - kubernetes
+                  - m365
                   type: string
                   description: |-
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
+                    * `m365` - M365
                 uid:
                   type: string
                   minLength: 3
@@ -9456,6 +10468,33 @@ components:
                 - client_secret
                 - tenant_id
               - type: object
+                title: M365 Static Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  user:
+                    type: email
+                    description: User microsoft email address.
+                  encrypted_password:
+                    type: string
+                    description: User encrypted password.
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - encrypted_password
+              - type: object
                 title: GCP Static Credentials
                 properties:
                   client_id:
@@ -9637,6 +10676,33 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
+                  - type: object
+                    title: M365 Static Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      user:
+                        type: email
+                        description: User microsoft email address.
+                      encrypted_password:
+                        type: string
+                        description: User encrypted password.
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - encrypted_password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -9835,6 +10901,33 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
+              - type: object
+                title: M365 Static Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  user:
+                    type: email
+                    description: User microsoft email address.
+                  encrypted_password:
+                    type: string
+                    description: User encrypted password.
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - encrypted_password
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -10050,6 +11143,8 @@ components:
               type: boolean
             manage_account:
               type: boolean
+            manage_integrations:
+              type: boolean
             manage_providers:
               type: boolean
             manage_scans:
@@ -10178,6 +11273,8 @@ components:
             manage_users:
               type: boolean
             manage_account:
+              type: boolean
+            manage_integrations:
               type: boolean
             manage_providers:
               type: boolean
@@ -10312,6 +11409,8 @@ components:
                 manage_users:
                   type: boolean
                 manage_account:
+                  type: boolean
+                manage_integrations:
                   type: boolean
                 manage_providers:
                   type: boolean

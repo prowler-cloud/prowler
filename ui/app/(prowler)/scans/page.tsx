@@ -29,6 +29,7 @@ export default async function Scans({
     filters: {
       "filter[connected]": true,
     },
+    pageSize: 50,
   });
 
   const providerInfo =
@@ -40,7 +41,10 @@ export default async function Scans({
       connected: provider.attributes.connection.connected,
     })) || [];
 
-  const providersCountConnected = await getProviders({});
+  const providersCountConnected = await getProviders({
+    filters: { "filter[connected]": true },
+    pageSize: 50,
+  });
   const thereIsNoProviders =
     !providersCountConnected?.data || providersCountConnected.data.length === 0;
 
@@ -107,6 +111,7 @@ const SSRDataTableScans = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const sort = searchParams.sort?.toString();
 
   // Extract all filter parameters, excluding scanId
@@ -120,7 +125,7 @@ const SSRDataTableScans = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   // Fetch scans data
-  const scansData = await getScans({ query, page, sort, filters });
+  const scansData = await getScans({ query, page, sort, filters, pageSize });
 
   // Handle expanded scans data
   const expandedScansData = await Promise.all(

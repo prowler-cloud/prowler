@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.rds.rds_service import RDS, Certificate, DBInstance
@@ -28,6 +29,20 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_excepcion_deprecated_cert(self, operation_name, kwarg):
+    if operation_name == "DescribeCertificates":
+        raise ClientError(
+            error_response={
+                "Error": {
+                    "Code": "CertificateNotFound",
+                    "Message": "Certificate rds-ca-2019 not found",
+                }
+            },
+            operation_name=operation_name,
+        )
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -225,6 +240,57 @@ class Test_RDS_Service:
                 assert cert.valid_till == datetime(2025, 1, 1)
                 assert not cert.customer_override
                 assert cert.customer_override_valid_till == datetime(2025, 1, 1)
+
+    @mock_aws
+    def test_describe_db_certificate_with_deprecated_cert_not_found(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_make_api_call_excepcion_deprecated_cert,
+        ):
+            rds_client = mock.MagicMock
+            rds_client.db_instances = {
+                "arn:aws:rds:us-east-1:123456789012:db:db-master-1": DBInstance(
+                    id="db-master-1",
+                    region=AWS_REGION_US_EAST_1,
+                    endpoint={
+                        "Address": "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com",
+                        "Port": 5432,
+                    },
+                    status="available",
+                    public=True,
+                    encrypted=True,
+                    backup_retention_period=10,
+                    cloudwatch_logs=["audit", "error"],
+                    deletion_protection=True,
+                    auto_minor_version_upgrade=True,
+                    multi_az=True,
+                    cluster_id="cluster-postgres",
+                    tags=[{"Key": "test", "Value": "test"}],
+                    parameter_groups=["test"],
+                    copy_tags_to_snapshot=True,
+                    ca_cert="rds-cert-2019",
+                    arn="arn:aws:rds:us-east-1:123456789012:db:db-master-1",
+                    engine="postgres",
+                    engine_version="9.6.9",
+                    username="test",
+                    iam_auth=False,
+                    cert=[],
+                )
+            }
+
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ):
+                from prowler.providers.aws.services.rds.rds_service import RDS
+
+                rds = RDS(rds_client)
+                assert len(rds.db_instances) == 1
+                db_instance_arn, db_instance = next(iter(rds.db_instances.items()))
+                assert db_instance.id == "db-master-1"
+                assert db_instance.region == AWS_REGION_US_EAST_1
+                # No certificate should be found due to the exception
+                assert len(db_instance.cert) == 0
 
     # Test RDS Describe DB Snapshots
     @mock_aws

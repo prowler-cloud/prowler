@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Divider } from "@nextui-org/divider";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
@@ -9,10 +10,8 @@ import * as z from "zod";
 import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
-import { getProviderLogo } from "@/components/ui/entities";
-import { getProviderName } from "@/components/ui/entities";
-import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
+import { ProviderType } from "@/types";
 import {
   addCredentialsFormSchema,
   ApiError,
@@ -20,12 +19,15 @@ import {
   AzureCredentials,
   GCPCredentials,
   KubernetesCredentials,
+  M365Credentials,
 } from "@/types";
 
+import { ProviderTitleDocs } from "../provider-title-docs";
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
 
 type CredentialsFormSchema = z.infer<
   ReturnType<typeof addCredentialsFormSchema>
@@ -36,7 +38,8 @@ type FormType = CredentialsFormSchema &
   AWSCredentials &
   AzureCredentials &
   GCPCredentials &
-  KubernetesCredentials;
+  KubernetesCredentials &
+  M365Credentials;
 
 export const ViaCredentialsForm = ({
   searchParams,
@@ -76,17 +79,25 @@ export const ViaCredentialsForm = ({
               client_secret: "",
               tenant_id: "",
             }
-          : providerType === "gcp"
+          : providerType === "m365"
             ? {
                 client_id: "",
                 client_secret: "",
-                refresh_token: "",
+                tenant_id: "",
+                user: "",
+                encrypted_password: "",
               }
-            : providerType === "kubernetes"
+            : providerType === "gcp"
               ? {
-                  kubeconfig_content: "",
+                  client_id: "",
+                  client_secret: "",
+                  refresh_token: "",
                 }
-              : {}),
+              : providerType === "kubernetes"
+                ? {
+                    kubeconfig_content: "",
+                  }
+                : {}),
     },
   });
 
@@ -135,6 +146,18 @@ export const ViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
+          case "/data/attributes/secret/user":
+            form.setError("user", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/secret/encrypted_password":
+            form.setError("encrypted_password", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
           case "/data/attributes/secret/tenant_id":
             form.setError("tenant_id", {
               type: "server",
@@ -177,14 +200,9 @@ export const ViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <div className="mb-4 flex items-center space-x-4">
-          {providerType && getProviderLogo(providerType as ProviderType)}
-          <span className="text-lg font-semibold">
-            {providerType
-              ? getProviderName(providerType as ProviderType)
-              : "Unknown Provider"}
-          </span>
-        </div>
+        <ProviderTitleDocs providerType={providerType as ProviderType} />
+
+        <Divider />
 
         {providerType === "aws" && (
           <AWScredentialsForm
@@ -194,6 +212,11 @@ export const ViaCredentialsForm = ({
         {providerType === "azure" && (
           <AzureCredentialsForm
             control={form.control as unknown as Control<AzureCredentials>}
+          />
+        )}
+        {providerType === "m365" && (
+          <M365CredentialsForm
+            control={form.control as unknown as Control<M365Credentials>}
           />
         )}
         {providerType === "gcp" && (

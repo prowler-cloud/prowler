@@ -38,6 +38,7 @@ class Test_defender_ensure_defender_for_server_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "VirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
                 )
@@ -77,6 +78,7 @@ class Test_defender_ensure_defender_for_server_is_on:
             AZURE_SUBSCRIPTION_ID: {
                 "VirtualMachines": Pricing(
                     resource_id=resource_id,
+                    resource_name="Defender plan Servers",
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
                 )

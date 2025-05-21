@@ -30,6 +30,6 @@ class cloudformation_stack_cdktoolkit_bootstrap_version(Check):
                         report.status = "FAIL"
                         report.status_extended = f"CloudFormation Stack CDKToolkit has a Bootstrap version {bootstrap_version}, which is less than the recommended version {recommended_cdk_bootstrap_version}."
 
-                findings.append(report)
+                    findings.append(report)
 
         return findings

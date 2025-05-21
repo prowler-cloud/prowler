@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
+import { ProviderType } from "@/types";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
@@ -41,7 +42,7 @@ export const TestConnectionForm = ({
           connected: boolean | null;
           last_checked_at: string | null;
         };
-        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        provider: ProviderType;
         alias: string;
         scanner_args: Record<string, any>;
       };
@@ -280,7 +281,7 @@ export const TestConnectionForm = ({
               wrapper: "checkbox-update",
             }}
           >
-            Run a one-time scan (disable daily schedule).
+            Run a single scan (no recurring schedule).
           </Checkbox>
         )}
 

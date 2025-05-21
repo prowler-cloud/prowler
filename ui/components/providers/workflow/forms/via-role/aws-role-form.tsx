@@ -1,4 +1,4 @@
-import { Select, SelectItem, Spacer } from "@nextui-org/react";
+import { Divider, Select, SelectItem, Spacer } from "@nextui-org/react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
@@ -23,11 +23,11 @@ export const AWSCredentialsRoleForm = ({
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <div className="text-2xl font-bold leading-9 text-default-foreground">
+      <div className="flex flex-col">
+        <div className="text-md font-bold leading-9 text-default-foreground">
           Connect assuming IAM Role
         </div>
-        <div className="text-small text-default-500">
+        <div className="text-sm text-default-500">
           Please provide the information for your AWS credentials.
         </div>
       </div>
@@ -89,10 +89,11 @@ export const AWSCredentialsRoleForm = ({
           />
         </>
       )}
+      <Divider />
+      <span className="text-xs font-bold text-default-500">Assume Role</span>
       <CredentialsRoleHelper />
 
       <Spacer y={2} />
-      <span className="text-xs font-bold text-default-500">Assume Role</span>
 
       <CustomInput
         control={control}
@@ -111,7 +112,7 @@ export const AWSCredentialsRoleForm = ({
         type="text"
         label="External ID"
         labelPlacement="inside"
-        placeholder="Enter the External ID"
+        placeholder={externalId}
         variant="bordered"
         defaultValue={externalId}
         isDisabled

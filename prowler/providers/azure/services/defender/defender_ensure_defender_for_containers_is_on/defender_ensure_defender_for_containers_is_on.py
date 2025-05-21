@@ -11,7 +11,6 @@ class defender_ensure_defender_for_containers_is_on(Check):
                     metadata=self.metadata(), resource=pricings["Containers"]
                 )
                 report.subscription = subscription
-                report.resource_name = "Defender plan Container Registries"
                 report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for Containers from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["Containers"].pricing_tier != "Standard":

@@ -1,6 +1,8 @@
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
+import { ProviderType } from "./providers";
+
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
@@ -45,7 +47,7 @@ export interface CollapseMenuButtonProps {
 export interface SelectScanComplianceDataProps {
   scans: (ScanProps & {
     providerInfo: {
-      provider: "aws" | "azure" | "gcp" | "kubernetes";
+      provider: ProviderType;
       uid: string;
       alias: string;
     };
@@ -174,27 +176,6 @@ export interface FindingsSeverityOverview {
   };
 }
 
-export interface ProviderOverviewProps {
-  data: {
-    type: "provider-overviews";
-    id: "aws" | "gcp" | "azure" | "kubernetes";
-    attributes: {
-      findings: {
-        pass: number;
-        fail: number;
-        manual: number;
-        total: number;
-      };
-      resources: {
-        total: number;
-      };
-    };
-  }[];
-  meta: {
-    version: string;
-  };
-}
-
 export interface TaskDetails {
   attributes: {
     state: string;
@@ -238,6 +219,16 @@ export type AzureCredentials = {
   providerId: string;
 };
 
+export type M365Credentials = {
+  client_id: string;
+  client_secret: string;
+  tenant_id: string;
+  user: string;
+  encrypted_password: string;
+  secretName: string;
+  providerId: string;
+};
+
 export type GCPCredentials = {
   client_id: string;
   client_secret: string;
@@ -256,7 +247,8 @@ export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPCredentials
-  | KubernetesCredentials;
+  | KubernetesCredentials
+  | M365Credentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -498,51 +490,6 @@ export interface UserProps {
   }[];
 }
 
-export interface ProviderProps {
-  id: string;
-  type: "providers";
-  attributes: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
-    uid: string;
-    alias: string;
-    status: "completed" | "pending" | "cancelled";
-    resources: number;
-    connection: {
-      connected: boolean;
-      last_checked_at: string;
-    };
-    scanner_args: {
-      only_logs: boolean;
-      excluded_checks: string[];
-      aws_retries_max_attempts: number;
-    };
-    inserted_at: string;
-    updated_at: string;
-    created_by: {
-      object: string;
-      id: string;
-    };
-  };
-  relationships: {
-    secret: {
-      data: {
-        type: string;
-        id: string;
-      } | null;
-    };
-    provider_groups: {
-      meta: {
-        count: number;
-      };
-      data: Array<{
-        type: string;
-        id: string;
-      }>;
-    };
-  };
-  groupNames?: string[];
-}
-
 export interface ScanProps {
   type: "scans";
   id: string;
@@ -585,7 +532,7 @@ export interface ScanProps {
     };
   };
   providerInfo?: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    provider: ProviderType;
     uid: string;
     alias: string;
   };
@@ -597,10 +544,11 @@ export interface FindingProps {
   attributes: {
     uid: string;
     delta: "new" | "changed" | null;
-    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status: "PASS" | "FAIL" | "MANUAL";
     status_extended: string;
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
+    muted: boolean;
     check_metadata: {
       risk: string;
       notes: string;
@@ -743,6 +691,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

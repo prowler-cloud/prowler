@@ -1,7 +1,10 @@
+import { ProviderAccountProps } from "./providers";
+
 export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
+  valueLabelMapping?: Array<{ [uid: string]: ProviderAccountProps }>;
 }
 
 export interface CustomDropdownFilterProps {
