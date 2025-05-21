@@ -400,7 +400,7 @@ class Entra(M365Service):
                     directory_roles_ids=user_roles_map.get(user.id, []),
                     is_mfa_capable=(
                         registration_details.get(user.id, {}).is_mfa_capable
-                        if registration_details.get(user.id, {}) is not None
+                        if registration_details.get(user.id, None) is not None
                         else False
                     ),
                 )
