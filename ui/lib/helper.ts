@@ -273,7 +273,7 @@ export const permissionFormFields: PermissionInfo[] = [
 export function replaceFilterFieldKey(
   obj: Record<string, string>,
   oldField: string,
-  newField: string
+  newField: string,
 ): Record<string, string> {
   const fieldObj: Record<string, string> = {};
 

@@ -9,7 +9,13 @@ import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton
 import { ColumnResources } from "@/components/resources/table/column-resources";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { createDict, extractFiltersAndQuery, extractSortAndKey, hasDateOrScanFilter, replaceFilterFieldKey } from "@/lib";
+import {
+  createDict,
+  extractFiltersAndQuery,
+  extractSortAndKey,
+  hasDateOrScanFilter,
+  replaceFilterFieldKey,
+} from "@/lib";
 import { ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
@@ -39,7 +45,11 @@ export default async function Resources({
     }
   }
 
-  const outputFilters = replaceFilterFieldKey(filters, 'inserted_at', 'updated_at');
+  const outputFilters = replaceFilterFieldKey(
+    filters,
+    "inserted_at",
+    "updated_at",
+  );
 
   // Resource call for filters
   const resourcesData = await getResourceFields(
@@ -56,14 +66,14 @@ export default async function Resources({
     resourceNameList = Array.from(
       new Set(
         resourcesData.data.map((item: ResourceProps) => item.attributes.name) ||
-        [],
+          [],
       ),
     );
 
     typeList = Array.from(
       new Set(
         resourcesData.data.map((item: ResourceProps) => item.attributes.type) ||
-        [],
+          [],
       ),
     );
 
@@ -154,7 +164,11 @@ const SSRDataTable = async ({
     }
   }
 
-  const outputFilters = replaceFilterFieldKey(filters, 'inserted_at', 'updated_at');
+  const outputFilters = replaceFilterFieldKey(
+    filters,
+    "inserted_at",
+    "updated_at",
+  );
   const resourcesData = await getResources({
     query,
     page,
@@ -169,22 +183,22 @@ const SSRDataTable = async ({
   // Expand each resources with its corresponding findings and provider
   const expandedResources = resourcesData?.data
     ? resourcesData.data.map((resource: ResourceProps) => {
-      const findings = {
-        meta: resource.relationships.findings.meta,
-        data: resource.relationships.findings.data?.map(
-          (finding) => findingsDict[finding.id],
-        ),
-      };
+        const findings = {
+          meta: resource.relationships.findings.meta,
+          data: resource.relationships.findings.data?.map(
+            (finding) => findingsDict[finding.id],
+          ),
+        };
 
-      const provider = {
-        data: providerDict[resource.relationships.provider.data.id],
-      };
+        const provider = {
+          data: providerDict[resource.relationships.provider.data.id],
+        };
 
-      return {
-        ...resource,
-        relationships: { findings, provider },
-      };
-    })
+        return {
+          ...resource,
+          relationships: { findings, provider },
+        };
+      })
     : [];
 
   const expandedResponse = {
