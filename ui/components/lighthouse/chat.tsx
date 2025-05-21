@@ -17,7 +17,7 @@ interface ChatProps {
   hasApiKey: boolean;
 }
 
-export default function Chat({ hasApiKey }: ChatProps) {
+export const Chat = ({ hasApiKey }: ChatProps) => {
   const { messages, input, handleSubmit, handleInputChange, append, status } =
     useChat({
       api: "/api/lighthouse/analyst",
@@ -211,4 +211,6 @@ export default function Chat({ hasApiKey }: ChatProps) {
       </form>
     </div>
   );
-}
+};
+
+export default Chat;
