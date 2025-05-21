@@ -2,6 +2,16 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.8.0] (Prowler v5.8.0)
+
+### Added
+- Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
+- Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
+
+### Fixed
+
+---
+
 ## [v5.7.0] (Prowler v5.7.0)
 
 ### Added
