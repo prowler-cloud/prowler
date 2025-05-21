@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.8.1] (Prowler v5.7.1)
+
+### Fixed
+- Added database index to improve performance on finding lookup. [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800)
+
+---
+
 ## [v1.8.0] (Prowler v5.7.0)
 
 ### Added
@@ -9,6 +16,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Added improvements to `/overviews` endpoints [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
 - Added new queue to perform backfill background tasks [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690).
 - Added new endpoints to retrieve latest findings and metadata [(#7743)](https://github.com/prowler-cloud/prowler/pull/7743).
+- Added export support for Prowler ThreatScore in M365 [(7783)](https://github.com/prowler-cloud/prowler/pull/7783)
 
 ---
 
