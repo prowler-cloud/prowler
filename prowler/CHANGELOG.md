@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check `entra_users_mfa_capable`. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
 - Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
 - Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
+- Add a level for Prowler ThreatScore in the accordion from Prowler Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
@@ -23,7 +24,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Add GitHub provider. [(#5787)](https://github.com/prowler-cloud/prowler/pull/5787)
-- Add a level for Prowler ThreatScore in the accordion from Prowler Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - Add `repository_default_branch_requires_multiple_approvals` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
 - Add `repository_default_branch_protection_enabled` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
 - Add `repository_default_branch_requires_linear_history` check for GitHub provider. [(#6162)](https://github.com/prowler-cloud/prowler/pull/6162)
