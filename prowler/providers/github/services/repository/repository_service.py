@@ -40,11 +40,15 @@ class Repository(GithubService):
                         "CODEOWNERS",
                         "docs/CODEOWNERS",
                     ]
-                    codeowners_exists = False
-                    for path in codeowners_paths:
-                        if self._file_exists(repo, path):
-                            codeowners_exists = True
-                            break
+                    codeowners_files = [
+                        self._file_exists(repo, path) for path in codeowners_paths
+                    ]
+                    if True in codeowners_files:
+                        codeowners_exists = True
+                    elif all(file is None for file in codeowners_files):
+                        codeowners_exists = None
+                    else:
+                        codeowners_exists = False
                     delete_branch_on_merge = (
                         repo.delete_branch_on_merge
                         if repo.delete_branch_on_merge is not None

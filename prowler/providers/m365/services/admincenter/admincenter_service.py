@@ -11,6 +11,13 @@ from prowler.providers.m365.m365_provider import M365Provider
 class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        self.organization_config = None
+        self.sharing_policy = None
+        if self.powershell:
+            self.powershell.connect_exchange_online()
+            self.organization_config = self._get_organization_config()
+            self.sharing_policy = self._get_sharing_policy()
+            self.powershell.close()
 
         loop = get_event_loop()
 
@@ -28,6 +35,42 @@ class AdminCenter(M365Service):
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
         self.domains = attributes[2]
+
+    def _get_organization_config(self):
+        logger.info("Microsoft365 - Getting Exchange Organization configuration...")
+        organization_config = None
+        try:
+            organization_configuration = self.powershell.get_organization_config()
+            if organization_configuration:
+                organization_config = Organization(
+                    name=organization_configuration.get("Name", ""),
+                    guid=organization_configuration.get("Guid", ""),
+                    customer_lockbox_enabled=organization_configuration.get(
+                        "CustomerLockboxEnabled", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return organization_config
+
+    def _get_sharing_policy(self):
+        logger.info("M365 - Getting sharing policy...")
+        sharing_policy = None
+        try:
+            sharing_policy_data = self.powershell.get_sharing_policy()
+            if sharing_policy_data:
+                sharing_policy = SharingPolicy(
+                    name=sharing_policy_data.get("Name", ""),
+                    guid=sharing_policy_data.get("Guid", ""),
+                    enabled=sharing_policy_data.get("Enabled", False),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return sharing_policy
 
     async def _get_users(self):
         logger.info("M365 - Getting users...")
@@ -163,3 +206,15 @@ class Group(BaseModel):
 class Domain(BaseModel):
     id: str
     password_validity_period: int
+
+
+class Organization(BaseModel):
+    name: str
+    guid: str
+    customer_lockbox_enabled: bool
+
+
+class SharingPolicy(BaseModel):
+    name: str
+    guid: str
+    enabled: bool
