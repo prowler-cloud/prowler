@@ -24,6 +24,7 @@ def mock_list_repositories(_):
             status_checks=True,
             approval_count=2,
             codeowners_exists=True,
+            require_code_owner_reviews=True,
             enforce_admins=True,
             delete_branch_on_merge=True,
             conversation_resolution=True,
@@ -62,6 +63,7 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].conversation_resolution
         assert repository_service.repositories[1].approval_count == 2
         assert repository_service.repositories[1].codeowners_exists is True
+        assert repository_service.repositories[1].require_code_owner_reviews is True
 
 
 class Test_Repository_FileExists:
