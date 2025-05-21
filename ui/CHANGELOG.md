@@ -7,9 +7,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixes
 
 - Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
+<<<<<<< HEAD
 - Retrieve more than 10 providers in /scans, /manage-groups and /findings pages. [(#7793)](https://github.com/prowler-cloud/prowler/pull/7793)
 
+=======
+  
+>>>>>>> origin/v5.7
 ---
+
 ## [v1.7.0] (Prowler v5.7.0)
 
 ### 🚀 Added
