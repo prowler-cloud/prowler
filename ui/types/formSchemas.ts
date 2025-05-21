@@ -155,7 +155,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
         .object({
           providerId: z.string(),
           providerType: z.string(),
-          role_arn: z.string().optional(),
+          role_arn: z.string().nonempty("AWS Role ARN is required"),
           external_id: z.string().optional(),
           aws_access_key_id: z.string().optional(),
           aws_secret_access_key: z.string().optional(),

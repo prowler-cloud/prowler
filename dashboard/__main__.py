@@ -161,7 +161,7 @@ def update_nav_bar(pathname):
                             html.Span(
                                 [
                                     html.Img(src="assets/favicon.ico", className="w-5"),
-                                    "Subscribe to prowler SaaS",
+                                    "Subscribe to Prowler Cloud",
                                 ],
                                 className="flex items-center gap-x-3 text-white",
                             ),
