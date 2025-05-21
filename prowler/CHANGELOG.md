@@ -10,7 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new check `entra_users_mfa_capable`. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
 - Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
 - Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
-- Add a level for Prowler ThreatScore in the accordion from Prowler Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
+- Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
