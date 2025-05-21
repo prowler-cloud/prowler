@@ -9,7 +9,6 @@ from mock import MagicMock, patch
 from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
-from prowler.lib.mutelist.mutelist import validate_mutelist
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
@@ -305,7 +304,7 @@ class TestAWSMutelist:
 
         mutelist = AWSMutelist(mutelist_content=mutelist_fixture)
 
-        assert validate_mutelist(mutelist_fixture)[0]
+        assert mutelist.validate_mutelist(mutelist_fixture)[0]
         assert mutelist.mutelist == mutelist_fixture
 
     def test_validate_mutelist_not_valid_key(self):
@@ -318,7 +317,7 @@ class TestAWSMutelist:
 
         mutelist = AWSMutelist(mutelist_content=mutelist_fixture)
 
-        assert not validate_mutelist(mutelist_fixture)[0]
+        assert not mutelist.validate_mutelist(mutelist_fixture)[0]
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 

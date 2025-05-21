@@ -6,7 +6,7 @@ from boto3.dynamodb.conditions import Attr
 
 from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import Mutelist, validate_mutelist
+from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
 
 
@@ -41,7 +41,7 @@ class AWSMutelist(Mutelist):
             else:
                 self.get_mutelist_file_from_local_file(mutelist_path)
         if self._mutelist:
-            self._mutelist = validate_mutelist(self._mutelist)[1]
+            self._mutelist = self.validate_mutelist(self._mutelist)[1]
 
     def is_finding_muted(
         self,

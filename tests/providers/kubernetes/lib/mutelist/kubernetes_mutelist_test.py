@@ -1,7 +1,6 @@
 import yaml
 from mock import MagicMock
 
-from prowler.lib.mutelist.mutelist import validate_mutelist
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
@@ -37,7 +36,7 @@ class TestKubernetesMutelist:
 
         mutelist = KubernetesMutelist(mutelist_content=mutelist_fixture)
 
-        assert not validate_mutelist(mutelist_fixture)[0]
+        assert not mutelist.validate_mutelist(mutelist_fixture)[0]
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
