@@ -1,34 +1,31 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from colorama import Style
 
 from prowler.config.config import orange_color
 from prowler.lib.check.models import CheckReportM365
-from prowler.lib.fix.fixer import Fixer, FixerMetadata
+from prowler.lib.fix.fixer import Fixer
 from prowler.lib.logger import logger
 
 
-class M365Fixer(Fixer, ABC):
+class M365Fixer(Fixer):
     """M365 specific fixer implementation"""
 
     def __init__(
-        self, credentials: Optional[Dict] = None, session_config: Optional[Dict] = None
+        self,
+        description: str,
+        cost_impact: bool = False,
+        cost_description: Optional[str] = None,
+        service: str = "",
     ):
-        """
-        Initialize M365 fixer with optional credentials and session configuration.
+        super().__init__(description, cost_impact, cost_description)
+        self.service = service
 
-        Args:
-            credentials (Optional[Dict]): Optional M365 credentials for authentication
-            session_config (Optional[Dict]): Optional M365 session configuration
-        """
-        super().__init__(credentials, session_config)
-        self.service: str = ""
-        self.client: Any = None
-
-    @abstractmethod
-    def _get_metadata(self) -> FixerMetadata:
+    def _get_fixer_info(self):
         """Each fixer must define its metadata"""
+        fixer_info = super()._get_fixer_info()
+        fixer_info["service"] = self.service
+        return fixer_info
 
     def fix(self, finding: Optional[CheckReportM365] = None, **kwargs) -> bool:
         """
@@ -50,7 +47,7 @@ class M365Fixer(Fixer, ABC):
                 resource_id = (
                     finding.resource_id if hasattr(finding, "resource_id") else None
                 )
-            else:
+            elif kwargs.get("resource_id"):
                 resource_id = kwargs.get("resource_id")
 
             # Print the appropriate message based on available information
@@ -59,10 +56,8 @@ class M365Fixer(Fixer, ABC):
                     f"\t{orange_color}FIXING Resource {resource_id}...{Style.RESET_ALL}"
                 )
             else:
-                logger.error(
-                    "Either finding or required kwargs (resource_id) must be provided"
-                )
-                return False
+                # If no resource_id is provided, we'll still try to proceed
+                print(f"\t{orange_color}FIXING...{Style.RESET_ALL}")
 
             return True
 
