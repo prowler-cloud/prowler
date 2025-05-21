@@ -9,6 +9,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Allow setting cluster name in in-cluster mode in Kubernetes. [(#7695)](https://github.com/prowler-cloud/prowler/pull/7695)
 - Add Prowler ThreatScore for M365 provider. [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Add new check `entra_users_mfa_capable`. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
+- Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
+- Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
 - Add GitHub provider. [(#5787)](https://github.com/prowler-cloud/prowler/pull/5787)
 - Add `repository_default_branch_requires_multiple_approvals` check for GitHub provider. [(#6160)](https://github.com/prowler-cloud/prowler/pull/6160)
 - Add `repository_default_branch_protection_enabled` check for GitHub provider. [(#6161)](https://github.com/prowler-cloud/prowler/pull/6161)
@@ -27,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
 - Update and upgrade CIS for all the providers [(#7738)](https://github.com/prowler-cloud/prowler/pull/7738)
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
+- Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
 
 ---
