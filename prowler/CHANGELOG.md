@@ -14,7 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
-
+- Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
 ---
 
 ## [v5.7.0] (Prowler v5.7.0)
