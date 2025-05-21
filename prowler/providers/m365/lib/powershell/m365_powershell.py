@@ -133,7 +133,7 @@ class M365PowerShell(PowerShellSession):
             f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
         )
         self.execute(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
         )
 
         # Validate user belongs to tenant
@@ -724,6 +724,24 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
+    def get_sharing_policy(self) -> dict:
+        """
+        Get Exchange Online Sharing Policy.
+
+        Retrieves the current sharing policy settings for Exchange Online.
+
+        Returns:
+            dict: Sharing policy settings in JSON format.
+
+        Example:
+            >>> get_sharing_policy()
+            {
+                "Identity": "Default",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
 
 
 # This function is used to install the required M365 PowerShell modules in Docker containers

@@ -151,7 +151,7 @@ class Testm365PowerShell:
             f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
 
         # Verify MSAL was called with the correct parameters
