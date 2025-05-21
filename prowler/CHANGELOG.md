@@ -7,9 +7,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
 - Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
-- Add new check `entra_users_mfa_capable`. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
-- Add new check `admincenter_organization_customer_lockbox_enabled`. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
-- Add new check `admincenter_external_calendar_sharing_disabled`. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
+- Add new check `entra_users_mfa_capable` for M365 provider. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
+- Add new check `admincenter_organization_customer_lockbox_enabled` for M365 provider. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
+- Add new check `admincenter_external_calendar_sharing_disabled` for M365 provider. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
+- Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - Add CIS 4.0 compliance framework for GCP. [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
 
 ### Fixed
