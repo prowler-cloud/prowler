@@ -82,6 +82,7 @@ class M365CISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str

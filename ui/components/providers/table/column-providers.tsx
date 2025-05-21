@@ -27,7 +27,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "account",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Account"} param="alias" />
+      <DataTableColumnHeader column={column} title={"Provider"} param="alias" />
     ),
     cell: ({ row }) => {
       const {
@@ -64,7 +64,11 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "uid",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
+      <DataTableColumnHeader
+        column={column}
+        title={"Provider UID"}
+        param="uid"
+      />
     ),
     cell: ({ row }) => {
       const {
