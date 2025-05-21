@@ -94,13 +94,16 @@ prowler dashboard
 | M365 | 44 | 2 | 2 | 0 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
+???+ important "Up-to-date information"
+    The numbers in the table above are updated periodically.
+    For the most accurate and current details about checks, services, frameworks, and categories, visit [**Prowler HuB**](https://hub.prowler.com).
+
 > Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
 # 💻 Installation
 
 ## Prowler App
 
-Installing Prowler App
 Prowler App offers flexible installation methods tailored to various environments:
 
 > For detailed instructions on using Prowler App, refer to the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
