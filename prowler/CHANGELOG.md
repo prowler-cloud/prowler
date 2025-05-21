@@ -37,12 +37,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add GitHub provider documentation and CIS v1.0.0 compliance. [(#6116)](https://github.com/prowler-cloud/prowler/pull/6116)
 - Add CIS 5.0 compliance framework for AWS. [(7766)](https://github.com/prowler-cloud/prowler/pull/7766)
 
-
 ### Fixed
 - Update CIS 4.0 for M365 provider. [(#7699)](https://github.com/prowler-cloud/prowler/pull/7699)
 - Update and upgrade CIS for all the providers [(#7738)](https://github.com/prowler-cloud/prowler/pull/7738)
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
+
 ---
 
 ## [v5.6.0] (Prowler v5.6.0)
