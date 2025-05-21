@@ -1,0 +1,34 @@
+{
+    "Provider": "ionos",
+    "CheckID": "objectstorage_bucket_public_access",
+    "CheckTitle": "Check if Object Storage Buckets Allow Public Access",
+    "CheckType": [
+        "Infrastructure Security"
+    ],
+    "ServiceName": "objectstorage",
+    "SubServiceName": "bucket",
+    "ResourceIdTemplate": "arn:aws:s3:::bucket_name",
+    "Severity": "high",
+    "ResourceType": "AwsS3Bucket",
+    "Description": "Check if IONOS Object Storage buckets have public access enabled through bucket policies or ACLs.",
+    "Risk": "Public access to storage buckets could lead to data exposure and unauthorized access to sensitive information.",
+    "RelatedUrl": "https://docs.ionos.com/cloud/storage-and-backup/object-storage/access-control",
+    "Remediation": {
+        "Code": {
+            "CLI": "1. Access the IONOS Cloud Panel\n2. Navigate to Object Storage section\n3. Select the bucket\n4. Review and modify bucket permissions\n5. Ensure public access is disabled",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+        },
+        "Recommendation": {
+            "Text": "Configure bucket policies and ACLs to restrict public access. Only grant necessary permissions to specific authenticated users or roles.",
+            "Url": "https://docs.ionos.com/cloud/storage-and-backup/object-storage/access-control"
+        }
+    },
+    "Categories": [
+        "internet-exposed"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

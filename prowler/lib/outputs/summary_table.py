@@ -54,6 +54,9 @@ def display_summary_table(
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "ionos":
+            entity_type = "Datacenter ID"
+            audited_entities = provider.identity.datacenter_id
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
