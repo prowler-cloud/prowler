@@ -77,7 +77,7 @@ export const UserNav = ({ user }: { user?: UserProfileProps }) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem disabled className="hover:cursor-pointer" asChild>
+          <DropdownMenuItem className="hover:cursor-pointer" asChild>
             <Link href="/profile" className="flex items-center">
               <User className="text-muted-foreground mr-3 h-4 w-4" />
               Account
