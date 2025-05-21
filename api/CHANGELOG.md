@@ -5,7 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.8.1] (Prowler v5.7.1)
 
 ### Fixed
-- Added database index to improve performance on finding lookup. [()]()
+- Added database index to improve performance on finding lookup. [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800)
 
 ---
 
