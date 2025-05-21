@@ -93,8 +93,10 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
     header: () => <div className="text-center">Failed Findings</div>,
     cell: ({ row }) => {
       const count = row.original.relationships.findings.data.filter(
-        (data) => data.attributes.status === "FAIL",
+        (data) =>
+          data.attributes.status === "FAIL" && data.attributes.delta === "new",
       ).length;
+
       return (
         <>
           <p className="text-center">

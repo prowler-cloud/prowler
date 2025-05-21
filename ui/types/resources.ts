@@ -47,7 +47,7 @@ export interface ResourceProps {
       data: {
         type: "findings";
         id: string;
-        attributes: { status: string };
+        attributes: { status: string; delta: string };
       }[];
     };
   };
