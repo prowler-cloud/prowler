@@ -755,6 +755,10 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 condition=Q(delta="new"),
                 name="find_delta_new_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "uid", "-inserted_at"],
+                name="find_tenant_uid_inserted_idx",
+            ),
             GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
             GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
             GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
