@@ -148,7 +148,7 @@ def create_layout_compliance(
                     html.A(
                         [
                             html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
-                            html.Span("Subscribe to prowler SaaS"),
+                            html.Span("Subscribe to Prowler Cloud"),
                         ],
                         href="https://prowler.pro/",
                         target="_blank",

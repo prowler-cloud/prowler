@@ -1353,13 +1353,13 @@ def filter_data(
         "m365", m365_provider_logo, "Accounts", full_filtered_data
     )
 
-    # Subscribe to prowler SaaS card
+    # Subscribe to Prowler Cloud card
     subscribe_card = [
         html.Div(
             html.A(
                 [
                     html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
-                    html.Span("Subscribe to prowler SaaS"),
+                    html.Span("Subscribe to Prowler Cloud"),
                 ],
                 href="https://prowler.pro/",
                 target="_blank",
