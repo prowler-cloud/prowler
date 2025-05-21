@@ -21,7 +21,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
         """Execute the check for users with administrative roles and their licenses.
 
         This method iterates over all users and checks if those with administrative roles
-        have an allowed license. If a user has a valid license (AAD_PREMIUM or AAD_PREMIUM_P2),
+        have an allowed license. If a user has a valid license (AAD_PREMIUM or AAD_PREMIUM_P2) or no license,
         the check passes; otherwise, it fails.
 
         Returns:
@@ -45,7 +45,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
                     resource_name=user.name,
                     resource_id=user.id,
                 )
-                report.status = "FAIL"
+                report.status = "PASS"
                 report.status_extended = f"User {user.name} has administrative roles {admin_roles} and does not have a license."
 
                 if user.license:
