@@ -64,7 +64,7 @@ def delete_tenant(pk: str):
     """
     deletion_summary = {}
 
-    for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
+    for provider in Provider.objects.using(MainRouter.admin_read).filter(tenant_id=pk):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 

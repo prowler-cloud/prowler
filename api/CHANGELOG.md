@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.9.0] (Prowler UNRELEASED)
+
+### Added
+- Support for read only replicas in the database [(#7210)](https://github.com/prowler-cloud/prowler/pull/7210).
+
+---
+
 ## [v1.8.1] (Prowler v5.7.1)
 
 ### Fixed
@@ -33,7 +40,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.6.0] (Prowler v5.5.0)
 
 ### Added
-
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
 - HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289).
 - New endpoint to get the compliance overviews metadata [(#7333)](https://github.com/prowler-cloud/prowler/pull/7333).
@@ -70,7 +76,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Added a handled response in case local files are missing [(#7183)](https://github.com/prowler-cloud/prowler/pull/7183).
 - Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
 - Handled exception when a provider has no secret in test connection [(#7283)](https://github.com/prowler-cloud/prowler/pull/7283).
-
 
 ---
 
