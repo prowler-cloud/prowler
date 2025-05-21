@@ -68,7 +68,7 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex max-w-10 justify-center">
       <TriggerSheet
         triggerComponent={<InfoIcon className="text-primary" size={16} />}
         title="Finding Details"
@@ -110,8 +110,10 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return (
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
           <div className="flex flex-row items-center gap-4">
-            {(delta === "new" || delta === "changed") && (
+            {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
+            ) : (
+              <div className="w-2" />
             )}
             <p className="mr-7 whitespace-normal break-words text-sm">
               {checktitle}
@@ -121,6 +123,21 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
             <Muted isMuted={muted} />
           </span>
         </div>
+      );
+    },
+  },
+  {
+    accessorKey: "resourceName",
+    header: "Resource name",
+    cell: ({ row }) => {
+      const resourceName = getResourceData(row, "name");
+
+      return (
+        <SnippetChip
+          value={resourceName as string}
+          formatter={(value: string) => `...${value.slice(-10)}`}
+          icon={<Database size={16} />}
+        />
       );
     },
   },
@@ -207,21 +224,6 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
       return <p className="max-w-96 truncate text-xs">{servicename}</p>;
-    },
-  },
-  {
-    accessorKey: "resourceName",
-    header: "Resource name",
-    cell: ({ row }) => {
-      const resourceName = getResourceData(row, "name");
-
-      return (
-        <SnippetChip
-          value={resourceName as string}
-          formatter={(value) => `...${value.slice(-10)}`}
-          icon={<Database size={16} />}
-        />
-      );
     },
   },
   {
