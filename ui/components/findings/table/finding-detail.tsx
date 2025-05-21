@@ -115,13 +115,13 @@ export const FindingDetail = ({
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
         </div>
-        <InfoField label="ID" variant="simple">
+        <InfoField label="Finding ID" variant="simple">
           <CodeSnippet value={findingDetails.id} />
         </InfoField>
         <InfoField label="Check ID" variant="simple">
           <CodeSnippet value={attributes.check_id} />
         </InfoField>
-        <InfoField label="UID" variant="simple">
+        <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
         </InfoField>
 
