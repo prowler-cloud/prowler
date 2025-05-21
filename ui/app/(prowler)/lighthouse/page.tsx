@@ -1,9 +1,8 @@
 import { getAIKey } from "@/actions/lighthouse/lighthouse";
+import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
 
-import Chat from "./chat";
-
-export default async function AIChatbot() {
+export const AIChatbot = async () => {
   const apiKey = await getAIKey();
 
   return (
@@ -11,4 +10,6 @@ export default async function AIChatbot() {
       <Chat hasApiKey={!!apiKey} />
     </ContentLayout>
   );
-}
+};
+
+export default AIChatbot;
