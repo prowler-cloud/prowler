@@ -2,6 +2,10 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.9.0 ] (UNRELEASED)
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+
 ## [v1.8.0] (Prowler v5.7.0)
 
 ### Added
