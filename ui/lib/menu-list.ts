@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Bookmark,
   Bot,
-  Boxes,
   CloudCog,
   Cog,
   Group,
