@@ -64,14 +64,14 @@ export const M365CredentialsForm = ({
       />
       <CustomInput
         control={control}
-        name="encrypted_password"
+        name="password"
         type="password"
         label="Encrypted Password"
         labelPlacement="inside"
         placeholder="Enter the Password"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.encrypted_password}
+        isInvalid={!!control._formState.errors.password}
       />
     </>
   );
