@@ -4,12 +4,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
-<<<<<<< HEAD
-### 🐞 Fixes
-
-- Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
-  
-=======
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
@@ -24,7 +18,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Tweak some wording for consistency throughout the app. [(#7794)](https://github.com/prowler-cloud/prowler/pull/7794)
 - Retrieve more than 10 providers in /scans, /manage-groups and /findings pages. [(#7793)](https://github.com/prowler-cloud/prowler/pull/7793)
 
->>>>>>> 118f3d163 (docs: update changelog UI (#7808))
 ---
 
 ## [v1.7.0] (Prowler v5.7.0)
