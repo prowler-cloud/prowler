@@ -1,0 +1,67 @@
+name: Create Backport Label
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  create_label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Create backport label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          OWNER_REPO: ${{ github.repository }}
+        run: |
+          VERSION_ONLY=${RELEASE_TAG#v} # Remove 'v' prefix if present (e.g., v3.2.0 -> 3.2.0)
+
+          # Check if it's a minor version (X.Y.0)
+          if [[ "$VERSION_ONLY" =~ ^[0-9]+\.[0-9]+\.0$ ]]; then
+            echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is a minor version. Proceeding to create backport label."
+
+            TWO_DIGIT_VERSION=${VERSION_ONLY%.0} # Extract X.Y from X.Y.0 (e.g., 5.6 from 5.6.0)
+
+            FINAL_LABEL_NAME="backport-to-v${TWO_DIGIT_VERSION}"
+            FINAL_DESCRIPTION="Backport PR to the v${TWO_DIGIT_VERSION} branch"
+
+            echo "Effective label name will be: ${FINAL_LABEL_NAME}"
+            echo "Effective description will be: ${FINAL_DESCRIPTION}"
+
+            # Check if the label already exists
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${OWNER_REPO}/labels/${FINAL_LABEL_NAME}")
+
+            if [ "${STATUS_CODE}" -eq 200 ]; then
+              echo "Label '${FINAL_LABEL_NAME}' already exists."
+            elif [ "${STATUS_CODE}" -eq 404 ]; then
+              echo "Label '${FINAL_LABEL_NAME}' does not exist. Creating it..."
+              # Prepare JSON data payload
+              JSON_DATA=$(printf '{"name":"%s","description":"%s","color":"B60205"}' "${FINAL_LABEL_NAME}" "${FINAL_DESCRIPTION}")
+
+              CREATE_STATUS_CODE=$(curl -s -o /tmp/curl_create_response.json -w "%{http_code}" -X POST \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              --data "${JSON_DATA}" \
+              "https://api.github.com/repos/${OWNER_REPO}/labels")
+
+              CREATE_RESPONSE_BODY=$(cat /tmp/curl_create_response.json)
+              rm -f /tmp/curl_create_response.json
+
+              if [ "$CREATE_STATUS_CODE" -eq 201 ]; then
+                echo "Label '${FINAL_LABEL_NAME}' created successfully."
+              else
+                echo "Error creating label '${FINAL_LABEL_NAME}'. Status: $CREATE_STATUS_CODE"
+                echo "Response: $CREATE_RESPONSE_BODY"
+                exit 1
+              fi
+            else
+              echo "Error checking for label '${FINAL_LABEL_NAME}'. HTTP Status: ${STATUS_CODE}"
+              exit 1
+            fi
+          else
+            echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is not a minor version. Skipping backport label creation."
+            exit 0
+          fi
