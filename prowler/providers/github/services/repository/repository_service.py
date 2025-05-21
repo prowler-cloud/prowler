@@ -126,8 +126,7 @@ class Repository(GithubService):
                                 == "enabled"
                             )
                         try:
-                            # Use get_dependabot_alerts to check if Dependabot alerts are enabled,
-                            #   but this is slow because it retries 403 errors.
+                            # Use get_dependabot_alerts to check if Dependabot alerts are enabled
                             repo.get_dependabot_alerts()[0]
                             # If the call succeeds, Dependabot is enabled (even if no alerts)
                             dependabot_alerts_enabled = True
