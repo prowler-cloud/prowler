@@ -1,11 +1,16 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import {
+  DateWithTime,
+  EntityInfoShort,
+  SnippetChip,
+} from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
@@ -202,6 +207,21 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
       return <p className="max-w-96 truncate text-xs">{servicename}</p>;
+    },
+  },
+  {
+    accessorKey: "resourceName",
+    header: "Resource name",
+    cell: ({ row }) => {
+      const resourceName = getResourceData(row, "name");
+
+      return (
+        <SnippetChip
+          value={resourceName as string}
+          formatter={(value) => `...${value.slice(-10)}`}
+          icon={<Database size={16} />}
+        />
+      );
     },
   },
   {

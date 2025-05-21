@@ -1,17 +1,21 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import { Muted } from "@/components/findings/muted";
 import { DataTableRowDetails } from "@/components/findings/table";
 import { DeltaIndicator } from "@/components/findings/table/delta-indicator";
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import {
+  DateWithTime,
+  EntityInfoShort,
+  SnippetChip,
+} from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
-
-import { Muted } from "../../../findings/muted";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -149,6 +153,21 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
       return <p className="max-w-96 truncate text-small">{servicename}</p>;
+    },
+  },
+  {
+    accessorKey: "resourceName",
+    header: "Resource name",
+    cell: ({ row }) => {
+      const resourceName = getResourceData(row, "name");
+
+      return (
+        <SnippetChip
+          value={resourceName as string}
+          formatter={(value) => `...${value.slice(-10)}`}
+          icon={<Database size={16} />}
+        />
+      );
     },
   },
   {
