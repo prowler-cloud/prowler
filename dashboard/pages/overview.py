@@ -518,6 +518,7 @@ else:
     Input("service-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
@@ -540,6 +541,7 @@ def filter_data(
     service_values,
     table_row_values,
     status_values,
+    search_value,
     aws_clicks,
     azure_clicks,
     gcp_clicks,
@@ -1144,6 +1146,15 @@ def filter_data(
         }
 
         index_count = 0
+        if search_value:
+            search_value = search_value.lower()
+            filtered_data = filtered_data[
+                filtered_data["CHECK_TITLE"].str.lower().str.contains(search_value)
+                | filtered_data["SERVICE_NAME"].str.lower().str.contains(search_value)
+                | filtered_data["REGION"].str.lower().str.contains(search_value)
+                | filtered_data["STATUS"].str.lower().str.contains(search_value)
+            ]
+
         full_filtered_data = filtered_data.copy()
         filtered_data = filtered_data.head(table_row_values)
         # Sort the filtered_data
@@ -1342,13 +1353,13 @@ def filter_data(
         "m365", m365_provider_logo, "Accounts", full_filtered_data
     )
 
-    # Subscribe to Prowler Cloud card
+    # Subscribe to prowler SaaS card
     subscribe_card = [
         html.Div(
             html.A(
                 [
                     html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
-                    html.Span("Subscribe to Prowler Cloud"),
+                    html.Span("Subscribe to prowler SaaS"),
                 ],
                 href="https://prowler.pro/",
                 target="_blank",
