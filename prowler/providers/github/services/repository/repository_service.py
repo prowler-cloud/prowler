@@ -141,8 +141,6 @@ class Repository(GithubService):
                                 in error_str
                             ):
                                 dependabot_alerts_enabled = False
-                            elif "403" in error_str or "404" in error_str:
-                                dependabot_alerts_enabled = None
                             else:
                                 logger.error(
                                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
