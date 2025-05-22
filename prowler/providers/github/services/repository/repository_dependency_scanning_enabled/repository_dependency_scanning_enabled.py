@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_package_vulnerabilities_scanner_enabled(Check):
+class repository_dependency_scanning_enabled(Check):
     """Check if package vulnerability scanning (Dependabot alerts) is enabled for dependencies in the repository
 
     This class verifies whether each repository has package vulnerability scanning enabled.

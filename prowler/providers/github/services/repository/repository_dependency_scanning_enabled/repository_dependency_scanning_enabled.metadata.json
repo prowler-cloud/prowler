@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "repository_package_vulnerabilities_scanner_enabled",
+  "CheckID": "repository_dependency_scanning_enabled",
   "CheckTitle": "Check if package vulnerability scanning is enabled for dependencies in the repository",
   "CheckType": [],
   "ServiceName": "repository",
