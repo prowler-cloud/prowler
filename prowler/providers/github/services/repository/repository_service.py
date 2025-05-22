@@ -133,8 +133,8 @@ class Repository(GithubService):
                             repo.get_dependabot_alerts()[0]
                             # If the call succeeds, Dependabot is enabled (even if no alerts)
                             dependabot_alerts_enabled = True
-                        except Exception as dependabot_error:
-                            error_str = str(dependabot_error)
+                        except Exception as error:
+                            error_str = str(error)
                             if (
                                 "403" in error_str
                                 and "Dependabot alerts are disabled for this repository."
@@ -145,7 +145,7 @@ class Repository(GithubService):
                                 dependabot_alerts_enabled = None
                             else:
                                 logger.error(
-                                    f"Dependabot detection error in repo {repo.name}: {dependabot_error}"
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                                 dependabot_alerts_enabled = None
                     except Exception as error:
