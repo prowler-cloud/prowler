@@ -19,9 +19,9 @@ const getResourceData = (
 };
 
 const getChipStyle = (count: number) => {
-  if (count > 10) return "bg-red-100 text-red-800";
-  if (count > 1) return "bg-yellow-100 text-yellow-800";
-  return "bg-green-100 text-green-800";
+  if (count === 0) return "bg-green-100 text-green-800";
+  if (count >= 10) return "bg-red-100 text-red-800";
+  if (count >= 1) return "bg-yellow-100 text-yellow-800";
 };
 
 const getProviderData = (
@@ -75,7 +75,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const resourceName = getResourceData(row, "name");
       return (
         <>
-          <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+          <div className="relative flex max-w-[370px] flex-row items-center gap-2 3xl:max-w-[660px]">
             <div className="flex w-full flex-row items-center gap-4">
               <p className="w-full whitespace-normal break-words text-sm">
                 {typeof resourceName === "string"
@@ -119,7 +119,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const region = getResourceData(row, "region");
 
       return (
-        <div className="w-[120px] text-left">
+        <div className="w-[80px] text-xs">
           {typeof region === "string" ? region : "Invalid region"}
         </div>
       );
@@ -134,7 +134,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const type = getResourceData(row, "type");
 
       return (
-        <div className="w-[110px] whitespace-normal break-words text-left">
+        <div className="max-w-[150px] whitespace-normal break-words text-xs">
           {typeof type === "string" ? type : "Invalid type"}
         </div>
       );
@@ -153,7 +153,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const service = getResourceData(row, "service");
 
       return (
-        <div className="w-[90px] whitespace-normal break-words text-left">
+        <div className="max-w-96 truncate text-xs">
           {typeof service === "string" ? service : "Invalid region"}
         </div>
       );
