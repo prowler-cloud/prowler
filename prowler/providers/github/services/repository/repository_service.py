@@ -61,6 +61,7 @@ class Repository(GithubService):
                     allow_force_pushes = True
                     branch_deletion = True
                     require_code_owner_reviews = False
+                    require_signed_commits = False
                     status_checks = False
                     enforce_admins = False
                     conversation_resolution = False
@@ -95,6 +96,9 @@ class Repository(GithubService):
                                     if require_pr
                                     else False
                                 )
+                                require_signed_commits = (
+                                    branch.get_required_signatures()
+                                )
                     except Exception as error:
                         # If the branch is not found, it is not protected
                         if "404" in str(error):
@@ -110,6 +114,7 @@ class Repository(GithubService):
                             allow_force_pushes = None
                             branch_deletion = None
                             require_code_owner_reviews = None
+                            require_signed_commits = None
                             status_checks = None
                             enforce_admins = None
                             conversation_resolution = None
@@ -171,6 +176,7 @@ class Repository(GithubService):
                         codeowners_exists=codeowners_exists,
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
+                        require_signed_commits=require_signed_commits,
                         dependabot_alerts_enabled=dependabot_alerts_enabled,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
@@ -202,6 +208,7 @@ class Repo(BaseModel):
     codeowners_exists: Optional[bool]
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
+    require_signed_commits: Optional[bool]
     dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
