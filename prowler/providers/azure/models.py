@@ -18,6 +18,8 @@ class AzureRegionConfig(BaseModel):
     authority: str = None
     base_url: str = ""
     credential_scopes: list = []
+    graph_credential_scopes: list = []
+    graph_base_url: str = ""
 
 
 class AzureSubscription(BaseModel):
