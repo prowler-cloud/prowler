@@ -120,7 +120,10 @@ class Repository(GithubService):
                     secret_scanning_enabled = False
                     dependabot_alerts_enabled = False
                     try:
-                        if repo.security_and_analysis:
+                        if (
+                            repo.security_and_analysis
+                            and repo.security_and_analysis.secret_scanning
+                        ):
                             secret_scanning_enabled = (
                                 repo.security_and_analysis.secret_scanning.status
                                 == "enabled"
@@ -147,7 +150,7 @@ class Repository(GithubService):
                                 dependabot_alerts_enabled = None
                     except Exception as error:
                         logger.error(
-                            f"Secret scanning or Dependabot detection error in repo {repo.name}: {error}"
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         secret_scanning_enabled = None
                         dependabot_alerts_enabled = None

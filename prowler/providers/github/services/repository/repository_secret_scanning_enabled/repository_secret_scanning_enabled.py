@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_sensitive_data_scanner_enabled(Check):
+class repository_secret_scanning_enabled(Check):
     """Check if secret scanning is enabled to detect sensitive data in the repository
 
     This class verifies whether each repository has secret scanning enabled.

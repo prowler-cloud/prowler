@@ -4,7 +4,7 @@ from prowler.providers.github.services.repository.repository_service import Repo
 from tests.providers.github.github_fixtures import set_mocked_github_provider
 
 
-class Test_repository_sensitive_data_scanner_enabled:
+class Test_repository_secret_scanning_enabled:
     def test_no_repositories(self):
         repository_client = mock.MagicMock
         repository_client.repositories = {}
@@ -15,15 +15,15 @@ class Test_repository_sensitive_data_scanner_enabled:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled.repository_client",
+                "prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled import (
-                repository_sensitive_data_scanner_enabled,
+            from prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled import (
+                repository_secret_scanning_enabled,
             )
 
-            check = repository_sensitive_data_scanner_enabled()
+            check = repository_secret_scanning_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -50,15 +50,15 @@ class Test_repository_sensitive_data_scanner_enabled:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled.repository_client",
+                "prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled import (
-                repository_sensitive_data_scanner_enabled,
+            from prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled import (
+                repository_secret_scanning_enabled,
             )
 
-            check = repository_sensitive_data_scanner_enabled()
+            check = repository_secret_scanning_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
@@ -92,15 +92,15 @@ class Test_repository_sensitive_data_scanner_enabled:
                 return_value=set_mocked_github_provider(),
             ),
             mock.patch(
-                "prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled.repository_client",
+                "prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled.repository_client",
                 new=repository_client,
             ),
         ):
-            from prowler.providers.github.services.repository.repository_sensitive_data_scanner_enabled.repository_sensitive_data_scanner_enabled import (
-                repository_sensitive_data_scanner_enabled,
+            from prowler.providers.github.services.repository.repository_secret_scanning_enabled.repository_secret_scanning_enabled import (
+                repository_secret_scanning_enabled,
             )
 
-            check = repository_sensitive_data_scanner_enabled()
+            check = repository_secret_scanning_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 2
