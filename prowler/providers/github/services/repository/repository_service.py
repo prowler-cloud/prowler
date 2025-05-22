@@ -126,7 +126,7 @@ class Repository(GithubService):
                             )
                     except Exception as error:
                         logger.error(
-                            f"Secret scanning detection error in repo {repo.name}: {error}"
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         secret_scanning_enabled = None
                     repos[repo.id] = Repo(
