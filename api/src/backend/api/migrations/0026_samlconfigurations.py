@@ -11,7 +11,7 @@ import api.rls
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("api", "0023_resources_lookup_optimization"),
+        ("api", "0025_findings_uid_index_parent"),
     ]
 
     operations = [
