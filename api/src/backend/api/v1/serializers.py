@@ -1204,9 +1204,7 @@ class M365ProviderSecret(serializers.Serializer):
 
 
 class GCPProviderSecret(serializers.Serializer):
-    client_id = serializers.CharField()
-    client_secret = serializers.CharField()
-    refresh_token = serializers.CharField()
+    service_account_key = serializers.CharField()
 
     class Meta:
         resource_name = "provider-secrets"
