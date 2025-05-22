@@ -260,7 +260,11 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
+<<<<<<< HEAD
         spectacular_settings.VERSION = "1.8.3"
+=======
+        spectacular_settings.VERSION = "1.9.0"
+>>>>>>> 36aaec8a5 (chore(m365powershell): manage encryption from plaintext password (#7784))
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )

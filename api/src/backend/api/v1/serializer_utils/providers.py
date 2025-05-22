@@ -119,7 +119,7 @@ from rest_framework_json_api import serializers
                         "type": "email",
                         "description": "User microsoft email address.",
                     },
-                    "encrypted_password": {
+                    "password": {
                         "type": "string",
                         "description": "User encrypted password.",
                     },
@@ -129,7 +129,7 @@ from rest_framework_json_api import serializers
                     "client_secret",
                     "tenant_id",
                     "user",
-                    "encrypted_password",
+                    "password",
                 ],
             },
             {

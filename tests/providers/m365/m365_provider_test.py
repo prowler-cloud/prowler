@@ -365,7 +365,7 @@ class TestM365Provider:
             assert test_connection.is_connected
             assert test_connection.error is None
 
-    def test_test_connection_tenant_id_client_id_client_secret_no_user_encrypted_password(
+    def test_test_connection_tenant_id_client_id_client_secret_no_user_password(
         self,
     ):
         with patch(
@@ -384,13 +384,13 @@ class TestM365Provider:
                     client_id=str(uuid4()),
                     client_secret=str(uuid4()),
                     user=None,
-                    encrypted_password="test_password",
+                    password="test_password",
                 )
 
             assert exception.type == M365NotValidUserError
             assert "The provided M365 User is not valid." in str(exception.value)
 
-    def test_test_connection_tenant_id_client_id_client_secret_user_no_encrypted_password(
+    def test_test_connection_tenant_id_client_id_client_secret_user_no_password(
         self,
     ):
         with patch(
@@ -411,7 +411,7 @@ class TestM365Provider:
                     client_id=str(uuid4()),
                     client_secret=str(uuid4()),
                     user="test@example.com",
-                    encrypted_password=None,
+                    password=None,
                 )
 
             assert exception.type == M365NotValidEncryptedPasswordError
@@ -467,7 +467,7 @@ class TestM365Provider:
     def test_setup_powershell_valid_credentials(self):
         credentials_dict = {
             "user": "test@example.com",
-            "encrypted_password": "test_password",
+            "password": "test_password",
             "client_id": "test_client_id",
             "tenant_id": "test_tenant_id",
             "client_secret": "test_client_secret",
@@ -492,7 +492,7 @@ class TestM365Provider:
                 ),
             )
             assert result.user == credentials_dict["user"]
-            assert result.passwd == credentials_dict["encrypted_password"]
+            assert result.passwd == credentials_dict["password"]
 
     def test_setup_powershell_invalid_env_credentials(self):
         credentials = None
@@ -510,7 +510,7 @@ class TestM365Provider:
                 )
 
             assert (
-                "Missing M365_USER or M365_ENCRYPTED_PASSWORD environment variables required for credentials authentication"
+                "Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication"
                 in str(exc_info.value)
             )
             mock_session.test_credentials.assert_not_called()
@@ -534,7 +534,7 @@ class TestM365Provider:
                     client_id=str(uuid4()),
                     client_secret=str(uuid4()),
                     user="user@otherdomain.com",
-                    encrypted_password="test_password",
+                    password="test_password",
                 )
 
             assert exception.type == M365UserNotBelongingToTenantError
@@ -550,7 +550,7 @@ class TestM365Provider:
                 client_id="12345678-1234-5678-1234-567812345678",
                 client_secret="test_secret",
                 user="test@example.com",
-                encrypted_password="test_password",
+                password="test_password",
             )
         assert "The provided Tenant ID is not valid." in str(exception.value)
 
@@ -561,7 +561,7 @@ class TestM365Provider:
                 client_id="",
                 client_secret="test_secret",
                 user="test@example.com",
-                encrypted_password="test_password",
+                password="test_password",
             )
         assert "The provided Client ID is not valid." in str(exception.value)
 
@@ -572,7 +572,7 @@ class TestM365Provider:
                 client_id="12345678-1234-5678-1234-567812345678",
                 client_secret="",
                 user="test@example.com",
-                encrypted_password="test_password",
+                password="test_password",
             )
         assert "The provided Client Secret is not valid." in str(exception.value)
 
@@ -583,18 +583,18 @@ class TestM365Provider:
                 client_id="12345678-1234-5678-1234-567812345678",
                 client_secret="test_secret",
                 user="",
-                encrypted_password="test_password",
+                password="test_password",
             )
         assert "The provided User is not valid." in str(exception.value)
 
-    def test_validate_static_credentials_missing_encrypted_password(self):
+    def test_validate_static_credentials_missing_password(self):
         with pytest.raises(M365NotValidEncryptedPasswordError) as exception:
             M365Provider.validate_static_credentials(
                 tenant_id="12345678-1234-5678-1234-567812345678",
                 client_id="12345678-1234-5678-1234-567812345678",
                 client_secret="test_secret",
                 user="test@example.com",
-                encrypted_password="",
+                password="",
             )
         assert "The provided Encrypted Password is not valid." in str(exception.value)
 
@@ -609,11 +609,11 @@ class TestM365Provider:
                 client_id="test_client_id",
                 client_secret="test_secret",
                 user=None,
-                encrypted_password=None,
+                password=None,
             )
 
         assert (
-            "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_ENCRYPTED_PASSWORD environment variables to be set when using --env-auth"
+            "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_PASSWORD environment variables to be set when using --env-auth"
             in str(exception.value)
         )
 
@@ -655,7 +655,7 @@ class TestM365Provider:
                     client_id=str(uuid4()),
                     client_secret=str(uuid4()),
                     user=f"user@{user_domain}",
-                    encrypted_password="test_password",
+                    password="test_password",
                     provider_id=provider_id,
                 )
 
@@ -669,7 +669,7 @@ class TestM365Provider:
         """Test that initialize_m365_powershell_modules is not called when init_modules is False"""
         credentials_dict = {
             "user": "test@example.com",
-            "encrypted_password": "test_password",
+            "password": "test_password",
             "client_id": "test_client_id",
             "tenant_id": "test_tenant_id",
             "client_secret": "test_client_secret",
@@ -703,7 +703,7 @@ class TestM365Provider:
         """Test that initialize_m365_powershell_modules is called when init_modules is True"""
         credentials_dict = {
             "user": "test@example.com",
-            "encrypted_password": "test_password",
+            "password": "test_password",
             "client_id": "test_client_id",
             "tenant_id": "test_tenant_id",
             "client_secret": "test_client_secret",
@@ -737,7 +737,7 @@ class TestM365Provider:
         """Test that setup_powershell handles initialization failures correctly"""
         credentials_dict = {
             "user": "test@example.com",
-            "encrypted_password": "test_password",
+            "password": "test_password",
             "client_id": "test_client_id",
             "tenant_id": "test_tenant_id",
             "client_secret": "test_client_secret",
@@ -808,7 +808,7 @@ class TestM365Provider:
                     client_id=str(uuid4()),
                     client_secret=str(uuid4()),
                     user="user@contoso.onmicrosoft.com",
-                    encrypted_password="test_password",
+                    password="test_password",
                     provider_id=provider_id,
                 )
 

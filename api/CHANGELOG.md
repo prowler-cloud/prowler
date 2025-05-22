@@ -2,6 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
 ## [v1.8.3] (Prowler v5.7.3)
 
 ### Added
@@ -21,6 +22,12 @@ All notable changes to the **Prowler API** are documented in this file.
 - Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
 - Fixed a race condition when creating background tasks [(#7876)](https://github.com/prowler-cloud/prowler/pull/7876).
 - Fixed an error when modifying or retrieving tenants due to missing user UUID in transaction context [(#7890)](https://github.com/prowler-cloud/prowler/pull/7890).
+=======
+## [v1.9.0] (Prowler UNRELEASED)
+
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+>>>>>>> 36aaec8a5 (chore(m365powershell): manage encryption from plaintext password (#7784))
 
 ---
 
