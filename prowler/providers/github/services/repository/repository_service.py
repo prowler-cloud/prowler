@@ -127,8 +127,6 @@ class Repository(GithubService):
                                 repo.security_and_analysis.secret_scanning.status
                                 == "enabled"
                             )
-                        else:
-                            secret_scanning_enabled = False
                     except Exception as error:
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
