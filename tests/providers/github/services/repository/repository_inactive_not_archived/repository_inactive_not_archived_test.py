@@ -31,7 +31,6 @@ class Test_repository_inactive_not_archived:
     def test_repository_active_not_archived(self):
         repository_client = mock.MagicMock
         repo_name = "test-repo"
-        repo_full_name = "account-name/test-repo"
         default_branch = "main"
         now = datetime.now(timezone.utc)
         recent_activity = now - timedelta(days=30)  # 1 month ago
@@ -40,7 +39,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/test-repo",
                 private=False,
                 default_branch=default_branch,
                 archived=False,
@@ -70,13 +69,12 @@ class Test_repository_inactive_not_archived:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} has been active within the last 6 months."
+                == f"Repository {repo_name} has been active within the last 6 months."
             )
 
     def test_repository_inactive_not_archived(self):
         repository_client = mock.MagicMock
         repo_name = "test-repo"
-        repo_full_name = "account-name/test-repo"
         default_branch = "main"
         now = datetime.now(timezone.utc)
         old_activity = now - timedelta(days=200)  # ~6.5 months ago
@@ -85,7 +83,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/test-repo",
                 private=False,
                 default_branch=default_branch,
                 archived=False,
@@ -119,7 +117,6 @@ class Test_repository_inactive_not_archived:
     def test_repository_inactive_but_archived(self):
         repository_client = mock.MagicMock
         repo_name = "test-repo"
-        repo_full_name = "account-name/test-repo"
         default_branch = "main"
         now = datetime.now(timezone.utc)
         old_activity = now - timedelta(days=200)  # ~6.5 months ago
@@ -128,7 +125,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/test-repo",
                 default_branch=default_branch,
                 private=False,
                 archived=True,
@@ -158,5 +155,5 @@ class Test_repository_inactive_not_archived:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} is properly archived."
+                == f"Repository {repo_name} is properly archived."
             )

@@ -22,9 +22,7 @@ class repository_inactive_not_archived(Check):
 
             if repo.archived:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Repository {repo.full_name} is properly archived."
-                )
+                report.status_extended = f"Repository {repo.name} is properly archived."
                 findings.append(report)
                 continue
 
@@ -35,10 +33,12 @@ class repository_inactive_not_archived(Check):
 
             if months_inactive >= 6:
                 report.status = "FAIL"
-                report.status_extended = f"Repository {repo.full_name} has been inactive for {int(months_inactive)} months and is not archived."
+                report.status_extended = f"Repository {repo.name} has been inactive for {int(months_inactive)} months and is not archived."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Repository {repo.full_name} has been active within the last 6 months."
+                report.status_extended = (
+                    f"Repository {repo.name} has been active within the last 6 months."
+                )
 
             findings.append(report)
 
