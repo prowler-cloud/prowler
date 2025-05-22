@@ -13,11 +13,9 @@ import { RoleDetail, TenantDetailData } from "@/types/users/users";
 export default async function Profile() {
   return (
     <ContentLayout title="User Profile" icon="ci:users">
-      <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/3 2xl:w-1/4">
-        <Suspense fallback={<SkeletonUserInfo />}>
-          <SSRDataUser />
-        </Suspense>
-      </div>
+      <Suspense fallback={<SkeletonUserInfo />}>
+        <SSRDataUser />
+      </Suspense>
     </ContentLayout>
   );
 }
@@ -62,13 +60,19 @@ const SSRDataUser = async () => {
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <UserBasicInfoCard user={userProfile?.data} tenantId={userTenant?.id} />
-      <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
-      <MembershipsCard
-        memberships={memberships?.data || []}
-        tenantsMap={tenantsMap}
-      />
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+          <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
+        </div>
+        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+          <MembershipsCard
+            memberships={memberships?.data || []}
+            tenantsMap={tenantsMap}
+          />
+        </div>
+      </div>
     </div>
   );
 };

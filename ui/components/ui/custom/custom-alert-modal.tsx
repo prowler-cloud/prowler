@@ -26,6 +26,7 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
         closeButton: "right-0",
       }}
       backdrop="blur"
+      placement="center"
     >
       <ModalContent className="py-4">
         {(_onClose) => (
