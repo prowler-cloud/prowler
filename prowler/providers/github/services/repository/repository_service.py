@@ -139,15 +139,14 @@ class Repository(GithubService):
                         )
                         secret_scanning_enabled = None
 
-                    pushed_at = repo.pushed_at
-                    archived = repo.archived
-
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
                         full_name=repo.full_name,
                         default_branch=repo.default_branch,
                         private=repo.private,
+                        archived=repo.archived,
+                        pushed_at=repo.pushed_at,
                         securitymd=securitymd_exists,
                         require_pull_request=require_pr,
                         approval_count=approval_cnt,
@@ -162,8 +161,6 @@ class Repository(GithubService):
                         require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
                         require_signed_commits=require_signed_commits,
-                        archived=archived,
-                        pushed_at=pushed_at,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
 
@@ -183,6 +180,8 @@ class Repo(BaseModel):
     default_branch_protection: Optional[bool]
     default_branch: str
     private: bool
+    archived: bool
+    pushed_at: datetime
     securitymd: Optional[bool]
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]
@@ -195,7 +194,5 @@ class Repo(BaseModel):
     require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
     require_signed_commits: Optional[bool]
-    archived: bool
-    pushed_at: datetime
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
