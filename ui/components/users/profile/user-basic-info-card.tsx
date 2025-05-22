@@ -1,48 +1,18 @@
 "use client";
 
-import { Card, CardBody, Divider, Tooltip } from "@nextui-org/react";
+import { Card, CardBody, Divider } from "@nextui-org/react";
 import { CircleUserRound } from "lucide-react";
-import { useState } from "react";
 
-import { CopyIcon, DoneIcon } from "@/components/icons";
-import { CustomButton } from "@/components/ui/custom/custom-button";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyTenantId = () => {
-    navigator.clipboard.writeText(id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className="flex items-center justify-between">
       <p className="text-sm font-semibold text-default-600">
         Active organization ID:
       </p>
-      <div className="flex items-center">
-        <Tooltip content={copied ? "Copied!" : "Copy ID"}>
-          <CustomButton
-            ariaLabel="Copy Tenant ID"
-            onPress={handleCopyTenantId}
-            variant="light"
-            color="primary"
-            size="sm"
-          >
-            <span className="mr-2 max-w-[120px] overflow-hidden overflow-ellipsis whitespace-nowrap">
-              {id}
-            </span>
-            {copied ? (
-              <DoneIcon size={16} className="text-success" />
-            ) : (
-              <CopyIcon size={16} />
-            )}
-          </CustomButton>
-        </Tooltip>
-      </div>
+      <SnippetChip value={id} />
     </div>
   );
 };

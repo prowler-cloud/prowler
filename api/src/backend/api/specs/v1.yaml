@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.8.1
+  version: 1.9.0
   description: |-
     Prowler API specification.
 
@@ -9240,7 +9240,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -9248,7 +9248,7 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -10474,7 +10474,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10482,7 +10482,7 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -10672,7 +10672,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -10680,7 +10680,7 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -10886,7 +10886,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10894,7 +10894,7 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
