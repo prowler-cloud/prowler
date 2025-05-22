@@ -405,6 +405,16 @@ class SamlInitiateAPIView(GenericAPIView):
                 {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
             )
 
+        # Check certificates are not empty
+        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+
+        if not saml_public_cert or not saml_private_key:
+            return Response(
+                {"detail": "SAML configuration is invalid: missing certificates."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         saml_login_url = reverse(
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
