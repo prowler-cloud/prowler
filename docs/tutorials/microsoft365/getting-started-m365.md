@@ -98,9 +98,9 @@ Assign the following Microsoft Graph permissions:
 
 - `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
-- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
-- `Sites.Read.All`: Required for SharePoint service.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `AuditLog.Read.All`: Required for Entra service.
+- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
 
 Follow these steps to assign the permissions:
 
@@ -116,8 +116,8 @@ Follow these steps to assign the permissions:
 
     - `Directory.Read.All`
     - `Policy.Read.All`
-    - `Sites.Read.All`
     - `SharePointTenantSettings.Read.All`
+    - `AuditLog.Read.All`: Required for Entra service.
 
     ![Permission Screenshots](./img/directory-permission.png)
 

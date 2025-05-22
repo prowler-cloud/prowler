@@ -199,7 +199,6 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
     - `Directory.Read.All`: Required for all services.
     - `Policy.Read.All`: Required for all services.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `Sites.Read.All`: Required for SharePoint service.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `AuditLog.Read.All`: Required for Entra service.
 
