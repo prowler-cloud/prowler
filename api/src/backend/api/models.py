@@ -1215,7 +1215,6 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         S3 = "amazon_s3", _("Amazon S3")
-        SAML = "saml", _("SAML")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")

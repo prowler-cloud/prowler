@@ -106,4 +106,16 @@ class Migration(migrations.Migration):
                 fields=("tenant",), name="unique_samlconfig_per_tenant"
             ),
         ),
+        migrations.AlterField(
+            model_name="integration",
+            name="integration_type",
+            field=api.db_utils.IntegrationTypeEnumField(
+                choices=[
+                    ("amazon_s3", "Amazon S3"),
+                    ("aws_security_hub", "AWS Security Hub"),
+                    ("jira", "JIRA"),
+                    ("slack", "Slack"),
+                ]
+            ),
+        ),
     ]
