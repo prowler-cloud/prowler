@@ -23,7 +23,7 @@ from api.v1.views import (
     RoleProviderGroupRelationshipView,
     RoleViewSet,
     SAMLConfigurationsViewSet,
-    SamlInitiateAPIView,
+    SAMLInitiateAPIView,
     ScanViewSet,
     ScheduleViewSet,
     SchemaView,
@@ -118,7 +118,7 @@ urlpatterns = [
     ),
     # API endpoint to start SAML SSO flow
     path(
-        "auth/saml/initiate/", SamlInitiateAPIView.as_view(), name="api_saml_initiate"
+        "auth/saml/initiate/", SAMLInitiateAPIView.as_view(), name="api_saml_initiate"
     ),
     # Allauth SAML endpoints for tenants
     path("accounts/", include("allauth.urls")),

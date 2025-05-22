@@ -4,7 +4,7 @@ This guide explains how to enable and test SAML SSO integration in Prowler. It i
 
 ---
 
-## 🧾 Environment Configuration
+## Environment Configuration
 
 ### `DJANGO_ALLOWED_HOSTS`
 

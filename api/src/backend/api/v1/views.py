@@ -386,7 +386,7 @@ class GithubSocialLoginView(SocialLoginView):
 
 
 @extend_schema(exclude=True)
-class SamlInitiateAPIView(GenericAPIView):
+class SAMLInitiateAPIView(GenericAPIView):
     serializer_class = SamlInitiateSerializer
     permission_classes = []
 

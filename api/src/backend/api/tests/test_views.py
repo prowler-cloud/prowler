@@ -27,6 +27,7 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfigurations,
     Scan,
     StateChoices,
     Task,
@@ -5395,3 +5396,150 @@ class TestIntegrationViewSet:
             {f"filter[{filter_name}]": "whatever"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestSAMLInitiateAPIView:
+    def test_valid_email_domain_and_certificates(
+        self, authenticated_client, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
+        monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
+
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": saml_setup["email"]}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert f"email={saml_setup['email']}" in response.url
+        assert (
+            reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
+            in response.url
+        )
+
+    def test_invalid_email_domain(self, authenticated_client):
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": "user@unauthorized.com"}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()["errors"]["detail"] == "Unauthorized domain."
+
+    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
+        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
+        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
+
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": saml_setup["email"]}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "SAML configuration is invalid: missing certificates."
+        )
+
+
+@pytest.mark.django_db
+class TestSAMLConfigurationsViewSet:
+    def test_list_saml_configurations(self, authenticated_client, saml_setup):
+        config = SAMLConfigurations.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.get(reverse("saml-config-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"][0]["attributes"]["email_domain"]
+            == config.email_domain
+        )
+
+    def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfigurations.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.get(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
+        )
+
+    def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
+        payload = {
+            "email_domain": "newdomain.com",
+            "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+                    <md:KeyDescriptor use='signing'>
+                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                        <ds:X509Data>
+                        <ds:X509Certificate>TEST</ds:X509Certificate>
+                        </ds:X509Data>
+                    </ds:KeyInfo>
+                    </md:KeyDescriptor>
+                    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+                </md:IDPSSODescriptor>
+                </md:EntityDescriptor>
+            """,
+        }
+        response = authenticated_client.post(
+            reverse("saml-config-list"), data=payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert SAMLConfigurations.objects.filter(email_domain="newdomain.com").exists()
+
+    def test_update_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfigurations.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        payload = {
+            "data": {
+                "type": "saml-configuration",
+                "id": str(config.id),
+                "attributes": {
+                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+            <md:KeyDescriptor use='signing'>
+            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                <ds:X509Data>
+                <ds:X509Certificate>TEST2</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+            </md:KeyDescriptor>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+        </md:IDPSSODescriptor>
+        </md:EntityDescriptor>
+        """
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("saml-config-detail", kwargs={"pk": config.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        config.refresh_from_db()
+        assert (
+            config.metadata_xml.strip()
+            == payload["data"]["attributes"]["metadata_xml"].strip()
+        )
+
+    def test_delete_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfigurations.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.delete(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not SAMLConfigurations.objects.filter(id=config.id).exists()
