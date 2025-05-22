@@ -1,6 +1,12 @@
-import { ProviderAccountProps, ProviderProps } from "@/types/providers";
+import {
+  ProviderAccountProps,
+  ProviderProps,
+  ProvidersApiResponse,
+} from "@/types/providers";
 
-export const extractProviderUIDs = (providersData: any): string[] => {
+export const extractProviderUIDs = (
+  providersData: ProvidersApiResponse,
+): string[] => {
   if (!providersData?.data) return [];
 
   return Array.from(
@@ -14,7 +20,7 @@ export const extractProviderUIDs = (providersData: any): string[] => {
 
 export const createProviderDetailsMapping = (
   providerUIDs: string[],
-  providersData: any,
+  providersData: ProvidersApiResponse,
 ): Array<{ [uid: string]: ProviderAccountProps }> => {
   if (!providersData?.data) return [];
 
@@ -25,7 +31,7 @@ export const createProviderDetailsMapping = (
 
     return {
       [uid]: {
-        provider: provider?.attributes?.provider || "",
+        provider: provider?.attributes?.provider || "aws",
         uid: uid,
         alias: provider?.attributes?.alias ?? null,
       },

@@ -56,11 +56,11 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
 
-  const providerUIDs = extractProviderUIDs(providersData);
-  const providerDetails = createProviderDetailsMapping(
-    providerUIDs,
-    providersData,
-  );
+  // Extract provider UIDs and details using helper functions
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
 
   // Update the Provider UID filter
   const updatedFilters = filterFindings.map((filter) => {

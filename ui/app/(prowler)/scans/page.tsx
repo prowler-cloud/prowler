@@ -65,11 +65,11 @@ export default async function Scans({
       scan.attributes.state === "available",
   );
 
-  const providerUIDs = extractProviderUIDs(providersData);
-  const providerDetails = createProviderDetailsMapping(
-    providerUIDs,
-    providersData,
-  );
+  // Extract provider UIDs and create provider details mapping for filtering
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
 
   // Update the Provider UID filter
   const updatedFilters = filterScans.map((filter) => {
