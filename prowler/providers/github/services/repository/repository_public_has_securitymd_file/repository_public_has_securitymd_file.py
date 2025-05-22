@@ -28,13 +28,13 @@ class repository_public_has_securitymd_file(Check):
                 )
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Repository {repo.full_name} does have a SECURITY.md file."
+                    f"Repository {repo.name} does have a SECURITY.md file."
                 )
 
                 if not repo.securitymd:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Repository {repo.full_name} does not have a SECURITY.md file."
+                        f"Repository {repo.name} does not have a SECURITY.md file."
                     )
 
                 findings.append(report)

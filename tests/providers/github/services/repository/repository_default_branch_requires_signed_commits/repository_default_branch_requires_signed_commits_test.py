@@ -31,13 +31,12 @@ class Test_repository_default_branch_requires_signed_commits:
     def test_signed_commits_not_required(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
-        repo_full_name = "account-name/repo1"
         default_branch = "main"
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,
                 require_signed_commits=False,
@@ -69,19 +68,18 @@ class Test_repository_default_branch_requires_signed_commits:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} does not require signed commits on default branch ({default_branch})."
+                == f"Repository {repo_name} does not require signed commits on default branch ({default_branch})."
             )
 
     def test_signed_commits_required(self):
         repository_client = mock.MagicMock
         repo_name = "repo2"
-        repo_full_name = "account-name/repo2"
         default_branch = "main"
         repository_client.repositories = {
             2: Repo(
                 id=2,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/repo2",
                 private=False,
                 default_branch=default_branch,
                 require_signed_commits=True,
@@ -113,5 +111,5 @@ class Test_repository_default_branch_requires_signed_commits:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} does require signed commits on default branch ({default_branch})."
+                == f"Repository {repo_name} does require signed commits on default branch ({default_branch})."
             )

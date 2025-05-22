@@ -28,12 +28,14 @@ class repository_default_branch_deletion_disabled(Check):
                 )
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Repository {repo.full_name} does allow default branch deletion."
+                    f"Repository {repo.name} does allow default branch deletion."
                 )
 
                 if not repo.default_branch_deletion:
                     report.status = "PASS"
-                    report.status_extended = f"Repository {repo.full_name} does deny default branch deletion."
+                    report.status_extended = (
+                        f"Repository {repo.name} does deny default branch deletion."
+                    )
 
                 findings.append(report)
 

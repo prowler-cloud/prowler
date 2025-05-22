@@ -28,13 +28,13 @@ class repository_default_branch_disallows_force_push(Check):
                 )
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Repository {repo.full_name} does allow force push."
+                    f"Repository {repo.name} does allow force push."
                 )
 
                 if not repo.allow_force_pushes:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Repository {repo.full_name} does deny force push."
+                        f"Repository {repo.name} does deny force push."
                     )
 
                 findings.append(report)

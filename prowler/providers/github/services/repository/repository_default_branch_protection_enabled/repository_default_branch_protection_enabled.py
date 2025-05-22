@@ -27,11 +27,11 @@ class repository_default_branch_protection_enabled(Check):
                     metadata=self.metadata(), resource=repo, repository=repo.name
                 )
                 report.status = "FAIL"
-                report.status_extended = f"Repository {repo.full_name} does not enforce branch protection on default branch ({repo.default_branch})."
+                report.status_extended = f"Repository {repo.name} does not enforce branch protection on default branch ({repo.default_branch})."
 
                 if repo.default_branch_protection:
                     report.status = "PASS"
-                    report.status_extended = f"Repository {repo.full_name} does enforce branch protection on default branch ({repo.default_branch})."
+                    report.status_extended = f"Repository {repo.name} does enforce branch protection on default branch ({repo.default_branch})."
 
                 findings.append(report)
 

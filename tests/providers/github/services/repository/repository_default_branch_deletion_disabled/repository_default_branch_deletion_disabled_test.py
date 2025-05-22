@@ -31,7 +31,6 @@ class Test_repository_default_branch_deletion_disabled_test:
     def test_allow_branch_deletion_enabled(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
-        repo_full_name = "account-name/repo1"
         default_branch = "main"
         now = datetime.now(timezone.utc)
 
@@ -39,7 +38,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/repo1",
                 default_branch=default_branch,
                 private=False,
                 archived=False,
@@ -70,13 +69,12 @@ class Test_repository_default_branch_deletion_disabled_test:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} does allow default branch deletion."
+                == f"Repository {repo_name} does allow default branch deletion."
             )
 
     def test_allow_branch_deletion_disabled(self):
         repository_client = mock.MagicMock
         repo_name = "repo1"
-        repo_full_name = "account-name/repo1"
         default_branch = "main"
         now = datetime.now(timezone.utc)
 
@@ -84,7 +82,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
-                full_name=repo_full_name,
+                full_name="account-name/repo1",
                 default_branch=default_branch,
                 private=False,
                 archived=False,
@@ -115,5 +113,5 @@ class Test_repository_default_branch_deletion_disabled_test:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_full_name} does deny default branch deletion."
+                == f"Repository {repo_name} does deny default branch deletion."
             )
