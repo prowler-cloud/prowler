@@ -117,6 +117,21 @@ class Repository(GithubService):
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
 
+                    secret_scanning_enabled = False
+                    try:
+                        if (
+                            repo.security_and_analysis
+                            and repo.security_and_analysis.secret_scanning
+                        ):
+                            secret_scanning_enabled = (
+                                repo.security_and_analysis.secret_scanning.status
+                                == "enabled"
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        secret_scanning_enabled = None
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
@@ -135,6 +150,7 @@ class Repository(GithubService):
                         default_branch_protection=branch_protection,
                         codeowners_exists=codeowners_exists,
                         require_code_owner_reviews=require_code_owner_reviews,
+                        secret_scanning_enabled=secret_scanning_enabled,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
 
@@ -164,5 +180,6 @@ class Repo(BaseModel):
     approval_count: Optional[int]
     codeowners_exists: Optional[bool]
     require_code_owner_reviews: Optional[bool]
+    secret_scanning_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
