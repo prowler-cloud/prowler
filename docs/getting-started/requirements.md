@@ -153,77 +153,31 @@ With this credentials you will only be able to run the checks that work through 
 
 Authentication flag: `--env-auth`
 
-This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_ENCRYPTED_PASSWORD`.
+This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_PASSWORD`.
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 export M365_USER="your_email@example.com"
-export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
+export M365_PASSWORD="examplepassword"
 ```
 
 These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
-- `M365_USER` should be your Microsoft account email using the default domain. This means it must look like `example@YourCompany.onmicrosoft.com`.
+- `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
 
-    To ensure that you are using the default domain you can see how to verify it [here](../tutorials/microsoft365/getting-started-m365.md#step-1-obtain-your-domain).
+    ???+ warning
+        Using a tenant domain other than the one assigned — even if it belongs to the same tenant — will cause Prowler to fail, as Microsoft authentication will not succeed.
 
-    If you don't have a user created with that domain, Prowler will not work as it will not be able to ensure both app an user belong to the same tenant. To proceed, you can either create a new user with that domain or modify the domain of an existing user.
+    Ensure you are using the right domain for the user you are trying to authenticate with.
 
     ![User Domains](../tutorials/microsoft365/img/user-domains.png)
 
-- `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
+- `M365_PASSWORD` must be the user password.
 
-    ???+ warning
-        Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it should fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
-
-    If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password. This can be done using WSL which is so easy to install on Windows.
-
-    === "UNIX"
-
-        Open a PowerShell cmd with a [supported version](requirements.md#supported-powershell-versions) and then run the following command:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
-
-    === "Windows"
-
-
-        How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
-
-        ```console
-        wsl --install -d Ubuntu-22.04
-        ```
-
-        Then, open the Ubuntu terminal and run the following commands:
-
-        ```console
-        sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
-        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-        sudo dpkg -i packages-microsoft-prod.deb
-        sudo apt update
-        sudo apt install -y powershell
-        pwsh
-        ```
-
-        With this done you will see now that a prompt running PowerShell with the latest version is open so here you will be able to generate your encrypted password:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
-
+    ???+ note
+        Before we asked for a encrypted password, but now we ask for the user password directly. Prowler will now handle the password encryption for you.
 
 
 ### Interactive Browser authentication

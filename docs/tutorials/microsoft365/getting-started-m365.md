@@ -6,7 +6,7 @@ Set up your M365 account to enable security scanning using Prowler Cloud/App.
 
 To configure your M365 account, you’ll need:
 
-1. Obtain your `Default Domain` from the Entra ID portal.
+1. Obtain a domain from the Entra ID portal.
 
 2. Access Prowler Cloud/App and add a new cloud provider `Microsoft 365`.
 
@@ -17,8 +17,6 @@ To configure your M365 account, you’ll need:
     3.2 Grant the required API permissions.
 
     3.3 Assign the required roles to your user.
-
-    3.4 Retrieve your encrypted password.
 
 4. Add the credentials to Prowler Cloud/App.
 
@@ -32,9 +30,7 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Custom Domain Names](./img/custom-domain-names.png)
 
-Once you are there just look for the `Default Domain` this should be something similar to `YourCompany.onmicrosoft.com`. To ensure that you are picking the correct domain just click on it and verify that the type is `Initial` and you can't delete it.
-
-![Search Default Domain](./img/search-default-domain.png)
+Once you are there just select the domain you want to use.
 
 ---
 
@@ -78,11 +74,11 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
     ![New Registration](./img/new-registration.png)
 
-4. Go to `Certificates & secrets` > `+ New client secret`
+4. Go to `Certificates & secrets` > `Client secrets` > `+ New client secret`
 
     ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
 
-5. Fill in the required fields and click `Add`, then copy the generated value (that value will be `AZURE_CLIENT_SECRET`)
+5. Fill in the required fields and click `Add`, then copy the generated `value` (that value will be `AZURE_CLIENT_SECRET`)
 
     ![New Client Secret](./img/new-client-secret.png)
 
@@ -191,8 +187,8 @@ For this step you will need to use PowerShell, here you will have to create your
     - `Client ID`
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
-    - `M365_USER` your user using the default domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
-    - `M365_ENCRYPTED_PASSWORD` generated before
+    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
+    - `M365_PASSWORD` the password of the user
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
