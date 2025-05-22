@@ -1,6 +1,9 @@
 from types import MappingProxyType
 
-from api.models import Provider
+from django.db.models import Case, Count, IntegerField, Sum, When
+
+from api.db_utils import rls_transaction
+from api.models import ComplianceRequirementOverview, Provider
 from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
@@ -233,3 +236,88 @@ def generate_compliance_overview_template(prowler_compliance: dict):
             provider_compliance[compliance_name] = compliance_dict
 
     return template
+
+
+def aggregate_compliance_requirements(tenant_id: str, scan_id: str):
+    """
+    Aggregate compliance requirement data into compliance framework summaries.
+
+    This function processes ComplianceRequirementOverview records for a given scan
+    and aggregates them into overall compliance framework metrics. These metrics
+    can be used for dashboards and high-level compliance reporting.
+
+    Args:
+        tenant_id (str): The ID of the tenant for which to aggregate data.
+        scan_id (str): The ID of the scan for which to aggregate data.
+
+    Returns:
+        dict: A dictionary mapping (compliance_id, region) tuples to aggregated metrics.
+    """
+    with rls_transaction(tenant_id):
+        # Get all requirements for this scan
+        requirements = ComplianceRequirementOverview.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+
+        # Get compliance descriptions from the template
+        # First fetch the provider from any of the requirements
+        provider_type = None
+        first_requirement = requirements.first()
+        if first_requirement:
+            # Look up the provider from the scan
+            from api.models import Scan
+
+            scan = Scan.objects.get(id=scan_id)
+            provider_type = scan.provider.provider
+
+        compliance_descriptions = {}
+        if provider_type:
+            compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(
+                provider_type, {}
+            )
+            for compliance_id, data in compliance_template.items():
+                compliance_descriptions[compliance_id] = data.get("description", "")
+
+        # Aggregate metrics by compliance_id and region
+        aggregated_data = {}
+
+        # First, get basic counts per compliance framework and region
+        aggregates = requirements.values(
+            "compliance_id", "region", "framework", "version"
+        ).annotate(
+            requirements_passed=Sum(
+                Case(
+                    When(status="PASS", then=1), default=0, output_field=IntegerField()
+                )
+            ),
+            requirements_failed=Sum(
+                Case(
+                    When(status="FAIL", then=1), default=0, output_field=IntegerField()
+                )
+            ),
+            requirements_manual=Sum(
+                Case(
+                    When(status="MANUAL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            total_requirements=Count("id"),
+        )
+
+        # Format the aggregated data
+        for agg in aggregates:
+            compliance_id = agg["compliance_id"]
+            key = (compliance_id, agg["region"])
+
+            aggregated_data[key] = {
+                "framework": agg["framework"],
+                "version": agg["version"],
+                "description": compliance_descriptions.get(compliance_id, ""),
+                "requirements_passed": agg["requirements_passed"],
+                "requirements_failed": agg["requirements_failed"],
+                "requirements_manual": agg["requirements_manual"],
+                "total_requirements": agg["total_requirements"],
+            }
+
+        return aggregated_data
