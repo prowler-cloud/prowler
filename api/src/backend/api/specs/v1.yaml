@@ -9242,7 +9242,7 @@ components:
                         description: User microsoft email address.
                       password:
                         type: string
-                        description: User encrypted password.
+                        description: User password.
                     required:
                     - client_id
                     - client_secret
@@ -10487,7 +10487,7 @@ components:
                     description: User microsoft email address.
                   password:
                     type: string
-                    description: User encrypted password.
+                    description: User password.
                 required:
                 - client_id
                 - client_secret
@@ -10696,7 +10696,7 @@ components:
                         description: User microsoft email address.
                       password:
                         type: string
-                        description: User encrypted password.
+                        description: User password.
                     required:
                     - client_id
                     - client_secret
@@ -10921,7 +10921,7 @@ components:
                     description: User microsoft email address.
                   password:
                     type: string
-                    description: User encrypted password.
+                    description: User password.
                 required:
                 - client_id
                 - client_secret

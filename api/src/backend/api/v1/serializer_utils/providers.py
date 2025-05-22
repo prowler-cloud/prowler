@@ -121,7 +121,7 @@ from rest_framework_json_api import serializers
                     },
                     "password": {
                         "type": "string",
-                        "description": "User encrypted password.",
+                        "description": "User password.",
                     },
                 },
                 "required": [
