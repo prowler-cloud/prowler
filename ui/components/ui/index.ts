@@ -7,6 +7,7 @@ export * from "./content-layout/content-layout";
 export * from "./dialog/dialog";
 export * from "./download-icon-button/download-icon-button";
 export * from "./dropdown/Dropdown";
+export * from "./feedback-banner/feedback-banner";
 export * from "./headers/navigation-header";
 export * from "./label/Label";
 export * from "./main-layout/main-layout";
