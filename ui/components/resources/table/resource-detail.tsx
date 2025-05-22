@@ -78,25 +78,22 @@ export const ResourceDetail = ({
               </span>
             </Snippet>
           </InfoField>
-          <InfoField label="Provider Details">
-            <EntityInfoShort
-              cloudProvider={
-                resourceData.relationships.provider.data.attributes.provider as
-                  | "aws"
-                  | "azure"
-                  | "gcp"
-                  | "kubernetes"
-              }
-              entityAlias={
-                resourceData.relationships.provider.data.attributes
-                  .alias as string
-              }
-              entityId={
-                resourceData.relationships.provider.data.attributes
-                  .uid as string
-              }
-            />
-          </InfoField>
+          <EntityInfoShort
+            cloudProvider={
+              resourceData.relationships.provider.data.attributes.provider as
+                | "aws"
+                | "azure"
+                | "gcp"
+                | "kubernetes"
+            }
+            entityAlias={
+              resourceData.relationships.provider.data.attributes
+                .alias as string
+            }
+            entityId={
+              resourceData.relationships.provider.data.attributes.uid as string
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -132,11 +129,9 @@ export const ResourceDetail = ({
       </Section>
 
       {/* Finding associated with this resource section */}
-      <div>
-        <h2 className="text-md line-clamp-2 font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
-          Findings associated with this resource
-        </h2>
-      </div>
+      <h2 className="text-md line-clamp-2 font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+        Findings associated with this resource
+      </h2>
       {isLoading ? (
         <SkeletonFindingSummary />
       ) : failedFindings && failedFindings?.length > 0 ? (
@@ -150,14 +145,12 @@ export const ResourceDetail = ({
           return (
             <div
               key={index}
-              className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400"
+              className="flex flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
             >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
-                    {checktitle}
-                  </h3>
-                </div>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+                  {checktitle}
+                </h3>
                 <div className="flex items-center gap-2">
                   <SeverityBadge severity={severity || "-"} />
                   <StatusFindingBadge status={status || "-"} />
