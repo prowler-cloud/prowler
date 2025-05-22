@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - Add CIS 4.0 compliance framework for GCP. [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
 - Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
+- Add `repository_dependency_scanning_enabled` check for GitHub provider. [(#7771)](https://github.com/prowler-cloud/prowler/pull/7771)
 - Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
 
