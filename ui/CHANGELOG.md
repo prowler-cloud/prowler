@@ -4,20 +4,24 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
-
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
+- Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
+
+---
+
+## [v1.7.1] (Prowler v5.7.1)
 
 ### 🐞 Fixes
 
 - Added validation to AWS IAM role. [(#7787)](https://github.com/prowler-cloud/prowler/pull/7787)
+- Tweak some wording for consistency throughout the app. [(#7794)](https://github.com/prowler-cloud/prowler/pull/7794)
 - Retrieve more than 10 providers in /scans, /manage-groups and /findings pages. [(#7793)](https://github.com/prowler-cloud/prowler/pull/7793)
 
 ---
 
 ## [v1.7.0] (Prowler v5.7.0)
-
 
 ### 🚀 Added
 
@@ -25,7 +29,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Added `Accordion` component. [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
 - Improve `Provider UID` filter by adding more context and enhancing the UI/UX. [(#7741)](https://github.com/prowler-cloud/prowler/pull/7741)
 - Added an AWS CloudFormation Quick Link to the IAM Role credentials step [(#7735)](https://github.com/prowler-cloud/prowler/pull/7735)
-– Use `getLatestFindings` on findings page when no scan or date filters are applied. [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
+  – Use `getLatestFindings` on findings page when no scan or date filters are applied. [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
 
 ### 🐞 Fixes
 
@@ -98,7 +102,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Revalidate the page when a role is deleted. [(#6976)](https://github.com/prowler-cloud/prowler/pull/6976)
 - Allows removing group visibility when creating a role. [(#7088)](https://github.com/prowler-cloud/prowler/pull/7088)
 - Displays correct error messages when deleting a user. [(#7089)](https://github.com/prowler-cloud/prowler/pull/7089)
-- Updated label: *"Select a scan job"* → *"Select a cloud provider"*. [(#7107)](https://github.com/prowler-cloud/prowler/pull/7107)
+- Updated label: _"Select a scan job"_ → _"Select a cloud provider"_. [(#7107)](https://github.com/prowler-cloud/prowler/pull/7107)
 - Display uid if alias is missing when creating a group. [(#7137)](https://github.com/prowler-cloud/prowler/pull/7137)
 
 ---

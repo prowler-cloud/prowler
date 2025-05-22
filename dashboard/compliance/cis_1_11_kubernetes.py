@@ -1,6 +1,6 @@
 import warnings
 
-from dashboard.common_methods import get_section_containers_threatscore
+from dashboard.common_methods import get_section_containers_cis
 
 warnings.filterwarnings("ignore")
 
@@ -11,7 +11,6 @@ def get_table(data):
             "REQUIREMENTS_ID",
             "REQUIREMENTS_DESCRIPTION",
             "REQUIREMENTS_ATTRIBUTES_SECTION",
-            "REQUIREMENTS_ATTRIBUTES_SUBSECTION",
             "CHECKID",
             "STATUS",
             "REGION",
@@ -20,9 +19,6 @@ def get_table(data):
         ]
     ].copy()
 
-    return get_section_containers_threatscore(
-        aux,
-        "REQUIREMENTS_ATTRIBUTES_SECTION",
-        "REQUIREMENTS_ATTRIBUTES_SUBSECTION",
-        "REQUIREMENTS_ID",
+    return get_section_containers_cis(
+        aux, "REQUIREMENTS_ID", "REQUIREMENTS_ATTRIBUTES_SECTION"
     )
