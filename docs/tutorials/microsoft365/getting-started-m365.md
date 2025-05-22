@@ -176,7 +176,7 @@ Follow these steps to assign the role:
 
 ### Get your encrypted password
 
-For this step you will need to use PowerShell, here you will have to create your Encrypted Password based on the password of the User that you are going to use. For more information about how to generate this Password go [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended) and follow the steps needed to obtain `M365_ENCRYPTED_PASSWORD`.
+For this step you will need to use PowerShell, here you will have to create your Encrypted Password based on the password of the User that you are going to use. For more information about how to generate this Password go [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended) and follow the steps needed to obtain `M365_PASSWORD`.
 
 ---
 
@@ -192,7 +192,7 @@ For this step you will need to use PowerShell, here you will have to create your
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
     - `M365_USER` your user using the default domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
-    - `M365_ENCRYPTED_PASSWORD` generated before
+    - `M365_PASSWORD` generated before
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
