@@ -2,7 +2,7 @@
 
 import { getProviders } from "@/actions/providers/providers";
 import { getScans } from "@/actions/scans/scans";
-import { getProfileInfo } from "@/actions/users/users";
+import { getUserInfo } from "@/actions/users/users";
 
 // Cache storage
 type CacheStore = {
@@ -45,7 +45,7 @@ const fetchDataFromAPIs = async (): Promise<CachedData> => {
   cacheMisses++;
 
   // Step 1: Get user profile data
-  const profileData = await getProfileInfo();
+  const profileData = await getUserInfo();
 
   if (!profileData || !profileData.data) {
     throw new Error("Unable to fetch user profile data");
@@ -118,7 +118,7 @@ const fetchDataFromAPIs = async (): Promise<CachedData> => {
 
 // Get the current user ID from profile info
 export const getCurrentUserId = async (): Promise<string> => {
-  const profileInfo = await getProfileInfo();
+  const profileInfo = await getUserInfo();
   if (!profileInfo || !profileInfo.data || !profileInfo.data.id) {
     throw new Error("Unable to get current user ID");
   }

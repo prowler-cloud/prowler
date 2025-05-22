@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
-import { getProfileInfo, getUsers } from "@/actions/users/users";
+import { getUserInfo, getUsers } from "@/actions/users/users";
 import { getUsersSchema } from "@/types/lighthouse";
 
 export const getUsersTool = tool(
@@ -18,7 +18,7 @@ export const getUsersTool = tool(
 
 export const getMyProfileInfoTool = tool(
   async () => {
-    return await getProfileInfo();
+    return await getUserInfo();
   },
   {
     name: "getMyProfileInfo",
