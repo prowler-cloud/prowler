@@ -137,6 +137,12 @@ jobs:
         run: |
           poetry check --lock
 
+      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pip install --force-reinstall --no-binary lxml lxml
+
       - name: Lint with ruff
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
