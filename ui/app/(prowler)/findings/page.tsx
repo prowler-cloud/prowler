@@ -52,7 +52,6 @@ export default async function Findings({
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
-  // Get findings data
 
   // Extract provider UIDs
   const providerUIDs: string[] = Array.from(
