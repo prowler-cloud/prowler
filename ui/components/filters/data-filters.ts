@@ -30,6 +30,11 @@ export const filterScans = [
     labelCheckboxGroup: "Trigger",
     values: ["scheduled", "manual"],
   },
+  {
+    key: "provider_uid__in",
+    labelCheckboxGroup: "Provider UID",
+    values: [],
+  },
   // Add more filter categories as needed
 ];
 
@@ -53,6 +58,11 @@ export const filterFindings = [
     key: "provider_type__in",
     labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "m365", "gcp", "kubernetes"],
+  },
+  {
+    key: "provider_uid__in",
+    labelCheckboxGroup: "Provider UID",
+    values: [],
   },
   // Add more filter categories as needed
 ];

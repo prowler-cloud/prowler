@@ -23,7 +23,10 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { ProviderAccountProps, ProviderProps } from "@/types";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
 import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -53,29 +56,23 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
 
-  // Extract provider UIDs
-  const providerUIDs: string[] = Array.from(
-    new Set(
-      providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes?.uid)
-        .filter(Boolean),
-    ),
+  const providerUIDs = extractProviderUIDs(providersData);
+  const providerDetails = createProviderDetailsMapping(
+    providerUIDs,
+    providersData,
   );
 
-  const providerDetails: Array<{ [uid: string]: ProviderAccountProps }> =
-    providerUIDs.map((uid) => {
-      const provider = providersData.data.find(
-        (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
-      );
-
+  // Update the Provider UID filter
+  const updatedFilters = filterFindings.map((filter) => {
+    if (filter.key === "provider_uid__in") {
       return {
-        [uid]: {
-          provider: provider?.attributes?.provider || "",
-          uid: uid,
-          alias: provider?.attributes?.alias ?? null,
-        },
+        ...filter,
+        values: providerUIDs,
+        valueLabelMapping: providerDetails,
       };
-    });
+    }
+    return filter;
+  });
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
@@ -98,7 +95,7 @@ export default async function Findings({
       <Spacer y={8} />
       <DataTableFilterCustom
         filters={[
-          ...filterFindings,
+          ...updatedFilters,
           {
             key: "region__in",
             labelCheckboxGroup: "Regions",
@@ -113,12 +110,6 @@ export default async function Findings({
             key: "resource_type__in",
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
-          },
-          {
-            key: "provider_uid__in",
-            labelCheckboxGroup: "Provider UID",
-            values: providerUIDs,
-            valueLabelMapping: providerDetails,
           },
           {
             key: "scan__in",

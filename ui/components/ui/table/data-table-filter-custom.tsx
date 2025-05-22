@@ -56,7 +56,7 @@ export const DataTableFilterCustom = ({
       >
         <div
           className={`grid gap-4 ${
-            filters.length > 4
+            filters.length >= 4
               ? "grid-cols-1 md:grid-cols-4"
               : "grid-cols-1 md:grid-cols-3"
           }`}
