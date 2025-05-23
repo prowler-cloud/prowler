@@ -40,7 +40,7 @@ export const UserBasicInfoCard = ({
           </div>
         </div>
         <Divider className="my-4" />
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-start md:gap-8">
+        <div className="flex flex-row gap-4 md:items-start md:justify-start md:gap-8">
           <div className="flex gap-2 whitespace-nowrap md:flex-col md:items-start md:justify-start">
             <div className="flex items-center gap-2">
               <InfoField label="Date Joined" variant="simple">

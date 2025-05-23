@@ -42,7 +42,7 @@ export const MembershipItem = ({
             {membership.attributes.role}
           </Chip>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 md:flex-row md:gap-x-4">
             <InfoField label="Name" inline variant="transparent">
               <span className="whitespace-nowrap font-semibold">
                 {tenantName}
@@ -51,6 +51,7 @@ export const MembershipItem = ({
             <InfoField label="Joined on" inline variant="transparent">
               <DateWithTime
                 inline
+                showTime={false}
                 dateTime={membership.attributes.date_joined}
               />
             </InfoField>
