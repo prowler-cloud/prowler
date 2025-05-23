@@ -213,7 +213,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                       {entity ? (
                         <EntityInfoShort
                           cloudProvider={entity.provider}
-                          entityAlias={entity.alias}
+                          entityAlias={entity.alias ?? undefined}
                           entityId={entity.uid}
                           hideCopyButton
                         />
