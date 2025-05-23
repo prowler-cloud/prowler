@@ -191,6 +191,9 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
+        mock_rls_transaction.return_value.__enter__.return_value = None
+        mock_rls_transaction.return_value.__exit__.return_value = None
+
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
         provider = providers_fixture[0]
