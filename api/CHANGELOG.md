@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Changed
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 
 ---
 

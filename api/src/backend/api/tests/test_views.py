@@ -1678,6 +1678,14 @@ class TestProviderSecretViewSet:
                     "refresh_token": "refresh-token",
                 },
             ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
+                    "service_account_key": "service-account-key",
+                },
+            ),
             # Kubernetes with STATIC secret
             (
                 Provider.ProviderChoices.KUBERNETES.value,
