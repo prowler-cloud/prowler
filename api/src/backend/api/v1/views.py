@@ -1281,7 +1281,7 @@ class ScanViewSet(BaseRLSViewSet):
             try:
                 task = Task.objects.get(
                     task_runner_task__task_name="scan-report",
-                    task_runner_task__task_args__contains=str(scan_instance.id),
+                    task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
             except Task.DoesNotExist:
                 return None
