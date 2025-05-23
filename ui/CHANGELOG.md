@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
 - Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
+- Possibility to edit the organization name. [(#7829)](https://github.com/prowler-cloud/prowler/pull/7829)
 
 ---
 
