@@ -1159,6 +1159,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 )
         elif secret_type == ProviderSecret.TypeChoices.ROLE:
             serializer = AWSRoleAssumptionProviderSecret(data=secret)
+        elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
+            serializer = GCPServiceAccountProviderSecret(data=secret)
         else:
             raise serializers.ValidationError(
                 {"secret_type": f"Secret type not supported: {secret_type}"}
@@ -1204,6 +1206,15 @@ class M365ProviderSecret(serializers.Serializer):
 
 
 class GCPProviderSecret(serializers.Serializer):
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
+    refresh_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.CharField()
 
     class Meta:

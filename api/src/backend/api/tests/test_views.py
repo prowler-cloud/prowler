@@ -1673,6 +1673,16 @@ class TestProviderSecretViewSet:
                 Provider.ProviderChoices.GCP.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "refresh_token": "refresh-token",
+                },
+            ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
                     "service_account_key": "service-account-key",
                 },
             ),

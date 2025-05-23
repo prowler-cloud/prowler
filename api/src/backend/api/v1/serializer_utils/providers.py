@@ -136,6 +136,28 @@ from rest_framework_json_api import serializers
                 "type": "object",
                 "title": "GCP Static Credentials",
                 "properties": {
+                    "client_id": {
+                        "type": "string",
+                        "description": "The client ID from Google Cloud, used to identify the application for GCP "
+                        "access.",
+                    },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret associated with the GCP client ID, required for secure "
+                        "access.",
+                    },
+                    "refresh_token": {
+                        "type": "string",
+                        "description": "A refresh token that allows the application to obtain new access tokens for "
+                        "extended use.",
+                    },
+                },
+                "required": ["client_id", "client_secret", "refresh_token"],
+            },
+            {
+                "type": "object",
+                "title": "GCP Service Account Key",
+                "properties": {
                     "service_account_key": {
                         "type": "string",
                         "description": "The service account key for GCP.",

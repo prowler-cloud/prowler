@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.8.1
+  version: 1.9.0
   description: |-
     Prowler API specification.
 
@@ -9240,7 +9240,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -9248,15 +9248,26 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
-                      service_account_key:
+                      client_id:
                         type: string
-                        description: The service account key for GCP access.
+                        description: The client ID from Google Cloud, used to identify
+                          the application for GCP access.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the GCP client
+                          ID, required for secure access.
+                      refresh_token:
+                        type: string
+                        description: A refresh token that allows the application to
+                          obtain new access tokens for extended use.
                     required:
-                    - service_account_key
+                    - client_id
+                    - client_secret
+                    - refresh_token
                   - type: object
                     title: Kubernetes Static Credentials
                     properties:
@@ -10474,7 +10485,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10482,15 +10493,26 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
-                  service_account_key:
+                  client_id:
                     type: string
-                    description: The service account key for GCP access.
+                    description: The client ID from Google Cloud, used to identify
+                      the application for GCP access.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the GCP client
+                      ID, required for secure access.
+                  refresh_token:
+                    type: string
+                    description: A refresh token that allows the application to obtain
+                      new access tokens for extended use.
                 required:
-                - service_account_key
+                - client_id
+                - client_secret
+                - refresh_token
               - type: object
                 title: Kubernetes Static Credentials
                 properties:
@@ -10672,7 +10694,7 @@ components:
                       user:
                         type: email
                         description: User microsoft email address.
-                      encrypted_password:
+                      password:
                         type: string
                         description: User encrypted password.
                     required:
@@ -10680,15 +10702,26 @@ components:
                     - client_secret
                     - tenant_id
                     - user
-                    - encrypted_password
+                    - password
                   - type: object
                     title: GCP Static Credentials
                     properties:
-                      service_account_key:
+                      client_id:
                         type: string
-                        description: The service account key for GCP access.
+                        description: The client ID from Google Cloud, used to identify
+                          the application for GCP access.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the GCP client
+                          ID, required for secure access.
+                      refresh_token:
+                        type: string
+                        description: A refresh token that allows the application to
+                          obtain new access tokens for extended use.
                     required:
-                    - service_account_key
+                    - client_id
+                    - client_secret
+                    - refresh_token
                   - type: object
                     title: Kubernetes Static Credentials
                     properties:
@@ -10886,7 +10919,7 @@ components:
                   user:
                     type: email
                     description: User microsoft email address.
-                  encrypted_password:
+                  password:
                     type: string
                     description: User encrypted password.
                 required:
@@ -10894,15 +10927,26 @@ components:
                 - client_secret
                 - tenant_id
                 - user
-                - encrypted_password
+                - password
               - type: object
                 title: GCP Static Credentials
                 properties:
-                  service_account_key:
+                  client_id:
                     type: string
-                    description: The service account key for GCP access.
+                    description: The client ID from Google Cloud, used to identify
+                      the application for GCP access.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the GCP client
+                      ID, required for secure access.
+                  refresh_token:
+                    type: string
+                    description: A refresh token that allows the application to obtain
+                      new access tokens for extended use.
                 required:
-                - service_account_key
+                - client_id
+                - client_secret
+                - refresh_token
               - type: object
                 title: Kubernetes Static Credentials
                 properties:
