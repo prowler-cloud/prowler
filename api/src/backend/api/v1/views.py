@@ -26,10 +26,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
-    OpenApiTypes,
     extend_schema,
     extend_schema_view,
 )
@@ -58,7 +58,10 @@ from tasks.tasks import (
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
-from api.compliance import get_compliance_frameworks
+from api.compliance import (
+    PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
+    get_compliance_frameworks,
+)
 from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
@@ -81,6 +84,7 @@ from api.filters import (
 )
 from api.models import (
     ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
@@ -116,6 +120,9 @@ from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
+    ComplianceRequirementAttributesSerializer,
+    ComplianceRequirementDetailSerializer,
+    ComplianceRequirementStatusSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
@@ -2412,12 +2419,74 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
             ),
         ],
     ),
+    requirements_overview=extend_schema(
+        tags=["Compliance Overview"],
+        summary="List compliance requirements overview for a scan",
+        description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
+        "framework. This endpoint provides requirement-level details and aggregates status across regions.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
+    requirement_details=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Get detailed compliance requirement information",
+        description="Retrieve detailed information about compliance requirements for a specific scan and compliance framework, "
+        "grouped by requirement ID. Shows passing and failing requirements across all regions.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+            OpenApiParameter(
+                name="filter[compliance_id]",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Compliance framework ID to filter by.",
+            ),
+            OpenApiParameter(
+                name="filter[region]",
+                required=False,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Optional region to filter by.",
+            ),
+        ],
+    ),
+    attributes=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Get compliance requirement attributes",
+        description="Retrieve detailed attribute information for all requirements in a specific compliance framework. "
+        "This endpoint returns attributes like 'Tipo', 'Marco', 'Nivel', etc. from the Prowler compliance templates.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[compliance_id]",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Compliance framework ID to get attributes for.",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
+@method_decorator(CACHE_DECORATOR, name="requirements_overview")
+@method_decorator(CACHE_DECORATOR, name="requirement_details")
+@method_decorator(CACHE_DECORATOR, name="attributes")
 class ComplianceOverviewViewSet(BaseRLSViewSet):
     pagination_class = ComplianceOverviewPagination
-    queryset = ComplianceOverview.objects.all()
+    queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
     filterset_class = ComplianceOverviewFilter
     http_method_names = ["get"]
@@ -2475,6 +2544,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
             return ComplianceOverviewFullSerializer
         elif self.action == "metadata":
             return ComplianceOverviewMetadataSerializer
+        elif self.action == "requirements_overview":
+            return ComplianceRequirementStatusSerializer
+        elif self.action == "attributes":
+            return ComplianceRequirementAttributesSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
@@ -2509,7 +2582,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
 
         regions = list(
-            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            ComplianceRequirementOverview.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            )
             .values_list("region", flat=True)
             .order_by("region")
             .distinct()
@@ -2518,6 +2593,262 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="requirements-overview")
+    def requirements_overview(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = request.tenant_id
+
+        filtered_queryset = self.filter_queryset(
+            ComplianceRequirementOverview.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            )
+        )
+        compliance_frameworks = filtered_queryset.values(
+            "compliance_id", "framework", "version"
+        ).distinct()
+
+        failed_requirements_by_compliance = (
+            filtered_queryset.filter(requirement_status="FAIL")
+            .values("compliance_id")
+            .annotate(requirements_failed=Count("requirement_id", distinct=True))
+        )
+
+        all_requirements = (
+            filtered_queryset.values("compliance_id", "requirement_id")
+            .distinct()
+            .annotate(total_instances=Count("id"))
+        )
+
+        passed_requirement_instances = (
+            filtered_queryset.filter(requirement_status="PASS")
+            .values("compliance_id", "requirement_id")
+            .annotate(pass_count=Count("id"))
+        )
+
+        failed_requirements_count = {
+            item["compliance_id"]: item["requirements_failed"]
+            for item in failed_requirements_by_compliance
+        }
+
+        requirement_totals = {}
+        for requirement in all_requirements:
+            compliance_id = requirement["compliance_id"]
+            if compliance_id not in requirement_totals:
+                requirement_totals[compliance_id] = {"total": 0, "requirement_map": {}}
+            requirement_totals[compliance_id]["total"] += 1
+            requirement_totals[compliance_id]["requirement_map"][
+                (compliance_id, requirement["requirement_id"])
+            ] = requirement["total_instances"]
+
+        passed_instance_counts = {}
+        for passed_instance in passed_requirement_instances:
+            requirement_key = (
+                passed_instance["compliance_id"],
+                passed_instance["requirement_id"],
+            )
+            passed_instance_counts[requirement_key] = passed_instance["pass_count"]
+
+        fully_passed_counts = {}
+        for compliance_id, compliance_data in requirement_totals.items():
+            fully_passed_requirements = 0
+            for requirement_key, total_instances in compliance_data[
+                "requirement_map"
+            ].items():
+                if passed_instance_counts.get(requirement_key, 0) == total_instances:
+                    fully_passed_requirements += 1
+            fully_passed_counts[compliance_id] = fully_passed_requirements
+
+        compliance_summary = []
+        for framework in compliance_frameworks:
+            compliance_id = framework["compliance_id"]
+            total_requirements = requirement_totals.get(compliance_id, {"total": 0})[
+                "total"
+            ]
+            failed_requirements = failed_requirements_count.get(compliance_id, 0)
+            passed_requirements = fully_passed_counts.get(compliance_id, 0)
+            manual_requirements = (
+                total_requirements - failed_requirements - passed_requirements
+            )
+
+            compliance_summary.append(
+                {
+                    "id": compliance_id,
+                    "framework": framework["framework"],
+                    "version": framework["version"],
+                    "requirements_passed": passed_requirements,
+                    "requirements_failed": failed_requirements,
+                    "requirements_manual": manual_requirements,
+                    "total_requirements": total_requirements,
+                }
+            )
+
+        serializer = self.get_serializer(compliance_summary, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="requirement-details")
+    def requirement_details(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        compliance_id = request.query_params.get("filter[compliance_id]")
+        region = request.query_params.get("filter[region]")
+
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        if not compliance_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[compliance_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        tenant_id = request.tenant_id
+
+        # Base query filtering by scan and compliance ID
+        base_query = ComplianceRequirementOverview.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, compliance_id=compliance_id
+        )
+
+        # Apply region filter if provided
+        if region:
+            base_query = base_query.filter(region=region)
+
+        # Get all requirements with their total instances
+        all_requirements = (
+            base_query.values("requirement_id", "framework", "version", "description")
+            .distinct()
+            .annotate(total_instances=Count("id"))
+        )
+
+        # Get passed instances per requirement
+        passed_instances = (
+            base_query.filter(requirement_status="PASS")
+            .values("requirement_id")
+            .annotate(pass_count=Count("id"))
+        )
+
+        # Create a map of passed instances
+        passed_counts = {
+            item["requirement_id"]: item["pass_count"] for item in passed_instances
+        }
+
+        # Prepare the detailed requirements summary
+        requirements_summary = []
+        for requirement in all_requirements:
+            requirement_id = requirement["requirement_id"]
+            total_instances = requirement["total_instances"]
+            passed_count = passed_counts.get(requirement_id, 0)
+
+            # A requirement is considered failed if any instance fails
+            requirement_status = "PASS" if passed_count == total_instances else "FAIL"
+
+            requirements_summary.append(
+                {
+                    "id": requirement_id,
+                    "framework": requirement["framework"],
+                    "version": requirement["version"],
+                    "description": requirement["description"],
+                    "status": requirement_status,
+                }
+            )
+
+        serializer = ComplianceRequirementDetailSerializer(
+            requirements_summary, many=True
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="attributes")
+    def attributes(self, request):
+        compliance_id = request.query_params.get("filter[compliance_id]")
+        if not compliance_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[compliance_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        # Try to determine provider type from existing data
+        provider_type = None
+        try:
+            # Look for any requirement overview record with this compliance_id to determine provider type
+            sample_requirement = ComplianceRequirementOverview.objects.filter(
+                tenant_id=self.request.tenant_id, compliance_id=compliance_id
+            ).first()
+
+            if sample_requirement:
+                provider_type = sample_requirement.scan.provider.provider
+        except Exception:
+            pass
+
+        # If we couldn't determine from database, try each provider type
+        if not provider_type:
+            for pt in Provider.ProviderChoices.values:
+                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
+                    provider_type = pt
+                    break
+
+        if not provider_type:
+            raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
+
+        # Get the compliance framework from the template
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(
+            provider_type, {}
+        )
+        compliance_framework = compliance_template.get(compliance_id)
+
+        if not compliance_framework:
+            raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
+
+        # Extract attributes for each requirement
+        attribute_data = []
+        for requirement_id, requirement in compliance_framework.get(
+            "requirements", {}
+        ).items():
+            attribute_data.append(
+                {
+                    "id": requirement_id,
+                    "framework": compliance_framework.get("framework", ""),
+                    "version": compliance_framework.get("version", ""),
+                    "description": requirement.get("description", ""),
+                    "attributes": requirement.get("attributes", []),
+                }
+            )
+
+        serializer = ComplianceRequirementAttributesSerializer(
+            attribute_data, many=True
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -2566,7 +2897,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 class OverviewViewSet(BaseRLSViewSet):
     queryset = ComplianceOverview.objects.all()
     http_method_names = ["get"]
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []

@@ -1138,6 +1138,7 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
         resource_name = "compliance-overviews"
 
 
+# TODOVICTOR add index to findings -> tenant_id, scan_id, check_id
 class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
