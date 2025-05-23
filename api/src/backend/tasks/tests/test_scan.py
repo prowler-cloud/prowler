@@ -181,10 +181,8 @@ class TestPerformScan:
         "tasks.jobs.scan.initialize_prowler_provider",
         side_effect=Exception("Connection error"),
     )
-    @patch("api.db_utils.rls_transaction")
     def test_perform_prowler_scan_no_connection(
         self,
-        mock_rls_transaction,
         mock_initialize_prowler_provider,
         mock_prowler_scan_class,
         tenants_fixture,
@@ -205,6 +203,10 @@ class TestPerformScan:
 
         scan.refresh_from_db()
         assert scan.state == StateChoices.FAILED
+
+        provider.refresh_from_db()
+        assert provider.connected is False
+        assert provider.connection_last_checked_at is not None
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
