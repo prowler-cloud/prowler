@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -40,6 +41,8 @@ class Test_repository_default_branch_protection_enabled_test:
                 private=False,
                 default_branch_protection=False,
                 securitymd=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -81,6 +84,8 @@ class Test_repository_default_branch_protection_enabled_test:
                 default_branch=default_branch,
                 default_branch_protection=True,
                 securitymd=True,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 

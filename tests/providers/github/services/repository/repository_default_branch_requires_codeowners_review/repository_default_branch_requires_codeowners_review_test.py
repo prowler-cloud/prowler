@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -41,6 +42,8 @@ class Test_repository_default_branch_requires_codeowners_review:
                 require_pull_request=False,
                 approval_count=0,
                 require_code_owner_reviews=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -83,6 +86,8 @@ class Test_repository_default_branch_requires_codeowners_review:
                 require_pull_request=False,
                 approval_count=0,
                 require_code_owner_reviews=True,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
