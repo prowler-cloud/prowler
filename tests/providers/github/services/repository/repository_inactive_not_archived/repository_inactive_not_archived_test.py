@@ -9,6 +9,7 @@ class Test_repository_inactive_not_archived:
     def test_no_repositories(self):
         repository_client = mock.MagicMock
         repository_client.repositories = {}
+        repository_client.audit_config = {}
 
         with (
             mock.patch(
