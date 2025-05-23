@@ -111,3 +111,7 @@ The requirement page has the following components:
 | Region by Check Status                     | Bar chart showing Prowler checks by region and status                             |
 | Resource Checks for Benchmark Requirements | Table showing Resource ID, Resource Name, Status, Description, and Prowler Checkl |
 
+## Walkthrough Video
+[![image](https://github.com/user-attachments/assets/866642c6-43ac-4aac-83d3-bb625002da0b)](https://www.youtube.com/watch?v=lfKFkTqBxjU)
+
+
