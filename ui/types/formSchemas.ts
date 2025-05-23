@@ -142,7 +142,13 @@ export const addCredentialsFormSchema = (providerType: string) =>
                     .nonempty("Client Secret is required"),
                   tenant_id: z.string().nonempty("Tenant ID is required"),
                   user: z.string().nonempty("User is required"),
+<<<<<<< HEAD
                   password: z.string().nonempty("Password is required"),
+=======
+                  password: z
+                    .string()
+                    .nonempty("Password is required"),
+>>>>>>> 1b42dda81 (fix(formSchemas): encrypted password typo (#7828))
                 }
               : {}),
   });
