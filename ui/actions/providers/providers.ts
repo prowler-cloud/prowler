@@ -10,6 +10,7 @@ import {
   parseStringify,
   wait,
 } from "@/lib";
+import { ProvidersApiResponse } from "@/types/providers";
 
 export const getProviders = async ({
   page = 1,
@@ -17,7 +18,7 @@ export const getProviders = async ({
   sort = "",
   filters = {},
   pageSize = 10,
-}) => {
+}): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
@@ -195,7 +196,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     // Static credentials configuration for GCP
@@ -298,7 +299,7 @@ export const updateCredentialsProvider = async (
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     // Static credentials configuration for GCP
