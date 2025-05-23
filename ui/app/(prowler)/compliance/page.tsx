@@ -131,9 +131,6 @@ const SSRComplianceGrid = async ({
     query,
   });
 
-  const specificScanData = await getScan(scanId);
-  const taskId = specificScanData?.data?.relationships.task?.data?.id;
-
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
     return (
@@ -176,7 +173,6 @@ const SSRComplianceGrid = async ({
             prevTotalRequirements={total}
             scanId={scanId}
             complianceId={compliance_id}
-            taskId={taskId}
           />
         );
       })}

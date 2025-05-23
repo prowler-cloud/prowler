@@ -19,7 +19,6 @@ interface ComplianceCardProps {
   prevTotalRequirements: number;
   scanId: string;
   complianceId: string;
-  taskId: string;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -29,7 +28,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   totalRequirements,
   scanId,
   complianceId,
-  taskId,
 }) => {
   const searchParams = useSearchParams();
   const hasRegionFilter = searchParams.has("filter[region__in]");
@@ -72,18 +70,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   const handleDownload = async () => {
     setIsDownloading(true);
-    const taskResult = await checkTaskStatus(taskId);
-
-    if (taskResult.completed) {
-      downloadComplianceCsv(scanId, complianceId, toast);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: taskResult.error || "Unknown error",
-      });
+    try {
+      await downloadComplianceCsv(scanId, complianceId, toast);
+    } finally {
+      setIsDownloading(false);
     }
-    setIsDownloading(false);
   };
 
   return (
