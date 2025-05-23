@@ -2618,7 +2618,6 @@ class TestScanViewSet:
         task = Task.objects.create(
             tenant_id=scan.tenant_id,
             task_runner_task=task_result,
-            state=StateChoices.EXECUTING,
         )
 
         mock_task_serializer.return_value.data = {
