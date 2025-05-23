@@ -918,6 +918,26 @@ class TestProviderViewSet:
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onMirosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
             ]
         ),
     )
@@ -985,6 +1005,51 @@ class TestProviderViewSet:
                     },
                     "invalid_choice",
                     "provider",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "https://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "thisisnotadomain",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "http://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"{'a' * 64}.domain.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"subdomain.{'a' * 64}.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
                 ),
             ]
         ),
@@ -3184,6 +3249,29 @@ class TestFindingViewSet:
                 }
             ]
         }
+
+    def test_findings_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # The latest scan only has one finding, in comparison with `GET /findings`
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["status"]
+            == latest_scan_finding.status
+        )
+
+    def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+
+        assert attributes["services"] == latest_scan_finding.resource_services
+        assert attributes["regions"] == latest_scan_finding.resource_regions
+        assert attributes["resource_types"] == latest_scan_finding.resource_types
 
 
 @pytest.mark.django_db

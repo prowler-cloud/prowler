@@ -86,7 +86,7 @@ export const UpdateViaCredentialsForm = ({
                 client_secret: "",
                 tenant_id: "",
                 user: "",
-                encrypted_password: "",
+                password: "",
               }
             : providerType === "gcp"
               ? {
@@ -153,8 +153,8 @@ export const UpdateViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
-          case "/data/attributes/secret/encrypted_password":
-            form.setError("encrypted_password", {
+          case "/data/attributes/secret/password":
+            form.setError("password", {
               type: "server",
               message: errorMessage,
             });

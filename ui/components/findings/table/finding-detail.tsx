@@ -115,13 +115,13 @@ export const FindingDetail = ({
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
         </div>
-        <InfoField label="ID" variant="simple">
+        <InfoField label="Finding ID" variant="simple">
           <CodeSnippet value={findingDetails.id} />
         </InfoField>
         <InfoField label="Check ID" variant="simple">
           <CodeSnippet value={attributes.check_id} />
         </InfoField>
-        <InfoField label="UID" variant="simple">
+        <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
         </InfoField>
 
@@ -307,7 +307,9 @@ export const FindingDetail = ({
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Alias">{provider.alias}</InfoField>
+          {provider.alias && (
+            <InfoField label="Alias">{provider.alias}</InfoField>
+          )}
           <InfoField label="Connection Status">
             <span
               className={`${provider.connection.connected ? "text-green-500" : "text-red-500"}`}

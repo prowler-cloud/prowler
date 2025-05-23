@@ -219,9 +219,13 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_m365_uid(value):
-        if not re.match(r"^[a-zA-Z0-9-]+\.onmicrosoft\.com$", value):
+        if not re.match(
+            r"""^(?!-)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.(?!-)[A-Za-z0-9]"""
+            r"""(?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$""",
+            value,
+        ):
             raise ModelValidationError(
-                detail="M365 tenant ID must be a valid domain.",
+                detail="M365 domain ID must be a valid domain.",
                 code="m365-uid",
                 pointer="/data/attributes/uid",
             )
@@ -413,7 +417,6 @@ class Scan(RowLevelSecurityProtectedModel):
         PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
-
     provider = models.ForeignKey(
         Provider,
         on_delete=models.CASCADE,
@@ -761,6 +764,10 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "id"],
                 condition=Q(delta="new"),
                 name="find_delta_new_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "uid", "-inserted_at"],
+                name="find_tenant_uid_inserted_idx",
             ),
             GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
             GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),

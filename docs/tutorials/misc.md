@@ -38,11 +38,11 @@ prowler <provider> --list-checks
 ```
 - Execute specific check(s):
 ```console
-prowler <provider> -c/--checks s3_bucket_public_access
+prowler <provider> -c/--checks s3_bucket_public_access iam_root_mfa_enabled
 ```
 - Exclude specific check(s):
 ```console
-prowler <provider> -e/--excluded-checks ec2 rds
+prowler <provider> -e/--excluded-checks s3_bucket_public_access iam_root_mfa_enabled
 ```
 - Execute checks that appears in a json file:
 ```json
