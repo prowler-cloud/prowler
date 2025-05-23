@@ -243,6 +243,58 @@ CIS_1_5_AWS = Compliance(
     ],
 )
 
+CIS_4_0_M365_NAME = "cis_4.0_m365"
+CIS_4_0_M365 = Compliance(
+    Framework="CIS",
+    Provider="M365",
+    Version="4.0",
+    Description="The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for configuring security options for Microsoft 365 with an emphasis on foundational, testable, and architecture agnostic settings.",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=[
+                "mfa_delete_enabled",
+            ],
+            Id="2.1.3",
+            Description="Ensure MFA Delete is enabled on S3 buckets",
+            Attributes=[
+                CIS_Requirement_Attribute(
+                    Section="2.1. Simple Storage Service (S3)",
+                    Profile="Level 1",
+                    AssessmentStatus="Automated",
+                    Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
+                    RationaleStatement="Adding MFA delete to an S3 bucket, requires additional authentication when you change the version state of your bucket or you delete and object version adding another layer of security in the event your security credentials are compromised or unauthorized access is granted.",
+                    ImpactStatement="",
+                    RemediationProcedure="Perform the steps below to enable MFA delete on an S3 bucket.Note:-You cannot enable MFA Delete using the AWS Management Console. You must use the AWS CLI or API.-You must use your 'root' account to enable MFA Delete on S3 buckets.**From Command line:**1. Run the s3api put-bucket-versioning command aws s3api put-bucket-versioning --profile my-root-profile --bucket Bucket_Name --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa arn:aws:iam::aws_account_id:mfa/root-account-mfa-device passcode",
+                    AuditProcedure="Perform the steps below to confirm MFA delete is configured on an S3 Bucket**From Console:**1. Login to the S3 console at `https://console.aws.amazon.com/s3/`2. Click the `Check` box next to the Bucket name you want to confirm3. In the window under `Properties`4. Confirm that Versioning is `Enabled`5. Confirm that MFA Delete is `Enabled`**From Command Line:**1. Run the `get-bucket-versioning aws s3api get-bucket-versioning --bucket my-bucket Output example: <VersioningConfiguration xmlns=`http://s3.amazonaws.com/doc/2006-03-01/`>  <Status>Enabled</Status> <MfaDelete>Enabled</MfaDelete></VersioningConfiguration>\ If the Console or the CLI output does not show Versioning and MFA Delete `enabled` refer to the remediation below.",
+                    AdditionalInformation="",
+                    References="https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html#MultiFactorAuthenticationDelete:https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMFADelete.html:https://aws.amazon.com/blogs/security/securing-access-to-aws-using-mfa-part-3/:https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_lost-or-broken.html",
+                    DefaultValue="By default, MFA Delete is not enabled on S3 buckets.",
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="2.1.4",
+            Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
+            Attributes=[
+                CIS_Requirement_Attribute(
+                    Section="1.1 Control Plane Node Configuration Files",
+                    Profile="Level 1 - Master Node",
+                    AssessmentStatus="Automated",
+                    Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
+                    RationaleStatement="The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.",
+                    ImpactStatement="",
+                    RemediationProcedure="Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` chmod 600 /etc/kubernetes/manifests/kube-controller-manager.yaml ```",
+                    AuditProcedure="Run the below command (based on the file location on your system) on the Control Plane node. For example,  ``` stat -c %a /etc/kubernetes/manifests/kube-controller-manager.yaml ```  Verify that the permissions are `600` or more restrictive.",
+                    AdditionalInformation="",
+                    References="https://kubernetes.io/docs/admin/kube-apiserver/",
+                    DefaultValue="By default, the `kube-controller-manager.yaml` file has permissions of `640`.",
+                )
+            ],
+        ),
+    ],
+)
+
 MITRE_ATTACK_AWS_NAME = "mitre_attack_aws"
 MITRE_ATTACK_AWS = Compliance(
     Framework="MITRE-ATTACK",
@@ -823,6 +875,7 @@ PROWLER_THREATSCORE_AWS = Compliance(
                     AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
                     LevelOfRisk=5,
+                    Weight=1000,
                 )
             ],
             Checks=[
@@ -840,6 +893,7 @@ PROWLER_THREATSCORE_AWS = Compliance(
                     AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
                     LevelOfRisk=3,
+                    Weight=10,
                 )
             ],
             Checks=[],
@@ -865,6 +919,7 @@ PROWLER_THREATSCORE_AZURE = Compliance(
                     AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
                     LevelOfRisk=5,
+                    Weight=1000,
                 )
             ],
             Checks=[
@@ -882,6 +937,7 @@ PROWLER_THREATSCORE_AZURE = Compliance(
                     AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
                     LevelOfRisk=3,
+                    Weight=10,
                 )
             ],
             Checks=[],
@@ -907,6 +963,7 @@ PROWLER_THREATSCORE_GCP = Compliance(
                     AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
                     LevelOfRisk=5,
+                    Weight=1000,
                 )
             ],
             Checks=[
@@ -924,6 +981,51 @@ PROWLER_THREATSCORE_GCP = Compliance(
                     AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
                     AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
                     LevelOfRisk=3,
+                    Weight=10,
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+PROWLER_THREATSCORE_M365_NAME = "prowler_threatscore_m365"
+PROWLER_THREATSCORE_M365 = Compliance(
+    Framework="ProwlerThreatScore",
+    Version="1.0",
+    Provider="M365",
+    Description="Prowler ThreatScore Compliance Framework for M365 ensures that the M365 account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Requirements=[
+        Compliance_Requirement(
+            Id="1.1.1",
+            Description="Ensure MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="MFA enabled for 'root'",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password. With MFA activated, users must provide their credentials (username and password) along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
+                    LevelOfRisk=5,
+                    Weight=1000,
+                )
+            ],
+            Checks=[
+                "iam_root_mfa_enabled",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="1.1.2",
+            Description="Ensure hardware MFA is enabled for the 'root' user account",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="CloudTrail logging enabled",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The root user account in AWS has the highest level of privileges. Multi-Factor Authentication (MFA) enhances security by adding an extra layer of protection beyond a username and password. When MFA is enabled, users must enter their credentials along with a unique authentication code generated by their AWS MFA device when signing into an AWS website.",
+                    AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
+                    LevelOfRisk=3,
+                    Weight=10,
                 )
             ],
             Checks=[],

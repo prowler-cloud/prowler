@@ -82,6 +82,7 @@ class M365CISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -145,6 +146,37 @@ class KubernetesCISModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Section: str
     Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_References: str
+    Requirements_Attributes_DefaultValue: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+
+
+class GithubCISModel(BaseModel):
+    """
+    GithubCISModel generates a finding's output in Github CIS Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    Account_Name: str
+    Account_Id: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str

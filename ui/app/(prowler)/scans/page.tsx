@@ -29,6 +29,7 @@ export default async function Scans({
     filters: {
       "filter[connected]": true,
     },
+    pageSize: 50,
   });
 
   const providerInfo =
@@ -40,7 +41,10 @@ export default async function Scans({
       connected: provider.attributes.connection.connected,
     })) || [];
 
-  const providersCountConnected = await getProviders({});
+  const providersCountConnected = await getProviders({
+    filters: { "filter[connected]": true },
+    pageSize: 50,
+  });
   const thereIsNoProviders =
     !providersCountConnected?.data || providersCountConnected.data.length === 0;
 

@@ -1,6 +1,6 @@
 import { Suspense, use } from "react";
 
-import { getProfileInfo } from "@/actions/users/users";
+import { getUserInfo } from "@/actions/users/users";
 
 import { Navbar } from "../nav-bar/navbar";
 import { SkeletonContentLayout } from "./skeleton-content-layout";
@@ -11,7 +11,7 @@ interface ContentLayoutProps {
 }
 
 export function ContentLayout({ title, icon, children }: ContentLayoutProps) {
-  const user = use(getProfileInfo());
+  const user = use(getUserInfo());
 
   return (
     <>

@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_has_codeowners_file",
+  "CheckTitle": "Check if repositories have a CODEOWNERS file",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "high",
+  "ResourceType": "GitHubRepository",
+  "Description": "Ensure that repositories have a CODEOWNERS file.",
+  "Risk": "Not having a CODEOWNERS file in a repository may lead to unclear code ownership and review responsibilities, increasing the risk of unreviewed or unauthorized changes.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add a CODEOWNERS file to the root, .github/, or docs/ directory of the repository. The file should specify code owners for files and directories as appropriate for your organization.",
+      "Url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
