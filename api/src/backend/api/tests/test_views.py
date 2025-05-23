@@ -9,13 +9,17 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
 import pytest
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
+from django.http import JsonResponse
+from django.test import RequestFactory
 from django.urls import reverse
 from rest_framework import status
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import MainRouter
 from api.models import (
     ComplianceOverview,
     Integration,
@@ -35,6 +39,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.views import TenantFinishACSView
 
 TODAY = str(datetime.today().date())
 
@@ -5543,3 +5548,117 @@ class TestSAMLConfigurationsViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not SAMLConfigurations.objects.filter(id=config.id).exists()
+
+
+@pytest.mark.django_db
+class TestTenantFinishACSView:
+    def test_dispatch_skips_if_user_not_authenticated(self):
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = type("Anonymous", (), {"is_authenticated": False})()
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.return_value = SocialApp(
+                provider="saml",
+                client_id="testtenant",
+                name="Test App",
+                settings={},
+            )
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code in [200, 302]
+
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = users_fixture[0]
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.return_value = SocialApp(
+                provider="saml",
+                client_id="testtenant",
+                name="Test App",
+                settings={},
+            )
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
+
+    def test_dispatch_sets_user_profile_and_assigns_role(
+        self, create_test_user, tenants_fixture, saml_setup
+    ):
+        user = create_test_user
+        original_email = user.email
+        original_name = user.name
+        original_company = user.company_name
+        user.email = f"doe@{saml_setup['email']}"
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["TestOrg"],
+                "userType": ["saml_default_role"],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch("allauth.socialaccount.models.SocialApp.objects.get"),
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_socialaccount_get,
+            patch("api.v1.serializers.TokenSocialLoginSerializer") as mock_serializer,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+
+            mock_socialaccount_get.return_value = social_account
+
+            mock_instance = mock_serializer.return_value
+            mock_instance.is_valid.return_value = True
+            mock_instance.validated_data = {
+                "token": "mocktoken",
+                "refresh_token": "mockrefresh",
+            }
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 200
+        user.refresh_from_db()
+        assert user.name == "John Doe"
+        assert user.company_name == "TestOrg"
+
+        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        assert role.tenant == tenants_fixture[0]
+
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant_id=tenants_fixture[0].id)
+            .exists()
+        )
+        user.email = original_email
+        user.name = original_name
+        user.company_name = original_company
+        user.save()

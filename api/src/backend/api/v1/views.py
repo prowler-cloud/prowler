@@ -478,7 +478,6 @@ class SAMLConfigurationsViewSet(BaseRLSViewSet):
 class TenantFinishACSView(FinishACSView):
     def dispatch(self, request, organization_slug):
         response = super().dispatch(request, organization_slug)
-
         user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
             return response
@@ -490,7 +489,7 @@ class TenantFinishACSView(FinishACSView):
             social_account = SocialAccount.objects.get(
                 user=user, provider=social_app.provider
             )
-        except SocialApp.DoesNotExist:
+        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist):
             return response
 
         extra = social_account.extra_data
@@ -507,9 +506,22 @@ class TenantFinishACSView(FinishACSView):
             .tenant
         )
         role_name = extra.get("userType", ["saml_default_role"])[0].strip()
-        role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
-            name=role_name, tenant=tenant
-        )
+        try:
+            role = Role.objects.using(MainRouter.admin_db).get(
+                name=role_name, tenant=tenant
+            )
+        except Role.DoesNotExist:
+            role = Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                manage_users=False,
+                manage_account=False,
+                manage_billing=False,
+                manage_providers=False,
+                manage_integrations=False,
+                manage_scans=False,
+                unlimited_visibility=False,
+            )
         UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
             user=user,
             tenant_id=tenant.id,

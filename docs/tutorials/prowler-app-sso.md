@@ -46,7 +46,7 @@ You can manage SAML settings via the API. Prowler provides full CRUD support for
 
 - GET /api/v1/saml-config: Retrieve the current configuration
 
-- POST /api/v1/saml-config:Create a new configuration
+- POST /api/v1/saml-config: Create a new configuration
 
 - PATCH /api/v1/saml-config: Update the existing configuration
 
@@ -55,3 +55,35 @@ You can manage SAML settings via the API. Prowler provides full CRUD support for
 
 ???+ note "API Note"
     SSO with SAML API documentation.[Prowler API Reference - Upload SAML configuration](https://api.prowler.com/api/v1/docs#tag/SAML/operation/saml_config_create)
+
+# SAML Initiate
+
+### Description
+
+This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists and the required certificates are present, it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
+
+- POST /api/v1/accounts/saml/initiate/
+
+???+ note
+    Important: This endpoint is intended to be used from a browser, as it returns a 302 redirect that needs to be followed to continue the SAML authentication flow. For testing purposes, it is better to use a browser or a tool that follows redirects (such as Postman) rather than relying on unit tests that cannot capture the redirect behavior.
+
+### Expected payload
+```
+{
+  "email_domain": "user@domain.com"
+}
+```
+
+### Possible responses
+
+	•	302 FOUND: Redirects to the SAML login URL associated with the organization.
+
+	•	403 FORBIDDEN: The domain is not authorized or SAML certificates are missing from the configuration.
+
+### Validation logic
+
+    •	Looks up the domain in SAMLDomainIndex.
+
+	•	Retrieves the related SAMLConfigurations object via tenant_id.
+
+	•	Verifies that SAML_PUBLIC_CERT and SAML_PRIVATE_KEY environment variables are set.
