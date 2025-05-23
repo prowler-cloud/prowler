@@ -1,7 +1,6 @@
 import json
 import uuid
 from unittest.mock import MagicMock, patch
-from contextlib import contextmanager
 
 import pytest
 from tasks.jobs.scan import (
