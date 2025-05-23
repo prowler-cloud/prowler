@@ -24,7 +24,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NoAuthenticationMethodError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
-    M365NotValidEncryptedPasswordError,
+    M365NotValidPasswordError,
     M365NotValidTenantIdError,
     M365NotValidUserError,
     M365UserNotBelongingToTenantError,
@@ -396,14 +396,12 @@ class TestM365Provider:
         with patch(
             "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
         ) as mock_validate_static_credentials:
-            mock_validate_static_credentials.side_effect = (
-                M365NotValidEncryptedPasswordError(
-                    file=os.path.basename(__file__),
-                    message="The provided M365 Encrypted Password is not valid.",
-                )
+            mock_validate_static_credentials.side_effect = M365NotValidPasswordError(
+                file=os.path.basename(__file__),
+                message="The provided M365 Password is not valid.",
             )
 
-            with pytest.raises(M365NotValidEncryptedPasswordError) as exception:
+            with pytest.raises(M365NotValidPasswordError) as exception:
                 M365Provider.test_connection(
                     tenant_id=str(uuid4()),
                     region="M365Global",
@@ -414,10 +412,8 @@ class TestM365Provider:
                     encrypted_password=None,
                 )
 
-            assert exception.type == M365NotValidEncryptedPasswordError
-            assert "The provided M365 Encrypted Password is not valid." in str(
-                exception.value
-            )
+            assert exception.type == M365NotValidPasswordError
+            assert "The provided M365 Password is not valid." in str(exception.value)
 
     def test_test_connection_with_httpresponseerror(self):
         with patch(
@@ -587,8 +583,13 @@ class TestM365Provider:
             )
         assert "The provided User is not valid." in str(exception.value)
 
+<<<<<<< HEAD
     def test_validate_static_credentials_missing_encrypted_password(self):
         with pytest.raises(M365NotValidEncryptedPasswordError) as exception:
+=======
+    def test_validate_static_credentials_missing_password(self):
+        with pytest.raises(M365NotValidPasswordError) as exception:
+>>>>>>> f726d964a (fix(m365): remove last encrypted password appearances (#7825))
             M365Provider.validate_static_credentials(
                 tenant_id="12345678-1234-5678-1234-567812345678",
                 client_id="12345678-1234-5678-1234-567812345678",
@@ -596,7 +597,7 @@ class TestM365Provider:
                 user="test@example.com",
                 encrypted_password="",
             )
-        assert "The provided Encrypted Password is not valid." in str(exception.value)
+        assert "The provided Password is not valid." in str(exception.value)
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:

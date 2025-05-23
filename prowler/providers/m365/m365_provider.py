@@ -43,7 +43,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NotTenantIdButClientIdAndClientSecretError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
-    M365NotValidEncryptedPasswordError,
+    M365NotValidPasswordError,
     M365NotValidTenantIdError,
     M365NotValidUserError,
     M365SetUpRegionConfigError,
@@ -296,7 +296,7 @@ class M365Provider(Provider):
             client_id (str): The M365 Client ID.
             client_secret (str): The M365 Client Secret.
             user (str): The M365 User Account.
-            encrpted_password (str): The M365 Encrypted Password.
+            password (str): The M365 User Password.
 
         Raises:
             M365BrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
@@ -494,7 +494,11 @@ class M365Provider(Provider):
                 - client_id: The M365 client ID.
                 - client_secret: The M365 client secret
                 - user: The M365 user email
+<<<<<<< HEAD
                 - encrypted_password: The M365 encrypted password
+=======
+                - password: The M365 user password
+>>>>>>> f726d964a (fix(m365): remove last encrypted password appearances (#7825))
                 - provider_id: The M365 provider ID (in this case the Tenant ID).
             region_config (M365RegionConfig): The region configuration object.
 
@@ -985,7 +989,11 @@ class M365Provider(Provider):
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
             user (str): The M365 user email.
+<<<<<<< HEAD
             encrypted_password (str): The M365 encrypted password.
+=======
+            password (str): The M365 user password.
+>>>>>>> f726d964a (fix(m365): remove last encrypted password appearances (#7825))
 
         Raises:
             M365NotValidTenantIdError: If the provided M365 Tenant ID is not valid.
@@ -1030,11 +1038,17 @@ class M365Provider(Provider):
                 message="The provided User is not valid.",
             )
 
+<<<<<<< HEAD
         # Validate the Encrypted Password
         if not encrypted_password:
             raise M365NotValidEncryptedPasswordError(
+=======
+        # Validate the Password
+        if not password:
+            raise M365NotValidPasswordError(
+>>>>>>> f726d964a (fix(m365): remove last encrypted password appearances (#7825))
                 file=os.path.basename(__file__),
-                message="The provided Encrypted Password is not valid.",
+                message="The provided Password is not valid.",
             )
 
         try:
