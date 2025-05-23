@@ -144,7 +144,7 @@ export const addCredentialsFormSchema = (providerType: string) =>
                   user: z.string().nonempty("User is required"),
                   password: z
                     .string()
-                    .nonempty("Encrypted Password is required"),
+                    .nonempty("Password is required"),
                 }
               : {}),
   });
