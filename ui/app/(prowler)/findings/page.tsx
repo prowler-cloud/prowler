@@ -23,8 +23,13 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { ProviderAccountProps, ProviderProps } from "@/types";
-import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
+import { ProviderProps } from "@/types";
+import {
+  FindingProps,
+  IncludeProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -44,7 +49,9 @@ export default async function Findings({
       filters,
     }),
     getProviders({ pageSize: 50 }),
-    getScans({}),
+    getScans({
+      include: "provider",
+    }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -62,20 +69,21 @@ export default async function Findings({
     ),
   );
 
-  const providerDetails: Array<{ [uid: string]: ProviderAccountProps }> =
-    providerUIDs.map((uid) => {
-      const provider = providersData.data.find(
-        (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
-      );
+  const providerDetails = providerUIDs.map((uid) => {
+    const provider = providersData.data.find(
+      (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
+    );
 
-      return {
-        [uid]: {
+    return {
+      [uid]: {
+        providerInfo: {
           provider: provider?.attributes?.provider || "",
           uid: uid,
           alias: provider?.attributes?.alias ?? null,
         },
-      };
-    });
+      },
+    };
+  });
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
@@ -87,10 +95,42 @@ export default async function Findings({
     .map((scan: ScanProps) => ({
       id: scan.id,
       name: scan.attributes.name,
+      providerId: scan.relationships.provider.data.id,
+      completed_at: scan.attributes.completed_at,
     }));
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+
+  const providerDetailsAssociatedWithScans = completedScans?.map(
+    (scan: {
+      id: string;
+      name: string;
+      providerId: string;
+      completed_at: string;
+    }) => {
+      const providerId = scan.providerId;
+
+      const providerDetails = scansData.included.find(
+        (provider: IncludeProps) =>
+          provider.type === "providers" && provider.id === providerId,
+      );
+
+      return {
+        [scan.id]: {
+          providerInfo: {
+            provider: providerDetails?.attributes?.provider,
+            alias: providerDetails?.attributes?.alias,
+            uid: providerDetails?.attributes?.uid,
+          },
+          attributes: {
+            name: scan.name,
+            completed_at: scan.completed_at,
+          },
+        },
+      };
+    },
+  );
 
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
@@ -124,6 +164,7 @@ export default async function Findings({
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
+            valueLabelMapping: providerDetailsAssociatedWithScans,
           },
         ]}
         defaultOpen={true}
