@@ -100,21 +100,25 @@ export default async function Findings({
             key: "region__in",
             labelCheckboxGroup: "Regions",
             values: uniqueRegions,
+            index: 5,
           },
           {
             key: "service__in",
             labelCheckboxGroup: "Services",
             values: uniqueServices,
+            index: 6,
           },
           {
             key: "resource_type__in",
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
+            index: 7,
           },
           {
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
+            index: 9,
           },
         ]}
         defaultOpen={true}
