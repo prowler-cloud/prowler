@@ -238,7 +238,7 @@ export const getExportsZip = async (scanId: string) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      // TODO: Updated the getting of error message from `errors[0]?.` to `errors?.` to support currently, but need to be updated in backend to make it consistent
+
       throw new Error(
         errorData?.errors?.detail ||
           "Unable to fetch scan report. Contact support if the issue continues.",
@@ -279,7 +279,7 @@ export const getComplianceCsv = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      // TODO: Updated the getting of error message from `errors[0]?.` to `errors?.` to support currently, but need to be updated in backend to make it consistent
+
       throw new Error(
         errorData?.errors?.detail ||
           "Unable to retrieve compliance report. Contact support if the issue continues.",
