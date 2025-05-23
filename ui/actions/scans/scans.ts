@@ -16,6 +16,12 @@ export const getScans = async ({
   sort = "",
   filters = {},
   pageSize = 10,
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | number | boolean>;
+  pageSize?: number;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -28,18 +34,14 @@ export const getScans = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
+  // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
-    const scans = await fetch(url.toString(), {
-      headers,
-    });
-    const data = await scans.json();
+    const response = await fetch(url.toString(), { headers });
+    const data = await response.json();
     const parsedData = parseStringify(data);
     revalidatePath("/scans");
     return parsedData;
