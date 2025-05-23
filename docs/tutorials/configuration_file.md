@@ -537,7 +537,7 @@ m365:
 # GitHub Configuration
 github:
   # github.repository_inactive_not_archived
-  inactive_not_archived_days_threshold: 180 # days
+  inactive_not_archived_days_threshold: 180
 
 
 ```
