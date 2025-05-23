@@ -29,6 +29,7 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfigurations,
     Scan,
     StateChoices,
     Task,
@@ -2119,3 +2120,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
         return super().update(instance, validated_data)
+
+
+# SSO
+
+
+class SamlInitiateSerializer(serializers.Serializer):
+    email_domain = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "saml-initiate"
+
+
+class SamlMetadataSerializer(serializers.Serializer):
+    class JSONAPIMeta:
+        resource_name = "saml-meta"
+
+
+class SAMLConfigurationsSerializer(RLSSerializer):
+    class Meta:
+        model = SAMLConfigurations
+        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
