@@ -34,6 +34,7 @@ class Test_repository_branch_delete_on_merge_enabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,
@@ -74,6 +75,7 @@ class Test_repository_branch_delete_on_merge_enabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,

@@ -12,6 +12,7 @@ def mock_list_repositories(_):
         1: Repo(
             id=1,
             name="repo1",
+            owner="account-name",
             full_name="account-name/repo1",
             default_branch_protection=True,
             default_branch="main",

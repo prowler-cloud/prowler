@@ -34,6 +34,7 @@ class Test_repository_default_branch_requires_codeowners_review:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,
@@ -76,6 +77,7 @@ class Test_repository_default_branch_requires_codeowners_review:
             2: Repo(
                 id=2,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo2",
                 default_branch="main",
                 private=False,
