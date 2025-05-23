@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
 
@@ -29,23 +30,40 @@ export const getAllTenants = async () => {
   }
 };
 
-export async function updateTenantName(formData: FormData) {
-  const headers = await getAuthHeaders({ contentType: true });
-  const tenantId = formData.get("tenantId") as string;
-  const name = formData.get("name") as string;
+const editTenantFormSchema = z
+  .object({
+    tenantId: z.string(),
+    name: z.string().trim().min(1, { message: "Name is required" }),
+    currentName: z.string(),
+  })
+  .refine((data) => data.name !== data.currentName, {
+    message: "Name must be different from the current name",
+    path: ["name"],
+  });
 
-  if (!tenantId || !name) {
+export async function updateTenantName(prevState: any, formData: FormData) {
+  const headers = await getAuthHeaders({ contentType: true });
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = editTenantFormSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    const formFieldErrors = validatedData.error.flatten().fieldErrors;
+
     return {
-      errors: [{ detail: "Tenant ID and name are required" }],
+      errors: {
+        name: formFieldErrors?.name?.[0],
+      },
     };
   }
+
+  const { tenantId, name } = validatedData.data;
 
   const payload = {
     data: {
       type: "tenants",
       id: tenantId,
       attributes: {
-        name,
+        name: name.trim(),
       },
     },
   };
@@ -62,14 +80,16 @@ export async function updateTenantName(formData: FormData) {
       throw new Error(`Failed to update tenant name: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    await response.json();
     revalidatePath("/profile");
-    return data;
+    return { success: "Tenant name updated successfully!" };
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error updating tenant name:", error);
     return {
-      errors: [{ detail: `Error updating tenant name: ${error}` }],
+      errors: {
+        general: "Error updating tenant name. Please try again.",
+      },
     };
   }
 }

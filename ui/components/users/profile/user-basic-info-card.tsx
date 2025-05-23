@@ -30,7 +30,7 @@ export const UserBasicInfoCard = ({
   return (
     <Card className="dark:bg-prowler-blue-400">
       <CardBody>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-black p-1">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-black p-1 dark:border-white">
           <ProwlerShort />
         </div>
         <Divider className="my-4" />

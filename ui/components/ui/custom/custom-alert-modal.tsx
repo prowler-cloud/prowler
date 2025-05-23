@@ -23,7 +23,7 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
       size="xl"
       classNames={{
         base: "dark:bg-prowler-blue-800",
-        closeButton: "right-0",
+        closeButton: "rounded-md",
       }}
       backdrop="blur"
       placement="center"

@@ -8,6 +8,7 @@ import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
+import { isUserOwnerAndHasManageAccount } from "@/lib/permissions";
 import { RoleDetail, TenantDetailData } from "@/types/users/users";
 
 export default async function Profile() {
@@ -59,6 +60,12 @@ const SSRDataUser = async () => {
     ),
   );
 
+  const isOwner = isUserOwnerAndHasManageAccount(
+    roleDetails,
+    memberships?.data || [],
+    userProfile.data.id,
+  );
+
   return (
     <div className="flex w-full flex-col gap-6">
       <UserBasicInfoCard user={userProfile?.data} tenantId={userTenant?.id} />
@@ -70,6 +77,7 @@ const SSRDataUser = async () => {
           <MembershipsCard
             memberships={memberships?.data || []}
             tenantsMap={tenantsMap}
+            isOwner={isOwner}
           />
         </div>
       </div>

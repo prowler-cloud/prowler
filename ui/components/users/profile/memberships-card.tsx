@@ -7,9 +7,11 @@ import { MembershipItem } from "./membership-item";
 export const MembershipsCard = ({
   memberships,
   tenantsMap,
+  isOwner,
 }: {
   memberships: MembershipDetailData[];
   tenantsMap: Record<string, TenantDetailData>;
+  isOwner: boolean;
 }) => {
   return (
     <Card className="dark:bg-prowler-blue-400">
@@ -34,6 +36,7 @@ export const MembershipsCard = ({
                   membership={membership}
                   tenantId={tenantId}
                   tenantName={tenantsMap[tenantId]?.attributes.name}
+                  isOwner={isOwner}
                 />
               );
             })}

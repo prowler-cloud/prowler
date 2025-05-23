@@ -7,26 +7,27 @@ import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DateWithTime } from "@/components/ui/entities";
 import { MembershipDetailData } from "@/types/users/users";
 
-import { EditTenantForm } from "./edit-tenant-form";
+import { EditTenantForm } from "../forms";
 
 export const MembershipItem = ({
   membership,
   tenantName,
   tenantId,
+  isOwner,
 }: {
   membership: MembershipDetailData;
   tenantName: string;
   tenantId: string;
+  isOwner: boolean;
 }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const isOwner = membership.attributes.role?.toLowerCase() === "owner";
 
   return (
     <>
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Change organization name"
+        title=""
       >
         <EditTenantForm
           tenantId={tenantId}
@@ -41,19 +42,6 @@ export const MembershipItem = ({
             <Chip size="sm" variant="flat" color="secondary">
               {membership.attributes.role}
             </Chip>
-            {isOwner && (
-              <CustomButton
-                type="button"
-                ariaLabel="Change name"
-                className="text-blue-500"
-                variant="flat"
-                color="transparent"
-                size="sm"
-                onPress={() => setIsEditOpen(true)}
-              >
-                Change name
-              </CustomButton>
-            )}
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-gray-500">
@@ -61,6 +49,19 @@ export const MembershipItem = ({
               <p className="whitespace-nowrap text-xs font-semibold">
                 {tenantName}
               </p>
+              {isOwner && (
+                <CustomButton
+                  type="button"
+                  ariaLabel="Change name"
+                  className="text-blue-500"
+                  variant="flat"
+                  color="transparent"
+                  size="sm"
+                  onPress={() => setIsEditOpen(true)}
+                >
+                  Change name
+                </CustomButton>
+              )}
             </div>
           </div>
         </div>
