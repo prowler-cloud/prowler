@@ -5,7 +5,7 @@ import { InfoIcon } from "lucide-react";
 interface InfoFieldProps {
   label: string;
   children: React.ReactNode;
-  variant?: "default" | "simple";
+  variant?: "default" | "simple" | "transparent";
   className?: string;
   tooltipContent?: string;
 }
@@ -45,8 +45,10 @@ export const InfoField = ({
         <div className="text-small text-gray-900 dark:text-prowler-theme-pale">
           {children}
         </div>
+      ) : variant === "transparent" ? (
+        <div className="text-sm">{children}</div>
       ) : (
-        <div className="rounded-lg bg-gray-50 px-3 py-2 text-small text-gray-900 dark:bg-slate-800 dark:text-prowler-theme-pale">
+        <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:bg-slate-800 dark:text-prowler-theme-pale">
           {children}
         </div>
       )}
