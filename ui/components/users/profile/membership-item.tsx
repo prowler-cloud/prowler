@@ -4,7 +4,7 @@ import { Chip } from "@nextui-org/react";
 import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { MembershipDetailData } from "@/types/users/users";
 
 import { EditTenantForm } from "../forms";
@@ -37,38 +37,38 @@ export const MembershipItem = ({
       </CustomAlertModal>
 
       <div className="min-w-[320px] rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-        <div className="flex w-full flex-col space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <Chip size="sm" variant="flat" color="secondary">
-              {membership.attributes.role}
-            </Chip>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-gray-500">
-              <span className="text-xs">Name:</span>
-              <p className="whitespace-nowrap text-xs font-semibold">
-                {tenantName}
-              </p>
-              {isOwner && (
-                <CustomButton
-                  type="button"
-                  ariaLabel="Change name"
-                  className="text-blue-500"
-                  variant="flat"
-                  color="transparent"
-                  size="sm"
-                  onPress={() => setIsEditOpen(true)}
-                >
-                  Change name
-                </CustomButton>
-              )}
-            </div>
-          </div>
-        </div>
+        <div className="flex w-full items-center gap-4">
+          <Chip size="sm" variant="flat" color="secondary">
+            {membership.attributes.role}
+          </Chip>
 
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="">Joined on:</span>
-          <DateWithTime inline dateTime={membership.attributes.date_joined} />
+          <div className="flex flex-col gap-1">
+            <InfoField label="Name" inline variant="transparent">
+              <span className="whitespace-nowrap font-semibold">
+                {tenantName}
+              </span>
+            </InfoField>
+            <InfoField label="Joined on" inline variant="transparent">
+              <DateWithTime
+                inline
+                dateTime={membership.attributes.date_joined}
+              />
+            </InfoField>
+          </div>
+
+          {isOwner && (
+            <CustomButton
+              type="button"
+              ariaLabel="Change name"
+              className="ml-auto text-blue-500"
+              variant="flat"
+              color="transparent"
+              size="sm"
+              onPress={() => setIsEditOpen(true)}
+            >
+              Change name
+            </CustomButton>
+          )}
         </div>
       </div>
     </>
