@@ -14,11 +14,10 @@ import { XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ComplianceScanInfo } from "@/components/compliance";
 import { PlusCircleIcon } from "@/components/icons";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { CustomDropdownFilterProps } from "@/types";
-
-import { EntityInfoShort } from "../entities";
 
 const filterSelectedClass =
   "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
@@ -169,7 +168,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
+        <PopoverContent className="min-w-[20rem] dark:bg-prowler-blue-800">
           <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
               color="default"
@@ -192,14 +191,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <Divider orientation="horizontal" className="mt-2" />
               <ScrollShadow
                 hideScrollBar
-                className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
+                className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"
               >
                 {memoizedFilterValues.map((value) => {
                   // Find the corresponding entity from valueLabelMapping
                   const matchingEntry = filter.valueLabelMapping?.find(
                     (entry) => entry[value],
                   );
-                  const entity = matchingEntry?.[value];
+                  const scanData = matchingEntry?.[value];
 
                   return (
                     <Checkbox
@@ -210,13 +209,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                       key={value}
                       value={value}
                     >
-                      {entity ? (
-                        <EntityInfoShort
-                          cloudProvider={entity.provider}
-                          entityAlias={entity.alias}
-                          entityId={entity.uid}
-                          hideCopyButton
-                        />
+                      {scanData ? (
+                        <ComplianceScanInfo scan={scanData} />
                       ) : (
                         value
                       )}

@@ -20,7 +20,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   hideCopyButton = false,
 }) => {
   return (
-    <div className="flex w-full items-center justify-between space-x-2">
+    <div className="flex w-fit items-center justify-between">
       <div className="flex items-center gap-x-2">
         <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
         <div className="flex flex-col">
