@@ -1,0 +1,101 @@
+# Prowler Multicloud CIS Benchmarks PowerBI Template
+
+## Getting Started
+
+1. Install Microsoft PowerBI Desktop
+
+   This report requires the Microsoft PowerBI Desktop software which can be downloaded for free from Microsoft.
+2. Run compliance scans in Prowler
+
+   The report uses compliance csv outputs from Prowler. Compliance scans be run using either Prowler CLI or Prowler SaaS
+   1. Prowler CLI -&gt; Run a Prowler scan using the --compliance option
+   2. Prowler SaaS -&gt; Navigate to the compliance section to download csv outputs
+
+   The template supports the following CIS Benchmarks only:
+
+   | Compliance Framework                           | Version |
+   | ---------------------------------------------- | ------- |
+   | CIS Amazon Web Services Foundations Benchmark  | v4.0.1  |
+   | CIS Google Cloud Platform Foundation Benchmark | v3.0.0  |
+   | CIS Microsoft Azure Foundations Benchmark      | v3.0.0  |
+   | CIS Kubernetes Benchmark                       | v1.10.0 |
+
+   Ensure you run or download the correct benchmark versions.
+3. Create a local directory to store Prowler csvoutputs
+
+   Once downloaded, place your csv outputs in a directory on your local machine. If you rename the files, they must maintain the provider in the filename.
+
+   To use time-series capabilities such as "compliance percent over time" you'll need scans from multiple dates.
+4. Download and run the PowerBI template file (.pbit)
+
+   Running the .pbit file will open PowerBI Desktop and prompt you for the full filepath to the local directory
+5. Enter the full filepath to the directory created in step 3
+
+   Provide the full filepath from the root directory.
+
+   Ensure that the filepath is not wrapped in quotation marks (""). If you use Window's "copy as path" feature, it will automatically include quotation marks.
+6. Save the report as a PowerBI file (.pbix)
+
+   Once the filepath is entered, the template will automatically ingest and populate the report. You can then save this file as a new PowerBI report. If you'd like to generate another report, simply re-run the template file (.pbit) from step 4.
+
+## Validation
+
+After setting up your dashboard, you may want to validate the Prowler csv files were ingested correctly. To do this, navigate to the "Configuration" tab.
+
+The "loaded CIS Benchmarks" table shows the supported benchmarks and versions. This is defined by the template file and not editable by the user. All benchmarks will be loaded regardless of which providers you provided csv outputs for.
+
+The "Prowler CSV Folder" shows the path to the local directory you provided.
+
+The "Loaded Prowler Exports" table shows the ingested csv files from the local directory. It will mark files that are treated as the latest assessment with a green checkmark.
+
+## Report Sections
+
+The PowerBI Report is broken into three main report pages
+
+| Report Page | Description                                                                         |
+| ----------- | ----------------------------------------------------------------------------------- |
+| Overview    | Provides general CIS Benchmark overview across both AWS, Azure, GCP, and Kubernetes |
+| Benchmark   | Provides overview of a single CIS Benchmark                                         |
+| Requirement | Drill-through page to view details of a single requirement                          |
+
+### Overview Page
+
+The overview page is a general CIS Benchmark overview across both AWS, Azure, GCP, and Kubernetes.
+
+The page has the following components:
+
+| Component                                | Description                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| CIS Benchmark Overview                   | Table with benchmark name, Version, and overall compliance percentage    |
+| Provider by Requirement Status           | Bar chart showing benchmark requirements by status by provider           |
+| Compliance Percent Heatmap               | Heatmap showing compliance percent by benchmark and profile level        |
+| Profile level by Requirement Status      | Bar chart showing requirements by status and profile level               |
+| Compliance Percent Over Time by Provider | Line chart showing overall compliance perecentage over time by provider. |
+
+### Benchmark Page
+
+The benchmark page provides an overview of a single CIS Benchmark. You can select the benchmark from the dropdown as well as scope down to specific profile levels or regions.
+
+The page has the following components:
+
+| Component                               | Description                                                                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Compliance Percent Heatmap              | Heatmap showing compliance percent by region and profile level                                                                             |
+| Benchmark Section by Requirement Status | Bar chart showing benchmark requirements by bennchmark section and status                                                                  |
+| Compliance percent Over Time by Region  | Line chart showing overall compliance percentage over time by region                                                                       |
+| Benchmark Requirements                  | Table showing requirement section, requirement number, reuqirement title, number of resources tested, status, and number of failing checks |
+
+### Requirement Page
+
+The requirement page is a drill-through page to view details of a single requirement. To populate the requirement page right click on a requiement from the "Benchmark Requirements" table on the benchmark page and select "Drill through" -&gt; "Requirement".
+
+The requirement page has the following components:
+
+| Component                                  | Description                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| Title                                      | Title of the requirement                                                          |
+| Rationale                                  | Rationale of the requirement                                                      |
+| Remediation                                | Remedation guidance for the requirement                                           |
+| Region by Check Status                     | Bar chart showing Prowler checks by region and status                             |
+| Resource Checks for Benchmark Requirements | Table showing Resource ID, Resource Name, Status, Description, and Prowler Checkl |
+
