@@ -1,4 +1,5 @@
 # Prowler Multicloud CIS Benchmarks PowerBI Template
+![Prowler Report](https://github.com/user-attachments/assets/560f7f83-1616-4836-811a-16963223c72f)
 
 ## Getting Started
 
@@ -10,6 +11,8 @@
    The report uses compliance csv outputs from Prowler. Compliance scans be run using either Prowler CLI or Prowler SaaS
    1. Prowler CLI -&gt; Run a Prowler scan using the --compliance option
    2. Prowler SaaS -&gt; Navigate to the compliance section to download csv outputs
+![Download Compliance Scan](https://github.com/user-attachments/assets/42c11a60-8ce8-4c60-a663-2371199c052b)
+   
 
    The template supports the following CIS Benchmarks only:
 
@@ -48,6 +51,8 @@ The "Prowler CSV Folder" shows the path to the local directory you provided.
 
 The "Loaded Prowler Exports" table shows the ingested csv files from the local directory. It will mark files that are treated as the latest assessment with a green checkmark.
 
+![Prowler Validation](https://github.com/user-attachments/assets/a543ca9b-6cbe-4ad1-b32a-d4ac2163d447)
+
 ## Report Sections
 
 The PowerBI Report is broken into three main report pages
@@ -58,9 +63,12 @@ The PowerBI Report is broken into three main report pages
 | Benchmark   | Provides overview of a single CIS Benchmark                                         |
 | Requirement | Drill-through page to view details of a single requirement                          |
 
+
 ### Overview Page
 
 The overview page is a general CIS Benchmark overview across both AWS, Azure, GCP, and Kubernetes.
+
+![image](https://github.com/user-attachments/assets/94164fa9-36a4-4bb9-890d-e9a9a63a3e7d)
 
 The page has the following components:
 
@@ -76,6 +84,8 @@ The page has the following components:
 
 The benchmark page provides an overview of a single CIS Benchmark. You can select the benchmark from the dropdown as well as scope down to specific profile levels or regions.
 
+![image](https://github.com/user-attachments/assets/34498ee8-317b-4b81-b241-c561451d8def)
+
 The page has the following components:
 
 | Component                               | Description                                                                                                                                |
@@ -88,6 +98,8 @@ The page has the following components:
 ### Requirement Page
 
 The requirement page is a drill-through page to view details of a single requirement. To populate the requirement page right click on a requiement from the "Benchmark Requirements" table on the benchmark page and select "Drill through" -&gt; "Requirement".
+
+![image](https://github.com/user-attachments/assets/5c9172d9-56fe-4514-b341-7e708863fad6)
 
 The requirement page has the following components:
 
