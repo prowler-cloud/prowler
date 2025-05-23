@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
 from django.db import connections as django_connections
@@ -1006,6 +1007,28 @@ def saml_setup(tenants_fixture):
         "domain": domain,
         "tenant_id": tenant_id,
     }
+
+
+@pytest.fixture
+def saml_sociallogin(users_fixture):
+    user = users_fixture[0]
+    user.email = "samlsso@acme.com"
+    extra_data = {
+        "firstName": ["Test"],
+        "lastName": ["User"],
+        "organization": ["Prowler"],
+        "userType": ["member"],
+    }
+
+    account = MagicMock()
+    account.provider = "saml"
+    account.extra_data = extra_data
+
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.account = account
+    sociallogin.user = user
+
+    return sociallogin
 
 
 def get_authorization_header(access_token: str) -> dict:
