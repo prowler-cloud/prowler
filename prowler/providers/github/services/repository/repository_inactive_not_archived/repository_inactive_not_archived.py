@@ -15,6 +15,10 @@ class repository_inactive_not_archived(Check):
 
         now = datetime.now(timezone.utc)
 
+        days_threshold = repository_client.audit_config.get(
+            "inactive_not_archived_days_threshold", 180
+        )
+
         for repo in repository_client.repositories.values():
             report = CheckReportGithub(
                 metadata=self.metadata(), resource=repo, repository=repo.name
@@ -27,18 +31,14 @@ class repository_inactive_not_archived(Check):
                 continue
 
             latest_activity = repo.pushed_at
-            months_inactive = (
-                now - latest_activity
-            ).days / 30.44  # Average days per month
+            days_inactive = (now - latest_activity).days
 
-            if months_inactive >= 6:
+            if days_inactive >= days_threshold:
                 report.status = "FAIL"
-                report.status_extended = f"Repository {repo.name} has been inactive for {int(months_inactive)} months and is not archived."
+                report.status_extended = f"Repository {repo.name} has been inactive for {days_inactive} days and is not archived (threshold: {days_threshold} days)."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Repository {repo.name} has been active within the last 6 months."
-                )
+                report.status_extended = f"Repository {repo.name} has been active within the last {days_threshold} days."
 
             findings.append(report)
 

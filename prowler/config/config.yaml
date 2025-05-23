@@ -515,3 +515,8 @@ m365:
   # m365.exchange_mailbox_properties_auditing_enabled
   # Maximum number of days to keep audit logs
   audit_log_age: 90
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180 # days

@@ -109,6 +109,15 @@ The following list includes all the Microsoft 365 checks with configurable varia
 | `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
 
 
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
+
 ## Config YAML File Structure
 
 ???+ note
@@ -524,6 +533,11 @@ m365:
   # Exchange Organization Settings
   # m365.exchange_organization_mailtips_enabled
   recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180 # days
 
 
 ```
