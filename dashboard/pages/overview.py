@@ -518,6 +518,7 @@ else:
     Input("service-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
@@ -540,6 +541,7 @@ def filter_data(
     service_values,
     table_row_values,
     status_values,
+    search_value,
     aws_clicks,
     azure_clicks,
     gcp_clicks,
@@ -1144,6 +1146,15 @@ def filter_data(
         }
 
         index_count = 0
+        if search_value:
+            search_value = search_value.lower()
+            filtered_data = filtered_data[
+                filtered_data["CHECK_TITLE"].str.lower().str.contains(search_value)
+                | filtered_data["SERVICE_NAME"].str.lower().str.contains(search_value)
+                | filtered_data["REGION"].str.lower().str.contains(search_value)
+                | filtered_data["STATUS"].str.lower().str.contains(search_value)
+            ]
+
         full_filtered_data = filtered_data.copy()
         filtered_data = filtered_data.head(table_row_values)
         # Sort the filtered_data

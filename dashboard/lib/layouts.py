@@ -90,12 +90,28 @@ def create_layout_overview(
                     ),
                     html.Div(
                         [
-                            (
-                                html.Label(
-                                    "Table Rows:",
-                                    className="text-prowler-stone-900 font-bold text-sm",
-                                    style={"margin-right": "10px"},
-                                )
+                            html.Label(
+                                "Search:",
+                                className="text-prowler-stone-900 font-bold text-sm",
+                                style={"margin-right": "10px"},
+                            ),
+                            dcc.Input(
+                                id="search-input",
+                                type="text",
+                                placeholder="Search by check title, service, region...",
+                                debounce=True,
+                                style={
+                                    "padding": "4px 8px",
+                                    "border": "1px solid #ccc",
+                                    "borderRadius": "4px",
+                                    "marginRight": "20px",
+                                    "width": "250px",
+                                },
+                            ),
+                            html.Label(
+                                "Table Rows:",
+                                className="text-prowler-stone-900 font-bold text-sm",
+                                style={"margin-right": "10px"},
                             ),
                             table_row_dropdown,
                             download_button_csv,
