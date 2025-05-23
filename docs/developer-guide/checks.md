@@ -1,307 +1,207 @@
-# Creating a New Check for a Prowler Provider
+# Prowler Checks
 
 This guide explains how to create new checks in Prowler.
 
-**Before proceeding, ensure that a Prowler provider service is already set up. If the required service is unavailable or the attribute to be audited is not retrieved by the service, refer to the [Service](./services.md) documentation.**
-
 ## Introduction
 
-Checks are the core component of Prowler. A check is a simple piece of code designed to validate whether a configuration aligns with cybersecurity best practices. Once executed, the check generates a finding, providing the result along with metadata that offers contextual information regarding the outcome, associated risks, and recommended remediation steps.
+Checks are the core component of Prowler. A check is a simple piece of code designed to validate whether a configuration aligns with cybersecurity best practices. Execution of a check yields a finding, which includes the result and contextual metadata (e.g., outcome, risks, remediation).
 
-### Creating a Check for a Provider
+### Creating a Check
 
-To create a new check for a supported Prowler provider:
+To create a new check:
 
-- Navigate to the specific service directory associated with the provider.
+- Prerequisites: A Prowler provider and service must exist. Verify support and check for pre-existing checks via [Prowler Hub](https://hub.prowler.com). If the provider or service is not present, please refer to the [Provider](./provider.md) and [Service](./services.md) documentation for creation instructions.
 
-- Create a folder named after the check within this directory.
+- Navigate to the service directory. The path should be as follows: `prowler/providers/<provider>/services/<service>`.
 
-- Implement the necessary logic to evaluate the targeted security configuration.
+- Create a check-specific folder. The path should follow this pattern: `prowler/providers/<provider>/services/<service>/<check_name>`. Adhere to the [Naming Format for Checks](#naming-format-for-checks).
 
-For this example, we will use the `ec2_ami_public` check from the `AWS` provider.
-
-### Naming Format for Folders
-
-The corresponding folder must be named following the format:`prowler/providers/<provider>/services/<service>/<check_name>`. Consequently, the folder will be named as follows: `prowler/providers/aws/services/ec2/ec2_ami_public`.
+- Populate the folder with files as specified in [File Creation](#file-creation).
 
 ### Naming Format for Checks
 
 Checks must be named following the format: `service_subservice_resource_action`.
 
-???+ note A subservice represents an individual component of a service that undergoes auditing. In some cases, it may correspond to a shortened version of the class attribute accessed within the check.
+The name components are:
+
+- `service` – The main service being audited (e.g., ec2, entra, iam, etc.)
+- `subservice` – An individual component or subset of functionality within the service that is being audited. This may correspond to a shortened version of the class attribute accessed within the check. If there is no subservice, just omit.
+- `resource` – The specific resource type being evaluated (e.g., instance, policy, role, etc.)
+- `action` – The security aspect or configuration being checked (e.g., public, encrypted, enabled, etc.)
 
 ### File Creation
 
 Each check in Prowler follows a straightforward structure. Within the newly created folder, three files must be added to implement the check logic:
 
 - `__init__.py` (empty file) – Ensures Python treats the check folder as a package.
-- `check_name.py` (check implementation file) – Contains the check logic, following the prescribed format. Please refer to the [check](./checks.md#check) for more information.
-- `check_name.metadata.json` (metadata file) – Defines the check’s metadata for contextual information. Please refer to the [check metadata](./checks.md#check-metadata) for more information.
+- `<check_name>.py` (code file) – Contains the check logic, following the prescribed format. Please refer to the [prowler's check code structure](./checks.md#prowlers-check-code-structure) for more information.
+- `<check_name>.metadata.json` (metadata file) – Defines the check's metadata for contextual information. Please refer to the [check metadata](./checks.md#) for more information.
 
-## Prowler’s Check Structure
+## Prowler's Check Code Structure
 
-Prowler’s check structure is really uncomplicated. It follows a dynamic loading approach based on predefined paths, ensuring seamless integration of new checks into a provider's service without additional manual steps.
+Prowler's check structure is really uncomplicated. It follows a dynamic loading approach based on predefined paths, ensuring seamless integration of new checks into a provider's service without additional manual steps.
 
-Below the code for the `ec2_ami_public` check is presented:
+Below the code for a generic check is presented. It is strongly recommended to consult other checks from the same provider and service to understand provider-specific details and patterns. This will help ensure consistency and proper implementation of provider-specific requirements.
 
-```python title="Check Class"
+Report fields are the most dependent on the provider, consult the `CheckReport<Provider>` class for more information on what can be included in the report [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py).
 
+???+ note
+    Legacy providers (AWS, Azure, GCP, Kubernetes) follow the `Check_Report_<Provider>` naming convention. This is not recommended for current instances. Newer providers adopt the `CheckReport<Provider>` naming convention. Learn more at [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/check/models.py).
+
+```python title="Generic Check Class"
 # Required Imports
-
-# At the beginning of the check implementation file, import the following modules:
-
-# - Check class: Handles metadata retrieval
-
-#   - Exposes the `metadata()` method, which
-#     returns a JSON representation of the check’s metadata.
-#     Refer to the Check Metadata Model section below for details.
-
-#   - Each must be enforced to require the `execute()` function
-
-from prowler.lib.check.models import Check, Check_Report_AWS
-
-# Importing the Provider Service Client
-
-# To integrate the provider service client, import the necessary module:
-
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-
-# For more details on service client usage, refer to the [Service Documentation].
+# Import the base Check class and the provider-specific CheckReport class
+from prowler.lib.check.models import Check, CheckReport<Provider>
+# Import the provider service client
+from prowler.providers.<provider>.services.<service>.<service>_client import <service>_client
 
 # Defining the Check Class
-
-#-  Each check must be implemented as a Python class with the same name as its corresponding file.
-
-# - The class must inherit from the Check base class to ensure proper execution within Prowler.
-
-class ec2_ami_public(Check):
-
-    """ec2_ami_public verifies if an EC2 AMI is publicly shared"""
-
-    # Implementing the execute() Method
-
-Within the check class, define the execute(self) method.
-
-    # This method is required by the Check base class.
-
-    # It ensures compliance with Prowler’s check structure, enabling
-    # dynamic execution.
+# Each check must be implemented as a Python class with the same name as its corresponding file.
+# The class must inherit from the Check base class.
+class <check_name>(Check):
+    """Short description of what is being checked"""
 
     def execute(self):
+        """Execute <check short description>
 
-    # Implementing the execute() Method
-
-    # Within the execute(self) method,
-
-        # initialize a list to store findings:
-
+        Returns:
+            List[CheckReport<Provider>]: A list of reports containing the result of the check.
+        """
         findings = []
-
-        # next, iterate over the target resources using the provider service client.
-
-        # In this case, the check will process EC2 AMIs retrieved from the # ec2_client.images object: "ec2_client.images" object.
-
-        for image in ec2_client.images:
-
-            # For each resource, initialize an instance of the Check_Report_AWS class,
-            # passing the check’s metadata retrieved using the metadata() function:
-
-            report = Check_Report_AWS(self.metadata())
-
-            # Please see Required Imports above for details.
-
-            # Required Fields for Prowler Checks
-
-            # Each Prowler check must include the following required fields to ensure proper execution and reporting:
-
-            # Check_Report_AWS fields:
-
-            # - region
-            # - resource_id
-            # - resource_arn
-            # - resource_tags
-            # - status
-            # - status_extended
-
-            report.region = image.region
-            report.resource_id = image.id
-            report.resource_arn = image.arn
-
-            # Setting Resource Tags and Check Logic
-
-            # When implementing a check, ensure that resource tags (resource_tags) are populated if the resource supports tagging.
-            # Verify this capability within the respective service documentation:
-
-            report.resource_tags = image.tags
-
-            # Next, define the check business logic.
-            # The logic should remain simple, as Prowler handles the core processing.
-            # The check is responsible only for
-            # parsing and interpreting the provided data:
-
+        # Iterate over the target resources using the provider service client
+        for resource in <service>_client.<resources>:
+            # Initialize the provider-specific report class, passing metadata and resource
+            report = Check_Report_<Provider>(metadata=self.metadata(), resource=resource)
+            # Set required fields and implement check logic
             report.status = "PASS"
-            report.status_extended = f"EC2 AMI {image.id} is not public."
-
-            # Evaluating Public Visibility and Reporting Findings
-            # Each image object includes a boolean attribute, public, indicating whether the AMI is publicly shared.
-            # To assess its status, implement the following logic:
-
-            if image.public:
+            report.status_extended = f"<Description about why the resource is compliant>"
+            # If some of the information needed for the report is not inside the resource, it can be set it manually here.
+            # This depends on the provider and the resource that is being audited.
+            # report.region = resource.region
+            # report.resource_tags = getattr(resource, "tags", [])
+            # ...
+            # Example check logic (replace with actual logic):
+            if <non_compliant_condition>:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"EC2 AMI {image.id} is currently public."
-                )
-
-            # Once the check is performed,
-            # append the report object to the findings list at the same level:
-
+                report.status_extended = f"<Description about why the resource is not compliant>"
             findings.append(report)
-
-        # Finally, return the findings list to Prowler for processing:
-
         return findings
 ```
 
-### Check Statuses
+### Data Requirements for Checks in Prowler
+
+One of the most important aspects when creating a new check is ensuring that all required data is available from the service client. Often, default API calls are insufficient. Extending the service class with new methods or resource attributes may be required to fetch and store requisite data.
+
+### Statuses for Checks in Prowler
 
 Required Fields: status and status\_extended
 
 Each check **must** populate the `report.status` and `report.status_extended` fields according to the following criteria:
 
 - Status field: `report.status`
-
-  - `PASS` – Assigned when the check confirms compliance with the configured value.
-  - `FAIL` – Assigned when the check detects non-compliance with the configured value.
-  - `MANUAL` – This status must not be used unless manual verification is necessary to determine whether the status (`report.status`) passes (`PASS`) or fails (`FAIL`).
+    - `PASS` – Assigned when the check confirms compliance with the configured value.
+    - `FAIL` – Assigned when the check detects non-compliance with the configured value.
+    - `MANUAL` – This status must not be used unless manual verification is necessary to determine whether the status (`report.status`) passes (`PASS`) or fails (`FAIL`).
 
 - Status extended field: `report.status_extended`
+    - It **must** end with a period (`.`).
+    - It **must** include the audited service, the resource, and a concise explanation of the check result, for instance: `EC2 AMI ami-0123456789 is not public.`.
 
-  - It **must** end with a period (`.`).
-  - It **must** include the audited service, the resource, and a concise explanation of the check result, for instance: `EC2 AMI ami-0123456789 is not public.`.
-
-### Check Regions
-
-Required Field: report.region
-
-Each check **must** populate the `report.region` field according to the following criteria:
-
-- Regional Resources: Use the `region` attribute from the resource object. Note that the attribute name varies by provider: Azure \& GCP: `location`
-
-Kubernetes (K8s): `namespace`.
-
-- Global Resources: Use the `service_client.region` attribute from the service client object.
-
-### Check Severity Levels
+### Prowler's Check Severity Levels
 
 The severity of each check is defined in the metadata file using the `Severity` field. Severity values are always lowercase and must be one of the predefined categories below.
 
-- `critical`
-- `high`
-- `medium`
-- `low`
-- `informational`
+- `critical` – Issue that must be addressed immediately.
+- `high` – Issue that should be addressed as soon as possible.
+- `medium` – Issue that should be addressed within a reasonable timeframe.
+- `low` – Issue that can be addressed in the future.
+- `informational` – Not an issue but provides valuable information.
 
-If the check involves multiple scenarios that may alter its severity, adjustments can be made dynamically within the check’s logic using the severity `report.check_metadata.Severity` attribute:
+If the check involves multiple scenarios that may alter its severity, adjustments can be made dynamically within the check's logic using the severity `report.check_metadata.Severity` attribute:
 
 ```python
-if <valid for more than 6 months>:
+if <generic_condition_1>:
     report.status = "PASS"
     report.check_metadata.Severity = "informational"
-    report.status_extended = f"RDS Instance {db_instance.id} certificate has over 6 months of validity left."
-elif <valid for more than 3 months>:
-    report.status = "PASS"
+    report.status_extended = f"<Resource> is compliant with <requirement>."
+elif <generic_condition_2>:
+    report.status = "FAIL"
     report.check_metadata.Severity = "low"
-    report.status_extended = f"RDS Instance {db_instance.id} certificate has between 3 and 6 months of validity."
-elif <valid for more than 1 month>:
+    report.status_extended = f"<Resource> is not compliant with <requirement>: <reason>."
+elif <generic_condition_3>:
     report.status = "FAIL"
     report.check_metadata.Severity = "medium"
-    report.status_extended = f"RDS Instance {db_instance.id} certificate less than 3 months of validity."
-elif <valid for less than 1 month>:
+    report.status_extended = f"<Resource> is not compliant with <requirement>: <reason>."
+elif <generic_condition_4>:
     report.status = "FAIL"
     report.check_metadata.Severity = "high"
-    report.status_extended = f"RDS Instance {db_instance.id} certificate less than 1 month of validity."
+    report.status_extended = f"<Resource> is not compliant with <requirement>: <reason>."
 else:
     report.status = "FAIL"
     report.check_metadata.Severity = "critical"
-    report.status_extended = (
-        f"RDS Instance {db_instance.id} certificate has expired."
-    )
+    report.status_extended = f"<Resource> is not compliant with <requirement>: <critical reason>."
 ```
 
-### Resource ID, Name and ARN
+### Resource Identification in Prowler
 
-Required Fields: status and status\_extended
-
-Each check **must** populate the `report.resource_id` and `report.resource_arn` fields according to the following criteria:
+Each check **must** populate the report with an unique identifier for the audited resource. This identifier or identifiers are going to depend on the provider and the resource that is being audited. Here are the criteria for each provider:
 
 - AWS
 
-  - Resouce ID and ARN:
-    - When auditing an AWS account, the following identifiers must be included:
-      - `resource_id` — AWS Account Number
-      - `resource_arn` — AWS Account Root ARN
-    -
-    If the ARN cannot be retrieved directly from the audited resource, construct a valid ARN using the `resource_id` component as the audited entity. Examples:
+    - Amazon Resource ID — `report.resource_id`.
+        - The resource identifier. This is the name of the resource, the ID of the resource, or a resource path. Some resource identifiers include a parent resource (sub-resource-type/parent-resource/sub-resource) or a qualifier such as a version (resource-type:resource-name:qualifier).
+        - If the resource ID cannot be retrieved directly from the audited resource, it can be extracted from the ARN. It is the last part of the ARN after the last slash (`/`) or colon (`:`).
+        - If no actual resource to audit exists, this format can be used: `<resource_type>/unknown`
 
-      - Bedrock — `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`
-      - DirectConnect — `arn:<partition>:directconnect:<region>:<account-id>:dxcon`
-
-    - If no actual resource to audit exists, proceed as follows:
-
-      - resource\_id — `resource_type/unknown`
-      - resource\_arn — `arn:<partition>:<service>:<region>:<account-id>:<resource_type>/unknown`
-      - Examples:
-
-        - AWS Security Hub — `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`
-        - Access Analyzer — `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`
-        - GuardDuty — `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`
+    - Amazon Resource Name — `report.resource_arn`.
+        - The [Amazon Resource Name (ARN)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) of the audited entity.
+        - If the ARN cannot be retrieved directly from the audited resource, construct a valid ARN using the `resource_id` component as the audited entity. Examples:
+            - Bedrock — `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`.
+            - DirectConnect — `arn:<partition>:directconnect:<region>:<account-id>:dxcon`.
+        - If no actual resource to audit exists, this format can be used: `arn:<partition>:<service>:<region>:<account-id>:<resource_type>/unknown`.
+            - Examples:
+                - AWS Security Hub — `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`.
+                - Access Analyzer — `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`.
+                - GuardDuty — `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`.
 
 - GCP
 
-  - Resource ID — `report.resource_id`
-    - GCP Resource — Resource ID
-  - Resource Name — `report.resource_name`
-    - GCP Resource — Resource Name
+    - Resource ID — `report.resource_id`.
+        - Resource ID represents the full, [unambiguous path to a resource](https://google.aip.dev/122#full-resource-names), known as the full resource name. Typically, it follows the format: `//{api_service/resource_path}`.
+        - If the resource ID cannot be retrieved directly from the audited resource, by default the resource name is used.
+    - Resource Name — `report.resource_name`.
+        - Resource Name usually refers to the name of a resource within its service.
 
 - Azure
 
-  - Resource ID — `report.resource_id`
-    - Azure Resource — Resource ID
-  - Resource Name — `report.resource_name`
-    - Azure Resource — Resource Name
+    - Resource ID — `report.resource_id`.
+        - Resource ID represents the full Azure Resource Manager path to a resource, which follows the format: `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}`.
+    - Resource Name — `report.resource_name`.
+        - Resource Name usually refers to the name of a resource within its service.
+        - If the [resource name](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules) cannot be retrieved directly from the audited resource, the last part of the resource ID can be used.
 
-### Python Model
+- Kubernetes
 
-The following is the Python model corresponding to the class of the check.
+    - Resource ID — `report.resource_id`.
+        - The UID of the Kubernetes object. This is a system-generated string that uniquely identifies the object within the cluster for its entire lifetime. See [Kubernetes Object Names and IDs - UIDs](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids).
+    - Resource Name — `report.resource_name`.
+        - The name of the Kubernetes object. This is a client-provided string that must be unique for the resource type within a namespace (for namespaced resources) or cluster (for cluster-scoped resources). Names typically follow DNS subdomain or label conventions. See [Kubernetes Object Names and IDs - Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names).
 
-As of April 11th 2024 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L36-L82).
+- M365
 
-```python
-class Check(ABC, Check_Metadata_Model):
-    """Prowler Check"""
+    - Resource ID — `report.resource_id`.
+        - TBD
+    - Resource Name — `report.resource_name`.
+        - TBD
 
-    def __init__(self, **data):
-        """The __init__ function of the check. Calls the CheckMetadataModel init."""
-        # Parse the metadata file of the check
-        metadata_file = (
-            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
-            + ".metadata.json"
-        )
-        # Store it for validation with Pydantic
-        data = Check_Metadata_Model.parse_file(metadata_file).dict()
-        # Calls parents __init__ function
-        super().__init__(**data)
+- GitHub
 
-    def metadata(self) -> dict:
-        """Return the JSON representation of the metadata of the check"""
-        return self.json()
+    - Resource ID — `report.resource_id`.
+        - TBD
+    - Resource Name — `report.resource_name`.
+        - TBD
 
-    @abstractmethod
-    def execute(self):
-        """Execute the logic of the check"""
-```
-
-### Using the Audit Configuration
+### Using the Audit Configuration
 
 Prowler has a [configuration file](../tutorials/configuration_file.md) which is used to pass certain configuration values to the checks. For example:
 
@@ -310,160 +210,119 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
     def execute(self):
         findings = []
 
-        # max_security_group_rules, default: 50
         max_security_group_rules = ec2_client.audit_config.get(
             "max_security_group_rules", 50
         )
         for security_group_arn, security_group in ec2_client.security_groups.items():
 ```
 
+We use the `audit_config` object to retrieve the value of `max_security_group_rules`, which is the default value of 50 if the configuration value is not present.
+
+The configuration file is located at [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml) and is used to pass certain configuration values to the checks. For example:
+
 ```yaml title="config.yaml"
-# AWS Configuration
-
   aws:
-
-  # AWS EC2 Configuration
-
-  # aws.ec2_securitygroup_with_many_ingress_egress_rules
-  # The default value is 50 rules
-
-  max_security_group_rules: 50
+    max_security_group_rules: 50
 ```
 
-### Using Configuration Values in the Service Client
+This `audit_config` object is a Python dictionary that stores values read from the configuration file. It can be accessed by the check using the `audit_config` attribute of the service client.
 
-As in the above code, within the service client (e.g., `ec2_client`),the object `audit_config` is a Python dictionary that stores values read from the configuration file.
+???+ note
+    Always use the `dictionary.get(value, default)` syntax to ensure a default value is set when the configuration value is not present.
 
-### Checking and Using Configuration Values
+## Metadata Structure for Prowler Checks
 
-Verify whether the required value is present in the configuration file before using it. If the value is missing, add it to the `config.yaml` and retrieve it within the check implementation.
+Each Prowler check must include a metadata file named `<check_name>.metadata.json` that must be located in its directory. This file supplies crucial information for execution, reporting, and context.
 
-???+ note Always use the `dictionary.get(value, default)` syntax to ensure a default value is set when the configuration value is not present.
+### Example Metadata File
 
-## Check Metadata
-
-Each Prowler check has associated metadata, which is stored in a file named `check_name.metadata.json` located at the same level as the check’s folder. This file contains essential metadata for the check's execution and contextual information.
-
-???+ note Although comments are included in the following example for clarity, they cannot be present in the actual JSON file, as the JSON format does not support comments.
+Below is a generic example of a check metadata file. **Do not include comments in actual JSON files.**
 
 ```json
 {
-  # Provider holds the Prowler provider to which the checks belong.
   "Provider": "aws",
-  # CheckID holds check name
-  "CheckID": "ec2_ami_public",
-  # CheckTitle holds the title of the check.
-  "CheckTitle": "Ensure there are no EC2 AMIs set as Public.",
-  # CheckType holds Software and Configuration Checks. Check the following address for details:
-  # https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types
-  "CheckType": [
-    "Infrastructure Security"
-  ],
-  # ServiceName holds the provider service name.
+  "CheckID": "example_check_id",
+  "CheckTitle": "Example Check Title",
+  "CheckType": ["Infrastructure Security"],
   "ServiceName": "ec2",
-  # SubServiceName holds the service's subservice or resource used by the check.
   "SubServiceName": "ami",
-  # ResourceIdTemplate holds the unique ID for the resource used by the check.
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  # Severity holds the check's severity, always in lowercase (critical, high, medium, low or informational).
   "Severity": "critical",
-  # ResourceType is only intended for AWS. It retains the type stated here:
-  # https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html
-  # Formatting If a resource type does not exist, use its CloudFormation type as a reference. Remove all occurrences of "::" and apply PascalCase, ensuring only the first letter of each word is capitalized. Example Conversion: "AWS::EC2::Instance" → "AwsEc2Instance"
-  # For details on the types of CloudFormation, check: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html.
-  # If the resource type does not exist in the CloudFormation types, use "Other".
   "ResourceType": "Other",
-  # Description holds the title of the check. In this case, it remains as the title in CheckTitle.
-  "Description": "Ensure there are no EC2 AMIs set as Public.",
-  # Risk holds the check risk if the result is FAIL.
-  "Risk": "Publicly Accessible AMIs: When an Amazon Machine Image (AMI) is publicly accessible, it becomes available under Community AMIs, allowing any AWS account holder to use it for launching EC2 instances. Since AMIs may contain snapshots of applications—including sensitive data—exposing them publicly presents a security risk. It is strongly recommended to restrict AMI visibility to prevent unauthorized access.",
-  # Additional Resources
-  The RelatedUrl field provides a reference URL for more details on the check’s purpose:
-  "RelatedUrl": "",
-  # Remediation holds the information to help the practitioner fix the issue if the check raises a FAIL.
+  "Description": "Example description of the check.",
+  "Risk": "Example risk if the check fails.",
+  "RelatedUrl": "https://example.com",
   "Remediation": {
-    # Code holds different methods to remediate the FAIL finding.
     "Code": {
-      # CLI holds the command in the provider native CLI to remediate it.
-      "CLI": "aws ec2 modify-image-attribute --region <REGION> --image-id <EC2_AMI_ID> --launch-permission {\"Remove\":[{\"Group\":\"all\"}]}",
-      # NativeIaC holds the native IaC code to remediate it. Use: "https://docs.bridgecrew.io/docs"
+      "CLI": "example CLI command",
       "NativeIaC": "",
-      # Other holds the other commands, scripts or code to remediate it. Use: "https://www.trendmicro.com/cloudoneconformity"
-      "Other": "https://docs.prowler.com/checks/public_8#aws-console",
-      # Terraform holds the Terraform code to remediate it. Use: "https://docs.bridgecrew.io/docs"
+      "Other": "",
       "Terraform": ""
     },
-    # Recommendation holds the recommendation for this check with a description and the corresponding URL
     "Recommendation": {
-      "Text": "Recommendation: Restrict AMI Public Access
-It is recommended to prevent EC2 AMIs from being publicly accessible or listed as Community AMIs, as this can expose sensitive application snapshots to unauthorized users.
-
-Additional Information
-For guidance on managing AMI sharing permissions, refer to the official AWS documentation:",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cancel-sharing-an-AMI.html"
+      "Text": "Example recommendation text.",
+      "Url": "https://example.com/remediation"
     }
   },
-  # Categories holds the category or categories where the check can be included, in case it is applied.
-  "Categories": [
-    "internet-exposed"
-  ],
-  # The DependsOn attribute is currently inactive,
-  # but will eventually store references to other checks that this check depends on.
+  "Categories": ["example-category"],
   "DependsOn": [],
-  # The RelatedTo attribute is currently inactive,
-  # but will eventually store references to other checks that this check is related to.
   "RelatedTo": [],
-  # Notes holds additional information not covered in this file.
   "Notes": ""
 }
 ```
 
+### Metadata Fields and Their Purpose
+
+- **Provider** — The Prowler provider related to the check. The name **must** be lowercase and match the provider folder name. For supported providers refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+
+- **CheckID** — The unique identifier for the check inside the provider, this field **must** match the check's folder and python file and json metadata file name. For more information about the naming refer to the [Naming Format for Checks](#naming-format-for-checks) section.
+
+- **CheckTitle** — A concise, descriptive title for the check.
+
+- **CheckType** — *For now this field is only standardized for the AWS provider*.
+    - For AWS this field must follow the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format. So the common pattern to follow is `namespace/category/classifier`, refer to the attached documentation for the valid values for this fields.
+
+- **ServiceName** — The name of the provider service being audited. This field **must** be in lowercase and match with the service folder name. For supported services refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+
+- **SubServiceName** — The subservice or resource within the service, if applicable. For more information refer to the [Naming Format for Checks](#naming-format-for-checks) section.
+
+- **ResourceIdTemplate** — A template for the unique resource identifier. For more information refer to the [Prowler's Resource Identification](#prowlers-resource-identification) section.
+
+- **Severity** — The severity of the finding if the check fails. Must be one of: `critical`, `high`, `medium`, `low`, or `informational`, this field **must** be in lowercase. To get more information about the severity levels refer to the [Prowler's Check Severity Levels](#prowlers-check-severity-levels) section.
+
+- **ResourceType** — The type of resource being audited. *For now this field is only standardized for the AWS provider*.
+
+    - For AWS use the [Security Hub resource types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html) or, if not available, the PascalCase version of the [CloudFormation type](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) (e.g., `AwsEc2Instance`). Use "Other" if no match exists.
+
+- **Description** — A short description of what the check does.
+
+- **Risk** — The risk or impact if the check fails, explaining why the finding matters.
+
+- **RelatedUrl** — A URL to official documentation or further reading about the check's purpose. If no official documentation is available, use the risk and recommendation text from trusted third-party sources.
+
+- **Remediation** — Guidance for fixing a failed check, including:
+
+    - **Code** — Remediation commands or code snippets for CLI, Terraform, native IaC, or other tools like the Web Console.
+
+    - **Recommendation** — A textual human readable recommendation. Here it is not necessary to include actual steps, but rather a general recommendation about what to do to fix the check.
+
+- **Categories** — One or more categories for grouping checks in execution (e.g., `internet-exposed`). For the current list of categories, refer to the [Prowler Hub](https://hub.prowler.com/check).
+
+- **DependsOn** — Currently not used.
+
+- **RelatedTo** — Currently not used.
+
+- **Notes** — Any additional information not covered by other fields.
+
 ### Remediation Code Guidelines
 
-To populate the Remediation Code, reference the following knowledge sources:
+When providing remediation steps, reference the following sources:
 
-- Official documentation for the provider
-- Prowler Checks Index:
-https://docs.prowler.com/checks/checks-index
-- TrendMicro Cloud One Conformity:
-https://www.trendmicro.com/cloudoneconformity
-- CloudMatos Remediation Repository:
-https://github.com/cloudmatos/matos/tree/master/remediations
+- Official provider documentation.
+- [Prowler Checks Remediation Index](https://docs.prowler.com/checks/checks-index)
+- [TrendMicro Cloud One Conformity](https://www.trendmicro.com/cloudoneconformity)
+- [CloudMatos Remediation Repository](https://github.com/cloudmatos/matos/tree/master/remediations)
 
-### The RelatedURL and Recommendation Fields
+### Python Model Reference
 
-The RelatedURL field must reference an official provider documentation page, such as: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html
-
-If no official documentation is available, use the Risk and Recommendation texts from the TrendMicro [CloudConformity](https://www.trendmicro.com/cloudoneconformity) guide.
-
-### Python Model
-
-The following is the Python model corresponding to the metadata model of the check. Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) was used as the parent class.
-
-As of August 5th 2023 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L34-L56).
-
-```python
-class Check_Metadata_Model(BaseModel):
-    """Check Metadata Model"""
-
-    Provider: str
-    CheckID: str
-    CheckTitle: str
-    CheckType: list[str]
-    ServiceName: str
-    SubServiceName: str
-    ResourceIdTemplate: str
-    Severity: str
-    ResourceType: str
-    Description: str
-    Risk: str
-    RelatedUrl: str
-    Remediation: Remediation
-    Categories: list[str]
-    DependsOn: list[str]
-    RelatedTo: list[str]
-    Notes: str
-    # Compliance was set to None in order to
-    # store the compliance if later supplied.
-    Compliance: list = None
-```
+The metadata structure is enforced in code using a Pydantic model. For reference, see the [`CheckMetadata`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py).

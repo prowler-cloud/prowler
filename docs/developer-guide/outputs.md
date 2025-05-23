@@ -10,17 +10,17 @@ Prowler outputs are managed within the `/lib/outputs` directory. Each format—s
 
 * Outputs are generated based on scan findings, which are stored as structured dictionaries containing details such as: Resource IDs
 
-Severities
+- Severities
 
-Descriptions
+- Descriptions
 
-Other relevant metadata
+- Other relevant metadata
 
 * Creation Guidelines
 
 Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) for insights into Prowler’s architecture and best practices for creating custom outputs.
 
-* Identify the most suitable integration method for the output you are targeting.
+* Identify the most suitable integration method for the output being targeted.
 
 ## Steps to Create a Custom Output Format
 
@@ -48,7 +48,8 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
   * This method will transform the findings provided by Prowler to a specific format.
 
   #### Method Implementation
-    The following example demonstrates the `transform` method for the `CSV` class:
+
+The following example demonstrates the `transform` method for the `CSV` class:
 
   ```python title="Transform"
   def transform(self, findings: List[Finding]) -> None:
@@ -134,7 +135,7 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 
     #### Method Implementation
 
-    The following example demonstrates the `batch_write_data_to_file` method for the `CSV` class:
+The following example demonstrates the `batch_write_data_to_file` method for the `CSV` class:
 
   ```python title="Batch Write Data To File"
   def batch_write_data_to_file(self) -> None:
@@ -185,6 +186,7 @@ if mode == "csv":
 ### Testing
 
 * Verify that Prowler’s findings are accurately typed in the desired output format.
+
 * Error Handling – Simulate edge cases to assess robustness and failure recovery mechanisms.
 
 ### Documentation

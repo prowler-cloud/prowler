@@ -18,7 +18,7 @@ To integrate Prowler with a specific product:
 
 Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand its architecture and integration mechanisms.
 
-* Identify the most suitable integration method for the platform you are targeting.
+* Identify the most suitable integration method for the intended platform.
 
 ## Steps to Create an Integration
 
@@ -40,11 +40,11 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 
   * Ensure the script supports environment-specific settings, such as:
 
-API endpoints
+    - API endpoints
 
-Authentication tokens
+    - Authentication tokens
 
-Any necessary configurable parameters.
+    - Any necessary configurable parameters.
 
 ### Fundamental Structure
 

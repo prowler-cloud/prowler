@@ -39,7 +39,7 @@ To execute the Prowler test suite, install the necessary dependencies listed in 
 
 ### Prerequisites
 
-If you haven’t installed Prowler yet, refer to the [developer guide introduction](./introduction.md#get-the-code-and-install-all-dependencies).
+If you have not installed Prowler yet, refer to the [developer guide introduction](./introduction.md#get-the-code-and-install-all-dependencies).
 
 ### Executing Tests
 
