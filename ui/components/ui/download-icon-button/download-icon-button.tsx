@@ -11,6 +11,7 @@ interface DownloadIconButtonProps {
   ariaLabel?: string;
   isDisabled?: boolean;
   textTooltip?: string;
+  isDownloading?: boolean;
 }
 
 export const DownloadIconButton = ({
@@ -19,20 +20,24 @@ export const DownloadIconButton = ({
   ariaLabel = "Download report",
   isDisabled,
   textTooltip = "Download report",
+  isDownloading = false,
 }: DownloadIconButtonProps) => {
   return (
     <div className="flex items-center justify-end">
       <Tooltip content={textTooltip} className="text-xs">
         <CustomButton
           variant="ghost"
-          isDisabled={isDisabled}
+          isDisabled={isDisabled || isDownloading}
           onPress={() => onDownload(paramId)}
           className="p-0 text-default-500 hover:text-primary disabled:opacity-30"
           isIconOnly
           ariaLabel={ariaLabel}
           size="sm"
         >
-          <DownloadIcon size={16} />
+          <DownloadIcon
+            className={isDownloading ? "animate-download-icon" : ""}
+            size={16}
+          />
         </CustomButton>
       </Tooltip>
     </div>

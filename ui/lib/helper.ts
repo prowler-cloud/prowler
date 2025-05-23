@@ -95,8 +95,37 @@ export const downloadComplianceCsv = async (
   scanId: string,
   complianceId: string,
   toast: ReturnType<typeof useToast>["toast"],
-) => {
+): Promise<void> => {
   const result = await getComplianceCsv(scanId, complianceId);
+
+  if (result?.pending && result.taskId) {
+    const taskResult = await checkTaskStatus(result.taskId);
+
+    if (taskResult.completed) {
+      const task = await getTask(result.taskId);
+      const taskStatus = task.data.attributes.status;
+      const taskError = task.data.attributes.result?.error;
+
+      if (taskStatus === "completed") {
+        // Retry download now that it's ready
+        return await downloadComplianceCsv(scanId, complianceId, toast);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Download Failed",
+          description: taskError || "Report generation failed.",
+        });
+        return;
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Report Still Generating",
+        description: taskResult.error || "Try again later.",
+      });
+      return;
+    }
+  }
 
   if (result?.success && result?.data) {
     const binaryString = window.atob(result.data);
@@ -104,8 +133,8 @@ export const downloadComplianceCsv = async (
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-    const blob = new Blob([bytes], { type: "text/csv" });
 
+    const blob = new Blob([bytes], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
