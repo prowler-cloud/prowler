@@ -276,3 +276,37 @@ class TestSAMLConfigurationsModel:
         errors = exc_info.value.message_dict
         assert "metadata_xml" in errors
         assert "X509Certificate" in errors["metadata_xml"][0]
+
+    def test_updating_email_domain_deletes_old_domain_index(self):
+        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant Z")
+
+        config = SAMLConfigurations.objects.using(MainRouter.admin_db).create(
+            email_domain="original.com",
+            metadata_xml="""<?xml version='1.0' encoding='UTF-8'?>
+        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+            <md:KeyDescriptor use='signing'>
+            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                <ds:X509Data>
+                <ds:X509Certificate>TEST2</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+            </md:KeyDescriptor>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+        </md:IDPSSODescriptor>
+        </md:EntityDescriptor>
+        """,
+            tenant=tenant,
+        )
+
+        assert SAMLDomainIndex.objects.filter(email_domain="original.com").exists()
+
+        config.email_domain = "updated.com"
+        config.save()
+
+        assert not SAMLDomainIndex.objects.filter(email_domain="original.com").exists()
+        assert SAMLDomainIndex.objects.filter(
+            email_domain="updated.com", tenant=tenant
+        ).exists()
