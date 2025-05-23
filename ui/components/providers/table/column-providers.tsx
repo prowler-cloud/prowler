@@ -3,7 +3,7 @@
 import { Chip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime, SnippetId } from "@/components/ui/entities";
+import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
@@ -74,7 +74,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
       const {
         attributes: { uid },
       } = getProviderData(row);
-      return <SnippetId className="h-7" entityId={uid} />;
+      return <SnippetChip value={uid} className="h-7" />;
     },
   },
   {
