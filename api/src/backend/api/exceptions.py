@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework_json_api.exceptions import exception_handler
 from rest_framework_json_api.serializers import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 
 class ModelValidationError(ValidationError):
