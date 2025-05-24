@@ -634,11 +634,10 @@ class Check_Report_IONOS(Check_Report):
     resource_id: str
     datacenter_id: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.datacenter_id = ""
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(resource, "name", "")
+        self.resource_id = getattr(resource, "id", "")
         self.location = "global"
 
 # Testing Pending

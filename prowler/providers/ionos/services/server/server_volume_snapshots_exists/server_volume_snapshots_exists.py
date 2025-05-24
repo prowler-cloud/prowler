@@ -10,7 +10,7 @@ class server_volume_snapshots_exists(Check):
         
         snapshots = ionos_server_client.get_all_snapshots()
         
-        report = Check_Report_IONOS(self.metadata())
+        report = Check_Report_IONOS(self.metadata(), resource={})
         report.resource_id = "volumes-snapshots"
         report.resource_name = "Volumes Snapshots"
 

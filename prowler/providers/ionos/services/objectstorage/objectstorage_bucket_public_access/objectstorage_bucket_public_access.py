@@ -12,7 +12,13 @@ class objectstorage_bucket_public_access(Check):
         for bucket in buckets:
             logger.info("Checking bucket: %s", bucket)
             logger.info("Bucket Region: %s", buckets[bucket])
-            report = Check_Report_IONOS(self.metadata())
+
+            bucket_data = {
+                "name": bucket,
+                "region": buckets[bucket],
+            }
+
+            report = Check_Report_IONOS(self.metadata(), resource=bucket_data)
             report.resource_id = bucket
             report.resource_name = bucket
 

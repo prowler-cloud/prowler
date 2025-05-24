@@ -14,7 +14,7 @@ class server_firewall_allow_ingress_from_internet_to_tcp_ftp_port_20_21(
         
         for server in servers:
             nics = ionos_server_client.get_nics_for_server(server.id)
-            report = Check_Report_IONOS(self.metadata())
+            report = Check_Report_IONOS(self.metadata(), resource=server)
             report.resource_id = server.id
             report.resource_name = server.properties.name if hasattr(server.properties, 'name') else "No Name"
             

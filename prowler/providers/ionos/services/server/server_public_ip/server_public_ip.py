@@ -17,7 +17,7 @@ class server_public_ip(Check):
         
         for server in servers:
             logger.info("Checking server: %s", server.id)
-            report = Check_Report_IONOS(self.metadata())
+            report = Check_Report_IONOS(self.metadata(), resource=server)
             report.resource_id = server.id
             report.resource_name = server.properties.name if hasattr(server.properties, 'name') else "No Name"
             
