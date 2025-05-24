@@ -9,6 +9,7 @@ import {
   getProvidersOverview,
 } from "@/actions/overview/overview";
 import { FilterControls } from "@/components/filters";
+import { LighthouseBannerWrapper } from "@/components/lighthouse/lighthouse-banner-wrapper";
 import {
   FindingsBySeverityChart,
   FindingsByStatusChart,
@@ -188,6 +189,37 @@ const SSRDataNewFindingsTable = async () => {
           <LinkToFindings />
         </div>
       </div>
+      <Spacer y={4} />
+
+      {/* Dynamic Lighthouse Banner */}
+      <Suspense
+        fallback={
+          <div className="mb-6">
+            <div className="mb-2 text-xs font-medium text-slate-500">
+              AI-Powered Security Analysis
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-slate-600 bg-gradient-to-br from-slate-800 to-slate-900">
+              {/* Left gradient accent bar */}
+              <div className="absolute bottom-0 left-0 top-0 w-1 bg-gradient-to-b from-purple-500 to-violet-600"></div>
+
+              <div className="flex items-center gap-4 p-5 pl-6">
+                {/* Bot icon skeleton */}
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600">
+                  <div className="h-6 w-6 animate-pulse rounded bg-purple-300"></div>
+                </div>
+
+                {/* Content skeleton */}
+                <div className="flex-1">
+                  <div className="h-6 w-3/4 animate-pulse rounded bg-slate-600"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <LighthouseBannerWrapper />
+      </Suspense>
+
       <Spacer y={4} />
       <DataTable
         columns={ColumnNewFindingsToDate}
