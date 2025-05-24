@@ -2,7 +2,7 @@ import { getAIKey } from "@/actions/lighthouse/lighthouse";
 import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
 
-export const AIChatbot = async () => {
+export default async function AIChatbot() {
   const apiKey = await getAIKey();
 
   return (
@@ -10,6 +10,4 @@ export const AIChatbot = async () => {
       <Chat hasApiKey={!!apiKey} />
     </ContentLayout>
   );
-};
-
-export default AIChatbot;
+}
