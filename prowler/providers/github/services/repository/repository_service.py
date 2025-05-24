@@ -60,6 +60,8 @@ class Repository(GithubService):
                     required_linear_history = False
                     allow_force_pushes = True
                     branch_deletion = True
+                    require_code_owner_reviews = False
+                    require_signed_commits = False
                     status_checks = False
                     enforce_admins = False
                     conversation_resolution = False
@@ -89,6 +91,14 @@ class Repository(GithubService):
                                     protection.required_conversation_resolution
                                 )
                                 branch_protection = True
+                                require_code_owner_reviews = (
+                                    protection.required_pull_request_reviews.require_code_owner_reviews
+                                    if require_pr
+                                    else False
+                                )
+                                require_signed_commits = (
+                                    branch.get_required_signatures()
+                                )
                     except Exception as error:
                         # If the branch is not found, it is not protected
                         if "404" in str(error):
@@ -103,6 +113,8 @@ class Repository(GithubService):
                             required_linear_history = None
                             allow_force_pushes = None
                             branch_deletion = None
+                            require_code_owner_reviews = None
+                            require_signed_commits = None
                             status_checks = None
                             enforce_admins = None
                             conversation_resolution = None
@@ -110,6 +122,41 @@ class Repository(GithubService):
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
 
+                    secret_scanning_enabled = False
+                    dependabot_alerts_enabled = False
+                    try:
+                        if (
+                            repo.security_and_analysis
+                            and repo.security_and_analysis.secret_scanning
+                        ):
+                            secret_scanning_enabled = (
+                                repo.security_and_analysis.secret_scanning.status
+                                == "enabled"
+                            )
+                        try:
+                            # Use get_dependabot_alerts to check if Dependabot alerts are enabled
+                            repo.get_dependabot_alerts()[0]
+                            # If the call succeeds, Dependabot is enabled (even if no alerts)
+                            dependabot_alerts_enabled = True
+                        except Exception as error:
+                            error_str = str(error)
+                            if (
+                                "403" in error_str
+                                and "Dependabot alerts are disabled for this repository."
+                                in error_str
+                            ):
+                                dependabot_alerts_enabled = False
+                            else:
+                                logger.error(
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                                dependabot_alerts_enabled = None
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        secret_scanning_enabled = None
+                        dependabot_alerts_enabled = None
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
@@ -127,6 +174,10 @@ class Repository(GithubService):
                         conversation_resolution=conversation_resolution,
                         default_branch_protection=branch_protection,
                         codeowners_exists=codeowners_exists,
+                        require_code_owner_reviews=require_code_owner_reviews,
+                        secret_scanning_enabled=secret_scanning_enabled,
+                        require_signed_commits=require_signed_commits,
+                        dependabot_alerts_enabled=dependabot_alerts_enabled,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
 
@@ -155,5 +206,9 @@ class Repo(BaseModel):
     enforce_admins: Optional[bool]
     approval_count: Optional[int]
     codeowners_exists: Optional[bool]
+    require_code_owner_reviews: Optional[bool]
+    secret_scanning_enabled: Optional[bool]
+    require_signed_commits: Optional[bool]
+    dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
     conversation_resolution: Optional[bool]
