@@ -74,26 +74,19 @@ class IonosProvider(Provider):
         else:
             self._audit_config = load_and_validate_config_file("ionos", config_path)
         
-        if mutelist_content and not self.validate_mutelist_content(mutelist_content):
-            logger.error("Invalid mutelist content format")
-            mutelist_content = None
-
-        if mutelist_path and not os.path.exists(mutelist_path):
-            logger.warning(f"Mutelist file not found at {mutelist_path}")
-            mutelist_path = None
-
+        # Mutelist
         if mutelist_content:
             self._mutelist = IonosMutelist(
                 mutelist_content=mutelist_content,
-                session=self._session,
             )
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
+                logger.info(f"No mutelist path provided, using default: {mutelist_path}")
             self._mutelist = IonosMutelist(
                 mutelist_path=mutelist_path,
-                session=self._session,
             )
+            logger.info(f"Loaded mutelist from {mutelist_path}")
 
         Provider.set_global_provider(self)
 

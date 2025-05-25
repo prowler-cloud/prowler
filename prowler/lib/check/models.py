@@ -639,6 +639,7 @@ class Check_Report_IONOS(Check_Report):
         self.resource_name = getattr(resource, "name", "")
         self.resource_id = getattr(resource, "id", "")
         self.location = "global"
+        self.datacenter_id = getattr(resource, "datacenter_id", "")
 
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
