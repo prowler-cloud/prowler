@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "It may generate false positives if the member only has contribution in private repositories."
 }
