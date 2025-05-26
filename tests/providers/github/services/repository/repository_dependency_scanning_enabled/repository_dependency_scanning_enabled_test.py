@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -37,6 +38,8 @@ class Test_repository_dependency_scanning_enabled:
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
                 securitymd=True,
                 require_pull_request=False,
                 approval_count=0,
@@ -80,6 +83,8 @@ class Test_repository_dependency_scanning_enabled:
                 full_name="account-name/repo2",
                 default_branch="main",
                 private=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
                 securitymd=True,
                 require_pull_request=False,
                 approval_count=0,
