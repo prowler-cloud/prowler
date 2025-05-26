@@ -23,9 +23,7 @@ class repository_dependency_scanning_enabled(Check):
         findings = []
         for repo in repository_client.repositories.values():
             if repo.dependabot_alerts_enabled is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 if repo.dependabot_alerts_enabled:
                     report.status = "PASS"
                     report.status_extended = f"Repository {repo.name} has package vulnerability scanning (Dependabot alerts) enabled."

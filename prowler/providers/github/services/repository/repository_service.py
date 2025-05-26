@@ -161,6 +161,7 @@ class Repository(GithubService):
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
+                        owner=repo.owner.login,
                         full_name=repo.full_name,
                         default_branch=repo.default_branch,
                         private=repo.private,
@@ -196,6 +197,7 @@ class Repo(BaseModel):
 
     id: int
     name: str
+    owner: str
     full_name: str
     default_branch_protection: Optional[bool]
     default_branch: str
