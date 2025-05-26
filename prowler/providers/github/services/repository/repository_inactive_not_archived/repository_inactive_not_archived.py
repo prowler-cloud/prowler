@@ -38,7 +38,7 @@ class repository_inactive_not_archived(Check):
                 report.status_extended = f"Repository {repo.name} has been inactive for {days_inactive} days and is not archived (threshold: {days_threshold} days)."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Repository {repo.name} has been active within the last {days_threshold} days."
+                report.status_extended = f"Repository {repo.name} has been active within the last {days_threshold} days ({days_inactive} days ago)."
 
             findings.append(report)
 

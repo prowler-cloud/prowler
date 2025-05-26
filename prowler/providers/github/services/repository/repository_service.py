@@ -157,7 +157,6 @@ class Repository(GithubService):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         secret_scanning_enabled = None
-
                         dependabot_alerts_enabled = None
                     repos[repo.id] = Repo(
                         id=repo.id,

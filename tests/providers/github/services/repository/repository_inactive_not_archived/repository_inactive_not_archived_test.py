@@ -71,7 +71,7 @@ class Test_repository_inactive_not_archived:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repo_name} has been active within the last 180 days."
+                == f"Repository {repo_name} has been active within the last 180 days (30 days ago)."
             )
 
     def test_repository_inactive_not_archived(self):
