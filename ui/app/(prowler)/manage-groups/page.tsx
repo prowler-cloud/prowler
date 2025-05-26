@@ -115,7 +115,7 @@ const SSRDataEditGroup = async ({
   const associatedProviders = relationships.providers?.data.map(
     (provider: ProviderProps) => {
       const matchingProvider = providersList.find(
-        (p: ProviderProps) => p.id === provider.id,
+        (p: { id: string; name: string }) => p.id === provider.id,
       );
       return {
         id: provider.id,

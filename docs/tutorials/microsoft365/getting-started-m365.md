@@ -172,7 +172,7 @@ Follow these steps to assign the role:
 
 ### Get your encrypted password
 
-For this step you will need to use PowerShell, here you will have to create your Encrypted Password based on the password of the User that you are going to use. For more information about how to generate this Password go [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended) and follow the steps needed to obtain `M365_ENCRYPTED_PASSWORD`.
+For this step you will need to use PowerShell, here you will have to create your Encrypted Password based on the password of the User that you are going to use. For more information about how to generate this Password go [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended) and follow the steps needed to obtain `M365_PASSWORD`.
 
 ---
 
