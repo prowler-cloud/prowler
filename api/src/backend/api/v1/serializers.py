@@ -1215,7 +1215,7 @@ class GCPProviderSecret(serializers.Serializer):
 
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
-    service_account_key = serializers.CharField()
+    service_account_key = serializers.JSONField()
 
     class Meta:
         resource_name = "provider-secrets"

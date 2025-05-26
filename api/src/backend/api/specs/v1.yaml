@@ -9274,7 +9274,7 @@ components:
                     title: GCP Service Account Key
                     properties:
                       service_account_key:
-                        type: string
+                        type: object
                         description: The service account key for GCP.
                     required:
                     - service_account_key
@@ -10531,7 +10531,7 @@ components:
                 title: GCP Service Account Key
                 properties:
                   service_account_key:
-                    type: string
+                    type: object
                     description: The service account key for GCP.
                 required:
                 - service_account_key
@@ -10750,7 +10750,7 @@ components:
                     title: GCP Service Account Key
                     properties:
                       service_account_key:
-                        type: string
+                        type: object
                         description: The service account key for GCP.
                     required:
                     - service_account_key
@@ -10985,7 +10985,7 @@ components:
                 title: GCP Service Account Key
                 properties:
                   service_account_key:
-                    type: string
+                    type: object
                     description: The service account key for GCP.
                 required:
                 - service_account_key

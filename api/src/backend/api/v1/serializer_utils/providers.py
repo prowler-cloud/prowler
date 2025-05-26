@@ -159,7 +159,7 @@ from rest_framework_json_api import serializers
                 "title": "GCP Service Account Key",
                 "properties": {
                     "service_account_key": {
-                        "type": "string",
+                        "type": "object",
                         "description": "The service account key for GCP.",
                     }
                 },
