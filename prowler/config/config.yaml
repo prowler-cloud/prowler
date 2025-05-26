@@ -520,3 +520,21 @@ m365:
 github:
   # github.repository_inactive_not_archived --> CIS recommends 180 days (6 months)
   inactive_not_archived_days_threshold: 180
+
+ionos:
+  # IONOS Cloud API Configuration
+  # Get your API token from the IONOS Cloud portal
+  api_token: "YOUR_API_TOKEN_HERE"
+
+  # IONOS Cloud API base URL (for version 6)
+  base_url: "https://api.ionos.com/cloudapi/v6"
+
+  # (Optional) Default datacenter, in case your checks need to reference it
+  datacenter_id: "YOUR_DATACENTER_ID_HERE"
+
+  # (Optional) Maximum timeout for API requests (in seconds)
+  timeout: 60
+
+  # (Optional) Threshold or specific configurations for your checks, for example:
+  # Maximum number of days without using an access key, similar to AWS configuration
+  max_unused_access_keys_days: 45
