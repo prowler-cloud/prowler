@@ -1,5 +1,25 @@
 import { RolePermissionAttributes } from "@/types/users/users";
 
+export const isUserOwnerAndHasManageAccount = (
+  roles: any[],
+  memberships: any[],
+  userId: string,
+): boolean => {
+  const isOwner = memberships.some(
+    (membership) =>
+      membership.attributes.role === "owner" &&
+      membership.relationships?.user?.data?.id === userId,
+  );
+
+  const hasManageAccount = roles.some(
+    (role) =>
+      role.attributes.manage_account === true &&
+      role.relationships?.users?.data?.some((user: any) => user.id === userId),
+  );
+
+  return isOwner && hasManageAccount;
+};
+
 /**
  * Get the permissions for a user role
  * @param attributes - The attributes of the user role
