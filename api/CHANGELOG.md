@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v1.9.0] (Prowler UNRELEASED)
+
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+
+---
+
+## [v1.8.2] (Prowler v5.7.2)
+
+### Fixed
+- Fixed task lookup to use task_kwargs instead of task_args for scan report resolution. [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
+
+---
+
+>>>>>>> 50bcd828e (fix(reports): change invalid search term for tasks (#7830))
 ## [v1.8.1] (Prowler v5.7.1)
 
 ### Fixed
