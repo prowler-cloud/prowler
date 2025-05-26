@@ -80,11 +80,18 @@ export const getComplianceOverviewMetadataInfo = async ({
   }
 };
 
-export const getComplianceDetails = async (id: string) => {
+export const getComplianceAttributes = async (_complianceId: string) => {
+  // TODO: Remove mock data and uncomment real implementation
+  // Mock data from compliance-attributes.json
+  const mockData = await import("@/lib/compliance-attributes.json");
+  return parseStringify(mockData);
+
+  /* Real implementation - commented for now
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
-    const url = new URL(`${apiBaseUrl}/compliance-overviews/${id}`);
+    const url = new URL(`${apiBaseUrl}/compliance-overviews/attributes`);
+    url.searchParams.append("filter[compliance_id]", complianceId);
 
     const response = await fetch(url.toString(), {
       headers,
@@ -92,7 +99,7 @@ export const getComplianceDetails = async (id: string) => {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch compliance details: ${response.statusText}`,
+        `Failed to fetch compliance attributes: ${response.statusText}`,
       );
     }
 
@@ -102,7 +109,57 @@ export const getComplianceDetails = async (id: string) => {
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Error fetching compliance details:", error);
+    console.error("Error fetching compliance attributes:", error);
     return undefined;
   }
+  */
+};
+
+export const getComplianceRequirements = async ({
+  complianceId: _complianceId,
+  scanId: _scanId,
+  region: _region,
+}: {
+  complianceId: string;
+  scanId: string;
+  region?: string | string[];
+}) => {
+  // TODO: Remove mock data and uncomment real implementation
+  // Mock data from compliance-requeriments.json
+  const mockData = await import("@/lib/compliance-requeriments.json");
+  return parseStringify(mockData);
+
+  /* Real implementation - commented for now
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const url = new URL(`${apiBaseUrl}/compliance-overviews/requirements`);
+    url.searchParams.append("filter[compliance_id]", _complianceId);
+    url.searchParams.append("filter[scan_id]", _scanId);
+
+    if (_region) {
+      const regionValue = Array.isArray(_region) ? _region.join(",") : _region;
+      url.searchParams.append("filter[region__in]", regionValue);
+    }
+
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch compliance requirements: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching compliance requirements:", error);
+    return undefined;
+  }
+  */
 };

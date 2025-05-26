@@ -9,7 +9,7 @@ import {
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { Accordion } from "@/components/ui/accordion/Accordion";
-import { DataTable, StatusFindingBadge } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { useLoadingState } from "@/lib/hooks/useLoadingState";
 import { FindingProps } from "@/types/components";
@@ -40,7 +40,7 @@ export const ClientAccordionContent = ({
   useEffect(() => {
     async function loadFindings() {
       if (
-        requirement.checks?.length > 0 &&
+        requirement.check_ids?.length > 0 &&
         requirement.status !== "No findings" &&
         (loadedPageRef.current !== pageNumber ||
           loadedSortRef.current !== sort ||
@@ -53,9 +53,7 @@ export const ClientAccordionContent = ({
         startLoading();
 
         try {
-          const checkIds = requirement.checks.map(
-            (check: any) => check.checkName,
-          );
+          const checkIds = requirement.check_ids;
           const encodedSort = sort.replace(/^\+/, "");
           const findingsData = await getFindings({
             filters: {
@@ -102,15 +100,12 @@ export const ClientAccordionContent = ({
     loadFindings();
   }, [requirement, scanId, pageNumber, sort, startLoading, stopLoading]);
 
-  const checks = requirement.checks || [];
+  const checks = requirement.check_ids || [];
   const checksTable = (
     <div>
-      {checks.map((check: any, i: number) => (
-        <div key={i} className="mb-2 flex items-center justify-between">
-          <span>{check.checkName}</span>
-          <StatusFindingBadge status={check.status} />
-        </div>
-      ))}
+      <div className="mb-2 flex items-center">
+        <span>{checks.join(", ")}</span>
+      </div>
     </div>
   );
 

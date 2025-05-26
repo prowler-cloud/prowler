@@ -2,8 +2,11 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { getComplianceDetails } from "@/actions/compliances";
-import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
+import {
+  getComplianceAttributes,
+  getComplianceOverviewMetadataInfo,
+  getComplianceRequirements,
+} from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { ComplianceHeader } from "@/components/compliance/compliance-header";
@@ -14,6 +17,11 @@ import { ContentLayout } from "@/components/ui";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { mapComplianceData, toAccordionItems } from "@/lib/ens-compliance";
 import { ScanProps } from "@/types";
+import {
+  FailedSection,
+  MappedComplianceData,
+  RequirementsTotals,
+} from "@/types/compliance/compliance";
 
 export default async function ComplianceDetail({
   params,
@@ -85,6 +93,11 @@ export default async function ComplianceDetail({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Fetch compliance data once at the page level
+  const complianceData = selectedScanId
+    ? await getComplianceData(id, selectedScanId)
+    : null;
+
   return (
     <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">
       <ComplianceHeader
@@ -104,7 +117,11 @@ export default async function ComplianceDetail({
                 <div className="bg-muted h-[300px] w-full animate-pulse rounded-lg"></div>
               }
             >
-              <SSRRequirementsChart id={id} />
+              {complianceData ? (
+                <SSRRequirementsChart data={complianceData} />
+              ) : (
+                <RequirementsChart pass={0} fail={0} manual={0} />
+              )}
             </Suspense>
           </div>
 
@@ -116,7 +133,11 @@ export default async function ComplianceDetail({
                 <div className="bg-muted h-[350px] w-full animate-pulse rounded-lg"></div>
               }
             >
-              <SSRFailedSectionsChart id={id} />
+              {complianceData ? (
+                <SSRFailedSectionsChart data={complianceData} />
+              ) : (
+                <FailedSectionsChart sections={[]} />
+              )}
             </Suspense>
           </div>
         </div>
@@ -135,19 +156,46 @@ export default async function ComplianceDetail({
       </div>
 
       <Suspense key={id} fallback={<SkeletonAccordion />}>
-        <SSRComplianceDetail id={id} scanId={searchParams.scanId} />
+        {complianceData ? (
+          <SSRComplianceDetail data={complianceData} scanId={selectedScanId!} />
+        ) : (
+          <Accordion
+            items={[]}
+            variant="light"
+            selectionMode="multiple"
+            defaultExpandedKeys={[]}
+          />
+        )}
       </Suspense>
     </ContentLayout>
   );
 }
 
-const getTopFailedSections = (mappedData: any[]) => {
+const getComplianceData = async (
+  complianceId: string,
+  scanId: string,
+): Promise<MappedComplianceData> => {
+  const [attributesData, requirementsData] = await Promise.all([
+    getComplianceAttributes(complianceId),
+    getComplianceRequirements({
+      complianceId: complianceId,
+      scanId: scanId,
+    }),
+  ]);
+
+  const mappedData = mapComplianceData(attributesData, requirementsData);
+  return mappedData;
+};
+
+const getTopFailedSections = (
+  mappedData: MappedComplianceData,
+): FailedSection[] => {
   const failedSectionMap = new Map();
 
   mappedData.forEach((framework) => {
-    framework.categories.forEach((category: any) => {
-      category.controls.forEach((control: any) => {
-        control.requirements.forEach((requirement: any) => {
+    framework.categories.forEach((category) => {
+      category.controls.forEach((control) => {
+        control.requirements.forEach((requirement) => {
           if (requirement.status === "FAIL") {
             const sectionName = category.name;
 
@@ -173,19 +221,13 @@ const getTopFailedSections = (mappedData: any[]) => {
     .slice(0, 5); // Top 5
 };
 
-const SSRFailedSectionsChart = async ({ id }: { id: string }) => {
-  const complianceData = await getComplianceDetails(id);
-  const mappedData = mapComplianceData(complianceData.data);
-  const topFailedSections = getTopFailedSections(mappedData);
-
+const SSRFailedSectionsChart = ({ data }: { data: MappedComplianceData }) => {
+  const topFailedSections = getTopFailedSections(data);
   return <FailedSectionsChart sections={topFailedSections} />;
 };
 
-const SSRRequirementsChart = async ({ id }: { id: string }) => {
-  const complianceData = await getComplianceDetails(id);
-  const mappedData = mapComplianceData(complianceData.data);
-
-  const totalRequirements = mappedData.reduce(
+const SSRRequirementsChart = ({ data }: { data: MappedComplianceData }) => {
+  const totalRequirements: RequirementsTotals = data.reduce(
     (acc, framework) => ({
       pass: acc.pass + framework.pass,
       fail: acc.fail + framework.fail,
@@ -203,17 +245,14 @@ const SSRRequirementsChart = async ({ id }: { id: string }) => {
   );
 };
 
-const SSRComplianceDetail = async ({
-  id,
+const SSRComplianceDetail = ({
+  data,
   scanId,
 }: {
-  id: string;
-  scanId?: string;
+  data: MappedComplianceData;
+  scanId: string;
 }) => {
-  const complianceData = await getComplianceDetails(id);
-
-  const mappedData = mapComplianceData(complianceData.data);
-  const accordionItems = toAccordionItems(mappedData, scanId);
+  const accordionItems = toAccordionItems(data, scanId);
 
   return (
     <Accordion
