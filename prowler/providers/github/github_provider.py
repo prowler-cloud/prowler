@@ -4,6 +4,7 @@ from typing import Union
 
 from colorama import Fore, Style
 from github import Auth, Github, GithubIntegration
+from github.GithubRetry import GithubRetry
 
 from prowler.config.config import (
     default_config_file_path,
@@ -300,9 +301,10 @@ class GithubProvider(Provider):
         credentials = self.session
 
         try:
+            retry_config = GithubRetry(total=3)
             if credentials.token:
                 auth = Auth.Token(credentials.token)
-                g = Github(auth=auth)
+                g = Github(auth=auth, retry=retry_config)
                 try:
                     identity = GithubIdentityInfo(
                         account_id=g.get_user().id,
@@ -318,7 +320,7 @@ class GithubProvider(Provider):
 
             elif credentials.id != 0 and credentials.key:
                 auth = Auth.AppAuth(credentials.id, credentials.key)
-                gi = GithubIntegration(auth=auth)
+                gi = GithubIntegration(auth=auth, retry=retry_config)
                 try:
                     identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
                     return identity
