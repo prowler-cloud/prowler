@@ -7,6 +7,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Changed
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
+### Fixed
+- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
+
 ---
 
 ## [v1.8.1] (Prowler v5.7.1)
