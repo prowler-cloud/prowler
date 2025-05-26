@@ -17,7 +17,7 @@ def stdout_report(finding, color, verbose, status, fix):
     if finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
     if finding.check_metadata.Provider == "github":
-        details = finding.repository
+        details = finding.owner
     if finding.check_metadata.Provider == "m365":
         details = finding.location
     if finding.check_metadata.Provider == "nhn":

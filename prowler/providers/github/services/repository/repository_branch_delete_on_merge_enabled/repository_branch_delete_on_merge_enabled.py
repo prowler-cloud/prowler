@@ -22,9 +22,7 @@ class repository_branch_delete_on_merge_enabled(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = CheckReportGithub(
-                metadata=self.metadata(), resource=repo, repository=repo.name
-            )
+            report = CheckReportGithub(metadata=self.metadata(), resource=repo)
             report.status = "FAIL"
             report.status_extended = (
                 f"Repository {repo.name} does not delete branches on merge."

@@ -59,7 +59,9 @@ class TestGitHubProvider:
                 account_id=ACCOUNT_ID,
                 account_url=ACCOUNT_URL,
             )
-            assert provider._audit_config == {}
+            assert provider._audit_config == {
+                "inactive_not_archived_days_threshold": 180,
+            }
             assert provider._fixer_config == fixer_config
 
     def test_github_provider_OAuth(self):
@@ -99,7 +101,9 @@ class TestGitHubProvider:
                 account_id=ACCOUNT_ID,
                 account_url=ACCOUNT_URL,
             )
-            assert provider._audit_config == {}
+            assert provider._audit_config == {
+                "inactive_not_archived_days_threshold": 180,
+            }
             assert provider._fixer_config == fixer_config
 
     def test_github_provider_App(self):
@@ -133,5 +137,7 @@ class TestGitHubProvider:
             assert provider._type == "github"
             assert provider.session == GithubSession(token="", id=APP_ID, key=APP_KEY)
             assert provider.identity == GithubAppIdentityInfo(app_id=APP_ID)
-            assert provider._audit_config == {}
+            assert provider._audit_config == {
+                "inactive_not_archived_days_threshold": 180,
+            }
             assert provider._fixer_config == fixer_config

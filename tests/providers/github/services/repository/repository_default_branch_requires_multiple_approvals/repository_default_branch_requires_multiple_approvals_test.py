@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -34,6 +35,7 @@ class Test_repository_default_branch_requires_multiple_approvals:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch_protection=False,
                 default_branch="main",
@@ -41,6 +43,8 @@ class Test_repository_default_branch_requires_multiple_approvals:
                 securitymd=False,
                 require_pull_request=False,
                 approval_count=0,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -76,6 +80,7 @@ class Test_repository_default_branch_requires_multiple_approvals:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch_protection=False,
                 default_branch="master",
@@ -83,6 +88,8 @@ class Test_repository_default_branch_requires_multiple_approvals:
                 securitymd=False,
                 require_pull_request=True,
                 approval_count=0,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -118,6 +125,7 @@ class Test_repository_default_branch_requires_multiple_approvals:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch_protection=True,
                 default_branch="master",
@@ -125,6 +133,8 @@ class Test_repository_default_branch_requires_multiple_approvals:
                 securitymd=True,
                 require_pull_request=True,
                 approval_count=2,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 

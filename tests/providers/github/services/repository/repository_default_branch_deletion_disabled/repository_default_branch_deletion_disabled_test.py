@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -31,15 +32,19 @@ class Test_repository_default_branch_deletion_disabled_test:
         repository_client = mock.MagicMock
         repo_name = "repo1"
         default_branch = "main"
+        now = datetime.now(timezone.utc)
+
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch=default_branch,
-                default_branch_deletion=True,
                 private=False,
-                securitymd=False,
+                archived=False,
+                pushed_at=now,
+                default_branch_deletion=True,
             ),
         }
 
@@ -61,7 +66,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
@@ -72,15 +77,19 @@ class Test_repository_default_branch_deletion_disabled_test:
         repository_client = mock.MagicMock
         repo_name = "repo1"
         default_branch = "main"
+        now = datetime.now(timezone.utc)
+
         repository_client.repositories = {
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
-                private=False,
                 default_branch=default_branch,
+                private=False,
+                archived=False,
+                pushed_at=now,
                 default_branch_deletion=False,
-                securitymd=True,
             ),
         }
 
@@ -102,7 +111,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == 1
-            assert result[0].resource_name == "repo1"
+            assert result[0].resource_name == repo_name
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
