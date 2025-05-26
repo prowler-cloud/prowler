@@ -36,6 +36,7 @@ class Test_repository_default_branch_requires_signed_commits:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,
@@ -79,6 +80,7 @@ class Test_repository_default_branch_requires_signed_commits:
             2: Repo(
                 id=2,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo2",
                 private=False,
                 default_branch=default_branch,

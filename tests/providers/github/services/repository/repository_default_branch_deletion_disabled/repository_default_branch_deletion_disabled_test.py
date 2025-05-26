@@ -38,6 +38,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch=default_branch,
                 private=False,
@@ -82,6 +83,7 @@ class Test_repository_default_branch_deletion_disabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch=default_branch,
                 private=False,

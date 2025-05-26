@@ -36,6 +36,7 @@ class Test_repository_default_branch_status_checks_required_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch=default_branch,
                 status_checks=False,
@@ -79,6 +80,7 @@ class Test_repository_default_branch_status_checks_required_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,

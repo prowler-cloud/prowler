@@ -36,6 +36,7 @@ class Test_repository_default_branch_requires_conversation_resolution_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch=default_branch,
                 conversation_resolution=False,
@@ -79,6 +80,7 @@ class Test_repository_default_branch_requires_conversation_resolution_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 private=False,
                 default_branch=default_branch,

@@ -23,9 +23,7 @@ class repository_default_branch_requires_signed_commits(Check):
         findings = []
         for repo in repository_client.repositories.values():
             if repo.require_signed_commits is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not require signed commits on default branch ({repo.default_branch})."
 

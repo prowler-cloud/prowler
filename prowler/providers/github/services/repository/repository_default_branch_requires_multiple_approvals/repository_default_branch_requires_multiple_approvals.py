@@ -23,9 +23,7 @@ class repository_default_branch_requires_multiple_approvals(Check):
         findings = []
         for repo in repository_client.repositories.values():
             if repo.approval_count is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
 
