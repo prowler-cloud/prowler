@@ -2304,7 +2304,10 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2372,7 +2375,7 @@ class TestScanViewSet:
     ):
         """
         When output_location is a local path and glob.glob returns an empty list,
-        the view should return HTTP 404 with detail "The scan has no reports."
+        the view should return HTTP 404 with detail "The scan has no reports, or the report generation task has not started yet."
         """
         scan = scans_fixture[0]
         scan.output_location = "/tmp/nonexistent_report_pattern.zip"
@@ -2384,7 +2387,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == 404
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
@@ -2459,7 +2465,10 @@ class TestScanViewSet:
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_compliance_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2681,7 +2690,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     @patch("api.v1.views.get_s3_client")
     def test_report_s3_client_error_other(
