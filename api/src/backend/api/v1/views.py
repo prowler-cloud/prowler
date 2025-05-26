@@ -17,7 +17,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.urls import reverse
@@ -2466,8 +2466,8 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     attributes=extend_schema(
         tags=["Compliance Overview"],
         summary="Get compliance requirement attributes",
-        description="Retrieve detailed attribute information for all requirements in a specific compliance framework. "
-        "This endpoint returns attributes like 'Tipo', 'Marco', 'Nivel', etc. from the Prowler compliance templates.",
+        description="Retrieve detailed attribute information for all requirements in a specific compliance framework "
+        "along with the associated check IDs for each requirement.",
         parameters=[
             OpenApiParameter(
                 name="filter[compliance_id]",
@@ -2480,9 +2480,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-@method_decorator(CACHE_DECORATOR, name="retrieve")
-@method_decorator(CACHE_DECORATOR, name="requirements_overview")
-@method_decorator(CACHE_DECORATOR, name="requirement_details")
+@method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
 class ComplianceOverviewViewSet(BaseRLSViewSet):
     pagination_class = ComplianceOverviewPagination
@@ -2506,52 +2504,47 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         if self.action == "retrieve":
             if unlimited_visibility:
                 # User has unlimited visibility, return all compliance
-                return ComplianceOverview.objects.filter(
+                return ComplianceRequirementOverview.objects.filter(
                     tenant_id=self.request.tenant_id
                 )
 
             providers = get_providers(role)
-            return ComplianceOverview.objects.filter(
+            return ComplianceRequirementOverview.objects.filter(
                 tenant_id=self.request.tenant_id, scan__provider__in=providers
             )
 
         if unlimited_visibility:
             base_queryset = self.filter_queryset(
-                ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
+                ComplianceRequirementOverview.objects.filter(
+                    tenant_id=self.request.tenant_id
+                )
             )
         else:
             providers = Provider.objects.filter(
                 provider_groups__in=role.provider_groups.all()
             ).distinct()
             base_queryset = self.filter_queryset(
-                ComplianceOverview.objects.filter(
+                ComplianceRequirementOverview.objects.filter(
                     tenant_id=self.request.tenant_id, scan__provider__in=providers
                 )
             )
 
-        max_failed_ids = (
-            base_queryset.filter(compliance_id=OuterRef("compliance_id"))
-            .order_by("-requirements_failed")
-            .values("id")[:1]
-        )
-
-        return base_queryset.filter(id__in=Subquery(max_failed_ids)).order_by(
-            "compliance_id"
-        )
+        return base_queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ComplianceOverviewFullSerializer
         elif self.action == "metadata":
             return ComplianceOverviewMetadataSerializer
-        elif self.action == "requirements_overview":
+        elif self.action == "list":
             return ComplianceRequirementStatusSerializer
         elif self.action == "attributes":
             return ComplianceRequirementAttributesSerializer
         return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
-        if not request.query_params.get("filter[scan_id]"):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
             raise ValidationError(
                 [
                     {
@@ -2562,7 +2555,77 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-        return super().list(request, *args, **kwargs)
+
+        tenant_id = request.tenant_id
+
+        queryset = self.filter_queryset(
+            ComplianceRequirementOverview.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            )
+        )
+
+        requirement_status_subquery = queryset.values(
+            "compliance_id", "requirement_id"
+        ).annotate(
+            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
+            pass_count=Count("id", filter=Q(requirement_status="PASS")),
+            total_count=Count("id"),
+        )
+
+        compliance_data = {}
+        framework_info = {}
+
+        for item in queryset.values("compliance_id", "framework", "version").distinct():
+            framework_info[item["compliance_id"]] = {
+                "framework": item["framework"],
+                "version": item["version"],
+            }
+
+        for item in requirement_status_subquery:
+            compliance_id = item["compliance_id"]
+
+            if item["fail_count"] > 0:
+                req_status = "FAIL"
+            elif item["pass_count"] == item["total_count"]:
+                req_status = "PASS"
+            else:
+                req_status = "MANUAL"
+
+            if compliance_id not in compliance_data:
+                compliance_data[compliance_id] = {
+                    "total_requirements": 0,
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                }
+
+            compliance_data[compliance_id]["total_requirements"] += 1
+            if req_status == "PASS":
+                compliance_data[compliance_id]["requirements_passed"] += 1
+            elif req_status == "FAIL":
+                compliance_data[compliance_id]["requirements_failed"] += 1
+            else:
+                compliance_data[compliance_id]["requirements_manual"] += 1
+
+        response_data = []
+        for compliance_id, data in compliance_data.items():
+            framework = framework_info.get(compliance_id, {})
+
+            response_data.append(
+                {
+                    "id": compliance_id,
+                    "compliance_id": compliance_id,
+                    "framework": framework.get("framework", ""),
+                    "version": framework.get("version", ""),
+                    "requirements_passed": data["requirements_passed"],
+                    "requirements_failed": data["requirements_failed"],
+                    "requirements_manual": data["requirements_manual"],
+                    "total_requirements": data["total_requirements"],
+                }
+            )
+
+        serializer = self.get_serializer(response_data, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
@@ -2595,112 +2658,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], url_name="requirements-overview")
-    def requirements_overview(self, request):
-        scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
-
-        tenant_id = request.tenant_id
-
-        filtered_queryset = self.filter_queryset(
-            ComplianceRequirementOverview.objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id
-            )
-        )
-        compliance_frameworks = filtered_queryset.values(
-            "compliance_id", "framework", "version"
-        ).distinct()
-
-        failed_requirements_by_compliance = (
-            filtered_queryset.filter(requirement_status="FAIL")
-            .values("compliance_id")
-            .annotate(requirements_failed=Count("requirement_id", distinct=True))
-        )
-
-        all_requirements = (
-            filtered_queryset.values("compliance_id", "requirement_id")
-            .distinct()
-            .annotate(total_instances=Count("id"))
-        )
-
-        passed_requirement_instances = (
-            filtered_queryset.filter(requirement_status="PASS")
-            .values("compliance_id", "requirement_id")
-            .annotate(pass_count=Count("id"))
-        )
-
-        failed_requirements_count = {
-            item["compliance_id"]: item["requirements_failed"]
-            for item in failed_requirements_by_compliance
-        }
-
-        requirement_totals = {}
-        for requirement in all_requirements:
-            compliance_id = requirement["compliance_id"]
-            if compliance_id not in requirement_totals:
-                requirement_totals[compliance_id] = {"total": 0, "requirement_map": {}}
-            requirement_totals[compliance_id]["total"] += 1
-            requirement_totals[compliance_id]["requirement_map"][
-                (compliance_id, requirement["requirement_id"])
-            ] = requirement["total_instances"]
-
-        passed_instance_counts = {}
-        for passed_instance in passed_requirement_instances:
-            requirement_key = (
-                passed_instance["compliance_id"],
-                passed_instance["requirement_id"],
-            )
-            passed_instance_counts[requirement_key] = passed_instance["pass_count"]
-
-        fully_passed_counts = {}
-        for compliance_id, compliance_data in requirement_totals.items():
-            fully_passed_requirements = 0
-            for requirement_key, total_instances in compliance_data[
-                "requirement_map"
-            ].items():
-                if passed_instance_counts.get(requirement_key, 0) == total_instances:
-                    fully_passed_requirements += 1
-            fully_passed_counts[compliance_id] = fully_passed_requirements
-
-        compliance_summary = []
-        for framework in compliance_frameworks:
-            compliance_id = framework["compliance_id"]
-            total_requirements = requirement_totals.get(compliance_id, {"total": 0})[
-                "total"
-            ]
-            failed_requirements = failed_requirements_count.get(compliance_id, 0)
-            passed_requirements = fully_passed_counts.get(compliance_id, 0)
-            manual_requirements = (
-                total_requirements - failed_requirements - passed_requirements
-            )
-
-            compliance_summary.append(
-                {
-                    "id": compliance_id,
-                    "framework": framework["framework"],
-                    "version": framework["version"],
-                    "requirements_passed": passed_requirements,
-                    "requirements_failed": failed_requirements,
-                    "requirements_manual": manual_requirements,
-                    "total_requirements": total_requirements,
-                }
-            )
-
-        serializer = self.get_serializer(compliance_summary, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="requirement-details")
-    def requirement_details(self, request):
+    @action(detail=False, methods=["get"], url_name="requirements")
+    def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
         compliance_id = request.query_params.get("filter[compliance_id]")
         region = request.query_params.get("filter[region]")
@@ -2731,42 +2690,35 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
         tenant_id = request.tenant_id
 
-        # Base query filtering by scan and compliance ID
         base_query = ComplianceRequirementOverview.objects.filter(
             tenant_id=tenant_id, scan_id=scan_id, compliance_id=compliance_id
         )
 
-        # Apply region filter if provided
         if region:
             base_query = base_query.filter(region=region)
 
-        # Get all requirements with their total instances
         all_requirements = (
             base_query.values("requirement_id", "framework", "version", "description")
             .distinct()
             .annotate(total_instances=Count("id"))
         )
 
-        # Get passed instances per requirement
         passed_instances = (
             base_query.filter(requirement_status="PASS")
             .values("requirement_id")
             .annotate(pass_count=Count("id"))
         )
 
-        # Create a map of passed instances
         passed_counts = {
             item["requirement_id"]: item["pass_count"] for item in passed_instances
         }
 
-        # Prepare the detailed requirements summary
         requirements_summary = []
         for requirement in all_requirements:
             requirement_id = requirement["requirement_id"]
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
 
-            # A requirement is considered failed if any instance fails
             requirement_status = "PASS" if passed_count == total_instances else "FAIL"
 
             requirements_summary.append(
@@ -2799,10 +2751,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        # Try to determine provider type from existing data
         provider_type = None
         try:
-            # Look for any requirement overview record with this compliance_id to determine provider type
             sample_requirement = ComplianceRequirementOverview.objects.filter(
                 tenant_id=self.request.tenant_id, compliance_id=compliance_id
             ).first()
@@ -2822,7 +2772,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         if not provider_type:
             raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
 
-        # Get the compliance framework from the template
         compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(
             provider_type, {}
         )
@@ -2831,18 +2780,21 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         if not compliance_framework:
             raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
 
-        # Extract attributes for each requirement
         attribute_data = []
         for requirement_id, requirement in compliance_framework.get(
             "requirements", {}
         ).items():
+            check_ids = list(requirement.get("checks", {}).keys())
+
+            metadata = requirement.get("attributes", [])
+
             attribute_data.append(
                 {
                     "id": requirement_id,
                     "framework": compliance_framework.get("framework", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
-                    "attributes": requirement.get("attributes", []),
+                    "attributes": {"metadata": metadata, "check_ids": check_ids},
                 }
             )
 

@@ -1911,14 +1911,6 @@ class ComplianceRequirementDetailSerializer(serializers.Serializer):
 
 
 class ComplianceRequirementAttributesSerializer(serializers.Serializer):
-    """
-    Serializer for compliance requirement attributes.
-
-    This serializer is used to format requirement attribute data from the
-    Prowler compliance templates, providing detailed attribute information
-    for each requirement.
-    """
-
     id = serializers.CharField()
     framework = serializers.CharField()
     version = serializers.CharField()
