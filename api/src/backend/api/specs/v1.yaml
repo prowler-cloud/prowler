@@ -5376,7 +5376,8 @@ paths:
         '403':
           description: There is a problem with credentials
         '404':
-          description: The scan has no reports
+          description: The scan has no reports, or the report generation task has
+            not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
