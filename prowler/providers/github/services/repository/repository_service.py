@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -163,6 +164,8 @@ class Repository(GithubService):
                         full_name=repo.full_name,
                         default_branch=repo.default_branch,
                         private=repo.private,
+                        archived=repo.archived,
+                        pushed_at=repo.pushed_at,
                         securitymd=securitymd_exists,
                         require_pull_request=require_pr,
                         approval_count=approval_cnt,
@@ -197,6 +200,8 @@ class Repo(BaseModel):
     default_branch_protection: Optional[bool]
     default_branch: str
     private: bool
+    archived: bool
+    pushed_at: datetime
     securitymd: Optional[bool]
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]
