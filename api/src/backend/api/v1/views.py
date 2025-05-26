@@ -1160,7 +1160,9 @@ class ProviderViewSet(BaseRLSViewSet):
             200: OpenApiResponse(description="Report obtained successfully"),
             202: OpenApiResponse(description="The task is in progress"),
             403: OpenApiResponse(description="There is a problem with credentials"),
-            404: OpenApiResponse(description="The scan has no reports"),
+            404: OpenApiResponse(
+                description="The scan has no reports, or the report generation task has not started yet"
+            ),
         },
     ),
     compliance=extend_schema(
@@ -1363,7 +1365,9 @@ class ScanViewSet(BaseRLSViewSet):
                 code = e.response.get("Error", {}).get("Code")
                 if code == "NoSuchKey":
                     return Response(
-                        {"detail": "The scan has no reports."},
+                        {
+                            "detail": "The scan has no reports, or the report generation task has not started yet."
+                        },
                         status=status.HTTP_404_NOT_FOUND,
                     )
                 return Response(
@@ -1376,7 +1380,9 @@ class ScanViewSet(BaseRLSViewSet):
             files = glob.glob(path_pattern)
             if not files:
                 return Response(
-                    {"detail": "The scan has no reports."},
+                    {
+                        "detail": "The scan has no reports, or the report generation task has not started yet."
+                    },
                     status=status.HTTP_404_NOT_FOUND,
                 )
             filepath = files[0]
@@ -1402,7 +1408,10 @@ class ScanViewSet(BaseRLSViewSet):
 
         if not scan.output_location:
             return Response(
-                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "The scan has no reports, or the report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if scan.output_location.startswith("s3://"):
@@ -1440,7 +1449,10 @@ class ScanViewSet(BaseRLSViewSet):
 
         if not scan.output_location:
             return Response(
-                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "The scan has no reports, or the report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if scan.output_location.startswith("s3://"):
