@@ -13,6 +13,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
 from django.urls import reverse
+from django_celery_results.models import TaskResult
 from rest_framework import status
 
 from api.compliance import get_compliance_frameworks
@@ -2303,7 +2304,10 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2371,7 +2375,7 @@ class TestScanViewSet:
     ):
         """
         When output_location is a local path and glob.glob returns an empty list,
-        the view should return HTTP 404 with detail "The scan has no reports."
+        the view should return HTTP 404 with detail "The scan has no reports, or the report generation task has not started yet."
         """
         scan = scans_fixture[0]
         scan.output_location = "/tmp/nonexistent_report_pattern.zip"
@@ -2383,7 +2387,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == 404
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
@@ -2458,7 +2465,10 @@ class TestScanViewSet:
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_compliance_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2600,6 +2610,36 @@ class TestScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_finds_task_using_kwargs(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task_result = TaskResult.objects.create(
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.EXECUTING,
+        }
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.data["id"] == str(task.id)
+
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.sentry_sdk.capture_exception")
     def test_compliance_list_objects_client_error(
@@ -2650,7 +2690,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     @patch("api.v1.views.get_s3_client")
     def test_report_s3_client_error_other(

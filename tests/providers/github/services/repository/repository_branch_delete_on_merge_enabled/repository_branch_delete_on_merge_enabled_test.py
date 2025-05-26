@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest import mock
 
 from prowler.providers.github.services.repository.repository_service import Repo
@@ -34,11 +35,14 @@ class Test_repository_branch_delete_on_merge_enabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,
                 securitymd=False,
                 delete_branch_on_merge=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 
@@ -74,11 +78,14 @@ class Test_repository_branch_delete_on_merge_enabled_test:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/repo1",
                 default_branch="main",
                 private=False,
                 securitymd=True,
                 delete_branch_on_merge=True,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
             ),
         }
 

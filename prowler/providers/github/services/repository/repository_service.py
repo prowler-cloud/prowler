@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -135,7 +136,7 @@ class Repository(GithubService):
                             )
                         try:
                             # Use get_dependabot_alerts to check if Dependabot alerts are enabled
-                            repo.get_dependabot_alerts()[0]
+                            repo.get_dependabot_alerts().totalCount
                             # If the call succeeds, Dependabot is enabled (even if no alerts)
                             dependabot_alerts_enabled = True
                         except Exception as error:
@@ -160,9 +161,12 @@ class Repository(GithubService):
                     repos[repo.id] = Repo(
                         id=repo.id,
                         name=repo.name,
+                        owner=repo.owner.login,
                         full_name=repo.full_name,
                         default_branch=repo.default_branch,
                         private=repo.private,
+                        archived=repo.archived,
+                        pushed_at=repo.pushed_at,
                         securitymd=securitymd_exists,
                         require_pull_request=require_pr,
                         approval_count=approval_cnt,
@@ -193,10 +197,13 @@ class Repo(BaseModel):
 
     id: int
     name: str
+    owner: str
     full_name: str
     default_branch_protection: Optional[bool]
     default_branch: str
     private: bool
+    archived: bool
+    pushed_at: datetime
     securitymd: Optional[bool]
     require_pull_request: Optional[bool]
     required_linear_history: Optional[bool]

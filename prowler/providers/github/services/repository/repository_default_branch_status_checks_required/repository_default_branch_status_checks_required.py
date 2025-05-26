@@ -24,7 +24,7 @@ class repository_default_branch_status_checks_required(Check):
         for repo in repository_client.repositories.values():
             if repo.status_checks is not None:
                 report = CheckReportGithub(
-                    self.metadata(), resource=repo, repository=repo.name
+                    self.metadata(), resource=repo, owner=repo.name
                 )
                 report.status = "FAIL"
                 report.status_extended = (
