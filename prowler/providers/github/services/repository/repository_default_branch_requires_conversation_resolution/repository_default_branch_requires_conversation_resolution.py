@@ -25,15 +25,11 @@ class repository_default_branch_requires_conversation_resolution(Check):
             if repo.default_branch.conversation_resolution is not None:
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Repository {repo.name} does not require conversation resolution."
-                )
+                report.status_extended = f"Repository {repo.name} does not require conversation resolution on default branch ({repo.default_branch.name})."
 
                 if repo.default_branch.conversation_resolution:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"Repository {repo.name} does require conversation resolution."
-                    )
+                    report.status_extended = f"Repository {repo.name} does require conversation resolution on default branch ({repo.default_branch.name})."
 
                 findings.append(report)
 

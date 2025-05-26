@@ -25,15 +25,11 @@ class repository_default_branch_disallows_force_push(Check):
             if repo.default_branch.allow_force_pushes is not None:
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Repository {repo.name} does allow force push."
-                )
+                report.status_extended = f"Repository {repo.name} does allow force pushes on default branch ({repo.default_branch.name})."
 
                 if not repo.default_branch.allow_force_pushes:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"Repository {repo.name} does deny force push."
-                    )
+                    report.status_extended = f"Repository {repo.name} does deny force pushes on default branch ({repo.default_branch.name})."
 
                 findings.append(report)
 
