@@ -84,6 +84,8 @@ export const getComplianceAttributes = async (_complianceId: string) => {
   // TODO: Remove mock data and uncomment real implementation
   // Mock data from compliance-attributes.json
   const mockData = await import("@/lib/compliance-attributes.json");
+  //wait 1 second
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   return parseStringify(mockData);
 
   /* Real implementation - commented for now

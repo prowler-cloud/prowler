@@ -75,8 +75,8 @@ export function DataTablePagination({
 
   return (
     <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8">
-      <div className="whitespace-nowrap text-sm font-medium">
-        {totalEntries} entries in Total.
+      <div className="whitespace-nowrap text-sm">
+        {totalEntries} entries in total
       </div>
       {totalEntries > 10 && (
         <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">

@@ -143,7 +143,7 @@ export const ClientAccordionContent = ({
       );
     }
 
-    return null;
+    return <div>No findings</div>;
   };
 
   return (

@@ -11,7 +11,9 @@ import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { ComplianceHeader } from "@/components/compliance/compliance-header";
 import { FailedSectionsChart } from "@/components/compliance/failed-sections-chart";
+import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sections-chart-skeleton";
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
+import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
 import { SkeletonAccordion } from "@/components/compliance/skeleton-compliance-accordion";
 import { ContentLayout } from "@/components/ui";
 import { Accordion } from "@/components/ui/accordion/Accordion";
@@ -23,20 +25,32 @@ import {
   RequirementsTotals,
 } from "@/types/compliance/compliance";
 
+interface ComplianceDetailSearchParams {
+  id: string;
+  version?: string;
+  scanId?: string;
+  "filter[region__in]"?: string;
+}
+
 export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
   params: { compliancetitle: string };
-  searchParams: { id: string; version?: string; scanId?: string };
+  searchParams: ComplianceDetailSearchParams;
 }) {
   const { compliancetitle } = params;
-  const { id, version } = searchParams;
+  const { id, version, scanId } = searchParams;
+  const regionFilter = searchParams["filter[region__in]"];
+
   const logoPath = `/${compliancetitle.toLowerCase()}.png`;
 
   if (!id) {
     redirect("/");
   }
+
+  // Create a key that includes region filter for Suspense
+  const searchParamsKey = JSON.stringify(searchParams || {});
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
@@ -81,8 +95,7 @@ export default async function ComplianceDetail({
     }),
   );
 
-  const selectedScanId =
-    searchParams.scanId || expandedScansData[0]?.id || null;
+  const selectedScanId = scanId || expandedScansData[0]?.id || null;
 
   // Fetch metadata info for regions
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
@@ -93,11 +106,6 @@ export default async function ComplianceDetail({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  // Fetch compliance data once at the page level
-  const complianceData = selectedScanId
-    ? await getComplianceData(id, selectedScanId)
-    : null;
-
   return (
     <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">
       <ComplianceHeader
@@ -106,66 +114,37 @@ export default async function ComplianceDetail({
         showSearch={false}
       />
 
-      <div className="mb-8 flex w-full">
-        {/* Requirements and Failed Sections Charts */}
-        <div className="flex gap-4">
-          {/* Requirements Chart */}
-          <div className="">
-            <Suspense
-              key={id}
-              fallback={
-                <div className="bg-muted h-[300px] w-full animate-pulse rounded-lg"></div>
-              }
-            >
-              {complianceData ? (
-                <SSRRequirementsChart data={complianceData} />
-              ) : (
-                <RequirementsChart pass={0} fail={0} manual={0} />
+      <Suspense
+        key={searchParamsKey}
+        fallback={
+          <div className="space-y-8">
+            <div className="mb-8 flex w-full">
+              <div className="flex gap-4">
+                <RequirementsChartSkeleton />
+                <FailedSectionsChartSkeleton />
+              </div>
+              {logoPath && (
+                <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
+                  <Image
+                    src={logoPath}
+                    alt="Compliance Logo"
+                    fill
+                    priority
+                    className="object-contain"
+                  />
+                </div>
               )}
-            </Suspense>
+            </div>
+            <SkeletonAccordion />
           </div>
-
-          {/* Failed Sections List */}
-          <div className="w-[400px]">
-            <Suspense
-              key={`failed-sections-${id}`}
-              fallback={
-                <div className="bg-muted h-[350px] w-full animate-pulse rounded-lg"></div>
-              }
-            >
-              {complianceData ? (
-                <SSRFailedSectionsChart data={complianceData} />
-              ) : (
-                <FailedSectionsChart sections={[]} />
-              )}
-            </Suspense>
-          </div>
-        </div>
-
-        {logoPath && (
-          <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
-            <Image
-              src={logoPath}
-              alt="Compliance Logo"
-              fill
-              priority
-              className="object-contain"
-            />
-          </div>
-        )}
-      </div>
-
-      <Suspense key={id} fallback={<SkeletonAccordion />}>
-        {complianceData ? (
-          <SSRComplianceDetail data={complianceData} scanId={selectedScanId!} />
-        ) : (
-          <Accordion
-            items={[]}
-            variant="light"
-            selectionMode="multiple"
-            defaultExpandedKeys={[]}
-          />
-        )}
+        }
+      >
+        <SSRComplianceContent
+          complianceId={id}
+          scanId={selectedScanId!}
+          region={regionFilter}
+          logoPath={logoPath}
+        />
       </Suspense>
     </ContentLayout>
   );
@@ -174,12 +153,14 @@ export default async function ComplianceDetail({
 const getComplianceData = async (
   complianceId: string,
   scanId: string,
+  region?: string,
 ): Promise<MappedComplianceData> => {
   const [attributesData, requirementsData] = await Promise.all([
     getComplianceAttributes(complianceId),
     getComplianceRequirements({
       complianceId: complianceId,
       scanId: scanId,
+      region: region,
     }),
   ]);
 
@@ -221,12 +202,48 @@ const getTopFailedSections = (
     .slice(0, 5); // Top 5
 };
 
-const SSRFailedSectionsChart = ({ data }: { data: MappedComplianceData }) => {
-  const topFailedSections = getTopFailedSections(data);
-  return <FailedSectionsChart sections={topFailedSections} />;
-};
+const SSRComplianceContent = async ({
+  complianceId,
+  scanId,
+  region,
+  logoPath,
+}: {
+  complianceId: string;
+  scanId: string;
+  region?: string;
+  logoPath: string;
+}) => {
+  if (!scanId) {
+    return (
+      <div className="space-y-8">
+        <div className="mb-8 flex w-full">
+          <div className="flex gap-4">
+            <RequirementsChart pass={0} fail={0} manual={0} />
+            <FailedSectionsChart sections={[]} />
+          </div>
+          {logoPath && (
+            <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
+              <Image
+                src={logoPath}
+                alt="Compliance Logo"
+                fill
+                priority
+                className="object-contain"
+              />
+            </div>
+          )}
+        </div>
+        <Accordion
+          items={[]}
+          variant="light"
+          selectionMode="multiple"
+          defaultExpandedKeys={[]}
+        />
+      </div>
+    );
+  }
 
-const SSRRequirementsChart = ({ data }: { data: MappedComplianceData }) => {
+  const data = await getComplianceData(complianceId, scanId, region);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc, framework) => ({
       pass: acc.pass + framework.pass,
@@ -235,31 +252,44 @@ const SSRRequirementsChart = ({ data }: { data: MappedComplianceData }) => {
     }),
     { pass: 0, fail: 0, manual: 0 },
   );
-
-  return (
-    <RequirementsChart
-      pass={totalRequirements.pass}
-      fail={totalRequirements.fail}
-      manual={totalRequirements.manual}
-    />
-  );
-};
-
-const SSRComplianceDetail = ({
-  data,
-  scanId,
-}: {
-  data: MappedComplianceData;
-  scanId: string;
-}) => {
+  const topFailedSections = getTopFailedSections(data);
   const accordionItems = toAccordionItems(data, scanId);
 
   return (
-    <Accordion
-      items={accordionItems}
-      variant="light"
-      selectionMode="multiple"
-      defaultExpandedKeys={[]}
-    />
+    <div className="space-y-8">
+      <div className="mb-8 flex w-full">
+        <div className="flex gap-4">
+          <div className="">
+            <RequirementsChart
+              pass={totalRequirements.pass}
+              fail={totalRequirements.fail}
+              manual={totalRequirements.manual}
+            />
+          </div>
+          <div className="w-[400px]">
+            <FailedSectionsChart sections={topFailedSections} />
+          </div>
+        </div>
+
+        {logoPath && (
+          <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
+            <Image
+              src={logoPath}
+              alt="Compliance Logo"
+              fill
+              priority
+              className="object-contain"
+            />
+          </div>
+        )}
+      </div>
+
+      <Accordion
+        items={accordionItems}
+        variant="light"
+        selectionMode="multiple"
+        defaultExpandedKeys={[]}
+      />
+    </div>
   );
 };
