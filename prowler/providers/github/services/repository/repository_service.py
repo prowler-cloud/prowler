@@ -163,24 +163,27 @@ class Repository(GithubService):
                         name=repo.name,
                         owner=repo.owner.login,
                         full_name=repo.full_name,
-                        default_branch=repo.default_branch,
+                        default_branch=Branch(
+                            name=default_branch,
+                            protected=branch_protection,
+                            default_branch=True,
+                            require_pull_request=require_pr,
+                            approval_count=approval_cnt,
+                            required_linear_history=required_linear_history,
+                            allow_force_pushes=allow_force_pushes,
+                            branch_deletion=branch_deletion,
+                            status_checks=status_checks,
+                            enforce_admins=enforce_admins,
+                            conversation_resolution=conversation_resolution,
+                            require_code_owner_reviews=require_code_owner_reviews,
+                            require_signed_commits=require_signed_commits,
+                        ),
                         private=repo.private,
                         archived=repo.archived,
                         pushed_at=repo.pushed_at,
                         securitymd=securitymd_exists,
-                        require_pull_request=require_pr,
-                        approval_count=approval_cnt,
-                        required_linear_history=required_linear_history,
-                        allow_force_pushes=allow_force_pushes,
-                        default_branch_deletion=branch_deletion,
-                        status_checks=status_checks,
-                        enforce_admins=enforce_admins,
-                        conversation_resolution=conversation_resolution,
-                        default_branch_protection=branch_protection,
                         codeowners_exists=codeowners_exists,
-                        require_code_owner_reviews=require_code_owner_reviews,
                         secret_scanning_enabled=secret_scanning_enabled,
-                        require_signed_commits=require_signed_commits,
                         dependabot_alerts_enabled=dependabot_alerts_enabled,
                         delete_branch_on_merge=delete_branch_on_merge,
                     )
@@ -192,6 +195,24 @@ class Repository(GithubService):
         return repos
 
 
+class Branch(BaseModel):
+    """Model for Github Branch"""
+
+    name: str
+    protected: bool
+    default_branch: bool
+    require_pull_request: Optional[bool]
+    approval_count: Optional[int]
+    required_linear_history: Optional[bool]
+    allow_force_pushes: Optional[bool]
+    branch_deletion: Optional[bool]
+    status_checks: Optional[bool]
+    enforce_admins: Optional[bool]
+    require_code_owner_reviews: Optional[bool]
+    require_signed_commits: Optional[bool]
+    conversation_resolution: Optional[bool]
+
+
 class Repo(BaseModel):
     """Model for Github Repository"""
 
@@ -199,23 +220,12 @@ class Repo(BaseModel):
     name: str
     owner: str
     full_name: str
-    default_branch_protection: Optional[bool]
-    default_branch: str
+    default_branch: Branch
     private: bool
     archived: bool
     pushed_at: datetime
     securitymd: Optional[bool]
-    require_pull_request: Optional[bool]
-    required_linear_history: Optional[bool]
-    allow_force_pushes: Optional[bool]
-    default_branch_deletion: Optional[bool]
-    status_checks: Optional[bool]
-    enforce_admins: Optional[bool]
-    approval_count: Optional[int]
     codeowners_exists: Optional[bool]
-    require_code_owner_reviews: Optional[bool]
     secret_scanning_enabled: Optional[bool]
-    require_signed_commits: Optional[bool]
     dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
-    conversation_resolution: Optional[bool]
