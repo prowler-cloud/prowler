@@ -181,7 +181,7 @@ class TestPerformScan:
         "tasks.jobs.scan.initialize_prowler_provider",
         side_effect=Exception("Connection error"),
     )
-    @patch("api.db_utils.rls_transaction", side_effect=lambda x: x)
+    @patch("api.db_utils.rls_transaction")
     def test_perform_prowler_scan_no_connection(
         self,
         mock_rls_transaction,
@@ -191,6 +191,9 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
+        mock_rls_transaction.return_value.__enter__ = lambda self: None
+        mock_rls_transaction.return_value.__exit__ = lambda self, *args: None
+
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
         provider = providers_fixture[0]
