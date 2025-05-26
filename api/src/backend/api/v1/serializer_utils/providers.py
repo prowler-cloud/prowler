@@ -156,6 +156,17 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "GCP Service Account Key",
+                "properties": {
+                    "service_account_key": {
+                        "type": "object",
+                        "description": "The service account key for GCP.",
+                    }
+                },
+                "required": ["service_account_key"],
+            },
+            {
+                "type": "object",
                 "title": "Kubernetes Static Credentials",
                 "properties": {
                     "kubeconfig_content": {

@@ -1679,6 +1679,26 @@ class TestProviderSecretViewSet:
                     "refresh_token": "refresh-token",
                 },
             ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
+                    "service_account_key": {
+                        "type": "service_account",
+                        "project_id": "project-id",
+                        "private_key_id": "private-key-id",
+                        "private_key": "private-key",
+                        "client_email": "client-email",
+                        "client_id": "client-id",
+                        "auth_uri": "auth-uri",
+                        "token_uri": "token-uri",
+                        "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
+                        "client_x509_cert_url": "client-x509-cert-url",
+                        "universe_domain": "universe-domain",
+                    },
+                },
+            ),
             # Kubernetes with STATIC secret
             (
                 Provider.ProviderChoices.KUBERNETES.value,
