@@ -1,3 +1,4 @@
+import { Spacer } from "@nextui-org/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -258,7 +259,7 @@ const SSRComplianceContent = async ({
   return (
     <div className="space-y-8">
       <div className="mb-8 flex w-full">
-        <div className="flex gap-4">
+        <div className="flex gap-8">
           <div className="">
             <RequirementsChart
               pass={totalRequirements.pass}
@@ -266,9 +267,7 @@ const SSRComplianceContent = async ({
               manual={totalRequirements.manual}
             />
           </div>
-          <div className="w-[400px]">
-            <FailedSectionsChart sections={topFailedSections} />
-          </div>
+          <FailedSectionsChart sections={topFailedSections} />
         </div>
 
         {logoPath && (
@@ -283,7 +282,7 @@ const SSRComplianceContent = async ({
           </div>
         )}
       </div>
-
+      <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <Accordion
         items={accordionItems}
         variant="light"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import {
   Bar,
   BarChart,
@@ -25,6 +26,8 @@ interface FailedSectionsListProps {
 }
 
 export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
+  const { theme } = useTheme();
+
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "requisito":
@@ -51,7 +54,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   );
 
   return (
-    <div className="flex flex-col items-center justify-between">
+    <div className="flex w-[400px] flex-col items-center justify-between">
       <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
         Failed Sections (Top 5)
       </h3>
@@ -79,17 +82,19 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
-                border: "none",
-                borderRadius: "8px",
-                boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+                backgroundColor: theme === "dark" ? "#1e293b" : "white",
+                border: `1px solid ${theme === "dark" ? "#475569" : "rgba(0, 0, 0, 0.1)"}`,
+                borderRadius: "6px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
                 fontSize: "12px",
-                padding: "8px",
+                padding: "8px 12px",
+                color: theme === "dark" ? "white" : "black",
               }}
               formatter={(value: number, name: string) => [
                 value,
                 translateType(name),
               ]}
+              cursor={false}
             />
             <Legend
               formatter={(value) => translateType(value)}
