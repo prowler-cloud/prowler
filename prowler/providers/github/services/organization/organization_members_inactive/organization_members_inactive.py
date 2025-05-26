@@ -11,7 +11,6 @@ class organization_members_inactive(Check):
     """Check if organization members have been inactive for extended periods.
 
     This class verifies whether organization members have recent activity within the last 30 days.
-    Inactive accounts increase the risk of unauthorized access, particularly if they have elevated privileges.
     """
 
     def execute(self) -> List[CheckReportGithub]:
