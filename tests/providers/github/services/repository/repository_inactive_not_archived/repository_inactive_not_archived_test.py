@@ -40,6 +40,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/test-repo",
                 private=False,
                 default_branch=default_branch,
@@ -85,6 +86,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/test-repo",
                 private=False,
                 default_branch=default_branch,
@@ -128,6 +130,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/test-repo",
                 default_branch=default_branch,
                 private=False,
@@ -173,6 +176,7 @@ class Test_repository_inactive_not_archived:
             1: Repo(
                 id=1,
                 name=repo_name,
+                owner="account-name",
                 full_name="account-name/test-repo",
                 private=False,
                 default_branch=default_branch,
