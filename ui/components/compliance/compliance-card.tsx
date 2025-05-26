@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
-import { checkTaskStatus, downloadComplianceCsv } from "@/lib/helper";
+import { downloadComplianceCsv } from "@/lib/helper";
 
 import { getComplianceIcon } from "../icons";
 

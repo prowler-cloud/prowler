@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { getCompliancesOverview } from "@/actions/compliances";
 import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
-import { getScan, getScans } from "@/actions/scans";
+import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
