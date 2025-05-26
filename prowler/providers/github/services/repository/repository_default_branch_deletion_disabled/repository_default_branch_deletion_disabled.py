@@ -22,14 +22,14 @@ class repository_default_branch_deletion_disabled(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            if repo.default_branch_deletion is not None:
+            if repo.default_branch.branch_deletion is not None:
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Repository {repo.name} does allow default branch deletion."
                 )
 
-                if not repo.default_branch_deletion:
+                if not repo.default_branch.branch_deletion:
                     report.status = "PASS"
                     report.status_extended = (
                         f"Repository {repo.name} does deny default branch deletion."
