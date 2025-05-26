@@ -28,32 +28,33 @@ class organization_members_inactive(Check):
         current_time = datetime.now(timezone.utc)
 
         for org in organization_client.organizations.values():
-            report = CheckReportGithub(metadata=self.metadata(), resource=org)
+            if org.members is not None:
+                report = CheckReportGithub(metadata=self.metadata(), resource=org)
 
-            inactive_members = []
+                inactive_members = []
 
-            for member in org.members:
-                is_inactive = False
+                for member in org.members:
+                    is_inactive = False
 
-                if member.last_activity is None:
-                    is_inactive = True
-                else:
-                    time_since_activity = current_time - member.last_activity
-                    if time_since_activity > inactivity_threshold:
+                    if member.last_activity is None:
                         is_inactive = True
+                    else:
+                        time_since_activity = current_time - member.last_activity
+                        if time_since_activity > inactivity_threshold:
+                            is_inactive = True
 
-                if is_inactive:
-                    inactive_members.append(member.login)
+                    if is_inactive:
+                        inactive_members.append(member.login)
 
-            if inactive_members:
-                report.status = "FAIL"
-                report.status_extended = f"Organization {org.name} has {len(inactive_members)} inactive members: {', '.join(inactive_members[:5])}{'...' if len(inactive_members) > 5 else ''}"
-            else:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Organization {org.name} has no inactive members detected"
-                )
+                if inactive_members:
+                    report.status = "FAIL"
+                    report.status_extended = f"Organization {org.name} has {len(inactive_members)} inactive members: {', '.join(inactive_members[:5])}{'...' if len(inactive_members) > 5 else ''}"
+                else:
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"Organization {org.name} has no inactive members detected"
+                    )
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
