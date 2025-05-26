@@ -19,25 +19,25 @@ export const ComplianceAccordionTitle = ({
   const manualPercentage = (manual / total) * 100;
 
   return (
-    <div className="flex flex-col items-start justify-between gap-1 md:flex-row md:items-center md:gap-0">
-      <div className="w-1/2 overflow-hidden md:min-w-0">
+    <div className="flex flex-col items-start justify-between gap-1 md:flex-row md:items-center md:gap-2">
+      <div className="overflow-hidden md:min-w-0 md:flex-1">
         <span
-          className="block w-full overflow-hidden truncate text-ellipsis pr-2 text-sm"
+          className="block w-full overflow-hidden truncate text-ellipsis text-sm"
           title={label}
         >
           {label.charAt(0).toUpperCase() + label.slice(1)}
         </span>
       </div>
-      <div className="flex w-full items-center justify-center gap-2 md:w-1/2">
+      <div className="mr-4 flex items-center gap-2">
         <div className="hidden lg:block">
           {total > 0 && (
-            <span className="mr-1 whitespace-nowrap text-xs font-medium text-gray-600">
+            <span className="whitespace-nowrap text-xs font-medium text-gray-600">
               Requirements:
             </span>
           )}
         </div>
 
-        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner">
+        <div className="flex h-1.5 w-[200px] overflow-hidden rounded-full bg-gray-100 shadow-inner">
           {total > 0 ? (
             <div className="flex w-full">
               {pass > 0 && (
