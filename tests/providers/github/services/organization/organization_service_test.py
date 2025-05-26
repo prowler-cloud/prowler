@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.github.services.organization.organization_service import (
     Org,
+    OrgMember,
     Organization,
 )
 from tests.providers.github.github_fixtures import set_mocked_github_provider
@@ -13,6 +14,13 @@ def mock_list_organizations(_):
             id=1,
             name="test-organization",
             mfa_required=True,
+            members=[
+                OrgMember(
+                    id=123,
+                    login="test-user",
+                    last_activity=None,
+                )
+            ],
         ),
     }
 
@@ -35,3 +43,12 @@ class Test_Repository_Service:
         assert len(repository_service.organizations) == 1
         assert repository_service.organizations[1].name == "test-organization"
         assert repository_service.organizations[1].mfa_required
+
+    def test_list_organizations_with_members(self):
+        repository_service = Organization(set_mocked_github_provider())
+        assert len(repository_service.organizations) == 1
+        org = repository_service.organizations[1]
+        assert len(org.members) == 1
+        assert org.members[0].login == "test-user"
+        assert org.members[0].id == 123
+        assert org.members[0].last_activity is None

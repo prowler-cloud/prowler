@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_members_inactive",
+  "CheckTitle": "Ensure organization members are not inactive for extended periods",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Monitor and review user accounts that have been inactive for a significant period. Inactive accounts increase the risk of unauthorized access, particularly if they have elevated privileges. By removing or deactivating these accounts, organizations can reduce their exposure to potential attacks.",
+  "Risk": "Inactive user accounts pose security risks as they may be compromised without detection, especially if they retain elevated privileges or access to sensitive resources.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-membership-in-your-organization/removing-a-member-from-your-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review inactive organization members and consider removing or deactivating accounts that have been inactive for extended periods. Establish a regular review process for user access and implement automated monitoring for inactive accounts.",
+      "Url": "https://docs.github.com/en/organizations/managing-membership-in-your-organization/removing-a-member-from-your-organization"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
