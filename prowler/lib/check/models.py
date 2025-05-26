@@ -573,7 +573,7 @@ class CheckReportGithub(Check_Report):
         self.owner = (
             owner
             or getattr(resource, "owner", "")  # For Repositories
-            or getattr(resource, "login", "")  # For Organizations
+            or getattr(resource, "name", "")  # For Organizations
         )
 
 
