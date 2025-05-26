@@ -204,11 +204,11 @@ class TestPerformScan:
             perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
 
         scan.refresh_from_db()
-        provider.refresh_from_db()
-
         assert scan.state == StateChoices.FAILED
-        assert provider.connected is False
-        assert provider.connection_last_checked_at is not None
+
+        provider_from_db = Provider.objects.get(id=provider.id)
+        assert provider_from_db.connected is False
+        assert provider_from_db.connection_last_checked_at is not None
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
