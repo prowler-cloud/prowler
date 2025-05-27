@@ -149,11 +149,7 @@ class Provider(ABC):
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
             )
-            # Special case for IAC provider
-            if arguments.provider == "iac":
-                provider_class_name = "IACProvider"
-            else:
-                provider_class_name = f"{arguments.provider.capitalize()}Provider"
+            provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
@@ -248,13 +244,12 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                     )
                 elif "iac" in provider_class_name.lower():
-                    provider = provider_class(
+                    provider_class(
                         scan_path=arguments.scan_path,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                    Provider.set_global_provider(provider)
 
         except TypeError as error:
             logger.critical(

@@ -12,7 +12,7 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
 
-class IACProvider(Provider):
+class IacProvider(Provider):
     _type: str = "iac"
     audit_metadata: Audit_Metadata
 
