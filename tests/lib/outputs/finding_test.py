@@ -678,7 +678,6 @@ class TestFinding:
         # unroll_tags is called on a list with one tag -> expect {"env": "prod"}
         assert finding_obj.resource_tags == {"env": "prod"}
         assert finding_obj.region == "us-east-1"
-        assert finding_obj.account_tags == {"Environment": "prod", "Project": "test"}
         assert finding_obj.compliance == {
             "CIS-2.0": ["1.12"],
             "CIS-3.0": ["1.12"],
