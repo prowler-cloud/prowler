@@ -25,17 +25,23 @@ interface FailedSectionsListProps {
   sections: FailedSectionItem[];
 }
 
+const title = (
+  <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+    Failed Sections (Top 5)
+  </h3>
+);
+
 export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   const { theme } = useTheme();
 
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "requisito":
-        return "#3CEC6D";
+        return "#ff5356";
       case "recomendacion":
-        return "#FB718F";
+        return "#FDC53A"; // Increased contrast from #FDDD8A
       case "refuerzo":
-        return "#868994";
+        return "#7FB5FF"; // Increased contrast from #B5D7FF
       default:
         return "#868994";
     }
@@ -53,11 +59,21 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
     new Set(sections.flatMap((section) => Object.keys(section.types))),
   );
 
+  // Check if there are no failed sections
+  if (!sections || sections.length === 0) {
+    return (
+      <div className="flex w-[400px] flex-col items-center justify-between">
+        {title}
+        <div className="flex h-[320px] w-full items-center justify-center">
+          <p className="text-sm text-gray-500">There are no failed sections</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-[400px] flex-col items-center justify-between">
-      <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-        Failed Sections (Top 5)
-      </h3>
+      {title}
 
       <div className="h-[320px] w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -65,18 +81,26 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
             data={chartData}
             layout="vertical"
             margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+            maxBarSize={40}
           >
             <XAxis
               type="number"
               fontSize={12}
               axisLine={false}
               tickLine={false}
+              tick={{
+                fontSize: 12,
+                fill: theme === "dark" ? "#94a3b8" : "#374151",
+              }}
             />
             <YAxis
               type="category"
               dataKey="name"
               width={100}
-              tick={{ fontSize: 12 }}
+              tick={{
+                fontSize: 12,
+                fill: theme === "dark" ? "#94a3b8" : "#374151",
+              }}
               axisLine={false}
               tickLine={false}
             />

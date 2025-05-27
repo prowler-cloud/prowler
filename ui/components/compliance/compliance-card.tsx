@@ -74,7 +74,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;
     const params = new URLSearchParams();
-    params.set("id", id);
+    params.set("complianceId", id);
     params.set("version", version);
     params.set("scanId", scanId);
 

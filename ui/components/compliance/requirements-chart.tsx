@@ -1,13 +1,9 @@
 "use client";
 
-import { Cell, Label, Pie, PieChart } from "recharts";
+import { useTheme } from "next-themes";
+import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
 
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart/Chart";
+import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
 interface RequirementsChartProps {
   pass: number;
@@ -38,6 +34,8 @@ export const RequirementsChart = ({
   fail,
   manual,
 }: RequirementsChartProps) => {
+  const { theme } = useTheme();
+
   const chartData = [
     {
       name: "Pass",
@@ -66,6 +64,40 @@ export const RequirementsChart = ({
     },
   ];
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div
+          style={{
+            backgroundColor: theme === "dark" ? "#1e293b" : "white",
+            border: `1px solid ${theme === "dark" ? "#475569" : "rgba(0, 0, 0, 0.1)"}`,
+            borderRadius: "6px",
+            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
+            fontSize: "12px",
+            padding: "8px 12px",
+            color: theme === "dark" ? "white" : "black",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: data.payload.fill,
+              }}
+            />
+            <span>
+              {data.name}: {data.value}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="flex h-[320px] flex-col items-center justify-between">
       <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
@@ -77,7 +109,7 @@ export const RequirementsChart = ({
         className="aspect-square w-[200px] min-w-[200px]"
       >
         <PieChart>
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          <Tooltip cursor={false} content={<CustomTooltip />} />
           <Pie
             data={totalRequirements > 0 ? chartData : emptyChartData}
             dataKey="value"

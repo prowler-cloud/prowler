@@ -18,15 +18,14 @@ import { CustomDropdownFilterProps } from "@/types";
 
 import { EntityInfoShort } from "../entities";
 
-export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
+export const CustomDropdownFilter = ({
   filter,
   onFilterChange,
-}) => {
+}: CustomDropdownFilterProps) => {
   const searchParams = useSearchParams();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
   const [isOpen, setIsOpen] = useState(false);
 
-  // Simplified: combine filter values and selected values logic
   const filterValues = useMemo(() => filter?.values || [], [filter?.values]);
   const selectedValues = Array.from(groupSelected).filter(
     (value) => value !== "all",
@@ -34,7 +33,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   const isAllSelected =
     selectedValues.length === filterValues.length && filterValues.length > 0;
 
-  // Simplified: direct URL parsing without extra memoization
   const activeFilterValue = useMemo(() => {
     const filterParam = searchParams.get(`filter[${filter?.key}]`);
     return filterParam ? filterParam.split(",") : [];
@@ -53,15 +51,15 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     }
   }, [activeFilterValue, filterValues.length]);
 
-  // Simplified: single function to handle all selection changes
   const updateSelection = useCallback(
     (newValues: string[]) => {
-      const newSelection = new Set(newValues);
+      const actualValues = newValues.filter((key) => key !== "all");
+      const newSelection = new Set(actualValues);
 
       // Auto-add "all" if all items are selected
       if (
-        newSelection.size === filterValues.length &&
-        !newSelection.has("all")
+        actualValues.length === filterValues.length &&
+        filterValues.length > 0
       ) {
         newSelection.add("all");
       }
@@ -69,7 +67,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       setGroupSelected(newSelection);
 
       // Notify parent with actual values (excluding "all")
-      const actualValues = newValues.filter((key) => key !== "all");
       onFilterChange?.(filter.key, actualValues);
     },
     [filterValues.length, onFilterChange, filter.key],
@@ -77,24 +74,32 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
-      // Handle "all" selection logic
-      if (keys.includes("all")) {
-        if (groupSelected.has("all")) {
-          updateSelection([]);
-        } else {
-          updateSelection(filterValues);
-        }
+      const currentSelection = Array.from(groupSelected);
+      const newKeys = new Set(keys);
+      const oldKeys = new Set(currentSelection);
+
+      // Check if "all" was just toggled
+      const allWasSelected = oldKeys.has("all");
+      const allIsSelected = newKeys.has("all");
+
+      if (allIsSelected && !allWasSelected) {
+        // "all" was just selected - select all items
+        updateSelection(filterValues);
+      } else if (!allIsSelected && allWasSelected) {
+        // "all" was just deselected - deselect all items
+        updateSelection([]);
+      } else if (allIsSelected && allWasSelected) {
+        // "all" was already selected, but individual items changed
+        // Remove "all" and keep only the individual selections
+        const individualSelections = keys.filter((key) => key !== "all");
+        updateSelection(individualSelections);
       } else {
+        // Normal individual selection without "all"
         updateSelection(keys);
       }
     },
     [groupSelected, updateSelection, filterValues],
   );
-
-  const handleSelectAllClick = useCallback(() => {
-    const newValues = groupSelected.has("all") ? [] : filterValues;
-    updateSelection(newValues);
-  }, [groupSelected, updateSelection, filterValues]);
 
   const handleClearAll = useCallback(
     (e: React.MouseEvent) => {
@@ -104,7 +109,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     [updateSelection],
   );
 
-  // Simplified: inline display label logic
   const getDisplayLabel = useCallback(
     (value: string) => {
       const entity = filter.valueLabelMapping?.find((entry) => entry[value])?.[
@@ -160,13 +164,21 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                           : `${selectedValues.length} selected`}
                       </span>
                     )}
-                    <button
+                    <div
                       onClick={handleClearAll}
-                      className="ml-1 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full transition-colors hover:bg-default-200"
+                      className="ml-1 flex h-4 w-4 flex-shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-default-200"
                       aria-label="Clear selection"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleClearAll(e as any);
+                        }
+                      }}
                     >
                       <X className="h-3 w-3 text-default-400 hover:text-default-600" />
-                    </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -188,8 +200,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                   wrapper: "checkbox-update",
                 }}
                 value="all"
-                isSelected={groupSelected.has("all")}
-                onClick={handleSelectAllClick}
               >
                 Select All
               </Checkbox>

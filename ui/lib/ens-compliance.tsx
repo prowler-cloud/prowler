@@ -29,8 +29,8 @@ export const mapComplianceData = (
   attributesData: any,
   requirementsData: any,
 ): MappedComplianceData => {
-  const attributes = attributesData.data || [];
-  const requirements = requirementsData.data || [];
+  const attributes = attributesData?.data || [];
+  const requirements = requirementsData?.data || [];
 
   // Create a map for quick lookup of requirements by id
   const requirementsMap = new Map();

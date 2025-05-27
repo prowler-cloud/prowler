@@ -30,7 +30,6 @@ export const getCompliancesOverview = async ({
     });
     const data = await compliances.json();
     const parsedData = parseStringify(data);
-
     revalidatePath("/compliance");
     return parsedData;
   } catch (error) {
@@ -80,15 +79,7 @@ export const getComplianceOverviewMetadataInfo = async ({
   }
 };
 
-export const getComplianceAttributes = async (_complianceId: string) => {
-  // TODO: Remove mock data and uncomment real implementation
-  // Mock data from compliance-attributes.json
-  const mockData = await import("@/lib/compliance-attributes.json");
-  //wait 1 second
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return parseStringify(mockData);
-
-  /* Real implementation - commented for now
+export const getComplianceAttributes = async (complianceId: string) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
@@ -106,43 +97,39 @@ export const getComplianceAttributes = async (_complianceId: string) => {
     }
 
     const data = await response.json();
-    const parsedData = parseStringify(data);
 
+    const parsedData = parseStringify(data);
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error fetching compliance attributes:", error);
     return undefined;
   }
-  */
+  // */
 };
 
 export const getComplianceRequirements = async ({
-  complianceId: _complianceId,
-  scanId: _scanId,
-  region: _region,
+  complianceId,
+  scanId,
+  region,
 }: {
   complianceId: string;
   scanId: string;
   region?: string | string[];
 }) => {
-  // TODO: Remove mock data and uncomment real implementation
-  // Mock data from compliance-requeriments.json
-  const mockData = await import("@/lib/compliance-requeriments.json");
-  return parseStringify(mockData);
-
-  /* Real implementation - commented for now
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/requirements`);
-    url.searchParams.append("filter[compliance_id]", _complianceId);
-    url.searchParams.append("filter[scan_id]", _scanId);
+    url.searchParams.append("filter[compliance_id]", complianceId);
+    url.searchParams.append("filter[scan_id]", scanId);
 
-    if (_region) {
-      const regionValue = Array.isArray(_region) ? _region.join(",") : _region;
+    if (region) {
+      const regionValue = Array.isArray(region) ? region.join(",") : region;
       url.searchParams.append("filter[region__in]", regionValue);
+      //remove page param
     }
+    url.searchParams.delete("page");
 
     const response = await fetch(url.toString(), {
       headers,
@@ -163,5 +150,5 @@ export const getComplianceRequirements = async ({
     console.error("Error fetching compliance requirements:", error);
     return undefined;
   }
-  */
+  // */
 };

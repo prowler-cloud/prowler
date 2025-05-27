@@ -117,7 +117,11 @@ const SSRComplianceGrid = async ({
   });
 
   // Check if the response contains no data
-  if (!compliancesData || compliancesData?.data?.length === 0) {
+  if (
+    !compliancesData ||
+    !compliancesData.data ||
+    compliancesData.data.length === 0
+  ) {
     return (
       <div className="flex h-full items-center">
         <div className="text-sm text-default-500">
@@ -139,26 +143,22 @@ const SSRComplianceGrid = async ({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {compliancesData.data.map((compliance: ComplianceOverviewData) => {
-        const { attributes } = compliance;
-        const {
-          framework,
-          version,
-          requirements_status: { passed, total },
-          compliance_id,
-        } = attributes;
+        const { attributes, id } = compliance;
+        const { framework, version, requirements_passed, total_requirements } =
+          attributes;
 
         return (
           <ComplianceCard
-            key={compliance.id}
+            key={id}
             title={framework}
             version={version}
-            passingRequirements={passed}
-            totalRequirements={total}
-            prevPassingRequirements={passed}
-            prevTotalRequirements={total}
+            passingRequirements={requirements_passed}
+            totalRequirements={total_requirements}
+            prevPassingRequirements={requirements_passed}
+            prevTotalRequirements={total_requirements}
             scanId={scanId}
-            complianceId={compliance_id}
-            id={compliance.id}
+            complianceId={id}
+            id={id}
           />
         );
       })}

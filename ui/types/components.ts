@@ -263,50 +263,19 @@ export interface ApiError {
   code: string;
 }
 export interface CompliancesOverview {
-  links: {
-    first: string;
-    last: string;
-    next: string | null;
-    prev: string | null;
-  };
   data: ComplianceOverviewData[];
-  meta: {
-    pagination: {
-      page: number;
-      pages: number;
-      count: number;
-    };
-    version: string;
-  };
 }
 
 export interface ComplianceOverviewData {
-  type: "compliance-overviews";
+  type: "compliance-requirements-status";
   id: string;
   attributes: {
-    inserted_at: string;
-    compliance_id: string;
     framework: string;
     version: string;
-    requirements_status: {
-      passed: number;
-      failed: number;
-      manual: number;
-      total: number;
-    };
-    region: string;
-    provider_type: string;
-  };
-  relationships: {
-    scan: {
-      data: {
-        type: "scans";
-        id: string;
-      };
-    };
-  };
-  links: {
-    self: string;
+    requirements_passed: number;
+    requirements_failed: number;
+    requirements_manual: number;
+    total_requirements: number;
   };
 }
 

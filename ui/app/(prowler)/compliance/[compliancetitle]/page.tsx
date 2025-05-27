@@ -1,6 +1,5 @@
 import { Spacer } from "@nextui-org/react";
 import Image from "next/image";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -27,7 +26,7 @@ import {
 } from "@/types/compliance/compliance";
 
 interface ComplianceDetailSearchParams {
-  id: string;
+  complianceId: string;
   version?: string;
   scanId?: string;
   "filter[region__in]"?: string;
@@ -41,14 +40,10 @@ export default async function ComplianceDetail({
   searchParams: ComplianceDetailSearchParams;
 }) {
   const { compliancetitle } = params;
-  const { id, version, scanId } = searchParams;
+  const { complianceId, version, scanId } = searchParams;
   const regionFilter = searchParams["filter[region__in]"];
 
   const logoPath = `/${compliancetitle.toLowerCase()}.png`;
-
-  if (!id) {
-    redirect("/");
-  }
 
   // Create a key that includes region filter for Suspense
   const searchParamsKey = JSON.stringify(searchParams || {});
@@ -64,10 +59,6 @@ export default async function ComplianceDetail({
       "filter[state]": "completed",
     },
   });
-
-  if (!scansData?.data) {
-    throw new Error("No scans data available");
-  }
 
   // Expand scans with provider information
   const expandedScansData = await Promise.all(
@@ -141,8 +132,8 @@ export default async function ComplianceDetail({
         }
       >
         <SSRComplianceContent
-          complianceId={id}
-          scanId={selectedScanId!}
+          complianceId={complianceId}
+          scanId={selectedScanId}
           region={regionFilter}
           logoPath={logoPath}
         />
@@ -159,9 +150,9 @@ const getComplianceData = async (
   const [attributesData, requirementsData] = await Promise.all([
     getComplianceAttributes(complianceId),
     getComplianceRequirements({
-      complianceId: complianceId,
-      scanId: scanId,
-      region: region,
+      complianceId,
+      scanId,
+      region,
     }),
   ]);
 
@@ -287,7 +278,7 @@ const SSRComplianceContent = async ({
         items={accordionItems}
         variant="light"
         selectionMode="multiple"
-        defaultExpandedKeys={[]}
+        defaultExpandedKeys={accordionItems.slice(0, 2).map((item) => item.key)}
       />
     </div>
   );
