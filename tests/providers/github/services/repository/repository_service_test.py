@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.github.services.repository.repository_service import (
+    Branch,
     Repo,
     Repository,
 )
@@ -12,23 +14,30 @@ def mock_list_repositories(_):
         1: Repo(
             id=1,
             name="repo1",
+            owner="account-name",
             full_name="account-name/repo1",
-            default_branch_protection=True,
-            default_branch="main",
+            default_branch=Branch(
+                name="main",
+                protected=True,
+                default_branch=True,
+                require_pull_request=True,
+                approval_count=2,
+                required_linear_history=True,
+                allow_force_pushes=True,
+                branch_deletion=True,
+                status_checks=True,
+                enforce_admins=True,
+                require_code_owner_reviews=True,
+                require_signed_commits=True,
+                conversation_resolution=True,
+            ),
             private=False,
             securitymd=True,
-            require_pull_request=True,
-            required_linear_history=True,
-            allow_force_pushes=True,
-            default_branch_deletion=True,
-            status_checks=True,
-            approval_count=2,
             codeowners_exists=True,
-            require_code_owner_reviews=True,
             secret_scanning_enabled=True,
-            enforce_admins=True,
+            archived=False,
+            pushed_at=datetime.now(timezone.utc),
             delete_branch_on_merge=True,
-            conversation_resolution=True,
         ),
     }
 
@@ -52,20 +61,29 @@ class Test_Repository_Service:
         assert repository_service.repositories[1].name == "repo1"
         assert repository_service.repositories[1].full_name == "account-name/repo1"
         assert repository_service.repositories[1].private is False
-        assert repository_service.repositories[1].default_branch == "main"
+        assert repository_service.repositories[1].default_branch.name == "main"
         assert repository_service.repositories[1].securitymd
-        assert repository_service.repositories[1].required_linear_history
-        assert repository_service.repositories[1].require_pull_request
-        assert repository_service.repositories[1].allow_force_pushes
-        assert repository_service.repositories[1].default_branch_deletion
-        assert repository_service.repositories[1].status_checks
-        assert repository_service.repositories[1].enforce_admins
+        assert repository_service.repositories[1].default_branch.required_linear_history
+        assert repository_service.repositories[1].default_branch.require_pull_request
+        assert repository_service.repositories[1].default_branch.allow_force_pushes
+        assert repository_service.repositories[1].default_branch.branch_deletion
+        assert repository_service.repositories[1].default_branch.status_checks
+        assert repository_service.repositories[1].default_branch.enforce_admins
         assert repository_service.repositories[1].delete_branch_on_merge
-        assert repository_service.repositories[1].conversation_resolution
-        assert repository_service.repositories[1].approval_count == 2
+        assert repository_service.repositories[1].default_branch.conversation_resolution
+        assert repository_service.repositories[1].default_branch.approval_count == 2
         assert repository_service.repositories[1].codeowners_exists is True
-        assert repository_service.repositories[1].require_code_owner_reviews is True
+        assert (
+            repository_service.repositories[1].default_branch.require_code_owner_reviews
+            is True
+        )
         assert repository_service.repositories[1].secret_scanning_enabled is True
+        assert (
+            repository_service.repositories[1].default_branch.require_signed_commits
+            is True
+        )
+        assert repository_service.repositories[1].archived is False
+        assert repository_service.repositories[1].pushed_at is not None
 
 
 class Test_Repository_FileExists:

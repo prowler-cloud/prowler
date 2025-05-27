@@ -22,11 +22,9 @@ class repository_default_branch_requires_codeowners_review(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            if repo.require_code_owner_reviews is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
-                if repo.require_code_owner_reviews:
+            if repo.default_branch.require_code_owner_reviews is not None:
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
+                if repo.default_branch.require_code_owner_reviews:
                     report.status = "PASS"
                     report.status_extended = f"Repository {repo.name} requires code owner approval for changes to owned code."
                 else:

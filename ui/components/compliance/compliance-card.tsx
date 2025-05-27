@@ -3,7 +3,7 @@
 import { Card, CardBody, Progress } from "@nextui-org/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
@@ -34,6 +34,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
@@ -74,11 +75,20 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;
     const params = new URLSearchParams();
+
     params.set("complianceId", id);
     params.set("version", version);
     params.set("scanId", scanId);
 
     router.push(`${path}?${params.toString()}`);
+  };
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadComplianceCsv(scanId, complianceId, toast);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -124,11 +134,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
               <DownloadIconButton
                 paramId={complianceId}
-                onDownload={() =>
-                  downloadComplianceCsv(scanId, complianceId, toast)
-                }
+                onDownload={handleDownload}
                 textTooltip="Download compliance CSV report"
                 isDisabled={hasRegionFilter}
+                isDownloading={isDownloading}
               />
               {/* <small>{getScanChange()}</small> */}
             </div>

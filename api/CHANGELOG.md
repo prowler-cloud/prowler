@@ -4,8 +4,18 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.9.0] (Prowler UNRELEASED)
 
+### Added
+- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
+
 ### Changed
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+
+---
+
+## [v1.8.2] (Prowler v5.7.2)
+
+### Fixed
+- Fixed task lookup to use task_kwargs instead of task_args for scan report resolution. [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
 
 ---
 
