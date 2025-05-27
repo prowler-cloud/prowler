@@ -15,6 +15,7 @@ export const getUsers = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -23,6 +24,7 @@ export const getUsers = async ({
   const url = new URL(`${apiBaseUrl}/users?include=roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -182,9 +184,9 @@ export const deleteUser = async (formData: FormData) => {
   }
 };
 
-export const getProfileInfo = async () => {
+export const getUserInfo = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/users/me`);
+  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -204,5 +206,35 @@ export const getProfileInfo = async () => {
     // eslint-disable-next-line no-console
     console.error("Error fetching profile:", error);
     return undefined;
+  }
+};
+
+export const getUserMemberships = async (userId: string) => {
+  if (!userId) {
+    return { data: [] };
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/users/${userId}/memberships`);
+  url.searchParams.append("page[size]", "100");
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch user memberships: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching user memberships:", error);
+    return { data: [] };
   }
 };

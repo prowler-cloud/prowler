@@ -69,4 +69,4 @@ class Inspector(BaseModel):
     ecr_status: str
     lambda_status: str
     lambda_code_status: str
-    active_findings: bool = False
+    active_findings: bool = None

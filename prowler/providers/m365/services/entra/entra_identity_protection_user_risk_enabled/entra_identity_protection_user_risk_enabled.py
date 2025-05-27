@@ -9,13 +9,13 @@ from prowler.providers.m365.services.entra.entra_service import (
 
 
 class entra_identity_protection_user_risk_enabled(Check):
-    """Check if at least one Conditional Access policy is a Identity Protection user risk policy.
+    """Check if at least one Conditional Access policy is an Identity Protection user risk policy.
 
-    This check ensures that at least one Conditional Access policy is a Identity Protection user risk policy.
+    This check ensures that at least one Conditional Access policy is an Identity Protection user risk policy.
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """Execute the check to ensure that at least one Conditional Access policy is a Identity Protection user risk policy.
+        """Execute the check to ensure that at least one Conditional Access policy is an Identity Protection user risk policy.
 
         Returns:
             list[CheckReportM365]: A list containing the results of the check.
@@ -29,7 +29,7 @@ class entra_identity_protection_user_risk_enabled(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access Policy is an user risk based Identity Protection Policy."
+        report.status_extended = "No Conditional Access Policy is a user risk based Identity Protection Policy."
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
@@ -62,13 +62,13 @@ class entra_identity_protection_user_risk_enabled(Check):
                 )
                 if RiskLevel.HIGH not in policy.conditions.user_risk_levels:
                     report.status = "FAIL"
-                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy but does not protect against high risk potential account compromises."
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is a user risk based Identity Protection Policy but does not protect against high risk potential account compromises."
                 elif policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                     report.status = "FAIL"
-                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy and reports high risk potential account compromises, but does not protect against them."
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is a user risk based Identity Protection Policy and reports high risk potential account compromises, but does not protect against them."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy and does protect against high risk potential account compromises."
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is a user risk based Identity Protection Policy and does protect against high risk potential account compromises."
                     break
 
         findings.append(report)

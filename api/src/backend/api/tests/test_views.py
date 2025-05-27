@@ -2,17 +2,21 @@ import glob
 import io
 import json
 import os
+import tempfile
 from datetime import datetime, timedelta, timezone
-from unittest.mock import ANY, Mock, patch
+from pathlib import Path
+from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
 import pytest
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
 from django.urls import reverse
+from django_celery_results.models import TaskResult
 from rest_framework import status
 
+from api.compliance import get_compliance_frameworks
 from api.models import (
     ComplianceOverview,
     Integration,
@@ -915,6 +919,26 @@ class TestProviderViewSet:
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onMirosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
             ]
         ),
     )
@@ -982,6 +1006,51 @@ class TestProviderViewSet:
                     },
                     "invalid_choice",
                     "provider",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "https://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "thisisnotadomain",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "http://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"{'a' * 64}.domain.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"subdomain.{'a' * 64}.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
                 ),
             ]
         ),
@@ -1610,6 +1679,26 @@ class TestProviderSecretViewSet:
                     "refresh_token": "refresh-token",
                 },
             ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
+                    "service_account_key": {
+                        "type": "service_account",
+                        "project_id": "project-id",
+                        "private_key_id": "private-key-id",
+                        "private_key": "private-key",
+                        "client_email": "client-email",
+                        "client_id": "client-id",
+                        "auth_uri": "auth-uri",
+                        "token_uri": "token-uri",
+                        "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
+                        "client_x509_cert_url": "client-x509-cert-url",
+                        "universe_domain": "universe-domain",
+                    },
+                },
+            ),
             # Kubernetes with STATIC secret
             (
                 Provider.ProviderChoices.KUBERNETES.value,
@@ -2235,7 +2324,10 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2277,7 +2369,8 @@ class TestScanViewSet:
         scan.save()
 
         monkeypatch.setattr(
-            "api.v1.views.env", type("env", (), {"str": lambda self, key: bucket})()
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
         )
 
         class FakeS3Client:
@@ -2302,7 +2395,7 @@ class TestScanViewSet:
     ):
         """
         When output_location is a local path and glob.glob returns an empty list,
-        the view should return HTTP 404 with detail "The scan has no reports."
+        the view should return HTTP 404 with detail "The scan has no reports, or the report generation task has not started yet."
         """
         scan = scans_fixture[0]
         scan.output_location = "/tmp/nonexistent_report_pattern.zip"
@@ -2314,37 +2407,337 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == 404
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
-    def test_report_local_file(
-        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
-    ):
-        """
-        When output_location is a local file path, the view should read the file from disk
-        and return it with proper headers.
-        """
+    def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
-        file_content = b"local zip file content"
-        file_path = tmp_path / "report.zip"
-        file_path.write_bytes(file_content)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base_tmp = tmp_path / "report_local_file"
+            base_tmp.mkdir(parents=True, exist_ok=True)
 
-        scan.output_location = str(file_path)
+            file_content = b"local zip file content"
+            file_path = base_tmp / "report.zip"
+            file_path.write_bytes(file_content)
+
+            scan.output_location = str(file_path)
+            scan.state = StateChoices.COMPLETED
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+            )
+
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == 200
+            assert response.content == file_content
+            content_disposition = response.get("Content-Disposition")
+            assert content_disposition.startswith('attachment; filename="')
+            assert f'filename="{file_path.name}"' in content_disposition
+
+    def test_compliance_invalid_framework(self, authenticated_client, scans_fixture):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "invalid"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert resp.json()["errors"]["detail"] == "Compliance 'invalid' not found."
+
+    def test_compliance_executing(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.EXECUTING
+        scan.save()
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        scan.task = task
+        scan.save()
+        dummy = {"id": str(task.id), "state": StateChoices.EXECUTING}
+
+        monkeypatch.setattr(
+            "api.v1.views.TaskSerializer",
+            lambda *args, **kwargs: type("S", (), {"data": dummy}),
+        )
+
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_202_ACCEPTED
+        assert "Content-Location" in resp
+        assert dummy["id"] in resp["Content-Location"]
+
+    def test_compliance_no_output(self, authenticated_client, scans_fixture):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
+
+    def test_compliance_s3_no_credentials(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        key = "file.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
         scan.state = StateChoices.COMPLETED
         scan.save()
 
         monkeypatch.setattr(
-            glob,
-            "glob",
-            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+            "api.v1.views.get_s3_client",
+            lambda: (_ for _ in ()).throw(NoCredentialsError()),
         )
+
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
+        assert resp.json()["errors"]["detail"] == "There is a problem with credentials."
+
+    def test_compliance_s3_success(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        prefix = "path/scan.zip"
+        scan.output_location = f"s3://{bucket}/{prefix}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+        )
+
+        match_key = "path/compliance/mitre_attack_aws.csv"
+
+        class FakeS3Client:
+            def list_objects_v2(self, Bucket, Prefix):
+                return {"Contents": [{"Key": match_key}]}
+
+            def get_object(self, Bucket, Key):
+                return {"Body": io.BytesIO(b"ignored")}
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        framework = match_key.split("/")[-1].split(".")[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_200_OK
+        cd = resp["Content-Disposition"]
+        assert cd.startswith('attachment; filename="')
+        assert cd.endswith('filename="mitre_attack_aws.csv"')
+
+    def test_compliance_s3_not_found(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        scan.output_location = f"s3://{bucket}/x/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+        )
+
+        class FakeS3Client:
+            def list_objects_v2(self, Bucket, Prefix):
+                return {"Contents": []}
+
+            def get_object(self, Bucket, Key):
+                return {"Body": io.BytesIO(b"ignored")}
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "No compliance file found for name 'cis_1.4_aws'."
+        )
+
+    def test_compliance_local_file(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            comp_dir = base / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+            fname = comp_dir / "scan_cis.csv"
+            fname.write_bytes(b"ignored")
+
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(fname)] if p.endswith("*_cis_1.4_aws.csv") else [],
+            )
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_returns_none_if_task_not_executing(
+        self, mock_task_serializer, mock_task_get, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        mock_task_get.return_value = task
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.COMPLETED,
+        }
 
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
-        assert response.status_code == 200
-        assert response.content == file_content
-        content_disposition = response.get("Content-Disposition")
-        assert content_disposition.startswith('attachment; filename="')
-        assert f'filename="{file_path.name}"' in content_disposition
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_finds_task_using_kwargs(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task_result = TaskResult.objects.create(
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.EXECUTING,
+        }
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.data["id"] == str(task.id)
+
+    @patch("api.v1.views.get_s3_client")
+    @patch("api.v1.views.sentry_sdk.capture_exception")
+    def test_compliance_list_objects_client_error(
+        self,
+        mock_sentry_capture,
+        mock_get_s3_client,
+        authenticated_client,
+        scans_fixture,
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/path/to/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.list_objects_v2.side_effect = ClientError(
+            {"Error": {"Code": "InternalError"}}, "ListObjectsV2"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        framework = get_compliance_frameworks(scan.provider.provider)[0]
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+        assert (
+            response.json()["errors"]["detail"]
+            == "Unable to list compliance files in S3: encountered an AWS error."
+        )
+        mock_sentry_capture.assert_called()
+
+    @patch("api.v1.views.get_s3_client")
+    def test_report_s3_nosuchkey(
+        self, mock_get_s3_client, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/report.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.get_object.side_effect = ClientError(
+            {"Error": {"Code": "NoSuchKey"}}, "GetObject"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
+
+    @patch("api.v1.views.get_s3_client")
+    def test_report_s3_client_error_other(
+        self, mock_get_s3_client, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.output_location = "s3://test-bucket/report.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        fake_client = MagicMock()
+        fake_client.get_object.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied"}}, "GetObject"
+        )
+        mock_get_s3_client.return_value = fake_client
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "There is a problem with credentials."
+        )
 
 
 @pytest.mark.django_db
@@ -2837,7 +3230,9 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
+    def test_findings_metadata_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
+    ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
@@ -2860,14 +3255,14 @@ class TestFindingViewSet:
         )
         # assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_metadata_severity_retrieve(
-        self, authenticated_client, findings_fixture
+    def test_findings_metadata_resource_filter_retrieve(
+        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
             {
-                "filter[severity__in]": ["low", "medium"],
+                "filter[region]": "eu-west-1",
                 "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -2917,6 +3312,29 @@ class TestFindingViewSet:
                 }
             ]
         }
+
+    def test_findings_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # The latest scan only has one finding, in comparison with `GET /findings`
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["status"]
+            == latest_scan_finding.status
+        )
+
+    def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+
+        assert attributes["services"] == latest_scan_finding.resource_services
+        assert attributes["regions"] == latest_scan_finding.resource_regions
+        assert attributes["resource_types"] == latest_scan_finding.resource_types
 
 
 @pytest.mark.django_db
@@ -4555,9 +4973,8 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
-            resources_fixture
-        )
+        # Since we rely on completed scans, there are only 2 resources now
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture

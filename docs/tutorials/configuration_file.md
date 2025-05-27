@@ -107,7 +107,17 @@ The following list includes all the Microsoft 365 checks with configurable varia
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
 | `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
+| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
 
+
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
 ## Config YAML File Structure
 
@@ -521,5 +531,14 @@ m365:
       #"allow_google_drive",
       #"allow_share_file",
     ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180
+
 
 ```

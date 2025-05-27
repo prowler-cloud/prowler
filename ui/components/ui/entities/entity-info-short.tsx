@@ -1,10 +1,13 @@
 import React from "react";
 
+import { IdIcon } from "@/components/icons";
+import { ProviderType } from "@/types";
+
 import { getProviderLogo } from "./get-provider-logo";
-import { SnippetId } from "./snippet-id";
+import { SnippetChip } from "./snippet-chip";
 
 interface EntityInfoProps {
-  cloudProvider: "aws" | "azure" | "gcp" | "kubernetes";
+  cloudProvider: ProviderType;
   entityAlias?: string;
   entityId?: string;
   hideCopyButton?: boolean;
@@ -24,9 +27,10 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
           {entityAlias && (
             <span className="text-xs text-default-500">{entityAlias}</span>
           )}
-          <SnippetId
-            entityId={entityId ?? ""}
+          <SnippetChip
+            value={entityId ?? ""}
             hideCopyButton={hideCopyButton}
+            icon={<IdIcon size={16} />}
           />
         </div>
       </div>

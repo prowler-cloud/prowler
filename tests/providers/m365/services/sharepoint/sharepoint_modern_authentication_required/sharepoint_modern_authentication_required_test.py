@@ -1,3 +1,4 @@
+import uuid
 from unittest import mock
 
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -35,6 +36,7 @@ class Test_sharepoint_modern_authentication_required:
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
                 legacyAuth=False,
+                allowedDomainGuidsForSyncApp=[uuid.uuid4()],
             )
             sharepoint_client.tenant_domain = DOMAIN
 
@@ -81,6 +83,7 @@ class Test_sharepoint_modern_authentication_required:
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
                 legacyAuth=True,
+                allowedDomainGuidsForSyncApp=[uuid.uuid4()],
             )
             sharepoint_client.tenant_domain = DOMAIN
 

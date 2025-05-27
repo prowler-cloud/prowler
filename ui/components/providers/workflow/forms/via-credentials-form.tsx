@@ -10,8 +10,8 @@ import * as z from "zod";
 import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
-import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
+import { ProviderType } from "@/types";
 import {
   addCredentialsFormSchema,
   ApiError,
@@ -85,7 +85,7 @@ export const ViaCredentialsForm = ({
                 client_secret: "",
                 tenant_id: "",
                 user: "",
-                encrypted_password: "",
+                password: "",
               }
             : providerType === "gcp"
               ? {
@@ -152,8 +152,8 @@ export const ViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
-          case "/data/attributes/secret/encrypted_password":
-            form.setError("encrypted_password", {
+          case "/data/attributes/secret/password":
+            form.setError("password", {
               type: "server",
               message: errorMessage,
             });

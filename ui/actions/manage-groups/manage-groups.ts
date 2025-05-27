@@ -16,11 +16,13 @@ export const getProviderGroups = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }: {
   page?: number;
   query?: string;
   sort?: string;
   filters?: Record<string, string | number>;
+  pageSize?: number;
 }): Promise<ProviderGroupsResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -29,6 +31,7 @@ export const getProviderGroups = async ({
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 

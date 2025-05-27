@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { CustomFilterIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
 
 export interface DataTableFilterCustomProps {
@@ -17,30 +17,35 @@ export const DataTableFilterCustom = ({
   filters,
   defaultOpen = false,
 }: DataTableFilterCustomProps) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { updateFilter } = useUrlFilters();
   const [showFilters, setShowFilters] = useState(defaultOpen);
+
+  // Sort filters by index property, with fallback to original order for filters without index
+  const sortedFilters = useMemo(() => {
+    return [...filters].sort((a, b) => {
+      // If both have index, sort by index
+      if (a.index !== undefined && b.index !== undefined) {
+        return a.index - b.index;
+      }
+      // If only one has index, prioritize the one with index
+      if (a.index !== undefined) return -1;
+      if (b.index !== undefined) return 1;
+      // If neither has index, maintain original order
+      return 0;
+    });
+  }, [filters]);
 
   const pushDropdownFilter = useCallback(
     (key: string, values: string[]) => {
-      const params = new URLSearchParams(searchParams);
-      const filterKey = `filter[${key}]`;
-
-      if (values.length === 0) {
-        params.delete(filterKey);
-      } else {
-        params.set(filterKey, values.join(","));
-      }
-
-      router.push(`?${params.toString()}`);
+      updateFilter(key, values.length > 0 ? values : null);
     },
-    [router, searchParams],
+    [updateFilter],
   );
 
   return (
     <div
       className={`flex ${
-        filters.length > 4 ? "flex-col" : "flex-col md:flex-row"
+        sortedFilters.length > 4 ? "flex-col" : "flex-col md:flex-row"
       } gap-4`}
     >
       <CustomButton
@@ -66,12 +71,12 @@ export const DataTableFilterCustom = ({
       >
         <div
           className={`grid gap-4 ${
-            filters.length > 4
+            sortedFilters.length >= 4
               ? "grid-cols-1 md:grid-cols-4"
               : "grid-cols-1 md:grid-cols-3"
           }`}
         >
-          {filters.map((filter) => (
+          {sortedFilters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}
               filter={{

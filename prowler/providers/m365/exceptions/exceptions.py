@@ -94,13 +94,25 @@ class M365BaseException(ProwlerException):
             "message": "Tenant Id is required for Microsoft 365 static credentials. Make sure you are using the correct credentials.",
             "remediation": "Check the Microsoft 365 Tenant ID and ensure it is properly set up.",
         },
-        (6022, "M365MissingEnvironmentUserCredentialsError"): {
+        (6022, "M365MissingEnvironmentCredentialsError"): {
             "message": "User and Password environment variables are needed to use Credentials authentication method.",
             "remediation": "Ensure your environment variables are properly set up.",
         },
-        (6023, "M365EnvironmentUserCredentialsError"): {
-            "message": "User or Password environment variables are not correct.",
-            "remediation": "Ensure you are using the right credentials.",
+        (6023, "M365UserCredentialsError"): {
+            "message": "The provided User credentials are not valid.",
+            "remediation": "Check the User credentials and ensure they are valid.",
+        },
+        (6024, "M365NotValidUserError"): {
+            "message": "The provided User is not valid.",
+            "remediation": "Check the User and ensure it is a valid user.",
+        },
+        (6025, "M365NotValidPasswordError"): {
+            "message": "The provided Password is not valid.",
+            "remediation": "Check the Password and ensure it is a valid password.",
+        },
+        (6026, "M365UserNotBelongingToTenantError"): {
+            "message": "The provided User does not belong to the specified tenant.",
+            "remediation": "Check the User email domain and ensure it belongs to the specified tenant.",
         },
     }
 
@@ -279,15 +291,36 @@ class M365NotTenantIdButClientIdAndClientSecretError(M365CredentialsError):
         )
 
 
-class M365MissingEnvironmentUserCredentialsError(M365CredentialsError):
+class M365MissingEnvironmentCredentialsError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6022, file=file, original_exception=original_exception, message=message
         )
 
 
-class M365EnvironmentUserCredentialsError(M365CredentialsError):
+class M365UserCredentialsError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6023, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365NotValidUserError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6024, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365NotValidPasswordError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6025, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365UserNotBelongingToTenantError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6026, file=file, original_exception=original_exception, message=message
         )

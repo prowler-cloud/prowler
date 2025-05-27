@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#9-use-cloud-native-accounts-for-microsoft-entra-roles"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "e3"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -15,6 +15,7 @@ export const getRoles = async ({
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -23,6 +24,7 @@ export const getRoles = async ({
   const url = new URL(`${apiBaseUrl}/roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -68,6 +70,38 @@ export const getRoleInfoById = async (roleId: string) => {
     return {
       error: getErrorMessage(error),
     };
+  }
+};
+
+export const getRolesByIds = async (roleIds: string[]) => {
+  if (!roleIds || roleIds.length === 0) {
+    return { data: [] };
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/roles`);
+
+  // Add filter for role IDs
+  url.searchParams.append("filter[id__in]", roleIds.join(","));
+  // Request all results on a single page with reasonable size
+  url.searchParams.append("page[size]", "100");
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch roles: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching roles by IDs:", error);
+    return { data: [] };
   }
 };
 

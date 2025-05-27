@@ -1,20 +1,20 @@
-# Getting Started with GCP on Prowler Cloud
+# Getting Started with GCP on Prowler Cloud/App
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding GCP" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
-Set up your GCP project to enable security scanning using Prowler Cloud.
+Set up your GCP project to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
 To configure your GCP project, you’ll need:
 
 1. Get the `Project ID`
-2. Access to Prowler Cloud
+2. Access to Prowler Cloud/App
 3. Configure authentication in GCP:
 
     3.1 Retrieve credentials from Google Cloud
 
-4. Add the credentials to Prowler Cloud
+4. Add the credentials to Prowler Cloud/App
 
 ---
 
@@ -27,9 +27,9 @@ To configure your GCP project, you’ll need:
 
 ---
 
-## Step 2: Access Prowler Cloud
+## Step 2: Access Prowler Cloud/App
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/)
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
@@ -86,7 +86,7 @@ To configure your GCP project, you’ll need:
 
     ![Get the FileName](./img/get-temp-file-credentials.png)
 
-8. Extract the following values for Prowler Cloud:
+8. Extract the following values for Prowler Cloud/App:
 
     - `client_id`
     - `client_secret`
@@ -96,9 +96,9 @@ To configure your GCP project, you’ll need:
 
 ---
 
-## Step 4: Add Credentials to Prowler Cloud
+## Step 4: Add Credentials to Prowler Cloud/App
 
-1. Go back to Prowler Cloud and enter the required credentials, then click `Next`
+1. Go back to Prowler Cloud/App and enter the required credentials, then click `Next`
 
     ![Enter the Credentials](./img/enter-credentials-prowler-cloud.png)
 

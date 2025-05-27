@@ -1,7 +1,14 @@
+import os
+import platform
+
 import msal
 
+from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
-from prowler.providers.m365.models import M365Credentials
+from prowler.providers.m365.exceptions.exceptions import (
+    M365UserNotBelongingToTenantError,
+)
+from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
 class M365PowerShell(PowerShellSession):
@@ -21,13 +28,14 @@ class M365PowerShell(PowerShellSession):
 
     Attributes:
         credentials (M365Credentials): The Microsoft 365 credentials used for authentication.
+        required_modules (list): List of required PowerShell modules for M365 operations.
 
     Note:
         This class requires the Microsoft Teams and Exchange Online PowerShell modules
         to be installed and available in the PowerShell environment.
     """
 
-    def __init__(self, credentials: M365Credentials):
+    def __init__(self, credentials: M365Credentials, identity: M365IdentityInfo):
         """
         Initialize a Microsoft 365 PowerShell session.
 
@@ -39,6 +47,7 @@ class M365PowerShell(PowerShellSession):
                 for authentication.
         """
         super().__init__()
+        self.tenant_identity = identity
         self.init_credential(credentials)
 
     def init_credential(self, credentials: M365Credentials) -> None:
@@ -56,16 +65,58 @@ class M365PowerShell(PowerShellSession):
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
+
+        credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
+
         # Sanitize user and password
-        user = self.sanitize(credentials.user)
-        passwd = self.sanitize(credentials.passwd)
+        sanitized_user = self.sanitize(credentials.user)
+        sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
 
         # Securely convert encrypted password to SecureString
-        self.execute(f'$user = "{user}"')
-        self.execute(f'$secureString = "{passwd}" | ConvertTo-SecureString')
+        self.execute(f'$user = "{sanitized_user}"')
+        self.execute(
+            f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
+        )
         self.execute(
             "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
         )
+
+    def encrypt_password(self, password: str) -> str:
+        """
+        Encrypts a password using Windows CryptProtectData on Windows systems
+        or UTF-16LE encoding on other systems.
+
+        Args:
+        password (str): The password to encrypt
+
+        Returns:
+        str: The encrypted password in hexadecimal format
+
+        Raises:
+        ValueError: If password is None or empty
+        """
+        try:
+            if platform.system() == "Windows":
+                import win32crypt
+
+                encrypted_blob = win32crypt.CryptProtectData(
+                    password.encode("utf-16le"), None, None, None, None, 0
+                )
+
+                encrypted_bytes = encrypted_blob
+                if isinstance(encrypted_blob, tuple):
+                    encrypted_bytes = encrypted_blob[1]
+                elif hasattr(encrypted_blob, "data"):
+                    encrypted_bytes = encrypted_blob.data
+
+                return encrypted_bytes.hex()
+
+            else:
+                return password.encode("utf-16le").hex()
+        except Exception as error:
+            raise Exception(
+                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
+            )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
@@ -79,16 +130,22 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         self.execute(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString\n'
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
         )
         self.execute(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
         )
-        self.process.stdin.write(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"\n'
-        )
-        self.process.stdin.write(f"Write-Output '{self.END}'\n")
-        decrypted_password = self.read_output()
+
+        # Validate user belongs to tenant
+        user_domain = credentials.user.split("@")[1]
+        if not any(
+            user_domain.endswith(domain)
+            for domain in self.tenant_identity.tenant_domains
+        ):
+            raise M365UserNotBelongingToTenantError(
+                file=os.path.basename(__file__),
+                message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
+            )
 
         app = msal.ConfidentialClientApplication(
             client_id=credentials.client_id,
@@ -96,13 +153,20 @@ class M365PowerShell(PowerShellSession):
             authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
         )
 
+        # Validate credentials
         result = app.acquire_token_by_username_password(
             username=credentials.user,
-            password=decrypted_password,  # Needs to be in plain text
+            password=credentials.passwd,
             scopes=["https://graph.microsoft.com/.default"],
         )
 
-        return "access_token" in result
+        if result is None:
+            return False
+
+        if "access_token" not in result:
+            return False
+
+        return True
 
     def connect_microsoft_teams(self) -> dict:
         """
@@ -135,7 +199,9 @@ class M365PowerShell(PowerShellSession):
                 "AllowGoogleDrive": true
             }
         """
-        return self.execute("Get-CsTeamsClientConfiguration | ConvertTo-Json")
+        return self.execute(
+            "Get-CsTeamsClientConfiguration | ConvertTo-Json", json_parse=True
+        )
 
     def get_global_meeting_policy(self) -> dict:
         """
@@ -153,7 +219,28 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json"
+            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
+        )
+
+    def get_global_messaging_policy(self) -> dict:
+        """
+        Get Teams Global Messaging Policy.
+
+        Retrieves the current Microsoft Teams global messaging policy settings.
+
+        Returns:
+            dict: Teams global messaging policy settings in JSON format.
+
+        Example:
+            >>> get_global_meeting_policy()
+            {
+                "AllowAnonymousUsersToJoinMeeting": true
+            }
+        """
+        return self.execute(
+            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_user_settings(self) -> dict:
@@ -171,7 +258,9 @@ class M365PowerShell(PowerShellSession):
                 "AllowExternalAccess": true
             }
         """
-        return self.execute("Get-CsTenantFederationConfiguration | ConvertTo-Json")
+        return self.execute(
+            "Get-CsTenantFederationConfiguration | ConvertTo-Json", json_parse=True
+        )
 
     def connect_exchange_online(self) -> dict:
         """
@@ -203,7 +292,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json"
+            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_malware_filter_policy(self) -> dict:
@@ -222,7 +312,25 @@ class M365PowerShell(PowerShellSession):
                 "Identity": "Default"
             }
         """
-        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json")
+        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json", json_parse=True)
+
+    def get_malware_filter_rule(self) -> dict:
+        """
+        Get Defender Malware Filter Rule.
+
+        Retrieves the current Defender anti-malware filter rule settings.
+
+        Returns:
+            dict: Malware filter rule settings in JSON format.
+
+        Example:
+            >>> get_malware_filter_rule()
+            {
+                "Name": "Default",
+                "State": "Enabled"
+            }
+        """
+        return self.execute("Get-MalwareFilterRule | ConvertTo-Json", json_parse=True)
 
     def get_outbound_spam_filter_policy(self) -> dict:
         """
@@ -242,7 +350,9 @@ class M365PowerShell(PowerShellSession):
                 "NotifyOutboundSpamRecipients": []
             }
         """
-        return self.execute("Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json")
+        return self.execute(
+            "Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json", json_parse=True
+        )
 
     def get_outbound_spam_filter_rule(self) -> dict:
         """
@@ -259,7 +369,9 @@ class M365PowerShell(PowerShellSession):
                 "State": "Enabled"
             }
         """
-        return self.execute("Get-HostedOutboundSpamFilterRule | ConvertTo-Json")
+        return self.execute(
+            "Get-HostedOutboundSpamFilterRule | ConvertTo-Json", json_parse=True
+        )
 
     def get_antiphishing_policy(self) -> dict:
         """
@@ -284,7 +396,7 @@ class M365PowerShell(PowerShellSession):
                 "IsDefault": false
             }
         """
-        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json")
+        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json", json_parse=True)
 
     def get_antiphishing_rules(self) -> dict:
         """
@@ -302,7 +414,7 @@ class M365PowerShell(PowerShellSession):
                 "State": Enabled,
             }
         """
-        return self.execute("Get-AntiPhishRule | ConvertTo-Json")
+        return self.execute("Get-AntiPhishRule | ConvertTo-Json", json_parse=True)
 
     def get_organization_config(self) -> dict:
         """
@@ -321,7 +433,7 @@ class M365PowerShell(PowerShellSession):
                 "AuditDisabled": false
             }
         """
-        return self.execute("Get-OrganizationConfig | ConvertTo-Json")
+        return self.execute("Get-OrganizationConfig | ConvertTo-Json", json_parse=True)
 
     def get_mailbox_audit_config(self) -> dict:
         """
@@ -340,7 +452,64 @@ class M365PowerShell(PowerShellSession):
                 "AuditBypassEnabled": false
             }
         """
-        return self.execute("Get-MailboxAuditBypassAssociation | ConvertTo-Json")
+        return self.execute(
+            "Get-MailboxAuditBypassAssociation | ConvertTo-Json", json_parse=True
+        )
+
+    def get_mailbox_policy(self) -> dict:
+        """
+        Get Mailbox Policy.
+
+        Retrieves the current mailbox policy settings for Exchange Online.
+
+        Returns:
+            dict: Mailbox policy settings in JSON format.
+
+        Example:
+            >>> get_mailbox_policy()
+            {
+                "Id": "OwaMailboxPolicy-Default",
+                "AdditionalStorageProvidersAvailable": True
+            }
+        """
+        return self.execute("Get-OwaMailboxPolicy | ConvertTo-Json", json_parse=True)
+
+    def get_external_mail_config(self) -> dict:
+        """
+        Get Exchange Online External Mail Configuration.
+
+        Retrieves the current external mail configuration settings for Exchange Online.
+
+        Returns:
+            dict: External mail configuration settings in JSON format.
+
+        Example:
+            >>> get_external_mail_config()
+            {
+                "Identity": "MyExternalMail",
+                "ExternalMailTagEnabled": true
+            }
+        """
+        return self.execute("Get-ExternalInOutlook | ConvertTo-Json", json_parse=True)
+
+    def get_transport_rules(self) -> dict:
+        """
+        Get Exchange Online Transport Rules.
+
+        Retrieves the current transport rules configured in Exchange Online.
+
+        Returns:
+            dict: Transport rules in JSON format.
+
+        Example:
+            >>> get_transport_rules()
+            {
+                "Name": "Rule1",
+                "SetSCL": -1,
+                "SenderDomainIs": ["example.com"]
+            }
+        """
+        return self.execute("Get-TransportRule | ConvertTo-Json", json_parse=True)
 
     def get_connection_filter_policy(self) -> dict:
         """
@@ -359,7 +528,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json"
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json",
+            json_parse=True,
         )
 
     def get_dkim_config(self) -> dict:
@@ -378,4 +548,259 @@ class M365PowerShell(PowerShellSession):
                 "Enabled": true
             }
         """
-        return self.execute("Get-DkimSigningConfig | ConvertTo-Json")
+        return self.execute("Get-DkimSigningConfig | ConvertTo-Json", json_parse=True)
+
+    def get_inbound_spam_filter_policy(self) -> dict:
+        """
+        Get Inbound Spam Filter Policy.
+
+        Retrieves the current inbound spam filter policy settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter policy settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_policy()
+            {
+                "Identity": "Default",
+                "AllowedSenderDomains": "[]"
+            }
+        """
+        return self.execute(
+            "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
+        )
+
+    def get_inbound_spam_filter_rule(self) -> dict:
+        """
+        Get Inbound Spam Filter Rule.
+
+        Retrieves the current inbound spam filter rule settings for Exchange Online.
+
+        Returns:
+            dict: Inbound spam filter rule settings in JSON format.
+
+        Example:
+            >>> get_inbound_spam_filter_rule()
+            {
+                "Name": "Rule1",
+                "State": "Enabled"
+            }
+        """
+        return self.execute(
+            "Get-HostedContentFilterRule | ConvertTo-Json", json_parse=True
+        )
+
+    def get_report_submission_policy(self) -> dict:
+        """
+        Get Exchange Online Report Submission Policy.
+
+        Retrieves the current Exchange Online report submission policy settings.
+
+        Returns:
+            dict: Report submission policy settings in JSON format.
+
+        Example:
+            >>> get_report_submission_policy()
+            {
+                "Id": "DefaultReportSubmissionPolicy",
+                "Identity": "DefaultReportSubmissionPolicy",
+                "Name": "DefaultReportSubmissionPolicy",
+                "ReportChatMessageEnabled": true,
+                "ReportChatMessageToCustomizedAddressEnabled": true,
+                "ReportJunkAddresses": [],
+                "ReportJunkToCustomizedAddress": true,
+                "ReportNotJunkAddresses": [],
+                "ReportNotJunkToCustomizedAddress": true,
+                "ReportPhishAddresses": [],
+                "ReportPhishToCustomizedAddress": true,
+                "ThirdPartyReportAddresses": [],
+                ...
+            }
+        """
+        return self.execute(
+            "Get-ReportSubmissionPolicy | ConvertTo-Json", json_parse=True
+        )
+
+    def get_role_assignment_policies(self) -> dict:
+        """
+        Get Role Assignment Policies.
+
+        Retrieves the current role assignment policies for Exchange Online.
+
+        Returns:
+            dict: Role assignment policies in JSON format.
+
+        Example:
+            >>> get_role_assignment_policies()
+            {
+                "Name": "Default Role Assignment Policy",
+                "Guid": "12345678-1234-1234-1234-123456789012",
+                "AssignedRoles": ["MyRole"]
+            }
+        """
+        return self.execute(
+            "Get-RoleAssignmentPolicy | ConvertTo-Json", json_parse=True
+        )
+
+    def get_mailbox_audit_properties(self) -> dict:
+        """
+        Get Mailbox Properties.
+
+        Retrieves the properties of all mailboxes in the organization in Exchange Online.
+
+        Args:
+            mailbox (str): The email address or identifier of the mailbox.
+
+        Returns:
+            dict: Mailbox properties in JSON format.
+
+        Example:
+            >>> get_mailbox_properties()
+            {
+                "UserPrincipalName": "User1",
+                "AuditEnabled": "false"
+                "AuditAdmin": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditDelegate": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "SendAs",
+                    "SendOnBehalf",
+                    "Create",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "ApplyRecord",
+                    "MailItemsAccessed"
+                ],
+                "AuditOwner": [
+                    "Update",
+                    "MoveToDeletedItems",
+                    "SoftDelete",
+                    "HardDelete",
+                    "UpdateFolderPermissions",
+                    "UpdateInboxRules",
+                    "UpdateCalendarDelegation",
+                    "ApplyRecord",
+                    "MailItemsAccessed",
+                    "Send"
+                ],
+                "AuditLogAgeLimit": "90",
+                "Identity": "User1",
+            }
+        """
+        return self.execute(
+            "Get-EXOMailbox -PropertySets Audit -ResultSize Unlimited | ConvertTo-Json",
+            json_parse=True,
+        )
+
+    def get_transport_config(self) -> dict:
+        """
+        Get Exchange Online Transport Configuration.
+
+        Retrieves the current transport configuration settings for Exchange Online.
+
+        Returns:
+            dict: Transport configuration settings in JSON format.
+
+        Example:
+            >>> get_transport_config()
+            {
+                "SmtpClientAuthenticationDisabled": True,
+            }
+        """
+        return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
+    def get_sharing_policy(self) -> dict:
+        """
+        Get Exchange Online Sharing Policy.
+
+        Retrieves the current sharing policy settings for Exchange Online.
+
+        Returns:
+            dict: Sharing policy settings in JSON format.
+
+        Example:
+            >>> get_sharing_policy()
+            {
+                "Identity": "Default",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
+
+
+# This function is used to install the required M365 PowerShell modules in Docker containers
+def initialize_m365_powershell_modules():
+    """
+    Initialize required PowerShell modules.
+
+    Checks if the required PowerShell modules are installed and installs them if necessary.
+    This method ensures that all required modules for M365 operations are available.
+
+    Returns:
+        bool: True if all modules were successfully initialized, False otherwise
+    """
+
+    REQUIRED_MODULES = [
+        "ExchangeOnlineManagement",
+        "MicrosoftTeams",
+    ]
+
+    pwsh = PowerShellSession()
+    try:
+        for module in REQUIRED_MODULES:
+            try:
+                # Check if module is already installed
+                result = pwsh.execute(
+                    f"Get-Module -ListAvailable -Name {module}", timeout=5
+                )
+
+                # Install module if not installed
+                if not result:
+                    install_result = pwsh.execute(
+                        f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        timeout=30,
+                    )
+                    if install_result:
+                        logger.warning(
+                            f"Unexpected output while installing module {module}: {install_result}"
+                        )
+                    else:
+                        logger.info(f"Successfully installed module {module}")
+
+                    # Import module
+                    pwsh.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
+
+            except Exception as error:
+                logger.error(f"Failed to initialize module {module}: {str(error)}")
+                return False
+
+        return True
+    finally:
+        pwsh.close()
+
+
+def main():
+    if initialize_m365_powershell_modules():
+        logger.info("M365 PowerShell modules initialized successfully")
+    else:
+        logger.error("Failed to initialize M365 PowerShell modules")
+
+
+if __name__ == "__main__":
+    main()

@@ -5,6 +5,7 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   KS8ProviderBadge,
+  M365ProviderBadge,
 } from "../icons/providers-badge";
 
 export const CustomProviderInputAWS = () => {
@@ -21,6 +22,15 @@ export const CustomProviderInputAzure = () => {
     <div className="flex items-center gap-x-2">
       <AzureProviderBadge width={25} height={25} />
       <p className="text-sm">Azure</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputM365 = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <M365ProviderBadge width={25} height={25} />
+      <p className="text-sm">Microsoft 365</p>
     </div>
   );
 };

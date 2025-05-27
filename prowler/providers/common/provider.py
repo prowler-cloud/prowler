@@ -207,6 +207,7 @@ class Provider(ABC):
                         kubeconfig_file=arguments.kubeconfig_file,
                         context=arguments.context,
                         namespace=arguments.namespace,
+                        cluster_name=arguments.cluster_name,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
@@ -221,6 +222,7 @@ class Provider(ABC):
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         tenant_id=arguments.tenant_id,
+                        init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
                     )
                 elif "nhn" in provider_class_name.lower():
@@ -231,6 +233,15 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                    )
+                elif "github" in provider_class_name.lower():
+                    provider_class(
+                        personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
+                        github_app_key=arguments.github_app_key,
+                        github_app_id=arguments.github_app_id,
+                        mutelist_path=arguments.mutelist_file,
+                        config_path=arguments.config_file,
                     )
 
         except TypeError as error:

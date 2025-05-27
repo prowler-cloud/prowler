@@ -54,7 +54,7 @@ export const UpdateViaRoleForm = ({
         aws_secret_access_key: "",
         aws_session_token: "",
         role_session_name: "",
-        session_duration: 3600,
+        session_duration: "3600",
       }),
     },
   });

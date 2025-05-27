@@ -58,34 +58,109 @@ class TestPowerShellSession:
 
     @patch("subprocess.Popen")
     def test_execute(self, mock_popen):
+        """Test the execute method with various scenarios:
+        - Normal command execution
+        - JSON parsing enabled
+        - Timeout handling
+        - Error handling
+        """
+        # Setup
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         session = PowerShellSession()
-        command = "Get-Command"
-        expected_output = '{"Name": "Get-Command"}'
 
-        with patch.object(session, "read_output", return_value=expected_output):
-            result = session.execute(command)
-
-            mock_process.stdin.write.assert_any_call(f"{command}\n")
+        # Test 1: Normal command execution
+        mock_process.stdout.readline.side_effect = ["Hello World\n", f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            result = session.execute("Get-Command")
+            assert result == "Hello World"
+            mock_process.stdin.write.assert_any_call("Get-Command\n")
             mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
-            assert result == {"Name": "Get-Command"}
+            mock_process.stdin.write.assert_any_call(f"Write-Error '{session.END}'\n")
+
+        # Test 2: JSON parsing enabled
+        mock_process.stdout.readline.side_effect = [
+            '{"key": "value"}\n',
+            f"{session.END}\n",
+        ]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            with patch.object(
+                session, "json_parse_output", return_value={"key": "value"}
+            ) as mock_json_parse:
+                result = session.execute("Get-Command", json_parse=True)
+                assert result == {"key": "value"}
+                mock_json_parse.assert_called_once_with('{"key": "value"}')
+
+        # Test 3: Timeout handling
+        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.execute("Get-Command", timeout=0.1)
+        assert result == ""
+
+        # Test 4: Error handling
+        mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = [
+            "Write-Error: This is an error\n",
+            f"Write-Error: {session.END}\n",
+        ]
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            with patch("prowler.lib.logger.logger.error") as mock_error:
+                result = session.execute("Get-Command")
+                assert result == ""
+                mock_error.assert_called_once_with(
+                    "PowerShell error output: Write-Error: This is an error"
+                )
+
         session.close()
 
     @patch("subprocess.Popen")
     def test_read_output(self, mock_popen):
+        """Test the read_output method with various scenarios:
+        - Normal stdout output
+        - Error in stderr
+        - Timeout in stdout
+        - Empty output
+        """
+        # Setup
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         session = PowerShellSession()
 
-        # Test normal output
-        with patch.object(session, "read_output", return_value="test@example.com"):
-            assert session.read_output() == "test@example.com"
+        # Test 1: Normal stdout output
+        mock_process.stdout.readline.side_effect = ["Hello World\n", f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            result = session.read_output()
+            assert result == "Hello World"
 
-        # Test timeout
-        mock_process.stdout.readline.return_value = "test output\n"
-        with patch.object(session, "remove_ansi", return_value="test output"):
-            assert session.read_output(timeout=0.1, default="") == ""
+        # Test 2: Error in stderr
+        mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
+        mock_process.stderr.readline.side_effect = [
+            "Write-Error: This is an error\n",
+            f"Write-Error: {session.END}\n",
+        ]
+        with patch.object(session, "remove_ansi", side_effect=lambda x: x):
+            with patch("prowler.lib.logger.logger.error") as mock_error:
+                result = session.read_output()
+                assert result == ""
+                mock_error.assert_called_once_with(
+                    "PowerShell error output: Write-Error: This is an error"
+                )
+
+        # Test 3: Timeout in stdout
+        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output(timeout=0.1, default="timeout")
+        assert result == "timeout"
+
+        # Test 4: Empty output
+        mock_process.stdout.readline.side_effect = [f"{session.END}\n"]
+        mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
+        result = session.read_output()
+        assert result == ""
+
         session.close()
 
     @patch("subprocess.Popen")
@@ -110,6 +185,53 @@ class TestPowerShellSession:
         for input_str, expected in test_cases:
             result = session.json_parse_output(input_str)
             assert result == expected
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_json_parse_output_logging(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test warning for non-JSON output
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.json_parse_output("some text without json")
+            assert result == {}
+            mock_error.assert_called_once_with(
+                "Unexpected PowerShell output: some text without json\n"
+            )
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_json_parse_output_with_text_around_json(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test JSON extraction from text with surrounding content
+        result = session.json_parse_output('some text {"key": "value"} more text')
+        assert result == {"key": "value"}
+
+        result = session.json_parse_output('prefix [{"key": "value"}] suffix')
+        assert result == [{"key": "value"}]
+
+        # Test non-JSON text returns empty dict
+        result = session.json_parse_output("just some text")
+        assert result == {}
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_json_parse_output_empty(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        session = PowerShellSession()
+
+        # Test empty string
+        result = session.json_parse_output("")
+        assert result == {}
+
         session.close()
 
     @patch("subprocess.Popen")

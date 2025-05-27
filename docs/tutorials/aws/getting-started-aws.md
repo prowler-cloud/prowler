@@ -1,14 +1,14 @@
-# Getting Started with AWS on Prowler Cloud
+# Getting Started with AWS on Prowler Cloud/App
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/RPgIWOCERzY" title="Prowler Cloud Onboarding AWS" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
-Set up your AWS account to enable security scanning using Prowler Cloud.
+Set up your AWS account to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
 To configure your AWS account, you’ll need:
 
-1. Access to Prowler Cloud
+1. Access to Prowler Cloud/App
 2. Properly configured AWS credentials (either static or via an assumed IAM role)
 
 ---
@@ -22,9 +22,9 @@ To configure your AWS account, you’ll need:
 
 ---
 
-## Step 2: Access Prowler Cloud
+## Step 2: Access Prowler Cloud/App
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Go to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
@@ -117,7 +117,7 @@ This method grants permanent access and is the recommended setup for production 
         terraform apply
         ```
 
-    2. During `plan` and `apply`, you will be prompted for the **External ID**, which is available in the Prowler Cloud UI:
+    2. During `plan` and `apply`, you will be prompted for the **External ID**, which is available in the Prowler Cloud/App UI:
 
         ![Get External ID](./img/get-external-id-prowler-cloud.png)
 
@@ -135,7 +135,7 @@ This method grants permanent access and is the recommended setup for production 
 
     ![New Role Info](./img/get-role-arn.png)
 
-10. Paste the ARN into the corresponding field in Prowler Cloud
+10. Paste the ARN into the corresponding field in Prowler Cloud/App
 
     ![Input the Role ARN](./img/paste-role-arn-prowler.png)
 
@@ -171,7 +171,7 @@ You can also configure your AWS account using static credentials (not recommende
 
         ![CloudShell Output](./img/cloudshell-output.png)
 
-    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
+    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud/App setup screen.
 
 === "Short term credentials (Recommended)"
 
@@ -203,9 +203,9 @@ You can also configure your AWS account using static credentials (not recommende
             }
             ```
 
-    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud setup screen.
+    > ⚠️ Save these credentials securely and paste them into the Prowler Cloud/App setup screen.
 
-Complete the form in Prowler Cloud and click `Next`
+Complete the form in Prowler Cloud/App and click `Next`
 
 ![Filled credentials page](./img/prowler-cloud-credentials-next.png)
 
