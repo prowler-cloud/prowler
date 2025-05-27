@@ -302,7 +302,7 @@ def create_index_on_partitions(
     columns: str,
     method: str = "BTREE",
     where: str = "",
-    all_partitions: bool = False,
+    all_partitions: bool = True,
 ):
     """
     Create an index on existing partitions of `parent_table`.
