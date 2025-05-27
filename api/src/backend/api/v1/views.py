@@ -117,12 +117,10 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import PaginateByPkMixin
 from api.v1.serializers import (
-    ComplianceOverviewFullSerializer,
+    ComplianceOverviewAttributesSerializer,
+    ComplianceOverviewDetailSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
-    ComplianceRequirementAttributesSerializer,
-    ComplianceRequirementDetailSerializer,
-    ComplianceRequirementStatusSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
@@ -2410,12 +2408,6 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
             ),
         ],
     ),
-    retrieve=extend_schema(
-        tags=["Compliance Overview"],
-        summary="Retrieve data from a specific compliance overview",
-        description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
-        "requirement information and check's status.",
-    ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
         summary="Retrieve metadata values from compliance overviews",
@@ -2431,7 +2423,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
             ),
         ],
     ),
-    requirements_overview=extend_schema(
+    requirements=extend_schema(
         tags=["Compliance Overview"],
         summary="List compliance requirements overview for a scan",
         description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
@@ -2444,36 +2436,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 location=OpenApiParameter.QUERY,
                 description="Related scan ID.",
             ),
-        ],
-    ),
-    requirement_details=extend_schema(
-        tags=["Compliance Overview"],
-        summary="Get detailed compliance requirement information",
-        description="Retrieve detailed information about compliance requirements for a specific scan and compliance framework, "
-        "grouped by requirement ID. Shows passing and failing requirements across all regions.",
-        parameters=[
-            OpenApiParameter(
-                name="filter[scan_id]",
-                required=True,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
-            ),
             OpenApiParameter(
                 name="filter[compliance_id]",
                 required=True,
-                type=str,
+                type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="Compliance framework ID to filter by.",
-            ),
-            OpenApiParameter(
-                name="filter[region]",
-                required=False,
-                type=str,
-                location=OpenApiParameter.QUERY,
-                description="Optional region to filter by.",
+                description="Compliance ID.",
             ),
         ],
+        filters=True,
     ),
     attributes=extend_schema(
         tags=["Compliance Overview"],
@@ -2513,18 +2484,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
 
-        if self.action == "retrieve":
-            if unlimited_visibility:
-                # User has unlimited visibility, return all compliance
-                return ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id
-                )
-
-            providers = get_providers(role)
-            return ComplianceRequirementOverview.objects.filter(
-                tenant_id=self.request.tenant_id, scan__provider__in=providers
-            )
-
         if unlimited_visibility:
             base_queryset = self.filter_queryset(
                 ComplianceRequirementOverview.objects.filter(
@@ -2544,15 +2503,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         return base_queryset
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
-            return ComplianceOverviewFullSerializer
+        if self.action == "list":
+            return ComplianceOverviewSerializer
         elif self.action == "metadata":
             return ComplianceOverviewMetadataSerializer
-        elif self.action == "list":
-            return ComplianceRequirementStatusSerializer
         elif self.action == "attributes":
-            return ComplianceRequirementAttributesSerializer
+            return ComplianceOverviewAttributesSerializer
+        elif self.action == "requirements":
+            return ComplianceOverviewDetailSerializer
         return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
@@ -2568,13 +2531,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        tenant_id = request.tenant_id
-
-        queryset = self.filter_queryset(
-            ComplianceRequirementOverview.objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id
-            )
-        )
+        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
 
         requirement_status_subquery = queryset.values(
             "compliance_id", "requirement_id"
@@ -2654,12 +2611,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        tenant_id = self.request.tenant_id
-
         regions = list(
-            ComplianceRequirementOverview.objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id
-            )
+            self.get_queryset()
+            .filter(scan_id=scan_id)
             .values_list("region", flat=True)
             .order_by("region")
             .distinct()
@@ -2674,7 +2628,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
         compliance_id = request.query_params.get("filter[compliance_id]")
-        region = request.query_params.get("filter[region]")
 
         if not scan_id:
             raise ValidationError(
@@ -2700,23 +2653,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        tenant_id = request.tenant_id
-
-        base_query = ComplianceRequirementOverview.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id, compliance_id=compliance_id
-        )
-
-        if region:
-            base_query = base_query.filter(region=region)
+        filtered_queryset = self.filter_queryset(self.get_queryset())
 
         all_requirements = (
-            base_query.values("requirement_id", "framework", "version", "description")
+            filtered_queryset.values(
+                "requirement_id", "framework", "version", "description"
+            )
             .distinct()
             .annotate(total_instances=Count("id"))
         )
 
         passed_instances = (
-            base_query.filter(requirement_status="PASS")
+            filtered_queryset.filter(requirement_status="PASS")
             .values("requirement_id")
             .annotate(pass_count=Count("id"))
         )
@@ -2743,9 +2691,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 }
             )
 
-        serializer = ComplianceRequirementDetailSerializer(
-            requirements_summary, many=True
-        )
+        serializer = self.get_serializer(requirements_summary, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
@@ -2765,9 +2711,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
         provider_type = None
         try:
-            sample_requirement = ComplianceRequirementOverview.objects.filter(
-                tenant_id=self.request.tenant_id, compliance_id=compliance_id
-            ).first()
+            sample_requirement = (
+                self.get_queryset().filter(compliance_id=compliance_id).first()
+            )
 
             if sample_requirement:
                 provider_type = sample_requirement.scan.provider.provider
@@ -2810,9 +2756,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 }
             )
 
-        serializer = ComplianceRequirementAttributesSerializer(
-            attribute_data, many=True
-        )
+        serializer = self.get_serializer(attribute_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

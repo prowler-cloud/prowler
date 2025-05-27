@@ -14,8 +14,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
-    ComplianceOverview,
-    ComplianceRequirementOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -1681,134 +1679,7 @@ class RoleProviderGroupRelationshipSerializer(RLSSerializer, BaseWriteSerializer
 # Compliance overview
 
 
-class ComplianceOverviewSerializer(RLSSerializer):
-    """
-    Serializer for the ComplianceOverview model.
-    """
-
-    requirements_status = serializers.SerializerMethodField(
-        read_only=True, method_name="get_requirements_status"
-    )
-    provider_type = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = ComplianceOverview
-        fields = [
-            "id",
-            "inserted_at",
-            "compliance_id",
-            "framework",
-            "version",
-            "requirements_status",
-            "region",
-            "provider_type",
-            "scan",
-            "url",
-        ]
-
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "passed": {"type": "integer"},
-                "failed": {"type": "integer"},
-                "manual": {"type": "integer"},
-                "total": {"type": "integer"},
-            },
-        }
-    )
-    def get_requirements_status(self, obj):
-        return {
-            "passed": obj.requirements_passed,
-            "failed": obj.requirements_failed,
-            "manual": obj.requirements_manual,
-            "total": obj.total_requirements,
-        }
-
-    @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_provider_type(self, obj):
-        """
-        Retrieves the provider_type from scan.provider.provider_type.
-        """
-        try:
-            return obj.scan.provider.provider
-        except AttributeError:
-            return None
-
-
-class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
-    requirements = serializers.SerializerMethodField(read_only=True)
-
-    class Meta(ComplianceOverviewSerializer.Meta):
-        fields = ComplianceOverviewSerializer.Meta.fields + [
-            "description",
-            "requirements",
-        ]
-
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "requirement_id": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "checks": {
-                            "type": "object",
-                            "properties": {
-                                "check_name": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "enum": ["PASS", "FAIL", None],
-                                        },
-                                    },
-                                }
-                            },
-                            "description": "Each key in the 'checks' object is a check name, with values as "
-                            "'PASS', 'FAIL', or null.",
-                        },
-                        "status": {
-                            "type": "string",
-                            "enum": ["PASS", "FAIL", "MANUAL"],
-                        },
-                        "attributes": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                            },
-                        },
-                        "description": {"type": "string"},
-                        "checks_status": {
-                            "type": "object",
-                            "properties": {
-                                "total": {"type": "integer"},
-                                "pass": {"type": "integer"},
-                                "fail": {"type": "integer"},
-                                "manual": {"type": "integer"},
-                            },
-                        },
-                    },
-                }
-            },
-        }
-    )
-    def get_requirements(self, obj):
-        return obj.requirements
-
-
-class ComplianceOverviewMetadataSerializer(serializers.Serializer):
-    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-
-    class JSONAPIMeta:
-        resource_name = "compliance-overviews-metadata"
-
-
-# Compliance Requirement Overview Serializers
-
-
-class ComplianceRequirementStatusSerializer(serializers.Serializer):
+class ComplianceOverviewSerializer(serializers.Serializer):
     """
     Serializer for compliance requirement status aggregated by compliance framework.
 
@@ -1827,81 +1698,10 @@ class ComplianceRequirementStatusSerializer(serializers.Serializer):
     total_requirements = serializers.IntegerField()
 
     class JSONAPIMeta:
-        resource_name = "compliance-requirements-status"
+        resource_name = "compliance-overviews"
 
 
-class ComplianceRequirementGroupedSerializer(RLSSerializer):
-    """
-    Serializer for grouped ComplianceRequirementOverview data.
-
-    This serializer is used to represent aggregated compliance requirement data
-    grouped by compliance framework, showing summary statistics for requirements.
-    """
-
-    requirements_status = serializers.SerializerMethodField(
-        read_only=True, method_name="get_requirements_status"
-    )
-    provider_type = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = ComplianceRequirementOverview
-        fields = [
-            "id",
-            "inserted_at",
-            "compliance_id",
-            "framework",
-            "version",
-            "description",
-            "requirements_status",
-            "region",
-            "provider_type",
-            "scan",
-            "url",
-        ]
-
-    class JSONAPIMeta:
-        resource_name = "compliance-requirements-overviews-grouped"
-
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "passed": {"type": "integer"},
-                "failed": {"type": "integer"},
-                "manual": {"type": "integer"},
-                "total": {"type": "integer"},
-            },
-        }
-    )
-    def get_requirements_status(self, obj):
-        """
-        Calculate the requirements status based on the aggregated data.
-
-        For aggregated data, obj will contain additional attributes:
-        - requirements_passed: Number of passed requirements
-        - requirements_failed: Number of failed requirements
-        - requirements_manual: Number of manual requirements
-        - total_requirements: Total number of requirements
-        """
-        return {
-            "passed": getattr(obj, "requirements_passed", 0),
-            "failed": getattr(obj, "requirements_failed", 0),
-            "manual": getattr(obj, "requirements_manual", 0),
-            "total": getattr(obj, "total_requirements", 0),
-        }
-
-    @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_provider_type(self, obj):
-        """
-        Retrieves the provider_type from scan.provider.provider_type.
-        """
-        try:
-            return obj.scan.provider.provider
-        except AttributeError:
-            return None
-
-
-class ComplianceRequirementDetailSerializer(serializers.Serializer):
+class ComplianceOverviewDetailSerializer(serializers.Serializer):
     """
     Serializer for detailed compliance requirement information.
 
@@ -1919,7 +1719,7 @@ class ComplianceRequirementDetailSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-details"
 
 
-class ComplianceRequirementAttributesSerializer(serializers.Serializer):
+class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
     framework = serializers.CharField()
     version = serializers.CharField()
@@ -1928,6 +1728,13 @@ class ComplianceRequirementAttributesSerializer(serializers.Serializer):
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-attributes"
+
+
+class ComplianceOverviewMetadataSerializer(serializers.Serializer):
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overviews-metadata"
 
 
 # Overviews
