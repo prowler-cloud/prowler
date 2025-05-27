@@ -61,14 +61,22 @@ export const downloadScanZip = async (
 ) => {
   const result = await getExportsZip(scanId);
 
-  if (result?.success && result?.data) {
+  if (result?.pending) {
+    toast({
+      title: "The report is still being generated",
+      description: "Please try again in a few minutes.",
+    });
+    return;
+  }
+
+  if (result?.success && result.data) {
     const binaryString = window.atob(result.data);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-    const blob = new Blob([bytes], { type: "application/zip" });
 
+    const blob = new Blob([bytes], { type: "application/zip" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -82,11 +90,11 @@ export const downloadScanZip = async (
       title: "Download Complete",
       description: "Your scan report has been downloaded successfully.",
     });
-  } else if (result?.error) {
+  } else {
     toast({
       variant: "destructive",
       title: "Download Failed",
-      description: result.error,
+      description: result?.error || "An unknown error occurred.",
     });
   }
 };

@@ -236,6 +236,17 @@ export const getExportsZip = async (scanId: string) => {
       headers,
     });
 
+    if (response.status === 202) {
+      const json = await response.json();
+      const taskId = json?.data?.id;
+      const state = json?.data?.attributes?.state;
+      return {
+        pending: true,
+        state,
+        taskId,
+      };
+    }
+
     if (!response.ok) {
       const errorData = await response.json();
 
