@@ -4,7 +4,7 @@ Set up your M365 account to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
-To configure your M365 account, you’ll need:
+To configure your M365 account, you'll need:
 
 1. Obtain a domain from the Entra ID portal.
 
@@ -186,6 +186,7 @@ Follow these steps to assign the role:
         $encryptedPassword = $securePassword | ConvertFrom-SecureString
         Write-Output $encryptedPassword
         6500780061006d0070006c006500700061007300730077006f0072006400
+        ```
 
     - Windows: Install WSL using `wsl --install -d Ubuntu-22.04`, then open the Ubuntu terminal, install powershell and run the same command above.
 
