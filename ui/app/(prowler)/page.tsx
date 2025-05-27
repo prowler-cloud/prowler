@@ -81,7 +81,7 @@ const SSRProvidersOverview = async () => {
   );
 };
 
-export const SSRFindingsByStatus = async ({
+const SSRFindingsByStatus = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
@@ -104,7 +104,7 @@ export const SSRFindingsByStatus = async ({
   );
 };
 
-export const SSRFindingsBySeverity = async ({
+const SSRFindingsBySeverity = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
