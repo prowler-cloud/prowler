@@ -20,6 +20,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    LighthouseConfig,
     Membership,
     Provider,
     ProviderGroup,
@@ -2128,3 +2129,117 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
         return super().update(instance, validated_data)
+
+
+class LighthouseConfigSerializer(RLSSerializer):
+    """
+    Serializer for the LighthouseConfig model.
+    """
+
+    api_key = serializers.CharField(required=False)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Check if api_key is specifically requested in fields param
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-config]", "")
+        if fields_param == "api_key":
+            # Return decrypted key if specifically requested
+            data["api_key"] = instance.api_key_decoded if instance.api_key else None
+        else:
+            # Return masked key for general requests
+            data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
+
+
+class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for creating new Lighthouse configurations."""
+
+    api_key = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+
+    def validate(self, attrs):
+        tenant_id = self.context.get("request").tenant_id
+        if LighthouseConfig.objects.filter(tenant_id=tenant_id).exists():
+            raise serializers.ValidationError(
+                {
+                    "tenant_id": "Lighthouse configuration already exists for this tenant."
+                }
+            )
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        api_key = validated_data.pop("api_key")
+        instance = super().create(validated_data)
+        instance.api_key_decoded = api_key
+        instance.save()
+        return instance
+
+
+class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating LighthouseConfig instances.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseConfig
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "name": {"required": False},
+            "model": {"required": False},
+            "temperature": {"required": False},
+            "max_tokens": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop("api_key", None)
+        instance = super().update(instance, validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save()
+        return instance

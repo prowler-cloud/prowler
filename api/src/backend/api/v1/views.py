@@ -2,6 +2,7 @@ import glob
 import os
 from datetime import datetime, timedelta, timezone
 
+import openai
 import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -84,6 +85,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfig,
     Membership,
     Provider,
     ProviderGroup,
@@ -126,6 +128,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -2900,3 +2905,73 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing Lighthouse configuration.
+    """
+
+    filterset_fields = {
+        "name": ["exact", "icontains"],
+        "model": ["exact", "icontains"],
+        "is_active": ["exact"],
+        "inserted_at": ["gte", "lte"],
+    }
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfig.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseConfigUpdateSerializer
+        return LighthouseConfigSerializer
+
+    @action(detail=True, methods=["get"])
+    def check_connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API.
+        """
+        instance = self.get_object()
+        if not instance.api_key_decoded:
+            return Response(
+                {"detail": "API key is invalid or missing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            client = openai.OpenAI(
+                api_key=instance.api_key_decoded,
+            )
+            models = client.models.list()
+            return Response(
+                {
+                    "detail": "Connection successful!",
+                    "available_models": [model.id for model in models.data],
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Connection failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Create new Lighthouse configuration"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            LighthouseConfigSerializer(
+                instance, context=self.get_serializer_context()
+            ).data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
