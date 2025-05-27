@@ -5,17 +5,17 @@ import { useForm } from "react-hook-form";
 
 import { Form } from "@/components/ui/form";
 
-import { RadioGroupAWSViaCredentialsForm } from "../radio-group-aws-via-credentials-form";
+import { RadioGroupAWSViaCredentialsForm } from "../aws/radio-group-aws-via-credentials-form";
 
-interface SelectViaAWSProps {
+interface SelectViaGCPProps {
   initialVia?: string;
 }
 
-export const SelectViaAWS = ({ initialVia }: SelectViaAWSProps) => {
+export const SelectViaGCP = ({ initialVia }: SelectViaGCPProps) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
-      awsCredentialsType: initialVia || "",
+      gcpCredentialsType: initialVia || "",
     },
   });
 
@@ -29,8 +29,8 @@ export const SelectViaAWS = ({ initialVia }: SelectViaAWSProps) => {
     <Form {...form}>
       <RadioGroupAWSViaCredentialsForm
         control={form.control}
-        isInvalid={!!form.formState.errors.awsCredentialsType}
-        errorMessage={form.formState.errors.awsCredentialsType?.message}
+        isInvalid={!!form.formState.errors.gcpCredentialsType}
+        errorMessage={form.formState.errors.gcpCredentialsType?.message}
         onChange={handleSelectionChange}
       />
     </Form>
