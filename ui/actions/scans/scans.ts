@@ -278,8 +278,10 @@ export const getComplianceCsv = async (
     if (response.status === 202) {
       const json = await response.json();
       const taskId = json?.data?.id;
+      const state = json?.data?.attributes?.state;
       return {
         pending: true,
+        state,
         taskId,
       };
     }

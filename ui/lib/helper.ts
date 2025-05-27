@@ -98,63 +98,61 @@ export const downloadComplianceCsv = async (
 ): Promise<void> => {
   const result = await getComplianceCsv(scanId, complianceId);
 
-  if (result?.pending && result.taskId) {
-    const taskResult = await checkTaskStatus(result.taskId);
-
-    if (taskResult.completed) {
-      const task = await getTask(result.taskId);
-      const taskStatus = task.data.attributes.status;
-      const taskError = task.data.attributes.result?.error;
-
-      if (taskStatus === "completed") {
-        // Retry download now that it's ready
-        return await downloadComplianceCsv(scanId, complianceId, toast);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Download Failed",
-          description: taskError || "Report generation failed.",
-        });
-        return;
-      }
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Report Still Generating",
-        description: taskResult.error || "Try again later.",
-      });
-      return;
-    }
+  if (result?.pending) {
+    toast({
+      title: "The report is still being generated",
+      description: "Please try again in a few minutes.",
+    });
+    return;
   }
 
-  if (result?.success && result?.data) {
-    const binaryString = window.atob(result.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+  if (result?.success && result.data) {
+    try {
+      const binaryString = window.atob(result.data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = result.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download Complete",
+        description: "The compliance report has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "An error occurred while processing the file.",
+      });
     }
+    return;
+  }
 
-    const blob = new Blob([bytes], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Download Complete",
-      description: "The compliance report has been downloaded successfully.",
-    });
-  } else if (result?.error) {
+  if (result?.error) {
     toast({
       variant: "destructive",
       title: "Download Failed",
       description: result.error,
     });
+    return;
   }
+
+  // Unexpected case
+  toast({
+    variant: "destructive",
+    title: "Download Failed",
+    description: "Unexpected response. Please try again later.",
+  });
 };
 
 export const isGoogleOAuthEnabled =
@@ -165,13 +163,12 @@ export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
-export async function checkTaskStatus(
+export const checkTaskStatus = async (
   taskId: string,
-): Promise<{ completed: boolean; error?: string }> {
-  const MAX_RETRIES = 20; // Define the maximum number of attempts before stopping the polling
-  const RETRY_DELAY = 1000; // Delay time between each poll (in milliseconds)
-
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+  maxRetries: number = 20,
+  retryDelay: number = 1500,
+): Promise<{ completed: boolean; error?: string }> => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     const task = await getTask(taskId);
 
     if (task.error) {
@@ -191,7 +188,7 @@ export async function checkTaskStatus(
       case "scheduled":
       case "executing":
         // Continue waiting if the task is still in progress
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
         break;
       default:
         return { completed: false, error: "Unexpected task state" };
@@ -199,7 +196,7 @@ export async function checkTaskStatus(
   }
 
   return { completed: false, error: "Max retries exceeded" };
-}
+};
 
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
