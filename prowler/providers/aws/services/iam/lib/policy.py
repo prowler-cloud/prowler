@@ -1,5 +1,6 @@
 from ipaddress import ip_address, ip_network
 import re
+from typing import Optional, Tuple
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
@@ -574,7 +575,7 @@ def is_valid_aws_service(service):
 
 def is_codebuild_using_allowed_github_org(
     trust_policy: dict, github_repo_url: str, allowed_organizations: list
-) -> tuple[bool, str | None]:
+) -> Tuple[bool, Optional[str]]:
     """
     Checks if the trust policy allows codebuild.amazonaws.com as a trusted principal and if the GitHub organization
     in the repo URL is in the allowed organizations list.

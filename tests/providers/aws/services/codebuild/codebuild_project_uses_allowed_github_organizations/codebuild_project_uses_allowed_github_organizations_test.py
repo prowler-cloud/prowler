@@ -13,10 +13,16 @@ class Test_codebuild_project_uses_allowed_github_organizations:
     def test_no_projects(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -68,10 +74,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -127,10 +145,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -188,10 +218,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -250,10 +292,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -309,10 +363,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
@@ -370,10 +436,22 @@ class Test_codebuild_project_uses_allowed_github_organizations:
             serviceRole=role_arn,
             tags=[{"key": "Name", "value": "test"}],
         )["project"]["arn"]
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
         with (
             patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=IAM(aws_provider),
             ),
             patch(
                 "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
