@@ -98,7 +98,7 @@ from api.models import (
     ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfigurations,
+    SAMLConfiguration,
     SAMLDomainIndex,
     Scan,
     ScanSummary,
@@ -152,7 +152,7 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
-    SAMLConfigurationsSerializer,
+    SAMLConfigurationSerializer,
     SamlInitiateSerializer,
     ScanComplianceReportSerializer,
     ScanCreateSerializer,
@@ -399,8 +399,8 @@ class SAMLInitiateAPIView(GenericAPIView):
         try:
             check = SAMLDomainIndex.objects.get(email_domain=domain)
             with rls_transaction(str(check.tenant_id)):
-                config = SAMLConfigurations.objects.get(tenant_id=str(check.tenant_id))
-        except (SAMLDomainIndex.DoesNotExist, SAMLConfigurations.DoesNotExist):
+                config = SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+        except (SAMLDomainIndex.DoesNotExist, SAMLConfiguration.DoesNotExist):
             return Response(
                 {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -450,11 +450,11 @@ class SAMLInitiateAPIView(GenericAPIView):
 )
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 @method_decorator(CACHE_DECORATOR, name="list")
-class SAMLConfigurationsViewSet(BaseRLSViewSet):
+class SAMLConfigurationViewSet(BaseRLSViewSet):
     """
     ViewSet for managing SAML SSO configurations per tenant.
 
-    This endpoint allows authorized users to perform CRUD operations on SAMLConfigurations,
+    This endpoint allows authorized users to perform CRUD operations on SAMLConfiguration,
     which define how a tenant integrates with an external SAML Identity Provider (IdP).
 
     Typical use cases include:
@@ -464,15 +464,15 @@ class SAMLConfigurationsViewSet(BaseRLSViewSet):
         - Deleting a configuration when deactivating SAML for a tenant.
     """
 
-    serializer_class = SAMLConfigurationsSerializer
+    serializer_class = SAMLConfigurationSerializer
     required_permissions = [Permissions.MANAGE_INTEGRATIONS]
-    queryset = SAMLConfigurations.objects.all()
+    queryset = SAMLConfiguration.objects.all()
 
     def get_queryset(self):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
-            return User.objects.none()
-        return SAMLConfigurations.objects.filter(tenant=self.request.tenant_id)
+            return SAMLConfiguration.objects.none()
+        return SAMLConfiguration.objects.filter(tenant=self.request.tenant_id)
 
 
 class TenantFinishACSView(FinishACSView):
@@ -501,7 +501,7 @@ class TenantFinishACSView(FinishACSView):
 
         email_domain = user.email.split("@")[-1]
         tenant = (
-            SAMLConfigurations.objects.using(MainRouter.admin_db)
+            SAMLConfiguration.objects.using(MainRouter.admin_db)
             .get(email_domain=email_domain)
             .tenant
         )

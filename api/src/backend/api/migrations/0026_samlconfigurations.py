@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.CreateModel(
-            name="SAMLConfigurations",
+            name="SAMLConfiguration",
             fields=[
                 (
                     "id",

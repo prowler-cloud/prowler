@@ -84,6 +84,6 @@ This endpoint receives an email and checks if there is an active SAML configurat
 
     •	Looks up the domain in SAMLDomainIndex.
 
-	•	Retrieves the related SAMLConfigurations object via tenant_id.
+	•	Retrieves the related SAMLConfiguration object via tenant_id.
 
 	•	Verifies that SAML_PUBLIC_CERT and SAML_PRIVATE_KEY environment variables are set.

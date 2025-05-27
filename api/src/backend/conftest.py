@@ -27,7 +27,7 @@ from api.models import (
     Resource,
     ResourceTag,
     Role,
-    SAMLConfigurations,
+    SAMLConfiguration,
     SAMLDomainIndex,
     Scan,
     ScanSummary,
@@ -996,7 +996,7 @@ def saml_setup(tenants_fixture):
     </md:IDPSSODescriptor>
     </md:EntityDescriptor>
     """
-    SAMLConfigurations.objects.create(
+    SAMLConfiguration.objects.create(
         tenant_id=str(tenant_id),
         email_domain=domain,
         metadata_xml=metadata_xml,

@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 
 from api.adapters import ProwlerSocialAccountAdapter
 from api.db_router import MainRouter
-from api.models import Membership, SAMLConfigurations, Tenant
+from api.models import Membership, SAMLConfiguration, Tenant
 
 User = get_user_model()
 
@@ -67,7 +67,7 @@ class TestProwlerSocialAccountAdapter:
         tenant = Tenant.objects.using(MainRouter.admin_db).get(
             id=saml_setup["tenant_id"]
         )
-        saml_config = SAMLConfigurations.objects.using(MainRouter.admin_db).get(
+        saml_config = SAMLConfiguration.objects.using(MainRouter.admin_db).get(
             tenant=tenant
         )
         assert saml_config.email_domain == saml_setup["domain"]

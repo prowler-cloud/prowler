@@ -4956,7 +4956,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/PaginatedSAMLConfigurationsList'
+                $ref: '#/components/schemas/PaginatedSAMLConfigurationList'
           description: ''
     post:
       operationId: saml_config_create
@@ -4969,13 +4969,13 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/SAMLConfigurationsRequest'
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SAMLConfigurationsRequest'
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SAMLConfigurationsRequest'
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
         required: true
       security:
       - jwtAuth: []
@@ -4984,7 +4984,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SAMLConfigurationsResponse'
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
           description: ''
   /api/v1/saml-config/{id}:
     get:
@@ -5023,7 +5023,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SAMLConfigurationsResponse'
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
           description: ''
     patch:
       operationId: saml_config_partial_update
@@ -5044,13 +5044,13 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationsRequest'
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationsRequest'
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationsRequest'
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
         required: true
       security:
       - jwtAuth: []
@@ -5059,7 +5059,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/SAMLConfigurationsResponse'
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
           description: ''
     delete:
       operationId: saml_config_destroy
@@ -8886,13 +8886,13 @@ components:
             $ref: '#/components/schemas/Role'
       required:
       - data
-    PaginatedSAMLConfigurationsList:
+    PaginatedSAMLConfigurationList:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/SAMLConfigurations'
+            $ref: '#/components/schemas/SAMLConfiguration'
       required:
       - data
     PaginatedScanList:
@@ -9712,7 +9712,7 @@ components:
                   readOnly: true
       required:
       - data
-    PatchedSAMLConfigurationsRequest:
+    PatchedSAMLConfigurationRequest:
       type: object
       properties:
         data:
@@ -11871,7 +11871,7 @@ components:
           $ref: '#/components/schemas/Role'
       required:
       - data
-    SAMLConfigurations:
+    SAMLConfiguration:
       type: object
       required:
       - type
@@ -11880,7 +11880,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/SAMLConfigurationsTypeEnum'
+          - $ref: '#/components/schemas/SAMLConfigurationTypeEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -11909,7 +11909,7 @@ components:
           required:
           - email_domain
           - metadata_xml
-    SAMLConfigurationsRequest:
+    SAMLConfigurationRequest:
       type: object
       properties:
         data:
@@ -11951,14 +11951,14 @@ components:
               - metadata_xml
       required:
       - data
-    SAMLConfigurationsResponse:
+    SAMLConfigurationResponse:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/SAMLConfigurations'
+          $ref: '#/components/schemas/SAMLConfiguration'
       required:
       - data
-    SAMLConfigurationsTypeEnum:
+    SAMLConfigurationTypeEnum:
       type: string
       enum:
       - saml-configuration

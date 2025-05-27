@@ -32,7 +32,7 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfigurations,
+    SAMLConfiguration,
     Scan,
     StateChoices,
     Task,
@@ -5512,9 +5512,9 @@ class TestSAMLInitiateAPIView:
 
 
 @pytest.mark.django_db
-class TestSAMLConfigurationsViewSet:
+class TestSAMLConfigurationViewSet:
     def test_list_saml_configurations(self, authenticated_client, saml_setup):
-        config = SAMLConfigurations.objects.get(
+        config = SAMLConfiguration.objects.get(
             email_domain=saml_setup["email"].split("@")[-1]
         )
         response = authenticated_client.get(reverse("saml-config-list"))
@@ -5525,7 +5525,7 @@ class TestSAMLConfigurationsViewSet:
         )
 
     def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfigurations.objects.get(
+        config = SAMLConfiguration.objects.get(
             email_domain=saml_setup["email"].split("@")[-1]
         )
         response = authenticated_client.get(
@@ -5560,10 +5560,10 @@ class TestSAMLConfigurationsViewSet:
             reverse("saml-config-list"), data=payload, format="json"
         )
         assert response.status_code == status.HTTP_201_CREATED
-        assert SAMLConfigurations.objects.filter(email_domain="newdomain.com").exists()
+        assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
 
     def test_update_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfigurations.objects.get(
+        config = SAMLConfiguration.objects.get(
             email_domain=saml_setup["email"].split("@")[-1]
         )
         payload = {
@@ -5603,14 +5603,14 @@ class TestSAMLConfigurationsViewSet:
         )
 
     def test_delete_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfigurations.objects.get(
+        config = SAMLConfiguration.objects.get(
             email_domain=saml_setup["email"].split("@")[-1]
         )
         response = authenticated_client.delete(
             reverse("saml-config-detail", kwargs={"pk": config.id})
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not SAMLConfigurations.objects.filter(id=config.id).exists()
+        assert not SAMLConfiguration.objects.filter(id=config.id).exists()
 
 
 @pytest.mark.django_db

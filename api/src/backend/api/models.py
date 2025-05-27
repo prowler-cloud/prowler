@@ -1312,7 +1312,7 @@ class SAMLDomainIndex(models.Model):
         ]
 
 
-class SAMLConfigurations(RowLevelSecurityProtectedModel):
+class SAMLConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores per-tenant SAML settings, including email domain and IdP metadata.
     Automatically syncs to a SocialApp instance on save.
@@ -1326,7 +1326,7 @@ class SAMLConfigurations(RowLevelSecurityProtectedModel):
     it is not designed for multi-tenant use. SocialApp lacks support for tenant scoping,
     email domain mapping, and structured metadata handling.
 
-    By managing SAMLConfigurations separately, we ensure:
+    By managing SAMLConfiguration separately, we ensure:
         - Strong isolation between tenants via RLS.
         - Ownership of raw IdP metadata and its validation.
         - An explicit link between SAML config and business-level identifiers (e.g. email domain).
@@ -1372,7 +1372,7 @@ class SAMLConfigurations(RowLevelSecurityProtectedModel):
             raise ValidationError({"email_domain": "Domain must not contain @"})
 
         # Enforce at most one config per tenant
-        qs = SAMLConfigurations.objects.filter(tenant=self.tenant)
+        qs = SAMLConfiguration.objects.filter(tenant=self.tenant)
         # Exclude ourselves in case of update
         if self.pk:
             qs = qs.exclude(pk=self.pk)
@@ -1382,7 +1382,7 @@ class SAMLConfigurations(RowLevelSecurityProtectedModel):
             )
 
         # The email domain must be unique in the entire system
-        qs = SAMLConfigurations.objects.filter(email_domain__iexact=self.email_domain)
+        qs = SAMLConfiguration.objects.filter(email_domain__iexact=self.email_domain)
         if qs.exists() and old_email_domain != self.email_domain:
             raise ValidationError(
                 {"tenant": "There is a problem with your email domain."}
@@ -1390,10 +1390,10 @@ class SAMLConfigurations(RowLevelSecurityProtectedModel):
 
     def save(self, *args, **kwargs):
         self.email_domain = self.email_domain.strip().lower()
-        is_create = not SAMLConfigurations.objects.filter(pk=self.pk).exists()
+        is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
 
         if not is_create:
-            old = SAMLConfigurations.objects.get(pk=self.pk)
+            old = SAMLConfiguration.objects.get(pk=self.pk)
             old_email_domain = old.email_domain
             old_metadata_xml = old.metadata_xml
         else:

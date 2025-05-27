@@ -29,7 +29,7 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfigurations,
+    SAMLConfiguration,
     Scan,
     StateChoices,
     Task,
@@ -2146,8 +2146,8 @@ class SamlMetadataSerializer(serializers.Serializer):
         resource_name = "saml-meta"
 
 
-class SAMLConfigurationsSerializer(RLSSerializer):
+class SAMLConfigurationSerializer(RLSSerializer):
     class Meta:
-        model = SAMLConfigurations
+        model = SAMLConfiguration
         fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
         read_only_fields = ["id", "created_at", "updated_at"]

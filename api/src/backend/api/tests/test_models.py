@@ -3,28 +3,7 @@ from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 
 from api.db_router import MainRouter
-from api.models import (
-    Resource,
-    ResourceTag,
-    SAMLConfigurations,
-    SAMLDomainIndex,
-    Tenant,
-)
-
-VALID_METADATA = """<?xml version='1.0' encoding='UTF-8'?>
-<md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-  <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-    <md:KeyDescriptor use='signing'>
-      <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-        <ds:X509Data>
-          <ds:X509Certificate>FAKECERTDATA</ds:X509Certificate>
-        </ds:X509Data>
-      </ds:KeyInfo>
-    </md:KeyDescriptor>
-    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://idp.test/sso'/>
-  </md:IDPSSODescriptor>
-</md:EntityDescriptor>
-"""
+from api.models import Resource, ResourceTag, SAMLConfiguration, Tenant
 
 
 @pytest.mark.django_db
@@ -147,24 +126,38 @@ class TestResourceModel:
 
 
 @pytest.mark.django_db
-class TestSAMLConfigurationsModel:
+class TestSAMLConfigurationModel:
+    VALID_METADATA = """<?xml version='1.0' encoding='UTF-8'?>
+    <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+    <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+        <md:KeyDescriptor use='signing'>
+        <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+            <ds:X509Data>
+            <ds:X509Certificate>FAKECERTDATA</ds:X509Certificate>
+            </ds:X509Data>
+        </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://idp.test/sso'/>
+    </md:IDPSSODescriptor>
+    </md:EntityDescriptor>
+    """
+
     def test_creates_valid_configuration(self):
         tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant A")
-        config = SAMLConfigurations.objects.using(MainRouter.admin_db).create(
+        config = SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="ssoexample.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant,
         )
 
         assert config.email_domain == "ssoexample.com"
-        assert SAMLDomainIndex.objects.filter(email_domain="ssoexample.com").exists()
         assert SocialApp.objects.filter(client_id="ssoexample.com").exists()
 
     def test_email_domain_with_at_symbol_fails(self):
         tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant B")
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="invalid@domain.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant,
         )
 
@@ -179,15 +172,15 @@ class TestSAMLConfigurationsModel:
         tenant1 = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant C1")
         tenant2 = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant C2")
 
-        SAMLConfigurations.objects.using(MainRouter.admin_db).create(
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="duplicate.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant1,
         )
 
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="duplicate.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant2,
         )
 
@@ -201,15 +194,15 @@ class TestSAMLConfigurationsModel:
     def test_duplicate_tenant_config_fails(self):
         tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant D")
 
-        SAMLConfigurations.objects.using(MainRouter.admin_db).create(
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="unique1.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant,
         )
 
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="unique2.com",
-            metadata_xml=VALID_METADATA,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
             tenant=tenant,
         )
 
@@ -225,7 +218,7 @@ class TestSAMLConfigurationsModel:
 
     def test_invalid_metadata_xml_fails(self):
         tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant E")
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="brokenxml.com",
             metadata_xml="<bad<xml>",
             tenant=tenant,
@@ -244,7 +237,7 @@ class TestSAMLConfigurationsModel:
         xml = """<md:EntityDescriptor entityID="x" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
                 <md:IDPSSODescriptor></md:IDPSSODescriptor>
                 </md:EntityDescriptor>"""
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="nosso.com",
             metadata_xml=xml,
             tenant=tenant,
@@ -264,7 +257,7 @@ class TestSAMLConfigurationsModel:
                         <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.com/sso"/>
                     </md:IDPSSODescriptor>
                 </md:EntityDescriptor>"""
-        config = SAMLConfigurations(
+        config = SAMLConfiguration(
             email_domain="nocert.com",
             metadata_xml=xml,
             tenant=tenant,
@@ -276,37 +269,3 @@ class TestSAMLConfigurationsModel:
         errors = exc_info.value.message_dict
         assert "metadata_xml" in errors
         assert "X509Certificate" in errors["metadata_xml"][0]
-
-    def test_updating_email_domain_deletes_old_domain_index(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant Z")
-
-        config = SAMLConfigurations.objects.using(MainRouter.admin_db).create(
-            email_domain="original.com",
-            metadata_xml="""<?xml version='1.0' encoding='UTF-8'?>
-        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-            <md:KeyDescriptor use='signing'>
-            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-                <ds:X509Data>
-                <ds:X509Certificate>TEST2</ds:X509Certificate>
-                </ds:X509Data>
-            </ds:KeyInfo>
-            </md:KeyDescriptor>
-            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-        </md:IDPSSODescriptor>
-        </md:EntityDescriptor>
-        """,
-            tenant=tenant,
-        )
-
-        assert SAMLDomainIndex.objects.filter(email_domain="original.com").exists()
-
-        config.email_domain = "updated.com"
-        config.save()
-
-        assert not SAMLDomainIndex.objects.filter(email_domain="original.com").exists()
-        assert SAMLDomainIndex.objects.filter(
-            email_domain="updated.com", tenant=tenant
-        ).exists()

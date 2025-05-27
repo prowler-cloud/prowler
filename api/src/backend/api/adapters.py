@@ -6,7 +6,7 @@ from api.db_utils import rls_transaction
 from api.models import (
     Membership,
     Role,
-    SAMLConfigurations,
+    SAMLConfiguration,
     Tenant,
     User,
     UserRoleRelationship,
@@ -51,7 +51,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
 
                 email_domain = user.email.split("@")[-1]
                 tenant = (
-                    SAMLConfigurations.objects.using(MainRouter.admin_db)
+                    SAMLConfiguration.objects.using(MainRouter.admin_db)
                     .get(email_domain=email_domain)
                     .tenant
                 )
