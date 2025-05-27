@@ -38,7 +38,7 @@ class Finding(BaseModel):
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
     metadata: CheckMetadata
-    account_tags: dict = {}
+    account_tags: dict = Field(default_factory=dict)
     uid: str
     status: Status
     status_extended: str
@@ -50,7 +50,7 @@ class Finding(BaseModel):
     resource_tags: dict = Field(default_factory=dict)
     partition: Optional[str] = None
     region: str
-    compliance: dict
+    compliance: dict = Field(default_factory=dict)
     prowler_version: str = prowler_version
     raw: dict = Field(default_factory=dict)
 

@@ -21,7 +21,7 @@ class GCPProject(BaseModel):
     number: str
     id: str
     name: str
-    organization: Optional[GCPOrganization]
+    organization: Optional[GCPOrganization] = None
     labels: dict
     lifecycle_state: str
 

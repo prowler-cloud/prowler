@@ -573,6 +573,16 @@ class TestFinding:
         inserted_at = 1234567890
         provider = DummyProvider(uid="account123")
         provider.type = "aws"
+        provider.organizations_metadata = SimpleNamespace(
+            account_name="test-account",
+            account_email="test@example.com",
+            organization_arn="arn:aws:organizations::123456789012:organization/o-abcdef123456",
+            organization_id="o-abcdef123456",
+            account_tags={"Environment": "prod", "Project": "test"},
+        )
+        provider.identity = SimpleNamespace(
+            account="123456789012", partition="aws", profile="default"
+        )
         scan = DummyScan(provider=provider)
 
         # Create a dummy resource with one tag
@@ -655,7 +665,10 @@ class TestFinding:
         assert meta.Notes == "Some notes"
 
         # Check other Finding fields
-        assert finding_obj.uid == "prowler-aws-check-001--us-east-1-ResourceName1"
+        assert (
+            finding_obj.uid
+            == "prowler-aws-check-001-123456789012-us-east-1-ResourceName1"
+        )
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
         # From the dummy resource
@@ -665,6 +678,7 @@ class TestFinding:
         # unroll_tags is called on a list with one tag -> expect {"env": "prod"}
         assert finding_obj.resource_tags == {"env": "prod"}
         assert finding_obj.region == "us-east-1"
+        assert finding_obj.account_tags == {"Environment": "prod", "Project": "test"}
         assert finding_obj.compliance == {
             "CIS-2.0": ["1.12"],
             "CIS-3.0": ["1.12"],

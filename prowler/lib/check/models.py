@@ -5,7 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -118,7 +118,7 @@ class CheckMetadata(BaseModel):
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: list = None
+    Compliance: Optional[list[Any]] = []
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):

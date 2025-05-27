@@ -90,16 +90,22 @@ class IACProvider(Provider):
 
             try:
                 output = json.loads(process.stdout)
+                if not output:
+                    logger.warning("No findings returned from Checkov scan")
+                    return []
             except json.JSONDecodeError:
                 logger.error("Failed to parse IaC scan output as JSON")
                 return []
 
             reports = []
 
-            # TODO: Process passed checks
             # Process failed checks
             for finding in output:
-                for failed_check in finding.get("results", {}).get("failed_checks", []):
+                failed_checks = finding.get("results", {}).get("failed_checks", [])
+                if not failed_checks:
+                    continue
+
+                for failed_check in failed_checks:
                     # Get severity and ensure it's a valid string
                     severity = finding.get("severity", "low")
                     if severity is None:
@@ -144,6 +150,7 @@ class IACProvider(Provider):
                         "DependsOn": [],
                         "RelatedTo": [],
                         "Notes": "",
+                        "GCPProject": failed_check.get("project_id", ""),
                     }
 
                     # Convert metadata dict to JSON string

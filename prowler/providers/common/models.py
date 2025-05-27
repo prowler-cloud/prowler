@@ -9,10 +9,6 @@ from prowler.providers.common.provider import Provider
 
 # TODO: include this for all the providers
 class Audit_Metadata(BaseModel):
-    provider: str
-    account_id: str
-    account_name: str
-    region: str
     services_scanned: int
     # We can't use a set in the expected
     # checks because the set is unordered
