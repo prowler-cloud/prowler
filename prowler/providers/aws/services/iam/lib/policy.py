@@ -1,5 +1,6 @@
 from ipaddress import ip_address, ip_network
 import re
+from typing import Optional, Tuple
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
@@ -570,3 +571,56 @@ def is_valid_aws_service(service):
     if service in read_aws_regions_file()["services"]:
         return True
     return False
+
+
+def is_codebuild_using_allowed_github_org(
+    trust_policy: dict, github_repo_url: str, allowed_organizations: list
+) -> Tuple[bool, Optional[str]]:
+    """
+    Checks if the trust policy allows codebuild.amazonaws.com as a trusted principal and if the GitHub organization
+    in the repo URL is in the allowed organizations list.
+    Returns (is_allowed: bool, org_name: str or None)
+    """
+    if not trust_policy or not github_repo_url:
+        return False, None
+
+    statements = trust_policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+
+    for statement in statements:
+        if (
+            statement.get("Effect") == "Allow"
+            and "Principal" in statement
+            and isinstance(statement["Principal"], dict)
+            and statement["Principal"].get("Service") == "codebuild.amazonaws.com"
+        ):
+            # Extract org name from GitHub repo URL
+            try:
+                org_name = github_repo_url.split("/")[3]
+                if not org_name:
+                    org_name = None
+            except IndexError:
+                org_name = None
+            if org_name and org_name in allowed_organizations:
+                return True, org_name
+            return False, org_name
+    return False, None
+
+
+def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
+    """
+    Returns True if the trust policy allows codebuild.amazonaws.com as a trusted principal, otherwise False.
+    """
+    if not trust_policy:
+        return False
+    statements = trust_policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+    return any(
+        s.get("Effect") == "Allow"
+        and "Principal" in s
+        and isinstance(s["Principal"], dict)
+        and s["Principal"].get("Service") == "codebuild.amazonaws.com"
+        for s in statements
+    )
