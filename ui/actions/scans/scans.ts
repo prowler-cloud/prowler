@@ -236,10 +236,23 @@ export const getExportsZip = async (scanId: string) => {
       headers,
     });
 
+    if (response.status === 202) {
+      const json = await response.json();
+      const taskId = json?.data?.id;
+      const state = json?.data?.attributes?.state;
+      return {
+        pending: true,
+        state,
+        taskId,
+      };
+    }
+
     if (!response.ok) {
       const errorData = await response.json();
+
       throw new Error(
-        errorData?.errors?.[0]?.detail || "Failed to fetch report",
+        errorData?.errors?.detail ||
+          "Unable to fetch scan report. Contact support if the issue continues.",
       );
     }
 
@@ -271,20 +284,28 @@ export const getComplianceCsv = async (
   );
 
   try {
-    const response = await fetch(url.toString(), {
-      headers,
-    });
+    const response = await fetch(url.toString(), { headers });
+
+    if (response.status === 202) {
+      const json = await response.json();
+      const taskId = json?.data?.id;
+      const state = json?.data?.attributes?.state;
+      return {
+        pending: true,
+        state,
+        taskId,
+      };
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData?.errors?.[0]?.detail || "Failed to fetch compliance report",
+        errorData?.errors?.detail ||
+          "Unable to retrieve compliance report. Contact support if the issue continues.",
       );
     }
 
-    // Get the blob data as an array buffer
     const arrayBuffer = await response.arrayBuffer();
-    // Convert to base64
     const base64 = Buffer.from(arrayBuffer).toString("base64");
 
     return {
