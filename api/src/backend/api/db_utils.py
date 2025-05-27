@@ -1,3 +1,4 @@
+import re
 import secrets
 import uuid
 from contextlib import contextmanager
@@ -227,6 +228,72 @@ def register_enum(apps, schema_editor, enum_class):  # noqa: F841
         register_adapter(enum_class, enum_adapter)
 
 
+def _should_create_index_on_partition(
+    partition_name: str, all_partitions: bool = False
+) -> bool:
+    """
+    Determine if we should create an index on this partition.
+
+    Args:
+        partition_name: The name of the partition (e.g., "findings_2025_aug", "findings_default")
+        all_partitions: If True, create on all partitions. If False, only current/future partitions.
+
+    Returns:
+        bool: True if index should be created on this partition, False otherwise.
+    """
+    if all_partitions:
+        return True
+
+    # Extract date from partition name if it follows the pattern
+    # Partition names look like: findings_2025_aug, findings_2025_jul, etc.
+    date_pattern = r"(\d{4})_([a-z]{3})$"
+    match = re.search(date_pattern, partition_name)
+
+    if not match:
+        # If we can't parse the date, include it to be safe (e.g., default partition)
+        return True
+
+    try:
+        year_str, month_abbr = match.groups()
+        year = int(year_str)
+
+        # Map month abbreviations to numbers
+        month_map = {
+            "jan": 1,
+            "feb": 2,
+            "mar": 3,
+            "apr": 4,
+            "may": 5,
+            "jun": 6,
+            "jul": 7,
+            "aug": 8,
+            "sep": 9,
+            "oct": 10,
+            "nov": 11,
+            "dec": 12,
+        }
+
+        month = month_map.get(month_abbr.lower())
+        if month is None:
+            # Unknown month abbreviation, include it to be safe
+            return True
+
+        partition_date = datetime(year, month, 1, tzinfo=timezone.utc)
+
+        # Get current month start
+        now = datetime.now(timezone.utc)
+        current_month_start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        # Include current month and future partitions
+        return partition_date >= current_month_start
+
+    except (ValueError, TypeError):
+        # If date parsing fails, include it to be safe
+        return True
+
+
 def create_index_on_partitions(
     apps,  # noqa: F841
     schema_editor,
@@ -235,16 +302,39 @@ def create_index_on_partitions(
     columns: str,
     method: str = "BTREE",
     where: str = "",
+    all_partitions: bool = False,
 ):
     """
-    Create an index on every existing partition of `parent_table`.
+    Create an index on existing partitions of `parent_table`.
 
     Args:
         parent_table: The name of the root table (e.g. "findings").
         index_name: A short name for the index (will be prefixed per-partition).
         columns: The parenthesized column list, e.g. "tenant_id, scan_id, status".
-        method:   The index method—BTREE, GIN, etc.  Defaults to BTREE.
-        where:    Optional WHERE clause (without the leading "WHERE"), e.g. "status = 'FAIL'".
+        method: The index method—BTREE, GIN, etc. Defaults to BTREE.
+        where: Optional WHERE clause (without the leading "WHERE"), e.g. "status = 'FAIL'".
+        all_partitions: Whether to create indexes on all partitions or just current/future ones.
+                       Defaults to False (current/future only) to avoid maintenance overhead
+                       on old partitions where the index may not be needed.
+
+    Examples:
+        # Create index only on current and future partitions (recommended for new indexes)
+        create_index_on_partitions(
+            apps, schema_editor,
+            parent_table="findings",
+            index_name="new_performance_idx",
+            columns="tenant_id, status, severity",
+            all_partitions=False  # Default behavior
+        )
+
+        # Create index on all partitions (use when migrating existing critical indexes)
+        create_index_on_partitions(
+            apps, schema_editor,
+            parent_table="findings",
+            index_name="critical_existing_idx",
+            columns="tenant_id, scan_id",
+            all_partitions=True
+        )
     """
     with connection.cursor() as cursor:
         cursor.execute(
@@ -259,13 +349,14 @@ def create_index_on_partitions(
 
     where_sql = f" WHERE {where}" if where else ""
     for partition in partitions:
-        idx_name = f"{partition.replace('.', '_')}_{index_name}"
-        sql = (
-            f"CREATE INDEX CONCURRENTLY IF NOT EXISTS {idx_name} "
-            f"ON {partition} USING {method} ({columns})"
-            f"{where_sql};"
-        )
-        schema_editor.execute(sql)
+        if _should_create_index_on_partition(partition, all_partitions):
+            idx_name = f"{partition.replace('.', '_')}_{index_name}"
+            sql = (
+                f"CREATE INDEX CONCURRENTLY IF NOT EXISTS {idx_name} "
+                f"ON {partition} USING {method} ({columns})"
+                f"{where_sql};"
+            )
+            schema_editor.execute(sql)
 
 
 def drop_index_on_partitions(
@@ -279,7 +370,7 @@ def drop_index_on_partitions(
 
     Args:
         parent_table: The name of the root table (e.g. "findings").
-        index_name:   The same short name used when creating them.
+        index_name: The same short name used when creating them.
     """
     with connection.cursor() as cursor:
         cursor.execute(

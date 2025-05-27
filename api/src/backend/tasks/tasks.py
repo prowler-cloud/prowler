@@ -384,7 +384,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
 @shared_task(base=RLSTask, name="compliance-requirements")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
-    Task to create detailed compliance requirement records for a scan.
+    Creates detailed compliance requirement records for a scan.
 
     This task processes the compliance data collected during a scan and creates
     individual records for each compliance requirement in each region. These detailed
@@ -393,11 +393,5 @@ def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     Args:
         tenant_id (str): The tenant ID for which to create records.
         scan_id (str): The ID of the scan for which to create records.
-
-    Returns:
-        dict: A dictionary containing the number of requirements created and the regions processed.
-
-    Raises:
-        ValidationError: If tenant_id or scan_id is not a valid UUID.
     """
     return create_compliance_requirements(tenant_id=tenant_id, scan_id=scan_id)
