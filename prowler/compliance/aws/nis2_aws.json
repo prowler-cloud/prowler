@@ -1,0 +1,2104 @@
+{
+  "Framework": "NIS2",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "ANNEX to the Commission Implementing Regulation laying down rules for the application of Directive (EU) 2022/2555 as regards technical and methodological requirements of cybersecurity risk-management measures and further specification of the cases in which an incident is considered to be significant with regard to DNS service providers, TLD name registries, cloud computing service providers, data centre service providers, content delivery network providers, managed service providers, managed security service providers, providers of online market places, of online search engines and of social networking services platforms, and trust service providers",
+  "Requirements": [
+    {
+      "Id": "1.1.1.a",
+      "Description": "set out the relevant entities approach to managing the security of their network and information systems;",
+      "Checks": [
+        "route53_domains_privacy_protection_enabled",
+        "secretsmanager_not_publicly_accessible",
+        "account_security_contact_information_is_registered"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.1.c",
+      "Description": "set out network and information security objectives;",
+      "Checks": [
+        "route53_domains_privacy_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "route53"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.1.d",
+      "Description": "include a commitment to continual improvement of the security of network and information systems;",
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_rotate_access_key_90_days",
+        "route53_domains_privacy_protection_enabled",
+        "secretsmanager_secret_rotated_periodically"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.1.h",
+      "Description": "list the documentation to be kept and the duration of retention of the documentation;",
+      "Checks": [
+        "kinesis_stream_data_retention_period",
+        "s3_bucket_server_access_logging_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "The network and information system security policy shall be reviewed and, where appropriate, updated by management bodies at least annually and when significant incidents or significant changes to operations or risks occur. The result of the reviews shall be documented.",
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_rotate_access_key_90_days",
+        "secretsmanager_secret_rotated_periodically"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "As part of their policy on the security of network and information systems referred to in point 1.1., the relevant entities shall lay down responsibilities and authorities for network and information system security and assign them to roles, allocate them according to the relevant entities needs, and communicate them to the management bodies.",
+      "Checks": [
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_role_administratoraccess_policy",
+        "iam_policy_cloudshell_admin_not_attached"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.3",
+      "Description": "At least one person shall report directly to the management bodies on matters of network and information system security.",
+      "Checks": [
+        "account_security_contact_information_is_registered"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "account"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "Depending on the size of the relevant entities, network and information system security shall be covered by dedicated roles or duties carried out in addition to existing roles.",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "For the purpose of Article 21(2), point (a) of Directive (EU) 2022/2555, the relevant entities shall establish and maintain an appropriate risk management framework to identify and address the risks posed to the security of network and information systems. The relevant entities shall perform and document risk assessments and, based on the results, establish, implement and monitor a risk treatment plan. Risk assessment results and residual risks shall be accepted by management bodies or, where applicable, by persons who are accountable and have the authority to manage risks, provided that the relevant entities ensure adequate reporting to the management bodies.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "iam_securityaudit_role_created",
+        "iam_support_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.a",
+      "Description": "follow a risk management methodology;",
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "iam_securityaudit_role_created",
+        "iam_support_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.d",
+      "Description": "in line with an all-hazards approach, identify and document the risks posed to the security of network and information systems, in particular in relation to third parties and risks that could lead to disruptions in the availability, integrity, authenticity and confidentiality of the network and information systems, including the identification of single point of failures;",
+      "Checks": [
+        "networkfirewall_multi_az",
+        "networkfirewall_policy_rule_group_associated",
+        "backup_plans_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.e",
+      "Description": "analyse the risks posed to the security of network and information systems, including threat, likelihood, impact, and risk level, taking into account cyber threat intelligence and vulnerabilities;",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.f",
+      "Description": "evaluate the identified risks based on the risk criteria;",
+      "Checks": [
+        "iam_securityaudit_role_created",
+        "iam_policy_attached_only_to_group_or_roles",
+        "secretsmanager_secret_rotated_periodically"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.g",
+      "Description": "identify and prioritise appropriate risk treatment options and measures;",
+      "Checks": [
+        "guardduty_no_high_severity_findings",
+        "inspector2_active_findings_exist",
+        "accessanalyzer_enabled_without_findings"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.h",
+      "Description": "continuously monitor the implementation of the risk treatment measures;",
+      "Checks": [
+        "guardduty_no_high_severity_findings",
+        "inspector2_active_findings_exist",
+        "accessanalyzer_enabled_without_findings"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.i",
+      "Description": "identify who is responsible for implementing the risk treatment measures and when they should be implemented;",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "ssm"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.j",
+      "Description": "document the chosen risk treatment measures in a risk treatment plan and the reasons justifying the acceptance of residual risks in a comprehensible manner.",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.3",
+      "Description": "When identifying and prioritising appropriate risk treatment options and measures, the relevant entities shall take into account the risk assessment results, the results of the procedure to assess the effectiveness of cybersecurity risk-management measures, the cost of implementation in relation to the expected benefit, the asset classification referred to in point 12.1., and the business impact analysis referred to in point 4.1.3.",
+      "Checks": [
+        "backup_recovery_point_encrypted"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.4",
+      "Description": "The relevant entities shall review and, where appropriate, update the risk assessment results and the risk treatment plan at planned intervals and at least annually, and when significant changes to operations or risks or significant incidents occur.",
+      "Checks": [
+        "secretsmanager_secret_rotated_periodically",
+        "iam_rotate_access_key_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "The relevant entities shall regularly review the compliance with their policies on network and information system security, topic-specific policies, rules, and standards. The management bodies shall be informed of the status of network and information security on the basis of the compliance reviews by means of regular reporting.",
+      "Checks": [
+        "networkfirewall_policy_rule_group_associated",
+        "account_security_contact_information_is_registered",
+        "iam_support_role_created",
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.2 Compliance monitoring",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.2.3",
+      "Description": "The relevant entities shall perform the compliance monitoring at planned intervals and when significant incidents or significant changes to operations or risks occur.",
+      "Checks": [
+        "secretsmanager_secret_rotated_periodically",
+        "account_maintain_current_contact_details",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.2 Compliance monitoring",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "The relevant entities shall review independently their approach to managing network and information system security and its implementation including people, processes and technologies.",
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_securityaudit_role_created",
+        "secretsmanager_secret_rotated_periodically",
+        "cloudwatch_log_metric_filter_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.3 Independent review of information and network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "For the purpose of Article 21(2), point (b) of Directive (EU) 2022/2555, the relevant entities shall establish and implement an incident handling policy laying down the roles, responsibilities, and procedures for detecting, analysing, containing or responding to, recovering from, documenting and reporting of incidents in a timely manner.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "ssm"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.a",
+      "Description": "a categorisation system for incidents that is consistent with the event assessment and classification carried out pursuant to point 3.4.1.;",
+      "Checks": [
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.c",
+      "Description": "assignment of roles to detect and appropriately respond to incidents to competent employees;",
+      "Checks": [
+        "iam_role_cross_service_confused_deputy_prevention",
+        "iam_securityaudit_role_created",
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.d",
+      "Description": "documents to be used in the course of incident detection and response such as incident response manuals, escalation charts, contact lists and templates.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "ssm_documents_set_as_public",
+        "iam_support_role_created",
+        "account_security_contact_information_is_registered"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3",
+      "Description": "The roles, responsibilities and procedures laid down in the policy shall be tested and reviewed and, where appropriate, updated at planned intervals and after significant incidents or significant changes to operations or risks.",
+      "Checks": [
+        "secretsmanager_secret_rotated_periodically",
+        "iam_rotate_access_key_90_days",
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "The relevant entities shall lay down procedures and use tools to monitor and log activities on their network and information systems to detect events that could be considered as incidents and respond accordingly to mitigate the impact.",
+      "Checks": [
+        "cloudwatch_log_metric_filter_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.2",
+      "Description": "To the extent feasible, monitoring shall be automated and carried out either continuously or in periodic intervals, subject to business capabilities. The relevant entities shall implement their monitoring activities in a way which minimises false positives and false negatives.",
+      "Checks": [
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.a",
+      "Description": "relevant outbound and inbound network traffic;",
+      "Checks": [
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "ec2_launch_template_no_public_ip"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.b",
+      "Description": "creation, modification or deletion of users of the relevant entities network and information systems and extension of the permissions;",
+      "Checks": [
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.c",
+      "Description": "access to systems and applications;",
+      "Checks": [
+        "acm_certificates_transparency_logs_enabled",
+        "apigateway_restapi_logging_enabled",
+        "apigatewayv2_api_access_logging_enabled",
+        "appsync_field_level_logging_enabled",
+        "athena_workgroup_logging_enabled",
+        "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+        "bedrock_model_invocation_logging_enabled",
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "cloudfront_distributions_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "datasync_task_logging_enabled",
+        "dms_replication_task_source_logging_enabled",
+        "dms_replication_task_target_logging_enabled",
+        "ec2_client_vpn_endpoint_connection_logging_enabled",
+        "ecs_task_definitions_logging_block_mode",
+        "ecs_task_definitions_logging_enabled",
+        "eks_control_plane_logging_all_types_enabled",
+        "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+        "elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_logging_enabled",
+        "guardduty_eks_audit_log_enabled",
+        "mq_broker_logging_enabled",
+        "neptune_cluster_integration_cloudwatch_logs",
+        "networkfirewall_logging_enabled",
+        "opensearch_service_domains_audit_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_cluster_integration_cloudwatch_logs",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "route53_public_hosted_zones_cloudwatch_logging_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "stepfunctions_statemachine_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "waf_global_webacl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
+        "wafv2_webacl_rule_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.d",
+      "Description": "authentication-related events;",
+      "Checks": [
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "directoryservice_supported_mfa_radius_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.e",
+      "Description": "all privileged access to systems and applications, and activities performed by administrative accounts;",
+      "Checks": [
+        "accessanalyzer_enabled",
+        "cloudwatch_log_metric_filter_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.f",
+      "Description": "access or changes to critical configuration and backup files;",
+      "Checks": [
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.g",
+      "Description": "event logs and logs from security tools, such as antivirus, intrusion detection systems or firewalls;",
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.h",
+      "Description": "use of system resources, as well as their performance;",
+      "Checks": [
+        "rds_instance_enhanced_monitoring_enabled",
+        "ec2_instance_detailed_monitoring_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "kafka_cluster_enhanced_monitoring_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.4",
+      "Description": "The logs shall be regularly reviewed for any unusual or unwanted trends. Where appropriate, the relevant entities shall lay down appropriate values for alarm thresholds. If the laid down values for alarm threshold are exceeded, an alarm shall be triggered, where appropriate, automatically. The relevant entities shall ensure that, in case of an alarm, a qualified and appropriate response is initiated in a timely manner.",
+      "Checks": [
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.5",
+      "Description": "The relevant entities shall maintain and back up logs for a predefined period and shall protect them from unauthorised access or changes.",
+      "Checks": [
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.4.1",
+      "Description": "The relevant entities shall assess suspicious events to determine whether they constitute incidents and, if so, determine their nature and severity.",
+      "Checks": [
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_llm_jacking"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.4 Event assessment and classification",
+          "Service": "cloudtrail"
+        }
+      ]
+    },
+    {
+      "Id": "3.4.2.c",
+      "Description": "review the appropriate logs for the purposes of event assessment and classification;",
+      "Checks": [
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.4 Event assessment and classification",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.4.2.d",
+      "Description": "put in place a process for log correlation and analysis, and reassess and reclassify events in case of new information becoming available or after analysis of previously available information.",
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.4 Event assessment and classification",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.1",
+      "Description": "The relevant entities shall respond to incidents in accordance with documented procedures and in a timely manner.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "ssm"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.3.a",
+      "Description": "with the Computer Security Incident Response Teams (CSIRTs) or, where applicable, the competent authorities, related to incident notification;",
+      "Checks": [
+        "route53_domains_privacy_protection_enabled",
+        "account_security_contact_information_is_registered",
+        "account_maintain_current_contact_details",
+        "ec2_instance_secrets_user_data",
+        "secretsmanager_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.4",
+      "Description": "The relevant entities shall log incident response activities in accordance with the procedures referred to in point 3.2.1., and record evidence.",
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "3.6.1",
+      "Description": "Where appropriate, the relevant entities shall carry out post-incident reviews after recovery from incidents. The post-incident reviews shall identify, where possible, the root cause of the incident and result in documented lessons learned to reduce the occurrence and consequences of future incidents.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.6 Post-incident reviews",
+          "Service": "ssm"
+        }
+      ]
+    },
+    {
+      "Id": "3.6.2",
+      "Description": "The relevant entities shall ensure that post-incident reviews contribute to improving their approach to network and information security, to risk treatment measures, and to incident handling, detection and response procedures.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.6 Post-incident reviews",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.6.3",
+      "Description": "The relevant entities shall review at planned intervals if incidents led to post-incident reviews.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.6 Post-incident reviews",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "For the purpose of Article 21(2), point (c) of Directive (EU) 2022/2555, the relevant entities shall lay down and maintain a business continuity and disaster recovery plan to apply in the case of incidents.",
+      "Checks": [
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_plans_exist",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan",
+        "rds_cluster_protected_by_backup_plan"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.f",
+      "Description": "recovery plans for specific operations, including recovery objectives;",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist",
+        "backup_vaults_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.g",
+      "Description": "required resources, including backups and redundancies;",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.3",
+      "Description": "The relevant entities shall carry out a business impact analysis to assess the potential impact of severe disruptions to their business operations and shall, based on the results of the business impact analysis, establish continuity requirements for the network and information systems.",
+      "Checks": [
+        "backup_plans_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4",
+      "Description": "The business continuity plan and disaster recovery plan shall be tested, reviewed and, where appropriate, updated at planned intervals and following significant incidents or significant changes to operations or risks. The relevant entities shall ensure that the plans incorporate lessons learnt from such tests.",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "dynamodb_table_protected_by_backup_plan"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.b",
+      "Description": "assurance that backup copies are complete and accurate, including configuration data and data stored in cloud computing service environment;",
+      "Checks": [
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "backup_recovery_point_encrypted",
+        "backup_plans_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.e",
+      "Description": "restoring data from backup copies;",
+      "Checks": [
+        "rds_cluster_backtrack_enabled",
+        "rds_instance_backup_enabled",
+        "backup_vaults_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.f",
+      "Description": "retention periods based on business and regulatory requirements.",
+      "Checks": [
+        "kinesis_stream_data_retention_period",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.1",
+      "Description": "The relevant entities shall put in place a process for crisis management.",
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.3 Crisis management",
+          "Service": "ssm"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.2.a",
+      "Description": "roles and responsibilities for personnel and, where appropriate, suppliers and service providers, specifying the allocation of roles in crisis situations, including specific steps to follow;",
+      "Checks": [
+        "iam_support_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.3 Crisis management",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.2.c",
+      "Description": "application of appropriate measures to ensure the maintenance of network and information system security in crisis situations.",
+      "Checks": [
+        "iam_no_expired_server_certificates_stored",
+        "route53_domains_privacy_protection_enabled",
+        "backup_vaults_encrypted"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.3 Crisis management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.2.a",
+      "Description": "the cybersecurity practices of the suppliers and service providers, including their secure development procedures;",
+      "Checks": [
+        "codebuild_report_group_export_encrypted",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "bedrock_model_invocation_logs_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.4.f",
+      "Description": "an obligation on suppliers and service providers to handle vulnerabilities that present a risk to the security of the network and information systems of the relevant entities;",
+      "Checks": [
+        "guardduty_no_high_severity_findings",
+        "inspector2_active_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.7.b",
+      "Description": "review incidents related to ICT products and ICT services from suppliers and service providers;",
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "iam_support_role_created",
+        "account_security_contact_information_is_registered",
+        "account_maintain_current_contact_details"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.7.d",
+      "Description": "analyse the risks presented by changes related to ICT products and ICT services from suppliers and service providers and, where appropriate, take mitigating measures in a timely manner.",
+      "Checks": [
+        "guardduty_no_high_severity_findings",
+        "inspector2_active_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.1.2.b",
+      "Description": "requirements regarding security updates throughout the entire lifetime of the ICT services or ICT products, or replacement after the end of the support period;",
+      "Checks": [
+        "elasticbeanstalk_environment_managed_updates_enabled",
+        "opensearch_service_domains_updated_to_the_latest_service_software_version"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.1 Security in acquisition of ICT services or ICT products",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.1",
+      "Description": "Before developing a network and information system, including software, the relevant entities shall lay down rules for the secure development of network and information systems and apply them when developing network and information systems in-house, or when outsourcing the development of network and information systems. The rules shall cover all development phases, including specification, design, development, implementation and testing.",
+      "Checks": [
+        "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+        "glue_development_endpoints_job_bookmark_encryption_enabled",
+        "glue_development_endpoints_s3_encryption_enabled",
+        "sagemaker_models_network_isolation_enabled",
+        "ecs_task_definitions_host_networking_mode_users",
+        "eks_cluster_network_policy_enabled",
+        "networkfirewall_deletion_protection",
+        "networkfirewall_in_all_vpc",
+        "networkfirewall_policy_default_action_fragmented_packets",
+        "networkfirewall_policy_default_action_full_packets"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.a",
+      "Description": "carry out an analysis of security requirements at the specification and design phases of any development or acquisition project undertaken by the relevant entities or on behalf of those entities;",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.b",
+      "Description": "apply principles for engineering secure systems and secure coding principles to any information system development activities such as promoting cybersecurity-by-design, zero-trust architectures;",
+      "Checks": [
+        "codebuild_report_group_export_encrypted",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_no_secrets_in_variables",
+        "codebuild_project_older_90_days",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_user_controlled_buildspec"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.c",
+      "Description": "lay down security requirements regarding development environments;",
+      "Checks": [
+        "codebuild_project_no_secrets_in_variables",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_report_group_export_encrypted",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "glue_development_endpoints_job_bookmark_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.4",
+      "Description": "The relevant entities shall review and, where necessary, update their secure development rules at planned intervals.",
+      "Checks": [
+        "secretsmanager_secret_rotated_periodically",
+        "iam_rotate_access_key_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.4.1",
+      "Description": "The relevant entities shall apply change management procedures to control changes of network and information systems. Where applicable, the procedures shall be consistent with the relevant entities general policies concerning change management.",
+      "Checks": [
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.4 Change management, repairs and maintenance",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "6.6.1.a",
+      "Description": "security patches are applied within a reasonable time after they become available;",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "memorydb_cluster_auto_minor_version_upgrades",
+        "elasticbeanstalk_environment_managed_updates_enabled",
+        "elasticache_redis_cluster_auto_minor_version_upgrades",
+        "glue_development_endpoints_job_bookmark_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.6 Security patch management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.b",
+      "Description": "determine and apply controls to protect the relevant entities internal network domains from unauthorised access;",
+      "Checks": [
+        "networkfirewall_deletion_protection",
+        "networkfirewall_in_all_vpc",
+        "networkfirewall_logging_enabled",
+        "networkfirewall_multi_az",
+        "networkfirewall_policy_default_action_fragmented_packets",
+        "networkfirewall_policy_default_action_full_packets",
+        "networkfirewall_policy_rule_group_associated"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "networkfirewall"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.e",
+      "Description": "not use systems used for administration of the security policy implementation for other purposes;",
+      "Checks": [
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_avoid_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.g",
+      "Description": "where appropriate, exclusively allow access to the relevant entities network and information systems by devices authorised by those entities;",
+      "Checks": [
+        "ec2_instance_port_cassandra_exposed_to_internet",
+        "ec2_instance_port_cifs_exposed_to_internet",
+        "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+        "ec2_instance_port_ftp_exposed_to_internet",
+        "ec2_instance_port_kafka_exposed_to_internet",
+        "ec2_instance_port_kerberos_exposed_to_internet",
+        "ec2_instance_port_ldap_exposed_to_internet",
+        "ec2_instance_port_memcached_exposed_to_internet",
+        "ec2_instance_port_mongodb_exposed_to_internet",
+        "ec2_instance_port_mysql_exposed_to_internet",
+        "ec2_instance_port_oracle_exposed_to_internet",
+        "ec2_instance_port_postgresql_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_redis_exposed_to_internet",
+        "ec2_instance_port_sqlserver_exposed_to_internet",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "ec2"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.i",
+      "Description": "establish communication between distinct systems only through trusted channels that are isolated using logical, cryptographic or physical separation from other communication channels and provide assured identification of their end points and protection of the channel data from modification or disclosure;",
+      "Checks": [
+        "kafka_cluster_in_transit_encryption_enabled",
+        "kafka_connector_in_transit_encryption_enabled",
+        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+        "redshift_cluster_in_transit_encryption_enabled",
+        "transfer_server_in_transit_encryption_enabled",
+        "elbv2_nlb_tls_termination_enabled",
+        "kafka_cluster_mutual_tls_authentication_enabled",
+        "autoscaling_group_launch_configuration_requires_imdsv2",
+        "ec2_instance_account_imdsv2_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_launch_template_imdsv2_required"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.l",
+      "Description": "apply best practices for the security of the DNS, and for Internet routing security and routing hygiene of traffic originating from and destined to the network.",
+      "Checks": [
+        "route53_domains_privacy_protection_enabled",
+        "route53_dangling_ip_subdomain_takeover",
+        "elbv2_nlb_tls_termination_enabled",
+        "kafka_cluster_mutual_tls_authentication_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.8.2.a",
+      "Description": "consider the functional, logical and physical relationship, including location, between trustworthy systems and services;",
+      "Checks": [
+        "iam_role_cross_service_confused_deputy_prevention",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_endpoint_connections_trust_boundaries"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.8 Network segmentation",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.9.2",
+      "Description": "For that purpose, the relevant entities shall in particular implement measures that detect or prevent the use of malicious or unauthorised software. The relevant entities shall, where appropriate, ensure that their network and information systems are equipped with detection and response software, which is updated regularly in accordance with the risk assessment carried out pursuant to point 2.1 and the contractual agreements with the providers.",
+      "Checks": [
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_llm_jacking"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.9 Protection against malicious and unauthorised software",
+          "Service": "cloudtrail"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.b",
+      "Description": "the methods for monitoring, measurement, analysis and evaluation, as applicable, to ensure valid results;",
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.d",
+      "Description": "who is responsible for monitoring and measuring the effectiveness of the cybersecurity risk-management measures;",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.e",
+      "Description": "when the results from monitoring and measurement are to be analysed and evaluated;",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.f",
+      "Description": "who has to analyse and evaluate these results.",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.a",
+      "Description": "in accordance with the relevant entities classification of assets, the type, strength and quality of the cryptographic measures required to protect the relevant entities assets, including data at rest and data in transit;",
+      "Checks": [
+        "apigateway_restapi_cache_encrypted",
+        "athena_workgroup_encryption",
+        "backup_recovery_point_encrypted",
+        "cloudtrail_kms_encryption_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_report_group_export_encrypted",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dms_endpoint_redis_in_transit_encryption_enabled",
+        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "kafka_connector_in_transit_encryption_enabled",
+        "redshift_cluster_in_transit_encryption_enabled",
+        "transfer_server_in_transit_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c",
+      "Description": "the relevant entities approach to key management, including, where appropriate, methods for the following:",
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "secretsmanager_secret_rotated_periodically",
+        "kms_key_not_publicly_accessible",
+        "iam_no_root_access_key",
+        "iam_user_no_setup_initial_access_key",
+        "iam_user_two_active_access_key"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.i",
+      "Description": "generating different keys for cryptographic systems and applications;",
+      "Checks": [
+        "acm_certificates_with_secure_key_algorithms"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "acm"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.ii",
+      "Description": "issuing and obtaining public key certificates;",
+      "Checks": [
+        "acm_certificates_with_secure_key_algorithms",
+        "acm_certificates_transparency_logs_enabled",
+        "route53_domains_privacy_protection_enabled",
+        "iam_no_expired_server_certificates_stored"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.iii",
+      "Description": "distributing keys to intended entities, including how to activate keys when received;",
+      "Checks": [
+        "iam_user_no_setup_initial_access_key"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.iv",
+      "Description": "storing keys, including how authorised users obtain access to keys;",
+      "Checks": [
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_not_publicly_accessible",
+        "secretsmanager_secret_rotated_periodically",
+        "secretsmanager_secret_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "secretsmanager"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.v",
+      "Description": "changing or updating keys, including rules on when and how to change keys;",
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vi",
+      "Description": "backing up or archiving keys;",
+      "Checks": [
+        "backup_vaults_encrypted"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "backup"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vii",
+      "Description": "logging and auditing of key management-related activities;",
+      "Checks": [
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.xii",
+      "Description": "setting activation and deactivation dates for keys ensuring that the keys can only be used for the specified period of time according to the organization's rules on key management.",
+      "Checks": [
+        "iam_rotate_access_key_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.1",
+      "Description": "For the purpose of Article 21(2), point (i) of Directive (EU) 2022/2555, the relevant entities shall establish, document and implement logical and physical access control policies for the access to their network and information systems, based on business requirements as well as network and information system security requirements.",
+      "Checks": [
+        "accessanalyzer_enabled",
+        "apigateway_restapi_client_certificate_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cognito_identity_pool_guest_access_disabled",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "ec2_instance_profile_attached",
+        "ecs_task_definitions_containers_readonly_access",
+        "efs_access_point_enforce_root_directory",
+        "efs_access_point_enforce_user_identity",
+        "efs_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.2.c",
+      "Description": "ensure that access is only granted to users that have been adequately authenticated.",
+      "Checks": [
+        "apigatewayv2_api_access_logging_enabled",
+        "cognito_identity_pool_guest_access_disabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_administrator_access_with_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.1",
+      "Description": "The relevant entities shall provide, modify, remove and document access rights to network and information systems in accordance with the access control policy referred to in point 11.1.",
+      "Checks": [
+        "accessanalyzer_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "accessanalyzer"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.a",
+      "Description": "assign and revoke access rights based on the principles of need-to-know, least privilege and separation of duties;",
+      "Checks": [
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.d",
+      "Description": "ensure that access rights appropriately address third-party access, such as visitors, suppliers and service providers, in particular by limiting access rights in scope and in duration;",
+      "Checks": [
+        "apigateway_restapi_client_certificate_enabled",
+        "cognito_identity_pool_guest_access_disabled",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "ec2_instance_profile_attached",
+        "ecs_task_definitions_containers_readonly_access",
+        "efs_access_point_enforce_root_directory"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.e",
+      "Description": "maintain a register of access rights granted;",
+      "Checks": [
+        "accessanalyzer_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "accessanalyzer"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.f",
+      "Description": "apply logging to the management of access rights.",
+      "Checks": [
+        "apigatewayv2_api_access_logging_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "wafv2_webacl_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.1",
+      "Description": "The relevant entities shall maintain policies for management of privileged accounts and system administration accounts as part of the access control policy referred to in point 11.1.",
+      "Checks": [
+        "iam_role_administratoraccess_policy"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.a",
+      "Description": "establish strong identification, authentication such as multi-factor authentication, and authorisation procedures for privileged accounts and system administration accounts;",
+      "Checks": [
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled",
+        "iam_administrator_access_with_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.b",
+      "Description": "set up specific accounts to be used for system administration operations exclusively, such as installation, configuration, management or maintenance;",
+      "Checks": [
+        "iam_avoid_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.c",
+      "Description": "individualise and restrict system administration privileges to the highest extent possible,",
+      "Checks": [
+        "iam_avoid_root_usage",
+        "iam_inline_policy_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.d",
+      "Description": "provide that system administration accounts are only used to connect to system administration systems.",
+      "Checks": [
+        "iam_user_console_access_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.a",
+      "Description": "only use system administration systems for system administration purposes, and not for any other operations;",
+      "Checks": [
+        "iam_avoid_root_usage"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.b",
+      "Description": "separate logically such systems from application software not used for system administrative purposes,",
+      "Checks": [
+        "iam_inline_policy_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.c",
+      "Description": "protect access to system administration systems through authentication and encryption.",
+      "Checks": [
+        "dms_endpoint_mongodb_authentication_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "kafka_cluster_mutual_tls_authentication_enabled",
+        "neptune_cluster_iam_authentication_enabled",
+        "opensearch_service_domains_use_cognito_authentication_for_kibana",
+        "rds_cluster_iam_authentication_enabled",
+        "rds_instance_iam_authentication_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.2.a",
+      "Description": "set up unique identities for network and information systems and their users;",
+      "Checks": [
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "fsx_file_system_copy_tags_to_volumes_enabled",
+        "neptune_cluster_copy_tags_to_snapshots",
+        "organizations_tags_policies_enabled_and_attached",
+        "rds_cluster_copy_tags_to_snapshots",
+        "rds_instance_copy_tags_to_snapshots"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.2.d",
+      "Description": "apply logging to the management of identities.",
+      "Checks": [
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "cloudwatch"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.4",
+      "Description": "The relevant entities shall regularly review the identities for network and information systems and their users and, if no longer needed, deactivate them without delay.",
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.1",
+      "Description": "The relevant entities shall implement secure authentication procedures and technologies based on access restrictions and the policy on access control.",
+      "Checks": [
+        "cognito_user_pool_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.a",
+      "Description": "ensure the strength of authentication is appropriate to the classification of the asset to be accessed;",
+      "Checks": [
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "cognito_user_pool_password_policy_number",
+        "cognito_user_pool_password_policy_symbol",
+        "cognito_user_pool_password_policy_uppercase",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.c",
+      "Description": "require the change of authentication credentials initially, at predefined intervals and upon suspicion that the credentials were compromised;",
+      "Checks": [
+        "secretsmanager_secret_rotated_periodically",
+        "iam_rotate_access_key_90_days",
+        "kms_cmk_rotation_enabled",
+        "secretsmanager_automatic_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.d",
+      "Description": "require the reset of authentication credentials and the blocking of users after a predefined number of unsuccessful log-in attempts;",
+      "Checks": [
+        "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+        "cognito_user_pool_blocks_potential_malicious_sign_in_attempts"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "cognito"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.e",
+      "Description": "terminate inactive sessions after a predefined period of inactivity; and",
+      "Checks": [
+        "appstream_fleet_session_idle_disconnect_timeout",
+        "appstream_fleet_maximum_session_duration",
+        "appstream_fleet_session_disconnect_timeout"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "appstream"
+        }
+      ]
+    },
+    {
+      "Id": "11.7.2",
+      "Description": "The relevant entities shall ensure that the strength of authentication is appropriate for the classification of the asset to be accessed.",
+      "Checks": [
+        "cloudtrail_bucket_requires_mfa_delete",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cognito_user_pool_mfa_enabled",
+        "directoryservice_supported_mfa_radius_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "s3_bucket_no_mfa_delete"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.7 Multi-factor authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.1.2.c",
+      "Description": "align the availability requirements of the assets with the delivery and recovery objectives set out in their business continuity and disaster recovery plans.",
+      "Checks": [
+        "backup_vaults_exist",
+        "backup_plans_exist",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "eks_control_plane_logging_all_types_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.1 Asset classification",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.a",
+      "Description": "cover the entire life cycle of the assets, including acquisition, use, storage, transportation and disposal;",
+      "Checks": [
+        "dlm_ebs_snapshot_lifecycle_policy_exists",
+        "ecr_repositories_lifecycle_policy_enabled",
+        "s3_bucket_lifecycle_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.b",
+      "Description": "provide rules on the safe use, safe storage, safe transport, and the irretrievable deletion and destruction of the assets;",
+      "Checks": [
+        "backup_vaults_exist",
+        "backup_plans_exist",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "eks_control_plane_logging_all_types_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "ssmincidents_enabled_with_plans"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.c",
+      "Description": "provide that the transfer shall take place in a secure manner, in accordance with the type of asset to be transferred.",
+      "Checks": [
+        "transfer_server_in_transit_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "transfer"
+        }
+      ]
+    }
+  ]
+}
