@@ -609,6 +609,42 @@ class CheckReportM365(Check_Report):
 
 
 @dataclass
+class CheckReportIAC(Check_Report):
+    """Contains the IAC Check's finding information using Checkov."""
+
+    metadata: dict
+    check_id: str
+    check_name: str
+    check_result: dict
+    check_result_status: str
+    file_path: str
+    file_line_range: list
+    guideline: str
+    resource: str
+    severity: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the IAC Check's finding information from a Checkov failed_check dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            failed_check (dict): A single failed_check result from Checkov's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.check_id = finding.get("check_id", "")
+        self.check_name = finding.get("check_name", "")
+        self.check_result = finding.get("check_result", {})
+        self.check_result_status = self.check_result.get("result", "UNKNOWN")
+        self.file_path = finding.get("file_path", "")
+        self.file_line_range = finding.get("file_line_range", [])
+        self.guideline = finding.get("guideline", "")
+        self.resource = finding.get("resource", "")
+        self.severity = finding.get("severity", "UNKNOWN")
+
+
+@dataclass
 class CheckReportNHN(Check_Report):
     """Contains the NHN Check's finding information."""
 

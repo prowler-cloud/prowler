@@ -80,6 +80,7 @@ class CIS_Requirement_Attribute_AssessmentStatus(str):
 
 # CIS Requirement Attribute
 class CIS_Requirement_Attribute(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
     """CIS Requirement Attribute"""
 
     Section: str

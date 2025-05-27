@@ -282,6 +282,14 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "iac":
+                output_data["auth_method"] = "iac"
+                output_data["account_uid"] = "iac"
+                output_data["account_name"] = "iac"
+                output_data["resource_name"] = check_output.check_name
+                output_data["resource_uid"] = check_output.check_id
+                output_data["region"] = check_output.file_path
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
