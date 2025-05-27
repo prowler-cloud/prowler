@@ -81,6 +81,9 @@ Prowler for Azure needs two types of permission scopes to be set:
 
 To assign the permissions, follow the instructions in the [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions) section and the [Azure subscriptions permissions](../tutorials/azure/subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler) section, respectively.
 
+???+ warning
+    Some permissions in `ProwlerRole` are considered **write** permissions, so if you have a `ReadOnly` lock attached to some resources you may get an error and will not get a finding for that check.
+
 #### Checks that require ProwlerRole
 
 The following checks require the `ProwlerRole` permissions to be executed, if you want to run them, make sure you have assigned the role to the identity that is going to be assumed by Prowler:
@@ -153,14 +156,14 @@ With this credentials you will only be able to run the checks that work through 
 
 Authentication flag: `--env-auth`
 
-This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_ENCRYPTED_PASSWORD`.
+This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_PASSWORD`.
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 export M365_USER="your_email@example.com"
-export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
+export M365_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
 ```
 
 These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
@@ -173,7 +176,7 @@ These two new environment variables are **required** to execute the PowerShell m
 
     ![User Domains](../tutorials/microsoft365/img/user-domains.png)
 
-- `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
+- `M365_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
 
     ???+ warning
         Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it should fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
@@ -191,7 +194,7 @@ These two new environment variables are **required** to execute the PowerShell m
         6500780061006d0070006c006500700061007300730077006f0072006400
         ```
 
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
+        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_PASSWORD` environment variable.
 
     === "Windows"
 
@@ -222,7 +225,7 @@ These two new environment variables are **required** to execute the PowerShell m
         6500780061006d0070006c006500700061007300730077006f0072006400
         ```
 
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
+        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_PASSWORD` environment variable.
 
 
 
@@ -247,6 +250,7 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
     - `Sites.Read.All`: Required for SharePoint service.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+    - `AuditLog.Read.All`: Required for Entra service.
 
 - **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.

@@ -3,7 +3,7 @@
 import { Chip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime, SnippetId } from "@/components/ui/entities";
+import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
@@ -27,7 +27,7 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "account",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Account"} param="alias" />
+      <DataTableColumnHeader column={column} title={"Provider"} param="alias" />
     ),
     cell: ({ row }) => {
       const {
@@ -64,13 +64,17 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   {
     accessorKey: "uid",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
+      <DataTableColumnHeader
+        column={column}
+        title={"Provider UID"}
+        param="uid"
+      />
     ),
     cell: ({ row }) => {
       const {
         attributes: { uid },
       } = getProviderData(row);
-      return <SnippetId className="h-7" entityId={uid} />;
+      return <SnippetChip value={uid} className="h-7" />;
     },
   },
   {

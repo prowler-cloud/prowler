@@ -1,4 +1,5 @@
 import os
+import platform
 
 import msal
 
@@ -7,7 +8,7 @@ from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365UserNotBelongingToTenantError,
 )
-from prowler.providers.m365.models import M365Credentials
+from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
 class M365PowerShell(PowerShellSession):
@@ -34,7 +35,7 @@ class M365PowerShell(PowerShellSession):
         to be installed and available in the PowerShell environment.
     """
 
-    def __init__(self, credentials: M365Credentials):
+    def __init__(self, credentials: M365Credentials, identity: M365IdentityInfo):
         """
         Initialize a Microsoft 365 PowerShell session.
 
@@ -46,6 +47,7 @@ class M365PowerShell(PowerShellSession):
                 for authentication.
         """
         super().__init__()
+        self.tenant_identity = identity
         self.init_credential(credentials)
 
     def init_credential(self, credentials: M365Credentials) -> None:
@@ -63,16 +65,58 @@ class M365PowerShell(PowerShellSession):
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
+
+        credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
+
         # Sanitize user and password
-        user = self.sanitize(credentials.user)
-        passwd = self.sanitize(credentials.passwd)
+        sanitized_user = self.sanitize(credentials.user)
+        sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
 
         # Securely convert encrypted password to SecureString
-        self.execute(f'$user = "{user}"')
-        self.execute(f'$secureString = "{passwd}" | ConvertTo-SecureString')
+        self.execute(f'$user = "{sanitized_user}"')
+        self.execute(
+            f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
+        )
         self.execute(
             "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
         )
+
+    def encrypt_password(self, password: str) -> str:
+        """
+        Encrypts a password using Windows CryptProtectData on Windows systems
+        or UTF-16LE encoding on other systems.
+
+        Args:
+        password (str): The password to encrypt
+
+        Returns:
+        str: The encrypted password in hexadecimal format
+
+        Raises:
+        ValueError: If password is None or empty
+        """
+        try:
+            if platform.system() == "Windows":
+                import win32crypt
+
+                encrypted_blob = win32crypt.CryptProtectData(
+                    password.encode("utf-16le"), None, None, None, None, 0
+                )
+
+                encrypted_bytes = encrypted_blob
+                if isinstance(encrypted_blob, tuple):
+                    encrypted_bytes = encrypted_blob[1]
+                elif hasattr(encrypted_blob, "data"):
+                    encrypted_bytes = encrypted_blob.data
+
+                return encrypted_bytes.hex()
+
+            else:
+                return password.encode("utf-16le").hex()
+        except Exception as error:
+            raise Exception(
+                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
+            )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
@@ -86,14 +130,22 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         self.execute(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
         )
         self.execute(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
         )
-        decrypted_password = self.execute(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"'
-        )
+
+        # Validate user belongs to tenant
+        user_domain = credentials.user.split("@")[1]
+        if not any(
+            user_domain.endswith(domain)
+            for domain in self.tenant_identity.tenant_domains
+        ):
+            raise M365UserNotBelongingToTenantError(
+                file=os.path.basename(__file__),
+                message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
+            )
 
         app = msal.ConfidentialClientApplication(
             client_id=credentials.client_id,
@@ -101,9 +153,10 @@ class M365PowerShell(PowerShellSession):
             authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
         )
 
+        # Validate credentials
         result = app.acquire_token_by_username_password(
             username=credentials.user,
-            password=decrypted_password,  # Needs to be in plain text
+            password=credentials.passwd,
             scopes=["https://graph.microsoft.com/.default"],
         )
 
@@ -112,14 +165,6 @@ class M365PowerShell(PowerShellSession):
 
         if "access_token" not in result:
             return False
-
-        # Validate user credentials belong to tenant
-        user_domain = credentials.user.split("@")[1]
-        if not credentials.provider_id.endswith(user_domain):
-            raise M365UserNotBelongingToTenantError(
-                file=os.path.basename(__file__),
-                message="The provided M365 User does not belong to the specified tenant.",
-            )
 
         return True
 
@@ -679,6 +724,24 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+
+    def get_sharing_policy(self) -> dict:
+        """
+        Get Exchange Online Sharing Policy.
+
+        Retrieves the current sharing policy settings for Exchange Online.
+
+        Returns:
+            dict: Sharing policy settings in JSON format.
+
+        Example:
+            >>> get_sharing_policy()
+            {
+                "Identity": "Default",
+                "Enabled": true
+            }
+        """
+        return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
 
 
 # This function is used to install the required M365 PowerShell modules in Docker containers

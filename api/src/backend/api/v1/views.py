@@ -260,7 +260,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.8.0"
+        spectacular_settings.VERSION = "1.9.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1160,7 +1160,9 @@ class ProviderViewSet(BaseRLSViewSet):
             200: OpenApiResponse(description="Report obtained successfully"),
             202: OpenApiResponse(description="The task is in progress"),
             403: OpenApiResponse(description="There is a problem with credentials"),
-            404: OpenApiResponse(description="The scan has no reports"),
+            404: OpenApiResponse(
+                description="The scan has no reports, or the report generation task has not started yet"
+            ),
         },
     ),
     compliance=extend_schema(
@@ -1281,7 +1283,7 @@ class ScanViewSet(BaseRLSViewSet):
             try:
                 task = Task.objects.get(
                     task_runner_task__task_name="scan-report",
-                    task_runner_task__task_args__contains=str(scan_instance.id),
+                    task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
             except Task.DoesNotExist:
                 return None
@@ -1363,7 +1365,9 @@ class ScanViewSet(BaseRLSViewSet):
                 code = e.response.get("Error", {}).get("Code")
                 if code == "NoSuchKey":
                     return Response(
-                        {"detail": "The scan has no reports."},
+                        {
+                            "detail": "The scan has no reports, or the report generation task has not started yet."
+                        },
                         status=status.HTTP_404_NOT_FOUND,
                     )
                 return Response(
@@ -1376,7 +1380,9 @@ class ScanViewSet(BaseRLSViewSet):
             files = glob.glob(path_pattern)
             if not files:
                 return Response(
-                    {"detail": "The scan has no reports."},
+                    {
+                        "detail": "The scan has no reports, or the report generation task has not started yet."
+                    },
                     status=status.HTTP_404_NOT_FOUND,
                 )
             filepath = files[0]
@@ -1402,7 +1408,10 @@ class ScanViewSet(BaseRLSViewSet):
 
         if not scan.output_location:
             return Response(
-                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "The scan has no reports, or the report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if scan.output_location.startswith("s3://"):
@@ -1440,7 +1449,10 @@ class ScanViewSet(BaseRLSViewSet):
 
         if not scan.output_location:
             return Response(
-                {"detail": "The scan has no reports."}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "The scan has no reports, or the report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if scan.output_location.startswith("s3://"):
@@ -1941,40 +1953,38 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         url_path="metadata/latest",
     )
     def metadata_latest(self, request):
-        # Force filter validation
-        filtered_queryset = self.filter_queryset(self.get_queryset())
-
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scan_ids = (
+        latest_scans_queryset = (
             Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
-            .values_list("id", flat=True)
         )
+        latest_scans_ids = list(latest_scans_queryset.values_list("id", flat=True))
 
         queryset = ResourceScanSummary.objects.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            tenant_id=tenant_id,
+            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
         )
         # ToRemove: Temporary fallback mechanism
-        scans_with_flag = latest_scan_ids.annotate(
-            has_summary=Exists(
-                ResourceScanSummary.objects.filter(
-                    tenant_id=tenant_id,
-                    scan_id=OuterRef("pk"),
-                )
+        present_ids = set(
+            ResourceScanSummary.objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scans_ids
             )
+            .values_list("scan_id", flat=True)
+            .distinct()
         )
-        if missing_scan_ids := scans_with_flag.filter(has_summary=False).values_list(
-            "id", flat=True
-        ):
+        missing_scan_ids = [sid for sid in latest_scans_ids if sid not in present_ids]
+        if missing_scan_ids:
             for scan_id in missing_scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
             return Response(
-                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
+                get_findings_metadata_no_aggregations(
+                    tenant_id, self.filter_queryset(self.get_queryset())
+                )
             )
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
