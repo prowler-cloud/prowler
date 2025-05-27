@@ -668,6 +668,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     first_seen_at = models.DateTimeField(editable=False, null=True)
 
     uid = models.CharField(max_length=300)
+    new_uid = models.TextField(blank=True, null=True)
     delta = FindingDeltaEnumField(
         choices=DeltaChoices.choices,
         blank=True,
@@ -766,6 +767,24 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "findings"
+
+    @property
+    def effective_uid(self):
+        """
+        Property to read the uid value. Returns new_uid if uid is null, otherwise returns uid.
+        This ensures backward compatibility.
+        """
+        if self.uid is None:
+            return self.new_uid
+        return self.uid
+
+    @effective_uid.setter
+    def effective_uid(self, value):
+        """
+        Property to set the uid value. Always stores in new_uid field.
+        This ensures new findings are stored in the new field.
+        """
+        self.new_uid = value
 
     def add_resources(self, resources: list[Resource] | None):
         if not resources:

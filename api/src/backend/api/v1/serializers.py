@@ -1085,6 +1085,7 @@ class FindingSerializer(RLSSerializer):
     """
 
     resources = serializers.ResourceRelatedField(many=True, read_only=True)
+    uid = serializers.SerializerMethodField()
 
     class Meta:
         model = Finding
@@ -1112,6 +1113,13 @@ class FindingSerializer(RLSSerializer):
         "scan": ScanIncludeSerializer,
         "resources": ResourceIncludeSerializer,
     }
+
+    def get_uid(self, obj):
+        """
+        Custom getter for uid field that uses the effective_uid property.
+        This ensures backward compatibility.
+        """
+        return obj.effective_uid
 
 
 # To be removed when the related endpoint is removed as well
