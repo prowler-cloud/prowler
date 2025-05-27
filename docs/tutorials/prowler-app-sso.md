@@ -87,3 +87,100 @@ This endpoint receives an email and checks if there is an active SAML configurat
 	•	Retrieves the related SAMLConfiguration object via tenant_id.
 
 	•	Verifies that SAML_PUBLIC_CERT and SAML_PRIVATE_KEY environment variables are set.
+
+
+# SAML Integration: Testing Guide
+
+This document outlines the process for testing the SAML integration functionality.
+
+---
+
+## 1. Generate Self-Signed Certificate and Private Key
+
+First, generate a self-signed certificate and corresponding private key using OpenSSL:
+
+```bash
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  -keyout saml_private_key.pem \
+  -out saml_public_cert.pem \
+  -subj "/C=US/ST=Test/L=Test/O=Test/OU=Test/CN=localhost"
+```
+
+## 2. Add Certificate Values to .env
+
+Paste the generated values into your .env file:
+```
+SAML_PUBLIC_CERT=<paste certificate content here>
+SAML_PRIVATE_KEY=<paste private key content here>
+```
+
+## 3. Start Ngrok and Update ALLOWED_HOSTS
+
+Start ngrok on port 8080:
+```
+ngrok http 8080
+```
+
+Then, copy the generated ngrok URL and include it in the ALLOWED_HOSTS setting. If you’re using the development environment, it usually defaults to *, but in some cases this may not work properly, like in my tests (investigate):
+
+```
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
+```
+
+## 4. Configure the Identity Provider (IdP)
+
+Start your environment and configure your IdP. You will need to download the IdP’s metadata XML file.
+
+Your Assertion Consumer Service (ACS) URL must follow this format:
+
+```
+https://<PROXY_URL>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/acs/
+```
+
+## 5. IdP Attribute Mapping
+
+The following fields are expected from the IdP:
+
+- firstName
+
+- lastName
+
+- userType (this is the name of the role the user should be assigned)
+
+- companyName (this is filled automatically if the IdP includes an “organization” field)
+
+These values are dynamic. If the values change in the IdP, they will be updated on the next login.
+
+## 6. SAML Configuration API (POST)
+
+SAML configuration is managed via a CRUD API. Use the following POST request to create a new configuration:
+
+```bash
+curl --location 'http://localhost:8080/api/v1/saml-config' \
+--header 'Content-Type: application/vnd.api+json' \
+--header 'Accept: application/vnd.api+json' \
+--header 'Authorization: Bearer <TOKEN>' \
+--data '{
+  "data": {
+    "type": "saml-configuration",
+    "attributes": {
+      "email_domain": "prowler.com",
+      "metadata_xml": "<XML>"
+    }
+  }
+}'
+```
+
+## 7. Start SAML Login Flow
+
+Once everything is configured, start the SAML login process by visiting the following URL:
+
+```
+https://<PROXY_IP>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/login/?email=<USER_EMAIL>
+```
+
+At the end you will get a valid access and refresh token
+
+## 8. Notes on the initiate Endpoint
+
+The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it’s optional.
