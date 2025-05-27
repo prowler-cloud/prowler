@@ -10,7 +10,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0025_findings_uid_index_parent"),
+        ("api", "0026_provider_secret_gcp_service_account"),
     ]
 
     operations = [
