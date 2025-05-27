@@ -13,6 +13,7 @@ import NISTLogo from "./nist.svg";
 import PCILogo from "./pci-dss.svg";
 import RBILogo from "./rbi.svg";
 import SOC2Logo from "./soc2.svg";
+import NIS2Logo from "./nis2.svg";
 
 export const getComplianceIcon = (complianceTitle: string) => {
   if (complianceTitle.toLowerCase().includes("aws")) {
@@ -59,5 +60,8 @@ export const getComplianceIcon = (complianceTitle: string) => {
   }
   if (complianceTitle.toLowerCase().includes("soc2")) {
     return SOC2Logo;
+  }
+  if (complianceTitle.toLowerCase().includes("nis2")) {
+    return NIS2Logo;
   }
 };
