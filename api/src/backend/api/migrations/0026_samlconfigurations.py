@@ -92,15 +92,15 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddConstraint(
-            model_name="samlconfigurations",
+            model_name="samlconfiguration",
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
-                name="rls_on_samlconfigurations",
+                name="rls_on_samlconfiguration",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
-            model_name="samlconfigurations",
+            model_name="samlconfiguration",
             constraint=models.UniqueConstraint(
                 fields=("tenant",), name="unique_samlconfig_per_tenant"
             ),
