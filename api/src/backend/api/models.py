@@ -1377,7 +1377,8 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     )
     business_context = models.TextField(
         blank=True,
-        null=True,
+        null=False,
+        default="",
         help_text="Additional business context for this AI model configuration",
     )
     is_active = models.BooleanField(default=True)
@@ -1444,7 +1445,7 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
         openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
         if not re.match(openai_key_pattern, value):
             raise ModelValidationError(
-                detail="Invalid OpenAI API key format. Must start with 'sk-'.",
+                detail="Invalid OpenAI API key format.",
                 code="invalid_api_key",
                 pointer="/data/attributes/api_key",
             )

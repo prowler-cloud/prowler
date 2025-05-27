@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
@@ -2203,6 +2204,18 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
     def create(self, validated_data):
         api_key = validated_data.pop("api_key")
+
+        # Validate API key format before creating the instance
+        if not api_key:
+            raise serializers.ValidationError({"api_key": "API key is required"})
+
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, api_key):
+            raise serializers.ValidationError(
+                {"api_key": "Invalid OpenAI API key format."}
+            )
+
         instance = super().create(validated_data)
         instance.api_key_decoded = api_key
         instance.save()

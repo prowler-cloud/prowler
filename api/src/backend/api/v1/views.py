@@ -2907,6 +2907,38 @@ class IntegrationViewSet(BaseRLSViewSet):
         return context
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse"],
+        summary="List all Lighthouse configurations",
+        description="Retrieve a list of all Lighthouse configurations.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse"],
+        summary="Create a new Lighthouse configuration",
+        description="Create a new Lighthouse configuration with the specified details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse"],
+        summary="Partially update a Lighthouse configuration",
+        description="Update certain fields of an existing Lighthouse configuration.",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse"],
+        summary="Retrieve a Lighthouse configuration",
+        description="Fetch detailed information about a specific Lighthouse configuration by its ID. Add query param `fields[lighthouse-config]=api_key` to get API key.",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse"],
+        summary="Delete a Lighthouse configuration",
+        description="Remove a Lighthouse configuration by its ID.",
+    ),
+    check_connection=extend_schema(
+        tags=["Lighthouse"],
+        summary="Check the connection to the OpenAI API",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+    ),
+)
 class LighthouseConfigViewSet(BaseRLSViewSet):
     """
     API endpoint for managing Lighthouse configuration.
