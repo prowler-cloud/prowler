@@ -86,7 +86,7 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 567 | 82 | 35 | 10 |
+| AWS | 567 | 82 | 36 | 10 |
 | GCP | 79 | 13 | 9 | 3 |
 | Azure | 142 | 18 | 9 | 3 |
 | Kubernetes | 83 | 7 | 5 | 7 |
