@@ -96,59 +96,62 @@ class IACProvider(Provider):
 
             reports = []
 
+            # TODO: Process passed checks
             # Process failed checks
-            for finding in output.get("results", {}).get("failed_checks", []):
-                # Get severity and ensure it's a valid string
-                severity = finding.get("severity", "low")
-                if severity is None:
-                    severity = "low"
-                severity = str(severity).lower()
+            for finding in output:
+                for failed_check in finding.get("results", {}).get("failed_checks", []):
+                    # Get severity and ensure it's a valid string
+                    severity = finding.get("severity", "low")
+                    if severity is None:
+                        severity = "low"
+                    severity = str(severity).lower()
 
-                # Create a basic metadata structure for the check
-                metadata_dict = {
-                    "Provider": "iac",
-                    "CheckID": finding.get("check_id", ""),
-                    "CheckTitle": finding.get("check_name", ""),
-                    "CheckType": ["Infrastructure as Code"],
-                    "ServiceName": "iac",
-                    "SubServiceName": "",
-                    "ResourceIdTemplate": "",
-                    "Severity": severity,
-                    "ResourceType": "iac",
-                    "Description": finding.get("check_name", ""),
-                    "Risk": "",
-                    "RelatedUrl": finding.get("guideline", ""),
-                    "Remediation": {
-                        "Code": {
-                            "NativeIaC": "",
-                            "Terraform": "",
-                            "CLI": "",
-                            "Other": "",
+                    # Create a basic metadata structure for the check
+                    metadata_dict = {
+                        "Provider": "iac",
+                        "CheckID": failed_check.get("check_id", ""),
+                        "CheckTitle": failed_check.get("check_name", ""),
+                        "CheckType": ["Infrastructure as Code"],
+                        "ServiceName": "iac",
+                        "SubServiceName": "",
+                        "ResourceIdTemplate": "",
+                        "Severity": severity,
+                        "ResourceType": "iac",
+                        "Description": failed_check.get("check_name", ""),
+                        "Risk": "",
+                        "RelatedUrl": (
+                            failed_check.get("guideline", "")
+                            if failed_check.get("guideline")
+                            else ""
+                        ),
+                        "Remediation": {
+                            "Code": {
+                                "NativeIaC": "",
+                                "Terraform": "",
+                                "CLI": "",
+                                "Other": "",
+                            },
+                            "Recommendation": {
+                                "Text": "",
+                                "Url": (
+                                    failed_check.get("guideline", "")
+                                    if failed_check.get("guideline")
+                                    else ""
+                                ),
+                            },
                         },
-                        "Recommendation": {
-                            "Text": "",
-                            "Url": finding.get("guideline", ""),
-                        },
-                    },
-                    "Categories": ["security"],
-                    "DependsOn": [],
-                    "RelatedTo": [],
-                    "Notes": "",
-                }
+                        "Categories": [],
+                        "DependsOn": [],
+                        "RelatedTo": [],
+                        "Notes": "",
+                    }
 
-                # Convert metadata dict to JSON string
-                metadata = json.dumps(metadata_dict)
+                    # Convert metadata dict to JSON string
+                    metadata = json.dumps(metadata_dict)
 
-                report = CheckReportIAC(metadata=metadata, finding=finding)
-                reports.append(report)
-
-            # Log summary
-            summary = output.get("summary", {})
-            logger.info(
-                f"IaC scan completed with {summary.get('passed', 0)} passed, "
-                f"{summary.get('failed', 0)} failed, and "
-                f"{summary.get('skipped', 0)} skipped checks."
-            )
+                    report = CheckReportIAC(metadata=metadata, finding=failed_check)
+                    report.status = "FAIL"
+                    reports.append(report)
 
             return reports
 

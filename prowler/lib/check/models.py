@@ -640,7 +640,7 @@ class CheckReportIAC(Check_Report):
         self.file_path = finding.get("file_path", "")
         self.file_line_range = finding.get("file_line_range", [])
         self.guideline = finding.get("guideline", "")
-        self.resource = finding.get("resource", "")
+        self.resource = finding
         self.severity = finding.get("severity", "UNKNOWN")
 
 

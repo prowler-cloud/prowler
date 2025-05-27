@@ -3,7 +3,10 @@ def init_parser(self):
     iac_parser = self.subparsers.add_parser(
         "iac", parents=[self.common_providers_parser], help="IaC Provider"
     )
-    iac_parser.add_argument(
+
+    # Scan Path
+    iac_scan_subparser = iac_parser.add_argument_group("Scan Path")
+    iac_scan_subparser.add_argument(
         "--scan-path",
         "-P",
         dest="scan_path",
