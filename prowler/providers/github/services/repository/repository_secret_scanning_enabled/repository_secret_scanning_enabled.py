@@ -23,9 +23,7 @@ class repository_secret_scanning_enabled(Check):
         findings = []
         for repo in repository_client.repositories.values():
             if repo.secret_scanning_enabled is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 if getattr(repo, "secret_scanning_enabled", None):
                     report.status = "PASS"
                     report.status_extended = f"Repository {repo.name} has secret scanning enabled to detect sensitive data."
