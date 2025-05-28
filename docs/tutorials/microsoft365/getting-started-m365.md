@@ -4,9 +4,9 @@ Set up your M365 account to enable security scanning using Prowler Cloud/App.
 
 ## Requirements
 
-To configure your M365 account, you’ll need:
+To configure your M365 account, you'll need:
 
-1. Obtain your `Default Domain` from the Entra ID portal.
+1. Obtain a domain from the Entra ID portal.
 
 2. Access Prowler Cloud/App and add a new cloud provider `Microsoft 365`.
 
@@ -17,8 +17,6 @@ To configure your M365 account, you’ll need:
     3.2 Grant the required API permissions.
 
     3.3 Assign the required roles to your user.
-
-    3.4 Retrieve your encrypted password.
 
 4. Add the credentials to Prowler Cloud/App.
 
@@ -32,9 +30,7 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Custom Domain Names](./img/custom-domain-names.png)
 
-Once you are there just look for the `Default Domain` this should be something similar to `YourCompany.onmicrosoft.com`. To ensure that you are picking the correct domain just click on it and verify that the type is `Initial` and you can't delete it.
-
-![Search Default Domain](./img/search-default-domain.png)
+Once you are there just select the domain you want to use.
 
 ---
 
@@ -78,11 +74,11 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
     ![New Registration](./img/new-registration.png)
 
-4. Go to `Certificates & secrets` > `+ New client secret`
+4. Go to `Certificates & secrets` > `Client secrets` > `+ New client secret`
 
     ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
 
-5. Fill in the required fields and click `Add`, then copy the generated value (that value will be `AZURE_CLIENT_SECRET`)
+5. Fill in the required fields and click `Add`, then copy the generated `value` (that value will be `AZURE_CLIENT_SECRET`)
 
     ![New Client Secret](./img/new-client-secret.png)
 
@@ -102,9 +98,9 @@ Assign the following Microsoft Graph permissions:
 
 - `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
-- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
-- `Sites.Read.All`: Required for SharePoint service.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `AuditLog.Read.All`: Required for Entra service.
+- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
 
 Follow these steps to assign the permissions:
 
@@ -120,8 +116,8 @@ Follow these steps to assign the permissions:
 
     - `Directory.Read.All`
     - `Policy.Read.All`
-    - `Sites.Read.All`
     - `SharePointTenantSettings.Read.All`
+    - `AuditLog.Read.All`: Required for Entra service.
 
     ![Permission Screenshots](./img/directory-permission.png)
 
@@ -174,25 +170,34 @@ Follow these steps to assign the role:
 
 ---
 
-### Get your encrypted password
-
-For this step you will need to use PowerShell, here you will have to create your Encrypted Password based on the password of the User that you are going to use. For more information about how to generate this Password go [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended) and follow the steps needed to obtain `M365_PASSWORD`.
-
----
-
 ## Step 4: Add credentials to Prowler Cloud/App
 
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
 
+???+ warning
+    For Prowler Cloud encrypted password is still needed (when we update Prowler Cloud and regular password is accepted this warning will be deleted), so the password that you paste in the next step should be generated following this steps:
+
+    - UNIX: Open a PowerShell cmd with a [supported version](../../getting-started/requirements.md#supported-powershell-versions) and then run the following command:
+
+        ```console
+        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
+        $encryptedPassword = $securePassword | ConvertFrom-SecureString
+        Write-Output $encryptedPassword
+        6500780061006d0070006c006500700061007300730077006f0072006400
+        ```
+
+    - Windows: Install WSL using `wsl --install -d Ubuntu-22.04`, then open the Ubuntu terminal, install powershell and run the same command above.
+
+
 2. Go to Prowler Cloud/App and paste:
 
     - `Client ID`
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
-    - `M365_USER` your user using the default domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
-    - `M365_PASSWORD` generated before
+    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
+    - `M365_PASSWORD` the password of the user
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
