@@ -9,11 +9,11 @@ import GxPLogo from "./gxp-aws.svg";
 import HIPAALogo from "./hipaa.svg";
 import ISOLogo from "./iso-27001.svg";
 import MITRELogo from "./mitre-attack.svg";
+import NIS2Logo from "./nis2.svg";
 import NISTLogo from "./nist.svg";
 import PCILogo from "./pci-dss.svg";
 import RBILogo from "./rbi.svg";
 import SOC2Logo from "./soc2.svg";
-import NIS2Logo from "./nis2.svg";
 
 export const getComplianceIcon = (complianceTitle: string) => {
   if (complianceTitle.toLowerCase().includes("aws")) {
