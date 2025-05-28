@@ -95,11 +95,9 @@ export const ClientAccordionContent = ({
   }, [requirement, scanId, pageNumber, sort, region]);
 
   const checks = requirement.check_ids || [];
-  const checksTable = (
-    <div>
-      <div className="mb-2 flex items-center">
-        <span>{checks.join(", ")}</span>
-      </div>
+  const checksList = (
+    <div className="mb-2 flex items-center">
+      <span>{checks.join(", ")}</span>
     </div>
   );
 
@@ -112,7 +110,7 @@ export const ClientAccordionContent = ({
           {checks.length > 1 ? <span>Checks</span> : <span>Check</span>}
         </div>
       ),
-      content: checksTable,
+      content: checksList,
     },
   ];
 
