@@ -287,9 +287,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
                 output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = (
-                    check_output.check_id
-                )  # TODO: is this mandatory?
+                output_data["resource_uid"] = check_output.resource_name
                 output_data["region"] = (
                     check_output.file_path
                 )  # TODO: is this mandatory?
