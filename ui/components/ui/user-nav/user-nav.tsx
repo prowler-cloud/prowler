@@ -2,10 +2,8 @@
 
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
-import { use } from "react";
 
 import { logOut } from "@/actions/auth";
-import { getUserInfo } from "@/actions/users/users";
 import {
   Avatar,
   AvatarFallback,
@@ -30,9 +28,7 @@ import { UserProfileProps } from "@/types";
 
 import { Button } from "../button/button";
 
-export const UserNav = () => {
-  const user: UserProfileProps = use(getUserInfo());
-
+export const UserNav = ({ user }: { user?: UserProfileProps }) => {
   if (!user || !user.data) return null;
 
   const { name, email, company_name } = user.data.attributes;

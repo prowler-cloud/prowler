@@ -1,6 +1,9 @@
 import { Icon } from "@iconify/react";
+import { use } from "react";
 
+import { getUserInfo } from "@/actions/users/users";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { UserProfileProps } from "@/types";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
@@ -10,6 +13,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ title, icon }: NavbarProps) {
+  const user: UserProfileProps = use(getUserInfo());
   return (
     <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-primary">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
@@ -25,7 +29,7 @@ export function Navbar({ title, icon }: NavbarProps) {
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           <ThemeSwitch />
-          <UserNav />
+          <UserNav user={user} />
         </div>
       </div>
     </header>
