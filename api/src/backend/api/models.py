@@ -354,7 +354,7 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
 
 
 class TaskManager(models.Manager):
-    def get_with_retry(self, id, max_retries=5, delay_seconds=0.5):
+    def get_with_retry(self, id, max_retries=5, delay_seconds=0.1):
         """
         Retry fetching a Task by ID in case it hasn't been created yet.
 
