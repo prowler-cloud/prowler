@@ -161,14 +161,23 @@ class IacProvider(Provider):
                 text=True,
             )
 
+            # Log Checkov's error output if any
+            if process.stderr:
+                logger.critical(
+                    f"{process.stderr.__class__.__name__} -- {process.stderr}"
+                )
+                sys.exit(1)
+
             try:
                 output = json.loads(process.stdout)
                 if not output:
                     logger.warning("No findings returned from Checkov scan")
                     return []
-            except json.JSONDecodeError:
-                logger.error("Failed to parse IaC scan output as JSON")
-                return []
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+                sys.exit(1)
 
             reports = []
 
