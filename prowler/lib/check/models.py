@@ -612,20 +612,9 @@ class CheckReportM365(Check_Report):
 class CheckReportIAC(Check_Report):
     """Contains the IAC Check's finding information using Checkov."""
 
-    metadata: dict
-    check_id: str
-    check_name: str
-    check_result: dict
-    check_result_status: str
-    file_path: str
-    file_line_range: list
-    guideline: str
-    resource: str
-    severity: str
-    # TODO: comparing with the others, are all the above are necesary? review
     resource_name: str
-    resource_id: str
-    location: str
+    resource_path: str
+    resource_line_range: str
 
     def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
         """
@@ -637,16 +626,6 @@ class CheckReportIAC(Check_Report):
         """
         super().__init__(metadata, finding)
 
-        self.check_id = finding.get("check_id", "")
-        self.check_name = finding.get("check_name", "")
-        self.check_result = finding.get("check_result", {})
-        self.check_result_status = self.check_result.get("result", "UNKNOWN")
-        self.file_path = finding.get("file_path", "")
-        self.file_line_range = finding.get("file_line_range", [])
-        self.guideline = finding.get("guideline", "")
-        self.resource = finding
-        self.severity = finding.get("severity", "UNKNOWN")
-        # TODO: same question above
         self.resource_name = getattr(finding, "resource", "")
         self.resource_path = getattr(finding, "file_path", "")
         self.resource_line_range = getattr(finding, "file_line_range", "")

@@ -14,7 +14,7 @@ class GCPOrganization(BaseModel):
     id: str
     name: str
     # TODO: the name needs to be retrieved from another API
-    display_name: Optional[str]
+    display_name: Optional[str] = None
 
 
 class GCPProject(BaseModel):
