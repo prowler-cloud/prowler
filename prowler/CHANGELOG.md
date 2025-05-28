@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
 - Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
+- Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)

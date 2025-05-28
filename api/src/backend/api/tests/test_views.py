@@ -921,7 +921,7 @@ class TestProviderViewSet:
                 },
                 {
                     "provider": "m365",
-                    "uid": "TestingPro.onMirosoft.com",
+                    "uid": "TestingPro.onMicrosoft.com",
                     "alias": "test",
                 },
                 {
