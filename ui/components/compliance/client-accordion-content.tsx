@@ -92,7 +92,7 @@ export const ClientAccordionContent = ({
     }
 
     loadFindings();
-  }, [requirement, scanId, pageNumber, sort]);
+  }, [requirement, scanId, pageNumber, sort, region]);
 
   const checks = requirement.check_ids || [];
   const checksTable = (
