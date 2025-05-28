@@ -53,9 +53,7 @@ class TestIacProvider:
         """Test processing a passed check"""
         provider = IacProvider()
 
-        finding = {"severity": "medium"}
-
-        report = provider._process_check(finding, SAMPLE_PASSED_CHECK, "PASS")
+        report = provider._process_check(SAMPLE_FINDING, SAMPLE_PASSED_CHECK, "PASS")
 
         assert isinstance(report, CheckReportIAC)
         assert report.status == "PASS"
