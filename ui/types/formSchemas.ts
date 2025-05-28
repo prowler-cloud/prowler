@@ -176,6 +176,21 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
         providerType: z.string(),
       });
 
+export const addCredentialsServiceAccountFormSchema = (providerType: string) =>
+  providerType === "gcp"
+    ? z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+        service_account_key: z
+          .string()
+          .nonempty("Service Account Key is required"),
+        secretName: z.string().optional(),
+      })
+    : z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+      });
+
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
   runOnce: z.boolean().default(false),

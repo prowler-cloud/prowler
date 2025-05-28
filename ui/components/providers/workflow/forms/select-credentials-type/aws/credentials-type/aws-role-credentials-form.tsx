@@ -4,9 +4,9 @@ import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import { CustomInput } from "@/components/ui/custom";
 import { AWSCredentialsRole } from "@/types";
 
-import { CredentialsRoleHelper } from "../../credentials-role-helper";
+import { CredentialsRoleHelper } from "../../../../credentials-role-helper";
 
-export const AWSCredentialsRoleForm = ({
+export const AWSRoleCredentialsForm = ({
   control,
   setValue,
   externalId,

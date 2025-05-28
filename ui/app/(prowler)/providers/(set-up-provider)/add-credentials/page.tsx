@@ -5,7 +5,10 @@ import {
   ViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
-import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import {
+  SelectViaGCP,
+  ViaServiceAccountForm,
+} from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 
 interface Props {
   searchParams: { type: string; id: string; via?: string };
@@ -34,7 +37,7 @@ export default function AddCredentialsPage({ searchParams }: Props) {
 
       {searchParams.type === "gcp" &&
         searchParams.via === "service-account" && (
-          <div>Service Account form - to be implemented</div>
+          <ViaServiceAccountForm searchParams={searchParams} />
         )}
     </>
   );
