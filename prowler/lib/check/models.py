@@ -622,6 +622,10 @@ class CheckReportIAC(Check_Report):
     guideline: str
     resource: str
     severity: str
+    # TODO: comparing with the others, are all the above are necesary? review
+    resource_name: str
+    resource_id: str
+    location: str
 
     def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
         """
@@ -642,6 +646,10 @@ class CheckReportIAC(Check_Report):
         self.guideline = finding.get("guideline", "")
         self.resource = finding
         self.severity = finding.get("severity", "UNKNOWN")
+        # TODO: same question above
+        self.resource_name = getattr(finding, "resource", "")
+        self.resource_path = getattr(finding, "file_path", "")
+        self.resource_line_range = getattr(finding, "file_line_range", "")
 
 
 @dataclass
