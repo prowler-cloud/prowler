@@ -15,9 +15,6 @@ class AdminCenter(M365Service):
         if self.powershell:
             self.powershell.close()
 
-        self.organization_config = None
-        self.sharing_policy = None
-
         loop = get_event_loop()
 
         # Get users first alone because it is a dependency for other attributes
