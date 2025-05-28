@@ -12,13 +12,11 @@ class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
 
+        if self.powershell:
+            self.powershell.close()
+
         self.organization_config = None
         self.sharing_policy = None
-        if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.sharing_policy = self._get_sharing_policy()
-            self.powershell.close()
 
         loop = get_event_loop()
 
