@@ -5,6 +5,10 @@ from typing import List
 
 from colorama import Fore, Style
 
+from prowler.config.config import (
+    default_config_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
@@ -22,8 +26,6 @@ class IacProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
-        mutelist_path: str = None,
-        mutelist_content: dict = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
@@ -33,8 +35,18 @@ class IacProvider(Provider):
         self._session = None
         self._identity = "prowler"
 
-        self._audit_config = config_content if config_content else {}
+        # Audit Config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist (not needed for IAC since Checkov has its own mutelist logic)
         self._mutelist = None
 
         self.audit_metadata = Audit_Metadata(
@@ -74,6 +86,67 @@ class IacProvider(Provider):
         """IAC provider doesn't need a session since it uses Checkov directly"""
         return None
 
+    def _process_check(self, finding: dict, check: dict, status: str) -> CheckReportIAC:
+        """
+        Process a single check (failed or passed) and create a CheckReportIAC object.
+
+        Args:
+            finding: The finding object from Checkov output
+            check: The individual check data (failed_check or passed_check)
+            status: The status of the check ("FAIL" or "PASS")
+
+        Returns:
+            CheckReportIAC: The processed check report
+        """
+
+        metadata_dict = {
+            "Provider": "iac",
+            "CheckID": check.get("check_id", ""),
+            "CheckTitle": check.get("check_name", ""),
+            "CheckType": ["Infrastructure as Code"],
+            "ServiceName": finding["check_type"],
+            "SubServiceName": "",
+            "ResourceIdTemplate": "",
+            "Severity": (
+                check.get("severity", "low").lower() if check.get("severity") else "low"
+            ),
+            "ResourceType": "iac",
+            "Description": check.get("check_name", ""),
+            "Risk": "",
+            "RelatedUrl": (
+                check.get("guideline", "") if check.get("guideline") else ""
+            ),
+            "Remediation": {
+                "Code": {
+                    "NativeIaC": "",
+                    "Terraform": "",
+                    "CLI": "",
+                    "Other": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": (
+                        check.get("guideline", "") if check.get("guideline") else ""
+                    ),
+                },
+            },
+            "Categories": [],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "",
+        }
+
+        # Convert metadata dict to JSON string
+        metadata = json.dumps(metadata_dict)
+
+        report = CheckReportIAC(metadata=metadata, finding=check)
+        report.status = status
+        report.resource_tags = check.get("entity_tags", {})
+        report.status_extended = check.get("check_name", "")
+        if status == "MUTED":
+            report.muted = True
+        return report
+
     def run(self) -> List[CheckReportIAC]:
         return self.run_scan(self.scan_path)
 
@@ -99,65 +172,30 @@ class IacProvider(Provider):
 
             reports = []
 
-            # Process failed checks
+            # If only one framework has findings, the output is a dict, otherwise it's a list of dicts
+            if isinstance(output, dict):
+                output = [output]
+
+            # Process all frameworks findings
             for finding in output:
-                failed_checks = finding.get("results", {}).get("failed_checks", [])
-                if not failed_checks:
-                    continue
+                results = finding.get("results", {})
 
+                # Process failed checks
+                failed_checks = results.get("failed_checks", [])
                 for failed_check in failed_checks:
-                    # Get severity and ensure it's a valid string
-                    severity = finding.get("severity", "low")
-                    if severity is None:
-                        severity = "low"
-                    severity = str(severity).lower()
+                    report = self._process_check(finding, failed_check, "FAIL")
+                    reports.append(report)
 
-                    # Create a basic metadata structure for the check
-                    metadata_dict = {
-                        "Provider": "iac",
-                        "CheckID": failed_check.get("check_id", ""),
-                        "CheckTitle": failed_check.get("check_name", ""),
-                        "CheckType": ["Infrastructure as Code"],
-                        "ServiceName": "iac",
-                        "SubServiceName": "",
-                        "ResourceIdTemplate": "",
-                        "Severity": severity,
-                        "ResourceType": "iac",
-                        "Description": failed_check.get("check_name", ""),
-                        "Risk": "",
-                        "RelatedUrl": (
-                            failed_check.get("guideline", "")
-                            if failed_check.get("guideline")
-                            else ""
-                        ),
-                        "Remediation": {
-                            "Code": {
-                                "NativeIaC": "",
-                                "Terraform": "",
-                                "CLI": "",
-                                "Other": "",
-                            },
-                            "Recommendation": {
-                                "Text": "",
-                                "Url": (
-                                    failed_check.get("guideline", "")
-                                    if failed_check.get("guideline")
-                                    else ""
-                                ),
-                            },
-                        },
-                        "Categories": [],
-                        "DependsOn": [],
-                        "RelatedTo": [],
-                        "Notes": "",
-                        "GCPProject": failed_check.get("project_id", ""),
-                    }
+                # Process passed checks
+                passed_checks = results.get("passed_checks", [])
+                for passed_check in passed_checks:
+                    report = self._process_check(finding, passed_check, "PASS")
+                    reports.append(report)
 
-                    # Convert metadata dict to JSON string
-                    metadata = json.dumps(metadata_dict)
-
-                    report = CheckReportIAC(metadata=metadata, finding=failed_check)
-                    report.status = "FAIL"
+                # Process skipped checks (muted)
+                skipped_checks = results.get("skipped_checks", [])
+                for skipped_check in skipped_checks:
+                    report = self._process_check(finding, skipped_check, "MUTED")
                     reports.append(report)
 
             return reports

@@ -247,7 +247,6 @@ class Provider(ABC):
                     provider_class(
                         scan_path=arguments.scan_path,
                         config_path=arguments.config_file,
-                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
 

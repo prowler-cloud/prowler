@@ -283,12 +283,16 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.location
 
             elif provider.type == "iac":
-                output_data["auth_method"] = "iac"
+                output_data["auth_method"] = "local"  # Until we support remote repos
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
-                output_data["resource_name"] = check_output.check_name
-                output_data["resource_uid"] = check_output.check_id
-                output_data["region"] = check_output.file_path
+                output_data["resource_name"] = check_output.resource["resource"]
+                output_data["resource_uid"] = check_output.resource["resource"]
+                output_data["region"] = check_output.resource_path
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = (
+                    check_output.check_metadata.ServiceName
+                )  # TODO: can we get the framework from the check_output?
 
             # check_output Unique ID
             # TODO: move this to a function
