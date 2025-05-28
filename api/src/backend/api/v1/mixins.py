@@ -211,6 +211,7 @@ class TaskManagementMixin:
         task_state = task_state_mapping.get(celery_status or "", StateChoices.AVAILABLE)
 
         if task_state == StateChoices.EXECUTING:
+            self.response_serializer_class = TaskSerializer
             serializer = TaskSerializer(task)
             return Response(
                 data=serializer.data,

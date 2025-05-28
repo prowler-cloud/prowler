@@ -2408,6 +2408,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Related scan ID.",
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance overviews obtained successfully"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
     ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
@@ -2423,6 +2432,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Related scan ID.",
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance overviews metadata obtained successfully"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
     ),
     requirements=extend_schema(
         tags=["Compliance Overview"],
@@ -2445,6 +2463,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance ID.",
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance requirement details obtained successfully"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
         filters=True,
     ),
     attributes=extend_schema(
@@ -2504,7 +2531,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return base_queryset
 
     def get_serializer_class(self):
-        if self.action == "list":
+        if hasattr(self, "response_serializer_class"):
+            return self.response_serializer_class
+        elif self.action == "list":
             return ComplianceOverviewSerializer
         elif self.action == "metadata":
             return ComplianceOverviewMetadataSerializer
