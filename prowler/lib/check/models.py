@@ -329,9 +329,6 @@ class CheckMetadata(BaseModel):
         checks = set()
 
         if service:
-            # This is a special case for the AWS provider since `lambda` is a reserved keyword in Python
-            if service == "awslambda":
-                service = "lambda"
             checks = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
