@@ -11,7 +11,6 @@ from api.rls import RowLevelSecurityConstraint
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0026_provider_secret_gcp_service_account"),
     ]
