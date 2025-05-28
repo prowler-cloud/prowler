@@ -25,7 +25,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
-- Fix tests from prowler threatscore to don't create dummy files [(7859)](https://github.com/prowler-cloud/prowler/pull/7859)
 
 ---
 
