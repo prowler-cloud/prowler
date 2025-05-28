@@ -170,10 +170,16 @@ module.exports = {
           "50%": { left: "20%", width: "80%" },
           "100%": { left: "100%", width: "100%" },
         },
+        dropArrow: {
+          '0%': { transform: 'translateY(-8px)', opacity: '0' },
+          '50%': { opacity: '1' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
       animation: {
         "collapsible-down": "collapsible-down 0.2s ease-out",
         "collapsible-up": "collapsible-up 0.2s ease-out",
+        "drop-arrow": "dropArrow 0.6s ease-out infinite",
       },
       screens: {
         "3xl": "1920px", // Add breakpoint to optimize layouts for large screens.
