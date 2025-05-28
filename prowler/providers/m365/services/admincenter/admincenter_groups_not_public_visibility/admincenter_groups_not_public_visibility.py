@@ -36,7 +36,7 @@ class admincenter_groups_not_public_visibility(Check):
             report.status = "FAIL"
             report.status_extended = f"Group {group.name} has {group.visibility} visibility and should be Private."
 
-            if group.visibility != "Public":
+            if group.visibility and group.visibility != "Public":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Group {group.name} has {group.visibility} visibility."

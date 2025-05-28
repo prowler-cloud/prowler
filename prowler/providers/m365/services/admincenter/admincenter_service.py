@@ -160,7 +160,7 @@ class DirectoryRole(BaseModel):
 class Group(BaseModel):
     id: str
     name: str
-    visibility: str
+    visibility: Optional[str]
 
 
 class Domain(BaseModel):
