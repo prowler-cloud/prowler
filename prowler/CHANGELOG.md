@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [5.8.0] (Prowler v5.8.0)
 
 ### Added
@@ -31,7 +29,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 41f663749 (fix(defender): update `defender_ensure_notify_alerts_severity_is_high` logic (#7862))
 ## [v5.7.0] (Prowler v5.7.0)
 
 ### Added
