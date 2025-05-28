@@ -10,10 +10,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.models import (
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
-from tests.lib.outputs.compliance.fixtures import (
-    PROWLER_THREATSCORE_GCP,
-    PROWLER_THREATSCORE_GCP_NAME,
-)
+from tests.lib.outputs.compliance.fixtures import PROWLER_THREATSCORE_GCP
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID
 
@@ -30,9 +27,7 @@ class TestProwlerThreatScoreGCP:
             )
         ]
 
-        output = ProwlerThreatScoreGCP(
-            findings, PROWLER_THREATSCORE_GCP, PROWLER_THREATSCORE_GCP_NAME
-        )
+        output = ProwlerThreatScoreGCP(findings, PROWLER_THREATSCORE_GCP)
         output_data = output.data[0]
         assert isinstance(output_data, ProwlerThreatScoreGCPModel)
         assert output_data.Provider == "gcp"
@@ -140,9 +135,7 @@ class TestProwlerThreatScoreGCP:
         findings = [
             generate_finding_output(compliance={"ProwlerThreatScore-1.0": "1.1.1"})
         ]
-        output = ProwlerThreatScoreGCP(
-            findings, PROWLER_THREATSCORE_GCP, PROWLER_THREATSCORE_GCP_NAME
-        )
+        output = ProwlerThreatScoreGCP(findings, PROWLER_THREATSCORE_GCP)
         output._file_descriptor = mock_file
 
         with patch.object(mock_file, "close", return_value=None):
