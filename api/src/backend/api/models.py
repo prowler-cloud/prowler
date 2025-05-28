@@ -3,6 +3,7 @@ import re
 import time
 from uuid import UUID, uuid4
 
+from config.env import env
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
@@ -354,7 +355,7 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
 
 
 class TaskManager(models.Manager):
-    def get_with_retry(self, id, max_retries=5, delay_seconds=0.1):
+    def get_with_retry(self, id, max_retries: int = 0, delay_seconds: int = 0):
         """
         Retry fetching a Task by ID in case it hasn't been created yet.
 
@@ -369,6 +370,9 @@ class TaskManager(models.Manager):
         Raises:
             Task.DoesNotExist: If the task is not found after all retries.
         """
+        max_retries = max_retries or env("TASK_RETRY_ATTEMPTS", default=5)
+        delay_seconds = delay_seconds or env("TASK_RETRY_DELAY_SECONDS", default=0.1)
+
         for _attempt in range(max_retries):
             try:
                 return self.get(id=id)
