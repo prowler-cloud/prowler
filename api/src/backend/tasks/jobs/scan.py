@@ -592,11 +592,19 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
 
         # Bulk create requirement records
         with rls_transaction(tenant_id):
-            result = ComplianceRequirementOverview.objects.bulk_create(
+            ComplianceRequirementOverview.objects.bulk_create(
                 compliance_requirement_objects, batch_size=500
             )
 
-        return result
+        return {
+            "requirements_created": len(compliance_requirement_objects),
+            "regions_processed": list(regions),
+            "compliance_frameworks": (
+                list(compliance_overview_by_region.get(list(regions)[0], {}).keys())
+                if regions
+                else []
+            ),
+        }
 
     except Exception as e:
         logger.error(f"Error creating compliance requirements for scan {scan_id}: {e}")

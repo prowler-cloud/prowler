@@ -96,6 +96,7 @@ class TaskManagementMixin:
             task = (
                 Task.objects.filter(**task_filter)
                 .select_related("task_runner_task")
+                .order_by("-inserted_at")
                 .first()
             )
 
@@ -141,7 +142,11 @@ class TaskManagementMixin:
             for key, value in task_kwargs.items():
                 task_result_filter["task_kwargs__contains"] = str(value)
 
-            task_result = TaskResult.objects.filter(**task_result_filter).first()
+            task_result = (
+                TaskResult.objects.filter(**task_result_filter)
+                .order_by("-date_created")
+                .first()
+            )
 
             if task_result:
                 # Check if the TaskResult indicates a running task
