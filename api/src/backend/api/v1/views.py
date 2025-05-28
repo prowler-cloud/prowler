@@ -63,6 +63,7 @@ from api.compliance import (
     get_compliance_frameworks,
 )
 from api.db_router import MainRouter
+from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
@@ -115,7 +116,7 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin
+from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -2465,7 +2466,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
-class ComplianceOverviewViewSet(BaseRLSViewSet):
+class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     pagination_class = ComplianceOverviewPagination
     queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
@@ -2473,7 +2474,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     http_method_names = ["get"]
     search_fields = ["compliance_id"]
     ordering = ["compliance_id"]
-    ordering_fields = ["inserted_at", "compliance_id", "framework", "region"]
+    ordering_fields = ["compliance_id"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -2530,7 +2531,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
 
         requirement_status_subquery = queryset.values(
@@ -2610,7 +2622,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         regions = list(
             self.get_queryset()
             .filter(scan_id=scan_id)
@@ -2652,7 +2675,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
         all_requirements = (

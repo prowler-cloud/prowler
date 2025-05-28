@@ -381,7 +381,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="compliance-requirements")
+@shared_task(base=RLSTask, name="scan-compliance-overviews")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
