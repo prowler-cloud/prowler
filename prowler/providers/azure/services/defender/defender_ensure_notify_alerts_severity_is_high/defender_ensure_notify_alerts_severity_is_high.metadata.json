@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_notify_alerts_severity_is_high",
-  "CheckTitle": "Ensure That 'Notify about alerts with the following severity' is Set to 'High' or Lower",
+  "CheckTitle": "Ensure that email notifications are configured for alerts with a minimum severity of 'High' or lower",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
