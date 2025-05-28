@@ -1,8 +1,5 @@
 # IAC Provider Constants
 DEFAULT_SCAN_PATH = "."
-DEFAULT_REGION = "global"
-DEFAULT_ACCOUNT = "local-iac"
-DEFAULT_IDENTITY = "prowler"
 
 # Sample Checkov Output
 SAMPLE_CHECKOV_OUTPUT = [
