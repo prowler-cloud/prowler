@@ -11,7 +11,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ### Fixed
-- Fixed Kubernetes UID validation to allow valid context names [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Fixed Kubernetes UID validation to allow valid context names [(#7871)](https://github.com/prowler-cloud/prowler/pull/7871)
 ---
 
 ## [v1.8.2] (Prowler v5.7.2)
