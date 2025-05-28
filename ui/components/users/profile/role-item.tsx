@@ -35,7 +35,7 @@ export const RoleItem = ({
   role: RoleData;
   roleDetail?: RoleDetail;
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   if (!roleDetail) {
     return (

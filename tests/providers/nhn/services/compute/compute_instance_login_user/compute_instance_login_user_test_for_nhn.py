@@ -67,7 +67,7 @@ class Test_compute_instance_login_user:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "has a appropriate login user" in result[0].status_extended
+            assert "has an appropriate login user" in result[0].status_extended
             assert result[0].resource_name == instance_name
             assert result[0].resource_id == instance_id
 

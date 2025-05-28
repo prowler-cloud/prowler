@@ -11,12 +11,13 @@ export interface FilterOption {
         alias?: string;
         uid?: string;
       };
-      attributes: {
+      attributes?: {
         name?: string;
         completed_at: string;
       };
     };
   }>;
+  index?: number;
 }
 
 export interface CustomDropdownFilterProps {

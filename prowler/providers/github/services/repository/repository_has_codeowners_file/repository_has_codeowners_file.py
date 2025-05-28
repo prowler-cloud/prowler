@@ -23,9 +23,7 @@ class repository_has_codeowners_file(Check):
         findings = []
         for repo in repository_client.repositories.values():
             if repo.codeowners_exists is not None:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 if repo.codeowners_exists:
                     report.status = "PASS"
                     report.status_extended = (

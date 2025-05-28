@@ -23,7 +23,10 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { ProviderProps } from "@/types";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
 import {
   FindingProps,
   IncludeProps,
@@ -60,29 +63,22 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
 
-  // Extract provider UIDs
-  const providerUIDs: string[] = Array.from(
-    new Set(
-      providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes?.uid)
-        .filter(Boolean),
-    ),
-  );
+  // Extract provider UIDs and details using helper functions
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
 
-  const providerDetails = providerUIDs.map((uid) => {
-    const provider = providersData.data.find(
-      (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
-    );
-
-    return {
-      [uid]: {
-        providerInfo: {
-          provider: provider?.attributes?.provider || "",
-          uid: uid,
-          alias: provider?.attributes?.alias ?? null,
-        },
-      },
-    };
+  // Update the Provider UID filter
+  const updatedFilters = filterFindings.map((filter) => {
+    if (filter.key === "provider_uid__in") {
+      return {
+        ...filter,
+        values: providerUIDs,
+        valueLabelMapping: providerDetails,
+      };
+    }
+    return filter;
   });
 
   // Extract scan UUIDs with "completed" state and more than one resource
@@ -138,33 +134,31 @@ export default async function Findings({
       <Spacer y={8} />
       <DataTableFilterCustom
         filters={[
-          ...filterFindings,
+          ...updatedFilters,
           {
             key: "region__in",
             labelCheckboxGroup: "Regions",
             values: uniqueRegions,
+            index: 5,
           },
           {
             key: "service__in",
             labelCheckboxGroup: "Services",
             values: uniqueServices,
+            index: 6,
           },
           {
             key: "resource_type__in",
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
-          },
-          {
-            key: "provider_uid__in",
-            labelCheckboxGroup: "Provider UID",
-            values: providerUIDs,
-            valueLabelMapping: providerDetails,
+            index: 7,
           },
           {
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
             valueLabelMapping: providerDetailsAssociatedWithScans,
+            index: 9,
           },
         ]}
         defaultOpen={true}
