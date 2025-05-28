@@ -1,14 +1,17 @@
 import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion-requeriment-title";
+import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion-title";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
+import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
+  AttributesData,
   Framework,
   MappedComplianceData,
   Requirement,
+  RequirementItemData,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance/compliance";
-
-import { ComplianceAccordionTitle } from "../components/compliance/compliance-accordion-title";
 
 export const translateType = (type: string) => {
   switch (type.toLowerCase()) {
@@ -26,15 +29,15 @@ export const translateType = (type: string) => {
 };
 
 export const mapComplianceData = (
-  attributesData: any,
-  requirementsData: any,
+  attributesData: AttributesData,
+  requirementsData: RequirementsData,
 ): MappedComplianceData => {
   const attributes = attributesData?.data || [];
   const requirements = requirementsData?.data || [];
 
   // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map();
-  requirements.forEach((req: any) => {
+  const requirementsMap = new Map<string, RequirementItemData>();
+  requirements.forEach((req: RequirementItemData) => {
     requirementsMap.set(req.id, req);
   });
 
@@ -115,6 +118,8 @@ export const mapComplianceData = (
       pass: finalStatus === "PASS" ? 1 : 0,
       fail: finalStatus === "FAIL" ? 1 : 0,
       manual: finalStatus === "MANUAL" ? 1 : 0,
+      nivel: attrs.Nivel || "",
+      dimensiones: attrs.Dimensiones || [],
     };
 
     control.requirements.push(requirement);
@@ -209,7 +214,7 @@ export const toAccordionItems = (
                     <ComplianceAccordionRequirementTitle
                       type={requirement.type}
                       name={requirement.name}
-                      status={requirement.status}
+                      status={requirement.status as FindingStatus}
                     />
                   ),
                   content: (

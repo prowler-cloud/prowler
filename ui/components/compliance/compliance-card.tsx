@@ -72,6 +72,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   const navigateToDetail = () => {
+    // We will unlock this while developing the rest of complainces.
+    if (!id.includes("ens")) {
+      return;
+    }
+
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;
     const params = new URLSearchParams();

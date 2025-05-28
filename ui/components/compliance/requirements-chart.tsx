@@ -64,7 +64,18 @@ export const RequirementsChart = ({
     },
   ];
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface CustomTooltipProps {
+    active: boolean;
+    payload: {
+      payload: {
+        name: string;
+        value: number;
+        fill: string;
+      };
+    }[];
+  }
+
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
@@ -89,7 +100,7 @@ export const RequirementsChart = ({
               }}
             />
             <span>
-              {data.name}: {data.value}
+              {data.payload.name}: {data.payload.value}
             </span>
           </div>
         </div>
@@ -109,7 +120,10 @@ export const RequirementsChart = ({
         className="aspect-square w-[200px] min-w-[200px]"
       >
         <PieChart>
-          <Tooltip cursor={false} content={<CustomTooltip />} />
+          <Tooltip
+            cursor={false}
+            content={<CustomTooltip active={false} payload={[]} />}
+          />
           <Pie
             data={totalRequirements > 0 ? chartData : emptyChartData}
             dataKey="value"

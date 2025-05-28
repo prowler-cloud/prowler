@@ -72,7 +72,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   }
 
   return (
-    <div className="flex w-[400px] flex-col items-center justify-between">
+    <div className="flex w-[600px] flex-col items-center justify-between">
       {title}
 
       <div className="h-[320px] w-full">

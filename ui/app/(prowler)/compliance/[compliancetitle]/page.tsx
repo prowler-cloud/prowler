@@ -9,14 +9,14 @@ import {
 } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import { ClientAccordionWrapper } from "@/components/compliance/client-accordion-wrapper";
 import { ComplianceHeader } from "@/components/compliance/compliance-header";
+import { SkeletonAccordion } from "@/components/compliance/compliance-skeleton-accordion";
 import { FailedSectionsChart } from "@/components/compliance/failed-sections-chart";
 import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sections-chart-skeleton";
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
-import { SkeletonAccordion } from "@/components/compliance/skeleton-compliance-accordion";
 import { ContentLayout } from "@/components/ui";
-import { Accordion } from "@/components/ui/accordion/Accordion";
 import { mapComplianceData, toAccordionItems } from "@/lib/ens-compliance";
 import { ScanProps } from "@/types";
 import {
@@ -31,6 +31,20 @@ interface ComplianceDetailSearchParams {
   scanId?: string;
   "filter[region__in]"?: string;
 }
+
+const Logo = ({ logoPath }: { logoPath: string }) => {
+  return (
+    <div className="relative ml-auto hidden h-[200px] w-[200px] flex-shrink-0 md:block">
+      <Image
+        src={logoPath}
+        alt="Compliance Logo"
+        fill
+        priority
+        className="object-contain"
+      />
+    </div>
+  );
+};
 
 export default async function ComplianceDetail({
   params,
@@ -111,21 +125,11 @@ export default async function ComplianceDetail({
         fallback={
           <div className="space-y-8">
             <div className="mb-8 flex w-full">
-              <div className="flex gap-4">
+              <div className="flex gap-16">
                 <RequirementsChartSkeleton />
                 <FailedSectionsChartSkeleton />
               </div>
-              {logoPath && (
-                <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
-                  <Image
-                    src={logoPath}
-                    alt="Compliance Logo"
-                    fill
-                    priority
-                    className="object-contain"
-                  />
-                </div>
-              )}
+              {logoPath && <Logo logoPath={logoPath} />}
             </div>
             <SkeletonAccordion />
           </div>
@@ -213,24 +217,9 @@ const SSRComplianceContent = async ({
             <RequirementsChart pass={0} fail={0} manual={0} />
             <FailedSectionsChart sections={[]} />
           </div>
-          {logoPath && (
-            <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
-              <Image
-                src={logoPath}
-                alt="Compliance Logo"
-                fill
-                priority
-                className="object-contain"
-              />
-            </div>
-          )}
+          {logoPath && <Logo logoPath={logoPath} />}
         </div>
-        <Accordion
-          items={[]}
-          variant="light"
-          selectionMode="multiple"
-          defaultExpandedKeys={[]}
-        />
+        <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
   }
@@ -246,11 +235,12 @@ const SSRComplianceContent = async ({
   );
   const topFailedSections = getTopFailedSections(data);
   const accordionItems = toAccordionItems(data, scanId);
+  const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
 
   return (
     <div className="space-y-8">
       <div className="mb-8 flex w-full">
-        <div className="flex gap-8">
+        <div className="flex gap-16">
           <div className="">
             <RequirementsChart
               pass={totalRequirements.pass}
@@ -261,24 +251,12 @@ const SSRComplianceContent = async ({
           <FailedSectionsChart sections={topFailedSections} />
         </div>
 
-        {logoPath && (
-          <div className="relative ml-auto hidden h-[120px] w-[120px] flex-shrink-0 md:block">
-            <Image
-              src={logoPath}
-              alt="Compliance Logo"
-              fill
-              priority
-              className="object-contain"
-            />
-          </div>
-        )}
+        {logoPath && <Logo logoPath={logoPath} />}
       </div>
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
-      <Accordion
+      <ClientAccordionWrapper
         items={accordionItems}
-        variant="light"
-        selectionMode="multiple"
-        defaultExpandedKeys={accordionItems.slice(0, 2).map((item) => item.key)}
+        defaultExpandedKeys={defaultKeys}
       />
     </div>
   );

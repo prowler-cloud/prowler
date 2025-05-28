@@ -262,22 +262,6 @@ export interface ApiError {
   };
   code: string;
 }
-export interface CompliancesOverview {
-  data: ComplianceOverviewData[];
-}
-
-export interface ComplianceOverviewData {
-  type: "compliance-requirements-status";
-  id: string;
-  attributes: {
-    framework: string;
-    version: string;
-    requirements_passed: number;
-    requirements_failed: number;
-    requirements_manual: number;
-    total_requirements: number;
-  };
-}
 
 export interface InvitationProps {
   type: "invitations";
@@ -505,6 +489,11 @@ export interface ScanProps {
     uid: string;
     alias: string;
   };
+}
+
+export interface FindingsResponse {
+  data: FindingProps[];
+  meta: MetaDataProps;
 }
 
 export interface FindingProps {
