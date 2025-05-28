@@ -13,6 +13,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
 - Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
 
+### 🐞 Fixes
+- Retrieve more than 10 scans in /compliance page. [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
+
 ---
 
 ## [v1.7.1] (Prowler v5.7.1)
