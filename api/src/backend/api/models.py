@@ -242,13 +242,14 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
+            r"^[a-z0-9][A-Za-z0-9_.:\/-@]{1,250}$",
             value,
         ):
             raise ModelValidationError(
                 detail="The value must either be a valid Kubernetes UID (up to 63 characters, "
                 "starting and ending with a lowercase letter or number, containing only "
-                "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
+                "lowercase alphanumeric characters and hyphens), a valid email address, "
+                "or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
                 pointer="/data/attributes/uid",
             )
