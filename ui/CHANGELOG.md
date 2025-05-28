@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
 - Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
 - Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
+- Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
 
 ---
 
