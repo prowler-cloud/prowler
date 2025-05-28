@@ -1,7 +1,7 @@
 import {
-  ProviderAccountProps,
   ProviderProps,
   ProvidersApiResponse,
+  ProviderType,
 } from "@/types/providers";
 
 export const extractProviderUIDs = (
@@ -21,7 +21,15 @@ export const extractProviderUIDs = (
 export const createProviderDetailsMapping = (
   providerUIDs: string[],
   providersData: ProvidersApiResponse,
-): Array<{ [uid: string]: ProviderAccountProps }> => {
+): Array<{
+  [uid: string]: {
+    providerInfo: {
+      provider: ProviderType;
+      alias?: string;
+      uid?: string;
+    };
+  };
+}> => {
   if (!providersData?.data) return [];
 
   return providerUIDs.map((uid) => {
@@ -31,9 +39,11 @@ export const createProviderDetailsMapping = (
 
     return {
       [uid]: {
-        provider: provider?.attributes?.provider || "aws",
-        uid: uid,
-        alias: provider?.attributes?.alias ?? null,
+        providerInfo: {
+          provider: provider?.attributes?.provider || "aws",
+          uid: uid,
+          alias: provider?.attributes?.alias,
+        },
       },
     };
   });
