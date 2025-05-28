@@ -13,7 +13,7 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import rls_transaction
+from api.db_utils import create_objects_in_batches, rls_transaction
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
@@ -591,10 +591,9 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     )
 
         # Bulk create requirement records
-        with rls_transaction(tenant_id):
-            ComplianceRequirementOverview.objects.bulk_create(
-                compliance_requirement_objects, batch_size=500
-            )
+        create_objects_in_batches(
+            tenant_id, ComplianceRequirementOverview, compliance_requirement_objects
+        )
 
         return {
             "requirements_created": len(compliance_requirement_objects),

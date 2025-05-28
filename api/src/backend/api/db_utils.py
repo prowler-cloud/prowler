@@ -153,6 +153,28 @@ def delete_related_daily_task(provider_id: str):
     PeriodicTask.objects.filter(name=task_name).delete()
 
 
+def create_objects_in_batches(
+    tenant_id: str, model, objects: list, batch_size: int = 500
+):
+    """
+    Bulk-create model instances in repeated, per-tenant RLS transactions.
+
+    All chunks execute in their own transaction, so no single transaction
+    grows too large.
+
+    Args:
+        tenant_id (str): UUID string of the tenant under which to set RLS.
+        model: Django model class whose `.objects.bulk_create()` will be called.
+        objects (list): List of model instances (unsaved) to bulk-create.
+        batch_size (int): Maximum number of objects per bulk_create call.
+    """
+    total = len(objects)
+    for i in range(0, total, batch_size):
+        chunk = objects[i : i + batch_size]
+        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            model.objects.bulk_create(chunk, batch_size)
+
+
 # Postgres Enums
 
 

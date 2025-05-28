@@ -3,11 +3,13 @@ from enum import Enum
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 
 from api import db_utils
 from api.db_utils import (
     _should_create_index_on_partition,
     batch_delete,
+    create_objects_in_batches,
     enum_to_choices,
     generate_random_token,
     one_week_from_now,
@@ -188,3 +190,54 @@ class TestShouldCreateIndexOnPartition:
         bad_name2 = "findings_2025_abc"
         # abc not in month_map → fallback True
         assert _should_create_index_on_partition(bad_name2, False) is True
+
+
+@pytest.mark.django_db
+class TestCreateObjectsInBatches:
+    @pytest.fixture
+    def tenant(self, tenants_fixture):
+        return tenants_fixture[0]
+
+    def make_provider_instances(self, tenant, count):
+        """
+        Return a list of `count` unsaved Provider instances for the given tenant.
+        """
+        base_uid = 1000
+        return [
+            Provider(
+                tenant=tenant,
+                uid=str(base_uid + i),
+                provider=Provider.ProviderChoices.AWS,
+            )
+            for i in range(count)
+        ]
+
+    def test_exact_multiple_of_batch(self, tenant):
+        total = 6
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
+
+    def test_non_multiple_of_batch(self, tenant):
+        total = 7
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
+
+    def test_batch_size_default(self, tenant):
+        default_size = settings.DJANGO_DELETION_BATCH_SIZE
+        total = default_size + 2
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
