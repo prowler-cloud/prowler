@@ -5,6 +5,10 @@ from typing import List
 
 from colorama import Fore, Style
 
+from prowler.config.config import (
+    default_config_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
@@ -22,8 +26,6 @@ class IacProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
-        mutelist_path: str = None,
-        mutelist_content: dict = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
@@ -33,8 +35,18 @@ class IacProvider(Provider):
         self._session = None
         self._identity = "prowler"
 
-        self._audit_config = config_content if config_content else {}
+        # Audit Config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist (not needed for IAC since Checkov has its own mutelist logic)
         self._mutelist = None
 
         self.audit_metadata = Audit_Metadata(
@@ -86,22 +98,17 @@ class IacProvider(Provider):
         Returns:
             CheckReportIAC: The processed check report
         """
-        # Get severity and ensure it's a valid string
-        severity = finding.get("severity", "low")
-        if severity is None:
-            severity = "low"
-        severity = str(severity).lower()
-
-        # Create a basic metadata structure for the check
         metadata_dict = {
             "Provider": "iac",
             "CheckID": check.get("check_id", ""),
             "CheckTitle": check.get("check_name", ""),
             "CheckType": ["Infrastructure as Code"],
-            "ServiceName": "iac",
+            "ServiceName": finding["check_type"],
             "SubServiceName": "",
             "ResourceIdTemplate": "",
-            "Severity": severity,
+            "Severity": (
+                check.get("severity", "low").lower() if check.get("severity") else "low"
+            ),
             "ResourceType": "iac",
             "Description": check.get("check_name", ""),
             "Risk": "",
@@ -126,7 +133,6 @@ class IacProvider(Provider):
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "",
-            "GCPProject": check.get("project_id", ""),
         }
 
         # Convert metadata dict to JSON string
@@ -134,6 +140,10 @@ class IacProvider(Provider):
 
         report = CheckReportIAC(metadata=metadata, finding=check)
         report.status = status
+        report.resource_tags = check.get("entity_tags", {})
+        report.status_extended = check.get("check_name", "")
+        if status == "MUTED":
+            report.muted = True
         return report
 
     def run(self) -> List[CheckReportIAC]:
@@ -161,7 +171,11 @@ class IacProvider(Provider):
 
             reports = []
 
-            # Process all findings
+            # If only one framework has findings, the output is a dict, otherwise it's a list of dicts
+            if isinstance(output, dict):
+                output = [output]
+
+            # Process all frameworks findings
             for finding in output:
                 results = finding.get("results", {})
 
@@ -175,6 +189,12 @@ class IacProvider(Provider):
                 passed_checks = results.get("passed_checks", [])
                 for passed_check in passed_checks:
                     report = self._process_check(finding, passed_check, "PASS")
+                    reports.append(report)
+
+                # Process skipped checks (muted)
+                skipped_checks = results.get("skipped_checks", [])
+                for skipped_check in skipped_checks:
+                    report = self._process_check(finding, skipped_check, "MUTED")
                     reports.append(report)
 
             return reports
