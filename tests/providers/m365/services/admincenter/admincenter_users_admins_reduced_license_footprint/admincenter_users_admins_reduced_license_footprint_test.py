@@ -195,7 +195,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             check = admincenter_users_admins_reduced_license_footprint()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
                 == "User User1 has administrative roles Global Administrator and does not have a license."
