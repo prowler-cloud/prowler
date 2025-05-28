@@ -10,6 +10,7 @@ import HIPAALogo from "./hipaa.svg";
 import ISOLogo from "./iso-27001.svg";
 import KISALogo from "./kisa.svg";
 import MITRELogo from "./mitre-attack.svg";
+import NIS2Logo from "./nis2.svg";
 import NISTLogo from "./nist.svg";
 import PCILogo from "./pci-dss.svg";
 import PROWLERTHREATLogo from "./prowlerThreat.svg";
@@ -67,5 +68,8 @@ export const getComplianceIcon = (complianceTitle: string) => {
   }
   if (complianceTitle.toLowerCase().includes("prowlerthreatscore")) {
     return PROWLERTHREATLogo;
+  }
+  if (complianceTitle.toLowerCase().includes("nis2")) {
+    return NIS2Logo;
   }
 };
