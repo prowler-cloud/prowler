@@ -117,11 +117,11 @@ export const ClientAccordionContent = ({
   ];
 
   const renderContent = () => {
-    if (findings === null) {
+    if (findings === null && requirement.status !== "MANUAL") {
       return <SkeletonTableFindings />;
     }
 
-    if (findings?.data?.length > 0) {
+    if (findings?.data?.length && findings.data.length > 0) {
       return (
         <div className="p-1">
           <DataTable
@@ -137,7 +137,7 @@ export const ClientAccordionContent = ({
       );
     }
 
-    return <div>No findings</div>;
+    return <div>There are no findings for this regions</div>;
   };
 
   return (
