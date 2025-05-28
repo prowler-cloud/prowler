@@ -271,7 +271,7 @@ def perform_prowler_scan(
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
-                        uid=finding_uid,
+                        new_uid=finding_uid,
                         delta=delta,
                         check_metadata=finding.get_metadata(),
                         status=status,

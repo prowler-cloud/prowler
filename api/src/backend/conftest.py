@@ -631,6 +631,9 @@ def findings_fixture(scans_fixture, resources_fixture):
         },
         first_seen_at="2024-01-02T00:00:00Z",
     )
+    # Set the uid using the effective_uid property
+    # finding1.effective_uid = "test_finding_uid_1"
+    # finding1.save()
 
     finding1.add_resources([resource1])
 
@@ -658,6 +661,9 @@ def findings_fixture(scans_fixture, resources_fixture):
         first_seen_at="2024-01-02T00:00:00Z",
         muted=True,
     )
+    # Set the uid using the effective_uid property
+    # finding2.effective_uid = "test_finding_uid_2"
+    # finding2.save()
 
     finding2.add_resources([resource2])
 
@@ -943,7 +949,6 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
     )
     finding = Finding.objects.create(
         tenant_id=tenant_id,
-        uid="test_finding_uid_1",
         scan=scan,
         delta="new",
         status=Status.FAIL,
@@ -964,6 +969,9 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
         },
         first_seen_at="2024-01-02T00:00:00Z",
     )
+    # Set the uid using the effective_uid property
+    finding.effective_uid = "test_finding_uid_1"
+    # finding.save()
 
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))

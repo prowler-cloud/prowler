@@ -166,7 +166,7 @@ class Command(BaseCommand):
                     Finding(
                         tenant_id=tenant_id,
                         scan=scan,
-                        uid=f"testing-{uid_token}-{i}",
+                        new_uid=f"testing-{uid_token}-{i}",
                         delta=random.choice(possible_deltas),
                         check_id=f"check-{check_id}",
                         status=random.choice(list(StatusChoices)),
