@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [5.8.0] (Prowler v5.8.0)
 
 ### Added
@@ -23,7 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> dddec4c68 (fix(m365): add `powershell.close()` to `msgraph` services (#7816))
 ## [v5.7.0] (Prowler v5.7.0)
 
 ### Added
