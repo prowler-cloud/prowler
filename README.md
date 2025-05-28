@@ -91,7 +91,7 @@ prowler dashboard
 | Azure | 142 | 18 | 9 | 3 |
 | Kubernetes | 83 | 7 | 5 | 7 |
 | GitHub | 16 | 2 | 1 | 0 |
-| M365 | 69 | 7 | 2 | 0 |
+| M365 | 69 | 7 | 2 | 2 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
 > [!Note]
