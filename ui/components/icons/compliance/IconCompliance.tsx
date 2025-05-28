@@ -8,9 +8,11 @@ import GDPRLogo from "./gdpr.svg";
 import GxPLogo from "./gxp-aws.svg";
 import HIPAALogo from "./hipaa.svg";
 import ISOLogo from "./iso-27001.svg";
+import KISALogo from "./kisa.svg";
 import MITRELogo from "./mitre-attack.svg";
 import NISTLogo from "./nist.svg";
 import PCILogo from "./pci-dss.svg";
+import PROWLERTHREATLogo from "./prowlerThreat.svg";
 import RBILogo from "./rbi.svg";
 import SOC2Logo from "./soc2.svg";
 
@@ -59,5 +61,11 @@ export const getComplianceIcon = (complianceTitle: string) => {
   }
   if (complianceTitle.toLowerCase().includes("soc2")) {
     return SOC2Logo;
+  }
+  if (complianceTitle.toLowerCase().includes("kisa")) {
+    return KISALogo;
+  }
+  if (complianceTitle.toLowerCase().includes("prowlerthreatscore")) {
+    return PROWLERTHREATLogo;
   }
 };
