@@ -631,6 +631,34 @@ class CheckReportNHN(Check_Report):
         self.location = getattr(resource, "location", "kr1")
 
 
+@dataclass
+class CheckReportIaC(Check_Report):
+    """Contains the IaC Check's finding information."""
+
+    resource_name: str
+    resource_path: str
+    resource_line_range: str
+
+    def __init__(self, iac_finding: Any) -> None:
+        """Initialize the IaC Check's finding information.
+
+        Args:
+            iac_finding: The IaC finding.
+        """
+        super().__init__()
+        self.metadata = CheckMetadata(
+            Provider="iac",
+            ServiceName=iac_finding.check_type,
+            CheckID=iac_finding.check_id,
+            CheckTitle=iac_finding.check_name,
+            CheckType=[],
+            # TODO: Map all the mandatory values
+        )
+        self.resource_name = getattr(iac_finding, "resource", "")
+        self.resource_path = getattr(iac_finding, "file_path", "")
+        self.resource_line_range = getattr(iac_finding, "file_line_range", "")
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """

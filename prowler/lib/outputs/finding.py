@@ -282,6 +282,17 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "iac":
+                output_data["auth_method"] = "local"  # at least for now
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_path"] = check_output.resource_path
+                output_data["resource_line_range"] = check_output.resource_line_range
+                # output_data["account_name"] = provider.identity.account_name
+                # output_data["account_uid"] = provider.identity.account_id
+                output_data["framework"] = (
+                    check_output.check_metadata.ServiceName
+                )  # TODO: can we get the framework from the check_output?
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
