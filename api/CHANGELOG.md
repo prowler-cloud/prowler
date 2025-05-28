@@ -17,6 +17,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed task lookup to use task_kwargs instead of task_args for scan report resolution. [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
 - Fixed Kubernetes UID validation to allow valid context names [(#7871)](https://github.com/prowler-cloud/prowler/pull/7871)
+- Fixed a race condition when creating async tasks [(#7876)](https://github.com/prowler-cloud/prowler/pull/7876).
 
 ---
 
