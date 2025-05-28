@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from uuid import UUID, uuid4
 
 from cryptography.fernet import Fernet
@@ -352,6 +353,32 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
         resource_name = "provider_groups-provider"
 
 
+class TaskManager(models.Manager):
+    def get_with_retry(self, id, max_retries=5, delay_seconds=0.5):
+        """
+        Retry fetching a Task by ID in case it hasn't been created yet.
+
+        Args:
+            id (UUID): The Celery task ID.
+            max_retries (int): Number of retry attempts.
+            delay_seconds (float): Seconds to wait between retries.
+
+        Returns:
+            Task: The retrieved Task instance.
+
+        Raises:
+            Task.DoesNotExist: If the task is not found after all retries.
+        """
+        for _attempt in range(max_retries):
+            try:
+                return self.get(id=id)
+            except self.model.DoesNotExist:
+                time.sleep(delay_seconds)
+        raise self.model.DoesNotExist(
+            f"Task with ID {id} not found after {max_retries} retries."
+        )
+
+
 class Task(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -363,6 +390,8 @@ class Task(RowLevelSecurityProtectedModel):
         null=True,
         blank=True,
     )
+
+    objects = TaskManager()
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "tasks"
