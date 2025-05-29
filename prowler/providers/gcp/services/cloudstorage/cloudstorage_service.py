@@ -60,4 +60,4 @@ class Bucket(BaseModel):
     uniform_bucket_level_access: bool
     public: bool
     project_id: str
-    retention_policy: Optional[dict]
+    retention_policy: Optional[dict] = None

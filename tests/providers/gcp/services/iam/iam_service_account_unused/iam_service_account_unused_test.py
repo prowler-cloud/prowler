@@ -96,7 +96,7 @@ class Test_iam_service_account_unused:
             assert result[0].resource_id == iam_client.service_accounts[0].email
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_US_CENTER1_LOCATION
-            assert result[0].resource == iam_client.service_accounts[0]
+            assert result[0].resource == iam_client.service_accounts[0].model_dump()
 
     def test_iam_service_account_unused_mix(self):
         iam_client = mock.MagicMock()
@@ -168,7 +168,7 @@ class Test_iam_service_account_unused:
             assert result[0].resource_id == iam_client.service_accounts[0].email
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_US_CENTER1_LOCATION
-            assert result[0].resource == iam_client.service_accounts[0]
+            assert result[0].resource == iam_client.service_accounts[0].model_dump()
 
             assert result[1].status == "FAIL"
             assert (
@@ -178,4 +178,4 @@ class Test_iam_service_account_unused:
             assert result[1].resource_id == iam_client.service_accounts[1].email
             assert result[1].project_id == GCP_PROJECT_ID
             assert result[1].location == GCP_US_CENTER1_LOCATION
-            assert result[1].resource == iam_client.service_accounts[1]
+            assert result[1].resource == iam_client.service_accounts[1].model_dump()
