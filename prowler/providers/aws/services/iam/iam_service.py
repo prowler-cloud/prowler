@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger

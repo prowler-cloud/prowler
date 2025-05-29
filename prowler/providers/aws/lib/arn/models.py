@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.providers.aws.exceptions.exceptions import AWSIAMRoleARNMissingFieldsError
 

@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider

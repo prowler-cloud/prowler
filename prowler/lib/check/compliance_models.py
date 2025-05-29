@@ -3,7 +3,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic.v1 import BaseModel, ValidationError, root_validator
 
 from prowler.lib.check.utils import list_compliance_modules
 from prowler.lib.logger import logger
@@ -69,6 +69,10 @@ class CIS_Requirement_Attribute_Profile(str, Enum):
 
     Level_1 = "Level 1"
     Level_2 = "Level 2"
+    E3_Level_1 = "E3 Level 1"
+    E3_Level_2 = "E3 Level 2"
+    E5_Level_1 = "E5 Level 1"
+    E5_Level_2 = "E5 Level 2"
 
 
 class CIS_Requirement_Attribute_AssessmentStatus(str, Enum):

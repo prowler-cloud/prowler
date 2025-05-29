@@ -708,7 +708,7 @@
         {
           "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Automate service accounts management.",
           "RationaleStatement": "When you create a pod, if you do not specify a service account, it is automatically assigned the `default` service account in the same namespace. You should create your own service account and let the API server manage its security tokens.",
@@ -731,7 +731,7 @@
         {
           "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Reject creating objects in a namespace that is undergoing termination.",
           "RationaleStatement": "Setting admission control policy to `NamespaceLifecycle` ensures that objects cannot be created in non-existent namespaces, and that namespaces undergoing termination are not used for creating the new objects. This is recommended to enforce the integrity of the namespace termination process and also for the availability of the newer objects.",
@@ -754,7 +754,7 @@
         {
           "Section": "1 Control Plane Components",
           "SubSection": "1.2 API Server",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Limit the `Node` and `Pod` objects that a kubelet could modify.",
           "RationaleStatement": "Using the `NodeRestriction` plug-in ensures that the kubelet is restricted to the `Node` and `Pod` objects that it could modify as defined. Such kubelets will only be allowed to modify their own `Node` API object, and only modify `Pod` API objects that are bound to their node.",
@@ -1501,7 +1501,7 @@
       "Attributes": [
         {
           "Section": "2 etcd",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Use a different certificate authority for etcd from the one used for Kubernetes.",
           "RationaleStatement": "etcd is a highly available key-value store used by Kubernetes deployments for persistent storage of all of its REST API objects. Its access should be restricted to specifically designated clients and peers only.   Authentication to etcd is based on whether the certificate presented was issued by a trusted certificate authority. There is no checking of certificate attributes such as common name or subject alternative name. As such, if any attackers were able to gain access to any certificate issued by the trusted certificate authority, they would be able to gain full access to the etcd database.",
@@ -1606,7 +1606,7 @@
         {
           "Section": "3 Control Plane Configuration",
           "SubSection": "3.2 Logging",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the audit policy created for the cluster covers key security concerns.",
           "RationaleStatement": "Security audit logs should cover access and modification of key resources in the cluster, to enable them to form an effective part of a security environment.",
@@ -2010,7 +2010,7 @@
         {
           "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
-          "Profile": "Level 2 - Worker Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Security relevant information should be captured. The eventRecordQPS on the Kubelet configuration can be used to limit the rate at which events are gathered and sets the maximum event creations per second. Setting this too low could result in relevant events not being logged, however the unlimited setting of `0` could result in a denial of service on the kubelet.",
           "RationaleStatement": "It is important to capture all events and not restrict event creation. Events are an important source of security information and analytics that ensure that your environment is consistently monitored using the event data.",
@@ -2163,7 +2163,7 @@
         {
           "Section": "4 Worker Nodes",
           "SubSection": "4.2 Kubelet",
-          "Profile": "Level 2 - Worker Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Ensuring that `--IPAddressDeny` is set to Any will facilitate allowlisting of only IP addresses that are explicitly set with the `--IPAddressAllow` parameter which will block unspecified IP addresses from communicating with the **kubelet** component.",
           "RationaleStatement": "By default, Kubernetes allows any IP address to communicate with the **kubelet** component IP restrictions and IP whitelisting are security best practices and reduce the attack surface of the **kubelet**.",
@@ -2634,7 +2634,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers to be run as the root user.",
           "RationaleStatement": "Containers may run as any Linux user. Containers which run as the root user, whilst constrained by Container Runtime security features still have a escalated likelihood of container breakout.  Ideally, all containers should run as a defined non-UID 0 user.  There should be at least one admission control policy defined which does not permit root containers.  If you need to run root containers, this should be defined in a separate policy and you should carefully check to ensure that only limited service accounts and users are given permission to use that policy.",
@@ -2703,7 +2703,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.2 Pod Security Standards",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Do not generally permit containers with capabilities",
           "RationaleStatement": "Containers run with a default set of capabilities as assigned by the Container Runtime. Capabilities are parts of the rights generally granted on a Linux system to the root user.  In many cases applications running in containers do not require any capabilities to operate, so from the perspective of the principal of least privilege use of capabilities should be minimized.",
@@ -2812,7 +2812,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.3 Network Policies and CNI",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Use network policies to isolate traffic in your cluster network.",
           "RationaleStatement": "Running different applications on the same Kubernetes cluster creates a risk of one compromised application attacking a neighboring application. Network segmentation is important to ensure that containers can communicate only with those they are supposed to. A network policy is a specification of how selections of pods are allowed to communicate with each other and other network endpoints.   Network Policies are namespace scoped. When a network policy is introduced to a given namespace, all traffic not allowed by the policy is denied. However, if there are no network policies in a namespace all traffic will be allowed into and out of the pods in that namespace.",
@@ -2835,7 +2835,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.4 Secrets Management",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes supports mounting secrets as data volumes or as environment variables. Minimize the use of environment variable secrets.",
           "RationaleStatement": "It is reasonably common for application code to log out its environment (particularly in the event of an error). This will include any secret values passed in as environment variables, so secrets can easily be exposed to any user or entity who has access to the logs.",
@@ -2856,7 +2856,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.4 Secrets Management",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Consider the use of an external secrets storage and management system, instead of using Kubernetes Secrets directly, if you have more complex secret management needs. Ensure the solution requires authentication to access secrets, has auditing of access to and use of secrets, and encrypts secrets. Some solutions also make it easier to rotate secrets.",
           "RationaleStatement": "Kubernetes supports secrets as first-class objects, but care needs to be taken to ensure that access to secrets is carefully limited. Using an external secrets provider can ease the management of access to secrets, especially where secrests are used across both Kubernetes and non-Kubernetes environments.",
@@ -2877,7 +2877,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.5 Extensible Admission Control",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Configure Image Provenance for your deployment.",
           "RationaleStatement": "Kubernetes supports plugging in provenance rules to accept or reject the images in your deployments. You could configure such rules to ensure that only approved images are deployed in the cluster.",
@@ -2921,7 +2921,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.6 General Policies",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable `docker/default` seccomp profile in your pod definitions.",
           "RationaleStatement": "Seccomp (secure computing mode) is used to restrict the set of system calls applications can make, allowing cluster administrators greater control over the security of workloads running in the cluster. Kubernetes disables seccomp profiles by default for historical reasons. You should enable it to ensure that the workloads have restricted actions available within the container.",
@@ -2942,7 +2942,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.6 General Policies",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Apply Security Context to Your Pods and Containers",
           "RationaleStatement": "A security context defines the operating system security settings (uid, gid, capabilities, SELinux role, etc..) applied to a container. When designing your containers and pods, make sure that you configure the security context for your pods, containers, and volumes. A security context is a property defined in the deployment yaml. It controls the security parameters that will be assigned to the pod/container/volume. There are two levels of security context: pod level security context, and container level security context.",
@@ -2963,7 +2963,7 @@
         {
           "Section": "5 Policies",
           "SubSection": "5.6 General Policies",
-          "Profile": "Level 2 - Master Node",
+          "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Kubernetes provides a default namespace, where objects are placed if no namespace is specified for them. Placing objects in this namespace makes application of RBAC and other controls more difficult.",
           "RationaleStatement": "Resources in a Kubernetes cluster should be segregated by namespace, to allow for security controls to be applied at that level and to make it easier to manage resources.",
