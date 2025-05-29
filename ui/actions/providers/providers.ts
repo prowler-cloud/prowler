@@ -155,6 +155,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
   const providerType = formData.get("providerType");
 
   const isRole = formData.get("role_arn") !== null;
+  const isServiceAccount = formData.get("service_account_key") !== null;
 
   let secret = {};
   let secretType = "static"; // Default to static credentials
@@ -199,19 +200,38 @@ export const addCredentialsProvider = async (formData: FormData) => {
       password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
+    if (isServiceAccount) {
+      // Service account configuration for GCP
+      secretType = "service_account";
+      const serviceAccountKeyRaw = formData.get(
+        "service_account_key",
+      ) as string;
+
+      try {
+        const serviceAccountKey = JSON.parse(serviceAccountKeyRaw);
+        secret = {
+          service_account_key: serviceAccountKey,
+        };
+      } catch (error) {
+        return {
+          error:
+            "Invalid service account key format. Please provide a valid JSON.",
+        };
+      }
+    } else {
+      // Static credentials configuration for GCP
+      secret = {
+        client_id: formData.get("client_id"),
+        client_secret: formData.get("client_secret"),
+        refresh_token: formData.get("refresh_token"),
+      };
+    }
   } else if (providerType === "kubernetes") {
     // Static credentials configuration for Kubernetes
     secret = {
       kubeconfig_content: formData.get("kubeconfig_content"),
     };
   }
-
   const bodyData = {
     data: {
       type: "provider-secrets",
@@ -260,6 +280,7 @@ export const updateCredentialsProvider = async (
   const providerType = formData.get("providerType");
 
   const isRole = formData.get("role_arn") !== null;
+  const isServiceAccount = formData.get("service_account_key") !== null;
 
   let secret = {};
 
@@ -302,12 +323,31 @@ export const updateCredentialsProvider = async (
       password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
+    if (isServiceAccount) {
+      // Service account configuration for GCP
+      const serviceAccountKeyRaw = formData.get(
+        "service_account_key",
+      ) as string;
+
+      try {
+        const serviceAccountKey = JSON.parse(serviceAccountKeyRaw);
+        secret = {
+          service_account_key: serviceAccountKey,
+        };
+      } catch (error) {
+        return {
+          error:
+            "Invalid service account key format. Please provide a valid JSON.",
+        };
+      }
+    } else {
+      // Static credentials configuration for GCP
+      secret = {
+        client_id: formData.get("client_id"),
+        client_secret: formData.get("client_secret"),
+        refresh_token: formData.get("refresh_token"),
+      };
+    }
   } else if (providerType === "kubernetes") {
     // Static credentials configuration for Kubernetes
     secret = {
