@@ -227,7 +227,7 @@ class BackupVault(BaseModel):
     locked: bool
     min_retention_days: int = None
     max_retention_days: int = None
-    tags: Optional[list]
+    tags: Optional[list] = None
 
 
 class BackupPlan(BaseModel):
@@ -236,17 +236,17 @@ class BackupPlan(BaseModel):
     region: str
     name: str
     version_id: str
-    last_execution_date: Optional[datetime]
+    last_execution_date: Optional[datetime] = None
     advanced_settings: list
-    tags: Optional[list]
+    tags: Optional[list] = None
 
 
 class BackupReportPlan(BaseModel):
     arn: str
     region: str
     name: str
-    last_attempted_execution_date: Optional[datetime]
-    last_successful_execution_date: Optional[datetime]
+    last_attempted_execution_date: Optional[datetime] = None
+    last_successful_execution_date: Optional[datetime] = None
 
 
 class RecoveryPoint(BaseModel):
@@ -256,4 +256,4 @@ class RecoveryPoint(BaseModel):
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str
-    tags: Optional[list]
+    tags: Optional[list] = None

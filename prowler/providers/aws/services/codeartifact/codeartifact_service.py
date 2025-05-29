@@ -246,7 +246,7 @@ class Package(BaseModel):
     """Details of a package"""
 
     name: str
-    namespace: Optional[str]
+    namespace: Optional[str] = None
     format: str
     origin_configuration: OriginConfiguration
     latest_version: LatestPackageVersion

@@ -279,7 +279,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
-    Tags: Optional[dict]
+    Tags: Optional[dict] = None
 
     @validator("Tags", pre=True, always=True)
     def tags_cannot_be_empty_dict(tags):

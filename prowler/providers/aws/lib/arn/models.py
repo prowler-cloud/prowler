@@ -10,7 +10,7 @@ class ARN(BaseModel):
     arn: str
     partition: str
     service: str
-    region: Optional[str]  # In IAM ARN's do not have region
+    region: Optional[str] = None  # In IAM ARN's do not have region
     account_id: str
     resource: str
     resource_type: str

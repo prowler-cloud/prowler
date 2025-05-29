@@ -111,5 +111,5 @@ class Certificate(BaseModel):
     tags: Optional[list] = []
     expiration_days: int
     in_use: bool
-    transparency_logging: Optional[bool]
+    transparency_logging: Optional[bool] = None
     region: str

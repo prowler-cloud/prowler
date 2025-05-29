@@ -19,7 +19,7 @@ class AWSWellArchitectedModel(BaseModel):
     Requirements_Attributes_WellArchitectedQuestionId: str
     Requirements_Attributes_WellArchitectedPracticeId: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_LevelOfRisk: str
     Requirements_Attributes_AssessmentMethod: str
     Requirements_Attributes_Description: str
