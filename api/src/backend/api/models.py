@@ -355,14 +355,19 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
 
 
 class TaskManager(models.Manager):
-    def get_with_retry(self, id, max_retries: int = 0, delay_seconds: int = 0):
+    def get_with_retry(
+        self,
+        id: str,
+        max_retries: int = None,
+        delay_seconds: float = None,
+    ):
         """
         Retry fetching a Task by ID in case it hasn't been created yet.
 
         Args:
-            id (UUID): The Celery task ID.
-            max_retries (int): Number of retry attempts.
-            delay_seconds (float): Seconds to wait between retries.
+            id (str): The Celery task ID (expected to match Task model PK).
+            max_retries (int, optional): Number of retry attempts. Defaults to env TASK_RETRY_ATTEMPTS or 5.
+            delay_seconds (float, optional): Delay between retries in seconds. Defaults to env TASK_RETRY_DELAY_SECONDS or 0.1.
 
         Returns:
             Task: The retrieved Task instance.
@@ -370,8 +375,10 @@ class TaskManager(models.Manager):
         Raises:
             Task.DoesNotExist: If the task is not found after all retries.
         """
-        max_retries = max_retries or env("TASK_RETRY_ATTEMPTS", default=5)
-        delay_seconds = delay_seconds or env("TASK_RETRY_DELAY_SECONDS", default=0.1)
+        max_retries = max_retries or env.int("TASK_RETRY_ATTEMPTS", default=5)
+        delay_seconds = delay_seconds or env.float(
+            "TASK_RETRY_DELAY_SECONDS", default=0.1
+        )
 
         for _attempt in range(max_retries):
             try:
