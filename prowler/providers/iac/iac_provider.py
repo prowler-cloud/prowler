@@ -159,11 +159,9 @@ class IacProvider(Provider):
                 capture_output=True,
                 text=True,
             )
-
             # Log Checkov's error output if any
             if process.stderr:
-                logger.critical(process.stderr)
-                sys.exit(1)
+                logger.error(process.stderr)
 
             try:
                 output = json.loads(process.stdout)
