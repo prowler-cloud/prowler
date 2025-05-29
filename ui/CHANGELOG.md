@@ -14,6 +14,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
 - Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
 
+### 🐞 Fixes
+- Retrieve more than 10 scans in /compliance page. [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
+
 ---
 
 ## [v1.7.1] (Prowler v5.7.1)
