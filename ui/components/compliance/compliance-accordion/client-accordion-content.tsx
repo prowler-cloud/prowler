@@ -11,8 +11,10 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { Requirement } from "@/types/compliance";
+import { ComplianceId, Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
+
+import { ComplianceCustomDetails } from "../compliance-custom-details/ens-details";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
@@ -27,6 +29,7 @@ export const ClientAccordionContent = ({
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
+  const complianceId = searchParams.get("complianceId") as ComplianceId;
   const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.get("sort") || defaultSort;
   const loadedPageRef = useRef<string | null>(null);
@@ -114,7 +117,7 @@ export const ClientAccordionContent = ({
     },
   ];
 
-  const renderContent = () => {
+  const renderFindingsTable = () => {
     if (findings === null && requirement.status !== "MANUAL") {
       return <SkeletonTableFindings />;
     }
@@ -138,36 +141,26 @@ export const ClientAccordionContent = ({
     return <div>There are no findings for this regions</div>;
   };
 
+  const renderDetails = () => {
+    if (!complianceId) {
+      return null;
+    }
+
+    switch (complianceId) {
+      case "ens_rd2022_aws":
+        return (
+          <div className="w-full">
+            <ComplianceCustomDetails requirement={requirement} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="w-full">
-      <div className="mb-4">
-        <div className="mb-2 text-sm text-gray-600">
-          {requirement.description}
-        </div>
-        <div className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Level:</span>
-            <span className="capitalize">{requirement.nivel}</span>
-          </div>
-          {requirement.dimensiones && requirement.dimensiones.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Dimensions:</span>
-              <div className="flex flex-wrap gap-1">
-                {requirement.dimensiones.map(
-                  (dimension: string, index: number) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize dark:bg-prowler-blue-400"
-                    >
-                      {dimension}
-                    </span>
-                  ),
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {renderDetails()}
 
       {checks.length > 0 && (
         <div className="mb-6 mt-2">
@@ -180,7 +173,7 @@ export const ClientAccordionContent = ({
         </div>
       )}
 
-      {renderContent()}
+      {renderFindingsTable()}
     </div>
   );
 };

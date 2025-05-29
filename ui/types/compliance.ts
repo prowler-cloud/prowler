@@ -1,5 +1,7 @@
 export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
 
+export type ComplianceId = "ens_rd2022_aws";
+
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
 }
@@ -26,8 +28,9 @@ export interface Requirement {
   fail: number;
   manual: number;
   check_ids: string[];
-  nivel: string;
-  dimensiones: string[];
+  // ENS
+  nivel?: string;
+  dimensiones?: string[];
 }
 
 export interface Control {
