@@ -2410,9 +2410,12 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         ],
         responses={
             200: OpenApiResponse(
-                description="Compliance overviews obtained successfully"
+                description="Compliance overviews obtained successfully",
+                response=ComplianceOverviewSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -2434,7 +2437,8 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         ],
         responses={
             200: OpenApiResponse(
-                description="Compliance overviews metadata obtained successfully"
+                description="Compliance overviews metadata obtained successfully",
+                response=ComplianceOverviewMetadataSerializer,
             ),
             202: OpenApiResponse(description="The task is in progress"),
             500: OpenApiResponse(
@@ -2465,7 +2469,8 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
         ],
         responses={
             200: OpenApiResponse(
-                description="Compliance requirement details obtained successfully"
+                description="Compliance requirement details obtained successfully",
+                response=ComplianceOverviewDetailSerializer(many=True),
             ),
             202: OpenApiResponse(description="The task is in progress"),
             500: OpenApiResponse(
@@ -2488,6 +2493,12 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance framework ID to get attributes for.",
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance attributes obtained successfully",
+                response=ComplianceOverviewAttributesSerializer(many=True),
+            ),
+        },
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
