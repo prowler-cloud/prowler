@@ -213,10 +213,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
           service_account_key: serviceAccountKey,
         };
       } catch (error) {
-        return {
-          error:
-            "Invalid service account key format. Please provide a valid JSON.",
-        };
+        console.error("error", error);
       }
     } else {
       // Static credentials configuration for GCP
@@ -330,15 +327,13 @@ export const updateCredentialsProvider = async (
       ) as string;
 
       try {
+        // Parse the service account key as JSON
         const serviceAccountKey = JSON.parse(serviceAccountKeyRaw);
         secret = {
           service_account_key: serviceAccountKey,
         };
       } catch (error) {
-        return {
-          error:
-            "Invalid service account key format. Please provide a valid JSON.",
-        };
+        console.error("error", error);
       }
     } else {
       // Static credentials configuration for GCP

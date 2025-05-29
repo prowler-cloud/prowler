@@ -6,9 +6,11 @@ import {
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
+import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { UpdateViaServiceAccountForm } from "@/components/providers/workflow/forms/update-via-service-account-key-form";
 
 interface Props {
-  searchParams: { type: string; id: string; via?: string };
+  searchParams: { type: string; id: string; via?: string; secretId?: string };
 }
 
 export default function UpdateCredentialsPage({ searchParams }: Props) {
@@ -40,14 +42,24 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
         </>
       )}
 
+      {searchParams.type === "gcp" && !searchParams.via && (
+        <SelectViaGCP initialVia={searchParams.via} />
+      )}
+
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        searchParams.type !== "aws") && (
+        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
+        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
         <UpdateViaCredentialsForm searchParams={searchParams} />
       )}
 
       {searchParams.type === "aws" && searchParams.via === "role" && (
         <UpdateViaRoleForm searchParams={searchParams} />
       )}
+
+      {searchParams.type === "gcp" &&
+        searchParams.via === "service-account" && (
+          <UpdateViaServiceAccountForm searchParams={searchParams} />
+        )}
     </>
   );
 }
