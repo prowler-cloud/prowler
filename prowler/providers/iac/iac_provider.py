@@ -98,7 +98,6 @@ class IacProvider(Provider):
         Returns:
             CheckReportIAC: The processed check report
         """
-
         metadata_dict = {
             "Provider": "iac",
             "CheckID": check.get("check_id", ""),
