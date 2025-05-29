@@ -162,9 +162,7 @@ class IacProvider(Provider):
 
             # Log Checkov's error output if any
             if process.stderr:
-                logger.critical(
-                    f"{process.stderr.__class__.__name__} -- {process.stderr}"
-                )
+                logger.critical(process.stderr)
                 sys.exit(1)
 
             try:

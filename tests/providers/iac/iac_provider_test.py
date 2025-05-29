@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from prowler.lib.check.models import CheckReportIAC
 from prowler.providers.iac.iac_provider import IacProvider
 from tests.providers.iac.iac_fixtures import (
@@ -113,9 +115,10 @@ class TestIacProvider:
             stdout=get_invalid_checkov_output(), stderr=""
         )
 
-        reports = provider.run_scan("/test/directory")
+        with pytest.raises(SystemExit) as excinfo:
+            provider.run_scan("/test/directory")
 
-        assert len(reports) == 0
+        assert excinfo.value.code == 1
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_null_output(self, mock_subprocess):
