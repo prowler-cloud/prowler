@@ -2397,8 +2397,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     list=extend_schema(
         tags=["Compliance Overview"],
         summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan. If no region filters are provided, the"
-        " region with the most fails will be returned by default.",
+        description="Retrieve an overview of all the compliance in a given scan.",
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
