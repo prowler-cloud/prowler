@@ -192,7 +192,6 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
-
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
         provider = providers_fixture[0]
