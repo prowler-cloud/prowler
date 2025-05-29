@@ -69,6 +69,10 @@ class CIS_Requirement_Attribute_Profile(str, Enum):
 
     Level_1 = "Level 1"
     Level_2 = "Level 2"
+    E3_Level_1 = "E3 Level 1"
+    E3_Level_2 = "E3 Level 2"
+    E5_Level_1 = "E5 Level 1"
+    E5_Level_2 = "E5 Level 2"
 
 
 class CIS_Requirement_Attribute_AssessmentStatus(str, Enum):
