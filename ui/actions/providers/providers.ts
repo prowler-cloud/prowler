@@ -213,6 +213,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
           service_account_key: serviceAccountKey,
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("error", error);
       }
     } else {
@@ -333,6 +334,7 @@ export const updateCredentialsProvider = async (
           service_account_key: serviceAccountKey,
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("error", error);
       }
     } else {

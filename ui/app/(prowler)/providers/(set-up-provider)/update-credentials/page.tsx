@@ -1,11 +1,11 @@
 import React from "react";
 
+import { CredentialsUpdateInfo } from "@/components/providers";
 import {
   UpdateViaCredentialsForm,
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { UpdateViaServiceAccountForm } from "@/components/providers/workflow/forms/update-via-service-account-key-form";
-import { CredentialsUpdateInfo } from "@/components/providers";
 
 interface Props {
   searchParams: { type: string; id: string; via?: string; secretId?: string };

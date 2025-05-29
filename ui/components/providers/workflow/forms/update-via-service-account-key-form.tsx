@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { updateCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -16,9 +17,9 @@ import {
   GCPServiceAccountKey,
   ProviderType,
 } from "@/types";
-import { updateCredentialsProvider } from "@/actions/providers/providers";
-import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type";
+
 import { ProviderTitleDocs } from "../provider-title-docs";
+import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type";
 
 export const UpdateViaServiceAccountForm = ({
   searchParams,
@@ -79,11 +80,7 @@ export const UpdateViaServiceAccountForm = ({
 
     try {
       const data = await updateCredentialsProvider(providerSecretId, formData);
-
-      console.log("DATA RESPONSE FROM ACTION:", data);
-
       if (data?.errors && data.errors.length > 0) {
-        console.log("data", data);
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
 
