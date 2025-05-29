@@ -256,7 +256,7 @@ class TestPerformScan:
         )
 
         mock_get_or_create_resource.assert_called_once_with(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
@@ -307,7 +307,7 @@ class TestPerformScan:
         )
 
         mock_get_or_create_resource.assert_called_once_with(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
