@@ -1,5 +1,6 @@
 import json
 import uuid
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -205,6 +206,10 @@ class TestPerformScan:
 
         scan.refresh_from_db()
         assert scan.state == StateChoices.FAILED
+
+        provider.refresh_from_db()
+        assert provider.connected is False
+        assert isinstance(provider.connection_last_checked_at, datetime)
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
