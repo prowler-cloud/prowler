@@ -162,9 +162,9 @@ class RoleBinding(BaseModel):
 
 
 class Rule(BaseModel):
-    apiGroups: Optional[List[str]]
-    resources: Optional[List[str]]
-    verbs: Optional[List[str]]
+    apiGroups: Optional[List[str]] = None
+    resources: Optional[List[str]] = None
+    verbs: Optional[List[str]] = None
 
 
 class Role(BaseModel):

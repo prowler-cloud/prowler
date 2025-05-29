@@ -18,7 +18,7 @@ class GCPOrganization(BaseModel):
 
 
 class GCPProject(BaseModel):
-    number: str
+    number: int
     id: str
     name: str
     organization: Optional[GCPOrganization] = None

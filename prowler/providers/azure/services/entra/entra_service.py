@@ -367,12 +367,12 @@ class User(BaseModel):
 
 
 class DefaultUserRolePermissions(BaseModel):
-    allowed_to_create_apps: Optional[bool]
-    allowed_to_create_security_groups: Optional[bool]
-    allowed_to_create_tenants: Optional[bool]
-    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool]
-    allowed_to_read_other_users: Optional[bool]
-    odata_type: Optional[str]
+    allowed_to_create_apps: Optional[bool] = None
+    allowed_to_create_security_groups: Optional[bool] = None
+    allowed_to_create_tenants: Optional[bool] = None
+    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool] = None
+    allowed_to_read_other_users: Optional[bool] = None
+    odata_type: Optional[str] = None
     permission_grant_policies_assigned: Optional[List[str]] = None
 
 
@@ -380,20 +380,20 @@ class AuthorizationPolicy(BaseModel):
     id: str
     name: str
     description: str
-    default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    default_user_role_permissions: Optional[DefaultUserRolePermissions] = None
     guest_invite_settings: str
     guest_user_role_id: UUID
 
 
 class SettingValue(BaseModel):
-    name: Optional[str]
-    odata_type: Optional[str]
-    value: Optional[str]
+    name: Optional[str] = None
+    odata_type: Optional[str] = None
+    value: Optional[str] = None
 
 
 class GroupSetting(BaseModel):
-    name: Optional[str]
-    template_id: Optional[str]
+    name: Optional[str] = None
+    template_id: Optional[str] = None
     settings: List[SettingValue]
 
 

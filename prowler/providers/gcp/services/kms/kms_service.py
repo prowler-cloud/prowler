@@ -143,8 +143,8 @@ class CriptoKey(BaseModel):
     id: str
     name: str
     location: str
-    rotation_period: Optional[str]
-    next_rotation_time: Optional[str]
+    rotation_period: Optional[str] = None
+    next_rotation_time: Optional[str] = None
     key_ring: str
     members: list = []
     project_id: str

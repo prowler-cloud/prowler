@@ -224,11 +224,11 @@ class Stage(BaseModel):
     arn: str
     logging: bool
     client_certificate: bool
-    waf: Optional[str]
+    waf: Optional[str] = None
     tags: Optional[list] = []
-    tracing_enabled: Optional[bool]
-    cache_enabled: Optional[bool]
-    cache_data_encrypted: Optional[bool]
+    tracing_enabled: Optional[bool] = None
+    cache_enabled: Optional[bool] = None
+    cache_data_encrypted: Optional[bool] = None
 
 
 class PathResourceMethods(BaseModel):

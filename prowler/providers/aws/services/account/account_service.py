@@ -101,6 +101,6 @@ class Account(AWSService):
 
 class Contact(BaseModel):
     type: str
-    email: Optional[str]
-    name: Optional[str]
-    phone_number: Optional[str]
+    email: Optional[str] = None
+    name: Optional[str] = None
+    phone_number: Optional[str] = None

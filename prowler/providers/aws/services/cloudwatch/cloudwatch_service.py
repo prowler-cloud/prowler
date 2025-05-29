@@ -278,8 +278,8 @@ class Logs(AWSService):
 class MetricAlarm(BaseModel):
     arn: str
     name: str
-    metric: Optional[str]
-    name_space: Optional[str]
+    metric: Optional[str] = None
+    name_space: Optional[str] = None
     region: str
     tags: Optional[list] = []
     alarm_actions: list
@@ -310,7 +310,7 @@ class MetricFilter(BaseModel):
     name: str
     metric: str
     pattern: str
-    log_group: Optional[LogGroup]
+    log_group: Optional[LogGroup] = None
     region: str
 
 

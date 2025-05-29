@@ -36,7 +36,7 @@ Available Cloud Providers:
     kubernetes          Kubernetes Provider
     github              GitHub Provider
     m365                Microsoft 365 Provider
-    iac                 IaC Provider
+    iac                 IaC Provider (Preview)
     nhn                 NHN Provider (Unofficial)
 
 Available components:
