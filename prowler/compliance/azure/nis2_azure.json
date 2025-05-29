@@ -1,0 +1,1898 @@
+{
+  "Framework": "NIS2",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "ANNEX to the Commission Implementing Regulation laying down rules for the application of Directive (EU) 2022/2555 as regards technical and methodological requirements of cybersecurity risk-management measures and further specification of the cases in which an incident is considered to be significant with regard to DNS service providers, TLD name registries, cloud computing service providers, data centre service providers, content delivery network providers, managed service providers, managed security service providers, providers of online market places, of online search engines and of social networking services platforms, and trust service providers",
+  "Requirements": [
+    {
+      "Id": "1.1.1.a",
+      "Description": "set out the relevant entities approach to managing the security of their network and information systems;",
+      "Checks": [
+        "storage_ensure_private_endpoints_in_storage_accounts"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.1.c",
+      "Description": "set out network and information security objectives;",
+      "Checks": [
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "storage_ensure_private_endpoints_in_storage_accounts"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "As part of their policy on the security of network and information systems referred to in point 1.1., the relevant entities shall lay down responsibilities and authorities for network and information system security and assign them to roles, allocate them according to the relevant entities needs, and communicate them to the management bodies.",
+      "Checks": [
+        "aks_network_policy_enabled",
+        "network_http_internet_access_restricted",
+        "storage_default_network_access_rule_is_denied"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "Depending on the size of the relevant entities, network and information system security shall be covered by dedicated roles or duties carried out in addition to existing roles.",
+      "Checks": [
+        "sqlserver_azuread_administrator_enabled",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "sqlserver"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.f",
+      "Description": "evaluate the identified risks based on the risk criteria;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_rbac_key_expiration_set"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.g",
+      "Description": "identify and prioritise appropriate risk treatment options and measures;",
+      "Checks": [
+        "aisearch_service_not_publicly_accessible",
+        "aks_cluster_rbac_enabled",
+        "aks_clusters_created_with_private_nodes",
+        "aks_clusters_public_access_disabled",
+        "aks_network_policy_enabled",
+        "app_ensure_auth_is_set_up",
+        "app_ensure_http_is_redirected_to_https",
+        "app_function_access_keys_configured",
+        "app_function_application_insights_enabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_function_latest_runtime_version",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "app_http_logs_enabled",
+        "app_minimum_tls_version_12",
+        "app_register_with_identity",
+        "containerregistry_admin_user_disabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "cosmosdb_account_use_aad_and_rbac",
+        "cosmosdb_account_use_private_endpoints"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.h",
+      "Description": "continuously monitor the implementation of the risk treatment measures;",
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.i",
+      "Description": "identify who is responsible for implementing the risk treatment measures and when they should be implemented;",
+      "Checks": [
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_register_with_identity"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "The relevant entities shall regularly review the compliance with their policies on network and information system security, topic-specific policies, rules, and standards. The management bodies shall be informed of the status of network and information security on the basis of the compliance reviews by means of regular reporting.",
+      "Checks": [
+        "sqlserver_va_scan_reports_configured",
+        "defender_container_images_scan_enabled",
+        "sqlserver_va_periodic_recurring_scans_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.2 Compliance monitoring",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.2.3",
+      "Description": "The relevant entities shall perform the compliance monitoring at planned intervals and when significant incidents or significant changes to operations or risks occur.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.2 Compliance monitoring",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "The relevant entities shall review independently their approach to managing network and information system security and its implementation including people, processes and technologies.",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "aks_network_policy_enabled",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "storage_default_network_access_rule_is_denied"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.3 Independent review of information and network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "For the purpose of Article 21(2), point (b) of Directive (EU) 2022/2555, the relevant entities shall establish and implement an incident handling policy laying down the roles, responsibilities, and procedures for detecting, analysing, containing or responding to, recovering from, documenting and reporting of incidents in a timely manner.",
+      "Checks": [
+        "sqlserver_va_scan_reports_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "sqlserver"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.c",
+      "Description": "assignment of roles to detect and appropriately respond to incidents to competent employees;",
+      "Checks": [
+        "defender_ensure_notify_emails_to_owners",
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_alerts_severity_is_high"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "defender"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.d",
+      "Description": "documents to be used in the course of incident detection and response such as incident response manuals, escalation charts, contact lists and templates.",
+      "Checks": [
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "defender"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3",
+      "Description": "The roles, responsibilities and procedures laid down in the policy shall be tested and reviewed and, where appropriate, updated at planned intervals and after significant incidents or significant changes to operations or risks.",
+      "Checks": [
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "The relevant entities shall lay down procedures and use tools to monitor and log activities on their network and information systems to detect events that could be considered as incidents and respond accordingly to mitigate the impact.",
+      "Checks": [
+        "app_http_logs_enabled",
+        "keyvault_logging_enabled",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.2",
+      "Description": "To the extent feasible, monitoring shall be automated and carried out either continuously or in periodic intervals, subject to business capabilities. The relevant entities shall implement their monitoring activities in a way which minimises false positives and false negatives.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.a",
+      "Description": "relevant outbound and inbound network traffic;",
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.b",
+      "Description": "creation, modification or deletion of users of the relevant entities network and information systems and extension of the permissions;",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "monitor_diagnostic_settings_exists"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.c",
+      "Description": "access to systems and applications;",
+      "Checks": [
+        "app_http_logs_enabled",
+        "keyvault_logging_enabled",
+        "monitor_diagnostic_settings_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.d",
+      "Description": "authentication-related events;",
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "keyvault_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.e",
+      "Description": "all privileged access to systems and applications, and activities performed by administrative accounts;",
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.f",
+      "Description": "access or changes to critical configuration and backup files;",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.g",
+      "Description": "event logs and logs from security tools, such as antivirus, intrusion detection systems or firewalls;",
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.h",
+      "Description": "use of system resources, as well as their performance;",
+      "Checks": [
+        "appinsights_ensure_is_configured",
+        "monitor_diagnostic_settings_exists"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.4",
+      "Description": "The logs shall be regularly reviewed for any unusual or unwanted trends. Where appropriate, the relevant entities shall lay down appropriate values for alarm thresholds. If the laid down values for alarm threshold are exceeded, an alarm shall be triggered, where appropriate, automatically. The relevant entities shall ensure that, in case of an alarm, a qualified and appropriate response is initiated in a timely manner.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.5",
+      "Description": "The relevant entities shall maintain and back up logs for a predefined period and shall protect them from unauthorised access or changes.",
+      "Checks": [
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.4.1",
+      "Description": "The relevant entities shall assess suspicious events to determine whether they constitute incidents and, if so, determine their nature and severity.",
+      "Checks": [
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.4 Event assessment and classification",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.1",
+      "Description": "The relevant entities shall respond to incidents in accordance with documented procedures and in a timely manner.",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.3.a",
+      "Description": "with the Computer Security Incident Response Teams (CSIRTs) or, where applicable, the competent authorities, related to incident notification;",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.4",
+      "Description": "The relevant entities shall log incident response activities in accordance with the procedures referred to in point 3.2.1., and record evidence.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "3.6.2",
+      "Description": "The relevant entities shall ensure that post-incident reviews contribute to improving their approach to network and information security, to risk treatment measures, and to incident handling, detection and response procedures.",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied",
+        "defender_ensure_wdatp_is_enabled",
+        "sqlserver_microsoft_defender_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.6 Post-incident reviews",
+          "Service": "defender"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "For the purpose of Article 21(2), point (c) of Directive (EU) 2022/2555, the relevant entities shall lay down and maintain a business continuity and disaster recovery plan to apply in the case of incidents.",
+      "Checks": [
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.f",
+      "Description": "recovery plans for specific operations, including recovery objectives;",
+      "Checks": [
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.g",
+      "Description": "required resources, including backups and redundancies;",
+      "Checks": [
+        "keyvault_recoverable",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4",
+      "Description": "The business continuity plan and disaster recovery plan shall be tested, reviewed and, where appropriate, updated at planned intervals and following significant incidents or significant changes to operations or risks. The relevant entities shall ensure that the plans incorporate lessons learnt from such tests.",
+      "Checks": [
+        "keyvault_recoverable",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.b",
+      "Description": "assurance that backup copies are complete and accurate, including configuration data and data stored in cloud computing service environment;",
+      "Checks": [
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.e",
+      "Description": "restoring data from backup copies;",
+      "Checks": [
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.f",
+      "Description": "retention periods based on business and regulatory requirements.",
+      "Checks": [
+        "sqlserver_auditing_retention_90_days",
+        "storage_ensure_soft_delete_is_enabled",
+        "network_flow_log_more_than_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.2.a",
+      "Description": "roles and responsibilities for personnel and, where appropriate, suppliers and service providers, specifying the allocation of roles in crisis situations, including specific steps to follow;",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.3 Crisis management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.2.c",
+      "Description": "application of appropriate measures to ensure the maintenance of network and information system security in crisis situations.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.3 Crisis management",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.2.a",
+      "Description": "the cybersecurity practices of the suppliers and service providers, including their secure development procedures;",
+      "Checks": [
+        "aks_network_policy_enabled",
+        "app_client_certificates_on",
+        "app_ensure_auth_is_set_up",
+        "app_ensure_http_is_redirected_to_https",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_using_http20",
+        "app_ftp_deployment_disabled",
+        "app_function_access_keys_configured",
+        "app_function_application_insights_enabled",
+        "app_function_ftps_deployment_disabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_function_latest_runtime_version",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "app_http_logs_enabled",
+        "app_minimum_tls_version_12",
+        "app_register_with_identity",
+        "appinsights_ensure_is_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.4.f",
+      "Description": "an obligation on suppliers and service providers to handle vulnerabilities that present a risk to the security of the network and information systems of the relevant entities;",
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "sqlserver_vulnerability_assessment_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.7.b",
+      "Description": "review incidents related to ICT products and ICT services from suppliers and service providers;",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.1.2.b",
+      "Description": "requirements regarding security updates throughout the entire lifetime of the ICT services or ICT products, or replacement after the end of the support period;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_non_rbac_secret_expiration_set",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "network_flow_log_more_than_90_days",
+        "sqlserver_auditing_retention_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.1 Security in acquisition of ICT services or ICT products",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.1",
+      "Description": "Before developing a network and information system, including software, the relevant entities shall lay down rules for the secure development of network and information systems and apply them when developing network and information systems in-house, or when outsourcing the development of network and information systems. The rules shall cover all development phases, including specification, design, development, implementation and testing.",
+      "Checks": [
+        "defender_ensure_system_updates_are_applied",
+        "app_client_certificates_on",
+        "app_ensure_auth_is_set_up",
+        "app_ensure_http_is_redirected_to_https",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_using_http20",
+        "app_ftp_deployment_disabled",
+        "app_function_access_keys_configured",
+        "app_function_application_insights_enabled",
+        "app_function_ftps_deployment_disabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_function_latest_runtime_version",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "app_http_logs_enabled",
+        "app_minimum_tls_version_12",
+        "app_register_with_identity"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.b",
+      "Description": "apply principles for engineering secure systems and secure coding principles to any information system development activities such as promoting cybersecurity-by-design, zero-trust architectures;",
+      "Checks": [
+        "app_client_certificates_on",
+        "app_ensure_auth_is_set_up",
+        "app_ensure_http_is_redirected_to_https",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_using_http20",
+        "app_ftp_deployment_disabled",
+        "app_function_access_keys_configured",
+        "app_function_application_insights_enabled",
+        "app_function_ftps_deployment_disabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_function_latest_runtime_version",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "app_http_logs_enabled",
+        "app_minimum_tls_version_12",
+        "app_register_with_identity"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.c",
+      "Description": "lay down security requirements regarding development environments;",
+      "Checks": [
+        "app_client_certificates_on",
+        "app_ensure_auth_is_set_up",
+        "app_ensure_http_is_redirected_to_https",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_using_http20",
+        "app_ftp_deployment_disabled",
+        "app_function_access_keys_configured",
+        "app_function_application_insights_enabled",
+        "app_function_ftps_deployment_disabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_function_latest_runtime_version",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "app_http_logs_enabled",
+        "app_minimum_tls_version_12",
+        "app_register_with_identity"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "6.4.1",
+      "Description": "The relevant entities shall apply change management procedures to control changes of network and information systems. Where applicable, the procedures shall be consistent with the relevant entities general policies concerning change management.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.4 Change management, repairs and maintenance",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "6.6.1.a",
+      "Description": "security patches are applied within a reasonable time after they become available;",
+      "Checks": [
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "sqlserver_vulnerability_assessment_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.6 Security patch management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.b",
+      "Description": "determine and apply controls to protect the relevant entities internal network domains from unauthorised access;",
+      "Checks": [
+        "aisearch_service_not_publicly_accessible",
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "storage_default_network_access_rule_is_denied"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.e",
+      "Description": "not use systems used for administration of the security policy implementation for other purposes;",
+      "Checks": [
+        "app_function_identity_without_admin_privileges",
+        "containerregistry_admin_user_disabled",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "sqlserver_azuread_administrator_enabled",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.g",
+      "Description": "where appropriate, exclusively allow access to the relevant entities network and information systems by devices authorised by those entities;",
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "app_function_ftps_deployment_disabled",
+        "app_ensure_auth_is_set_up",
+        "app_function_identity_is_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.i",
+      "Description": "establish communication between distinct systems only through trusted channels that are isolated using logical, cryptographic or physical separation from other communication channels and provide assured identification of their end points and protection of the channel data from modification or disclosure;",
+      "Checks": [
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_secure_transfer_required_is_enabled",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12",
+        "app_ensure_http_is_redirected_to_https",
+        "defender_ensure_defender_for_dns_is_on",
+        "sqlserver_tde_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.l",
+      "Description": "apply best practices for the security of the DNS, and for Internet routing security and routing hygiene of traffic originating from and destined to the network.",
+      "Checks": [
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_secure_transfer_required_is_enabled",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12",
+        "app_ensure_http_is_redirected_to_https",
+        "defender_ensure_defender_for_dns_is_on",
+        "sqlserver_tde_encryption_enabled",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.8.2.a",
+      "Description": "consider the functional, logical and physical relationship, including location, between trustworthy systems and services;",
+      "Checks": [
+        "entra_trusted_named_locations_exists",
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.8 Network segmentation",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.9.2",
+      "Description": "For that purpose, the relevant entities shall in particular implement measures that detect or prevent the use of malicious or unauthorised software. The relevant entities shall, where appropriate, ensure that their network and information systems are equipped with detection and response software, which is updated regularly in accordance with the risk assessment carried out pursuant to point 2.1 and the contractual agreements with the providers.",
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied",
+        "defender_ensure_wdatp_is_enabled",
+        "sqlserver_microsoft_defender_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.9 Protection against malicious and unauthorised software",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.b",
+      "Description": "the methods for monitoring, measurement, analysis and evaluation, as applicable, to ensure valid results;",
+      "Checks": [
+        "defender_ensure_notify_alerts_severity_is_high",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.a",
+      "Description": "in accordance with the relevant entities classification of assets, the type, strength and quality of the cryptographic measures required to protect the relevant entities assets, including data at rest and data in transit;",
+      "Checks": [
+        "app_minimum_tls_version_12",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_secure_transfer_required_is_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c",
+      "Description": "the relevant entities approach to key management, including, where appropriate, methods for the following:",
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.i",
+      "Description": "generating different keys for cryptographic systems and applications;",
+      "Checks": [
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.ii",
+      "Description": "issuing and obtaining public key certificates;",
+      "Checks": [
+        "app_client_certificates_on"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.iii",
+      "Description": "distributing keys to intended entities, including how to activate keys when received;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_rbac_key_expiration_set",
+        "storage_key_rotation_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.iv",
+      "Description": "storing keys, including how authorised users obtain access to keys;",
+      "Checks": [
+        "app_function_access_keys_configured",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable",
+        "sqlserver_tde_encrypted_with_cmk",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_key_rotation_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.v",
+      "Description": "changing or updating keys, including rules on when and how to change keys;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vi",
+      "Description": "backing up or archiving keys;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_recoverable",
+        "keyvault_rbac_key_expiration_set"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vii",
+      "Description": "logging and auditing of key management-related activities;",
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "keyvault_logging_enabled",
+        "sqlserver_auditing_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.xii",
+      "Description": "setting activation and deactivation dates for keys ensuring that the keys can only be used for the specified period of time according to the organization's rules on key management.",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_non_rbac_secret_expiration_set"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.1",
+      "Description": "For the purpose of Article 21(2), point (i) of Directive (EU) 2022/2555, the relevant entities shall establish, document and implement logical and physical access control policies for the access to their network and information systems, based on business requirements as well as network and information system security requirements.",
+      "Checks": [
+        "app_ensure_auth_is_set_up",
+        "app_function_ftps_deployment_disabled",
+        "aisearch_service_not_publicly_accessible",
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "storage_default_network_access_rule_is_denied"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.2.c",
+      "Description": "ensure that access is only granted to users that have been adequately authenticated.",
+      "Checks": [
+        "app_ensure_auth_is_set_up",
+        "app_function_ftps_deployment_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.1",
+      "Description": "The relevant entities shall provide, modify, remove and document access rights to network and information systems in accordance with the access control policy referred to in point 11.1.",
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_is_private",
+        "storage_default_network_access_rule_is_denied"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.a",
+      "Description": "assign and revoke access rights based on the principles of need-to-know, least privilege and separation of duties;",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.d",
+      "Description": "ensure that access rights appropriately address third-party access, such as visitors, suppliers and service providers, in particular by limiting access rights in scope and in duration;",
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_is_private",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "aks_clusters_created_with_private_nodes",
+        "containerregistry_uses_private_link",
+        "cosmosdb_account_use_private_endpoints",
+        "keyvault_private_endpoints",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "storage_ensure_private_endpoints_in_storage_accounts"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.f",
+      "Description": "apply logging to the management of access rights.",
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.1",
+      "Description": "The relevant entities shall maintain policies for management of privileged accounts and system administration accounts as part of the access control policy referred to in point 11.1.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.a",
+      "Description": "establish strong identification, authentication such as multi-factor authentication, and authorisation procedures for privileged accounts and system administration accounts;",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.b",
+      "Description": "set up specific accounts to be used for system administration operations exclusively, such as installation, configuration, management or maintenance;",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.c",
+      "Description": "individualise and restrict system administration privileges to the highest extent possible,",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.d",
+      "Description": "provide that system administration accounts are only used to connect to system administration systems.",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.b",
+      "Description": "separate logically such systems from application software not used for system administrative purposes,",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.c",
+      "Description": "protect access to system administration systems through authentication and encryption.",
+      "Checks": [
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_privileged_user_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.2.a",
+      "Description": "set up unique identities for network and information systems and their users;",
+      "Checks": [
+        "app_function_identity_is_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "app"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.2.d",
+      "Description": "apply logging to the management of identities.",
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "monitor"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.1",
+      "Description": "The relevant entities shall implement secure authentication procedures and technologies based on access restrictions and the policy on access control.",
+      "Checks": [
+        "app_ensure_auth_is_set_up",
+        "app_function_ftps_deployment_disabled",
+        "aisearch_service_not_publicly_accessible",
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.a",
+      "Description": "ensure the strength of authentication is appropriate to the classification of the asset to be accessed;",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "entra"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.c",
+      "Description": "require the change of authentication credentials initially, at predefined intervals and upon suspicion that the credentials were compromised;",
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.7.2",
+      "Description": "The relevant entities shall ensure that the strength of authentication is appropriate for the classification of the asset to be accessed.",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.7 Multi-factor authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.1.2.c",
+      "Description": "align the availability requirements of the assets with the delivery and recovery objectives set out in their business continuity and disaster recovery plans.",
+      "Checks": [
+        "keyvault_recoverable"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.1 Asset classification",
+          "Service": "keyvault"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.a",
+      "Description": "cover the entire life cycle of the assets, including acquisition, use, storage, transportation and disposal;",
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_ensure_soft_delete_is_enabled",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_key_rotation_90_days",
+        "storage_secure_transfer_required_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.b",
+      "Description": "provide rules on the safe use, safe storage, safe transport, and the irretrievable deletion and destruction of the assets;",
+      "Checks": [
+        "storage_ensure_soft_delete_is_enabled",
+        "keyvault_recoverable",
+        "storage_secure_transfer_required_is_enabled",
+        "app_minimum_tls_version_12",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.c",
+      "Description": "provide that the transfer shall take place in a secure manner, in accordance with the type of asset to be transferred.",
+      "Checks": [
+        "storage_secure_transfer_required_is_enabled",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    }
+  ]
+}
