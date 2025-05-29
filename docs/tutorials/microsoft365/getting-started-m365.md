@@ -176,20 +176,6 @@ Follow these steps to assign the role:
 
     ![App Overview](./img/app-overview.png)
 
-???+ warning
-    For Prowler Cloud encrypted password is still needed (when we update Prowler Cloud and regular password is accepted this warning will be deleted), so the password that you paste in the next step should be generated following this steps:
-
-    - UNIX: Open a PowerShell cmd with a [supported version](../../getting-started/requirements.md#supported-powershell-versions) and then run the following command:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-    - Windows: Install WSL using `wsl --install -d Ubuntu-22.04`, then open the Ubuntu terminal, install powershell and run the same command above.
-
 
 2. Go to Prowler Cloud/App and paste:
 
