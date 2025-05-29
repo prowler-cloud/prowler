@@ -1,7 +1,7 @@
 import socket
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from kubernetes import client
 from prowler.lib.logger import logger

@@ -3,7 +3,7 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic.v1 import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import (
