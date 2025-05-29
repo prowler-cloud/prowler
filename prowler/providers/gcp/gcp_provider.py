@@ -515,9 +515,9 @@ class GcpProvider(Provider):
                     credentials=session,
                 )
 
-            # Test the connection using the Service Usage API since it is enabled by default
-            client = discovery.build("serviceusage", "v1", credentials=session)
-            request = client.services().list(parent=f"projects/{project_id}")
+            # Test the connection using OAuth2 API to verify token validity
+            client = discovery.build("oauth2", "v2", credentials=session)
+            request = client.tokeninfo()
             request.execute()
             return Connection(is_connected=True)
 

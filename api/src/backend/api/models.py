@@ -242,7 +242,7 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
+            r"^[a-zA-Z0-9][a-zA-Z0-9._@:\/-]{1,250}$",
             value,
         ):
             raise ModelValidationError(
@@ -850,6 +850,7 @@ class ProviderSecret(RowLevelSecurityProtectedModel):
     class TypeChoices(models.TextChoices):
         STATIC = "static", _("Key-value pairs")
         ROLE = "role", _("Role assumption")
+        SERVICE_ACCOUNT = "service_account", _("GCP Service Account Key")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

@@ -5376,7 +5376,8 @@ paths:
         '403':
           description: There is a problem with credentials
         '404':
-          description: The scan has no reports
+          description: The scan has no reports, or the report generation task has
+            not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -9136,10 +9137,12 @@ components:
                   enum:
                   - static
                   - role
+                  - service_account
                   type: string
                   description: |-
                     * `static` - Key-value pairs
                     * `role` - Role assumption
+                    * `service_account` - GCP Service Account Key
                   readOnly: true
                 secret:
                   oneOf:
@@ -9242,7 +9245,7 @@ components:
                         description: User microsoft email address.
                       password:
                         type: string
-                        description: User encrypted password.
+                        description: User password.
                     required:
                     - client_id
                     - client_secret
@@ -9268,6 +9271,14 @@ components:
                     - client_id
                     - client_secret
                     - refresh_token
+                  - type: object
+                    title: GCP Service Account Key
+                    properties:
+                      service_account_key:
+                        type: object
+                        description: The service account key for GCP.
+                    required:
+                    - service_account_key
                   - type: object
                     title: Kubernetes Static Credentials
                     properties:
@@ -10316,10 +10327,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
+                * `service_account` - GCP Service Account Key
           required:
           - secret_type
         relationships:
@@ -10383,10 +10396,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
+                * `service_account` - GCP Service Account Key
             secret:
               oneOf:
               - type: object
@@ -10487,7 +10502,7 @@ components:
                     description: User microsoft email address.
                   password:
                     type: string
-                    description: User encrypted password.
+                    description: User password.
                 required:
                 - client_id
                 - client_secret
@@ -10513,6 +10528,14 @@ components:
                 - client_id
                 - client_secret
                 - refresh_token
+              - type: object
+                title: GCP Service Account Key
+                properties:
+                  service_account_key:
+                    type: object
+                    description: The service account key for GCP.
+                required:
+                - service_account_key
               - type: object
                 title: Kubernetes Static Credentials
                 properties:
@@ -10591,10 +10614,12 @@ components:
                   enum:
                   - static
                   - role
+                  - service_account
                   type: string
                   description: |-
                     * `static` - Key-value pairs
                     * `role` - Role assumption
+                    * `service_account` - GCP Service Account Key
                 secret:
                   oneOf:
                   - type: object
@@ -10696,7 +10721,7 @@ components:
                         description: User microsoft email address.
                       password:
                         type: string
-                        description: User encrypted password.
+                        description: User password.
                     required:
                     - client_id
                     - client_secret
@@ -10722,6 +10747,14 @@ components:
                     - client_id
                     - client_secret
                     - refresh_token
+                  - type: object
+                    title: GCP Service Account Key
+                    properties:
+                      service_account_key:
+                        type: object
+                        description: The service account key for GCP.
+                    required:
+                    - service_account_key
                   - type: object
                     title: Kubernetes Static Credentials
                     properties:
@@ -10816,10 +10849,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
+                * `service_account` - GCP Service Account Key
               readOnly: true
             secret:
               oneOf:
@@ -10921,7 +10956,7 @@ components:
                     description: User microsoft email address.
                   password:
                     type: string
-                    description: User encrypted password.
+                    description: User password.
                 required:
                 - client_id
                 - client_secret
@@ -10947,6 +10982,14 @@ components:
                 - client_id
                 - client_secret
                 - refresh_token
+              - type: object
+                title: GCP Service Account Key
+                properties:
+                  service_account_key:
+                    type: object
+                    description: The service account key for GCP.
+                required:
+                - service_account_key
               - type: object
                 title: Kubernetes Static Credentials
                 properties:

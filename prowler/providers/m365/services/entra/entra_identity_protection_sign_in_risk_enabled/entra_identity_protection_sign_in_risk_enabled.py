@@ -9,13 +9,13 @@ from prowler.providers.m365.services.entra.entra_service import (
 
 
 class entra_identity_protection_sign_in_risk_enabled(Check):
-    """Check if at least one Conditional Access policy is a Identity Protection sign-in risk policy.
+    """Check if at least one Conditional Access policy is an Identity Protection sign-in risk policy.
 
-    This check ensures that at least one Conditional Access policy is a Identity Protection sign-in risk policy.
+    This check ensures that at least one Conditional Access policy is an Identity Protection sign-in risk policy.
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """Execute the check to ensure that at least one Conditional Access policy is a Identity Protection sign-in risk policy.
+        """Execute the check to ensure that at least one Conditional Access policy is an Identity Protection sign-in risk policy.
 
         Returns:
             list[CheckReportM365]: A list containing the results of the check.

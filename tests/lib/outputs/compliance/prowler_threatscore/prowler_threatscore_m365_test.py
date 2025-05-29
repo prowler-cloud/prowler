@@ -10,10 +10,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.models import (
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
     ProwlerThreatScoreM365,
 )
-from tests.lib.outputs.compliance.fixtures import (
-    PROWLER_THREATSCORE_M365,
-    PROWLER_THREATSCORE_M365_NAME,
-)
+from tests.lib.outputs.compliance.fixtures import PROWLER_THREATSCORE_M365
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.m365.m365_fixtures import TENANT_ID
 
@@ -30,9 +27,7 @@ class TestProwlerThreatScoreM365:
             )
         ]
 
-        output = ProwlerThreatScoreM365(
-            findings, PROWLER_THREATSCORE_M365, PROWLER_THREATSCORE_M365_NAME
-        )
+        output = ProwlerThreatScoreM365(findings, PROWLER_THREATSCORE_M365)
         output_data = output.data[0]
         assert isinstance(output_data, ProwlerThreatScoreM365Model)
         assert output_data.Provider == "m365"
@@ -142,9 +137,7 @@ class TestProwlerThreatScoreM365:
         findings = [
             generate_finding_output(compliance={"ProwlerThreatScore-1.0": "1.1.1"})
         ]
-        output = ProwlerThreatScoreM365(
-            findings, PROWLER_THREATSCORE_M365, PROWLER_THREATSCORE_M365_NAME
-        )
+        output = ProwlerThreatScoreM365(findings, PROWLER_THREATSCORE_M365)
         output._file_descriptor = mock_file
 
         with patch.object(mock_file, "close", return_value=None):
