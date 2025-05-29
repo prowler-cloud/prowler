@@ -149,6 +149,8 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
+        # If the provider is not connected, raise an exception outside the transaction.
+        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked as not connected.
         if exc:
             raise exc
 
