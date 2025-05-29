@@ -1,5 +1,6 @@
 import json
 import uuid
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -191,8 +192,6 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
-        mock_rls_transaction.return_value.__enter__ = lambda self: None
-        mock_rls_transaction.return_value.__exit__ = lambda self, *args: None
 
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
@@ -209,9 +208,9 @@ class TestPerformScan:
         scan.refresh_from_db()
         assert scan.state == StateChoices.FAILED
 
-        provider_from_db = Provider.objects.get(id=provider.id)
-        assert provider_from_db.connected is False
-        assert provider_from_db.connection_last_checked_at is not None
+        provider.refresh_from_db()
+        assert provider.connected is False
+        assert isinstance(provider.connection_last_checked_at, datetime)
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
