@@ -35,11 +35,12 @@ export const CredentialsUpdateInfo = ({
         <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
         <p>
           If the provider was configured with static credentials, updates must
-          also use static credentials. If it was configured with a role (or
-          service account), updates must use the same type.
+          also use static credentials. If it was configured with a role in AWS
+          (or service account in GCP),{" "}
+          <strong>updates must use the same type.</strong>
         </p>
       </div>
-      <p className="text-sm text-default-700">
+      <p className="text-sm font-bold text-default-700">
         To switch from one type to another, the provider must be deleted and set
         up again.
       </p>
