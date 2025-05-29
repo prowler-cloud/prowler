@@ -1,8 +1,20 @@
 import { Select, SelectItem } from "@nextui-org/react";
 
-import { SelectScanComplianceDataProps } from "@/types";
+import { ProviderType, ScanProps } from "@/types";
 
-import { ComplianceScanInfo } from "../compliance-scan-info";
+import { ComplianceScanInfo } from "./compliance-scan-info";
+
+export interface SelectScanComplianceDataProps {
+  scans: (ScanProps & {
+    providerInfo: {
+      provider: ProviderType;
+      uid: string;
+      alias: string;
+    };
+  })[];
+  selectedScanId: string;
+  onSelectionChange: (selectedKey: string) => void;
+}
 
 export const SelectScanComplianceData = ({
   scans,

@@ -10,10 +10,10 @@ import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
 } from "@/components/compliance";
-import { ComplianceHeader } from "@/components/compliance/compliance-header";
+import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
 import { ScanProps, SearchParamsProps } from "@/types";
-import { ComplianceOverviewData } from "@/types/compliance/compliance";
+import { ComplianceOverviewData } from "@/types/compliance";
 
 export default async function Compliance({
   searchParams,

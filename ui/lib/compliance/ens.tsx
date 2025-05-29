@@ -1,6 +1,6 @@
-import { ClientAccordionContent } from "@/components/compliance/client-accordion-content";
-import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion-requeriment-title";
-import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion-title";
+import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
+import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
+import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
@@ -11,7 +11,7 @@ import {
   RequirementItemData,
   RequirementsData,
   RequirementStatus,
-} from "@/types/compliance/compliance";
+} from "@/types/compliance";
 
 export const translateType = (type: string) => {
   switch (type.toLowerCase()) {

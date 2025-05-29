@@ -11,7 +11,7 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { Requirement } from "@/types/compliance/compliance";
+import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
 interface ClientAccordionContentProps {

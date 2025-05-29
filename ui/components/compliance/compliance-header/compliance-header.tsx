@@ -4,9 +4,9 @@ import { Spacer } from "@nextui-org/react";
 
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
-import { SelectScanComplianceDataProps } from "@/types";
 
 import { DataCompliance } from "./data-compliance";
+import { SelectScanComplianceDataProps } from "./select-scan-compliance-data";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];

@@ -9,8 +9,8 @@ import {
 } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { ClientAccordionWrapper } from "@/components/compliance/client-accordion-wrapper";
-import { ComplianceHeader } from "@/components/compliance/compliance-header";
+import { ClientAccordionWrapper } from "@/components/compliance/compliance-accordion/client-accordion-wrapper";
+import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { SkeletonAccordion } from "@/components/compliance/compliance-skeleton-accordion";
 import { FailedSectionsChart } from "@/components/compliance/failed-sections-chart";
 import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sections-chart-skeleton";
@@ -23,7 +23,7 @@ import {
   FailedSection,
   MappedComplianceData,
   RequirementsTotals,
-} from "@/types/compliance/compliance";
+} from "@/types/compliance";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
