@@ -4,7 +4,7 @@ import { Skeleton } from "@nextui-org/react";
 
 export const FailedSectionsChartSkeleton = () => {
   return (
-    <div className="flex w-[600px] flex-col items-center justify-between">
+    <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
       {/* Title skeleton */}
       <Skeleton className="h-4 w-40 rounded-lg">
         <div className="h-4 bg-default-200" />

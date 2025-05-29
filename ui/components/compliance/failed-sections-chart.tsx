@@ -62,7 +62,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   // Check if there are no failed sections
   if (!sections || sections.length === 0) {
     return (
-      <div className="flex w-[400px] flex-col items-center justify-between">
+      <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
         {title}
         <div className="flex h-[320px] w-full items-center justify-center">
           <p className="text-sm text-gray-500">There are no failed sections</p>
@@ -72,7 +72,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   }
 
   return (
-    <div className="flex w-[600px] flex-col items-center justify-between">
+    <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
       {title}
 
       <div className="h-[320px] w-full">

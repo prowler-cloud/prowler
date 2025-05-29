@@ -46,6 +46,23 @@ const Logo = ({ logoPath }: { logoPath: string }) => {
   );
 };
 
+const ChartsWrapper = ({
+  children,
+  logoPath,
+}: {
+  children: React.ReactNode;
+  logoPath: string;
+}) => {
+  return (
+    <div className="mb-8 flex w-full">
+      <div className="flex flex-col items-center gap-16 lg:flex-row">
+        {children}
+      </div>
+      {logoPath && <Logo logoPath={logoPath} />}
+    </div>
+  );
+};
+
 export default async function ComplianceDetail({
   params,
   searchParams,
@@ -124,13 +141,10 @@ export default async function ComplianceDetail({
         key={searchParamsKey}
         fallback={
           <div className="space-y-8">
-            <div className="mb-8 flex w-full">
-              <div className="flex gap-16">
-                <RequirementsChartSkeleton />
-                <FailedSectionsChartSkeleton />
-              </div>
-              {logoPath && <Logo logoPath={logoPath} />}
-            </div>
+            <ChartsWrapper logoPath={logoPath}>
+              <RequirementsChartSkeleton />
+              <FailedSectionsChartSkeleton />
+            </ChartsWrapper>
             <SkeletonAccordion />
           </div>
         }
@@ -212,13 +226,10 @@ const SSRComplianceContent = async ({
   if (!scanId) {
     return (
       <div className="space-y-8">
-        <div className="mb-8 flex w-full">
-          <div className="flex gap-4">
-            <RequirementsChart pass={0} fail={0} manual={0} />
-            <FailedSectionsChart sections={[]} />
-          </div>
-          {logoPath && <Logo logoPath={logoPath} />}
-        </div>
+        <ChartsWrapper logoPath={logoPath}>
+          <RequirementsChart pass={0} fail={0} manual={0} />
+          <FailedSectionsChart sections={[]} />
+        </ChartsWrapper>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
@@ -239,20 +250,15 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="space-y-8">
-      <div className="mb-8 flex w-full">
-        <div className="flex gap-16">
-          <div className="">
-            <RequirementsChart
-              pass={totalRequirements.pass}
-              fail={totalRequirements.fail}
-              manual={totalRequirements.manual}
-            />
-          </div>
-          <FailedSectionsChart sections={topFailedSections} />
-        </div>
+      <ChartsWrapper logoPath={logoPath}>
+        <RequirementsChart
+          pass={totalRequirements.pass}
+          fail={totalRequirements.fail}
+          manual={totalRequirements.manual}
+        />
+        <FailedSectionsChart sections={topFailedSections} />
+      </ChartsWrapper>
 
-        {logoPath && <Logo logoPath={logoPath} />}
-      </div>
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper
         items={accordionItems}
