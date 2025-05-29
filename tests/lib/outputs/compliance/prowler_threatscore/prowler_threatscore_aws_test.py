@@ -10,10 +10,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.models import (
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
-from tests.lib.outputs.compliance.fixtures import (
-    PROWLER_THREATSCORE_AWS,
-    PROWLER_THREATSCORE_AWS_NAME,
-)
+from tests.lib.outputs.compliance.fixtures import PROWLER_THREATSCORE_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
@@ -24,9 +21,7 @@ class TestProwlerThreatScoreAWS:
             generate_finding_output(compliance={"ProwlerThreatScore-1.0": "1.1.1"})
         ]
 
-        output = ProwlerThreatScoreAWS(
-            findings, PROWLER_THREATSCORE_AWS, PROWLER_THREATSCORE_AWS_NAME
-        )
+        output = ProwlerThreatScoreAWS(findings, PROWLER_THREATSCORE_AWS)
         output_data = output.data[0]
         assert isinstance(output_data, ProwlerThreatScoreAWSModel)
         assert output_data.Provider == "aws"
@@ -134,9 +129,7 @@ class TestProwlerThreatScoreAWS:
         findings = [
             generate_finding_output(compliance={"ProwlerThreatScore-1.0": "1.1.1"})
         ]
-        output = ProwlerThreatScoreAWS(
-            findings, PROWLER_THREATSCORE_AWS, PROWLER_THREATSCORE_AWS_NAME
-        )
+        output = ProwlerThreatScoreAWS(findings, PROWLER_THREATSCORE_AWS)
         output._file_descriptor = mock_file
 
         with patch.object(mock_file, "close", return_value=None):
