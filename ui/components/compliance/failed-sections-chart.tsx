@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { translateType } from "@/lib/ens-compliance";
+import { translateType } from "@/lib/compliance/ens";
 
 type FailedSectionItem = {
   name: string;

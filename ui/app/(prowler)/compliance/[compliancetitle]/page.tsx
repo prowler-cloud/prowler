@@ -17,7 +17,7 @@ import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sect
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
 import { ContentLayout } from "@/components/ui";
-import { mapComplianceData, toAccordionItems } from "@/lib/ens-compliance";
+import { mapComplianceData, toAccordionItems } from "@/lib/compliance/ens";
 import { ScanProps } from "@/types";
 import {
   FailedSection,

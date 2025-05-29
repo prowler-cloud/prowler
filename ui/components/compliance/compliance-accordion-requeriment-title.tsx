@@ -1,5 +1,5 @@
 import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
-import { translateType } from "@/lib/ens-compliance";
+import { translateType } from "@/lib/compliance/ens";
 
 interface ComplianceAccordionRequirementTitleProps {
   type: string;
