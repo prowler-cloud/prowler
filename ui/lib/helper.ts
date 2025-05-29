@@ -303,3 +303,5 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
+
+export type ProviderType = "aws" | "gcp" | "azure" | "kubernetes" | "m365";

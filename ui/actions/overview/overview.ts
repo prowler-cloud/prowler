@@ -128,3 +128,48 @@ export const getFindingsBySeverity = async ({
     return undefined;
   }
 };
+
+export const getFindingsByService = async ({
+  page = 1,
+  query = "",
+  sort = "",
+  filters = {},
+}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  if (isNaN(Number(page)) || page < 1) redirect("/");
+
+  const url = new URL(`${apiBaseUrl}/overviews/services`);
+
+  if (page) url.searchParams.append("page[number]", page.toString());
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  // Handle multiple filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch findings by service: ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+    revalidatePath("/");
+    return parsedData;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching findings by service overview:", error);
+    return undefined;
+  }
+};

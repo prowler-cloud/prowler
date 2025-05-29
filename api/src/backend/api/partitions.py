@@ -4,11 +4,11 @@ from typing import Generator, Optional
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from psqlextra.partitioning import (
+    PostgresPartitioningError,
     PostgresPartitioningManager,
     PostgresRangePartition,
     PostgresRangePartitioningStrategy,
     PostgresTimePartitionSize,
-    PostgresPartitioningError,
 )
 from psqlextra.partitioning.config import PostgresPartitioningConfig
 from uuid6 import UUID

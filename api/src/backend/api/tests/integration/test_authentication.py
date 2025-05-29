@@ -296,5 +296,5 @@ class TestTokenSwitchTenant:
         assert invalid_tenant_response.status_code == 400
         assert invalid_tenant_response.json()["errors"][0]["code"] == "invalid"
         assert invalid_tenant_response.json()["errors"][0]["detail"] == (
-            "Tenant does not exist or user is not a " "member."
+            "Tenant does not exist or user is not a member."
         )
