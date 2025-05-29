@@ -54,7 +54,7 @@ export const ClientAccordionContent = ({
             filters: {
               "filter[check_id__in]": checkIds.join(","),
               "filter[scan]": scanId,
-              "filter[region__in]": region,
+              ...(region && { "filter[region__in]": region }),
             },
             page: parseInt(pageNumber, 10),
             sort: encodedSort,
