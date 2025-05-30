@@ -8,6 +8,7 @@ import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateCredentialsProvider } from "@/actions/providers/providers";
+import { ProviderTitleDocs } from "@/components/providers/workflow";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -18,7 +19,6 @@ import {
   ProviderType,
 } from "@/types";
 
-import { ProviderTitleDocs } from "../provider-title-docs";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type";
 
 export const UpdateViaServiceAccountForm = ({

@@ -10,7 +10,7 @@ import {
   parseStringify,
   wait,
 } from "@/lib";
-import { ProvidersApiResponse } from "@/types/providers";
+import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
   page = 1,
@@ -110,7 +110,7 @@ export const updateProvider = async (formData: FormData) => {
 export const addProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
-  const providerType = formData.get("providerType") as string;
+  const providerType = formData.get("providerType") as ProviderType;
   const providerUid = formData.get("providerUid") as string;
   const providerAlias = formData.get("providerAlias") as string;
 
@@ -152,7 +152,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
 
   const secretName = formData.get("secretName");
   const providerId = formData.get("providerId");
-  const providerType = formData.get("providerType");
+  const providerType = formData.get("providerType") as ProviderType;
 
   const isRole = formData.get("role_arn") !== null;
   const isServiceAccount = formData.get("service_account_key") !== null;
@@ -275,7 +275,7 @@ export const updateCredentialsProvider = async (
   const url = new URL(`${apiBaseUrl}/providers/secrets/${credentialsId}`);
 
   const secretName = formData.get("secretName");
-  const providerType = formData.get("providerType");
+  const providerType = formData.get("providerType") as ProviderType;
 
   const isRole = formData.get("role_arn") !== null;
   const isServiceAccount = formData.get("service_account_key") !== null;

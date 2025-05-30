@@ -8,6 +8,7 @@ import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { addCredentialsProvider } from "@/actions/providers/providers";
+import { ProviderTitleDocs } from "@/components/providers/workflow";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -18,13 +19,12 @@ import {
   ProviderType,
 } from "@/types";
 
-import { ProviderTitleDocs } from "../../..";
 import { GCPServiceAccountKeyForm } from "./credentials-type/gcp-service-account-key-form";
 
 export const ViaServiceAccountForm = ({
   searchParams,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: ProviderType; id: string };
 }) => {
   const router = useRouter();
   const { toast } = useToast();

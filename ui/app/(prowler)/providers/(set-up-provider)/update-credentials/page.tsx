@@ -6,9 +6,15 @@ import {
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { UpdateViaServiceAccountForm } from "@/components/providers/workflow/forms/update-via-service-account-key-form";
+import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: { type: string; id: string; via?: string; secretId?: string };
+  searchParams: {
+    type: ProviderType;
+    id: string;
+    via?: string;
+    secretId?: string;
+  };
 }
 
 export default function UpdateCredentialsPage({ searchParams }: Props) {

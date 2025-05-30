@@ -1,10 +1,9 @@
 import { Divider, Select, SelectItem, Spacer } from "@nextui-org/react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
+import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
 import { AWSCredentialsRole } from "@/types";
-
-import { CredentialsRoleHelper } from "../../../../credentials-role-helper";
 
 export const AWSRoleCredentialsForm = ({
   control,

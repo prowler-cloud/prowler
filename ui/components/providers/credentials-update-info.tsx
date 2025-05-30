@@ -3,9 +3,10 @@
 import { InfoIcon } from "@/components/icons";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { ProviderType } from "@/types/providers";
 
 interface UpdateCredentialsInfoProps {
-  providerType: string;
+  providerType: ProviderType;
   initialVia?: string;
 }
 

@@ -9,9 +9,10 @@ import {
   SelectViaGCP,
   ViaServiceAccountForm,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: { type: string; id: string; via?: string };
+  searchParams: { type: ProviderType; id: string; via?: string };
 }
 
 export default function AddCredentialsPage({ searchParams }: Props) {
