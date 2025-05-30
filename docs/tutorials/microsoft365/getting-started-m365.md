@@ -96,7 +96,7 @@ With this done you will have all the needed keys, summarized in the following ta
 
 Assign the following Microsoft Graph permissions:
 
-- `Directory.Read.All`: Required for all services.
+- `Domain.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 - `AuditLog.Read.All`: Required for Entra service.
@@ -114,7 +114,7 @@ Follow these steps to assign the permissions:
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
 
-    - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
     - `AuditLog.Read.All`: Required for Entra service.
