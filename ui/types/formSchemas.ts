@@ -184,14 +184,18 @@ export const addCredentialsServiceAccountFormSchema = (providerType: string) =>
         service_account_key: z.string().refine(
           (val) => {
             try {
-              JSON.parse(val);
-              return true;
+              const parsed = JSON.parse(val);
+              return (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                !Array.isArray(parsed)
+              );
             } catch {
               return false;
             }
           },
           {
-            message: "Invalid JSON format. Please provide valid JSON.",
+            message: "Invalid JSON format. Please provide a valid JSON object.",
           },
         ),
         secretName: z.string().optional(),
