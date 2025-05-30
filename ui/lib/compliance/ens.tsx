@@ -242,39 +242,3 @@ export const toAccordionItems = (
     };
   });
 };
-
-export const getENSTopFailedSections = (
-  mappedData: Framework[],
-): FailedSection[] => {
-  const failedSectionMap = new Map();
-
-  mappedData.forEach((framework) => {
-    framework.categories.forEach((category) => {
-      category.controls.forEach((control) => {
-        control.requirements.forEach((requirement) => {
-          if (requirement.status === "FAIL") {
-            const sectionName = category.name;
-
-            if (!failedSectionMap.has(sectionName)) {
-              failedSectionMap.set(sectionName, { total: 0, types: {} });
-            }
-
-            const sectionData = failedSectionMap.get(sectionName);
-            sectionData.total += 1;
-
-            const type = requirement.type;
-
-            sectionData.types[type as string] =
-              (sectionData.types[type as string] || 0) + 1;
-          }
-        });
-      });
-    });
-  });
-
-  // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
-};

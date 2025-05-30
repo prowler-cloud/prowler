@@ -18,16 +18,7 @@ import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import {
-  getENSTopFailedSections,
-  mapComplianceData as mapENSComplianceData,
-  toAccordionItems as toENSAccordionItems,
-} from "@/lib/compliance/ens";
-import {
-  getISO27001TopFailedSections,
-  mapComplianceData as mapISOComplianceData,
-  toAccordionItems as toISOAccordionItems,
-} from "@/lib/compliance/iso";
+import { getComplianceMapper } from "@/lib/compliance/commons";
 import { ScanProps } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
 
@@ -182,13 +173,9 @@ const getComplianceData = async (
   // Determine framework from the first attribute item
   const framework = attributesData?.data?.[0]?.attributes?.framework;
 
-  let mappedData: Framework[];
-  if (framework === "ISO27001") {
-    mappedData = mapISOComplianceData(attributesData, requirementsData);
-  } else {
-    // Default to ENS for backward compatibility
-    mappedData = mapENSComplianceData(attributesData, requirementsData);
-  }
+  // Get the appropriate mapper for this framework
+  const mapper = getComplianceMapper(framework);
+  const mappedData = mapper.mapComplianceData(attributesData, requirementsData);
 
   return mappedData;
 };
@@ -226,19 +213,14 @@ const SSRComplianceContent = async ({
     { pass: 0, fail: 0, manual: 0 },
   );
 
-  // Determine which accordion items function to use
+  // Get the framework to determine which mapper to use
   const attributesData = await getComplianceAttributes(complianceId);
   const framework = attributesData?.data?.[0]?.attributes?.framework;
 
-  let accordionItems;
-  let topFailedSections;
-  if (framework === "ISO27001") {
-    accordionItems = toISOAccordionItems(data, scanId);
-    topFailedSections = getISO27001TopFailedSections(data);
-  } else {
-    accordionItems = toENSAccordionItems(data, scanId);
-    topFailedSections = getENSTopFailedSections(data);
-  }
+  // Get the appropriate mapper for this framework
+  const mapper = getComplianceMapper(framework);
+  const accordionItems = mapper.toAccordionItems(data, scanId);
+  const topFailedSections = mapper.getTopFailedSections(data);
 
   // Todo: rethink as every compliance has a different number of items
   // const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
