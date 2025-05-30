@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -60,4 +60,4 @@ class Bucket(BaseModel):
     uniform_bucket_level_access: bool
     public: bool
     project_id: str
-    retention_policy: Optional[dict]
+    retention_policy: Optional[dict] = None
