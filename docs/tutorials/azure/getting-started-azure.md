@@ -90,7 +90,7 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
 Assign the following Microsoft Graph permissions:
 
-    - Directory.Read.All
+    - Domain.Read.All
 
     - Policy.Read.All
 
@@ -107,7 +107,7 @@ Assign the following Microsoft Graph permissions:
 
 3. Search and select:
 
-    - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 
