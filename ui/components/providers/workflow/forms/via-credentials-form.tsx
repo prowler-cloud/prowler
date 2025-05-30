@@ -58,7 +58,7 @@ export const ViaCredentialsForm = ({
     router.push(`?${currentParams.toString()}`);
   };
 
-  const providerType = searchParams.type;
+  const providerType = searchParams.type as ProviderType;
   const providerId = searchParams.id;
   const formSchema = addCredentialsFormSchema(providerType);
 
@@ -200,7 +200,7 @@ export const ViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <ProviderTitleDocs providerType={providerType as ProviderType} />
+        <ProviderTitleDocs providerType={providerType} />
 
         <Divider />
 
