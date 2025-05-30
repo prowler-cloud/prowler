@@ -3,7 +3,6 @@ import React, { Suspense } from "react";
 import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
-import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
@@ -13,11 +12,9 @@ import { RoleDetail, TenantDetailData } from "@/types/users/users";
 
 export default async function Profile() {
   return (
-    <ContentLayout title="User Profile" icon="ci:users">
-      <Suspense fallback={<SkeletonUserInfo />}>
-        <SSRDataUser />
-      </Suspense>
-    </ContentLayout>
+    <Suspense fallback={<SkeletonUserInfo />}>
+      <SSRDataUser />
+    </Suspense>
   );
 }
 

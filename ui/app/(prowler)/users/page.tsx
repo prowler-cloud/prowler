@@ -5,7 +5,6 @@ import { getRoles } from "@/actions/roles";
 import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
-import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { AddUserButton } from "@/components/users";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
@@ -19,7 +18,7 @@ export default async function Users({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <ContentLayout title="Users" icon="ci:users">
+    <>
       <FilterControls search />
       <Spacer y={8} />
       <AddUserButton />
@@ -30,7 +29,7 @@ export default async function Users({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </ContentLayout>
+    </>
   );
 }
 
