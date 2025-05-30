@@ -24,11 +24,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
-import { UserProfileProps } from "@/types";
+import { useStore } from "@/hooks/use-store";
+import { useUser } from "@/hooks/use-user";
 
 import { Button } from "../button/button";
 
-export const UserNav = ({ user }: { user?: UserProfileProps }) => {
+export const UserNav = () => {
+  const userStore = useStore(useUser, (x) => x);
+  const user = userStore?.user;
   if (!user || !user.data) return null;
 
   const { name, email, company_name } = user.data.attributes;

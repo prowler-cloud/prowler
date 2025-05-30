@@ -1,8 +1,10 @@
 import "@/styles/globals.css";
 
 import { Metadata, Viewport } from "next";
-import React from "react";
+import React, { use } from "react";
 
+import { getUserInfo } from "@/actions/users/users";
+import { UserProvider } from "@/components/providers/user-provider";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
@@ -34,6 +36,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = use(getUserInfo());
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -44,10 +47,12 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <MainLayout>{children}</MainLayout>
-          <Toaster />
-        </Providers>
+        <UserProvider initialUser={user}>
+          <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+            <MainLayout>{children}</MainLayout>
+            <Toaster />
+          </Providers>
+        </UserProvider>
       </body>
     </html>
   );

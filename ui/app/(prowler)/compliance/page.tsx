@@ -14,7 +14,6 @@ import {
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
 import { FilterControls } from "@/components/filters";
-import { ContentLayout } from "@/components/ui";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
 
@@ -80,7 +79,7 @@ export default async function Compliance({
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
-    <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
+    <>
       {selectedScanId ? (
         <>
           <FilterControls search />
@@ -105,7 +104,7 @@ export default async function Compliance({
       ) : (
         <NoScansAvailable />
       )}
-    </ContentLayout>
+    </>
   );
 }
 
