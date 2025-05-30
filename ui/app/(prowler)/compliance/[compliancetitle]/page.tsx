@@ -16,14 +16,20 @@ import { FailedSectionsChart } from "@/components/compliance/failed-sections-cha
 import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sections-chart-skeleton";
 import { RequirementsChart } from "@/components/compliance/requirements-chart";
 import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
+import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import { mapComplianceData, toAccordionItems } from "@/lib/compliance/ens";
-import { ScanProps } from "@/types";
 import {
-  FailedSection,
-  MappedComplianceData,
-  RequirementsTotals,
-} from "@/types/compliance";
+  getENSTopFailedSections,
+  mapComplianceData as mapENSComplianceData,
+  toAccordionItems as toENSAccordionItems,
+} from "@/lib/compliance/ens";
+import {
+  getISO27001TopFailedSections,
+  mapComplianceData as mapISOComplianceData,
+  toAccordionItems as toISOAccordionItems,
+} from "@/lib/compliance/iso";
+import { ScanProps } from "@/types";
+import { Framework, RequirementsTotals } from "@/types/compliance";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -32,7 +38,7 @@ interface ComplianceDetailSearchParams {
   "filter[region__in]"?: string;
 }
 
-const Logo = ({ logoPath }: { logoPath: string }) => {
+const ComplianceLogo = ({ logoPath }: { logoPath: string }) => {
   return (
     <div className="relative ml-auto hidden h-[200px] w-[200px] flex-shrink-0 md:block">
       <Image
@@ -51,14 +57,14 @@ const ChartsWrapper = ({
   logoPath,
 }: {
   children: React.ReactNode;
-  logoPath: string;
+  logoPath?: string;
 }) => {
   return (
     <div className="mb-8 flex w-full">
       <div className="flex flex-col items-center gap-16 lg:flex-row">
         {children}
       </div>
-      {logoPath && <Logo logoPath={logoPath} />}
+      {logoPath && <ComplianceLogo logoPath={logoPath} />}
     </div>
   );
 };
@@ -73,8 +79,7 @@ export default async function ComplianceDetail({
   const { compliancetitle } = params;
   const { complianceId, version, scanId } = searchParams;
   const regionFilter = searchParams["filter[region__in]"];
-
-  const logoPath = `/${compliancetitle.toLowerCase()}.png`;
+  const logoPath = getComplianceIcon(compliancetitle);
 
   // Create a key that includes region filter for Suspense
   const searchParamsKey = JSON.stringify(searchParams || {});
@@ -164,7 +169,7 @@ const getComplianceData = async (
   complianceId: string,
   scanId: string,
   region?: string,
-): Promise<MappedComplianceData> => {
+): Promise<Framework[]> => {
   const [attributesData, requirementsData] = await Promise.all([
     getComplianceAttributes(complianceId),
     getComplianceRequirements({
@@ -174,42 +179,18 @@ const getComplianceData = async (
     }),
   ]);
 
-  const mappedData = mapComplianceData(attributesData, requirementsData);
+  // Determine framework from the first attribute item
+  const framework = attributesData?.data?.[0]?.attributes?.framework;
+
+  let mappedData: Framework[];
+  if (framework === "ISO27001") {
+    mappedData = mapISOComplianceData(attributesData, requirementsData);
+  } else {
+    // Default to ENS for backward compatibility
+    mappedData = mapENSComplianceData(attributesData, requirementsData);
+  }
+
   return mappedData;
-};
-
-const getTopFailedSections = (
-  mappedData: MappedComplianceData,
-): FailedSection[] => {
-  const failedSectionMap = new Map();
-
-  mappedData.forEach((framework) => {
-    framework.categories.forEach((category) => {
-      category.controls.forEach((control) => {
-        control.requirements.forEach((requirement) => {
-          if (requirement.status === "FAIL") {
-            const sectionName = category.name;
-
-            if (!failedSectionMap.has(sectionName)) {
-              failedSectionMap.set(sectionName, { total: 0, types: {} });
-            }
-
-            const sectionData = failedSectionMap.get(sectionName);
-            sectionData.total += 1;
-
-            const type = requirement.type;
-            sectionData.types[type] = (sectionData.types[type] || 0) + 1;
-          }
-        });
-      });
-    });
-  });
-
-  // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
 };
 
 const SSRComplianceContent = async ({
@@ -221,7 +202,7 @@ const SSRComplianceContent = async ({
   complianceId: string;
   scanId: string;
   region?: string;
-  logoPath: string;
+  logoPath?: string;
 }) => {
   if (!scanId) {
     return (
@@ -244,9 +225,24 @@ const SSRComplianceContent = async ({
     }),
     { pass: 0, fail: 0, manual: 0 },
   );
-  const topFailedSections = getTopFailedSections(data);
-  const accordionItems = toAccordionItems(data, scanId);
-  const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
+
+  // Determine which accordion items function to use
+  const attributesData = await getComplianceAttributes(complianceId);
+  const framework = attributesData?.data?.[0]?.attributes?.framework;
+
+  let accordionItems;
+  let topFailedSections;
+  if (framework === "ISO27001") {
+    accordionItems = toISOAccordionItems(data, scanId);
+    topFailedSections = getISO27001TopFailedSections(data);
+  } else {
+    accordionItems = toENSAccordionItems(data, scanId);
+    topFailedSections = getENSTopFailedSections(data);
+  }
+
+  // Todo: rethink as every compliance has a different number of items
+  // const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
+  const defaultKeys = [""];
 
   return (
     <div className="space-y-8">

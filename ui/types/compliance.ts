@@ -1,6 +1,9 @@
 export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
 
-export type ComplianceId = "ens_rd2022_aws";
+export type ComplianceId =
+  | "ens_rd2022_aws"
+  | "iso27001_2013_aws"
+  | "iso27001_2022_aws";
 
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
@@ -23,19 +26,17 @@ export interface Requirement {
   name: string;
   description: string;
   status: RequirementStatus;
-  type: string;
   pass: number;
   fail: number;
   manual: number;
   check_ids: string[];
-  // ENS
-  nivel?: string;
-  dimensiones?: string[];
+  // This is to allow any key to be added to the requirement object
+  // because each compliance has different keys
+  [key: string]: string | string[] | number | undefined;
 }
 
 export interface Control {
   label: string;
-  type: string;
   pass: number;
   fail: number;
   manual: number;
@@ -58,12 +59,10 @@ export interface Framework {
   categories: Category[];
 }
 
-export type MappedComplianceData = Framework[];
-
 export interface FailedSection {
   name: string;
   total: number;
-  types: { [key: string]: number };
+  types?: { [key: string]: number };
 }
 
 export interface RequirementsTotals {
@@ -73,7 +72,7 @@ export interface RequirementsTotals {
 }
 
 // API Responses types:
-export interface AttributesMetadata {
+export interface ENSAttributesMetadata {
   IdGrupoControl: string;
   Marco: string;
   Categoria: string;
@@ -85,6 +84,13 @@ export interface AttributesMetadata {
   Dependencias: any[];
 }
 
+export interface ISO27001AttributesMetadata {
+  Category: string;
+  Objetive_ID: string;
+  Objetive_Name: string;
+  Check_Summary: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -93,7 +99,7 @@ export interface AttributesItemData {
     version: string;
     description: string;
     attributes: {
-      metadata: AttributesMetadata[];
+      metadata: ENSAttributesMetadata[] | ISO27001AttributesMetadata[];
       check_ids: string[];
     };
   };

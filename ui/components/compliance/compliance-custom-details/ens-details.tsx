@@ -1,6 +1,7 @@
+import { translateType } from "@/lib/compliance/ens";
 import { Requirement } from "@/types/compliance";
 
-export const ComplianceCustomDetails = ({
+export const ENSCustomDetails = ({
   requirement,
 }: {
   requirement: Requirement;
@@ -11,6 +12,12 @@ export const ComplianceCustomDetails = ({
         {requirement.description}
       </div>
       <div className="flex flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">Type:</span>
+          <span className="capitalize">
+            {translateType(requirement.type || "")}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <span className="font-medium">Level:</span>
           <span className="capitalize">{requirement.nivel}</span>

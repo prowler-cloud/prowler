@@ -14,7 +14,8 @@ import { createDict } from "@/lib";
 import { ComplianceId, Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
-import { ComplianceCustomDetails } from "../compliance-custom-details/ens-details";
+import { ENSCustomDetails } from "../compliance-custom-details/ens-details";
+import { ISOCustomDetails } from "../compliance-custom-details/iso-details";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
@@ -150,7 +151,14 @@ export const ClientAccordionContent = ({
       case "ens_rd2022_aws":
         return (
           <div className="w-full">
-            <ComplianceCustomDetails requirement={requirement} />
+            <ENSCustomDetails requirement={requirement} />
+          </div>
+        );
+      case "iso27001_2013_aws":
+      case "iso27001_2022_aws":
+        return (
+          <div className="w-full">
+            <ISOCustomDetails requirement={requirement} />
           </div>
         );
       default:
