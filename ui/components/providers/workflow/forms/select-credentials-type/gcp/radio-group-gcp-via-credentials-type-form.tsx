@@ -14,7 +14,7 @@ type RadioGroupAWSViaCredentialsFormProps = {
   onChange?: (value: string) => void;
 };
 
-export const RadioGroupAWSViaCredentialsForm = ({
+export const RadioGroupGCPViaCredentialsTypeForm = ({
   control,
   isInvalid,
   errorMessage,
@@ -22,7 +22,7 @@ export const RadioGroupAWSViaCredentialsForm = ({
 }: RadioGroupAWSViaCredentialsFormProps) => {
   return (
     <Controller
-      name="awsCredentialsType"
+      name="gcpCredentialsType"
       control={control}
       render={({ field }) => (
         <>
@@ -39,21 +39,28 @@ export const RadioGroupAWSViaCredentialsForm = ({
             }}
           >
             <div className="flex flex-col gap-4">
-              <span className="text-sm text-default-500">Using IAM Role</span>
-              <CustomRadio description="Connect assuming IAM Role" value="role">
+              <span className="text-sm text-default-500">
+                Using Service Account
+              </span>
+              <CustomRadio
+                description="Connect using Service Account"
+                value="service-account"
+              >
                 <div className="flex items-center">
-                  <span className="ml-2">Connect assuming IAM Role</span>
+                  <span className="ml-2">Connect via Service Account Key</span>
                 </div>
               </CustomRadio>
               <span className="text-sm text-default-500">
-                Using Credentials
+                Using Application Default Credentials
               </span>
               <CustomRadio
                 description="Connect via Credentials"
                 value="credentials"
               >
                 <div className="flex items-center">
-                  <span className="ml-2">Connect via Credentials</span>
+                  <span className="ml-2">
+                    Connect via Application Default Credentials
+                  </span>
                 </div>
               </CustomRadio>
             </div>

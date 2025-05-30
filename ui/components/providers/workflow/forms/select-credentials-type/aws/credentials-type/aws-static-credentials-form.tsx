@@ -1,12 +1,12 @@
 import { Control } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
-import { GCPCredentials } from "@/types";
+import { AWSCredentials } from "@/types";
 
-export const GCPcredentialsForm = ({
+export const AWSStaticCredentialsForm = ({
   control,
 }: {
-  control: Control<GCPCredentials>;
+  control: Control<AWSCredentials>;
 }) => {
   return (
     <>
@@ -15,41 +15,41 @@ export const GCPcredentialsForm = ({
           Connect via Credentials
         </div>
         <div className="text-sm text-default-500">
-          Please provide the information for your GCP credentials.
+          Please provide the information for your AWS credentials.
         </div>
       </div>
       <CustomInput
         control={control}
-        name="client_id"
-        type="text"
-        label="Client ID"
+        name="aws_access_key_id"
+        type="password"
+        label="AWS Access Key ID"
         labelPlacement="inside"
-        placeholder="Enter the Client ID"
+        placeholder="Enter the AWS Access Key ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
+        isInvalid={!!control._formState.errors.aws_access_key_id}
       />
       <CustomInput
         control={control}
-        name="client_secret"
+        name="aws_secret_access_key"
         type="password"
-        label="Client Secret"
+        label="AWS Secret Access Key"
         labelPlacement="inside"
-        placeholder="Enter the Client Secret"
+        placeholder="Enter the AWS Secret Access Key"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
+        isInvalid={!!control._formState.errors.aws_secret_access_key}
       />
       <CustomInput
         control={control}
-        name="refresh_token"
+        name="aws_session_token"
         type="password"
-        label="Refresh Token"
+        label="AWS Session Token"
         labelPlacement="inside"
-        placeholder="Enter the Refresh Token"
+        placeholder="Enter the AWS Session Token"
         variant="bordered"
-        isRequired
-        isInvalid={!!control._formState.errors.refresh_token}
+        isRequired={false}
+        isInvalid={!!control._formState.errors.aws_session_token}
       />
     </>
   );

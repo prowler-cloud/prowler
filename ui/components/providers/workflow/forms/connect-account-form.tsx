@@ -10,7 +10,6 @@ import * as z from "zod";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { ProviderType } from "@/types";
 
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
@@ -171,7 +170,7 @@ export const ConnectAccountForm = () => {
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
-            <ProviderTitleDocs providerType={providerType as ProviderType} />
+            <ProviderTitleDocs providerType={providerType} />
             <CustomInput
               control={form.control}
               name="providerUid"

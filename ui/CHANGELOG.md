@@ -9,10 +9,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
 - Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
 - Possibility to edit the organization name. [(#7829)](https://github.com/prowler-cloud/prowler/pull/7829)
+- Add GCP credential method (Account Service Key). [(#7872)](https://github.com/prowler-cloud/prowler/pull/7872)
+
+### 🔄 Changed
+
+- Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
 - Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
+
+### 🐞 Fixes
+
 - Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
 - Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
-- Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
+
 
 ### 🐞 Fixes
 - Retrieve more than 10 scans in /compliance page. [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
