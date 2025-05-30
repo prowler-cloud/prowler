@@ -109,25 +109,11 @@ class BaseTenantViewset(BaseViewSet):
                 pass  # Tenant might not exist, handle gracefully
 
     def initial(self, request, *args, **kwargs):
-        if (
-            request.resolver_match.url_name != "tenant-detail"
-            and request.method != "DELETE"
-        ):
-            user_id = str(request.user.id)
-
-            with rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
-                return super().initial(request, *args, **kwargs)
-
-        # TODO: DRY this when we have time
         if request.auth is None:
             raise NotAuthenticated
 
-        tenant_id = request.auth.get("tenant_id")
-        if tenant_id is None:
-            raise NotAuthenticated("Tenant ID is not present in token")
-
-        with rls_transaction(tenant_id):
-            self.request.tenant_id = tenant_id
+        user_id = str(request.user.id)
+        with rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
             return super().initial(request, *args, **kwargs)
 
 
