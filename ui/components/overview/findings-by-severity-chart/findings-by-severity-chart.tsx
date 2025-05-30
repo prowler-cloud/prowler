@@ -116,9 +116,9 @@ export const FindingsBySeverityChart = ({
               >
                 <LabelList
                   position="insideRight"
-                  offset={10}
+                  offset={5}
                   className="fill-foreground font-bold"
-                  fontSize={12}
+                  fontSize={11}
                 />
               </Bar>
             </BarChart>

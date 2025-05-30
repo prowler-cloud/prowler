@@ -9,7 +9,7 @@ import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
 import { isUserOwnerAndHasManageAccount } from "@/lib/permissions";
-import { RoleDetail, TenantDetailData } from "@/types/users/users";
+import { RoleDetail, TenantDetailData } from "@/types/users";
 
 export default async function Profile() {
   return (

@@ -16,10 +16,12 @@ const statusColorMap: Record<
 export const StatusFindingBadge = ({
   status,
   size = "sm",
+  value,
   ...props
 }: {
   status: FindingStatus;
   size?: "sm" | "md" | "lg";
+  value?: string | number;
 }) => {
   const color = statusColorMap[status];
 
@@ -33,6 +35,7 @@ export const StatusFindingBadge = ({
     >
       <span className="text-xs font-light tracking-wide text-default-600">
         {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+        {value !== undefined && `: ${value}`}
       </span>
     </Chip>
   );

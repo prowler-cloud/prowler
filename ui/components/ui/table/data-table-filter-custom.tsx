@@ -55,7 +55,7 @@ export const DataTableFilterCustom = ({
         size="md"
         startContent={<CustomFilterIcon size={16} />}
         onPress={() => setShowFilters(!showFilters)}
-        className="w-fit"
+        className="w-full max-w-fit"
       >
         <h3 className="text-small">
           {showFilters ? "Hide Filters" : "Show Filters"}

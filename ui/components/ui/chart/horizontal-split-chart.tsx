@@ -70,6 +70,16 @@ interface HorizontalSplitBarProps {
    * @default "text-gray-700"
    */
   labelColor?: string;
+  /**
+   * Growth ratio multiplier (pixels per value unit)
+   * @default 1
+   */
+  ratio?: number;
+  /**
+   * Show zero values in labels
+   * @default true
+   */
+  showZero?: boolean;
 }
 
 /**
@@ -99,6 +109,8 @@ export const HorizontalSplitBar = ({
   tooltipContentA,
   tooltipContentB,
   labelColor = "text-gray-700",
+  ratio = 1,
+  showZero = true,
 }: HorizontalSplitBarProps) => {
   // Reference to the container to measure its width
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -150,8 +162,9 @@ export const HorizontalSplitBar = ({
   const halfWidth = availableWidth / 2;
   const separatorWidth = 1;
 
-  let rawWidthA = valA;
-  let rawWidthB = valB;
+  // Apply ratio multiplier to raw widths
+  let rawWidthA = valA * ratio;
+  let rawWidthB = valB * ratio;
 
   // Determine if we need to scale to fit in available space
   const maxSideWidth = halfWidth - separatorWidth / 2;
@@ -183,7 +196,7 @@ export const HorizontalSplitBar = ({
             className={cn("text-xs font-medium", labelColor)}
             aria-label={`${formattedValueA} ${tooltipContentA ? tooltipContentA : ""}`}
           >
-            {valA > 0 ? formattedValueA : "0"}
+            {valA > 0 ? formattedValueA : showZero ? "0" : ""}
           </div>
           {/* Left bar */}
           {valA > 0 && (
@@ -230,7 +243,7 @@ export const HorizontalSplitBar = ({
             className={cn("text-xs font-medium", labelColor)}
             aria-label={`${formattedValueB} ${tooltipContentB ? tooltipContentB : ""}`}
           >
-            {valB > 0 ? formattedValueB : "0"}
+            {valB > 0 ? formattedValueB : showZero ? "0" : ""}
           </div>
         </div>
       </div>

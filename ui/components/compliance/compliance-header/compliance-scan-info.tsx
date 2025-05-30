@@ -3,6 +3,7 @@ import React from "react";
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { ProviderType } from "@/types";
+
 interface ComplianceScanInfoProps {
   scan: {
     providerInfo: {

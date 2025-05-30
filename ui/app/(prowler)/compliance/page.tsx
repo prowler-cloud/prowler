@@ -1,6 +1,4 @@
 export const dynamic = "force-dynamic";
-
-import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
@@ -12,11 +10,10 @@ import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
 } from "@/components/compliance";
-import { DataCompliance } from "@/components/compliance/data-compliance";
-import { FilterControls } from "@/components/filters";
+import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
-import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
-import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
+import { ScanProps, SearchParamsProps } from "@/types";
+import { ComplianceOverviewData } from "@/types/compliance";
 
 export default async function Compliance({
   searchParams,
@@ -84,21 +81,10 @@ export default async function Compliance({
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       {selectedScanId ? (
         <>
-          <FilterControls search />
-          <Spacer y={8} />
-          <DataCompliance scans={expandedScansData} />
-          <Spacer y={8} />
-          <DataTableFilterCustom
-            filters={[
-              {
-                key: "region__in",
-                labelCheckboxGroup: "Regions",
-                values: uniqueRegions,
-              },
-            ]}
-            defaultOpen={true}
+          <ComplianceHeader
+            scans={expandedScansData}
+            uniqueRegions={uniqueRegions}
           />
-          <Spacer y={12} />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid searchParams={searchParams} />
           </Suspense>
@@ -133,7 +119,11 @@ const SSRComplianceGrid = async ({
   });
 
   // Check if the response contains no data
-  if (!compliancesData || compliancesData?.data?.length === 0) {
+  if (
+    !compliancesData ||
+    !compliancesData.data ||
+    compliancesData.data.length === 0
+  ) {
     return (
       <div className="flex h-full items-center">
         <div className="text-sm text-default-500">
@@ -155,25 +145,22 @@ const SSRComplianceGrid = async ({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {compliancesData.data.map((compliance: ComplianceOverviewData) => {
-        const { attributes } = compliance;
-        const {
-          framework,
-          version,
-          requirements_status: { passed, total },
-          compliance_id,
-        } = attributes;
+        const { attributes, id } = compliance;
+        const { framework, version, requirements_passed, total_requirements } =
+          attributes;
 
         return (
           <ComplianceCard
-            key={compliance.id}
+            key={id}
             title={framework}
             version={version}
-            passingRequirements={passed}
-            totalRequirements={total}
-            prevPassingRequirements={passed}
-            prevTotalRequirements={total}
+            passingRequirements={requirements_passed}
+            totalRequirements={total_requirements}
+            prevPassingRequirements={requirements_passed}
+            prevTotalRequirements={total_requirements}
             scanId={scanId}
-            complianceId={compliance_id}
+            complianceId={id}
+            id={id}
           />
         );
       })}

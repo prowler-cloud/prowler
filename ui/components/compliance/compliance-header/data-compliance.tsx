@@ -3,8 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { SelectScanComplianceData } from "@/components/compliance/data-compliance";
-import { SelectScanComplianceDataProps } from "@/types";
+import {
+  SelectScanComplianceData,
+  SelectScanComplianceDataProps,
+} from "@/components/compliance/compliance-header/index";
 interface DataComplianceProps {
   scans: SelectScanComplianceDataProps["scans"];
 }
