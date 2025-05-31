@@ -106,9 +106,9 @@ class M365BaseException(ProwlerException):
             "message": "The provided User is not valid.",
             "remediation": "Check the User and ensure it is a valid user.",
         },
-        (6025, "M365NotValidEncryptedPasswordError"): {
-            "message": "The provided Encrypted Password is not valid.",
-            "remediation": "Check the Encrypted Password and ensure it is a valid password.",
+        (6025, "M365NotValidPasswordError"): {
+            "message": "The provided Password is not valid.",
+            "remediation": "Check the Password and ensure it is a valid password.",
         },
         (6026, "M365UserNotBelongingToTenantError"): {
             "message": "The provided User does not belong to the specified tenant.",
@@ -312,7 +312,7 @@ class M365NotValidUserError(M365CredentialsError):
         )
 
 
-class M365NotValidEncryptedPasswordError(M365CredentialsError):
+class M365NotValidPasswordError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6025, file=file, original_exception=original_exception, message=message

@@ -5,6 +5,7 @@ export interface FilterOption {
   labelCheckboxGroup: string;
   values: string[];
   valueLabelMapping?: Array<{ [uid: string]: ProviderAccountProps }>;
+  index?: number;
 }
 
 export interface CustomDropdownFilterProps {

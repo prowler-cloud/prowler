@@ -142,9 +142,7 @@ export const addCredentialsFormSchema = (providerType: string) =>
                     .nonempty("Client Secret is required"),
                   tenant_id: z.string().nonempty("Tenant ID is required"),
                   user: z.string().nonempty("User is required"),
-                  encrypted_password: z
-                    .string()
-                    .nonempty("Encrypted Password is required"),
+                  password: z.string().nonempty("Password is required"),
                 }
               : {}),
   });
@@ -155,7 +153,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
         .object({
           providerId: z.string(),
           providerType: z.string(),
-          role_arn: z.string().optional(),
+          role_arn: z.string().nonempty("AWS Role ARN is required"),
           external_id: z.string().optional(),
           aws_access_key_id: z.string().optional(),
           aws_secret_access_key: z.string().optional(),
