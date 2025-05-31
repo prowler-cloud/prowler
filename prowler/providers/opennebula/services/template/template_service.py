@@ -15,7 +15,7 @@ class TemplateService(OpennebulaService):
                 template_raw = getattr(tmpl.TEMPLATE, "_attributes", tmpl.TEMPLATE)
                 context = template_raw.get("CONTEXT", {})
                 user_inputs = template_raw.get("USER_INPUTS", {})
-                os_data = template_raw.get("OS", {})
+                os_data = template_raw.get("OS") or {}
 
                 self.templates.append(Template(
                     id=tmpl.ID,
