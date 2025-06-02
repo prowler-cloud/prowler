@@ -113,7 +113,7 @@ export const CustomDropdownFilter = ({
       const entity = filter.valueLabelMapping?.find((entry) => entry[value])?.[
         value
       ];
-      return entity?.alias || entity?.uid || value;
+      return entity?.providerInfo?.alias || entity?.providerInfo?.uid || value;
     },
     [filter.valueLabelMapping],
   );
