@@ -25,9 +25,9 @@ class HostService(OpennebulaService):
                     vm_mad=host.VM_MAD,
                     version=version,
                     total_cpu=int(host.HOST_SHARE.MAX_CPU) if hasattr(host.HOST_SHARE, "MAX_CPU") else None,
-                    used_cpu=int(host.HOST_SHARE.USED_CPU) if hasattr(host.HOST_SHARE, "USED_CPU") else None,
+                    used_cpu=int(host.HOST_SHARE.CPU_USAGE) if hasattr(host.HOST_SHARE, "CPU_USAGE") else None,
                     total_mem=int(host.HOST_SHARE.MAX_MEM) if hasattr(host.HOST_SHARE, "MAX_MEM") else None,
-                    used_mem=int(host.HOST_SHARE.USED_MEM) if hasattr(host.HOST_SHARE, "USED_MEM") else None,
+                    used_mem=int(host.HOST_SHARE.MEM_USAGE) if hasattr(host.HOST_SHARE, "MEM_USAGE") else None,
                     running_vms=int(host.HOST_SHARE.RUNNING_VMS) if hasattr(host.HOST_SHARE, "RUNNING_VMS") else None,
                     online=online,
                     healthy=healthy

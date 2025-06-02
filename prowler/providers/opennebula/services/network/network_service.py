@@ -36,9 +36,17 @@ class NetworkService(OpennebulaService):
             start_ip = ipaddress.ip_address(ar["ip_start"])
             for ip_offset in range(int(ar["size"])):
                 ip = start_ip + ip_offset
-                if not ip.is_private:
+                if not self.__is_private_ip__(ip):
                     return True
         return False
+
+    def __is_private_ip__(self, ip):
+        private_ranges = [
+            ipaddress.ip_network("10.0.0.0/8"),
+            ipaddress.ip_network("172.16.0.0/12"),
+            ipaddress.ip_network("192.168.0.0/16")
+        ]
+        return any(ip in private_range for private_range in private_ranges)
 
 class VNet(BaseModel):
     id: str

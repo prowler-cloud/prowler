@@ -12,19 +12,10 @@ class TemplateService(OpennebulaService):
         try:
             template_pool = self.client.templatepool.info(-2, -1, -1, -1)
             for tmpl in template_pool.VMTEMPLATE:
-                context = {}
-                user_inputs = {}
-                os_data = {}
-                template_raw = tmpl.TEMPLATE._attributes if hasattr(tmpl.TEMPLATE, "_attributes") else {}
-
-                if hasattr(tmpl.TEMPLATE, "CONTEXT"):
-                    context = tmpl.TEMPLATE.CONTEXT._attributes if hasattr(tmpl.TEMPLATE.CONTEXT, "_attributes") else {}
-
-                if hasattr(tmpl.TEMPLATE, "USER_INPUTS"):
-                    user_inputs = tmpl.TEMPLATE.USER_INPUTS._attributes if hasattr(tmpl.TEMPLATE.USER_INPUTS, "_attributes") else {}
-
-                if hasattr(tmpl.TEMPLATE, "OS"):
-                    os_data = tmpl.TEMPLATE.OS._attributes if hasattr(tmpl.TEMPLATE.OS, "_attributes") else {}
+                template_raw = getattr(tmpl.TEMPLATE, "_attributes", tmpl.TEMPLATE)
+                context = template_raw.get("CONTEXT", {})
+                user_inputs = template_raw.get("USER_INPUTS", {})
+                os_data = template_raw.get("OS") or {}
 
                 self.templates.append(Template(
                     id=tmpl.ID,
@@ -48,4 +39,3 @@ class Template(BaseModel):
     user_inputs: dict
     os: dict
     template_raw: dict
-

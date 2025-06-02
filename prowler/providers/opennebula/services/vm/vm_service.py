@@ -10,19 +10,29 @@ class VMService(OpennebulaService):
 
     def __get_vms__(self):
         try:
+            # Primero, obtenemos la lista de IDs de todas las VMs
             vmpool = self.client.vmpool.info(-2, -1, -1, -1)  # All VMs
-            for vm in vmpool.VM:
+            vm_ids = [vm.ID for vm in vmpool.VM]
+            for vm_id in vm_ids:
+                vm = self.client.vm.info(vm_id)
+                template_raw = getattr(vm.TEMPLATE, "_attributes", vm.TEMPLATE)
                 context = {}
-                if hasattr(vm.TEMPLATE, "CONTEXT"):
-                    context = vm.TEMPLATE.CONTEXT._attributes if hasattr(vm.TEMPLATE.CONTEXT, "_attributes") else {}
+                if isinstance(template_raw, dict):
+                    context = template_raw.get("CONTEXT", {})
+                elif hasattr(template_raw, "CONTEXT"):
+                    context_attr = getattr(template_raw, "CONTEXT")
+                    context = getattr(context_attr, "_attributes", context_attr) or {}
+
                 self.vms.append(VM(
                     id=vm.ID,
                     name=vm.NAME,
                     uname=vm.UNAME,
                     gname=vm.GNAME,
                     state=vm.STATE,
-                    context=context
+                    context=context,
+                    template_raw=template_raw
                 ))
+
         except Exception as error:
             logger.error(f"Error al obtener máquinas virtuales: {error}")
 
@@ -33,3 +43,4 @@ class VM(BaseModel):
     gname: str
     state: str
     context: dict
+    template_raw: dict
