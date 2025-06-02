@@ -14,9 +14,8 @@ import { ChevronDown, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { CustomDropdownFilterProps } from "@/types";
-
 import { ComplianceScanInfo } from "@/components/compliance";
+import { CustomDropdownFilterProps } from "@/types";
 
 export const CustomDropdownFilter = ({
   filter,

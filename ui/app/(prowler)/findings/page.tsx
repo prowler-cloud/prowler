@@ -26,13 +26,9 @@ import {
 import {
   createProviderDetailsMapping,
   extractProviderUIDs,
+  getProviderDetailsByScan,
 } from "@/lib/provider-helpers";
-import {
-  FindingProps,
-  IncludeProps,
-  ScanProps,
-  SearchParamsProps,
-} from "@/types/components";
+import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -89,43 +85,15 @@ export default async function Findings({
         scan.attributes.unique_resource_count > 1,
     )
     .map((scan: ScanProps) => ({
+      ...scan,
       id: scan.id,
-      name: scan.attributes.name,
-      providerId: scan.relationships.provider.data.id,
-      completed_at: scan.attributes.completed_at,
     }));
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
-  const providerDetailsAssociatedWithScans = completedScans?.map(
-    (scan: {
-      id: string;
-      name: string;
-      providerId: string;
-      completed_at: string;
-    }) => {
-      const providerId = scan.providerId;
-
-      const providerDetails = scansData.included.find(
-        (provider: IncludeProps) =>
-          provider.type === "providers" && provider.id === providerId,
-      );
-
-      return {
-        [scan.id]: {
-          providerInfo: {
-            provider: providerDetails?.attributes?.provider,
-            alias: providerDetails?.attributes?.alias,
-            uid: providerDetails?.attributes?.uid,
-          },
-          attributes: {
-            name: scan.name,
-            completed_at: scan.completed_at,
-          },
-        },
-      };
-    },
+  const providerDetailsAssociatedWithScans = scansData.data.map(
+    (scan: ScanProps) => getProviderDetailsByScan(scan, scansData.included),
   );
 
   return (
