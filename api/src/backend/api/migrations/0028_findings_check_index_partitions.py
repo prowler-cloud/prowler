@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
                 parent_table="findings",
                 index_name="find_tenant_scan_check_idx",
                 columns="tenant_id, scan_id, check_id",
-                all_partitions=False,
             ),
             reverse_code=partial(
                 drop_index_on_partitions,
