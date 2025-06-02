@@ -1,34 +1,34 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Divider } from "@nextui-org/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { Control, useForm, UseFormSetValue } from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { addCredentialsProvider } from "@/actions/providers/providers";
+import { updateCredentialsProvider } from "@/actions/providers/providers";
+import { ProviderTitleDocs } from "@/components/providers/workflow";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import {
-  addCredentialsRoleFormSchema,
+  addCredentialsServiceAccountFormSchema,
   ApiError,
-  AWSCredentialsRole,
+  GCPServiceAccountKey,
+  ProviderType,
 } from "@/types";
 
-import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type";
+import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type";
 
-export const ViaRoleForm = ({
+export const UpdateViaServiceAccountForm = ({
   searchParams,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; secretId?: string };
 }) => {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
   const searchParamsObj = useSearchParams();
-  const externalId = session?.tenantId;
 
   // Handler for back button
   const handleBackStep = () => {
@@ -37,29 +37,22 @@ export const ViaRoleForm = ({
     router.push(`?${currentParams.toString()}`);
   };
 
-  const providerType = searchParams.type;
+  const providerType = searchParams.type as ProviderType;
   const providerId = searchParams.id;
+  const providerSecretId = searchParams.secretId || "";
 
-  const formSchema = addCredentialsRoleFormSchema(providerType);
-  type FormSchemaType = z.infer<typeof formSchema> & {
-    credentials_type: "aws-sdk-default" | "access-secret-key";
-  };
+  const formSchema = addCredentialsServiceAccountFormSchema(providerType);
+  type FormSchemaType = z.infer<typeof formSchema>;
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
       providerType,
-      credentials_type: "aws-sdk-default",
-      ...(providerType === "aws"
+      ...(providerType === "gcp"
         ? {
-            role_arn: "",
-            external_id: externalId,
-            aws_access_key_id: "",
-            aws_secret_access_key: "",
-            aws_session_token: "",
-            role_session_name: "",
-            session_duration: "3600",
+            service_account_key: "",
+            secretName: "",
           }
         : {}),
     },
@@ -68,49 +61,32 @@ export const ViaRoleForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormSchemaType) => {
+    if (!providerSecretId) {
+      toast({
+        variant: "destructive",
+        title: "Missing Secret ID",
+        description: "Cannot update credentials without a valid secret ID.",
+      });
+      return;
+    }
+
     const formData = new FormData();
 
     Object.entries(values).forEach(([key, value]) => {
-      // Do not include credentials_type
-      if (key === "credentials_type") return;
-
-      // If credentials_type is "access-secret-key", include the relevant fields
-      if (
-        values.credentials_type === "access-secret-key" &&
-        [
-          "aws_access_key_id",
-          "aws_secret_access_key",
-          "aws_session_token",
-        ].includes(key)
-      ) {
-        if (value !== undefined && value !== "") {
-          formData.append(key, String(value));
-        }
-        return;
-      }
-
-      // Add any other valid field
       if (value !== undefined && value !== "") {
         formData.append(key, String(value));
       }
     });
 
     try {
-      const data = await addCredentialsProvider(formData);
-
+      const data = await updateCredentialsProvider(providerSecretId, formData);
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
 
           switch (error.source.pointer) {
-            case "/data/attributes/secret/role_arn":
-              form.setError("role_arn" as keyof FormSchemaType, {
-                type: "server",
-                message: errorMessage,
-              });
-              break;
-            case "/data/attributes/secret/external_id":
-              form.setError("external_id" as keyof FormSchemaType, {
+            case "/data/attributes/secret/service_account_key":
+              form.setError("service_account_key" as keyof FormSchemaType, {
                 type: "server",
                 message: errorMessage,
               });
@@ -125,7 +101,7 @@ export const ViaRoleForm = ({
         });
       } else {
         router.push(
-          `/providers/test-connection?type=${providerType}&id=${providerId}`,
+          `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
         );
       }
     } catch (error) {
@@ -148,18 +124,18 @@ export const ViaRoleForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        {providerType === "aws" && (
-          <AWSRoleCredentialsForm
-            control={form.control as unknown as Control<AWSCredentialsRole>}
-            setValue={
-              form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
-            }
-            externalId={externalId || ""}
+        <ProviderTitleDocs providerType={providerType} />
+
+        <Divider />
+
+        {providerType === "gcp" && (
+          <GCPServiceAccountKeyForm
+            control={form.control as unknown as Control<GCPServiceAccountKey>}
           />
         )}
 
         <div className="flex w-full justify-end sm:space-x-6">
-          {searchParamsObj.get("via") === "role" && (
+          {searchParamsObj.get("via") === "service-account" && (
             <CustomButton
               type="button"
               ariaLabel="Back"
