@@ -12,7 +12,13 @@ import {
 } from "@nextui-org/react";
 import { ChevronDown, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { CustomDropdownFilterProps } from "@/types";
 
@@ -25,6 +31,7 @@ export const CustomDropdownFilter = ({
   const searchParams = useSearchParams();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
   const [isOpen, setIsOpen] = useState(false);
+  const hasUserInteracted = useRef(false);
 
   const filterValues = useMemo(() => filter?.values || [], [filter?.values]);
   const selectedValues = Array.from(groupSelected).filter(
@@ -49,16 +56,17 @@ export const CustomDropdownFilter = ({
         newSelection.add("all");
       }
       setGroupSelected(newSelection);
-    } else {
+    } else if (!hasUserInteracted.current) {
       // Handle default behavior when no URL params exist
+      // Only apply defaults if user hasn't interacted yet
+      // Only set visual state, don't trigger URL changes automatically
       if (filter?.defaultToSelectAll && filterValues.length > 0) {
         const newSelection = new Set(filterValues);
         if (filter?.showSelectAll !== false) {
           newSelection.add("all");
         }
         setGroupSelected(newSelection);
-        // Notify parent with all values selected by default
-        onFilterChange?.(filter.key, filterValues);
+        // DON'T notify parent automatically - wait for user interaction
       } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
         // Handle specific default values
         const validDefaultValues = filter.defaultValues.filter((value) =>
@@ -75,8 +83,7 @@ export const CustomDropdownFilter = ({
         }
 
         setGroupSelected(newSelection);
-        // Notify parent with default values
-        onFilterChange?.(filter.key, validDefaultValues);
+        // DON'T notify parent automatically - wait for user interaction
       } else {
         setGroupSelected(new Set());
       }
@@ -87,12 +94,13 @@ export const CustomDropdownFilter = ({
     filter?.defaultToSelectAll,
     filter?.defaultValues,
     filter?.showSelectAll,
-    filter.key,
-    onFilterChange,
   ]);
 
   const updateSelection = useCallback(
     (newValues: string[]) => {
+      // Mark that user has interacted with the filter
+      hasUserInteracted.current = true;
+
       const actualValues = newValues.filter((key) => key !== "all");
       const newSelection = new Set(actualValues);
 
