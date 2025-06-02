@@ -14,6 +14,10 @@ import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
 import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Scans({
@@ -29,6 +33,7 @@ export default async function Scans({
     filters: {
       "filter[connected]": true,
     },
+    pageSize: 50,
   });
 
   const providerInfo =
@@ -42,6 +47,7 @@ export default async function Scans({
 
   const providersCountConnected = await getProviders({
     filters: { "filter[connected]": true },
+    pageSize: 50,
   });
   const thereIsNoProviders =
     !providersCountConnected?.data || providersCountConnected.data.length === 0;
@@ -58,6 +64,24 @@ export default async function Scans({
       scan.attributes.state === "executing" ||
       scan.attributes.state === "available",
   );
+
+  // Extract provider UIDs and create provider details mapping for filtering
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
+
+  // Update the Provider UID filter
+  const updatedFilters = filterScans.map((filter) => {
+    if (filter.key === "provider_uid__in") {
+      return {
+        ...filter,
+        values: providerUIDs,
+        valueLabelMapping: providerDetails,
+      };
+    }
+    return filter;
+  });
 
   return (
     <>
@@ -87,7 +111,7 @@ export default async function Scans({
           <div className="grid grid-cols-12 items-start gap-4 px-6 py-4 sm:px-8 xl:px-10">
             <div className="col-span-12">
               <div className="flex flex-row items-center justify-between">
-                <DataTableFilterCustom filters={filterScans || []} />
+                <DataTableFilterCustom filters={updatedFilters || []} />
                 <Spacer x={4} />
                 <FilterControls />
               </div>

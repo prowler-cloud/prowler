@@ -40,7 +40,7 @@ az ad sp create-for-rbac --name "ProwlerApp"
 
 To allow Prowler to retrieve metadata from the identity assumed and run specific Entra checks, it is needed to assign the following permissions:
 
-- `Directory.Read.All`
+- `Domain.Read.All`
 - `Policy.Read.All`
 - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
 
@@ -58,7 +58,7 @@ To assign the permissions you can make it from the Azure Portal or using the Azu
 5. Then click on "+ Add a permission" and select "Microsoft Graph"
 6. Once in the "Microsoft Graph" view, select "Application permissions"
 7. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
-    - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 8. Click on "Add permissions" to apply the new permissions.

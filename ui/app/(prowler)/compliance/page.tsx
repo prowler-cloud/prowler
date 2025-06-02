@@ -33,6 +33,7 @@ export default async function Compliance({
     filters: {
       "filter[state]": "completed",
     },
+    pageSize: 50,
   });
 
   if (!scansData?.data) {

@@ -14,6 +14,8 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Entra(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        if self.powershell:
+            self.powershell.close()
 
         loop = get_event_loop()
         self.tenant_domain = provider.identity.tenant_domain
@@ -377,6 +379,19 @@ class Entra(M365Service):
                 for member in members:
                     user_roles_map.setdefault(member.id, []).append(role_template_id)
 
+            try:
+                registration_details_list = (
+                    await self.client.reports.authentication_methods.user_registration_details.get()
+                )
+                registration_details = {
+                    detail.id: detail for detail in registration_details_list.value
+                }
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                registration_details = {}
+
             for user in users_list.value:
                 users[user.id] = User(
                     id=user.id,
@@ -385,6 +400,11 @@ class Entra(M365Service):
                         True if (user.on_premises_sync_enabled) else False
                     ),
                     directory_roles_ids=user_roles_map.get(user.id, []),
+                    is_mfa_capable=(
+                        registration_details.get(user.id, {}).is_mfa_capable
+                        if registration_details.get(user.id, None) is not None
+                        else False
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -473,6 +493,7 @@ class ConditionalAccessGrantControl(Enum):
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
     PASSWORD_CHANGE = "passwordChange"
+    COMPLIANT_DEVICE = "compliantDevice"
 
 
 class GrantControlOperator(Enum):
@@ -563,6 +584,7 @@ class User(BaseModel):
     name: str
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
+    is_mfa_capable: bool = False
 
 
 class InvitationsFrom(Enum):

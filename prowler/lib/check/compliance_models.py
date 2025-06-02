@@ -193,6 +193,7 @@ class Prowler_ThreatScore_Requirement_Attribute(BaseModel):
     AttributeDescription: str
     AdditionalInformation: str
     LevelOfRisk: int
+    Weight: int
 
 
 # Base Compliance Model
