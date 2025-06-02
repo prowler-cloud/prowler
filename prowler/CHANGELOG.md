@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.8.0] (Prowler v5.8.0)
+## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
@@ -25,8 +25,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-### [v5.7.2] Fixed
+## [v5.7.2] (Prowler v5.7.2)
 
+### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
@@ -134,8 +135,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-### [v5.5.1] Fixed
+## [v5.5.1] (Prowler v5.5.1)
 
+### Fixed
 - Add default name to contacts in Azure Defender. [(#7483)](https://github.com/prowler-cloud/prowler/pull/7483)
 - Handle projects without ID in GCP. [(#7496)](https://github.com/prowler-cloud/prowler/pull/7496)
 - Restore packages location in PyProject. [(#7510)](https://github.com/prowler-cloud/prowler/pull/7510)
