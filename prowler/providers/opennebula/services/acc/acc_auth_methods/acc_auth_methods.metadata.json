@@ -1,0 +1,30 @@
+{
+    "Provider": "opennebula",
+    "CheckID": "acc_auth_methods",
+    "CheckTitle": "Checks the authentication methods.",
+    "CheckType": [],
+    "ServiceName": "Authentication and Access Control",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "Account",
+    "Description": "Checks the authentication methods used in the OpenNebula infrastructure.",
+    "Risk": "",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Just simple 'core' authentication is enable. Consider using a more root authentication method.",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "The authentication method 'core' with a simple user/password is not robust enough."
+  }

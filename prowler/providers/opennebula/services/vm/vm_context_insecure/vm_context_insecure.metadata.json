@@ -1,0 +1,31 @@
+{
+    "Provider": "opennebula",
+    "CheckID": "vm_context_insecure",
+    "CheckTitle": "Checks for OpenNebula VMs with insecure secrets in CONTEXT",
+    "CheckType": [],
+    "ServiceName": "Virtual Machine",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "VM",
+    "Description": "This check identifies OpenNebula VMs whose CONTEXT section contains sensitive information (such as passwords, tokens, or private keys) in plaintext.",
+    "Risk": "Sensitive data exposed in VM context could be retrieved by unauthorized users, leading to credential compromise or escalation attacks.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "onevm updateconf <vm_id>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Avoid embedding secrets in CONTEXT. Use encryption mechanisms like PASSWORD_BASE64 or manage secrets via secure channels.",
+        "Url": ""
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Even if Base64 encoding is used, it is not encryption and should not be treated as secure."
+  }
+  

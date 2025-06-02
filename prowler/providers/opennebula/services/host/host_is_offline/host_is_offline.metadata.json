@@ -1,0 +1,30 @@
+{
+  "Provider": "opennebula",
+  "CheckID": "host_is_offline",
+  "CheckTitle": "Checks if any OpenNebula host is offline or in an error state",
+  "CheckType": [],
+  "ServiceName": "Host",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Host",
+  "Description": "This check validates whether all OpenNebula hosts are in ONLINE state. Hosts not in state 2 (ONLINE) are flagged as offline or potentially misconfigured.",
+  "Risk": "Offline or misconfigured hosts may indicate authentication problems, infrastructure failures or management issues. These hosts might not apply firewall/security policies or participate in scheduling.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "onehost list",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify the configuration and connectivity of hosts marked as offline. Ensure the host has valid credentials and that the OpenNebula front-end can reach it.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Hosts not in ONLINE state may also fail to execute VM deployments or sync monitoring data, affecting availability."
+}
