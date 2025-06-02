@@ -112,6 +112,10 @@ class BaseTenantViewset(BaseViewSet):
         if request.auth is None:
             raise NotAuthenticated
 
+        tenant_id = request.auth.get("tenant_id")
+        if tenant_id is None:
+            raise NotAuthenticated("Tenant ID is not present in token")
+
         user_id = str(request.user.id)
         with rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
             return super().initial(request, *args, **kwargs)
