@@ -7,7 +7,7 @@ class template_has_embedded_credentials(Check):
         findings = []
         logger.info("Checking for OpenNebula templates with embedded credentials or secrets in CONTEXT...")
 
-        sensitive_keys = ["PASSWORD", "PASSWORD_BASE64", "SSH_PUBLIC_KEY", "AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID"]
+        sensitive_keys = ["PASSWORD", "PASSWORD_BASE64", "SSH_PRIVATE_KEY", "AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID"]
 
         for template in template_client.templates:
             report = Check_Report_OpenNebula(

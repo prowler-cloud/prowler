@@ -7,7 +7,7 @@ class vm_context_insecure(Check):
         findings = []
         logger.info("Checking for OpenNebula VMs with insecure secrets in CONTEXT...")
 
-        sensitive_keys = ["PASSWORD", "SSH_PRIVATE_KEY", "TOKEN", "DB_PASSWORD", "API_KEY", "SECRET_KEY"]
+        sensitive_keys = ["SSH_PRIVATE_KEY", "DB_PASSWORD", "API_KEY", "SECRET_KEY"]
 
         for vm in vm_client.vms:
             report = Check_Report_OpenNebula(
