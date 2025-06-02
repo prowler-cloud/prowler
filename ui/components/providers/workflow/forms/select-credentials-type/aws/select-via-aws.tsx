@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 
 import { Form } from "@/components/ui/form";
 
-import { RadioGroupAWSViaCredentialsForm } from "../radio-group-aws-via-credentials-form";
+import { RadioGroupAWSViaCredentialsTypeForm } from "./radio-group-aws-via-credentials-type-form";
 
 interface SelectViaAWSProps {
   initialVia?: string;
@@ -27,7 +27,7 @@ export const SelectViaAWS = ({ initialVia }: SelectViaAWSProps) => {
 
   return (
     <Form {...form}>
-      <RadioGroupAWSViaCredentialsForm
+      <RadioGroupAWSViaCredentialsTypeForm
         control={form.control}
         isInvalid={!!form.formState.errors.awsCredentialsType}
         errorMessage={form.formState.errors.awsCredentialsType?.message}
