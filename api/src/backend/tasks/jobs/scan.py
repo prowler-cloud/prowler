@@ -584,7 +584,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             description=requirement["description"],
                             passed_checks=requirement["checks_status"]["pass"],
                             failed_checks=requirement["checks_status"]["fail"],
-                            manual_checks=requirement["checks_status"]["manual"],
                             total_checks=requirement["checks_status"]["total"],
                             requirement_status=requirement["status"],
                         )

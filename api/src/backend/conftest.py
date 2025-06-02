@@ -798,7 +798,6 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_status=StatusChoices.PASS,
         passed_checks=2,
         failed_checks=0,
-        manual_checks=0,
         total_checks=2,
     )
 
@@ -814,7 +813,6 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_status=StatusChoices.PASS,
         passed_checks=2,
         failed_checks=0,
-        manual_checks=0,
         total_checks=2,
     )
 
@@ -830,7 +828,6 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_status=StatusChoices.PASS,
         passed_checks=2,
         failed_checks=0,
-        manual_checks=0,
         total_checks=2,
     )
 
@@ -846,7 +843,6 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_status=StatusChoices.FAIL,
         passed_checks=1,
         failed_checks=1,
-        manual_checks=0,
         total_checks=2,
     )
 
@@ -863,7 +859,6 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_status=StatusChoices.FAIL,
         passed_checks=0,
         failed_checks=3,
-        manual_checks=0,
         total_checks=3,
     )
 
