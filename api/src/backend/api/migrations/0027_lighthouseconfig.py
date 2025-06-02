@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": "lighthouse_config",
+                "db_table": "lighthouse_configurations",
                 "abstract": False,
                 "indexes": [
                     models.Index(fields=["name"], name="lighthouse_config_name_idx"),

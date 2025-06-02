@@ -85,7 +85,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
-    LighthouseConfig,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -2954,7 +2954,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     ordering = ["-inserted_at"]
 
     def get_queryset(self):
-        return LighthouseConfig.objects.filter(tenant_id=self.request.tenant_id)
+        return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":

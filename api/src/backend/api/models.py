@@ -3,6 +3,7 @@ import logging
 import re
 from uuid import UUID, uuid4
 
+from config.custom_logging import BackendLogger
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
@@ -50,7 +51,7 @@ fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(BackendLogger.API)
 
 
 class StatusChoices(models.TextChoices):
@@ -1337,19 +1338,18 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
         ]
 
 
-class LighthouseConfig(RowLevelSecurityProtectedModel):
+class LighthouseConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores configuration and API keys for LLM services.
     """
 
-    MODEL_CHOICES = [
-        "gpt-4o-2024-11-20",
-        "gpt-4o-2024-08-06",
-        "gpt-4o-2024-05-13",
-        "gpt-4o",
-        "gpt-4o-mini-2024-07-18",
-        "gpt-4o-mini",
-    ]
+    class ModelChoices(models.TextChoices):
+        GPT_4O_2024_11_20 = "gpt-4o-2024-11-20", _("GPT-4o v2024-11-20")
+        GPT_4O_2024_08_06 = "gpt-4o-2024-08-06", _("GPT-4o v2024-08-06")
+        GPT_4O_2024_05_13 = "gpt-4o-2024-05-13", _("GPT-4o v2024-05-13")
+        GPT_4O = "gpt-4o", _("GPT-4o Default")
+        GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
+        GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -1367,6 +1367,7 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
     )
     model = models.CharField(
         max_length=50,
+        choices=ModelChoices.choices,
         blank=False,
         null=False,
         help_text="Must be one of the supported model names",
@@ -1405,31 +1406,20 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
                 pointer="/data/attributes/max_tokens",
             )
 
-        # Validate model name
-        if self.model not in self.MODEL_CHOICES:
-            raise ModelValidationError(
-                detail=f"Model must be one of: {', '.join(self.MODEL_CHOICES)}",
-                code="invalid_model",
-                pointer="/data/attributes/model",
-            )
-
     @property
     def api_key_decoded(self):
-        """Return the decrypted API key."""
+        """Return the decrypted API key, or None if unavailable or invalid."""
         if not self.api_key:
             return None
 
         try:
-            api_key_bytes = bytes(self.api_key)
-            decrypted_key = fernet.decrypt(api_key_bytes)
+            decrypted_key = fernet.decrypt(bytes(self.api_key))
             return decrypted_key.decode()
 
         except InvalidToken:
-            logger.warning("Failed to decrypt API key: invalid token.")
-            return None
+            logger.warning("Invalid token while decrypting API key.")
         except Exception as e:
-            logger.error(f"Unexpected error while decrypting API key: {e}")
-            return None
+            logger.exception("Unexpected error while decrypting API key: %s", e)
 
     @api_key_decoded.setter
     def api_key_decoded(self, value):
@@ -1452,26 +1442,11 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
         self.api_key = fernet.encrypt(value.encode())
 
     def save(self, *args, **kwargs):
-        # Validate required fields
-        if not self.name:
-            raise ModelValidationError(
-                detail="Name is required",
-                code="missing_name",
-                pointer="/data/attributes/name",
-            )
-
-        if not self.model:
-            raise ModelValidationError(
-                detail="Model is required",
-                code="missing_model",
-                pointer="/data/attributes/model",
-            )
-
         self.full_clean()
         super().save(*args, **kwargs)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "lighthouse_config"
+        db_table = "lighthouse_configurations"
 
         constraints = [
             RowLevelSecurityConstraint(
@@ -1485,10 +1460,5 @@ class LighthouseConfig(RowLevelSecurityProtectedModel):
             ),
         ]
 
-        indexes = [
-            models.Index(fields=["name"], name="lighthouse_config_name_idx"),
-            models.Index(fields=["is_active"], name="lighthouse_config_active_idx"),
-        ]
-
     class JSONAPIMeta:
-        resource_name = "lighthouse-config"
+        resource_name = "lighthouse-configurations"

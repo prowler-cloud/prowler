@@ -21,7 +21,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
-    LighthouseConfig,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -2140,7 +2140,7 @@ class LighthouseConfigSerializer(RLSSerializer):
     api_key = serializers.CharField(required=False)
 
     class Meta:
-        model = LighthouseConfig
+        model = LighthouseConfiguration
         fields = [
             "id",
             "name",
@@ -2181,7 +2181,7 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
     api_key = serializers.CharField(write_only=True, required=True)
 
     class Meta:
-        model = LighthouseConfig
+        model = LighthouseConfiguration
         fields = [
             "name",
             "api_key",
@@ -2194,7 +2194,7 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
     def validate(self, attrs):
         tenant_id = self.context.get("request").tenant_id
-        if LighthouseConfig.objects.filter(tenant_id=tenant_id).exists():
+        if LighthouseConfiguration.objects.filter(tenant_id=tenant_id).exists():
             raise serializers.ValidationError(
                 {
                     "tenant_id": "Lighthouse configuration already exists for this tenant."
@@ -2230,7 +2230,7 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
     api_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        model = LighthouseConfig
+        model = LighthouseConfiguration
         fields = [
             "id",
             "name",
