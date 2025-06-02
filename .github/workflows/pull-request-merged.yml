@@ -18,7 +18,7 @@ jobs:
       - name: Set short git commit SHA
         id: vars
         run: |
-          shortSha=$(git rev-parse --short ${{ github.sha }})
+          shortSha=$(git rev-parse --short ${{ github.event.pull_request.merge_commit_sha }})
           echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
       - name: Trigger pull request
@@ -28,7 +28,7 @@ jobs:
           repository: ${{ secrets.CLOUD_DISPATCH }}
           event-type: prowler-pull-request-merged
           client-payload: '{
-            "PROWLER_COMMIT_SHA": "${{ github.sha }}",
+            "PROWLER_COMMIT_SHA": "${{ github.event.pull_request.merge_commit_sha }}",
             "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
             "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
             "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},

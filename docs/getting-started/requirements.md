@@ -70,7 +70,7 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 Prowler for Azure needs two types of permission scopes to be set:
 
 - **Microsoft Entra ID permissions**: used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
-    - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
 - **Subscription scope permissions**: required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
@@ -199,7 +199,7 @@ Since this is a delegated permission authentication method, necessary permission
 Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
 
 - **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
-    - `Directory.Read.All`: Required for all services.
+    - `Domain.Read.All`: Required for all services.
     - `Policy.Read.All`: Required for all services.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
