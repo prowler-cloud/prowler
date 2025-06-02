@@ -111,7 +111,7 @@ Assign the following Microsoft Graph permissions:
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 
-    ![Permission Screenshots](./img/directory-permission.png)
+    ![Permission Screenshots](./img/domain-permission.png)
 
 4. Click `Add permissions`, then grant admin consent
 
