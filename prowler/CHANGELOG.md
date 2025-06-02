@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ---
 
 ### [v5.7.2] Fixed
+
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
@@ -67,7 +68,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.6.0] (Prowler v5.6.0)
 
 ### Added
-
 - Add SOC2 compliance framework to Azure. [(#7489)](https://github.com/prowler-cloud/prowler/pull/7489)
 - Add check for unused Service Accounts in GCP. [(#7419)](https://github.com/prowler-cloud/prowler/pull/7419)
 - Add Powershell to Microsoft365. [(#7331)](https://github.com/prowler-cloud/prowler/pull/7331)
@@ -117,7 +117,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
 
 ### Fixed
-
 - Fix package name location in pyproject.toml while replicating for prowler-cloud. [(#7531)](https://github.com/prowler-cloud/prowler/pull/7531)
 - Remove cache in PyPI release action. [(#7532)](https://github.com/prowler-cloud/prowler/pull/7532)
 - Add the correct values for logger.info inside iam service. [(#7526)](https://github.com/prowler-cloud/prowler/pull/7526)
@@ -135,9 +134,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.5.1] (Prowler v5.5.1)
-
-### Fixed
+### [v5.5.1] Fixed
 
 - Add default name to contacts in Azure Defender. [(#7483)](https://github.com/prowler-cloud/prowler/pull/7483)
 - Handle projects without ID in GCP. [(#7496)](https://github.com/prowler-cloud/prowler/pull/7496)
