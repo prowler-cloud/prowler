@@ -85,6 +85,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.microsoft365.models import Microsoft365OutputOptions
+from prowler.providers.opennebula.models import OpennebulaOutputOptions
 
 
 def prowler():
@@ -268,6 +269,10 @@ def prowler():
         )
     elif provider == "microsoft365":
         output_options = Microsoft365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "opennebula":
+        output_options = OpennebulaOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
