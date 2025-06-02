@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 from django.conf import settings
+from freezegun import freeze_time
 
-from api import db_utils
 from api.db_utils import (
     _should_create_index_on_partition,
     batch_delete,
@@ -145,20 +145,7 @@ class TestBatchDelete:
 
 
 class TestShouldCreateIndexOnPartition:
-    @pytest.fixture(scope="function")
-    def fixed_datetime(self, monkeypatch):
-        """
-        Freeze now() to 2025-05-15T00:00:00Z so tests are deterministic.
-        """
-
-        class FixedDateTime(datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return cls(2025, 5, 15, 0, 0, 0, tzinfo=timezone.utc)
-
-        monkeypatch.setattr(db_utils, "datetime", FixedDateTime)
-        return FixedDateTime
-
+    @freeze_time("2025-05-15 00:00:00Z")
     @pytest.mark.parametrize(
         "partition_name, all_partitions, expected",
         [
@@ -173,15 +160,14 @@ class TestShouldCreateIndexOnPartition:
             ("findings_2025_xyz", False, True),
         ],
     )
-    def test_partition_inclusion_logic(
-        self, partition_name, all_partitions, expected, fixed_datetime
-    ):
+    def test_partition_inclusion_logic(self, partition_name, all_partitions, expected):
         assert (
             _should_create_index_on_partition(partition_name, all_partitions)
             is expected
         )
 
-    def test_invalid_date_components(self, fixed_datetime):
+    @freeze_time("2025-05-15 00:00:00Z")
+    def test_invalid_date_components(self):
         # even if regex matches but int conversion fails, we fallback True
         # (e.g. year too big, month number parse error)
         bad_name = "findings_99999_jan"
