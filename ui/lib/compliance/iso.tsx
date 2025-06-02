@@ -5,7 +5,6 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
-  FailedSection,
   Framework,
   ISO27001AttributesMetadata,
   Requirement,
@@ -161,6 +160,7 @@ export const toAccordionItems = (
             pass={category.pass}
             fail={category.fail}
             manual={category.manual}
+            isParentLevel={true}
           />
         ),
         content: "",

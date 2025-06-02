@@ -6,7 +6,6 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
   ENSAttributesMetadata,
-  FailedSection,
   Framework,
   Requirement,
   RequirementItemData,
@@ -180,6 +179,7 @@ export const toAccordionItems = (
           pass={framework.pass}
           fail={framework.fail}
           manual={framework.manual}
+          isParentLevel={true}
         />
       ),
       content: "",
