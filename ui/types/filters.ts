@@ -6,6 +6,9 @@ export interface FilterOption {
   values: string[];
   valueLabelMapping?: Array<{ [uid: string]: ProviderAccountProps }>;
   index?: number;
+  showSelectAll?: boolean;
+  defaultToSelectAll?: boolean;
+  defaultValues?: string[];
 }
 
 export interface CustomDropdownFilterProps {

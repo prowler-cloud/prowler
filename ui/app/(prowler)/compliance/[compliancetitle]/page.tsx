@@ -9,13 +9,15 @@ import {
 } from "@/actions/compliances";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { ClientAccordionWrapper } from "@/components/compliance/compliance-accordion/client-accordion-wrapper";
-import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
-import { SkeletonAccordion } from "@/components/compliance/compliance-skeleton-accordion";
-import { FailedSectionsChart } from "@/components/compliance/failed-sections-chart";
-import { FailedSectionsChartSkeleton } from "@/components/compliance/failed-sections-chart-skeleton";
-import { RequirementsChart } from "@/components/compliance/requirements-chart";
-import { RequirementsChartSkeleton } from "@/components/compliance/requirements-chart-skeleton";
+import {
+  ClientAccordionWrapper,
+  ComplianceHeader,
+  FailedSectionsChart,
+  FailedSectionsChartSkeleton,
+  RequirementsChart,
+  RequirementsChartSkeleton,
+  SkeletonAccordion,
+} from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/commons";
@@ -27,11 +29,12 @@ interface ComplianceDetailSearchParams {
   version?: string;
   scanId?: string;
   "filter[region__in]"?: string;
+  "filter[cis_profile_level]"?: string;
 }
 
 const ComplianceLogo = ({ logoPath }: { logoPath: string }) => {
   return (
-    <div className="relative ml-auto hidden h-[200px] w-[200px] flex-shrink-0 md:block">
+    <div className="relative ml-auto hidden h-[200px] w-[200px] flex-shrink-0 xl:block">
       <Image
         src={logoPath}
         alt="Compliance Logo"
@@ -52,7 +55,7 @@ const ChartsWrapper = ({
 }) => {
   return (
     <div className="mb-8 flex w-full">
-      <div className="flex flex-col items-center gap-16 lg:flex-row">
+      <div className="flex flex-col items-center gap-32 sm:flex-row">
         {children}
       </div>
       {logoPath && <ComplianceLogo logoPath={logoPath} />}
@@ -70,6 +73,7 @@ export default async function ComplianceDetail({
   const { compliancetitle } = params;
   const { complianceId, version, scanId } = searchParams;
   const regionFilter = searchParams["filter[region__in]"];
+  const cisProfileFilter = searchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
   // Create a key that includes region filter for Suspense
@@ -88,31 +92,33 @@ export default async function ComplianceDetail({
   });
 
   // Expand scans with provider information
-  const expandedScansData = await Promise.all(
-    scansData.data.map(async (scan: ScanProps) => {
-      const providerId = scan.relationships?.provider?.data?.id;
+  const expandedScansData = scansData?.data?.length
+    ? await Promise.all(
+        scansData.data.map(async (scan: ScanProps) => {
+          const providerId = scan.relationships?.provider?.data?.id;
 
-      if (!providerId) {
-        return { ...scan, providerInfo: null };
-      }
+          if (!providerId) {
+            return { ...scan, providerInfo: null };
+          }
 
-      const formData = new FormData();
-      formData.append("id", providerId);
+          const formData = new FormData();
+          formData.append("id", providerId);
 
-      const providerData = await getProvider(formData);
+          const providerData = await getProvider(formData);
 
-      return {
-        ...scan,
-        providerInfo: providerData?.data
-          ? {
-              provider: providerData.data.attributes.provider,
-              uid: providerData.data.attributes.uid,
-              alias: providerData.data.attributes.alias,
-            }
-          : null,
-      };
-    }),
-  );
+          return {
+            ...scan,
+            providerInfo: providerData?.data
+              ? {
+                  provider: providerData.data.attributes.provider,
+                  uid: providerData.data.attributes.uid,
+                  alias: providerData.data.attributes.alias,
+                }
+              : null,
+          };
+        }),
+      )
+    : [];
 
   const selectedScanId = scanId || expandedScansData[0]?.id || null;
 
@@ -131,6 +137,7 @@ export default async function ComplianceDetail({
         scans={expandedScansData}
         uniqueRegions={uniqueRegions}
         showSearch={false}
+        framework={compliancetitle}
       />
 
       <Suspense
@@ -149,6 +156,7 @@ export default async function ComplianceDetail({
           complianceId={complianceId}
           scanId={selectedScanId}
           region={regionFilter}
+          filter={cisProfileFilter}
           logoPath={logoPath}
         />
       </Suspense>
@@ -160,6 +168,7 @@ const getComplianceData = async (
   complianceId: string,
   scanId: string,
   region?: string,
+  filter?: string,
 ): Promise<Framework[]> => {
   const [attributesData, requirementsData] = await Promise.all([
     getComplianceAttributes(complianceId),
@@ -175,7 +184,11 @@ const getComplianceData = async (
 
   // Get the appropriate mapper for this framework
   const mapper = getComplianceMapper(framework);
-  const mappedData = mapper.mapComplianceData(attributesData, requirementsData);
+  const mappedData = mapper.mapComplianceData(
+    attributesData,
+    requirementsData,
+    filter,
+  );
 
   return mappedData;
 };
@@ -184,11 +197,13 @@ const SSRComplianceContent = async ({
   complianceId,
   scanId,
   region,
+  filter,
   logoPath,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
+  filter?: string;
   logoPath?: string;
 }) => {
   if (!scanId) {
@@ -203,7 +218,7 @@ const SSRComplianceContent = async ({
     );
   }
 
-  const data = await getComplianceData(complianceId, scanId, region);
+  const data = await getComplianceData(complianceId, scanId, region, filter);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc, framework) => ({
       pass: acc.pass + framework.pass,

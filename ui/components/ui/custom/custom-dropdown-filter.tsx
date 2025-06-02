@@ -42,24 +42,65 @@ export const CustomDropdownFilter = ({
   useEffect(() => {
     if (activeFilterValue.length > 0) {
       const newSelection = new Set(activeFilterValue);
-      if (newSelection.size === filterValues.length) {
+      if (
+        newSelection.size === filterValues.length &&
+        filter?.showSelectAll !== false
+      ) {
         newSelection.add("all");
       }
       setGroupSelected(newSelection);
     } else {
-      setGroupSelected(new Set());
+      // Handle default behavior when no URL params exist
+      if (filter?.defaultToSelectAll && filterValues.length > 0) {
+        const newSelection = new Set(filterValues);
+        if (filter?.showSelectAll !== false) {
+          newSelection.add("all");
+        }
+        setGroupSelected(newSelection);
+        // Notify parent with all values selected by default
+        onFilterChange?.(filter.key, filterValues);
+      } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
+        // Handle specific default values
+        const validDefaultValues = filter.defaultValues.filter((value) =>
+          filterValues.includes(value),
+        );
+        const newSelection = new Set(validDefaultValues);
+
+        // Add "all" if all items are selected and showSelectAll is not false
+        if (
+          validDefaultValues.length === filterValues.length &&
+          filter?.showSelectAll !== false
+        ) {
+          newSelection.add("all");
+        }
+
+        setGroupSelected(newSelection);
+        // Notify parent with default values
+        onFilterChange?.(filter.key, validDefaultValues);
+      } else {
+        setGroupSelected(new Set());
+      }
     }
-  }, [activeFilterValue, filterValues.length]);
+  }, [
+    activeFilterValue,
+    filterValues,
+    filter?.defaultToSelectAll,
+    filter?.defaultValues,
+    filter?.showSelectAll,
+    filter.key,
+    onFilterChange,
+  ]);
 
   const updateSelection = useCallback(
     (newValues: string[]) => {
       const actualValues = newValues.filter((key) => key !== "all");
       const newSelection = new Set(actualValues);
 
-      // Auto-add "all" if all items are selected
+      // Auto-add "all" if all items are selected and showSelectAll is not false
       if (
         actualValues.length === filterValues.length &&
-        filterValues.length > 0
+        filterValues.length > 0 &&
+        filter?.showSelectAll !== false
       ) {
         newSelection.add("all");
       }
@@ -69,7 +110,7 @@ export const CustomDropdownFilter = ({
       // Notify parent with actual values (excluding "all")
       onFilterChange?.(filter.key, actualValues);
     },
-    [filterValues.length, onFilterChange, filter.key],
+    [filterValues.length, onFilterChange, filter.key, filter?.showSelectAll],
   );
 
   const onSelectionChange = useCallback(
@@ -194,16 +235,20 @@ export const CustomDropdownFilter = ({
               onValueChange={onSelectionChange}
               className="font-bold"
             >
-              <Checkbox
-                classNames={{
-                  label: "text-small font-normal",
-                  wrapper: "checkbox-update",
-                }}
-                value="all"
-              >
-                Select All
-              </Checkbox>
-              <Divider orientation="horizontal" className="mt-2" />
+              {filter?.showSelectAll !== false && (
+                <>
+                  <Checkbox
+                    classNames={{
+                      label: "text-small font-normal",
+                      wrapper: "checkbox-update",
+                    }}
+                    value="all"
+                  >
+                    Select All
+                  </Checkbox>
+                  <Divider orientation="horizontal" className="mt-2" />
+                </>
+              )}
               <ScrollShadow
                 hideScrollBar
                 className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"

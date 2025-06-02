@@ -1,11 +1,22 @@
+import React from "react";
+
+// Import detail components
+import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
+import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
+import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
   FailedSection,
   Framework,
+  Requirement,
   RequirementsData,
 } from "@/types/compliance";
 
+import {
+  mapComplianceData as mapCISComplianceData,
+  toAccordionItems as toCISAccordionItems,
+} from "./cis";
 import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
@@ -19,12 +30,14 @@ export interface ComplianceMapper {
   mapComplianceData: (
     attributesData: AttributesData,
     requirementsData: RequirementsData,
+    filter?: string,
   ) => Framework[];
   toAccordionItems: (
     data: Framework[],
     scanId: string | undefined,
   ) => AccordionItemProps[];
   getTopFailedSections: (mappedData: Framework[]) => FailedSection[];
+  getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
 // Common function for getting top failed sections
@@ -70,11 +83,22 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     mapComplianceData: mapENSComplianceData,
     toAccordionItems: toENSAccordionItems,
     getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ENSCustomDetails, { requirement }),
   },
   ISO27001: {
     mapComplianceData: mapISOComplianceData,
     toAccordionItems: toISOAccordionItems,
     getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ISOCustomDetails, { requirement }),
+  },
+  CIS: {
+    mapComplianceData: mapCISComplianceData,
+    toAccordionItems: toCISAccordionItems,
+    getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(CISCustomDetails, { requirement }),
   },
 };
 
@@ -83,7 +107,7 @@ const defaultMapper: ComplianceMapper = complianceMappers.ENS;
 
 /**
  * Get the appropriate compliance mapper based on the framework name
- * @param framework - The framework name (e.g., "ENS", "ISO27001")
+ * @param framework - The framework name (e.g., "ENS", "ISO27001", "CIS")
  * @returns ComplianceMapper object with specific functions for the framework
  */
 export const getComplianceMapper = (framework?: string): ComplianceMapper => {
