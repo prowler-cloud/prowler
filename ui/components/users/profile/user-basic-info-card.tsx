@@ -3,7 +3,7 @@
 import { Card, CardBody, Divider } from "@nextui-org/react";
 
 import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";
-import { UserDataWithRoles } from "@/types/users/users";
+import { UserDataWithRoles } from "@/types/users";
 
 import { ProwlerShort } from "../../icons";
 

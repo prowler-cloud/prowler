@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 
-import { MembershipDetailData, TenantDetailData } from "@/types/users/users";
+import { MembershipDetailData, TenantDetailData } from "@/types/users";
 
 import { MembershipItem } from "./membership-item";
 
