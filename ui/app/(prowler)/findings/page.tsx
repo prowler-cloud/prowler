@@ -15,7 +15,6 @@ import {
   ColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import {
   createDict,
@@ -90,8 +89,8 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   return (
-    <ContentLayout title="Findings" icon="carbon:data-view-alt">
-      <FilterControls search date />
+    <>
+      <FilterControls search />
       <Spacer y={8} />
       <DataTableFilterCustom
         filters={[
@@ -127,7 +126,7 @@ export default async function Findings({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </ContentLayout>
+    </>
   );
 }
 

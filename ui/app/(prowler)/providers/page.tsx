@@ -9,7 +9,6 @@ import {
   ColumnProviders,
   SkeletonTableProviders,
 } from "@/components/providers/table";
-import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { ProviderProps, SearchParamsProps } from "@/types";
 
@@ -21,7 +20,7 @@ export default async function Providers({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
+    <>
       <FilterControls search />
       <Spacer y={8} />
       <div className="flex items-center gap-4 md:justify-end">
@@ -39,7 +38,7 @@ export default async function Providers({
           </Suspense>
         </div>
       </div>
-    </ContentLayout>
+    </>
   );
 }
 

@@ -3,7 +3,6 @@ export * from "./action-card/ActionCard";
 export * from "./alert/Alert";
 export * from "./alert-dialog/AlertDialog";
 export * from "./chart/Chart";
-export * from "./content-layout/content-layout";
 export * from "./dialog/dialog";
 export * from "./download-icon-button/download-icon-button";
 export * from "./dropdown/Dropdown";

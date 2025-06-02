@@ -10,7 +10,6 @@ import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
-import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
 
@@ -22,7 +21,7 @@ export default async function Invitations({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <ContentLayout title="Invitations" icon="ci:users">
+    <>
       <FilterControls search />
       <Spacer y={8} />
       <SendInvitationButton />
@@ -33,7 +32,7 @@ export default async function Invitations({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </ContentLayout>
+    </>
   );
 }
 
