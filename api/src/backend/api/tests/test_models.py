@@ -1,9 +1,12 @@
+import uuid
+from unittest import mock
+
 import pytest
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 
 from api.db_router import MainRouter
-from api.models import Resource, ResourceTag, SAMLConfiguration, Tenant
+from api.models import Resource, ResourceTag, SAMLConfiguration, Task, Tenant
 
 
 @pytest.mark.django_db
@@ -269,3 +272,34 @@ class TestSAMLConfigurationModel:
         errors = exc_info.value.message_dict
         assert "metadata_xml" in errors
         assert "X509Certificate" in errors["metadata_xml"][0]
+
+
+class TestTaskManager:
+    def test_get_with_retry_success(self):
+        task_id = uuid.uuid4()
+        call_counter = {"count": 0}
+
+        def side_effect(*args, **kwargs):
+            if call_counter["count"] < 2:
+                call_counter["count"] += 1
+                raise Task.DoesNotExist()
+            return Task(id=task_id)
+
+        with mock.patch.object(Task.objects, "get", side_effect=side_effect):
+            task = Task.objects.get_with_retry(
+                task_id, max_retries=5, delay_seconds=0.01
+            )
+
+        assert task.id == task_id
+        assert call_counter["count"] == 2
+
+    def test_get_with_retry_fail(self):
+        non_existent_id = uuid.uuid4()
+
+        with mock.patch.object(Task.objects, "get", side_effect=Task.DoesNotExist):
+            with pytest.raises(Task.DoesNotExist) as excinfo:
+                Task.objects.get_with_retry(
+                    non_existent_id, max_retries=3, delay_seconds=0.01
+                )
+
+        assert str(non_existent_id) in str(excinfo.value)

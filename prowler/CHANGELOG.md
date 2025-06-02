@@ -20,11 +20,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
 - Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
+- Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
+- Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
+- Fix `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity. [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
+- Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive. [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
 
 ---
 

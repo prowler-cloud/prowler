@@ -921,13 +921,23 @@ class TestProviderViewSet:
                     "alias": "GKE",
                 },
                 {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
                     "provider": "azure",
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
                 {
                     "provider": "m365",
-                    "uid": "TestingPro.onMirosoft.com",
+                    "uid": "TestingPro.onmicrosoft.com",
                     "alias": "test",
                 },
                 {

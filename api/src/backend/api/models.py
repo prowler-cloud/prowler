@@ -1,9 +1,11 @@
 import json
 import re
+import time
 import xml.etree.ElementTree as ET
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
+from config.env import env
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -247,7 +249,7 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
+            r"^[a-zA-Z0-9][a-zA-Z0-9._@:\/-]{1,250}$",
             value,
         ):
             raise ModelValidationError(
@@ -357,6 +359,42 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
         resource_name = "provider_groups-provider"
 
 
+class TaskManager(models.Manager):
+    def get_with_retry(
+        self,
+        id: str,
+        max_retries: int = None,
+        delay_seconds: float = None,
+    ):
+        """
+        Retry fetching a Task by ID in case it hasn't been created yet.
+
+        Args:
+            id (str): The Celery task ID (expected to match Task model PK).
+            max_retries (int, optional): Number of retry attempts. Defaults to env TASK_RETRY_ATTEMPTS or 5.
+            delay_seconds (float, optional): Delay between retries in seconds. Defaults to env TASK_RETRY_DELAY_SECONDS or 0.1.
+
+        Returns:
+            Task: The retrieved Task instance.
+
+        Raises:
+            Task.DoesNotExist: If the task is not found after all retries.
+        """
+        max_retries = max_retries or env.int("TASK_RETRY_ATTEMPTS", default=5)
+        delay_seconds = delay_seconds or env.float(
+            "TASK_RETRY_DELAY_SECONDS", default=0.1
+        )
+
+        for _attempt in range(max_retries):
+            try:
+                return self.get(id=id)
+            except self.model.DoesNotExist:
+                time.sleep(delay_seconds)
+        raise self.model.DoesNotExist(
+            f"Task with ID {id} not found after {max_retries} retries."
+        )
+
+
 class Task(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -368,6 +406,8 @@ class Task(RowLevelSecurityProtectedModel):
         null=True,
         blank=True,
     )
+
+    objects = TaskManager()
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "tasks"

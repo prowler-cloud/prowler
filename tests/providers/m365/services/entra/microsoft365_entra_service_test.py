@@ -68,7 +68,10 @@ async def mock_entra_get_conditional_access_policies(_):
                 ),
             ),
             grant_controls=GrantControls(
-                built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                built_in_controls=[
+                    ConditionalAccessGrantControl.BLOCK,
+                    ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+                ],
                 operator=GrantControlOperator.OR,
                 authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
             ),
@@ -211,7 +214,10 @@ class Test_Entra_Service:
                     ),
                 ),
                 grant_controls=GrantControls(
-                    built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                    built_in_controls=[
+                        ConditionalAccessGrantControl.BLOCK,
+                        ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+                    ],
                     operator=GrantControlOperator.OR,
                     authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                 ),
