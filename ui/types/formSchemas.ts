@@ -176,6 +176,35 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
         providerType: z.string(),
       });
 
+export const addCredentialsServiceAccountFormSchema = (providerType: string) =>
+  providerType === "gcp"
+    ? z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+        service_account_key: z.string().refine(
+          (val) => {
+            try {
+              const parsed = JSON.parse(val);
+              return (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                !Array.isArray(parsed)
+              );
+            } catch {
+              return false;
+            }
+          },
+          {
+            message: "Invalid JSON format. Please provide a valid JSON object.",
+          },
+        ),
+        secretName: z.string().optional(),
+      })
+    : z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+      });
+
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
   runOnce: z.boolean().default(false),

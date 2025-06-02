@@ -215,10 +215,16 @@ export type M365Credentials = {
   providerId: string;
 };
 
-export type GCPCredentials = {
+export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type GCPServiceAccountKey = {
+  service_account_key: string;
   secretName: string;
   providerId: string;
 };
@@ -232,7 +238,8 @@ export type KubernetesCredentials = {
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
-  | GCPCredentials
+  | GCPDefaultCredentials
+  | GCPServiceAccountKey
   | KubernetesCredentials
   | M365Credentials;
 
