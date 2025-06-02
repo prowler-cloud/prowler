@@ -5466,7 +5466,7 @@ class TestLighthouseConfigViewSet:
     def valid_config_payload(self):
         return {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "name": "OpenAI",
                     "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
@@ -5483,7 +5483,7 @@ class TestLighthouseConfigViewSet:
     def invalid_config_payload(self):
         return {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "name": "T",  # Too short
                     "api_key": "invalid-key",  # Invalid format
@@ -5495,13 +5495,13 @@ class TestLighthouseConfigViewSet:
         }
 
     def test_lighthouse_config_list(self, authenticated_client):
-        response = authenticated_client.get(reverse("lighthouseconfig-list"))
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"] == []
 
     def test_lighthouse_config_create(self, authenticated_client, valid_config_payload):
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=valid_config_payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5545,7 +5545,7 @@ class TestLighthouseConfigViewSet:
         payload["data"]["attributes"]["name"] = "T"  # Too short
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5561,13 +5561,15 @@ class TestLighthouseConfigViewSet:
         payload["data"]["attributes"]["api_key"] = "invalid-key"
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
-        assert any("api_key" in error["source"]["pointer"] for error in errors)
+        assert any(
+            "Invalid OpenAI API key format." in error["detail"] for error in errors
+        )
 
     def test_lighthouse_config_create_invalid_model(
         self, authenticated_client, valid_config_payload
@@ -5577,7 +5579,7 @@ class TestLighthouseConfigViewSet:
         payload["data"]["attributes"]["model"] = "invalid-model"
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5593,7 +5595,7 @@ class TestLighthouseConfigViewSet:
         payload["data"]["attributes"]["temperature"] = 2.0  # Out of range
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5609,7 +5611,7 @@ class TestLighthouseConfigViewSet:
         payload["data"]["attributes"]["max_tokens"] = -1  # Invalid value
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5621,10 +5623,10 @@ class TestLighthouseConfigViewSet:
         self, authenticated_client
     ):
         """Test that validation fails when required fields are missing"""
-        payload = {"data": {"type": "lighthouse-config", "attributes": {}}}
+        payload = {"data": {"type": "lighthouse-configuration", "attributes": {}}}
 
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5640,7 +5642,7 @@ class TestLighthouseConfigViewSet:
     ):
         # Create first config
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=valid_config_payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5648,7 +5650,7 @@ class TestLighthouseConfigViewSet:
 
         # Try to create second config for same tenant
         response = authenticated_client.post(
-            reverse("lighthouseconfig-list"),
+            reverse("lighthouseconfiguration-list"),
             data=valid_config_payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -5664,7 +5666,8 @@ class TestLighthouseConfigViewSet:
         """Test retrieving a lighthouse config"""
         response = authenticated_client.get(
             reverse(
-                "lighthouseconfig-detail", kwargs={"pk": lighthouse_config_fixture.id}
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
             )
         )
         assert response.status_code == status.HTTP_200_OK
@@ -5679,7 +5682,7 @@ class TestLighthouseConfigViewSet:
     ):
         update_payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "id": str(lighthouse_config_fixture.id),
                 "attributes": {
                     "name": "Updated Config",
@@ -5690,7 +5693,8 @@ class TestLighthouseConfigViewSet:
         }
         response = authenticated_client.patch(
             reverse(
-                "lighthouseconfig-detail", kwargs={"pk": lighthouse_config_fixture.id}
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
             ),
             data=update_payload,
             content_type=API_JSON_CONTENT_TYPE,
@@ -5706,12 +5710,12 @@ class TestLighthouseConfigViewSet:
     ):
         config_id = lighthouse_config_fixture.id
         response = authenticated_client.delete(
-            reverse("lighthouseconfig-detail", kwargs={"pk": config_id})
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         # Verify deletion
         response = authenticated_client.get(
-            reverse("lighthouseconfig-detail", kwargs={"pk": config_id})
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -5728,7 +5732,9 @@ class TestLighthouseConfigViewSet:
         mock_openai.return_value = mock_client
         # Check connection
         response = authenticated_client.get(
-            reverse("lighthouseconfig-check-connection", kwargs={"pk": config_id})
+            reverse(
+                "lighthouseconfiguration-check-connection", kwargs={"pk": config_id}
+            )
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["detail"] == "Connection successful!"
@@ -5741,7 +5747,7 @@ class TestLighthouseConfigViewSet:
         config_id = lighthouse_config_fixture.id
         expected_api_key = valid_config_payload["data"]["attributes"]["api_key"]
         response = authenticated_client.get(
-            reverse("lighthouseconfig-detail", kwargs={"pk": config_id})
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
             + "?fields[lighthouse-config]=api_key"
         )
         assert response.status_code == status.HTTP_200_OK
@@ -5752,7 +5758,7 @@ class TestLighthouseConfigViewSet:
     ):
         # Test name filter
         response = authenticated_client.get(
-            reverse("lighthouseconfig-list")
+            reverse("lighthouseconfiguration-list")
             + "?filter[name]="
             + lighthouse_config_fixture.name
         )
@@ -5760,13 +5766,13 @@ class TestLighthouseConfigViewSet:
         assert len(response.json()["data"]) == 1
         # Test model filter
         response = authenticated_client.get(
-            reverse("lighthouseconfig-list") + "?filter[model]=gpt-4o"
+            reverse("lighthouseconfiguration-list") + "?filter[model]=gpt-4o"
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         # Test is_active filter
         response = authenticated_client.get(
-            reverse("lighthouseconfig-list") + "?filter[is_active]=true"
+            reverse("lighthouseconfiguration-list") + "?filter[is_active]=true"
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
@@ -5776,13 +5782,13 @@ class TestLighthouseConfigViewSet:
     ):
         # Test sorting by name
         response = authenticated_client.get(
-            reverse("lighthouseconfig-list") + "?sort=name"
+            reverse("lighthouseconfiguration-list") + "?sort=name"
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         # Test sorting by inserted_at
         response = authenticated_client.get(
-            reverse("lighthouseconfig-list") + "?sort=-inserted_at"
+            reverse("lighthouseconfiguration-list") + "?sort=-inserted_at"
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
