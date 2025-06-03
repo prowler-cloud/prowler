@@ -81,6 +81,8 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
             <h4 className="text-muted-foreground mb-1 text-sm font-medium">
               Remediation Procedure
             </h4>
+            {/* Prettier -> "plugins": ["prettier-plugin-tailwindcss"] is not ready yet to "prose": */}
+            {/* eslint-disable-next-line */}
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{requirement.remediation_procedure}</ReactMarkdown>
             </div>
@@ -93,6 +95,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
             <h4 className="text-muted-foreground mb-1 text-sm font-medium">
               Audit Procedure
             </h4>
+            {/* eslint-disable-next-line */}
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{requirement.audit_procedure}</ReactMarkdown>
             </div>
