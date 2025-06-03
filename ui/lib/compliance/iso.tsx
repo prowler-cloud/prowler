@@ -192,12 +192,14 @@ export const toAccordionItems = (
                   <ClientAccordionContent
                     requirement={requirement}
                     scanId={scanId || ""}
+                    framework={framework.name}
+                    disableFindings={
+                      requirement.check_ids.length === 0 &&
+                      requirement.manual === 0
+                    }
                   />
                 ),
                 items: [],
-                isDisabled:
-                  requirement.check_ids.length === 0 &&
-                  requirement.manual === 0,
               };
             }),
             isDisabled:

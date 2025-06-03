@@ -18,13 +18,15 @@ import { FindingProps, FindingsResponse } from "@/types/components";
 interface ClientAccordionContentProps {
   requirement: Requirement;
   scanId: string;
-  framework?: string;
+  framework: string;
+  disableFindings?: boolean;
 }
 
 export const ClientAccordionContent = ({
   requirement,
   framework,
   scanId,
+  disableFindings = false,
 }: ClientAccordionContentProps) => {
   const [findings, setFindings] = useState<FindingsResponse | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
@@ -41,6 +43,7 @@ export const ClientAccordionContent = ({
   useEffect(() => {
     async function loadFindings() {
       if (
+        !disableFindings &&
         requirement.check_ids?.length > 0 &&
         requirement.status !== "No findings" &&
         (loadedPageRef.current !== pageNumber ||
@@ -98,6 +101,28 @@ export const ClientAccordionContent = ({
     loadFindings();
   }, [requirement, scanId, pageNumber, sort, region]);
 
+  const renderDetails = () => {
+    if (!complianceId) {
+      return null;
+    }
+
+    const mapper = getComplianceMapper(framework);
+    const detailsComponent = mapper.getDetailsComponent(requirement);
+
+    return <div className="w-full">{detailsComponent}</div>;
+  };
+
+  if (disableFindings) {
+    return (
+      <div className="w-full">
+        {renderDetails()}
+        <p className="text-sm text-gray-500">
+          This requirement has no checks; therefore, there are no findings.
+        </p>
+      </div>
+    );
+  }
+
   const checks = requirement.check_ids || [];
   const checksList = (
     <div className="mb-2 flex items-center">
@@ -140,17 +165,6 @@ export const ClientAccordionContent = ({
     }
 
     return <div>There are no findings for this regions</div>;
-  };
-
-  const renderDetails = () => {
-    if (!complianceId) {
-      return null;
-    }
-
-    const mapper = getComplianceMapper(framework);
-    const detailsComponent = mapper.getDetailsComponent(requirement);
-
-    return <div className="w-full">{detailsComponent}</div>;
   };
 
   return (
