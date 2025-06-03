@@ -7,8 +7,6 @@ class AWSENSModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -30,6 +28,8 @@ class AWSENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class AzureENSModel(BaseModel):
@@ -38,8 +38,6 @@ class AzureENSModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -61,6 +59,8 @@ class AzureENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class GCPENSModel(BaseModel):
@@ -69,8 +69,6 @@ class GCPENSModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -92,3 +90,5 @@ class GCPENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

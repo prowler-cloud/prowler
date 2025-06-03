@@ -41,8 +41,6 @@ class AWSISO27001(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AWSISO27001Model(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -60,6 +58,8 @@ class AWSISO27001(ComplianceOutput):
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                             ResourceName=finding.resource_name,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -68,8 +68,6 @@ class AWSISO27001(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSISO27001Model(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
@@ -87,5 +85,7 @@ class AWSISO27001(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

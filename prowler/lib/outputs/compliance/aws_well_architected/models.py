@@ -9,8 +9,6 @@ class AWSWellArchitectedModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -32,3 +30,5 @@ class AWSWellArchitectedModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

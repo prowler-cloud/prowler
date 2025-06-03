@@ -7,8 +7,6 @@ class AWSISO27001Model(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -26,6 +24,8 @@ class AWSISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class AzureISO27001Model(BaseModel):
@@ -34,8 +34,6 @@ class AzureISO27001Model(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -53,6 +51,8 @@ class AzureISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class GCPISO27001Model(BaseModel):
@@ -61,8 +61,6 @@ class GCPISO27001Model(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -80,6 +78,8 @@ class GCPISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class KubernetesISO27001Model(BaseModel):
@@ -88,8 +88,6 @@ class KubernetesISO27001Model(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     Context: str
     Namespace: str
@@ -107,6 +105,8 @@ class KubernetesISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class NHNISO27001Model(BaseModel):
@@ -115,8 +115,6 @@ class NHNISO27001Model(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -134,3 +132,5 @@ class NHNISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

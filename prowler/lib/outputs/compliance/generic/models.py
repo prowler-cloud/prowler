@@ -9,8 +9,6 @@ class GenericComplianceModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -28,3 +26,5 @@ class GenericComplianceModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

@@ -1,6 +1,6 @@
 {
   "Framework": "FFIEC",
-  "Name": "Federal Financial Institutions Examination Council (FFIEC) Cybersecurity Assessment Tool framework",
+  "Name": "FFIEC Cybersecurity Assessment Tool framework",
   "Version": "",
   "Provider": "AWS",
   "Description": "In light of the increasing volume and sophistication of cyber threats, the Federal Financial Institutions Examination Council (FFIEC) developed the Cybersecurity Assessment Tool (Assessment), on behalf of its members, to help institutions identify their risks and determine their cybersecurity maturity.",

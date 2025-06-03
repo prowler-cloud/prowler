@@ -41,8 +41,6 @@ class GCPMitreAttack(ComplianceOutput):
                 if requirement.Id in finding_requirements:
                     compliance_row = GCPMitreAttackModel(
                         Provider=finding.provider,
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId=finding.account_uid,
                         Location=finding.region,
@@ -74,6 +72,8 @@ class GCPMitreAttack(ComplianceOutput):
                         ResourceName=finding.resource_name,
                         CheckId=finding.check_id,
                         Muted=finding.muted,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -82,8 +82,6 @@ class GCPMitreAttack(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GCPMitreAttackModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",
@@ -115,5 +113,7 @@ class GCPMitreAttack(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

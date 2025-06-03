@@ -7,8 +7,6 @@ class AWSMitreAttackModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -30,6 +28,8 @@ class AWSMitreAttackModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class AzureMitreAttackModel(BaseModel):
@@ -38,8 +38,6 @@ class AzureMitreAttackModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     SubscriptionId: str
     AssessmentDate: str
@@ -61,6 +59,8 @@ class AzureMitreAttackModel(BaseModel):
     Muted: bool
     ResourceName: str
     Location: str
+    Framework: str
+    Name: str
 
 
 class GCPMitreAttackModel(BaseModel):
@@ -69,8 +69,6 @@ class GCPMitreAttackModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     ProjectId: str
     AssessmentDate: str
@@ -92,6 +90,8 @@ class GCPMitreAttackModel(BaseModel):
     Muted: bool
     ResourceName: str
     Location: str
+    Framework: str
+    Name: str
 
 
 # TODO: Create a parent class for the common fields of MITRE ATT&CK and have the specific classes from each provider to inherit from it.

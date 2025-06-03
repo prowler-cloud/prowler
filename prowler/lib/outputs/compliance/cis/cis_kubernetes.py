@@ -43,8 +43,6 @@ class KubernetesCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = KubernetesCISModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             Context=finding.account_name,
                             Namespace=finding.region,
@@ -69,6 +67,8 @@ class KubernetesCIS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -77,8 +77,6 @@ class KubernetesCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = KubernetesCISModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         Context="",
                         Namespace="",
@@ -103,5 +101,7 @@ class KubernetesCIS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

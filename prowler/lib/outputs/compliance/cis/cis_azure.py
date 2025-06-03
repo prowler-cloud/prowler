@@ -41,8 +41,6 @@ class AzureCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AzureCISModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             SubscriptionId=finding.account_uid,
                             Location=finding.region,
@@ -67,6 +65,8 @@ class AzureCIS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -75,8 +75,6 @@ class AzureCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AzureCISModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",
@@ -101,5 +99,7 @@ class AzureCIS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

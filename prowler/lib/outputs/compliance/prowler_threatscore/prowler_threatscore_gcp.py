@@ -43,8 +43,6 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreGCPModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
@@ -64,6 +62,8 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -72,8 +72,6 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreGCPModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",
@@ -93,5 +91,7 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

@@ -43,8 +43,6 @@ class AWSWellArchitected(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AWSWellArchitectedModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -66,6 +64,8 @@ class AWSWellArchitected(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -74,8 +74,6 @@ class AWSWellArchitected(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSWellArchitectedModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
@@ -97,5 +95,7 @@ class AWSWellArchitected(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

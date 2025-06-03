@@ -9,8 +9,6 @@ class AWSKISAISMSPModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -31,3 +29,5 @@ class AWSKISAISMSPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str

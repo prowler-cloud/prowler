@@ -43,8 +43,6 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreM365Model(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             TenantId=finding.account_uid,
                             Location=finding.region,
@@ -64,6 +62,8 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -72,8 +72,6 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreM365Model(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         TenantId="",
                         Location="",
@@ -93,5 +91,7 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

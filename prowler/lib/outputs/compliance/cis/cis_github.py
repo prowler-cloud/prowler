@@ -43,8 +43,6 @@ class GithubCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GithubCISModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             Account_Id=finding.account_uid,
                             Account_Name=finding.account_name,
@@ -68,6 +66,8 @@ class GithubCIS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -76,8 +76,6 @@ class GithubCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GithubCISModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         Account_Id="",
                         Account_Name="",
@@ -101,5 +99,7 @@ class GithubCIS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

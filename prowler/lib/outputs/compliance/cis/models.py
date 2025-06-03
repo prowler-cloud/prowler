@@ -9,8 +9,6 @@ class AWSCISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -37,6 +35,8 @@ class AWSCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class AzureCISModel(BaseModel):
@@ -45,8 +45,6 @@ class AzureCISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -71,6 +69,8 @@ class AzureCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class M365CISModel(BaseModel):
@@ -79,8 +79,6 @@ class M365CISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     TenantId: str
     Location: str
@@ -105,6 +103,8 @@ class M365CISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GCPCISModel(BaseModel):
@@ -113,8 +113,6 @@ class GCPCISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -138,6 +136,8 @@ class GCPCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class KubernetesCISModel(BaseModel):
@@ -146,8 +146,6 @@ class KubernetesCISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     Context: str
     Namespace: str
@@ -172,6 +170,8 @@ class KubernetesCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GithubCISModel(BaseModel):
@@ -180,8 +180,6 @@ class GithubCISModel(BaseModel):
     """
 
     Provider: str
-    Framework: str
-    Name: str
     Description: str
     Account_Name: str
     Account_Id: str
@@ -205,6 +203,8 @@ class GithubCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.

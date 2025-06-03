@@ -1,6 +1,6 @@
 {
   "Framework": "AWS-Account-Security-Onboarding",
-  "Name": "Amazon Web Services (AWS) Account Security Onboarding",
+  "Name": "AWS Account Security Onboarding",
   "Version": "",
   "Provider": "AWS",
   "Description": "Checklist when onboarding new AWS Accounts to existing AWS Organization.",

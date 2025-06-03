@@ -41,8 +41,6 @@ class GCPENS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GCPENSModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
@@ -68,6 +66,8 @@ class GCPENS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -76,8 +76,6 @@ class GCPENS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GCPENSModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",
@@ -103,5 +101,7 @@ class GCPENS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

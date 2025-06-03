@@ -301,7 +301,7 @@ CIS_4_0_M365 = Compliance(
 
 MITRE_ATTACK_AWS = Compliance(
     Framework="MITRE-ATTACK",
-    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
+    Name="MITRE ATT&CK compliance framework",
     Provider="AWS",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -359,7 +359,7 @@ MITRE_ATTACK_AWS = Compliance(
 
 MITRE_ATTACK_AZURE = Compliance(
     Framework="MITRE-ATTACK",
-    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
+    Name="MITRE ATT&CK compliance framework",
     Provider="Azure",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -435,7 +435,7 @@ MITRE_ATTACK_AZURE = Compliance(
 
 MITRE_ATTACK_GCP = Compliance(
     Framework="MITRE-ATTACK",
-    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
+    Name="MITRE ATT&CK compliance framework",
     Provider="GCP",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -490,7 +490,7 @@ MITRE_ATTACK_GCP = Compliance(
 
 ENS_RD2022_AWS = Compliance(
     Framework="ENS",
-    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
+    Name="ENS RD 311/2022",
     Provider="AWS",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -538,7 +538,7 @@ ENS_RD2022_AWS = Compliance(
 
 ENS_RD2022_AZURE = Compliance(
     Framework="ENS",
-    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
+    Name="ENS RD 311/2022",
     Provider="Azure",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -585,7 +585,7 @@ ENS_RD2022_AZURE = Compliance(
 )
 ENS_RD2022_GCP = Compliance(
     Framework="ENS",
-    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
+    Name="ENS RD 311/2022",
     Provider="GCP",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -642,7 +642,7 @@ NOT_PRESENT_COMPLIANCE = Compliance(
 
 AWS_WELL_ARCHITECTED = Compliance(
     Framework="AWS-Well-Architected-Framework-Security-Pillar",
-    Name="Amazon Web Services (AWS) Well-Architected Framework Security Pillar",
+    Name="AWS Well-Architected Framework Security Pillar",
     Provider="AWS",
     Version="",
     Description="Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
@@ -778,7 +778,7 @@ NIST_800_53_REVISION_4_AWS = Compliance(
 
 KISA_ISMSP_AWS = Compliance(
     Framework="KISA-ISMS-P",
-    Name="Korean Internet & Security Agency (KISA) Information Protection and Personal Information Protection Management System Certification 2023",
+    Name="KISA ISMS compliance framework 2023",
     Provider="AWS",
     Version="2023",
     Description="The ISMS-P certification, established by KISA Korea Internet & Security Agency",

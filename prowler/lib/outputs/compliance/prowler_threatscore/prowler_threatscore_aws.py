@@ -43,8 +43,6 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreAWSModel(
                             Provider=finding.provider,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -64,6 +62,8 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -72,8 +72,6 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreAWSModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
@@ -93,5 +91,7 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

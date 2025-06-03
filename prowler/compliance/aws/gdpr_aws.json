@@ -1,6 +1,6 @@
 {
   "Framework": "GDPR",
-  "Name": "General Data Protection Regulation (GDPR) framework",
+  "Name": "GDPR compliance framework",
   "Version": "",
   "Provider": "AWS",
   "Description": "The General Data Protection Regulation (GDPR) is a new European privacy law that became enforceable on May 25, 2018. The GDPR replaces the EU Data Protection Directive, also known as Directive 95/46/EC. It's intended to harmonize data protection laws throughout the European Union (EU). It does this by applying a single data protection law that's binding throughout each EU member state.",
