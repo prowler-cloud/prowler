@@ -49,6 +49,8 @@ class TestAWSISO27001:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == ISO27001_2013_AWS.Framework
+        assert output_data_manual.Name == ISO27001_2013_AWS.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Description == ISO27001_2013_AWS.Description

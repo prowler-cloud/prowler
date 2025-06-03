@@ -75,6 +75,8 @@ class TestGCPENS:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "gcp"
+        assert output_data_manual.Framework == ENS_RD2022_GCP.Framework
+        assert output_data_manual.Name == ENS_RD2022_GCP.Name
         assert output_data_manual.ProjectId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Requirements_Id == ENS_RD2022_GCP.Requirements[1].Id

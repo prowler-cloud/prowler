@@ -82,6 +82,8 @@ class TestProwlerThreatScoreGCP:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "gcp"
+        assert output_data_manual.Framework == PROWLER_THREATSCORE_GCP.Framework
+        assert output_data_manual.Name == PROWLER_THREATSCORE_GCP.Name
         assert output_data_manual.ProjectId == ""
         assert output_data_manual.Location == ""
         assert (

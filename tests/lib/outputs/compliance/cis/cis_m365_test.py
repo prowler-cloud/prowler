@@ -94,6 +94,8 @@ class TestM365CIS:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "m365"
+        assert output_data_manual.Framework == CIS_4_0_M365.Framework
+        assert output_data_manual.Name == CIS_4_0_M365.Name
         assert output_data_manual.TenantId == TENANT_ID
         assert output_data_manual.Location == LOCATION
         assert output_data_manual.Description == CIS_4_0_M365.Description

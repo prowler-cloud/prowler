@@ -87,6 +87,8 @@ class TestProwlerThreatScoreAzure:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "azure"
+        assert output_data_manual.Framework == PROWLER_THREATSCORE_AZURE.Framework
+        assert output_data_manual.Name == PROWLER_THREATSCORE_AZURE.Name
         assert output_data_manual.SubscriptionId == ""
         assert output_data_manual.Location == ""
         assert (

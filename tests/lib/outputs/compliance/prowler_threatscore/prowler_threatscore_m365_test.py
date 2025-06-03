@@ -84,6 +84,8 @@ class TestProwlerThreatScoreM365:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "m365"
+        assert output_data_manual.Framework == PROWLER_THREATSCORE_M365.Framework
+        assert output_data_manual.Name == PROWLER_THREATSCORE_M365.Name
         assert output_data_manual.TenantId == ""
         assert output_data_manual.Location == ""
         assert (

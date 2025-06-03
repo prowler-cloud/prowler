@@ -70,6 +70,8 @@ class TestAWSENS:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == ENS_RD2022_AWS.Framework
+        assert output_data_manual.Name == ENS_RD2022_AWS.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Requirements_Id == ENS_RD2022_AWS.Requirements[1].Id

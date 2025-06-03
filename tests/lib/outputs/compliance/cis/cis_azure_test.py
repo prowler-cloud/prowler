@@ -97,6 +97,8 @@ class TestAzureCIS:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "azure"
+        assert output_data_manual.Framework == CIS_2_0_AZURE.Framework
+        assert output_data_manual.Name == CIS_2_0_AZURE.Name
         assert output_data_manual.SubscriptionId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Description == CIS_2_0_AZURE.Description

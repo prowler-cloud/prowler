@@ -82,6 +82,8 @@ class TestAzureMITREAttack:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "azure"
+        assert output_data_manual.Framework == MITRE_ATTACK_AZURE.Framework
+        assert output_data_manual.Name == MITRE_ATTACK_AZURE.Name
         assert output_data_manual.SubscriptionId == ""
         assert output_data_manual.Location == ""
         assert (

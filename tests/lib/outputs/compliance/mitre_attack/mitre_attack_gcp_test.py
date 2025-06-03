@@ -76,6 +76,8 @@ class TestGCPMITREAttack:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "gcp"
+        assert output_data_manual.Framework == MITRE_ATTACK_GCP.Framework
+        assert output_data_manual.Name == MITRE_ATTACK_GCP.Name
         assert output_data_manual.ProjectId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Requirements_Id == MITRE_ATTACK_GCP.Requirements[1].Id

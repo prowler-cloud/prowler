@@ -76,6 +76,8 @@ class TestProwlerThreatScoreAWS:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == PROWLER_THREATSCORE_AWS.Framework
+        assert output_data_manual.Name == PROWLER_THREATSCORE_AWS.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert (

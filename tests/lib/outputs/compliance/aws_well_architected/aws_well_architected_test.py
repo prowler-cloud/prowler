@@ -91,6 +91,8 @@ class TestAWSWellArchitected:
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == AWS_WELL_ARCHITECTED.Framework
+        assert output_data_manual.Name == AWS_WELL_ARCHITECTED.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert (
