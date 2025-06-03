@@ -47,6 +47,8 @@ class BaseViewSet(ModelViewSet):
 
 class BaseRLSViewSet(BaseViewSet):
     def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
         # Ideally, this logic would be in the `.setup()` method but DRF view sets don't call it
         # https://docs.djangoproject.com/en/5.1/ref/class-based-views/base/#django.views.generic.base.View.setup
         if request.auth is None:
@@ -60,8 +62,6 @@ class BaseRLSViewSet(BaseViewSet):
 
         self._rls_cm = rls_transaction(tenant_id)
         self._rls_cm.__enter__()
-
-        super().initial(request, *args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
@@ -115,6 +115,8 @@ class BaseTenantViewset(BaseViewSet):
                 pass  # Tenant might not exist, handle gracefully
 
     def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
         if request.auth is None:
             raise NotAuthenticated
 
@@ -126,8 +128,6 @@ class BaseTenantViewset(BaseViewSet):
 
         self._rls_cm = rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR)
         self._rls_cm.__enter__()
-
-        super().initial(request, *args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
@@ -141,9 +141,11 @@ class BaseTenantViewset(BaseViewSet):
 
 class BaseUserViewset(BaseViewSet):
     def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
         # TODO refactor after improving RLS on users
         if request.stream is not None and request.stream.method == "POST":
-            return super().initial(request, *args, **kwargs)
+            return
         if request.auth is None:
             raise NotAuthenticated
 
@@ -155,8 +157,6 @@ class BaseUserViewset(BaseViewSet):
 
         self._rls_cm = rls_transaction(tenant_id)
         self._rls_cm.__enter__()
-
-        super().initial(request, *args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
