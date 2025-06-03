@@ -99,7 +99,7 @@ export const ClientAccordionContent = ({
     }
 
     loadFindings();
-  }, [requirement, scanId, pageNumber, sort, region]);
+  }, [requirement, scanId, pageNumber, sort, region, disableFindings]);
 
   const renderDetails = () => {
     if (!complianceId) {

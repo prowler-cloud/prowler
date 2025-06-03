@@ -10,10 +10,10 @@ import {
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
-  ClientAccordionWrapper,
-  ComplianceHeader,
   BarChart,
   BarChartSkeleton,
+  ClientAccordionWrapper,
+  ComplianceHeader,
   HeatmapChart,
   HeatmapChartSkeleton,
   PieChart,

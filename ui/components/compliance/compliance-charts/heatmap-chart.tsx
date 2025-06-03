@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useTheme } from "next-themes";
+import { useState } from "react";
+
 import { CategoryData, RegionData } from "@/types/compliance";
 
 interface HeatmapChartProps {
@@ -31,17 +32,10 @@ const capitalizeFirstLetter = (text: string): string => {
   );
 };
 
-const getTitle = (isRegionFiltered: boolean, regionName?: string) => (
-  <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-    {isRegionFiltered ? "Categories Failure Rate" : "Failure Rate by Region"}
-  </h3>
-);
-
 export const HeatmapChart = ({
   regions,
   categories = [],
   isRegionFiltered = false,
-  filteredRegionName,
 }: HeatmapChartProps) => {
   const { theme } = useTheme();
   const [hoveredItem, setHoveredItem] = useState<
@@ -64,7 +58,11 @@ export const HeatmapChart = ({
 
     return (
       <div className="flex w-[400px] flex-col items-center justify-between lg:w-[400px]">
-        {getTitle(isRegionFiltered, filteredRegionName)}
+        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+          {isRegionFiltered
+            ? "Categories Failure Rate"
+            : "Failure Rate by Region"}
+        </h3>
         <div className="flex h-[320px] w-full items-center justify-center">
           <p className="text-sm text-gray-500">{noDataMessage}</p>
         </div>
@@ -90,12 +88,18 @@ export const HeatmapChart = ({
 
   return (
     <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
-      <div>{getTitle(isRegionFiltered, filteredRegionName)}</div>
+      <div>
+        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+          {isRegionFiltered
+            ? "Categories Failure Rate"
+            : "Failure Rate by Region"}
+        </h3>
+      </div>
 
       <div className="h-full w-full p-4">
         {/* 3x3 Grid */}
         <div className="grid h-full w-full grid-cols-3 gap-1">
-          {heatmapData.map((item, index) => (
+          {heatmapData.map((item) => (
             <div
               key={item.name}
               className="flex items-center justify-center rounded border"
