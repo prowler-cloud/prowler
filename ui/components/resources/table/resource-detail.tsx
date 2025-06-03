@@ -78,22 +78,24 @@ export const ResourceDetail = ({
               </span>
             </Snippet>
           </InfoField>
-          <EntityInfoShort
-            cloudProvider={
-              resourceData.relationships.provider.data.attributes.provider as
+          <div className="flex w-full items-end justify-between space-x-2">
+            <EntityInfoShort
+              cloudProvider={
+                resourceData.relationships.provider.data.attributes.provider as
                 | "aws"
                 | "azure"
                 | "gcp"
                 | "kubernetes"
-            }
-            entityAlias={
-              resourceData.relationships.provider.data.attributes
-                .alias as string
-            }
-            entityId={
-              resourceData.relationships.provider.data.attributes.uid as string
-            }
-          />
+              }
+              entityAlias={
+                resourceData.relationships.provider.data.attributes
+                  .alias as string
+              }
+              entityId={
+                resourceData.relationships.provider.data.attributes.uid as string
+              }
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
