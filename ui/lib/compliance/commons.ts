@@ -1,3 +1,5 @@
+import React from "react";
+
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
@@ -11,7 +13,6 @@ import {
   Requirement,
   RequirementsData,
 } from "@/types/compliance";
-import React from "react";
 
 import {
   mapComplianceData as mapCISComplianceData,
