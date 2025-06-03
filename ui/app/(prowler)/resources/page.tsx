@@ -40,8 +40,10 @@ export default async function Resources({
 
     if (scansData?.data?.length !== 0) {
       const latestScandate = scansData.data?.[0]?.attributes?.inserted_at;
-      const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
-      filters["filter[updated_at]"] = formattedDate;
+      if (latestScandate) {
+        const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
+        filters["filter[updated_at]"] = formattedDate;
+      }
     }
   }
 
