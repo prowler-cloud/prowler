@@ -18,6 +18,9 @@ export interface FilterOption {
     };
   }>;
   index?: number;
+  showSelectAll?: boolean;
+  defaultToSelectAll?: boolean;
+  defaultValues?: string[];
 }
 
 export interface CustomDropdownFilterProps {

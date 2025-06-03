@@ -1,12 +1,13 @@
-import { Suspense, use } from "react";
+import { ReactNode, Suspense, use } from "react";
 
 import { getUserInfo } from "@/actions/users/users";
 
 import { Navbar } from "../nav-bar/navbar";
 import { SkeletonContentLayout } from "./skeleton-content-layout";
+
 interface ContentLayoutProps {
   title: string;
-  icon: string;
+  icon: string | ReactNode;
   children: React.ReactNode;
 }
 

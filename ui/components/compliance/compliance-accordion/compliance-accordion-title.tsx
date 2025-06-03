@@ -5,6 +5,7 @@ interface ComplianceAccordionTitleProps {
   pass: number;
   fail: number;
   manual?: number;
+  isParentLevel?: boolean;
 }
 
 export const ComplianceAccordionTitle = ({
@@ -12,6 +13,7 @@ export const ComplianceAccordionTitle = ({
   pass,
   fail,
   manual = 0,
+  isParentLevel = false,
 }: ComplianceAccordionTitleProps) => {
   const total = pass + fail + manual;
   const passPercentage = (pass / total) * 100;
@@ -30,7 +32,7 @@ export const ComplianceAccordionTitle = ({
       </div>
       <div className="mr-4 flex items-center gap-2">
         <div className="hidden lg:block">
-          {total > 0 && (
+          {total > 0 && isParentLevel && (
             <span className="whitespace-nowrap text-xs font-medium text-gray-600">
               Requirements:
             </span>

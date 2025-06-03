@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@nextui-org/react";
 
-export const FailedSectionsChartSkeleton = () => {
+export const BarChartSkeleton = () => {
   return (
     <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
       {/* Title skeleton */}
