@@ -164,6 +164,7 @@ class App(AzureService):
                                     ftps_state=getattr(
                                         function_config, "ftps_state", None
                                     ),
+                                    resource_group_name=function.resource_group,
                                 )
                             }
                         )
@@ -275,3 +276,4 @@ class FunctionApp:
     public_access: bool
     vnet_subnet_id: str
     ftps_state: Optional[str]
+    resource_group_name: str

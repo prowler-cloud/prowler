@@ -1,5 +1,7 @@
 from typing import Optional
 
+from azure.mgmt.web.models import SiteConfigResource
+
 from prowler.lib.check.models import Check_Report_Azure
 from prowler.providers.azure.lib.fix.fixer import AzureFixer
 from prowler.providers.azure.services.app.app_client import app_client
@@ -31,10 +33,14 @@ class AppFunctionFtpsDeploymentDisabledFixer(AzureFixer):
             bool: True if FTP/FTPS is disabled, False otherwise
         """
         try:
-            # Get region and resource_id either from finding or kwargs
+            # First call parent fix method to handle common Azure fix operations
+            if not super().fix(finding, **kwargs):
+                return False
+
+            # Get values either from finding or kwargs
             if finding:
-                resource_group = finding.resource.resource_group_name
-                app_name = finding.resource_id
+                resource_group = finding.resource.get("resource_group_name")
+                app_name = finding.resource_name
                 suscription_name = finding.subscription
             else:
                 resource_group = kwargs.get("resource_group")
@@ -46,21 +52,17 @@ class AppFunctionFtpsDeploymentDisabledFixer(AzureFixer):
                     "Resource group, app name and subscription name are required"
                 )
 
-            # Call parent fix method to handle common Azure fix operations
-            super().fix(
-                resource_group=resource_group,
-                app_name=app_name,
-                suscription_name=suscription_name,
-            )
-
             # Get the Azure client for this subscription
             client = app_client.clients[suscription_name]
+
+            # Create the SiteConfigResource object
+            site_config = SiteConfigResource(ftps_state="Disabled")
 
             # Update the function configuration to disable FTP/FTPS
             client.web_apps.update_configuration(
                 resource_group_name=resource_group,
                 name=app_name,
-                site_config={"ftps_state": "Disabled"},
+                site_config=site_config,
             )
 
             return True
