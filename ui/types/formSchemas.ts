@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ProviderType } from "./providers";
+
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
@@ -176,7 +178,9 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
         providerType: z.string(),
       });
 
-export const addCredentialsServiceAccountFormSchema = (providerType: string) =>
+export const addCredentialsServiceAccountFormSchema = (
+  providerType: ProviderType,
+) =>
   providerType === "gcp"
     ? z.object({
         providerId: z.string(),
