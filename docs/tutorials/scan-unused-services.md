@@ -1,91 +1,109 @@
-# Scan Unused Services
+# Scanning Unused Services
 
 ???+ note
-    Currently only available on the AWS provider.
+    This feature is currently available only for the AWS provider.
 
-By default, Prowler only scans the cloud services that are used (where resources are created) to reduce the number of findings in Prowler's reports. If you want Prowler to also scan unused services, you can use the following command:
+By default, Prowler scans only actively used cloud services (services with resources deployed). This reduces unnecessary findings in reports. To include unused services in the scan, use the following command:
 
 ```console
 prowler <provider> --scan-unused-services
 ```
 
-## Services that are ignored
-### AWS
-#### ACM
-You can have certificates in ACM that are not in use by any AWS resource.
-Prowler will check if every certificate is going to expire soon, if this certificate is not in use by default it is not going to be check if it is expired, is going to expire soon or it is good.
+## Services Ignored
 
-- `acm_certificates_expiration_check`
+### AWS
+
+#### ACM (AWS Certificate Manager)
+
+Certificates stored in ACM without active usage in AWS resources are excluded. By default, Prowler only scans actively used certificates. Unused certificates will not be checked if they are expired, if their expiring date is near or if they are good.
+
+    - `acm_certificates_expiration_check`
 
 #### Athena
-When you create an AWS Account, Athena will create a default primary workgroup for you.
-Prowler will check if that workgroup is enabled and if it is being used by checking if there were queries in the last 45 days.
-If not, the findings of the following checks will not appear:
 
-  - `athena_workgroup_encryption`
-  - `athena_workgroup_enforce_configuration`
+Upon AWS account creation, Athena provisions a default primary workgroup for the user. Prowler verifies if this workgroup is enabled and used by checking for queries within the last 45 days. If Athena is unused, findings related to its checks will not appear.
 
-#### CloudTrail
-AWS CloudTrail should have at least one trail with a data event to record all S3 object-level API operations, Prowler will check first if there are S3 buckets in your account before alerting this issue.
+    - `athena_workgroup_encryption`
+    - `athena_workgroup_enforce_configuration`
 
-  - `cloudtrail_s3_dataevents_read_enabled`
-  - `cloudtrail_s3_dataevents_write_enabled`
+#### AWS CloudTrail
 
-#### EC2
-If EBS default encyption is not enabled, sensitive information at rest is not protected in EC2. But Prowler will only create a finding if there are EBS Volumes where this default configuration could be enforced by default.
+AWS CloudTrail should have at least one trail with a data event to record all S3 object-level API operations. Before flagging this issue, Prowler verifies if S3 buckets exist in the account.
 
-  - `ec2_ebs_default_encryption`
+    - `cloudtrail_s3_dataevents_read_enabled`
+    - `cloudtrail_s3_dataevents_write_enabled`
 
-If your Security groups are not properly configured the attack surface is increased, nonetheless, Prowler will detect those security groups that are being used (they are attached) to only notify those that are being used. This logic applies to the 15 checks related to open ports in security groups, the check for the default security group and for the security groups that allow ingress and egress traffic.
+#### AWS Elastic Compute Cloud (EC2)
 
-  - `ec2_securitygroup_allow_ingress_from_internet_to_port_X` (15 checks)
-  - `ec2_securitygroup_default_restrict_traffic`
-  - `ec2_securitygroup_allow_wide_open_public_ipv4`
+If Amazon Elastic Block Store (EBS) default encyption is not enabled, sensitive data at rest will remain unprotected in EC2. However, Prowler will only generate a finding if EBS volumes exist where default encryption could be enforced.
 
-Prowler will also check for used Network ACLs to only alerts those with open ports that are being used.
+    - `ec2_ebs_default_encryption`
 
-  - `ec2_networkacl_allow_ingress_X_port` (3 checks)
+\*Security Groups\*: Misconfigured security groups increase the attack surface.
 
+Prowler scans only attached security groups to report vulnerabilities in actively used configurations. Applies to:
 
-#### Glue
-It is a best practice to encrypt both metadata and connection passwords in AWS Glue Data Catalogs, however, Prowler will detect if the service is in use by checking if there are any Data Catalog tables.
+\- 15 security group-related checks, including open ports and ingress/egress traffic rules.
 
-  - `glue_data_catalogs_connection_passwords_encryption_enabled`
-  - `glue_data_catalogs_metadata_encryption_enabled`
+    - `ec2_securitygroup_allow_ingress_from_internet_to_port_X`
+    - `ec2_securitygroup_default_restrict_traffic`
+    - `ec2_securitygroup_allow_wide_open_public_ipv4`
 
-#### Inspector
-Amazon Inspector is a vulnerability discovery service that automates continuous scanning for security vulnerabilities within your Amazon EC2, Amazon ECR, and AWS Lambda environments. Prowler recommends to enable it and resolve all the Inspector's findings. Ignoring the unused services, Prowler will only notify you if there are any Lambda functions, EC2 instances or ECR repositories in the region where Amazon inspector should be enabled.
+\- 3 network ACL-related checks, ensuring only active ACLs with open ports are flagged.
 
-  - `inspector2_is_enabled`
+    - `ec2_networkacl_allow_ingress_X_port`
 
-#### Macie
-Amazon Macie is a security service that uses machine learning to automatically discover, classify and protect sensitive data in S3 buckets. Prowler will only create a finding when Macie is not enabled if there are S3 buckets in your account.
+#### AWS Glue
 
-  - `macie_is_enabled`
+AWS Glue best practices recommend encrypting metadata and connection passwords in Data Catalogs.
+
+Prowler verifies service usage by checking for existing Data Catalog tables before applying findings.
+
+    - `glue_data_catalogs_connection_passwords_encryption_enabled`
+    - `glue_data_catalogs_metadata_encryption_enabled`
+
+#### Amazon Inspector
+
+Amazon Inspector is a vulnerability discovery service that automates continuous security scans for Amazon EC2, Amazon ECR, and AWS Lambda environments. Prowler recommends enabling Amazon Inspector and addressing all findings. By default, Prowler only triggers alerts if there are Lambda functions, EC2 instances, or ECR repositories in the region where Amazon Inspector should be enabled.
+
+    - `inspector2_is_enabled`
+
+#### Amazon Macie
+
+Amazon Macie leverages machine learning to automatically discover, classify, and protect sensitive data in S3 buckets. Prowler only generates findings if Macie is disabled and there are S3 buckets in the AWS account.
+
+    - `macie_is_enabled`
 
 #### Network Firewall
-Without a network firewall, it can be difficult to monitor and control traffic within the VPC. However, Prowler will only alert you for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
 
-  - `networkfirewall_in_all_vpc`
+A network firewall is essential for monitoring and controlling traffic within a Virtual Private Cloud (VPC). Prowler only alerts for VPCs in use, specifically those containing ENIs (Elastic Network Interfaces).
 
-#### S3
-You should enable Public Access Block at the account level to prevent the exposure of your data stored in S3. Prowler though will only check this block configuration if you have S3 buckets in your AWS account.
+    - `networkfirewall_in_all_vpc`
 
-  - `s3_account_level_public_access_blocks`
+#### Amazon S3
 
-#### VPC
-VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows. Nevertheless, Prowler will only check if the Flow Logs are enabled for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+To prevent unintended data exposure:
 
-  - `vpc_flow_logs_enabled`
+Public Access Block should be enabled at the account level. Prowler only checks this setting if S3 buckets exist in the account.
 
-VPC subnets must not have public IP addresses by default to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+    - `s3_account_level_public_access_blocks`
 
-  - `vpc_subnet_no_public_ip_by_default`
+#### Virtual Private Cloud (VPC)
 
-VPCs should have separate private and public subnets to prevent the exposure of your resources to the internet. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+VPC settings directly impact network security and availability.
 
-  - `vpc_subnet_separate_private_public`
+\- VPC Flow Logs: Provide visibility into network traffic for security monitoring. Prowler only checks if Flow Logs are enabled for VPCs in use, i.e., those with active ENIs.
 
-VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler will only check this configuration for those VPCs that are in use, in other words, only the VPCs where you have ENIs (network interfaces).
+    - `vpc_flow_logs_enabled`
 
-  - `vpc_subnet_different_az`
+\- VPC Subnet Public IP Restrictions: Prevent unintended exposure of resources to the internet. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+
+    - `vpc_subnet_no_public_ip_by_default`
+
+\- Separate Private and Public Subnets: Best practice to avoid exposure risks. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+
+    - `vpc_subnet_separate_private_public`
+
+\- Multi-AZ Subnet Distribution: VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+
+    - `vpc_subnet_different_az`

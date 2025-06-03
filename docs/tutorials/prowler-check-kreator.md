@@ -1,15 +1,13 @@
-
 # Prowler Check Kreator
 
-???+ note
-    Currently, this tool is only available for creating checks for the AWS provider.
+???+ note Currently, this tool is only available for creating checks for the AWS provider.
 
 **Prowler Check Kreator** is a utility designed to streamline the creation of new checks for Prowler. This tool generates all necessary files required to add a new check to the Prowler repository. Specifically, it creates:
 
-- A dedicated folder for the check.
-- The main check script.
-- A metadata file with essential details.
-- A folder and file structure for testing the check.
+    - A dedicated folder for the check.
+    - The main check script.
+    - A metadata file with essential details.
+    - A folder and file structure for testing the check.
 
 ## Usage
 
@@ -18,6 +16,7 @@ To use the tool, execute the main script with the following command:
 ```bash
 python util/prowler_check_kreator/prowler_check_kreator.py <prowler_provider> <check_name>
 ```
+
 Parameters:
 
 - `<prowler_provider>`: Currently only AWS is supported.

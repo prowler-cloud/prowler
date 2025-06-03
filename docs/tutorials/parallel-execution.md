@@ -76,9 +76,9 @@ prowler aws --list-services | ForEach-Object {
 
 Make any modifications for services you would like to skip scanning by modifying this file.
 
-Then create a new PowerShell script file `parallel-prowler.ps1` and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
+Then create a new PowerShell script file `parallel-prowler.ps1` and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run Prowler with.
 
-Change any parameters you would like when calling prowler in the `Start-Job -ScriptBlock` section. Note that you need to keep the `--only-logs` parameter, else some encoding issue occurs when trying to render the progress-bar and prowler won't successfully execute.
+Change any parameters you would like when calling Prowler in the `Start-Job -ScriptBlock` section. Note that you need to keep the `--only-logs` parameter, else some encoding issue occurs when trying to render the progress-bar and Prowler won't successfully execute.
 
 ```powershell
 $profile = "your_profile"
@@ -183,6 +183,6 @@ $combinedCsv | Export-Csv -Path "CombinedCSV.csv" -NoTypeInformation
 
 Some services need to instantiate another service to perform a check. For instance, `cloudwatch` will instantiate Prowler's `iam` service to perform the `cloudwatch_cross_account_sharing_disabled` check. When the `iam` service is instantiated, it will perform the `__init__` function, and pull all the information required for that service. This provides an opportunity for an improvement in the above script to group related services together so that the `iam` services (or any other cross-service references) isn't repeatedily instantiated by grouping dependant services together. A complete mapping between these services still needs to be further investigated, but these are the cross-references that have been noted:
 
-* inspector2 needs lambda and ec2
-* cloudwatch needs iam
-* dlm needs ec2
+    * inspector2 needs lambda and ec2
+    * cloudwatch needs iam
+    * dlm needs ec2

@@ -1,14 +1,14 @@
-# Use non default Azure regions
+# Using Non-Default Azure Regions
 
-Microsoft provides clouds for compliance with regional laws, which are available for your use.
-By default, Prowler uses `AzureCloud` cloud which is the comercial one. (you can list all the available with `az cloud list --output table`).
+Microsoft offers cloud environments that comply with regional regulations. These clouds are available for use based on your requirements. By default, Prowler utilizes the commercial `AzureCloud` environment. (To list all available Azure clouds, use `az cloud list --output table`).
 
-At the time of writing this documentation the available Azure Clouds from different regions are the following:
-- AzureCloud
-- AzureChinaCloud
-- AzureUSGovernment
+As of this documentation's publication, the following Azure clouds are available:
 
-If you want to change the default one you must include the flag `--azure-region`, i.e.:
+    - AzureCloud
+    - AzureChinaCloud
+    - AzureUSGovernment
+
+To change the default cloud, include the flag `--azure-region`. For example:
 
 ```console
 prowler azure --az-cli-auth --azure-region AzureChinaCloud

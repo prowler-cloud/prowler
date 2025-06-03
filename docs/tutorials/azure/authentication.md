@@ -1,27 +1,28 @@
-# Azure authentication
+# Azure Authentication in Prowler
 
-By default Prowler uses Azure Python SDK identity package authentication methods using the classes `DefaultAzureCredential` and `InteractiveBrowserCredential`.
-This allows Prowler to authenticate against azure using the following methods:
+By default, Prowler utilizes the Azure Python SDK identity package for authentication, leveraging the classes `DefaultAzureCredential` and `InteractiveBrowserCredential`. This enables authentication against Azure using the following approaches:
 
-- Service principal authentication by environment variables (Enterprise Application)
-- Current AZ CLI credentials stored
-- Interactive browser authentication
-- Managed identity authentication
+    - Service principal authentication via environment variables (Enterprise Application)
+    - Currently stored AZ CLI credentials
+    - Interactive browser authentication
+    - Managed identity authentication
 
-To launch the tool it is required to specify which method is used through the following flags:
+Before launching the tool, specify the desired method using the following flags:
 
 ```console
-# To use service principal authentication
+# Service principal authentication:
 prowler azure --sp-env-auth
 
-# To use az cli authentication
+# AZ CLI authentication
 prowler azure --az-cli-auth
 
-# To use browser authentication
+# Browser authentication
 prowler azure --browser-auth --tenant-id "XXXXXXXX"
 
-# To use managed identity auth
+# Managed identity authentication
 prowler azure --managed-identity-auth
 ```
 
-To use Prowler you need to set up also the permissions required to access your resources in your Azure account, to more details refer to [Requirements](../../getting-started/requirements.md)
+## Permission Configuration
+
+To ensure Prowler can access the required resources within your Azure account, proper permissions must be configured. Refer to the [Requirements](../../getting-started/requirements.md) section for details on setting up necessary privileges.

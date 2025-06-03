@@ -1,7 +1,14 @@
 # Mutelisting
-Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Mutelist option works along with other options and will modify the output in the following way if the finding is muted:
+Muting Findings for Intentional Configurations
+In some cases, certain AWS resources may be intentionally configured in a way that deviates from security best practices but serves a valid use case. Examples include:
+
+An AWS S3 bucket open to the Internet, used for hosting a public website.
+
+An AWS security group with an open port necessary for a specific application.
+
+Mutelist Option Behavior
+The Mutelist option works in combination with other filtering mechanisms and modifies the output in the following way when a finding is muted:
 
 - JSON-OCSF: `status_id` is `Suppressed`.
 - CSV: `muted` is `True`. The field `status` will keep the original status, `MANUAL`, `PASS` or `FAIL`, of the finding.
@@ -14,14 +21,15 @@ The **Mutelist** uses both "AND" and "OR" logic to determine which resources, ch
 If any of the criteria do not match, the check is not muted.
 
 ???+ note
-    Remember that mutelist can be used with regular expressions.
+  Remember that mutelist can be used with regular expressions.
+
 
 ## Mutelist Specification
 
 ???+ note
-    - For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
-    - For GCP provider, the Account ID is the Project ID and the Region is the Zone.
-    - For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
+- For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+- For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+- For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
 The Mutelist file uses the [YAML](https://en.wikipedia.org/wiki/YAML) format with the following syntax:
 
@@ -131,19 +139,22 @@ Mutelist:
             - "test-resource" # Will mute the resource "test-resource" in all accounts and regions for whatever check from the EC2 service
 ```
 
+
 ### Account, Check, Region, Resource, and Tag
 
-| Field | Description | Logic |
-|----------|----------|----------|
-| `account_id`    | Use `*` to apply the mutelist to all accounts.    | `ANDed`    |
-| `check_name`    | The name of the Prowler check. Use `*` to apply the mutelist to all checks, or `service_*` to apply it to all service's checks.    | `ANDed`    |
-| `region`    | The region identifier. Use `*` to apply the mutelist to all regions.    | `ANDed`    |
-| `resource`    | The resource identifier. Use `*` to apply the mutelist to all resources.    | `ANDed`    |
-| `tag`    | The tag value.    | `ORed`    |
+| Field| Description| Logic
+|----------|----------|----------
+| `account_id`| Use `*` to apply the mutelist to all accounts.| `ANDed`
+| `check_name`| The name of the Prowler check. Use `*` to apply the mutelist to all checks, or `service_*` to apply it to all service's checks.| `ANDed`
+| `region`| The region identifier. Use `*` to apply the mutelist to all regions.| `ANDed`
+| `resource`| The resource identifier. Use `*` to apply the mutelist to all resources.| `ANDed`
+| `tag`| The tag value.| `ORed`
+
 
 ### Description
 
 This field can be used to add information or some hints for the Mutelist rule.
+
 
 ## How to Use the Mutelist
 
@@ -155,6 +166,7 @@ prowler <provider> -w mutelist.yaml
 
 Replace `<provider>` with the appropriate provider name.
 
+
 ## Considerations
 
 - The Mutelist can be used in combination with other Prowler options, such as the `--service` or `--checks` option, to further customize the scanning process.
@@ -162,7 +174,9 @@ Replace `<provider>` with the appropriate provider name.
 
 
 ## AWS Mutelist
-### Mute specific AWS regions
+
+### Muting specific AWS regions
+
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
     Mutelist:
@@ -177,21 +191,28 @@ If you want to mute failed findings only in specific regions, create a file with
               - "*"
             Description: "Description related with the muted findings for the check"
 
+
 ### Default Mutelist
-For the AWS Provider, Prowler is executed with a default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone that can be found in [AWS Documentation](https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html).
-You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_mutelist.yaml).
+
+For the AWS Provider, Prowler is executed with a default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone that can be found in [AWS Documentation](https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html). You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_mutelist.yaml).
+
 
 ### Supported Mutelist Locations
 
 The mutelisting flag supports the following AWS locations when using the AWS Provider:
 
+
 #### AWS S3 URI
+
 You will need to pass the S3 URI where your Mutelist YAML file was uploaded to your bucket:
+
 ```
 prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ```
+
 ???+ note
-    Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
+  Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
+
 
 #### AWS DynamoDB Table ARN
 
@@ -201,23 +222,27 @@ You will need to pass the DynamoDB Mutelist Table ARN:
 prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 ```
 
-1. The DynamoDB Table must have the following String keys:
-<img src="../img/mutelist-keys.png"/>
+The DynamoDB Table must have the following String keys: <img src="../img/mutelist-keys.png"/>
 
 - The Mutelist Table must have the following columns:
     - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
+
     - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
+
     - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
-    - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be muted.
+
+    - Resources (List): This field contains a list of regular expressions (regex) that applies to the resources that are wanted to be muted.
+
     - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be muted.
+
     - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the mutelist.
 
 The following example will mute all resources in all accounts for the EC2 checks in the regions `eu-west-1` and `us-east-1` with the tags `environment=dev` and `environment=prod`, except the resources containing the string `test` in the account `012345678912` and region `eu-west-1` with the tag `environment=prod`:
 
 <img src="../img/mutelist-row.png"/>
-
 ???+ note
-    Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
+  Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
+
 
 #### AWS Lambda ARN
 
@@ -239,8 +264,7 @@ Make sure that the credentials that Prowler uses can invoke the Lambda Function:
         Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 ```
 
-The Lambda Function can then generate an Mutelist dynamically. Here is the code an example Python Lambda Function that
-generates an Mutelist:
+The Lambda Function can then generate an Mutelist dynamically. Here is the code an example Python Lambda Function that generates an Mutelist:
 
 ```
 def handler(event, context):
