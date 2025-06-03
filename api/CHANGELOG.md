@@ -20,7 +20,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.8.3] (Prowler v5.7.3)
 
 ### Fixed
-- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916)
+- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 
 ---
 
@@ -37,7 +37,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.8.1] (Prowler v5.7.1)
 
 ### Fixed
-- Added database index to improve performance on finding lookup. [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800)
+- Added database index to improve performance on finding lookup [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800).
 
 ---
 
