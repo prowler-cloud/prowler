@@ -13,7 +13,10 @@ import {
   supervisorPrompt,
   userInfoAgentPrompt,
 } from "@/lib/lighthouse/prompts";
-import { getProviderChecksTool } from "@/lib/lighthouse/tools/checks";
+import {
+  getProviderCheckDetailsTool,
+  getProviderChecksTool,
+} from "@/lib/lighthouse/tools/checks";
 import {
   getComplianceFrameworksTool,
   getComplianceOverviewTool,
@@ -96,7 +99,12 @@ export async function initLighthouseWorkflow() {
 
   const findingsAgent = createReactAgent({
     llm: llm,
-    tools: [getFindingsTool, getMetadataInfoTool, getProviderChecksTool],
+    tools: [
+      getFindingsTool,
+      getMetadataInfoTool,
+      getProviderChecksTool,
+      getProviderCheckDetailsTool,
+    ],
     name: "findings_agent",
     prompt: findingsAgentPrompt,
   });

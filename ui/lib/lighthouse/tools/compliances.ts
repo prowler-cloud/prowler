@@ -1,10 +1,10 @@
 import { tool } from "@langchain/core/tools";
 
+import { getLighthouseComplianceFrameworks } from "@/actions/lighthouse/complianceframeworks";
 import {
   getLighthouseComplianceOverview,
   getLighthouseCompliancesOverview,
 } from "@/actions/lighthouse/compliances";
-import { getLighthouseComplianceFrameworks } from "@/lib/lighthouse/helpers/complianceframeworks";
 import {
   getComplianceFrameworksSchema,
   getComplianceOverviewSchema,
