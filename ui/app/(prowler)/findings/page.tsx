@@ -28,7 +28,8 @@ import {
   extractProviderUIDs,
   getProviderDetailsByScan,
 } from "@/lib/provider-helpers";
-import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
+import { ScanProps } from "@/types";
+import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -132,6 +133,7 @@ export default async function Findings({
         defaultOpen={true}
       />
       <Spacer y={8} />
+
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>

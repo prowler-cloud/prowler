@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { getRolePermissions } from "@/lib/permissions";
-import { RoleData, RoleDetail } from "@/types/users/users";
+import { RoleData, RoleDetail } from "@/types/users";
 
 interface PermissionItemProps {
   enabled: boolean;

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ProviderType } from "./providers";
+
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
@@ -171,6 +173,37 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
             path: ["aws_access_key_id"],
           },
         )
+    : z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+      });
+
+export const addCredentialsServiceAccountFormSchema = (
+  providerType: ProviderType,
+) =>
+  providerType === "gcp"
+    ? z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+        service_account_key: z.string().refine(
+          (val) => {
+            try {
+              const parsed = JSON.parse(val);
+              return (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                !Array.isArray(parsed)
+              );
+            } catch {
+              return false;
+            }
+          },
+          {
+            message: "Invalid JSON format. Please provide a valid JSON object.",
+          },
+        ),
+        secretName: z.string().optional(),
+      })
     : z.object({
         providerId: z.string(),
         providerType: z.string(),
