@@ -11,9 +11,9 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
+import { getProviderDetailsByScan } from "@/lib/provider-helpers";
 import { ScanProps, SearchParamsProps } from "@/types";
 import { ComplianceOverviewData } from "@/types/compliance";
-import { getProviderDetailsByScan } from "@/lib/provider-helpers";
 
 export default async function Compliance({
   searchParams,
