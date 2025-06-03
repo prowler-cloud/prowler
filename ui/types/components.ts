@@ -609,15 +609,3 @@ export interface UserProps {
   dateAdded: string;
   status: "active" | "inactive";
 }
-
-export interface Connection {
-  connected: string;
-  last_checked_at: string;
-}
-
-export interface IncludeProps {
-  type: string;
-  id: string;
-  attributes: ProviderAccountProps;
-  connection: Connection;
-}

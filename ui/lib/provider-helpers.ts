@@ -1,4 +1,4 @@
-import { IncludeProps, ScanProps } from "@/types";
+import { ScanProps } from "@/types";
 import {
   ProviderProps,
   ProvidersApiResponse,
@@ -71,7 +71,7 @@ export const createProviderDetailsMapping = (
  */
 export const getProviderDetailsByScan = (
   scan: ScanProps,
-  included: IncludeProps[],
+  included: ProviderProps[],
   format: "keyed" | "flat" | "merged" = "keyed",
 ) => {
   const providerId = scan.relationships?.provider?.data?.id;
