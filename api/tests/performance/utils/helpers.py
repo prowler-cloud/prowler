@@ -167,6 +167,7 @@ def get_sort_value(sort_values: list) -> str:
     """
     return f"sort={','.join(sort_values)}"
 
+
 def get_random_resource_id(resource_list):
     """
     Selects and returns a random resource ID from the provided list.
@@ -186,4 +187,3 @@ def get_random_resource_id(resource_list):
     if not resource_list:
         raise ValueError("The resource list is empty.")
     return random.choice(resource_list)
-    
