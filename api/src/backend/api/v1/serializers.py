@@ -2183,6 +2183,7 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = LighthouseConfiguration
         fields = [
+            "id",
             "name",
             "api_key",
             "model",
@@ -2190,7 +2191,14 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "max_tokens",
             "business_context",
             "is_active",
+            "inserted_at",
+            "updated_at",
         ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
 
     def validate(self, attrs):
         tenant_id = self.context.get("request").tenant_id
