@@ -3,7 +3,13 @@ export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
 export type ComplianceId =
   | "ens_rd2022_aws"
   | "iso27001_2013_aws"
-  | "iso27001_2022_aws";
+  | "iso27001_2022_aws"
+  | "cis_1.4_aws"
+  | "cis_1.5_aws"
+  | "cis_2.0_aws"
+  | "cis_3.0_aws"
+  | "cis_4.0_aws"
+  | "cis_5.0_aws";
 
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
@@ -91,6 +97,21 @@ export interface ISO27001AttributesMetadata {
   Check_Summary: string;
 }
 
+export interface CISAttributesMetadata {
+  Section: string;
+  SubSection: string | null;
+  Profile: string; // "Level 1" or "Level 2"
+  AssessmentStatus: string; // "Manual" or "Automated"
+  Description: string;
+  RationaleStatement: string;
+  ImpactStatement: string;
+  RemediationProcedure: string;
+  AuditProcedure: string;
+  AdditionalInformation: string;
+  DefaultValue: string | null;
+  References: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -122,4 +143,18 @@ export interface AttributesData {
 
 export interface RequirementsData {
   data: RequirementItemData[];
+}
+
+export interface RegionData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
+}
+
+export interface CategoryData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
 }

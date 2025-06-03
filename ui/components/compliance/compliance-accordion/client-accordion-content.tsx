@@ -11,20 +11,22 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { getComplianceMapper } from "@/lib/compliance/commons";
 import { ComplianceId, Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
-
-import { ENSCustomDetails } from "../compliance-custom-details/ens-details";
-import { ISOCustomDetails } from "../compliance-custom-details/iso-details";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
   scanId: string;
+  framework: string;
+  disableFindings?: boolean;
 }
 
 export const ClientAccordionContent = ({
   requirement,
+  framework,
   scanId,
+  disableFindings = false,
 }: ClientAccordionContentProps) => {
   const [findings, setFindings] = useState<FindingsResponse | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
@@ -41,6 +43,7 @@ export const ClientAccordionContent = ({
   useEffect(() => {
     async function loadFindings() {
       if (
+        !disableFindings &&
         requirement.check_ids?.length > 0 &&
         requirement.status !== "No findings" &&
         (loadedPageRef.current !== pageNumber ||
@@ -96,7 +99,29 @@ export const ClientAccordionContent = ({
     }
 
     loadFindings();
-  }, [requirement, scanId, pageNumber, sort, region]);
+  }, [requirement, scanId, pageNumber, sort, region, disableFindings]);
+
+  const renderDetails = () => {
+    if (!complianceId) {
+      return null;
+    }
+
+    const mapper = getComplianceMapper(framework);
+    const detailsComponent = mapper.getDetailsComponent(requirement);
+
+    return <div className="w-full">{detailsComponent}</div>;
+  };
+
+  if (disableFindings) {
+    return (
+      <div className="w-full">
+        {renderDetails()}
+        <p className="text-sm text-gray-500">
+          This requirement has no checks; therefore, there are no findings.
+        </p>
+      </div>
+    );
+  }
 
   const checks = requirement.check_ids || [];
   const checksList = (
@@ -140,30 +165,6 @@ export const ClientAccordionContent = ({
     }
 
     return <div>There are no findings for this regions</div>;
-  };
-
-  const renderDetails = () => {
-    if (!complianceId) {
-      return null;
-    }
-
-    switch (complianceId) {
-      case "ens_rd2022_aws":
-        return (
-          <div className="w-full">
-            <ENSCustomDetails requirement={requirement} />
-          </div>
-        );
-      case "iso27001_2013_aws":
-      case "iso27001_2022_aws":
-        return (
-          <div className="w-full">
-            <ISOCustomDetails requirement={requirement} />
-          </div>
-        );
-      default:
-        return null;
-    }
   };
 
   return (

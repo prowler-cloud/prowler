@@ -5,8 +5,8 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
+  CISAttributesMetadata,
   Framework,
-  ISO27001AttributesMetadata,
   Requirement,
   RequirementItemData,
   RequirementsData,
@@ -16,6 +16,7 @@ import {
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
+  filter?: string, // "Level 1" or "Level 2" or undefined (show all)
 ): Framework[] => {
   const attributes = attributesData?.data || [];
   const requirements = requirementsData?.data || [];
@@ -32,23 +33,25 @@ export const mapComplianceData = (
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
     const metadataArray = attributeItem.attributes?.attributes
-      ?.metadata as unknown as ISO27001AttributesMetadata[];
+      ?.metadata as unknown as CISAttributesMetadata[];
     const attrs = metadataArray?.[0];
     if (!attrs) continue;
+
+    // Apply profile filter
+    if (filter === "Level 1" && attrs.Profile !== "Level 1") {
+      continue; // Skip Level 2 requirements when Level 1 is selected
+    }
 
     // Get corresponding requirement data
     const requirementData = requirementsMap.get(id);
     if (!requirementData) continue;
 
     const frameworkName = attributeItem.attributes.framework;
-    const categoryName = attrs.Category;
-    const controlLabel = `${attrs.Objetive_ID} - ${attrs.Objetive_Name}`;
+    const sectionName = attrs.Section;
     const description = attributeItem.attributes.description;
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
     const requirementName = id;
-    const objetiveName = attrs.Objetive_Name;
-    const checkSummary = attrs.Check_Summary;
 
     // Find or create framework
     let framework = frameworks.find((f) => f.name === frameworkName);
@@ -63,11 +66,14 @@ export const mapComplianceData = (
       frameworks.push(framework);
     }
 
-    // Find or create category
-    let category = framework.categories.find((c) => c.name === categoryName);
+    const normalizedSectionName = sectionName.replace(/^(\d+)\s/, "$1. ");
+    let category = framework.categories.find(
+      (c) => c.name === normalizedSectionName,
+    );
+
     if (!category) {
       category = {
-        name: categoryName,
+        name: normalizedSectionName,
         pass: 0,
         fail: 0,
         manual: 0,
@@ -76,37 +82,53 @@ export const mapComplianceData = (
       framework.categories.push(category);
     }
 
-    // Find or create control
-    let control = category.controls.find((c) => c.label === controlLabel);
-    if (!control) {
-      control = {
-        label: controlLabel,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        requirements: [],
-      };
-      category.controls.push(control);
-    }
+    // Create a control for this requirement (each requirement is its own control)
+    const controlLabel = `${id} - ${description}`;
+    const control = {
+      label: controlLabel,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      requirements: [] as Requirement[],
+    };
 
     // Create requirement
     const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement: Requirement = {
       name: requirementName,
-      description: description,
+      description: attrs.Description,
       status: finalStatus,
       check_ids: checks,
       pass: finalStatus === "PASS" ? 1 : 0,
       fail: finalStatus === "FAIL" ? 1 : 0,
       manual: finalStatus === "MANUAL" ? 1 : 0,
-      objetive_name: objetiveName,
-      check_summary: checkSummary,
+      profile: attrs.Profile,
+      subsection: attrs.SubSection || "",
+      assessment_status: attrs.AssessmentStatus,
+      rationale_statement: attrs.RationaleStatement,
+      impact_statement: attrs.ImpactStatement,
+      remediation_procedure: attrs.RemediationProcedure,
+      audit_procedure: attrs.AuditProcedure,
+      additional_information: attrs.AdditionalInformation,
+      default_value: attrs.DefaultValue || "",
+      references: attrs.References,
     };
 
     control.requirements.push(requirement);
+
+    // Update control counters
+    if (requirement.status === "MANUAL") {
+      control.manual++;
+    } else if (requirement.status === "PASS") {
+      control.pass++;
+    } else if (requirement.status === "FAIL") {
+      control.fail++;
+    }
+
+    category.controls.push(control);
   }
 
-  // Calculate counters
+  // Calculate counters for categories and frameworks
   frameworks.forEach((framework) => {
     framework.pass = 0;
     framework.fail = 0;
@@ -118,20 +140,6 @@ export const mapComplianceData = (
       category.manual = 0;
 
       category.controls.forEach((control) => {
-        control.pass = 0;
-        control.fail = 0;
-        control.manual = 0;
-
-        control.requirements.forEach((requirement) => {
-          if (requirement.status === "MANUAL") {
-            control.manual++;
-          } else if (requirement.status === "PASS") {
-            control.pass++;
-          } else if (requirement.status === "FAIL") {
-            control.fail++;
-          }
-        });
-
         category.pass += control.pass;
         category.fail += control.fail;
         category.manual += control.manual;
@@ -165,45 +173,29 @@ export const toAccordionItems = (
         ),
         content: "",
         items: category.controls.map((control, i: number) => {
+          const requirement = control.requirements[0]; // Each control has one requirement
+          const itemKey = `${framework.name}-${category.name}-control-${i}`;
+
           return {
-            key: `${framework.name}-${category.name}-control-${i}`,
+            key: itemKey,
             title: (
-              <ComplianceAccordionTitle
-                label={control.label}
-                pass={control.pass}
-                fail={control.fail}
-                manual={control.manual}
+              <ComplianceAccordionRequirementTitle
+                type=""
+                name={control.label}
+                status={requirement.status as FindingStatus}
               />
             ),
-            content: "",
-            items: control.requirements.map((requirement, j: number) => {
-              const itemKey = `${framework.name}-${category.name}-control-${i}-req-${j}`;
-
-              return {
-                key: itemKey,
-                title: (
-                  <ComplianceAccordionRequirementTitle
-                    type=""
-                    name={requirement.name}
-                    status={requirement.status as FindingStatus}
-                  />
-                ),
-                content: (
-                  <ClientAccordionContent
-                    requirement={requirement}
-                    scanId={scanId || ""}
-                    framework={framework.name}
-                    disableFindings={
-                      requirement.check_ids.length === 0 &&
-                      requirement.manual === 0
-                    }
-                  />
-                ),
-                items: [],
-              };
-            }),
-            isDisabled:
-              control.pass === 0 && control.fail === 0 && control.manual === 0,
+            content: (
+              <ClientAccordionContent
+                requirement={requirement}
+                scanId={scanId || ""}
+                framework={framework.name}
+                disableFindings={
+                  requirement.check_ids.length === 0 && requirement.manual === 0
+                }
+              />
+            ),
+            items: [],
           };
         }),
       };
