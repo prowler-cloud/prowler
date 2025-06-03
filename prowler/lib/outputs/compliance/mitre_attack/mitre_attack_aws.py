@@ -41,6 +41,8 @@ class AWSMitreAttack(ComplianceOutput):
                 if requirement.Id in finding_requirements:
                     compliance_row = AWSMitreAttackModel(
                         Provider=finding.provider,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId=finding.account_uid,
                         Region=finding.region,
@@ -80,6 +82,8 @@ class AWSMitreAttack(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSMitreAttackModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

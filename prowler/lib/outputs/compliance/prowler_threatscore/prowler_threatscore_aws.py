@@ -43,6 +43,8 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreAWSModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -70,6 +72,8 @@ class ProwlerThreatScoreAWS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreAWSModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

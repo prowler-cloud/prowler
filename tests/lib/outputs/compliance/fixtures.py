@@ -16,9 +16,9 @@ from prowler.lib.check.compliance_models import (
     Prowler_ThreatScore_Requirement_Attribute,
 )
 
-CIS_1_4_AWS_NAME = "cis_1.4_aws"
 CIS_1_4_AWS = Compliance(
     Framework="CIS",
+    Name="CIS Amazon Web Services Foundations Benchmark v1.4.0",
     Provider="AWS",
     Version="1.4",
     Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
@@ -65,9 +65,10 @@ CIS_1_4_AWS = Compliance(
         ),
     ],
 )
-CIS_2_0_AZURE_NAME = "cis_2.0_azure"
+
 CIS_2_0_AZURE = Compliance(
     Framework="CIS",
+    Name="CIS Microsoft Azure Foundations Benchmark v2.0.0",
     Provider="Azure",
     Version="2.0",
     Description="The CIS Azure Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Azure with an emphasis on foundational, testable, and architecture agnostic settings.",
@@ -116,9 +117,10 @@ CIS_2_0_AZURE = Compliance(
         ),
     ],
 )
-CIS_2_0_GCP_NAME = "cis_2.0_gcp"
+
 CIS_2_0_GCP = Compliance(
     Framework="CIS",
+    Name="CIS Google Cloud Platform Foundation Benchmark v2.0.0",
     Provider="GCP",
     Version="2.0",
     Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
@@ -164,9 +166,10 @@ CIS_2_0_GCP = Compliance(
         ),
     ],
 )
-CIS_1_8_KUBERNETES_NAME = "cis_2.0_kubernetes"
+
 CIS_1_8_KUBERNETES = Compliance(
     Framework="CIS",
+    Name="CIS Kubernetes Benchmark v1.8.0",
     Provider="Kubernetes",
     Version="1.8",
     Description="This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.",
@@ -214,9 +217,10 @@ CIS_1_8_KUBERNETES = Compliance(
         ),
     ],
 )
-CIS_1_5_AWS_NAME = "cis_1.5_aws"
+
 CIS_1_5_AWS = Compliance(
     Framework="CIS",
+    Name="CIS Amazon Web Services Foundations Benchmark v1.5.0",
     Provider="AWS",
     Version="1.5",
     Description="The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
@@ -243,9 +247,9 @@ CIS_1_5_AWS = Compliance(
     ],
 )
 
-CIS_4_0_M365_NAME = "cis_4.0_m365"
 CIS_4_0_M365 = Compliance(
     Framework="CIS",
+    Name="CIS Microsoft 365 Foundations Benchmark v4.0.0",
     Provider="M365",
     Version="4.0",
     Description="The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for configuring security options for Microsoft 365 with an emphasis on foundational, testable, and architecture agnostic settings.",
@@ -295,9 +299,9 @@ CIS_4_0_M365 = Compliance(
     ],
 )
 
-MITRE_ATTACK_AWS_NAME = "mitre_attack_aws"
 MITRE_ATTACK_AWS = Compliance(
     Framework="MITRE-ATTACK",
+    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
     Provider="AWS",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -352,9 +356,10 @@ MITRE_ATTACK_AWS = Compliance(
         ),
     ],
 )
-MITRE_ATTACK_AZURE_NAME = "mitre_attack_azure"
+
 MITRE_ATTACK_AZURE = Compliance(
     Framework="MITRE-ATTACK",
+    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
     Provider="Azure",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -427,9 +432,10 @@ MITRE_ATTACK_AZURE = Compliance(
         ),
     ],
 )
-MITRE_ATTACK_GCP_NAME = "mitre_attack_gcp"
+
 MITRE_ATTACK_GCP = Compliance(
     Framework="MITRE-ATTACK",
+    Name="MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) framework",
     Provider="GCP",
     Version="",
     Description="MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -481,9 +487,10 @@ MITRE_ATTACK_GCP = Compliance(
         ),
     ],
 )
-ENS_RD2022_AWS_NAME = "ens_rd2022_aws"
+
 ENS_RD2022_AWS = Compliance(
     Framework="ENS",
+    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
     Provider="AWS",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -528,9 +535,10 @@ ENS_RD2022_AWS = Compliance(
         ),
     ],
 )
-ENS_RD2022_AZURE_NAME = "ens_rd2022_azure"
+
 ENS_RD2022_AZURE = Compliance(
     Framework="ENS",
+    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
     Provider="Azure",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -575,9 +583,9 @@ ENS_RD2022_AZURE = Compliance(
         ),
     ],
 )
-ENS_RD2022_GCP_NAME = "ens_rd2022_gcp"
 ENS_RD2022_GCP = Compliance(
     Framework="ENS",
+    Name="Esquema Nacional de Seguridad (ENS) RD 311/2022",
     Provider="GCP",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -622,17 +630,19 @@ ENS_RD2022_GCP = Compliance(
         ),
     ],
 )
-NOT_PRESENT_COMPLIANCE_NAME = "not_present_compliance_name"
+
 NOT_PRESENT_COMPLIANCE = Compliance(
     Framework="NOT_EXISTENT",
+    Name="NOT_EXISTENT",
     Provider="NOT_EXISTENT",
     Version="NOT_EXISTENT",
     Description="NOT_EXISTENT",
     Requirements=[],
 )
-AWS_WELL_ARCHITECTED_NAME = "aws_well_architected_framework_security_pillar_aws"
+
 AWS_WELL_ARCHITECTED = Compliance(
     Framework="AWS-Well-Architected-Framework-Security-Pillar",
+    Name="Amazon Web Services (AWS) Well-Architected Framework Security Pillar",
     Provider="AWS",
     Version="",
     Description="Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
@@ -677,32 +687,10 @@ AWS_WELL_ARCHITECTED = Compliance(
         ),
     ],
 )
-AWISO27001_2013_AWS_NAME = "iso27001_2013_aws"
+
 ISO27001_2013_AWS = Compliance(
     Framework="ISO27001",
-    Provider="AWS",
-    Version="2013",
-    Description="ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
-    Requirements=[
-        Compliance_Requirement(
-            Id="A.10.1",
-            Description="Setup Encryption at rest for RDS instances",
-            Name="Cryptographic Controls",
-            Attributes=[
-                ISO27001_2013_Requirement_Attribute(
-                    Category="A.10 Cryptography",
-                    Objetive_ID="A.10.1",
-                    Objetive_Name="Cryptographic Controls",
-                    Check_Summary="Setup Encryption at rest for RDS instances",
-                )
-            ],
-            Checks=["rds_instance_storage_encrypted"],
-        ),
-    ],
-)
-ISO27001_2013_AWS_NAME = "iso27001_2013_aws"
-ISO27001_2013_AWS = Compliance(
-    Framework="ISO27001",
+    Name="ISO/IEC 27001 Information Security Management Standard 2013",
     Provider="AWS",
     Version="2013",
     Description="ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
@@ -737,9 +725,10 @@ ISO27001_2013_AWS = Compliance(
         ),
     ],
 )
-NIST_800_53_REVISION_4_AWS_NAME = "nist_800_53_revision_4_aws"
+
 NIST_800_53_REVISION_4_AWS = Compliance(
     Framework="NIST-800-53-Revision-4",
+    Name="National Institute of Standards and Technology (NIST) 800-53 Revision 4",
     Provider="AWS",
     Version="",
     Description="NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.",
@@ -786,9 +775,10 @@ NIST_800_53_REVISION_4_AWS = Compliance(
         ),
     ],
 )
-KISA_ISMSP_AWS_NAME = "kisa_isms-p_2023_aws"
+
 KISA_ISMSP_AWS = Compliance(
     Framework="KISA-ISMS-P",
+    Name="Korean Internet & Security Agency (KISA) Information Protection and Personal Information Protection Management System Certification 2023",
     Provider="AWS",
     Version="2023",
     Description="The ISMS-P certification, established by KISA Korea Internet & Security Agency",
@@ -859,6 +849,7 @@ KISA_ISMSP_AWS = Compliance(
 
 PROWLER_THREATSCORE_AWS = Compliance(
     Framework="ProwlerThreatScore",
+    Name="Prowler ThreatScore Compliance Framework for AWS",
     Version="1.0",
     Provider="AWS",
     Description="Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
@@ -902,6 +893,7 @@ PROWLER_THREATSCORE_AWS = Compliance(
 
 PROWLER_THREATSCORE_AZURE = Compliance(
     Framework="ProwlerThreatScore",
+    Name="Prowler ThreatScore Compliance Framework for Azure",
     Version="1.0",
     Provider="Azure",
     Description="Prowler ThreatScore Compliance Framework for Azure ensures that the Azure account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
@@ -945,6 +937,7 @@ PROWLER_THREATSCORE_AZURE = Compliance(
 
 PROWLER_THREATSCORE_GCP = Compliance(
     Framework="ProwlerThreatScore",
+    Name="Prowler ThreatScore Compliance Framework for GCP",
     Version="1.0",
     Provider="GCP",
     Description="Prowler ThreatScore Compliance Framework for GCP ensures that the GCP account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
@@ -988,6 +981,7 @@ PROWLER_THREATSCORE_GCP = Compliance(
 
 PROWLER_THREATSCORE_M365 = Compliance(
     Framework="ProwlerThreatScore",
+    Name="Prowler ThreatScore Compliance Framework for Microsoft 365",
     Version="1.0",
     Provider="M365",
     Description="Prowler ThreatScore Compliance Framework for M365 ensures that the M365 account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",

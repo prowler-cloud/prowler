@@ -1,5 +1,6 @@
 {
   "Framework": "AWS-Well-Architected-Framework-Reliability-Pillar",
+  "Name": "Amazon Web Services (AWS) Well-Architected Framework Reliability Pillar",
   "Version": "",
   "Provider": "AWS",
   "Description": "Best Practices for the AWS Well-Architected Framework Reliability Pillar encompasses the ability of a workload to perform its intended function correctly and consistently when it’s expected to. This includes the ability to operate and test the workload through its total lifecycle.",

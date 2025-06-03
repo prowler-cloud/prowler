@@ -7,6 +7,8 @@ class AWSMitreAttackModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -36,6 +38,8 @@ class AzureMitreAttackModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     SubscriptionId: str
     AssessmentDate: str
@@ -65,6 +69,8 @@ class GCPMitreAttackModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     ProjectId: str
     AssessmentDate: str

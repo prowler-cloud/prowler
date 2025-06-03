@@ -40,6 +40,8 @@ class NHNISO27001(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = NHNISO27001Model(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -66,6 +68,8 @@ class NHNISO27001(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = NHNISO27001Model(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

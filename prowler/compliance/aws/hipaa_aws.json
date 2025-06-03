@@ -1,5 +1,6 @@
 {
   "Framework": "HIPAA",
+  "Name": "Health Insurance Portability and Accountability Act (HIPAA) framework",
   "Version": "",
   "Provider": "AWS",
   "Description": "The Health Insurance Portability and Accountability Act of 1996 (HIPAA) is legislation that helps US workers to retain health insurance coverage when they change or lose jobs. The legislation also seeks to encourage electronic health records to improve the efficiency and quality of the US healthcare system through improved information sharing.",

@@ -1,5 +1,6 @@
 {
   "Framework": "GxP-21-CFR-Part-11",
+  "Name": "GxP (Good Practices) 21 CFR Part 11 - Electronic Records and Electronic Signatures",
   "Version": "",
   "Provider": "AWS",
   "Description": "GxP refers to the regulations and guidelines that are applicable to life sciences organizations that make food and medical products. Medical products that fall under this include medicines, medical devices, and medical software applications. The overall intent of GxP requirements is to ensure that food and medical products are safe for consumers. It's also to ensure the integrity of data that's used to make product-related safety decisions.",

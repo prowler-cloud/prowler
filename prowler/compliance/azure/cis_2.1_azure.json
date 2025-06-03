@@ -1,5 +1,6 @@
 {
   "Framework": "CIS",
+  "Name": "CIS Microsoft Azure Foundations Benchmark v2.1.0",
   "Version": "2.1",
   "Provider": "Azure",
   "Description": "The CIS Azure Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Azure with an emphasis on foundational, testable, and architecture agnostic settings.",

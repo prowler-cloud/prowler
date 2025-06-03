@@ -9,6 +9,8 @@ class AWSCISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -43,6 +45,8 @@ class AzureCISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -75,6 +79,8 @@ class M365CISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     TenantId: str
     Location: str
@@ -107,6 +113,8 @@ class GCPCISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -138,6 +146,8 @@ class KubernetesCISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     Context: str
     Namespace: str
@@ -170,6 +180,8 @@ class GithubCISModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     Account_Name: str
     Account_Id: str

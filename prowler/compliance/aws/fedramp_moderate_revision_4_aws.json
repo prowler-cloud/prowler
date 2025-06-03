@@ -1,5 +1,6 @@
 {
   "Framework": "FedRamp-Moderate-Revision-4",
+  "Name": "Federal Risk and Authorization Management Program (FedRAMP) Moderate Revision 4",
   "Version": "",
   "Provider": "AWS",
   "Description": "The Federal Risk and Authorization Management Program (FedRAMP) was established in 2011. It provides a cost-effective, risk-based approach for the adoption and use of cloud services by the U.S. federal government. FedRAMP empowers federal agencies to use modern cloud technologies, with an emphasis on the security and protection of federal information.",

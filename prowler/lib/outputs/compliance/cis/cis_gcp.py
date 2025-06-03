@@ -41,6 +41,8 @@ class GCPCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GCPCISModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
@@ -72,6 +74,8 @@ class GCPCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GCPCISModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",

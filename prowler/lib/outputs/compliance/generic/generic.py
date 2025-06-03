@@ -41,6 +41,8 @@ class GenericCompliance(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GenericComplianceModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -66,6 +68,8 @@ class GenericCompliance(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GenericComplianceModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

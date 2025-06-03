@@ -41,6 +41,8 @@ class GCPMitreAttack(ComplianceOutput):
                 if requirement.Id in finding_requirements:
                     compliance_row = GCPMitreAttackModel(
                         Provider=finding.provider,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId=finding.account_uid,
                         Location=finding.region,
@@ -80,6 +82,8 @@ class GCPMitreAttack(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GCPMitreAttackModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",

@@ -1,5 +1,6 @@
 {
   "Framework": "AWS-Audit-Manager-Control-Tower-Guardrails",
+  "Name": "Amazon Web Services (AWS) Audit Manager Control Tower Guardrails",
   "Version": "",
   "Provider": "AWS",
   "Description": "AWS Control Tower is a management and governance service that you can use to navigate through the setup process and governance requirements that are involved in creating a multi-account AWS environment.",

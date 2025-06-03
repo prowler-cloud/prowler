@@ -41,6 +41,8 @@ class GCPISO27001(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GCPISO27001Model(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
@@ -66,6 +68,8 @@ class GCPISO27001(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GCPISO27001Model(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",

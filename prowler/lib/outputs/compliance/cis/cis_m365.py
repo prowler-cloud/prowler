@@ -41,6 +41,8 @@ class M365CIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = M365CISModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             TenantId=finding.account_uid,
                             Location=finding.region,
@@ -73,6 +75,8 @@ class M365CIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = M365CISModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         TenantId=finding.account_uid,
                         Location=finding.region,

@@ -9,6 +9,8 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -36,6 +38,8 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -63,6 +67,8 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -90,6 +96,8 @@ class ProwlerThreatScoreM365Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     TenantId: str
     Location: str

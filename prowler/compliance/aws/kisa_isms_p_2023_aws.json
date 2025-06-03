@@ -1,5 +1,6 @@
 {
   "Framework": "KISA-ISMS-P",
+  "Name": "Korean Internet & Security Agency (KISA) Information Protection and Personal Information Protection Management System Certification 2023",
   "Version": "2023",
   "Provider": "AWS",
   "Description": "The ISMS-P certification, established by KISA (Korea Internet & Security Agency), is a system where an independent certification body evaluates whether a company or organization's information security and privacy protection measures comply with certification standards, and grants certification. This helps organizations improve public trust in their services and respond effectively to increasingly complex cyber threats. The ISMS-P framework also provides comprehensive guidelines for systematically establishing, implementing, and managing information security and privacy protection.",

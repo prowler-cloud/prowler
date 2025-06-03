@@ -41,6 +41,8 @@ class AzureENS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AzureENSModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             SubscriptionId=finding.account_name,
                             Location=finding.region,
@@ -74,6 +76,8 @@ class AzureENS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AzureENSModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",

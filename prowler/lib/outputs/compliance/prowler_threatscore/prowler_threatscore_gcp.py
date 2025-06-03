@@ -43,6 +43,8 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreGCPModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
@@ -70,6 +72,8 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreGCPModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",

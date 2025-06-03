@@ -43,6 +43,8 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreM365Model(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             TenantId=finding.account_uid,
                             Location=finding.region,
@@ -70,6 +72,8 @@ class ProwlerThreatScoreM365(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = ProwlerThreatScoreM365Model(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         TenantId="",
                         Location="",

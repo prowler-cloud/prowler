@@ -1,5 +1,6 @@
 {
   "Framework": "CIS",
+  "Name": "CIS Amazon Web Services Foundations Benchmark v1.5.0",
   "Version": "1.5",
   "Provider": "AWS",
   "Description": "The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",

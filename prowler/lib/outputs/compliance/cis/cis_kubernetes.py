@@ -43,6 +43,8 @@ class KubernetesCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = KubernetesCISModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             Context=finding.account_name,
                             Namespace=finding.region,
@@ -75,6 +77,8 @@ class KubernetesCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = KubernetesCISModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         Context="",
                         Namespace="",

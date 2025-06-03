@@ -7,6 +7,8 @@ class AWSENSModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -36,6 +38,8 @@ class AzureENSModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -65,6 +69,8 @@ class GCPENSModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     ProjectId: str
     Location: str

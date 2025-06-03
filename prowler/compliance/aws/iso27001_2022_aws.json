@@ -1,6 +1,7 @@
 {
   "Framework": "ISO27001",
   "Version": "2022",
+  "Name": "ISO/IEC 27001 Information Security Management Standard 2022",
   "Provider": "AWS",
   "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
   "Requirements": [

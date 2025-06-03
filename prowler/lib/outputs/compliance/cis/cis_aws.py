@@ -41,6 +41,8 @@ class AWSCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AWSCISModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -73,6 +75,8 @@ class AWSCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSCISModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

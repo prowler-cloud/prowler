@@ -41,6 +41,8 @@ class AzureMitreAttack(ComplianceOutput):
                 if requirement.Id in finding_requirements:
                     compliance_row = AzureMitreAttackModel(
                         Provider=finding.provider,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         SubscriptionId=finding.account_uid,
                         Location=finding.region,
@@ -81,6 +83,8 @@ class AzureMitreAttack(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AzureMitreAttackModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",

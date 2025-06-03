@@ -223,6 +223,7 @@ class Compliance(BaseModel):
     """Compliance holds the base model for every compliance framework"""
 
     Framework: str
+    Name: str
     Provider: str
     Version: Optional[str]
     Description: str
@@ -236,12 +237,13 @@ class Compliance(BaseModel):
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'
     def framework_and_provider_must_not_be_empty(cls, values):  # noqa: F841
-        framework, provider = (
+        framework, provider, name = (
             values.get("Framework"),
             values.get("Provider"),
+            values.get("Name"),
         )
-        if framework == "" or provider == "":
-            raise ValueError("Framework or Provider must not be empty")
+        if framework == "" or provider == "" or name == "":
+            raise ValueError("Framework, Provider or Name must not be empty")
         return values
 
     @staticmethod

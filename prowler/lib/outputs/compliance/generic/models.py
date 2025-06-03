@@ -9,6 +9,8 @@ class GenericComplianceModel(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str

@@ -43,6 +43,8 @@ class GithubCIS(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = GithubCISModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             Account_Id=finding.account_uid,
                             Account_Name=finding.account_name,
@@ -74,6 +76,8 @@ class GithubCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = GithubCISModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         Account_Id="",
                         Account_Name="",

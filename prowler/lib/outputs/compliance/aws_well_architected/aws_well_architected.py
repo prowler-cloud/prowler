@@ -43,6 +43,8 @@ class AWSWellArchitected(ComplianceOutput):
                     for attribute in requirement.Attributes:
                         compliance_row = AWSWellArchitectedModel(
                             Provider=finding.provider,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
@@ -72,6 +74,8 @@ class AWSWellArchitected(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSWellArchitectedModel(
                         Provider=compliance.Provider.lower(),
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",

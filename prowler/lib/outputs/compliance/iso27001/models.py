@@ -7,6 +7,8 @@ class AWSISO27001Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
@@ -32,6 +34,8 @@ class AzureISO27001Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     SubscriptionId: str
     Location: str
@@ -57,6 +61,8 @@ class GCPISO27001Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     ProjectId: str
     Location: str
@@ -82,6 +88,8 @@ class KubernetesISO27001Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     Context: str
     Namespace: str
@@ -107,6 +115,8 @@ class NHNISO27001Model(BaseModel):
     """
 
     Provider: str
+    Framework: str
+    Name: str
     Description: str
     AccountId: str
     Region: str
