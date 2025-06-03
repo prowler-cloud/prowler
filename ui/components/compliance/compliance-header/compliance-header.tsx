@@ -13,6 +13,7 @@ interface ComplianceHeaderProps {
   uniqueRegions: string[];
   showSearch?: boolean;
   showRegionFilter?: boolean;
+  framework?: string; // Framework name to show specific filters
 }
 
 export const ComplianceHeader = ({
@@ -20,25 +21,46 @@ export const ComplianceHeader = ({
   uniqueRegions,
   showSearch = true,
   showRegionFilter = true,
+  framework,
 }: ComplianceHeaderProps) => {
+  const frameworkFilters = [];
+
+  // Add CIS Profile Level filter if framework is CIS
+  if (framework === "CIS") {
+    frameworkFilters.push({
+      key: "cis_profile_level",
+      labelCheckboxGroup: "Level",
+      values: ["Level 1", "Level 2"],
+      index: 0, // Show first
+      showSelectAll: false, // No "Select All" option since Level 2 includes Level 1
+      defaultValues: ["Level 2"], // Default to Level 2 selected (which includes Level 1)
+    });
+  }
+
+  // Prepare region filters
+  const regionFilters = showRegionFilter
+    ? [
+        {
+          key: "region__in",
+          labelCheckboxGroup: "Regions",
+          values: uniqueRegions,
+          index: 1, // Show after framework filters
+          defaultToSelectAll: true, // Default to all regions selected
+        },
+      ]
+    : [];
+
+  const allFilters = [...frameworkFilters, ...regionFilters];
+
   return (
     <>
       {showSearch && <FilterControls search />}
       <Spacer y={8} />
       <DataCompliance scans={scans} />
-      {showRegionFilter && (
+      {allFilters.length > 0 && (
         <>
           <Spacer y={8} />
-          <DataTableFilterCustom
-            filters={[
-              {
-                key: "region__in",
-                labelCheckboxGroup: "Regions",
-                values: uniqueRegions,
-              },
-            ]}
-            defaultOpen={true}
-          />
+          <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
         </>
       )}
       <Spacer y={12} />

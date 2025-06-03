@@ -1,11 +1,17 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart as RechartsPieChart,
+  Tooltip,
+} from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
-interface RequirementsChartProps {
+interface PieChartProps {
   pass: number;
   fail: number;
   manual: number;
@@ -29,11 +35,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export const RequirementsChart = ({
-  pass,
-  fail,
-  manual,
-}: RequirementsChartProps) => {
+export const PieChart = ({ pass, fail, manual }: PieChartProps) => {
   const { theme } = useTheme();
 
   const chartData = [
@@ -119,7 +121,7 @@ export const RequirementsChart = ({
         config={chartConfig}
         className="aspect-square w-[200px] min-w-[200px]"
       >
-        <PieChart>
+        <RechartsPieChart>
           <Tooltip
             cursor={false}
             content={<CustomTooltip active={false} payload={[]} />}
@@ -168,7 +170,7 @@ export const RequirementsChart = ({
               }}
             />
           </Pie>
-        </PieChart>
+        </RechartsPieChart>
       </ChartContainer>
 
       <div className="mt-2 grid grid-cols-3 gap-4">

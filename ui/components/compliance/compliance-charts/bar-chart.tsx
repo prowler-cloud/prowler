@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import {
   Bar,
-  BarChart,
+  BarChart as RechartsBarChart,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -24,7 +24,7 @@ const title = (
   </h3>
 );
 
-export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
+export const BarChart = ({ sections }: FailedSectionsListProps) => {
   const { theme } = useTheme();
 
   const getTypeColor = (type: string) => {
@@ -84,16 +84,16 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
   }
 
   return (
-    <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
-      <div className="mt-4">{title}</div>
+    <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
+      <div>{title}</div>
 
-      <div className="h-[320px] w-full">
+      <div className="h-full w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
+          <RechartsBarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 16, right: 30, left: 40, bottom: 5 }}
-            maxBarSize={40}
+            margin={{ top: 12, bottom: 0 }}
+            maxBarSize={32}
           >
             <XAxis
               type="number"
@@ -111,10 +111,15 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
+              width={1}
               tick={{
                 fontSize: 12,
                 fill: theme === "dark" ? "#94a3b8" : "#374151",
+                textAnchor: "start",
+                style: {
+                  transform: "translateX(10px) translateY(-26px)",
+                },
+                width: 400,
               }}
               axisLine={false}
               tickLine={false}
@@ -157,22 +162,6 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
               }}
               cursor={false}
             />
-            {allTypes.length > 1 && (
-              <Legend
-                formatter={(value) => translateType(value)}
-                wrapperStyle={{
-                  fontSize: "10px",
-                  display: "flex",
-                  justifyContent: "center",
-                  width: "100%",
-                  paddingTop: "16px",
-                  marginBottom: "4px",
-                }}
-                iconType="circle"
-                layout="horizontal"
-                verticalAlign="bottom"
-              />
-            )}
             {allTypes.map((type, i) => (
               <Bar
                 key={type}
@@ -182,7 +171,21 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
                 radius={i === allTypes.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]}
               />
             ))}
-          </BarChart>
+            <Legend
+              formatter={(value) => translateType(value)}
+              wrapperStyle={{
+                fontSize: "10px",
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                paddingTop: "16px",
+                marginBottom: "16px",
+              }}
+              iconType="circle"
+              layout="horizontal"
+              verticalAlign="bottom"
+            />
+          </RechartsBarChart>
         </ResponsiveContainer>
       </div>
     </div>
