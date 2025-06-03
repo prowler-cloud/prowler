@@ -44,8 +44,8 @@ class IonosProvider(Provider):
         mutelist_content: dict = None,
     ):
         """
-        Inicializa la clase IonosProvider y configura la sesión.
-        Si no se proporcionan credenciales se intentará cargarlas desde variables de entorno o la configuración de ionosctl.
+        Initializes the IonosProvider class and sets up the session.
+        If no credentials are provided, it will attempt to load them from environment variables or ionosctl configuration.
         """
         logger.info("Initializing IONOS Provider...")
         self._token = self.load_ionosctl_token()
@@ -93,8 +93,8 @@ class IonosProvider(Provider):
     @staticmethod
     def load_env_credentials() -> Tuple[Optional[str], Optional[str], Optional[str]]:
         """
-        Lee las credenciales de IONOS desde las variables de entorno.
-        Retorna una tupla con (username, password, token)
+        Reads IONOS credentials from environment variables.
+        Returns a tuple with (username, password, token)
         """
         username = os.getenv("IONOS_USERNAME")
         password = os.getenv("IONOS_PASSWORD")
@@ -102,7 +102,7 @@ class IonosProvider(Provider):
         if username and password and token:
             logger.info("Loaded IONOS credentials from environment variables.")
         else:
-            logger.warning("No se encontraron todas las credenciales en las variables de entorno.")
+            logger.warning("Not all credentials were found in environment variables.")
         return username, password, token
 
     @staticmethod
@@ -157,7 +157,7 @@ class IonosProvider(Provider):
 
     def get_ionos_username(self) -> Optional[str]:
         """
-        Obtiene el nombre de usuario de IONOS desde la API.
+        Gets the IONOS username from the API.
         """
         user_api = UserManagementApi(self._session)
         try:
@@ -199,7 +199,7 @@ class IonosProvider(Provider):
         identity: IonosIdentityInfo,
     ) -> ApiClient:
         """
-        Configura la sesión para interactuar con la API de IONOS Cloud.
+        Setup the session to interact with the IONOS Cloud API.
         """
         try:
             config = Configuration()
@@ -238,8 +238,6 @@ class IonosProvider(Provider):
         datacenter_location = datacenters[0].properties.location if datacenters else "Not Found"
 
         report_lines = [
-            f"API Endpoint: {Fore.YELLOW}{host}{Style.RESET_ALL}",
-            f"API Token (masked): {Fore.YELLOW}{masked_token}{Style.RESET_ALL}",
             f"Datacenter ID: {Fore.YELLOW}{datacenter_id}{Style.RESET_ALL}",
             f"Datacenter Name: {Fore.YELLOW}{datacenter_name}{Style.RESET_ALL}",
             f"Datacenter Location: {Fore.YELLOW}{datacenter_location}{Style.RESET_ALL}",
@@ -249,8 +247,8 @@ class IonosProvider(Provider):
 
     def get_datacenter_id(self, datacenter_name: Optional[str] = None) -> str:
         """
-        Obtiene el ID de un datacenter por su nombre.
-        Si el nombre es vacío o None, devuelve el primer datacenter disponible.
+        Gets the ID of a datacenter by its name.
+        If the name is empty or None, returns the first available datacenter.
         """
         datacenters = self.get_datacenters()
         
@@ -264,13 +262,13 @@ class IonosProvider(Provider):
 
     def set_datacenter(self, datacenter_id: str) -> None:
         """
-        Establece el datacenter activo para las operaciones.
+        Sets the active datacenter for operations.
         """
         self._identity.datacenter_id = datacenter_id
 
     def test_connection(self) -> bool:
         """
-        Prueba la conexión con la API de IONOS.
+        Tests the connection with the IONOS API.
         """
         try:
             datacenter_api = DataCentersApi(self._session)
@@ -282,7 +280,7 @@ class IonosProvider(Provider):
 
     def get_datacenters(self) -> list:
         """
-        Recupera la lista de datacenters de la cuenta IONOS.
+        Retrieves the list of datacenters from the IONOS account.
         """
         try:
             datacenter_api = ionoscloud.DataCentersApi(self._session)
@@ -310,7 +308,7 @@ class IonosProvider(Provider):
         )
 
     def validate_mutelist_content(self, content: dict) -> bool:
-        """Valida el formato del contenido del mutelist"""
+        """Validates the format of the mutelist content"""
         if not isinstance(content, dict):
             return False
         if "muted_checks" not in content:
