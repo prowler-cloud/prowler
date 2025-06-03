@@ -101,7 +101,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
         <>
           <p className="text-center">
             <span
-              className={`w-6 h-6 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold flex items-center justify-center mx-auto ${getChipStyle(count)}`}
+              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(count)}`}
             >
               {count}
             </span>

@@ -82,17 +82,18 @@ export const ResourceDetail = ({
             <EntityInfoShort
               cloudProvider={
                 resourceData.relationships.provider.data.attributes.provider as
-                | "aws"
-                | "azure"
-                | "gcp"
-                | "kubernetes"
+                  | "aws"
+                  | "azure"
+                  | "gcp"
+                  | "kubernetes"
               }
               entityAlias={
                 resourceData.relationships.provider.data.attributes
                   .alias as string
               }
               entityId={
-                resourceData.relationships.provider.data.attributes.uid as string
+                resourceData.relationships.provider.data.attributes
+                  .uid as string
               }
             />
           </div>
