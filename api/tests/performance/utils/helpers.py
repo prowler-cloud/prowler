@@ -166,3 +166,24 @@ def get_sort_value(sort_values: list) -> str:
         str: A formatted sort query string (e.g., "sort=created_at,-severity").
     """
     return f"sort={','.join(sort_values)}"
+
+def get_random_resource_id(resource_list):
+    """
+    Selects and returns a random resource ID from the provided list.
+
+    Args:
+        resource_list (list): A list of resource IDs.
+
+    Returns:
+        Any: A randomly selected resource ID from the list.
+
+    Raises:
+        ValueError: If the provided list is empty.
+
+    Example:
+        resource_id = get_random_resource_id(GLOBAL["resource_ids"])
+    """
+    if not resource_list:
+        raise ValueError("The resource list is empty.")
+    return random.choice(resource_list)
+    
