@@ -1,17 +1,17 @@
-import React from "react";
-
-// Import detail components
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
+  CategoryData,
   FailedSection,
   Framework,
+  RegionData,
   Requirement,
   RequirementsData,
 } from "@/types/compliance";
+import React from "react";
 
 import {
   mapComplianceData as mapCISComplianceData,
@@ -116,4 +116,141 @@ export const getComplianceMapper = (framework?: string): ComplianceMapper => {
   }
 
   return complianceMappers[framework] || defaultMapper;
+};
+
+export const calculateRegionHeatmapData = async (
+  complianceId: string,
+  scanId: string,
+  uniqueRegions: string[],
+  attributesData: AttributesData,
+  mapper: ComplianceMapper,
+): Promise<RegionData[]> => {
+  if (!complianceId || !scanId || !uniqueRegions?.length) {
+    return [];
+  }
+
+  try {
+    const { getComplianceRequirements } = await import("@/actions/compliances");
+
+    // Get data for each region in parallel
+    const regionPromises = uniqueRegions.map(async (region) => {
+      try {
+        // Only need to fetch requirements data per region
+        const regionRequirementsData = await getComplianceRequirements({
+          complianceId,
+          scanId,
+          region, // Filter by specific region
+        });
+
+        // Map the data using the provided mapper
+        const mappedData = mapper.mapComplianceData(
+          attributesData,
+          regionRequirementsData,
+        );
+
+        // Calculate totals for this region
+        const regionTotals = mappedData.reduce(
+          (acc, framework) => ({
+            pass: acc.pass + framework.pass,
+            fail: acc.fail + framework.fail,
+            manual: acc.manual + framework.manual,
+          }),
+          { pass: 0, fail: 0, manual: 0 },
+        );
+
+        const totalRequirements =
+          regionTotals.pass + regionTotals.fail + regionTotals.manual;
+        const failurePercentage =
+          totalRequirements > 0
+            ? Math.round((regionTotals.fail / totalRequirements) * 100)
+            : 0;
+
+        return {
+          name: region,
+          failurePercentage,
+          totalRequirements,
+          failedRequirements: regionTotals.fail,
+        };
+      } catch (error) {
+        console.error(`Error fetching data for region ${region}:`, error);
+        return {
+          name: region,
+          failurePercentage: 0,
+          totalRequirements: 0,
+          failedRequirements: 0,
+        };
+      }
+    });
+
+    const regionData = await Promise.all(regionPromises);
+
+    // Filter, sort and limit to top 9 regions for 3x3 grid
+    const filteredData = regionData
+      .filter((region) => region.totalRequirements > 0)
+      .sort((a, b) => b.failurePercentage - a.failurePercentage)
+      .slice(0, 9);
+
+    return filteredData;
+  } catch (error) {
+    console.error("Error calculating region heatmap data:", error);
+    return [];
+  }
+};
+
+export const calculateCategoryHeatmapData = (
+  complianceData: Framework[],
+): CategoryData[] => {
+  if (!complianceData?.length) {
+    return [];
+  }
+
+  try {
+    const categoryMap = new Map<
+      string,
+      { pass: number; fail: number; manual: number }
+    >();
+
+    // Aggregate data by category
+    complianceData.forEach((framework) => {
+      framework.categories.forEach((category) => {
+        const existing = categoryMap.get(category.name) || {
+          pass: 0,
+          fail: 0,
+          manual: 0,
+        };
+        categoryMap.set(category.name, {
+          pass: existing.pass + category.pass,
+          fail: existing.fail + category.fail,
+          manual: existing.manual + category.manual,
+        });
+      });
+    });
+
+    const categoryData: CategoryData[] = Array.from(categoryMap.entries()).map(
+      ([name, stats]) => {
+        const totalRequirements = stats.pass + stats.fail + stats.manual;
+        const failurePercentage =
+          totalRequirements > 0
+            ? Math.round((stats.fail / totalRequirements) * 100)
+            : 0;
+
+        return {
+          name,
+          failurePercentage,
+          totalRequirements,
+          failedRequirements: stats.fail,
+        };
+      },
+    );
+
+    const filteredData = categoryData
+      .filter((category) => category.totalRequirements > 0)
+      .sort((a, b) => b.failurePercentage - a.failurePercentage)
+      .slice(0, 9); // Show top 9 categories
+
+    return filteredData;
+  } catch (error) {
+    console.error("Error calculating category heatmap data:", error);
+    return [];
+  }
 };

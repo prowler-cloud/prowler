@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import {
   Bar,
-  BarChart,
+  BarChart as RechartsBarChart,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -24,7 +24,7 @@ const title = (
   </h3>
 );
 
-export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
+export const BarChart = ({ sections }: FailedSectionsListProps) => {
   const { theme } = useTheme();
 
   const getTypeColor = (type: string) => {
@@ -89,7 +89,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
 
       <div className="h-full w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
+          <RechartsBarChart
             data={chartData}
             layout="vertical"
             margin={{ top: 12, bottom: 0 }}
@@ -185,7 +185,7 @@ export const FailedSectionsChart = ({ sections }: FailedSectionsListProps) => {
               layout="horizontal"
               verticalAlign="bottom"
             />
-          </BarChart>
+          </RechartsBarChart>
         </ResponsiveContainer>
       </div>
     </div>

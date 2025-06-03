@@ -144,3 +144,17 @@ export interface AttributesData {
 export interface RequirementsData {
   data: RequirementItemData[];
 }
+
+export interface RegionData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
+}
+
+export interface CategoryData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
+}
