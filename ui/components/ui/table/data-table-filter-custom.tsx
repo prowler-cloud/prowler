@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { CustomFilterIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
@@ -20,6 +20,21 @@ export const DataTableFilterCustom = ({
   const { updateFilter } = useUrlFilters();
   const [showFilters, setShowFilters] = useState(defaultOpen);
 
+  // Sort filters by index property, with fallback to original order for filters without index
+  const sortedFilters = useMemo(() => {
+    return [...filters].sort((a, b) => {
+      // If both have index, sort by index
+      if (a.index !== undefined && b.index !== undefined) {
+        return a.index - b.index;
+      }
+      // If only one has index, prioritize the one with index
+      if (a.index !== undefined) return -1;
+      if (b.index !== undefined) return 1;
+      // If neither has index, maintain original order
+      return 0;
+    });
+  }, [filters]);
+
   const pushDropdownFilter = useCallback(
     (key: string, values: string[]) => {
       updateFilter(key, values.length > 0 ? values : null);
@@ -30,7 +45,7 @@ export const DataTableFilterCustom = ({
   return (
     <div
       className={`flex ${
-        filters.length > 4 ? "flex-col" : "flex-col md:flex-row"
+        sortedFilters.length > 4 ? "flex-col" : "flex-col md:flex-row"
       } gap-4`}
     >
       <CustomButton
@@ -40,7 +55,7 @@ export const DataTableFilterCustom = ({
         size="md"
         startContent={<CustomFilterIcon size={16} />}
         onPress={() => setShowFilters(!showFilters)}
-        className="w-fit"
+        className="w-full max-w-fit"
       >
         <h3 className="text-small">
           {showFilters ? "Hide Filters" : "Show Filters"}
@@ -56,12 +71,12 @@ export const DataTableFilterCustom = ({
       >
         <div
           className={`grid gap-4 ${
-            filters.length > 4
+            sortedFilters.length >= 4
               ? "grid-cols-1 md:grid-cols-4"
               : "grid-cols-1 md:grid-cols-3"
           }`}
         >
-          {filters.map((filter) => (
+          {sortedFilters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}
               filter={{

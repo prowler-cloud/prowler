@@ -17,7 +17,7 @@ import {
   AWSCredentialsRole,
 } from "@/types";
 
-import { AWSCredentialsRoleForm } from "./via-role/aws-role-form";
+import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 
 export const UpdateViaRoleForm = ({
   searchParams,
@@ -150,7 +150,7 @@ export const UpdateViaRoleForm = ({
 
         {/* Conditional AWS Form */}
         {providerType === "aws" && (
-          <AWSCredentialsRoleForm
+          <AWSRoleCredentialsForm
             control={form.control as unknown as Control<AWSCredentialsRole>}
             setValue={
               form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>

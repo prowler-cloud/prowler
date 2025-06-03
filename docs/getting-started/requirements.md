@@ -70,7 +70,7 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 Prowler for Azure needs two types of permission scopes to be set:
 
 - **Microsoft Entra ID permissions**: used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
-    - `Directory.Read.All`
+    - `Domain.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
 - **Subscription scope permissions**: required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
@@ -80,6 +80,9 @@ Prowler for Azure needs two types of permission scopes to be set:
         Please, notice that the field `assignableScopes` in the JSON custom role file must be changed to be the subscription or management group where the role is going to be assigned. The valid formats for the field are `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
 
 To assign the permissions, follow the instructions in the [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions) section and the [Azure subscriptions permissions](../tutorials/azure/subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler) section, respectively.
+
+???+ warning
+    Some permissions in `ProwlerRole` are considered **write** permissions, so if you have a `ReadOnly` lock attached to some resources you may get an error and will not get a finding for that check.
 
 #### Checks that require ProwlerRole
 
@@ -153,77 +156,31 @@ With this credentials you will only be able to run the checks that work through 
 
 Authentication flag: `--env-auth`
 
-This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_ENCRYPTED_PASSWORD`.
+This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_PASSWORD`.
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 export M365_USER="your_email@example.com"
-export M365_ENCRYPTED_PASSWORD="6500780061006d0070006c006500700061007300730077006f0072006400" # replace this to yours
+export M365_PASSWORD="examplepassword"
 ```
 
 These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
-- `M365_USER` should be your Microsoft account email using the default domain. This means it must look like `example@YourCompany.onmicrosoft.com`.
+- `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
 
-    To ensure that you are using the default domain you can see how to verify it [here](../tutorials/microsoft365/getting-started-m365.md#step-1-obtain-your-domain).
+    ???+ warning
+        Using a tenant domain other than the one assigned — even if it belongs to the same tenant — will cause Prowler to fail, as Microsoft authentication will not succeed.
 
-    If you don't have a user created with that domain, Prowler will not work as it will not be able to ensure both app an user belong to the same tenant. To proceed, you can either create a new user with that domain or modify the domain of an existing user.
+    Ensure you are using the right domain for the user you are trying to authenticate with.
 
     ![User Domains](../tutorials/microsoft365/img/user-domains.png)
 
-- `M365_ENCRYPTED_PASSWORD` must be an encrypted SecureString. To convert your password into a valid encrypted string, you need to use PowerShell.
+- `M365_PASSWORD` must be the user password.
 
-    ???+ warning
-        Passwords encrypted using ConvertTo-SecureString can only be decrypted on the same OS/user context. If you generate an encrypted password on macOS or Linux (both UNIX), it should fail on Windows and vice versa. As Prowler Cloud runs on UNIX if you generate your password using Windows it won't work so you'll need to generate a new password using any UNIX distro (example above)
-
-    If you are working from Windows and you will use your encrypted password in a different system (like for example executing Prowler in macOS or adding your password to Prowler Cloud), you will need to generate a "UNIX compatible" version of your encrypted password. This can be done using WSL which is so easy to install on Windows.
-
-    === "UNIX"
-
-        Open a PowerShell cmd with a [supported version](requirements.md#supported-powershell-versions) and then run the following command:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
-
-    === "Windows"
-
-
-        How to install WSL and PowerShell on it to generate that password (you can use a different distro but this one will work for sure):
-
-        ```console
-        wsl --install -d Ubuntu-22.04
-        ```
-
-        Then, open the Ubuntu terminal and run the following commands:
-
-        ```console
-        sudo apt update && sudo apt install -y wget apt-transport-https software-properties-common
-        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-        sudo dpkg -i packages-microsoft-prod.deb
-        sudo apt update
-        sudo apt install -y powershell
-        pwsh
-        ```
-
-        With this done you will see now that a prompt running PowerShell with the latest version is open so here you will be able to generate your encrypted password:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-        If everything is done correctly, you will see the encrypted string that you need to set as the `M365_ENCRYPTED_PASSWORD` environment variable.
-
+    ???+ note
+        Before we asked for a encrypted password, but now we ask for the user password directly. Prowler will now handle the password encryption for you.
 
 
 ### Interactive Browser authentication
@@ -242,10 +199,9 @@ Since this is a delegated permission authentication method, necessary permission
 Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
 
 - **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
-    - `Directory.Read.All`: Required for all services.
+    - `Domain.Read.All`: Required for all services.
     - `Policy.Read.All`: Required for all services.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `Sites.Read.All`: Required for SharePoint service.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `AuditLog.Read.All`: Required for Entra service.
 

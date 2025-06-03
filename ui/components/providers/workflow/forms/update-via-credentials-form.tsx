@@ -17,15 +17,15 @@ import {
   ApiError,
   AWSCredentials,
   AzureCredentials,
-  GCPCredentials,
+  GCPDefaultCredentials,
   KubernetesCredentials,
   M365Credentials,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
-import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
+import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
+import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
-import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
 
@@ -38,7 +38,7 @@ type FormType = CredentialsFormSchema &
   AWSCredentials &
   AzureCredentials &
   M365Credentials &
-  GCPCredentials &
+  GCPDefaultCredentials &
   KubernetesCredentials;
 
 export const UpdateViaCredentialsForm = ({
@@ -58,7 +58,7 @@ export const UpdateViaCredentialsForm = ({
     router.push(`?${currentParams.toString()}`);
   };
 
-  const providerType = searchParams.type;
+  const providerType = searchParams.type as ProviderType;
   const providerId = searchParams.id;
   const providerSecretId = searchParams.secretId || "";
   const formSchema = addCredentialsFormSchema(providerType);
@@ -86,7 +86,7 @@ export const UpdateViaCredentialsForm = ({
                 client_secret: "",
                 tenant_id: "",
                 user: "",
-                encrypted_password: "",
+                password: "",
               }
             : providerType === "gcp"
               ? {
@@ -153,8 +153,8 @@ export const UpdateViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
-          case "/data/attributes/secret/encrypted_password":
-            form.setError("encrypted_password", {
+          case "/data/attributes/secret/password":
+            form.setError("password", {
               type: "server",
               message: errorMessage,
             });
@@ -201,12 +201,12 @@ export const UpdateViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <ProviderTitleDocs providerType={providerType as ProviderType} />
+        <ProviderTitleDocs providerType={providerType} />
 
         <Divider />
 
         {providerType === "aws" && (
-          <AWScredentialsForm
+          <AWSStaticCredentialsForm
             control={form.control as unknown as Control<AWSCredentials>}
           />
         )}
@@ -221,8 +221,8 @@ export const UpdateViaCredentialsForm = ({
           />
         )}
         {providerType === "gcp" && (
-          <GCPcredentialsForm
-            control={form.control as unknown as Control<GCPCredentials>}
+          <GCPDefaultCredentialsForm
+            control={form.control as unknown as Control<GCPDefaultCredentials>}
           />
         )}
         {providerType === "kubernetes" && (

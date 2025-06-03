@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.8.0] (Prowler v5.8.0)
+## [5.8.0] (Prowler v5.8.0)
 
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
@@ -14,12 +14,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - Add CIS 4.0 compliance framework for GCP. [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
 - Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
+- Add `repository_default_branch_requires_signed_commits` check for GitHub provider. [(#7777)](https://github.com/prowler-cloud/prowler/pull/7777)
+- Add `repository_inactive_not_archived` check for GitHub provider. [(#7786)](https://github.com/prowler-cloud/prowler/pull/7786)
+- Add `repository_dependency_scanning_enabled` check for GitHub provider. [(#7771)](https://github.com/prowler-cloud/prowler/pull/7771)
+- Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
+- Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
+- Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
+- Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
-### Fixed
+---
+
+### [v5.7.2] Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
+- Fix `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity. [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
+- Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive. [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
+- Split calls to list Azure Functions attributes. [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
 
 ---
 
@@ -48,6 +60,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update and upgrade CIS for all the providers [(#7738)](https://github.com/prowler-cloud/prowler/pull/7738)
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
+- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ---
 

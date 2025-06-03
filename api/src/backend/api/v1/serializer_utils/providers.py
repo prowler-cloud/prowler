@@ -119,9 +119,9 @@ from rest_framework_json_api import serializers
                         "type": "email",
                         "description": "User microsoft email address.",
                     },
-                    "encrypted_password": {
+                    "password": {
                         "type": "string",
-                        "description": "User encrypted password.",
+                        "description": "User password.",
                     },
                 },
                 "required": [
@@ -129,7 +129,7 @@ from rest_framework_json_api import serializers
                     "client_secret",
                     "tenant_id",
                     "user",
-                    "encrypted_password",
+                    "password",
                 ],
             },
             {
@@ -153,6 +153,17 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["client_id", "client_secret", "refresh_token"],
+            },
+            {
+                "type": "object",
+                "title": "GCP Service Account Key",
+                "properties": {
+                    "service_account_key": {
+                        "type": "object",
+                        "description": "The service account key for GCP.",
+                    }
+                },
+                "required": ["service_account_key"],
             },
             {
                 "type": "object",

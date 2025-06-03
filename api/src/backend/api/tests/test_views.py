@@ -13,11 +13,12 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
 from django.urls import reverse
+from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
 from api.models import (
-    ComplianceOverview,
     Integration,
     Invitation,
     Membership,
@@ -34,6 +35,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.views import ComplianceOverviewViewSet
 
 TODAY = str(datetime.today().date())
 
@@ -914,13 +916,23 @@ class TestProviderViewSet:
                     "alias": "GKE",
                 },
                 {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
                     "provider": "azure",
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
                     "alias": "test",
                 },
                 {
                     "provider": "m365",
-                    "uid": "TestingPro.onMirosoft.com",
+                    "uid": "TestingPro.onmicrosoft.com",
                     "alias": "test",
                 },
                 {
@@ -1678,6 +1690,26 @@ class TestProviderSecretViewSet:
                     "refresh_token": "refresh-token",
                 },
             ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
+                    "service_account_key": {
+                        "type": "service_account",
+                        "project_id": "project-id",
+                        "private_key_id": "private-key-id",
+                        "private_key": "private-key",
+                        "client_email": "client-email",
+                        "client_id": "client-id",
+                        "auth_uri": "auth-uri",
+                        "token_uri": "token-uri",
+                        "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
+                        "client_x509_cert_url": "client-x509-cert-url",
+                        "universe_domain": "universe-domain",
+                    },
+                },
+            ),
             # Kubernetes with STATIC secret
             (
                 Provider.ProviderChoices.KUBERNETES.value,
@@ -2303,7 +2335,10 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2371,7 +2406,7 @@ class TestScanViewSet:
     ):
         """
         When output_location is a local path and glob.glob returns an empty list,
-        the view should return HTTP 404 with detail "The scan has no reports."
+        the view should return HTTP 404 with detail "The scan has no reports, or the report generation task has not started yet."
         """
         scan = scans_fixture[0]
         scan.output_location = "/tmp/nonexistent_report_pattern.zip"
@@ -2383,7 +2418,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == 404
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
@@ -2458,7 +2496,10 @@ class TestScanViewSet:
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_compliance_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2600,6 +2641,36 @@ class TestScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_finds_task_using_kwargs(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task_result = TaskResult.objects.create(
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.EXECUTING,
+        }
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.data["id"] == str(task.id)
+
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.sentry_sdk.capture_exception")
     def test_compliance_list_objects_client_error(
@@ -2650,7 +2721,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     @patch("api.v1.views.get_s3_client")
     def test_report_s3_client_error_other(
@@ -4688,210 +4762,248 @@ class TestComplianceOverviewViewSet:
         assert len(response.json()["data"]) == 0
 
     def test_compliance_overview_list(
-        self, authenticated_client, compliance_overviews_fixture
+        self, authenticated_client, compliance_requirements_overviews_fixture
     ):
         # List compliance overviews with existing data
-        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
-        scan_id = str(compliance_overview1.scan.id)
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
 
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
             {"filter[scan_id]": scan_id},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert (
-            len(response.json()["data"]) == 1
-        )  # Due to the custom get_queryset method, only one compliance_id
+        data = response.json()["data"]
+        assert len(data) == 2  # Two compliance frameworks
 
-    def test_compliance_overview_list_missing_scan_id(self, authenticated_client):
-        # Attempt to list compliance overviews without providing filter[scan_id]
-        response = authenticated_client.get(reverse("complianceoverview-list"))
+        # Check that we get aggregated data for each compliance framework
+        framework_ids = [item["id"] for item in data]
+        assert "aws_account_security_onboarding_aws" in framework_ids
+        assert "cis_1.4_aws" in framework_ids
+
+        # Check structure of response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "requirements_passed" in attributes
+            assert "requirements_failed" in attributes
+            assert "requirements_manual" in attributes
+            assert "total_requirements" in attributes
+
+    def test_compliance_overview_metadata(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-metadata"),
+            {"filter[scan_id]": scan_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert "attributes" in data
+        assert "regions" in data["attributes"]
+        assert isinstance(data["attributes"]["regions"], list)
+
+    def test_compliance_overview_requirements(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+        compliance_id = requirement_overview1.compliance_id
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of requirements response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "status" in attributes
+
+    def test_compliance_overview_requirements_missing_scan_id(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
-        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_compliance_overview_requirements_missing_compliance_id(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {"filter[scan_id]": scan_id},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_attributes(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of attributes response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "attributes" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+
+    def test_compliance_overview_attributes_missing_compliance_id(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_task_management_integration(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        """Test that task management mixin is properly integrated"""
+        from unittest.mock import patch
+
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        # Mock a running task
+        with patch.object(
+            ComplianceOverviewViewSet, "get_task_response_if_running"
+        ) as mock_task_response:
+            mock_response = Response(
+                {"detail": "Task is running"}, status=status.HTTP_202_ACCEPTED
+            )
+            mock_task_response.return_value = mock_response
+
+            response = authenticated_client.get(
+                reverse("complianceoverview-list"),
+                {"filter[scan_id]": scan_id},
+            )
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mock_task_response.assert_called_once()
+
+    def test_compliance_overview_task_failed_exception(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        """Test handling of TaskFailedException"""
+        from unittest.mock import patch
+
+        from api.exceptions import TaskFailedException
+
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        # Mock a failed task
+        with patch.object(
+            ComplianceOverviewViewSet, "get_task_response_if_running"
+        ) as mock_task_response:
+            mock_task_response.side_effect = TaskFailedException("Task failed")
+
+            response = authenticated_client.get(
+                reverse("complianceoverview-list"),
+                {"filter[scan_id]": scan_id},
+            )
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert "Task failed to generate compliance overview data" in str(
+                response.data
+            )
 
     @pytest.mark.parametrize(
-        "filter_name, filter_value, expected_count",
+        "filter_name, filter_value_attr, expected_count_min",
         [
-            ("compliance_id", "aws_account_security_onboarding_aws", 1),
-            ("compliance_id.icontains", "security_onboarding", 1),
-            ("framework", "AWS-Account-Security-Onboarding", 1),
-            ("framework.icontains", "security-onboarding", 1),
-            ("version", "1.0", 1),
-            ("version", "2.0", 0),
-            ("version.icontains", "0", 1),
-            ("region", "eu-west-1", 1),
-            ("region.icontains", "west-1", 1),
-            ("region.in", "eu-west-1,eu-west-2", 1),
-            ("inserted_at.date", "2024-01-01", 0),
-            ("inserted_at.date", TODAY, 1),
-            ("inserted_at.gte", "2024-01-01", 1),
+            ("scan_id", "scan.id", 1),
+            ("compliance_id", "compliance_id", 1),
+            ("framework", "framework", 1),
+            ("version", "version", 1),
+            ("region", "region", 1),
         ],
     )
     def test_compliance_overview_filters(
         self,
         authenticated_client,
-        compliance_overviews_fixture,
+        compliance_requirements_overviews_fixture,
         filter_name,
-        filter_value,
-        expected_count,
+        filter_value_attr,
+        expected_count_min,
     ):
-        # Test filtering compliance overviews
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
+        requirement_overview = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview.scan.id)
+
+        filter_value = requirement_overview
+        for attr in filter_value_attr.split("."):
+            filter_value = getattr(filter_value, attr)
+
+        filter_value = str(filter_value)
+
+        query_params = {
+            "filter[scan_id]": scan_id,
+            f"filter[{filter_name}]": filter_value,
+        }
+
+        if filter_name == "scan_id":
+            query_params = {"filter[scan_id]": filter_value}
 
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                f"filter[{filter_name}]": filter_value,
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == expected_count
-
-    @pytest.mark.parametrize(
-        "filter_name",
-        ["invalid_filter", "unknown_field"],
-    )
-    def test_compliance_overview_filters_invalid(
-        self, authenticated_client, compliance_overviews_fixture, filter_name
-    ):
-        # Test handling of invalid filters
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                f"filter[{filter_name}]": "some_value",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.parametrize(
-        "sort_field",
-        ["inserted_at", "-inserted_at", "compliance_id", "-compliance_id"],
-    )
-    def test_compliance_overview_sort(
-        self, authenticated_client, compliance_overviews_fixture, sort_field
-    ):
-        # Test sorting compliance overviews
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                "sort": sort_field,
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_compliance_overview_sort_invalid(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        # Test handling of invalid sort parameters
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                "sort": "invalid_field",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["code"] == "invalid"
-        assert "invalid sort parameter" in response.json()["errors"][0]["detail"]
-
-    def test_compliance_overview_retrieve(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        # Retrieve a specific compliance overview
-        compliance_overview1 = compliance_overviews_fixture[0]
-
-        response = authenticated_client.get(
-            reverse(
-                "complianceoverview-detail",
-                kwargs={"pk": compliance_overview1.id},
-            ),
-        )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert data["id"] == str(compliance_overview1.id)
-        attributes = data["attributes"]
-        assert attributes["compliance_id"] == compliance_overview1.compliance_id
-        assert attributes["framework"] == compliance_overview1.framework
-        assert attributes["version"] == compliance_overview1.version
-        assert attributes["region"] == compliance_overview1.region
-        assert attributes["description"] == compliance_overview1.description
-        assert "requirements" in attributes
-
-    def test_compliance_overview_invalid_retrieve(self, authenticated_client):
-        # Attempt to retrieve a compliance overview with an invalid ID
-        response = authenticated_client.get(
-            reverse(
-                "complianceoverview-detail",
-                kwargs={"pk": "invalid-id"},
-            ),
-        )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_compliance_overview_list_queryset(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {"filter[scan_id]": scan_id},
-        )
-        # No filters, most fails should be returned
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["id"] == str(compliance_overview2.id)
-
-        compliance_overview1.requirements_failed = 5
-        compliance_overview1.save()
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {"filter[scan_id]": scan_id},
-        )
-        # No filters, now compliance_overview1 has more fails
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["id"] == str(compliance_overview1.id)
-
-    def test_compliance_overview_metadata(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        response = authenticated_client.get(
-            reverse("complianceoverview-metadata"),
-            {"filter[scan_id]": str(compliance_overviews_fixture[0].scan_id)},
-        )
-        data = response.json()
-
-        expected_regions = set(
-            ComplianceOverview.objects.all()
-            .values_list("region", flat=True)
-            .distinct("region")
+            query_params,
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert data["data"]["type"] == "compliance-overviews-metadata"
-        assert data["data"]["id"] is None
-        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        response_data = response.json()
 
-    def test_compliance_overview_metadata_missing_scan_id(self, authenticated_client):
-        # Attempt to list compliance overviews without providing filter[scan_id]
-        response = authenticated_client.get(reverse("complianceoverview-metadata"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
-        assert response.json()["errors"][0]["code"] == "required"
+        assert len(response_data["data"]) >= expected_count_min
+
+        if response_data["data"]:
+            first_item = response_data["data"][0]
+            assert "id" in first_item
+            assert "type" in first_item
+            assert first_item["type"] == "compliance-overviews"
+            assert "attributes" in first_item
+
+            attributes = first_item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "requirements_passed" in attributes
+            assert "requirements_failed" in attributes
+            assert "requirements_manual" in attributes
+            assert "total_requirements" in attributes
+
+            if filter_name == "compliance_id":
+                assert first_item["id"] == filter_value
+            elif filter_name == "framework":
+                assert attributes["framework"] == filter_value
+            elif filter_name == "version":
+                assert attributes["version"] == filter_value
 
 
 @pytest.mark.django_db
