@@ -136,6 +136,11 @@ class App(AzureService):
                             subscription_name, function.resource_group, function.name
                         )
 
+                        web_app_config = client.web_apps.get_configuration(
+                            resource_group_name=function.resource_group,
+                            name=function.name,
+                        )
+
                         functions[subscription_name].update(
                             {
                                 function.id: FunctionApp(
@@ -162,7 +167,7 @@ class App(AzureService):
                                         "",
                                     ),
                                     ftps_state=getattr(
-                                        function_config, "ftps_state", None
+                                        web_app_config, "ftps_state", ""
                                     ),
                                 )
                             }
