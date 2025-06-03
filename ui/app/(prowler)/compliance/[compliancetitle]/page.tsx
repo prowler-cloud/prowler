@@ -32,15 +32,20 @@ interface ComplianceDetailSearchParams {
   "filter[cis_profile_level]"?: string;
 }
 
-const ComplianceLogo = ({ logoPath }: { logoPath: string }) => {
+const ComplianceIconSmall = ({
+  logoPath,
+  title,
+}: {
+  logoPath: string;
+  title: string;
+}) => {
   return (
-    <div className="relative ml-auto hidden h-[200px] w-[200px] flex-shrink-0 xl:block">
+    <div className="relative h-6 w-6 flex-shrink-0">
       <Image
         src={logoPath}
-        alt="Compliance Logo"
+        alt={`${title} logo`}
         fill
-        priority
-        className="object-contain"
+        className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );
@@ -48,17 +53,13 @@ const ComplianceLogo = ({ logoPath }: { logoPath: string }) => {
 
 const ChartsWrapper = ({
   children,
-  logoPath,
 }: {
   children: React.ReactNode;
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full">
-      <div className="flex flex-col items-center gap-32 sm:flex-row">
-        {children}
-      </div>
-      {logoPath && <ComplianceLogo logoPath={logoPath} />}
+    <div className="mb-8 flex w-full flex-col items-center gap-32 sm:flex-row">
+      {children}
     </div>
   );
 };
@@ -132,7 +133,16 @@ export default async function ComplianceDetail({
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
-    <ContentLayout title={pageTitle} icon="fluent-mdl2:compliance-audit">
+    <ContentLayout
+      title={pageTitle}
+      icon={
+        logoPath ? (
+          <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
+        ) : (
+          "fluent-mdl2:compliance-audit"
+        )
+      }
+    >
       <ComplianceHeader
         scans={expandedScansData}
         uniqueRegions={uniqueRegions}
