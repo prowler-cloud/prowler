@@ -19,6 +19,9 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.3] (Prowler v5.7.3)
 
+### Added
+- Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935).
+
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 
