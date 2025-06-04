@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@nextui-org/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
@@ -77,9 +78,15 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
 
       <div className="h-full w-full p-2">
         <div
-          className="grid h-full w-full grid-cols-3 gap-1"
+          className={cn(
+            "grid h-full w-full gap-1",
+            heatmapData.length < 3 ? "grid-cols-1" : "grid-cols-3",
+          )}
           style={{
-            gridTemplateRows: `repeat(${Math.min(Math.ceil(heatmapData.length / 3), 3)}, 1fr)`,
+            gridTemplateRows:
+              heatmapData.length < 3
+                ? `repeat(${heatmapData.length}, ${heatmapData.length}fr)`
+                : `repeat(${Math.min(Math.ceil(heatmapData.length / 3), 3)}, 1fr)`,
           }}
         >
           {heatmapData.map((item) => (
