@@ -9,10 +9,10 @@ interface ComplianceScanInfoProps {
     providerInfo: {
       provider: ProviderType;
       alias?: string;
-      uid?: string;
+      uid: string;
     };
     attributes: {
-      name?: string;
+      name: string;
       completed_at: string;
     };
   };

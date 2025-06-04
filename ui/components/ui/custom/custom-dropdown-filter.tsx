@@ -20,9 +20,8 @@ import React, {
   useState,
 } from "react";
 
+import { ComplianceScanInfo } from "@/components/compliance";
 import { CustomDropdownFilterProps } from "@/types";
-
-import { EntityInfoShort } from "../entities";
 
 export const CustomDropdownFilter = ({
   filter,
@@ -163,7 +162,7 @@ export const CustomDropdownFilter = ({
       const entity = filter.valueLabelMapping?.find((entry) => entry[value])?.[
         value
       ];
-      return entity?.alias || entity?.uid || value;
+      return entity?.providerInfo?.alias || entity?.providerInfo?.uid || value;
     },
     [filter.valueLabelMapping],
   );
@@ -234,7 +233,7 @@ export const CustomDropdownFilter = ({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
+        <PopoverContent className="min-w-[20rem] dark:bg-prowler-blue-800">
           <div className="flex w-full flex-col gap-4 p-2">
             <CheckboxGroup
               color="default"
@@ -264,7 +263,8 @@ export const CustomDropdownFilter = ({
                 {filterValues.map((value) => {
                   const entity = filter.valueLabelMapping?.find(
                     (entry) => entry[value],
-                  )?.[value];
+                  );
+                  const scanData = entity?.[value];
 
                   return (
                     <Checkbox
@@ -275,13 +275,8 @@ export const CustomDropdownFilter = ({
                       key={value}
                       value={value}
                     >
-                      {entity ? (
-                        <EntityInfoShort
-                          cloudProvider={entity.provider}
-                          entityAlias={entity.alias ?? undefined}
-                          entityId={entity.uid}
-                          hideCopyButton
-                        />
+                      {scanData ? (
+                        <ComplianceScanInfo scan={scanData} />
                       ) : (
                         value
                       )}

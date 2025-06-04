@@ -26,6 +26,7 @@ import {
 import {
   createProviderDetailsMapping,
   extractProviderUIDs,
+  getProviderDetailsByScan,
 } from "@/lib/provider-helpers";
 import { ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
@@ -48,7 +49,9 @@ export default async function Findings({
       filters,
     }),
     getProviders({ pageSize: 50 }),
-    getScans({}),
+    getScans({
+      include: "provider",
+    }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -83,12 +86,16 @@ export default async function Findings({
         scan.attributes.unique_resource_count > 1,
     )
     .map((scan: ScanProps) => ({
+      ...scan,
       id: scan.id,
-      name: scan.attributes.name,
     }));
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+
+  const providerDetailsAssociatedWithScans = scansData.data.map(
+    (scan: ScanProps) => getProviderDetailsByScan(scan, scansData.included),
+  );
 
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
@@ -119,6 +126,7 @@ export default async function Findings({
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
+            valueLabelMapping: providerDetailsAssociatedWithScans,
             index: 9,
           },
         ]}

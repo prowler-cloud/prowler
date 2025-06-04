@@ -16,12 +16,14 @@ export const getScans = async ({
   sort = "",
   filters = {},
   pageSize = 10,
+  include = "",
 }: {
   page?: number;
   query?: string;
   sort?: string;
   filters?: Record<string, string | number | boolean>;
   pageSize?: number;
+  include?: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -33,6 +35,7 @@ export const getScans = async ({
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
+  if (include) url.searchParams.append("include", include);
 
   // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
@@ -254,7 +257,7 @@ export const getExportsZip = async (scanId: string) => {
 
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to fetch scan report. Contact support if the issue continues.",
+        "Unable to fetch scan report. Contact support if the issue continues.",
       );
     }
 
@@ -303,7 +306,7 @@ export const getComplianceCsv = async (
       const errorData = await response.json();
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve compliance report. Contact support if the issue continues.",
+        "Unable to retrieve compliance report. Contact support if the issue continues.",
       );
     }
 

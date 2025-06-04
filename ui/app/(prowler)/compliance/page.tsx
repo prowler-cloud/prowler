@@ -3,7 +3,6 @@ import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
 import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
-import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
@@ -12,6 +11,7 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
+import { getProviderDetailsByScan } from "@/lib/provider-helpers";
 import { ScanProps, SearchParamsProps } from "@/types";
 import { ComplianceOverviewData } from "@/types/compliance";
 
@@ -31,6 +31,7 @@ export default async function Compliance({
       "filter[state]": "completed",
     },
     pageSize: 50,
+    include: "provider",
   });
 
   if (!scansData?.data) {
@@ -38,31 +39,10 @@ export default async function Compliance({
   }
 
   // Expand scans with provider information
-  const expandedScansData = await Promise.all(
-    scansData.data.map(async (scan: ScanProps) => {
-      const providerId = scan.relationships?.provider?.data?.id;
-
-      if (!providerId) {
-        return { ...scan, providerInfo: null };
-      }
-
-      const formData = new FormData();
-      formData.append("id", providerId);
-
-      const providerData = await getProvider(formData);
-
-      return {
-        ...scan,
-        providerInfo: providerData?.data
-          ? {
-              provider: providerData.data.attributes.provider,
-              uid: providerData.data.attributes.uid,
-              alias: providerData.data.attributes.alias,
-            }
-          : null,
-      };
-    }),
-  );
+  const expandedScansData = scansData.data.map((scan: ScanProps) => ({
+    id: scan.id,
+    ...getProviderDetailsByScan(scan, scansData.included, "flat"),
+  }));
 
   const selectedScanId =
     searchParams.scanId || expandedScansData[0]?.id || null;

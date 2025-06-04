@@ -17,6 +17,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
+- Improve `Scan ID` filter by adding more context and enhancing the UI/UX. [(#7827)](https://github.com/prowler-cloud/prowler/pull/7827/)
 
 ---
 

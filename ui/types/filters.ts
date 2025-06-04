@@ -1,10 +1,22 @@
-import { ProviderAccountProps } from "./providers";
+import { ProviderType } from "./providers";
 
 export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
-  valueLabelMapping?: Array<{ [uid: string]: ProviderAccountProps }>;
+  valueLabelMapping?: Array<{
+    [uid: string]: {
+      providerInfo: {
+        provider: ProviderType;
+        alias?: string;
+        uid?: string;
+      };
+      attributes?: {
+        name?: string;
+        completed_at: string;
+      };
+    };
+  }>;
   index?: number;
   showSelectAll?: boolean;
   defaultToSelectAll?: boolean;
