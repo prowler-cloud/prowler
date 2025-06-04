@@ -2823,6 +2823,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 {
                     "id": requirement_id,
                     "framework": compliance_framework.get("framework", ""),
+                    "compliance_name": compliance_framework.get("name", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
                     "attributes": {"metadata": metadata, "check_ids": check_ids},
