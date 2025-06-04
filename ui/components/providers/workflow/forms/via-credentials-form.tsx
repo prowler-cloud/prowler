@@ -11,21 +11,21 @@ import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { ProviderType } from "@/types";
 import {
   addCredentialsFormSchema,
   ApiError,
   AWSCredentials,
   AzureCredentials,
-  GCPCredentials,
+  GCPDefaultCredentials,
   KubernetesCredentials,
   M365Credentials,
+  ProviderType,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
-import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
+import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
+import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
-import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
 
@@ -37,7 +37,7 @@ type CredentialsFormSchema = z.infer<
 type FormType = CredentialsFormSchema &
   AWSCredentials &
   AzureCredentials &
-  GCPCredentials &
+  GCPDefaultCredentials &
   KubernetesCredentials &
   M365Credentials;
 
@@ -58,7 +58,7 @@ export const ViaCredentialsForm = ({
     router.push(`?${currentParams.toString()}`);
   };
 
-  const providerType = searchParams.type;
+  const providerType = searchParams.type as ProviderType;
   const providerId = searchParams.id;
   const formSchema = addCredentialsFormSchema(providerType);
 
@@ -200,12 +200,12 @@ export const ViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <ProviderTitleDocs providerType={providerType as ProviderType} />
+        <ProviderTitleDocs providerType={providerType} />
 
         <Divider />
 
         {providerType === "aws" && (
-          <AWScredentialsForm
+          <AWSStaticCredentialsForm
             control={form.control as unknown as Control<AWSCredentials>}
           />
         )}
@@ -220,8 +220,8 @@ export const ViaCredentialsForm = ({
           />
         )}
         {providerType === "gcp" && (
-          <GCPcredentialsForm
-            control={form.control as unknown as Control<GCPCredentials>}
+          <GCPDefaultCredentialsForm
+            control={form.control as unknown as Control<GCPDefaultCredentials>}
           />
         )}
         {providerType === "kubernetes" && (
