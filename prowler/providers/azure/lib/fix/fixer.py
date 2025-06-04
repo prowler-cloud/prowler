@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from colorama import Style
 
@@ -17,14 +17,17 @@ class AzureFixer(Fixer):
         cost_impact: bool = False,
         cost_description: Optional[str] = None,
         service: str = "",
+        permissions_required: Optional[Dict] = None,
     ):
         super().__init__(description, cost_impact, cost_description)
         self.service = service
+        self.permissions_required = permissions_required or {}
 
     def _get_fixer_info(self):
         """Each fixer must define its metadata"""
         fixer_info = super()._get_fixer_info()
         fixer_info["service"] = self.service
+        fixer_info["permissions_required"] = self.permissions_required
         return fixer_info
 
     def fix(self, finding: Optional[Check_Report_Azure] = None, **kwargs) -> bool:
@@ -53,8 +56,8 @@ class AzureFixer(Fixer):
                     finding.resource_id if hasattr(finding, "resource_id") else None
                 )
                 resource_group = (
-                    finding.resource_group_name
-                    if hasattr(finding, "resource_group_name")
+                    finding.resource.get("resource_group_name")
+                    if hasattr(finding.resource, "resource_group_name")
                     else None
                 )
             else:
