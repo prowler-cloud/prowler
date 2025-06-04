@@ -5,9 +5,9 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
-from pydantic import BaseModel, ValidationError, validator
+from pydantic.v1 import BaseModel, ValidationError, validator
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -118,7 +118,7 @@ class CheckMetadata(BaseModel):
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: list = None
+    Compliance: Optional[list[Any]] = []
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
@@ -605,6 +605,29 @@ class CheckReportM365(Check_Report):
         self.resource_name = resource_name
         self.resource_id = resource_id
         self.location = resource_location
+
+
+@dataclass
+class CheckReportIAC(Check_Report):
+    """Contains the IAC Check's finding information using Checkov."""
+
+    resource_name: str
+    resource_path: str
+    resource_line_range: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the IAC Check's finding information from a Checkov failed_check dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            failed_check (dict): A single failed_check result from Checkov's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.resource_name = getattr(finding, "resource", "")
+        self.resource_path = getattr(finding, "file_path", "")
+        self.resource_line_range = getattr(finding, "file_line_range", "")
 
 
 @dataclass
