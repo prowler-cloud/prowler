@@ -167,7 +167,7 @@ class App(AzureService):
                                         "",
                                     ),
                                     ftps_state=getattr(
-                                        web_app_config, "ftps_state", ""
+                                        web_app_config, "ftps_state", None
                                     ),
                                 )
                             }
