@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.8.3] (Prowler v5.7.3)
+
+### Fixed
+- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
+- Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
+
+---
+
 ## [v1.8.2] (Prowler v5.7.2)
 
 ### Fixed
