@@ -2,7 +2,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@langchain/langgraph-supervisor": "^0.0.12",
-    "@langchain/openai": "^0.5.10",
+    "@langchain/openai": "0.5.10",
     "@nextui-org/react": "2.4.8",
     "@nextui-org/system": "2.2.1",
     "@nextui-org/theme": "2.2.5",
