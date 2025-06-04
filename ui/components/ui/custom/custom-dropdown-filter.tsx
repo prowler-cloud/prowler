@@ -20,9 +20,8 @@ import React, {
   useState,
 } from "react";
 
+import { EntityInfoShort } from "@/components/ui/entities";
 import { CustomDropdownFilterProps } from "@/types";
-
-import { EntityInfoShort } from "../entities";
 
 export const CustomDropdownFilter = ({
   filter,
@@ -57,13 +56,11 @@ export const CustomDropdownFilter = ({
     setGroupSelected(newSelection);
   }, [activeFilterValue, filterValues, filter?.showSelectAll]);
 
-  // Helper function to reset component state when filters are cleared
   const resetComponentState = useCallback(() => {
     setGroupSelected(new Set());
     hasUserInteracted.current = false;
   }, []);
 
-  // Helper function to apply default values when component loads
   const applyDefaultValues = useCallback(() => {
     if (filter?.defaultToSelectAll && filterValues.length > 0) {
       const newSelection = new Set(filterValues);
@@ -95,7 +92,6 @@ export const CustomDropdownFilter = ({
     filter?.showSelectAll,
   ]);
 
-  // Sync URL state with component state
   useEffect(() => {
     const hasActiveFilters = activeFilterValue.length > 0;
     const userHasInteracted = hasUserInteracted.current;
