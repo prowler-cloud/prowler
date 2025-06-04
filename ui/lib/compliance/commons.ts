@@ -1,5 +1,6 @@
 import React from "react";
 
+import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
@@ -14,6 +15,10 @@ import {
   RequirementsData,
 } from "@/types/compliance";
 
+import {
+  mapComplianceData as mapAWSWellArchitectedComplianceData,
+  toAccordionItems as toAWSWellArchitectedAccordionItems,
+} from "./aws-well-architected";
 import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
@@ -100,6 +105,20 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     getTopFailedSections,
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(CISCustomDetails, { requirement }),
+  },
+  "AWS-Well-Architected-Framework-Security-Pillar": {
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
+    getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+  },
+  "AWS-Well-Architected-Framework-Reliability-Pillar": {
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
+    getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
   },
 };
 
