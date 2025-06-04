@@ -79,8 +79,9 @@ export const ChatbotConfig = ({
         setConfigExists(true);
         toast({
           title: "Success",
-          description: `Lighthouse configuration ${configExists ? "updated" : "created"
-            } successfully`,
+          description: `Lighthouse configuration ${
+            configExists ? "updated" : "created"
+          } successfully`,
         });
       } else {
         throw new Error("Failed to save configuration");

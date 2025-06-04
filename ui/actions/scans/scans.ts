@@ -257,7 +257,7 @@ export const getExportsZip = async (scanId: string) => {
 
       throw new Error(
         errorData?.errors?.detail ||
-        "Unable to fetch scan report. Contact support if the issue continues.",
+          "Unable to fetch scan report. Contact support if the issue continues.",
       );
     }
 
@@ -306,7 +306,7 @@ export const getComplianceCsv = async (
       const errorData = await response.json();
       throw new Error(
         errorData?.errors?.detail ||
-        "Unable to retrieve compliance report. Contact support if the issue continues.",
+          "Unable to retrieve compliance report. Contact support if the issue continues.",
       );
     }
 
