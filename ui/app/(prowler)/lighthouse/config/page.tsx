@@ -1,5 +1,6 @@
 import { getLighthouseConfig } from "@/actions/lighthouse";
 import { ChatbotConfig } from "@/components/lighthouse";
+import { ContentLayout } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,11 @@ export default async function ChatbotConfigPage() {
   const configExists = !!response;
 
   return (
-    <ChatbotConfig initialValues={initialValues} configExists={configExists} />
+    <ContentLayout title="Configure Lighthouse" icon="lucide:settings">
+      <ChatbotConfig
+        initialValues={initialValues}
+        configExists={configExists}
+      />
+    </ContentLayout>
   );
 }
