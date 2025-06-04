@@ -23,6 +23,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
+### Fixed
+- Fix `network_flow_log_more_than_90_days` check to pass when retention policy is 0 (indefinite). [(#7926)](https://github.com/prowler-cloud/prowler/pull/7926)
+
 ---
 
 ### [v5.7.2] Fixed
@@ -32,6 +35,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity. [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
 - Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive. [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
 - Split calls to list Azure Functions attributes. [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
+
 
 ---
 
