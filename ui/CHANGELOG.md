@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
+### 🐞 Fixes
+
+- Fix sync between filter buttons and URL when filters change. [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
+
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
