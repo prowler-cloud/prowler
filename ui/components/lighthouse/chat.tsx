@@ -3,9 +3,11 @@
 import { useChat } from "@ai-sdk/react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
-import { CustomButton } from "@/components/ui/custom";
+import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { Form } from "@/components/ui/form";
 
 interface SuggestedAction {
   title: string;
@@ -17,9 +19,13 @@ interface ChatProps {
   hasApiKey: boolean;
 }
 
+interface ChatFormData {
+  message: string;
+}
+
 export const Chat = ({ hasApiKey }: ChatProps) => {
-  const { messages, input, handleSubmit, handleInputChange, append, status } =
-    useChat({
+  const { messages, handleSubmit, handleInputChange, append, status } = useChat(
+    {
       api: "/api/lighthouse/analyst",
       credentials: "same-origin",
       experimental_throttle: 100,
@@ -27,10 +33,67 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
       onFinish: () => {
         // Handle chat completion
       },
-      onError: () => {
-        console.log("An error occurred, please try again!");
+      onError: (error) => {
+        console.error("Chat error:", error);
       },
-    });
+    },
+  );
+
+  const form = useForm<ChatFormData>({
+    defaultValues: {
+      message: "",
+    },
+  });
+
+  const messageValue = form.watch("message");
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+
+  // Sync form value with chat input
+  useEffect(() => {
+    const syntheticEvent = {
+      target: { value: messageValue },
+    } as React.ChangeEvent<HTMLInputElement>;
+    handleInputChange(syntheticEvent);
+  }, [messageValue, handleInputChange]);
+
+  // Reset form when message is sent
+  useEffect(() => {
+    if (status === "submitted") {
+      form.reset({ message: "" });
+    }
+  }, [status, form]);
+
+  const onFormSubmit = form.handleSubmit((data) => {
+    if (data.message.trim()) {
+      handleSubmit();
+    }
+  });
+
+  // Global keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (messageValue?.trim()) {
+          onFormSubmit();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [messageValue, onFormSubmit]);
+
+  useEffect(() => {
+    if (messagesContainerRef.current && latestUserMsgRef.current) {
+      const container = messagesContainerRef.current;
+      const userMsg = latestUserMsgRef.current;
+      const containerPadding = 16; // p-4 in Tailwind = 16px
+      container.scrollTop =
+        userMsg.offsetTop - container.offsetTop - containerPadding;
+    }
+  }, [messages]);
 
   const suggestedActions: SuggestedAction[] = [
     {
@@ -55,36 +118,6 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
       action: "List my highest privileged AWS IAM users with full admin access",
     },
   ];
-
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (messagesContainerRef.current && latestUserMsgRef.current) {
-      const container = messagesContainerRef.current;
-      const userMsg = latestUserMsgRef.current;
-      const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop =
-        userMsg.offsetTop - container.offsetTop - containerPadding;
-    }
-  }, [messages]);
-
-  const handleAutoResizeInputChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    handleInputChange(e);
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-      if (textarea.scrollHeight > textarea.clientHeight + 1) {
-        textarea.style.overflowY = "auto";
-      } else {
-        textarea.style.overflowY = "hidden";
-      }
-    }
-  };
 
   return (
     <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
@@ -181,38 +214,38 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto flex w-full gap-2 px-4 pb-4 md:max-w-3xl md:pb-6"
-      >
-        <div className="flex w-full items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleAutoResizeInputChange}
-            placeholder="Type your message..."
-            rows={1}
-            className="w-full flex-1 resize-none overflow-hidden rounded-lg border bg-background px-3 py-2 focus:outline-none"
-            style={{ minHeight: "40px", maxHeight: "160px" }}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                e.preventDefault();
-                handleSubmit();
+      <Form {...form}>
+        <form
+          onSubmit={onFormSubmit}
+          className="mx-auto flex w-full gap-2 px-4 pb-4 md:max-w-3xl md:pb-6"
+        >
+          <div className="flex w-full items-end gap-2">
+            <div className="w-full flex-1">
+              <CustomTextarea
+                control={form.control}
+                name="message"
+                label=""
+                placeholder="Type your message..."
+                variant="bordered"
+                minRows={1}
+                maxRows={6}
+                fullWidth={true}
+                disableAutosize={false}
+              />
+            </div>
+            <CustomButton
+              type="submit"
+              ariaLabel={
+                status === "submitted" ? "Stop generation" : "Send message"
               }
-            }}
-          />
-          <CustomButton
-            type="submit"
-            ariaLabel={
-              status === "submitted" ? "Stop generation" : "Send message"
-            }
-            isDisabled={status === "submitted" || !input.trim()}
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {status === "submitted" ? <span>■</span> : <span>➤</span>}
-          </CustomButton>
-        </div>
-      </form>
+              isDisabled={status === "submitted" || !messageValue?.trim()}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+            >
+              {status === "submitted" ? <span>■</span> : <span>➤</span>}
+            </CustomButton>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 };
