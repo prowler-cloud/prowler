@@ -1721,7 +1721,7 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
-    name = serializers.CharField()
+    compliance_name = serializers.CharField()
     framework = serializers.CharField()
     version = serializers.CharField()
     description = serializers.CharField()
