@@ -2,6 +2,32 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v1.9.0] (Prowler UNRELEASED)
+
+### Added
+- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
+- Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+- Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+### Fixed
+- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
+
+---
+
+## [v1.8.3] (Prowler v5.7.3)
+
+### Fixed
+- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
+- Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
+
+---
+
+>>>>>>> fb914a2c9 (revert: remove get_with_retry (#7932))
 ## [v1.8.2] (Prowler v5.7.2)
 
 ### Fixed

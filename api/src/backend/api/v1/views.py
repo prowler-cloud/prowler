@@ -1086,7 +1086,7 @@ class ProviderViewSet(BaseRLSViewSet):
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
             )
-        prowler_task = Task.objects.get_with_retry(id=task.id)
+        prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
         return Response(
             data=serializer.data,
@@ -1109,7 +1109,7 @@ class ProviderViewSet(BaseRLSViewSet):
             task = delete_provider_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
             )
-        prowler_task = Task.objects.get_with_retry(id=task.id)
+        prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
         return Response(
             data=serializer.data,
@@ -1489,7 +1489,7 @@ class ScanViewSet(BaseRLSViewSet):
                 },
             )
 
-        prowler_task = Task.objects.get_with_retry(id=task.id)
+        prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])
 
@@ -2808,7 +2808,7 @@ class ScheduleViewSet(BaseRLSViewSet):
         with transaction.atomic():
             task = schedule_provider_scan(provider_instance)
 
-        prowler_task = Task.objects.get_with_retry(id=task.id)
+        prowler_task = Task.objects.get(id=task.id)
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
 
