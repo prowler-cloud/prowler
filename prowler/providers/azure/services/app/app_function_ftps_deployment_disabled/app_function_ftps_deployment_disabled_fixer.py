@@ -19,6 +19,9 @@ class AppFunctionFtpsDeploymentDisabledFixer(AzureFixer):
             service="app",
             cost_impact=False,
             cost_description=None,
+            permissions_required={
+                "Microsoft.Web/sites/config/write": "Write access to the site configuration",
+            },
         )
 
     def fix(self, finding: Optional[Check_Report_Azure] = None, **kwargs) -> bool:
@@ -33,35 +36,33 @@ class AppFunctionFtpsDeploymentDisabledFixer(AzureFixer):
             bool: True if FTP/FTPS is disabled, False otherwise
         """
         try:
-            # First call parent fix method to handle common Azure fix operations
-            if not super().fix(finding, **kwargs):
-                return False
-
-            # Get values either from finding or kwargs
             if finding:
                 resource_group = finding.resource.get("resource_group_name")
-                app_name = finding.resource_name
-                suscription_name = finding.subscription
+                resource_id = finding.resource_name
+                suscription_id = finding.subscription
             else:
                 resource_group = kwargs.get("resource_group")
-                app_name = kwargs.get("resource_id")
-                suscription_name = kwargs.get("subscription_id")
+                resource_id = kwargs.get("resource_id")
+                suscription_id = kwargs.get("subscription_id")
 
-            if not resource_group or not app_name or not suscription_name:
+            if not resource_group or not resource_id or not suscription_id:
                 raise ValueError(
                     "Resource group, app name and subscription name are required"
                 )
 
-            # Get the Azure client for this subscription
-            client = app_client.clients[suscription_name]
+            super().fix(
+                resource_group=resource_group,
+                resource_id=resource_id,
+                suscription_id=suscription_id,
+            )
 
-            # Create the SiteConfigResource object
+            client = app_client.clients[suscription_id]
+
             site_config = SiteConfigResource(ftps_state="Disabled")
 
-            # Update the function configuration to disable FTP/FTPS
             client.web_apps.update_configuration(
                 resource_group_name=resource_group,
-                name=app_name,
+                name=resource_id,
                 site_config=site_config,
             )
 
