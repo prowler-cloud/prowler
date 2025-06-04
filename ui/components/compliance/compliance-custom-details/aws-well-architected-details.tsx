@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SeverityBadge } from "@/components/ui/table";
 import { Requirement } from "@/types/compliance";
 
@@ -74,14 +76,14 @@ export const AWSWellArchitectedCustomDetails = ({
           <h4 className="text-muted-foreground mb-1 text-sm font-medium">
             Implementation Guidance
           </h4>
-          <a
+          <Link
             href={requirement.implementation_guidance_url as string}
             target="_blank"
             rel="noopener noreferrer"
             className="break-all text-sm text-blue-600 underline hover:text-blue-800"
           >
             {requirement.implementation_guidance_url}
-          </a>
+          </Link>
         </div>
       )}
     </div>
