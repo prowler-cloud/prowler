@@ -1,3 +1,5 @@
+"use server";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 
 const getLighthouseConfigId = async (): Promise<string> => {
