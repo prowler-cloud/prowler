@@ -153,6 +153,7 @@ export default async function ComplianceDetail({
         uniqueRegions={uniqueRegions}
         showSearch={false}
         framework={compliancetitle}
+        showProviders={false}
       />
 
       <Suspense

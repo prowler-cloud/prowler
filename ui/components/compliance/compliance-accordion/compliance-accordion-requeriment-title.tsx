@@ -13,7 +13,7 @@ export const ComplianceAccordionRequirementTitle = ({
   return (
     <div className="flex w-full items-center justify-between gap-2">
       <div className="flex w-3/4 items-center gap-1">
-        <span className="whitespace-nowrap text-sm">{name}</span>
+        <span className="text-sm">{name}</span>
       </div>
       <StatusFindingBadge status={status} />
     </div>
