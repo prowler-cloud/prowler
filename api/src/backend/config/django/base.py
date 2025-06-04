@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    "drf_spectacular_jsonapi",
     "django_guid",
     "rest_framework_json_api",
     "django_celery_results",
