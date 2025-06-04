@@ -10,7 +10,7 @@
 
    The report uses compliance csv outputs from Prowler. Compliance scans be run using either [Prowler CLI](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli) or [Prowler Cloud/App](https://cloud.prowler.com/sign-in)
    1. Prowler CLI -&gt; Run a Prowler scan using the --compliance option
-   2. Prowler SaaS -&gt; Navigate to the compliance section to download csv outputs
+   2. Prowler Cloud/App -&gt; Navigate to the compliance section to download csv outputs
 ![Download Compliance Scan](https://github.com/user-attachments/assets/42c11a60-8ce8-4c60-a663-2371199c052b)
    
 
