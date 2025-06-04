@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
 import { Requirement } from "@/types/compliance";
@@ -83,7 +84,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
             </h4>
             {/* Prettier -> "plugins": ["prettier-plugin-tailwindcss"] is not ready yet to "prose": */}
             {/* eslint-disable-next-line */}
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{requirement.remediation_procedure}</ReactMarkdown>
             </div>
           </div>
@@ -96,7 +97,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
               Audit Procedure
             </h4>
             {/* eslint-disable-next-line */}
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{requirement.audit_procedure}</ReactMarkdown>
             </div>
           </div>
@@ -131,14 +132,14 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
             {processReferences(requirement.references).map(
               (url: string, index: number) => (
                 <div key={index}>
-                  <a
+                  <Link
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="break-all text-blue-600 underline hover:text-blue-800"
                   >
                     {url}
-                  </a>
+                  </Link>
                 </div>
               ),
             )}
