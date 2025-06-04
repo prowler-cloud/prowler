@@ -13,6 +13,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add compliance detail view: ENS [(#7853)](https://github.com/prowler-cloud/prowler/pull/7853)
 - Add compliance detail view: ISO [(#7897)](https://github.com/prowler-cloud/prowler/pull/7897)
 - Add compliance detail view: CIS [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
+- Add compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
 
 ### 🔄 Changed
 

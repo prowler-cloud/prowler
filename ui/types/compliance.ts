@@ -112,6 +112,18 @@ export interface CISAttributesMetadata {
   References: string;
 }
 
+export interface AWSWellArchitectedAttributesMetadata {
+  Name: string;
+  WellArchitectedQuestionId: string;
+  WellArchitectedPracticeId: string;
+  Section: string;
+  SubSection: string;
+  LevelOfRisk: string;
+  AssessmentMethod: string;
+  Description: string;
+  ImplementationGuidanceUrl: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -120,7 +132,11 @@ export interface AttributesItemData {
     version: string;
     description: string;
     attributes: {
-      metadata: ENSAttributesMetadata[] | ISO27001AttributesMetadata[];
+      metadata:
+        | ENSAttributesMetadata[]
+        | ISO27001AttributesMetadata[]
+        | CISAttributesMetadata[]
+        | AWSWellArchitectedAttributesMetadata[];
       check_ids: string[];
     };
   };

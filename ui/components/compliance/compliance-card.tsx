@@ -73,7 +73,12 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   const navigateToDetail = () => {
     // We will unlock this while developing the rest of complainces.
-    if (!id.includes("ens") && !id.includes("iso") && !id.includes("cis_")) {
+    if (
+      !id.includes("ens") &&
+      !id.includes("iso") &&
+      !id.includes("cis_") &&
+      !id.includes("pillar")
+    ) {
       return;
     }
 
