@@ -36,7 +36,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive. [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
 - Split calls to list Azure Functions attributes. [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
 
-
 ---
 
 ## [v5.7.0] (Prowler v5.7.0)
