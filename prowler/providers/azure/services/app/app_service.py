@@ -132,13 +132,14 @@ class App(AzureService):
                         else:
                             function_keys = None
 
-                        function_config = self._get_function_config(
+                        application_settings = self._list_application_settings(
                             subscription_name, function.resource_group, function.name
                         )
 
-                        web_app_config = client.web_apps.get_configuration(
-                            resource_group_name=function.resource_group,
-                            name=function.name,
+                        function_config = self._get_function_config(
+                            subscription_name,
+                            function.resource_group,
+                            function.name,
                         )
 
                         functions[subscription_name].update(
@@ -150,7 +151,7 @@ class App(AzureService):
                                     kind=function.kind,
                                     function_keys=function_keys,
                                     enviroment_variables=getattr(
-                                        function_config, "properties", None
+                                        application_settings, "properties", None
                                     ),
                                     identity=getattr(function, "identity", None),
                                     public_access=(
@@ -167,7 +168,7 @@ class App(AzureService):
                                         "",
                                     ),
                                     ftps_state=getattr(
-                                        web_app_config, "ftps_state", None
+                                        function_config, "ftps_state", None
                                     ),
                                     resource_group_name=function.resource_group,
                                 )
@@ -224,13 +225,25 @@ class App(AzureService):
 
     def _get_function_config(self, subscription, resource_group, name):
         try:
-            return self.clients[subscription].web_apps.list_application_settings(
+            return self.clients[subscription].web_apps.get_configuration(
                 resource_group_name=resource_group,
                 name=name,
             )
         except Exception as error:
             logger.error(
                 f"Error getting configuration for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def _list_application_settings(self, subscription, resource_group, name):
+        try:
+            return self.clients[subscription].web_apps.list_application_settings(
+                resource_group_name=resource_group,
+                name=name,
+            )
+        except Exception as error:
+            logger.error(
+                f"Error getting application settings for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
 
