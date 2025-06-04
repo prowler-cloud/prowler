@@ -30,7 +30,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixes
 
 - Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
-- Compliace detail page, now available for ENS. [(#7853)](https://github.com/prowler-cloud/prowler/pull/7853)
 - Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
 - Retrieve more than 10 scans in /compliance page. [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
 - Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
