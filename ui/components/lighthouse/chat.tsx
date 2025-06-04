@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
+import { CustomButton } from "@/components/ui/custom";
 
 interface SuggestedAction {
   title: string;
@@ -113,9 +114,10 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {suggestedActions.map((action, index) => (
-                <button
+                <CustomButton
                   key={`suggested-action-${index}`}
-                  onClick={() => {
+                  ariaLabel={`Send message: ${action.action}`}
+                  onPress={() => {
                     append({
                       role: "user",
                       content: action.action,
@@ -125,7 +127,7 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
                 >
                   <span>{action.title}</span>
                   <span className="text-muted-foreground">{action.label}</span>
-                </button>
+                </CustomButton>
               ))}
             </div>
           </div>
@@ -199,13 +201,16 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
               }
             }}
           />
-          <button
+          <CustomButton
             type="submit"
-            disabled={status === "submitted" || !input.trim()}
+            ariaLabel={
+              status === "submitted" ? "Stop generation" : "Send message"
+            }
+            isDisabled={status === "submitted" || !input.trim()}
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {status === "submitted" ? <span>■</span> : <span>➤</span>}
-          </button>
+          </CustomButton>
         </div>
       </form>
     </div>
