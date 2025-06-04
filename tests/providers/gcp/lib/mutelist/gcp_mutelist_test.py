@@ -89,7 +89,7 @@ class TestGCPMutelist:
             account_uid="project_1",
             region="test-region",
             resource_uid="test_resource",
-            resource_tags=[],
+            resource_tags={},
             muted=False,
         )
 

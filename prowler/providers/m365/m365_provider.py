@@ -350,7 +350,6 @@ class M365Provider(Provider):
         """
         try:
             config = get_regions_config(region)
-
             return M365RegionConfig(
                 name=region,
                 authority=config["authority"],

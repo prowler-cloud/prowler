@@ -2,7 +2,7 @@ from json import dump
 from os import SEEK_SET
 from typing import Optional
 
-from pydantic import BaseModel, validator
+from pydantic.v1 import BaseModel, validator
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.logger import logger
@@ -279,7 +279,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
-    Tags: Optional[dict]
+    Tags: Optional[dict] = None
 
     @validator("Tags", pre=True, always=True)
     def tags_cannot_be_empty_dict(tags):
