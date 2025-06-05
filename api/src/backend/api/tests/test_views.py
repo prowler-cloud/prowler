@@ -5533,7 +5533,7 @@ class TestLighthouseConfigViewSet:
     def valid_config_payload(self):
         return {
             "data": {
-                "type": "lighthouse-configuration",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "name": "OpenAI",
                     "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
@@ -5550,7 +5550,7 @@ class TestLighthouseConfigViewSet:
     def invalid_config_payload(self):
         return {
             "data": {
-                "type": "lighthouse-configuration",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "name": "T",  # Too short
                     "api_key": "invalid-key",  # Invalid format
@@ -5628,7 +5628,6 @@ class TestLighthouseConfigViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
-        print(errors)
 
         # All field validation errors now follow the same pattern
         assert any(field_name in error["source"]["pointer"] for error in errors)
@@ -5637,7 +5636,7 @@ class TestLighthouseConfigViewSet:
         self, authenticated_client
     ):
         """Test that validation fails when required fields are missing"""
-        payload = {"data": {"type": "lighthouse-configuration", "attributes": {}}}
+        payload = {"data": {"type": "lighthouse-configurations", "attributes": {}}}
 
         response = authenticated_client.post(
             reverse("lighthouseconfiguration-list"),
@@ -5696,7 +5695,7 @@ class TestLighthouseConfigViewSet:
     ):
         update_payload = {
             "data": {
-                "type": "lighthouse-configuration",
+                "type": "lighthouse-configurations",
                 "id": str(lighthouse_config_fixture.id),
                 "attributes": {
                     "name": "Updated Config",

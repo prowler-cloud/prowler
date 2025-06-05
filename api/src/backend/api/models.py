@@ -1537,4 +1537,4 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "lighthouse-configuration"
+        resource_name = "lighthouse-configurations"

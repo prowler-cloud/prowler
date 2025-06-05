@@ -51,7 +51,7 @@ router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
 router.register(r"integrations", IntegrationViewSet, basename="integration")
 router.register(
-    r"lighthouse-configuration",
+    r"lighthouse-configurations",
     LighthouseConfigViewSet,
     basename="lighthouseconfiguration",
 )
