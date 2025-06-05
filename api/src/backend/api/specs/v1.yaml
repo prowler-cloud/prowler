@@ -1,11 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-<<<<<<< HEAD
   version: 1.8.3
-=======
-  version: 1.9.0
->>>>>>> 36aaec8a5 (chore(m365powershell): manage encryption from plaintext password (#7784))
   description: |-
     Prowler API specification.
 

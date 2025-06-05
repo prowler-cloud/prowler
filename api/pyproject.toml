@@ -35,11 +35,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-<<<<<<< HEAD
 version = "1.8.3"
-=======
-version = "1.9.0"
->>>>>>> 36aaec8a5 (chore(m365powershell): manage encryption from plaintext password (#7784))
 
 [project.scripts]
 celery = "src.backend.config.settings.celery"
