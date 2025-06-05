@@ -11,6 +11,7 @@ interface EntityInfoProps {
   entityAlias?: string;
   entityId?: string;
   hideCopyButton?: boolean;
+  snippetWidth?: string;
 }
 
 export const EntityInfoShort: React.FC<EntityInfoProps> = ({
@@ -18,21 +19,21 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   entityAlias,
   entityId,
   hideCopyButton = false,
+  snippetWidth,
 }) => {
   return (
-    <div className="flex w-full items-center justify-between space-x-2">
-      <div className="flex items-center gap-x-2">
-        <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
-        <div className="flex flex-col">
-          {entityAlias && (
-            <span className="text-xs text-default-500">{entityAlias}</span>
-          )}
-          <SnippetChip
-            value={entityId ?? ""}
-            hideCopyButton={hideCopyButton}
-            icon={<IdIcon size={16} />}
-          />
-        </div>
+    <div className="flex items-center justify-between gap-x-2">
+      <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
+      <div className="flex flex-col">
+        {entityAlias && (
+          <span className="text-xs text-default-500">{entityAlias}</span>
+        )}
+        <SnippetChip
+          value={entityId ?? ""}
+          hideCopyButton={hideCopyButton}
+          icon={<IdIcon size={16} />}
+          className={snippetWidth}
+        />
       </div>
     </div>
   );
