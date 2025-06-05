@@ -195,7 +195,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     // Static credentials configuration for GCP
@@ -298,7 +298,7 @@ export const updateCredentialsProvider = async (
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     // Static credentials configuration for GCP
