@@ -23,7 +23,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-### [v5.7.2] Fixed
+## [v5.7.3] (Prowler v5.7.3)
+
+### Fixed
+- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+- Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
+
+---
+
+## [v5.7.2] (Prowler v5.7.2)
+
+### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
@@ -59,8 +69,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
-- Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
-- Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
 
 ---
 
