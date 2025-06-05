@@ -25,6 +25,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+### [v5.7.3] Fixed
+- Add MFA warning for users. [(#7924)](https://github.com/prowler-cloud/prowler/pull/7924)
+
+---
+
 ### [v5.7.2] Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
