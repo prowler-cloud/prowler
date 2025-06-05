@@ -12,7 +12,7 @@ import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { getComplianceMapper } from "@/lib/compliance/commons";
-import { ComplianceId, Requirement } from "@/types/compliance";
+import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
 interface ClientAccordionContentProps {
@@ -32,7 +32,7 @@ export const ClientAccordionContent = ({
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
-  const complianceId = searchParams.get("complianceId") as ComplianceId;
+  const complianceId = searchParams.get("complianceId");
   const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.get("sort") || defaultSort;
   const loadedPageRef = useRef<string | null>(null);
@@ -116,8 +116,8 @@ export const ClientAccordionContent = ({
     return (
       <div className="w-full">
         {renderDetails()}
-        <p className="text-sm text-gray-500">
-          This requirement has no checks; therefore, there are no findings.
+        <p className="mt-2 text-sm font-medium text-gray-800">
+          ⚠️ This requirement has no checks; therefore, there are no findings.
         </p>
       </div>
     );
@@ -164,7 +164,11 @@ export const ClientAccordionContent = ({
       );
     }
 
-    return <div>There are no findings for this regions</div>;
+    return (
+      <div className="text-sm font-medium text-gray-800">
+        ⚠️ There are no findings for this regions
+      </div>
+    );
   };
 
   return (
@@ -172,7 +176,7 @@ export const ClientAccordionContent = ({
       {renderDetails()}
 
       {checks.length > 0 && (
-        <div className="mb-6 mt-2">
+        <div className="mb-2 mt-2">
           <Accordion
             items={accordionChecksItems}
             variant="light"
