@@ -11,9 +11,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
 
-### Fixed
-- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
-
 ---
 
 ## [v1.8.3] (Prowler v5.7.3)
@@ -27,6 +24,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
+- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
+
 
 ---
 
