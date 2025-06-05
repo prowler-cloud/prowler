@@ -221,6 +221,7 @@ def generate_compliance_overview_template(prowler_compliance: dict):
             # Build compliance dictionary
             compliance_dict = {
                 "framework": compliance_data.Framework,
+                "name": compliance_data.Name,
                 "version": compliance_data.Version,
                 "provider": provider_type,
                 "description": compliance_data.Description,

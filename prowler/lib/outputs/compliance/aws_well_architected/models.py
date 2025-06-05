@@ -30,3 +30,5 @@ class AWSWellArchitectedModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

@@ -35,6 +35,8 @@ class AWSCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class AzureCISModel(BaseModel):
@@ -67,6 +69,8 @@ class AzureCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class M365CISModel(BaseModel):
@@ -99,6 +103,8 @@ class M365CISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GCPCISModel(BaseModel):
@@ -130,6 +136,8 @@ class GCPCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class KubernetesCISModel(BaseModel):
@@ -162,6 +170,8 @@ class KubernetesCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GithubCISModel(BaseModel):
@@ -193,6 +203,8 @@ class GithubCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.
