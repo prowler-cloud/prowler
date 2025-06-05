@@ -4,9 +4,9 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-      target: dev
+      # target: dev
     environment:
-      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_SETTINGS_MODULE=config.django.production
       - DJANGO_LOGGING_FORMATTER=${LOGGING_FORMATTER:-human_readable}
     env_file:
       - path: .env
@@ -24,21 +24,21 @@ services:
         condition: service_healthy
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
-      - "dev"
+      - "prod"
 
   ui-dev:
     build:
       context: ./ui
       dockerfile: Dockerfile
-      target: dev
+      target: prod
     env_file:
       - path: .env
         required: false
     ports:
       - 3000:3000
-    volumes:
-      - "./ui:/app"
-      - "/app/node_modules"
+    # volumes:
+    #   - "./ui:/app"
+    #   - "/app/node_modules"
 
   postgres:
     image: postgres:16.3-alpine3.20
@@ -80,9 +80,9 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-      target: dev
+      # target: dev
     environment:
-      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_SETTINGS_MODULE=config.django.production
     env_file:
       - path: .env
         required: false
@@ -101,9 +101,9 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-      target: dev
+      # target: dev
     environment:
-      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_SETTINGS_MODULE=config.django.production
     env_file:
       - path: ./.env
         required: false
