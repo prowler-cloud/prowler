@@ -2141,19 +2141,20 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             )
         return super().validate(attrs)
 
-    def create(self, validated_data):
-        api_key = validated_data.pop("api_key")
-
-        # Validate API key format before creating the instance
-        if not api_key:
-            raise serializers.ValidationError({"api_key": "API key is required"})
+    def validate_api_key(self, value):
+        """Validate OpenAI API key format."""
+        if not value:
+            raise serializers.ValidationError("API key is required")
 
         # Validate OpenAI API key format
         openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
-        if not re.match(openai_key_pattern, api_key):
-            raise serializers.ValidationError(
-                {"api_key": "Invalid OpenAI API key format."}
-            )
+        if not re.match(openai_key_pattern, value):
+            raise serializers.ValidationError("Invalid OpenAI API key format.")
+
+        return value
+
+    def create(self, validated_data):
+        api_key = validated_data.pop("api_key")
 
         instance = super().create(validated_data)
         instance.api_key_decoded = api_key
