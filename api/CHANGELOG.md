@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v1.9.0] (Prowler UNRELEASED)
+
+### Added
+- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
+- Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+### Changed
+- Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+---
+
+>>>>>>> 8c95e1efa (chore: update API changelog for v5.7.3 (#7948))
 ## [v1.8.3] (Prowler v5.7.3)
 
 ### Added
@@ -13,6 +27,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
+- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
+
 
 ---
 
