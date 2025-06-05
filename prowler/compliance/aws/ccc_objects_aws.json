@@ -1,0 +1,910 @@
+{
+  "Framework": "CCC-Objects",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
+  "Requirements": [
+    {
+      "Id": "CCC.ObjStor.C01.TR01",
+      "Description": "When a request is made to read a protected bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_kms_encryption",
+        "kms_key_not_publicly_accessible",
+        "iam_policy_no_full_access_to_kms",
+        "storagegateway_fileshare_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR02",
+      "Description": "When a request is made to read a protected object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_cmk_not_deleted_unintentionally",
+        "iam_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR03",
+      "Description": "When a request is made to write to a bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_kms_encryption",
+        "iam_policy_no_full_access_to_kms",
+        "kms_key_not_publicly_accessible",
+        "kms_cmk_not_deleted_unintentionally",
+        "storagegateway_fileshare_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR04",
+      "Description": "When a request is made to write to an object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_full_access_to_kms",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_key_not_publicly_accessible",
+        "kms_cmk_not_multi_region"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C03.TR01",
+      "Description": "When an object storage bucket deletion is attempted, the bucket MUST be fully recoverable for a set time-frame after deletion is requested.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "CCC.ObjStor.C03 Prevent Bucket Deletion Through Irrevocable Bucket Retention Policy",
+          "SubSectionObjective": "Ensure that object storage bucket is not deleted after creation, and that the preventative measure cannot be unset.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C03.TR02",
+      "Description": "When an attempt is made to modify the retention policy for an object storage bucket, the service MUST prevent the policy from being modified.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "CCC.ObjStor.C03 Prevent Bucket Deletion Through Irrevocable Bucket Retention Policy",
+          "SubSectionObjective": "Ensure that object storage bucket is not deleted after creation, and that the preventative measure cannot be unset.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "s3_bucket_lifecycle_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C04.TR01",
+      "Description": "When an object is uploaded to the object storage system, the object MUST automatically receive a default retention policy that prevents premature deletion or modification.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C04 Log All Access and Changes",
+          "SubSection": "CCC.ObjStor.C04 Objects have an Effective Retention Policy by Default",
+          "SubSectionObjective": "Ensure that all objects stored in the object storage system have a retention policy applied by default, preventing premature deletion or modification of objects and ensuring compliance with data retention regulations.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kinesis_stream_data_retention_period",
+        "s3_bucket_object_versioning",
+        "s3_bucket_object_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C04.TR02",
+      "Description": "When an attempt is made to delete or modify an object that is subject to an active retention policy, the service MUST prevent the action from being completed.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C04 Log All Access and Changes",
+          "SubSection": "CCC.ObjStor.C04 Objects have an Effective Retention Policy by Default",
+          "SubSectionObjective": "Ensure that all objects stored in the object storage system have a retention policy applied by default, preventing premature deletion or modification of objects and ensuring compliance with data retention regulations.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kinesis_stream_data_retention_period",
+        "dynamodb_table_deletion_protection_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR01",
+      "Description": "When an object is uploaded to the object storage bucket, the object MUST be stored with a unique identifier.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "s3_bucket_object_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR02",
+      "Description": "When an object is modified, the service MUST assign a new unique identifier to the modified object to differentiate it from the previous version.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "s3_bucket_object_lock",
+        "iam_rotate_access_key_90_days",
+        "ecr_repositories_tag_immutability"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR03",
+      "Description": "When an object is modified, the service MUST allow for recovery of previous versions of the object.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "dynamodb_tables_pitr_enabled",
+        "backup_recovery_point_encrypted"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR04",
+      "Description": "When an object is deleted, the service MUST retain other versions of the object to allow for recovery of previous versions.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "kinesis_stream_data_retention_period",
+        "kms_cmk_not_deleted_unintentionally"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C06.TR01",
+      "Description": "When an object storage bucket is accessed, the service MUST store access logs in a separate data store.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C06 Prevent Deployment in Restricted Regions",
+          "SubSection": "CCC.ObjStor.C06 Access Logs are Stored in a Separate Data Store",
+          "SubSectionObjective": "Ensure that access logs for object storage buckets are stored in a separate data store to protect against unauthorized access, tampering, or deletion of logs (Logbuckets are exempt from this requirement, but must be tlp-red).",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07",
+                "CCC.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-07",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.15.0"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "s3_bucket_server_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C02.TR01",
+      "Description": "When a permission set is allowed for an object in a bucket, the service MUST allow the same permission set to access all objects in the same bucket.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C02 Ensure Data Encryption at Rest for All Stored Data",
+          "SubSection": "CCC.ObjStor.C02 Enforce Uniform Bucket-level Access to Prevent Inconsistent Permissions",
+          "SubSectionObjective": "Ensure that uniform bucket-level access is enforced across all object storage buckets. This prevents the use of ad-hoc or inconsistent object-level permissions, ensuring centralized, consistent, and secure access management in accordance with the principle of least privilege.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_public_write_acl",
+        "s3_bucket_public_access",
+        "s3_bucket_cross_account_access"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C02.TR02",
+      "Description": "When a permission set is denied for an object in a bucket, the service MUST deny the same permission set to access all objects in the same bucket.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C02 Ensure Data Encryption at Rest for All Stored Data",
+          "SubSection": "CCC.ObjStor.C02 Enforce Uniform Bucket-level Access to Prevent Inconsistent Permissions",
+          "SubSectionObjective": "Ensure that uniform bucket-level access is enforced across all object storage buckets. This prevents the use of ad-hoc or inconsistent object-level permissions, ensuring centralized, consistent, and secure access management in accordance with the principle of least privilege.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "s3_bucket_public_write_acl",
+        "s3_bucket_acl_prohibited",
+        "s3_bucket_public_access"
+      ]
+    }
+  ]
+}
