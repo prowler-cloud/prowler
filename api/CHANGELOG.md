@@ -9,7 +9,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
 
 ### Changed
-- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
 
 ### Fixed
@@ -21,6 +20,9 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935).
+
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).

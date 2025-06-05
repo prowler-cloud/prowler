@@ -25,6 +25,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [v5.7.3] (Prowler v5.7.3)
+
+### Fixed
+- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+- Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
+
+---
+
 ## [v5.7.2] (Prowler v5.7.2)
 
 ### Fixed
@@ -62,7 +70,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update and upgrade CIS for all the providers [(#7738)](https://github.com/prowler-cloud/prowler/pull/7738)
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
-- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ---
 
