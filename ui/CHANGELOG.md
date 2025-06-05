@@ -25,6 +25,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [v1.7.3] (Prowler v5.7.3)
+
+### 🐞 Fixes
+
+- Fix encrypted password typo in `formSchemas`. [(#7828)](https://github.com/prowler-cloud/prowler/pull/7828)
+
+---
+
 ## [v1.7.2] (Prowler v5.7.2)
 
 ### 🐞 Fixes
