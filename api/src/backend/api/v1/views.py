@@ -2733,7 +2733,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 "requirement_id", "framework", "version", "description"
             )
             .distinct()
-            .annotate(total_instances=Count("id"))
+            .annotate(
+                total_instances=Count("id"),
+                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            )
         )
 
         passed_instances = (
@@ -2751,8 +2754,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             requirement_id = requirement["requirement_id"]
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
-
-            requirement_status = "PASS" if passed_count == total_instances else "FAIL"
+            is_manual = requirement["manual_count"] == total_instances
+            if is_manual:
+                requirement_status = "MANUAL"
+            elif passed_count == total_instances:
+                requirement_status = "PASS"
+            else:
+                requirement_status = "FAIL"
 
             requirements_summary.append(
                 {

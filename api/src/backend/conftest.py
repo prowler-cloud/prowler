@@ -846,8 +846,23 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         total_checks=2,
     )
 
-    # Create a different compliance framework for testing
     requirement_overview5 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding (MANUAL)",
+        region="eu-west-2",
+        requirement_id="requirement3",
+        requirement_status=StatusChoices.MANUAL,
+        passed_checks=0,
+        failed_checks=0,
+        total_checks=0,
+    )
+
+    # Create a different compliance framework for testing
+    requirement_overview6 = ComplianceRequirementOverview.objects.create(
         tenant=tenant,
         scan=scan1,
         compliance_id="cis_1.4_aws",
@@ -868,6 +883,7 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_overview3,
         requirement_overview4,
         requirement_overview5,
+        requirement_overview6,
     )
 
 
