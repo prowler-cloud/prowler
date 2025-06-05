@@ -30,6 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
+- Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
 
 ---
 
