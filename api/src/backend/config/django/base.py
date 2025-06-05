@@ -128,6 +128,7 @@ DJANGO_GUID = {
 }
 
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]
+POSTGRES_EXTRA_DB_BACKEND_BASE = "database_backend"
 
 
 # Password validation
