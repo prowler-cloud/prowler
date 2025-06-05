@@ -86,7 +86,6 @@ export default async function Findings({
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
-  // Create scan details mapping for the filter using helper function
   const scanDetails = createScanDetailsMapping(completedScans, providersData);
 
   return (
