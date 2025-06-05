@@ -20,9 +20,8 @@ import React, {
   useState,
 } from "react";
 
+import { EntityInfoShort } from "@/components/ui/entities";
 import { CustomDropdownFilterProps } from "@/types";
-
-import { EntityInfoShort } from "../entities";
 
 export const CustomDropdownFilter = ({
   filter,
@@ -45,55 +44,73 @@ export const CustomDropdownFilter = ({
     return filterParam ? filterParam.split(",") : [];
   }, [searchParams, filter?.key]);
 
-  // Sync URL state with component state
-  useEffect(() => {
-    if (activeFilterValue.length > 0) {
-      const newSelection = new Set(activeFilterValue);
+  // Helper function to handle URL filter values sync
+  const syncWithActiveFilters = useCallback(() => {
+    const newSelection = new Set(activeFilterValue);
+    if (
+      newSelection.size === filterValues.length &&
+      filter?.showSelectAll !== false
+    ) {
+      newSelection.add("all");
+    }
+    setGroupSelected(newSelection);
+  }, [activeFilterValue, filterValues, filter?.showSelectAll]);
+
+  const resetComponentState = useCallback(() => {
+    setGroupSelected(new Set());
+    hasUserInteracted.current = false;
+  }, []);
+
+  const applyDefaultValues = useCallback(() => {
+    if (filter?.defaultToSelectAll && filterValues.length > 0) {
+      const newSelection = new Set(filterValues);
+      if (filter?.showSelectAll !== false) {
+        newSelection.add("all");
+      }
+      setGroupSelected(newSelection);
+    } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
+      const validDefaultValues = filter.defaultValues.filter((value) =>
+        filterValues.includes(value),
+      );
+      const newSelection = new Set(validDefaultValues);
+
+      // Add "all" if all items are selected and showSelectAll is not false
       if (
-        newSelection.size === filterValues.length &&
+        validDefaultValues.length === filterValues.length &&
         filter?.showSelectAll !== false
       ) {
         newSelection.add("all");
       }
       setGroupSelected(newSelection);
-    } else if (!hasUserInteracted.current) {
-      // Handle default behavior when no URL params exist
-      // Only apply defaults if user hasn't interacted yet
-      // Only set visual state, don't trigger URL changes automatically
-      if (filter?.defaultToSelectAll && filterValues.length > 0) {
-        const newSelection = new Set(filterValues);
-        if (filter?.showSelectAll !== false) {
-          newSelection.add("all");
-        }
-        setGroupSelected(newSelection);
-        // DON'T notify parent automatically - wait for user interaction
-      } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
-        // Handle specific default values
-        const validDefaultValues = filter.defaultValues.filter((value) =>
-          filterValues.includes(value),
-        );
-        const newSelection = new Set(validDefaultValues);
-
-        // Add "all" if all items are selected and showSelectAll is not false
-        if (
-          validDefaultValues.length === filterValues.length &&
-          filter?.showSelectAll !== false
-        ) {
-          newSelection.add("all");
-        }
-
-        setGroupSelected(newSelection);
-        // DON'T notify parent automatically - wait for user interaction
-      } else {
-        setGroupSelected(new Set());
-      }
+    } else {
+      setGroupSelected(new Set());
     }
   }, [
-    activeFilterValue,
     filterValues,
     filter?.defaultToSelectAll,
     filter?.defaultValues,
     filter?.showSelectAll,
+  ]);
+
+  useEffect(() => {
+    const hasActiveFilters = activeFilterValue.length > 0;
+    const userHasInteracted = hasUserInteracted.current;
+
+    if (hasActiveFilters) {
+      // URL has filter values - sync component state with URL
+      syncWithActiveFilters();
+    } else if (userHasInteracted) {
+      // URL has no filters but user had interacted - reset component state
+      resetComponentState();
+    } else {
+      // URL has no filters and user hasn't interacted - apply defaults
+      applyDefaultValues();
+    }
+  }, [
+    activeFilterValue,
+    syncWithActiveFilters,
+    resetComponentState,
+    applyDefaultValues,
   ]);
 
   const updateSelection = useCallback(
