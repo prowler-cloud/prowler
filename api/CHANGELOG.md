@@ -7,6 +7,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935).
 
+### Changed
+- Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
