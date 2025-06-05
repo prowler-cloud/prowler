@@ -13,7 +13,6 @@ The Mutelist option works in combination with other filtering mechanisms and mod
 - JSON-OCSF: `status_id` is `Suppressed`.
 - CSV: `muted` is `True`. The field `status` will keep the original status, `MANUAL`, `PASS` or `FAIL`, of the finding.
 
-
 ## How the Mutelist Works
 
 The **Mutelist** uses both "AND" and "OR" logic to determine which resources, checks, regions, and tags should be muted. For each check, the Mutelist evaluates whether the account, region, and resource match the specified criteria using "AND" logic. If tags are specified, the Mutelist can apply either "AND" or "OR" logic.
@@ -22,7 +21,6 @@ If any of the criteria do not match, the check is not muted.
 
 ???+ note
   Remember that mutelist can be used with regular expressions.
-
 
 ## Mutelist Specification
 
@@ -150,11 +148,9 @@ Mutelist:
 | `resource`| The resource identifier. Use `*` to apply the mutelist to all resources.| `ANDed`
 | `tag`| The tag value.| `ORed`
 
-
 ### Description
 
 This field can be used to add information or some hints for the Mutelist rule.
-
 
 ## How to Use the Mutelist
 
@@ -166,12 +162,10 @@ prowler <provider> -w mutelist.yaml
 
 Replace `<provider>` with the appropriate provider name.
 
-
 ## Considerations
 
 - The Mutelist can be used in combination with other Prowler options, such as the `--service` or `--checks` option, to further customize the scanning process.
 - Make sure to review and update the Mutelist regularly to ensure it reflects the desired exclusions and remains up to date with your infrastructure.
-
 
 ## AWS Mutelist
 
@@ -191,16 +185,13 @@ If you want to mute failed findings only in specific regions, create a file with
               - "*"
             Description: "Description related with the muted findings for the check"
 
-
 ### Default Mutelist
 
 For the AWS Provider, Prowler is executed with a default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone that can be found in [AWS Documentation](https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html). You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_mutelist.yaml).
 
-
 ### Supported Mutelist Locations
 
 The mutelisting flag supports the following AWS locations when using the AWS Provider:
-
 
 #### AWS S3 URI
 
@@ -212,7 +203,6 @@ prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 
 ???+ note
   Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
-
 
 #### AWS DynamoDB Table ARN
 
@@ -242,7 +232,6 @@ The following example will mute all resources in all accounts for the EC2 checks
 <img src="../img/mutelist-row.png"/>
 ???+ note
   Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
-
 
 #### AWS Lambda ARN
 

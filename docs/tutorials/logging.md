@@ -2,16 +2,15 @@
 
 Prowler has a logging feature to be as transparent as possible, so that you can see every action that is being performed whilst the tool is being executing.
 
-
 ## Set Log Level
 
 There are different log levels depending on the logging information that is desired to be displayed:
 
-    - **DEBUG**: It will show low-level logs from Python.
-    - **INFO**: It will show all the API calls that are being invoked by the provider.
-    - **WARNING**: It will show all resources that are being **muted**.
-    - **ERROR**: It will show any errors, e.g., not authorized actions.
-    - **CRITICAL**: The default log level. If a critical log appears, it will **exit** Prowler’s execution.
+- **DEBUG**: It will show low-level logs from Python.
+- **INFO**: It will show all the API calls that are being invoked by the provider.
+- **WARNING**: It will show all resources that are being **muted**.
+- **ERROR**: It will show any errors, e.g., not authorized actions.
+- **CRITICAL**: The default log level. If a critical log appears, it will **exit** Prowler’s execution.
 
 You can establish the log level of Prowler with `--log-level` option:
 
@@ -21,7 +20,6 @@ prowler <provider> --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
 
 ???+ note
     By default, Prowler will run with the `CRITICAL` log level, since critical errors will abort the execution.
-
 
 ## Export Logs to File
 

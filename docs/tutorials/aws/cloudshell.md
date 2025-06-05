@@ -6,7 +6,6 @@ AWS CloudShell has migrated from Amazon Linux 2 to Amazon Linux 2023 [[1]](https
 
 To install Prowler v4 in AWS CloudShell, follow the standard installation method using pip:
 
-
 ```shell
 sudo bash
 adduser prowler
@@ -20,9 +19,9 @@ prowler aws
 
 To download results from AWS CloudShell:
 
-    - Select Actions → Download File.
+- Select Actions → Download File.
 
-    - Specify the full file path of each file you wish to download. For example, downloading a CSV file would require providing its complete path, as in: `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+- Specify the full file path of each file you wish to download. For example, downloading a CSV file would require providing its complete path, as in: `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
 
 ## Cloning Prowler from GitHub
 

@@ -4,10 +4,10 @@
 
 **Prowler Check Kreator** is a utility designed to streamline the creation of new checks for Prowler. This tool generates all necessary files required to add a new check to the Prowler repository. Specifically, it creates:
 
-    - A dedicated folder for the check.
-    - The main check script.
-    - A metadata file with essential details.
-    - A folder and file structure for testing the check.
+- A dedicated folder for the check.
+- The main check script.
+- A metadata file with essential details.
+- A folder and file structure for testing the check.
 
 ## Usage
 

@@ -4,9 +4,9 @@ Microsoft offers cloud environments that comply with regional regulations. These
 
 As of this documentation's publication, the following Azure clouds are available:
 
-    - AzureCloud
-    - AzureChinaCloud
-    - AzureUSGovernment
+- AzureCloud
+- AzureChinaCloud
+- AzureUSGovernment
 
 To change the default cloud, include the flag `--azure-region`. For example:
 

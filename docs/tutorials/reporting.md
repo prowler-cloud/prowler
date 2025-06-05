@@ -26,19 +26,22 @@ By default, Prowler creates a file inside the `output` directory named: `prowler
 
 However, both the output file name and directory can be personalised:
 
-    - Custom output report name:
+- Custom output report name:
+
 You can use the flag `-F`/`--output-filename`
 
-    ```console
-    prowler <provider> -M csv json-ocsf json-asff -F <custom_report_name>
-    ```
+```console
+prowler <provider> -M csv json-ocsf json-asff -F <custom_report_name>
+```
 
-    - Custom output directory:
-    You can use the flag `-o`/`--output-directory`
 
-    ```console
-    prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
-    ```
+- Custom output directory:
+
+You can use the flag `-o`/`--output-directory`
+
+```console
+prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
+```
 
 ???+ note
     Both flags can be used simultaneously to provide a custom directory and filename. `console prowler <provider> -M csv json-ocsf json-asff \ -F <custom_report_name> -o <custom_report_directory>`
@@ -51,10 +54,10 @@ By default, the timestamp format of the output files is ISO 8601. This can be ch
 
 Prowler natively supports the following reporting output formats:
 
-    - CSV
-    - JSON-OCSF
-    - JSON-ASFF
-    - HTML
+- CSV
+- JSON-OCSF
+- JSON-ASFF
+- HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
@@ -62,47 +65,47 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 
 The CSV format follows a standardized structure across all providers. The following are the available columns:
 
-    - AUTH\_METHOD
-    - TIMESTAMP
-    - ACCOUNT\_UID
-    - ACCOUNT\_NAME
-    - ACCOUNT\_EMAIL
-    - ACCOUNT\_ORGANIZATION\_UID
-    - ACCOUNT\_ORGANIZATION\_NAME
-    - ACCOUNT\_TAGS
-    - FINDING\_UID
-    - PROVIDER
-    - CHECK\_ID
-    - CHECK\_TITLE
-    - CHECK\_TYPE
-    - STATUS
-    - STATUS\_EXTENDED
-    - MUTED
-    - SERVICE\_NAME
-    - SUBSERVICE\_NAME
-    - SEVERITY
-    - RESOURCE\_TYPE
-    - RESOURCE\_UID
-    - RESOURCE\_NAME
-    - RESOURCE\_DETAILS
-    - RESOURCE\_TAGS
-    - PARTITION
-    - REGION
-    - DESCRIPTION
-    - RISK
-    - RELATED\_URL
-    - REMEDIATION\_RECOMMENDATION\_TEXT
-    - REMEDIATION\_RECOMMENDATION\_URL
-    - REMEDIATION\_CODE\_NATIVEIAC
-    - REMEDIATION\_CODE\_TERRAFORM
-    - REMEDIATION\_CODE\_CLI
-    - REMEDIATION\_CODE\_OTHER
-    - COMPLIANCE
-    - CATEGORIES
-    - DEPENDS\_ON
-    - RELATED\_TO
-    - NOTES
-    - PROWLER\_VERSION
+- AUTH\_METHOD
+- TIMESTAMP
+- ACCOUNT\_UID
+- ACCOUNT\_NAME
+- ACCOUNT\_EMAIL
+- ACCOUNT\_ORGANIZATION\_UID
+- ACCOUNT\_ORGANIZATION\_NAME
+- ACCOUNT\_TAGS
+- FINDING\_UID
+- PROVIDER
+- CHECK\_ID
+- CHECK\_TITLE
+- CHECK\_TYPE
+- STATUS
+- STATUS\_EXTENDED
+- MUTED
+- SERVICE\_NAME
+- SUBSERVICE\_NAME
+- SEVERITY
+- RESOURCE\_TYPE
+- RESOURCE\_UID
+- RESOURCE\_NAME
+- RESOURCE\_DETAILS
+- RESOURCE\_TAGS
+- PARTITION
+- REGION
+- DESCRIPTION
+- RISK
+- RELATED\_URL
+- REMEDIATION\_RECOMMENDATION\_TEXT
+- REMEDIATION\_RECOMMENDATION\_URL
+- REMEDIATION\_CODE\_NATIVEIAC
+- REMEDIATION\_CODE\_TERRAFORM
+- REMEDIATION\_CODE\_CLI
+- REMEDIATION\_CODE\_OTHER
+- COMPLIANCE
+- CATEGORIES
+- DEPENDS\_ON
+- RELATED\_TO
+- NOTES
+- PROWLER\_VERSION
 
 #### CSV Headers Mapping
 

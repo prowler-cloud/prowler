@@ -8,40 +8,40 @@ Prowler leverages the AWS SDK (Boto3) for authentication, following standard AWS
 
 To execute Prowler across multiple AWS accounts using IAM Assume Role, choose one of the following approaches:
 
-    1. Custom Profile Configuration
+1. Custom Profile Configuration
 
-    Set up a custom profile inside `~/.aws/config` with the necessary role information.
+Set up a custom profile inside `~/.aws/config` with the necessary role information.
 
-    Then call the profile using `prowler aws -p/--profile your-custom-profile`.
+Then call the profile using `prowler aws -p/--profile your-custom-profile`.
 
-    - Role-Chaining Example Profile The `credential_source` parameter can be set to `Environment`, `Ec2InstanceMetadata`, or `EcsContainer`.
-    - Using an Alternative Named Profile
+- Role-Chaining Example Profile The `credential_source` parameter can be set to `Environment`, `Ec2InstanceMetadata`, or `EcsContainer`.
+- Using an Alternative Named Profile
 
-    Instead of the `credential_source` parameter, `source_profile` can be used to specify a separate named profile.
+Instead of the `credential_source` parameter, `source_profile` can be used to specify a separate named profile.
 
-    This profile must contain IAM user credentials with permissions to assume the target role. For additional details, refer to the AWS Assume Role documentation: [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html).
+This profile must contain IAM user credentials with permissions to assume the target role. For additional details, refer to the AWS Assume Role documentation: [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html).
 
-    ```
-    [profile crossaccountrole]
-    role_arn = arn:aws:iam::234567890123:role/SomeRole
-    credential_source = EcsContainer
-    ```
+```
+[profile crossaccountrole]
+role_arn = arn:aws:iam::234567890123:role/SomeRole
+credential_source = EcsContainer
+```
 
-    2. Using IAM Role Assumption in Prowler
+2. Using IAM Role Assumption in Prowler
 
-    To allow Prowler to retrieve temporary credentials by using `Boto3` and run assessments on the specified account, use the `-R`/`--role <role_arn>` flag.
+To allow Prowler to retrieve temporary credentials by using `Boto3` and run assessments on the specified account, use the `-R`/`--role <role_arn>` flag.
 
-    ```sh
-    prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
-    ```
+```sh
+prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
+```
 
-    - Defining Session Duration and External ID
+- Defining Session Duration and External ID
 
-    Optionally, specify the session duration (in seconds, default: 3600) and the external ID for role assumption:
+Optionally, specify the session duration (in seconds, default: 3600) and the external ID for role assumption:
 
-    ```sh
-    prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
-    ```
+```sh
+prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
+```
 
 ## Custom Role Session Name in Prowler
 
@@ -56,14 +56,12 @@ prowler aws --role-session-name <role_session_name>
 ???+ note
     If not specified, it defaults to `ProwlerAssessmentSession`.
 
-
 ## Role MFA Authentication
 
 If your IAM Role is configured with Multi-Factor Authentication (MFA), use `--mfa` along with `-R`/`--role <role_arn>`. Prowler will prompt you to input the following values to obtain a temporary session for the IAM Role provided:
 
-    - ARN of your MFA device
-    - TOTP (Time-Based One-Time Password)
-
+- ARN of your MFA device
+- TOTP (Time-Based One-Time Password)
 
 ## Creating a Role for One or Multiple Accounts
 

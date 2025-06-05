@@ -21,7 +21,6 @@ Standard results will be shown and additionally the framework information as the
 ???+ note
 	**If Prowler can't find a resource related with a check from a compliance requirement, this requirement won't appear on the output**
 
-
 ## List Available Compliance Frameworks In order to see which compliance frameworks are cover by Prowler, you can use option `--list-compliance`:
 
 ```sh
@@ -61,7 +60,6 @@ prowler <provider> --list-compliance
 - `rbi_cyber_security_framework_aws`
 - `soc2_aws`
 
-
 ### Azure
 
 - `cis_2.0_azure`
@@ -69,18 +67,15 @@ prowler <provider> --list-compliance
 - `ens_rd2022_azure`
 - `mitre_attack_azure`
 
-
 ### GCP
 
 - `cis_2.0_gcp`
 - `ens_rd2022_gcp`
 - `mitre_attack_gcp`
 
-
 ### Kubernetes
 
 - `cis_1.8_kubernetes`
-
 
 ## List Requirements of Compliance Frameworks
 For each compliance framework, you can use the `--list-compliance-requirements` option to list its requirements:

@@ -22,36 +22,37 @@ Make sure you update the `/your/local/dir/prowler-output` to match the path that
 
 The banner and additional info about the dashboard will be shown on your console: <img src="../img/dashboard/dashboard-banner.png">
 
-
 ## Overview Page
 
 The overview page provides a full impression of your findings obtained from Prowler:
 
 <img src="../img/dashboard/dashboard-overview.png">
+
 This page allows for multiple functions:
 
-    * Apply filters:
-        * Assesment Date
-        * Account
-        * Region
-        * Severity
-        * Service
-        * Status
+* Apply filters:
 
-    * See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon: <img src="../img/dashboard/dashboard-files-scanned.png">
+* Assesment Date
+* Account
+* Region
+* Severity
+* Service
+* Status
 
-    * Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
+* See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon: <img src="../img/dashboard/dashboard-files-scanned.png">
 
-    * Click the provider cards to filter by provider.
+* Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
 
-    * On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns: <img src="../img/dashboard/dropdown.png">
+* Click the provider cards to filter by provider.
 
+* On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns: <img src="../img/dashboard/dropdown.png">
 
 ## Compliance Page
 
 This page shows all the info related to the compliance selected. Multiple filters can be selected as per your preferences.
 
 <img src="../img/dashboard/dashboard-compliance.png">
+
 To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`.
 
 In this file use the format present in the others compliance files to create the table. Example for CIS 2.0:
@@ -84,7 +85,6 @@ def get_table(data):
 
 ```
 
-
 ## S3 Integration
 
 If you are using Prowler SaaS with the S3 integration or that integration from Prowler Open Source and you want to use your data from your S3 bucket, you can run the following command in order to load the dashboard with the new files:
@@ -94,7 +94,6 @@ aws s3 cp s3://<your-bucket>/output/csv ./output
 ```
 
 --recursive.
-
 
 ## Output Path
 

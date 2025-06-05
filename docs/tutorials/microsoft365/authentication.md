@@ -2,9 +2,9 @@
 
 By default, Prowler utilizes the MsGraph Python SDK identity package for authentication, leveraging the class `ClientSecretCredential`. This enables authentication against Microsoft 365 using the following approaches:
 
-    - Service principal authentication via environment variables (Enterprise Application)
-    - Currently stored CLI credentials
-    - Interactive browser authentication
+- Service principal authentication via environment variables (Enterprise Application)
+- Currently stored CLI credentials
+- Interactive browser authentication
 
 Before launching the tool, specify the desired authentication method using the following flags:
 

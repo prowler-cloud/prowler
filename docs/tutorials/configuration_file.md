@@ -67,7 +67,6 @@ The following list includes all the AWS checks with configurable variables that 
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 
-
 ## Azure
 
 ### Configurable Checks
@@ -82,11 +81,9 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 
-
 ## GCP
 
 ### Configurable Checks
-
 
 ## Kubernetes
 
@@ -102,7 +99,6 @@ The following list includes all the Kubernetes checks with configurable variable
 | `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
-
 ## Microsoft365
 
 ### Configurable Checks
@@ -112,7 +108,6 @@ The following list includes all the Microsoft365 checks with configurable variab
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
-
 
 ## Config YAML File Structure
 

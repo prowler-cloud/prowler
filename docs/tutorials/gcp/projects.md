@@ -18,9 +18,9 @@ Use an asterisk `*` to scan projects that match a pattern. For example, `prowler
 
 To view a list of projects the user has access to, run:
 
-    ```console
-    prowler gcp --list-project-ids
-    ```
+```console
+prowler gcp --list-project-ids
+```
 
 ### Excluding Projects in Prowler
 

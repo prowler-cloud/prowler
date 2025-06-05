@@ -8,7 +8,6 @@
 prowler <provider> -V/-v/--version
 ```
 
-
 ## Prowler Execution Options
 
 Prowler provides various execution settings.
@@ -57,29 +56,29 @@ prowler <provider> --no-color
 
 Prowler provides various security checks per cloud provider. Use the following options to list, execute, or exclude specific checks:
 
-    - \*List Available Checks\*
-    To display all available checks for the chosen provider:
+- \*List Available Checks\*
+To display all available checks for the chosen provider:
 
-    ```console
-    prowler <provider> --list-checks
-    ```
+```console
+prowler <provider> --list-checks
+```
 
-    - \*Execute Specific Checks\*
-    Run one or more specific security checks using:
+- \*Execute Specific Checks\*
+Run one or more specific security checks using:
 
-    ```console
-    prowler <provider> -c/--checks s3_bucket_public_access
-    ```
+```console
+prowler <provider> -c/--checks s3_bucket_public_access
+```
 
-    - \*Exclude Specific Checks\*
-    Exclude checks from execution with:
+- \*Exclude Specific Checks\*
+Exclude checks from execution with:
 
-    ```console
-    prowler <provider> -e/--excluded-checks ec2 rds
-    ```
+```console
+prowler <provider> -e/--excluded-checks ec2 rds
+```
 
-    - \*Execute Checks from a JSON File\*
-    To run checks defined in a JSON file, structure the file as follows:
+- \*Execute Checks from a JSON File\*
+To run checks defined in a JSON file, structure the file as follows:
 
 ```json
 <checks_list>.json
@@ -99,7 +98,6 @@ Prowler provides various security checks per cloud provider. Use the following o
 prowler <provider> -C/--checks-file <checks_list>.json
 ```
 
-
 ## Custom Checks in Prowler
 
 Prowler supports custom security checks, allowing users to define their own logic.
@@ -111,7 +109,8 @@ prowler <provider> -x/--checks-folder <custom_checks_folder>
 ???+ note
     S3 URIs are also supported for custom check folders (e.g., `s3://bucket/prefix/checks_folder/`). Ensure the credentials used have `s3:GetObject` permissions in the specified S3 path.
 
-Folder Structure for Custom Checks
+**Folder Structure for Custom Checks**
+
 Each check must reside in a dedicated subfolder, following this structure:
 
 - `__init__.py` (empty file) – Ensures Python treats the check folder as a package.
@@ -126,16 +125,15 @@ To see more information about how to write checks, refer to the [Developer Guide
 ???+ note
     If you want to run ONLY your custom check(s), import it with -x (--checks-folder) and then run it with -c (--checks), e.g.: `console prowler aws -x s3://bucket/prowler/providers/aws/services/s3/s3_bucket_policy/ -c s3_bucket_policy`
 
-
 ## Severities
 
 Each of Prowler's checks has a severity, which can be one of the following:
 
-    - informational
-    - low
-    - medium
-    - high
-    - critical
+- informational
+- low
+- medium
+- high
+- critical
 
 To execute specific severity(s):
 
@@ -143,42 +141,40 @@ To execute specific severity(s):
 prowler <provider> --severity critical high
 ```
 
-
 ## Service
 
 Prowler has services per provider, there are options related with them:
 
-    - List the available services in the provider:
+- List the available services in the provider:
 
-    ```console
-    prowler <provider> --list-services
-    ```
+```console
+prowler <provider> --list-services
+```
 
-    - Execute specific service(s):
+- Execute specific service(s):
 
-    ```console
-    prowler <provider> -s/--services s3 iam
-    ```
+```console
+prowler <provider> -s/--services s3 iam
+```
 
-    - Exclude specific service(s):
+- Exclude specific service(s):
 
-    ```console
-    prowler <provider> --excluded-services ec2 rds
-    ```
-
+```console
+prowler <provider> --excluded-services ec2 rds
+```
 
 ## Categories
 
 Prowler groups checks in different categories. There are options related with said categories:
 
-    - List the available categories in the provider:
+- List the available categories in the provider:
 
-    ```console
-    prowler <provider> --list-categories
-    ```
+```console
+prowler <provider> --list-categories
+```
 
-    - Execute specific category(s):
+- Execute specific category(s):
 
-    ```console
-    prowler  <provider> --categories secrets
-    ```
+```console
+prowler  <provider> --categories secrets
+```

@@ -4,8 +4,8 @@
 
 By default, Prowler uses your User Account credentials. You can configure authentication as follows:
 
-    - `gcloud init` to use a new account, or
-    - `gcloud config set account <account>` to use an existing account.
+- `gcloud init` to use a new account, or
+- `gcloud config set account <account>` to use an existing account.
 
 Then, obtain your access credentials using: `gcloud auth application-default login`.
 
@@ -22,9 +22,9 @@ prowler gcp --credentials-file path
 
 Prowler follows the same credential search process as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order), checking credentials in this order:
 
-    1. [GOOGLE\_APPLICATION\_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-    2. [User credentials set up via Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
-    3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+1. [GOOGLE\_APPLICATION\_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [User credentials set up via Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
 
 These credentials must be associated with a user or service account with the necessary permissions to perform security checks.
 

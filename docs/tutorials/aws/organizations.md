@@ -4,11 +4,11 @@
 
 If AWS Organizations is enabled, Prowler can fetch detailed account information during scans, including:
 
-  - Account Name
-  - Email Address
-  - ARN
-  - Organization ID
-  - Tags
+- Account Name
+- Email Address
+- ARN
+- Organization ID
+- Tags
 
 These details will be included alongside each security finding in the output.
 
@@ -45,35 +45,35 @@ In Prowler’s JSON output, tags are encoded in Base64 to prevent formatting err
 
 The additional fields in CSV header output are as follows:
 
-  - ACCOUNT\_DETAILS\_EMAIL
-  - ACCOUNT\_DETAILS\_NAME
-  - ACCOUNT\_DETAILS\_ARN
-  - ACCOUNT\_DETAILS\_ORG
-  - ACCOUNT\_DETAILS\_TAGS
+- ACCOUNT\_DETAILS\_EMAIL
+- ACCOUNT\_DETAILS\_NAME
+- ACCOUNT\_DETAILS\_ARN
+- ACCOUNT\_DETAILS\_ORG
+- ACCOUNT\_DETAILS\_TAGS
 
 ## Extra: Run Prowler across all accounts in AWS Organizations by assuming roles
 
 ### Running Prowler Across All AWS Organization Accounts
 
-  1. To run Prowler across all accounts in AWS Organizations, first retrieve a list of accounts that are not suspended:
+1. To run Prowler across all accounts in AWS Organizations, first retrieve a list of accounts that are not suspended:
 
-    ```shell
-    ACCOUNTS_IN_ORGS=$(aws organizations list-accounts \
-      --query "Accounts[?Status=='ACTIVE'].Id" \
-      --output text \
-    )
-    ```
+  ```shell
+  ACCOUNTS_IN_ORGS=$(aws organizations list-accounts \
+    --query "Accounts[?Status=='ACTIVE'].Id" \
+    --output text \
+  )
+  ```
 
-  2. Then run Prowler to assume a role (same in all members) per each account:
+2. Then run Prowler to assume a role (same in all members) per each account:
 
-    ```shell
-    for accountId in $ACCOUNTS_IN_ORGS;
-    do
-      prowler aws \
-        -O arn:aws:iam::<management_organizations_account_id>:role/<role_name> \
-        -R arn:aws:iam::"${accountId}":role/<role_name>;
-    done
-    ```
+  ```shell
+  for accountId in $ACCOUNTS_IN_ORGS;
+  do
+    prowler aws \
+      -O arn:aws:iam::<management_organizations_account_id>:role/<role_name> \
+      -R arn:aws:iam::"${accountId}":role/<role_name>;
+  done
+  ```
 
-  ???+ note
+???+ note
     This same loop structure can be adapted to scan a predefined list of accounts using a variable like the following: </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

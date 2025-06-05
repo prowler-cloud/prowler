@@ -44,8 +44,8 @@ Boto3's Standard retry mode includes the following mechanisms:
 
 For testing or modifying Prowler's behavior, use the following steps to confirm whether requests are being retried or abandoned:
 
-  * Run prowler with `--log-level DEBUG` and `--log-file debuglogs.txt`
-  * Search for retry attempts using `grep -i 'Retry needed' debuglogs.txt`
+* Run prowler with `--log-level DEBUG` and `--log-file debuglogs.txt`
+* Search for retry attempts using `grep -i 'Retry needed' debuglogs.txt`
 
 This approach follows the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, a message starting with "Retry needed” will be prompted.
 

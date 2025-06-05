@@ -116,7 +116,6 @@ CustomChecksMetadata:
             Url: https://kubernetes.io/docs/reference/access-authn-authz/authentication/
 ```
 
-
 ## Usage
 
 Executing the following command will assess all checks and generate a report while overriding the metadata for those checks:
