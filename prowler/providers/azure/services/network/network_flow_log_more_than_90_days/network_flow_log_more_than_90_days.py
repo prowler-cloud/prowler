@@ -21,7 +21,10 @@ class network_flow_log_more_than_90_days(Check):
                                 report.status = "FAIL"
                                 report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs disabled"
                                 has_failed = True
-                            elif flow_log.retention_policy.days < 90 and not has_failed:
+                            elif (
+                                flow_log.retention_policy.days < 90
+                                and flow_log.retention_policy.days != 0
+                            ) and not has_failed:
                                 report.status = "FAIL"
                                 report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} flow logs retention policy is less than 90 days"
                                 has_failed = True
