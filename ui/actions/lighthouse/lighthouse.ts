@@ -56,7 +56,7 @@ export const createLighthouseConfig = async (config: {
   try {
     const payload = {
       data: {
-        type: "lighthouse-configuration",
+        type: "lighthouse-configurations",
         attributes: {
           name: "OpenAI",
           model: config.model,
@@ -71,8 +71,7 @@ export const createLighthouseConfig = async (config: {
       headers,
       body: JSON.stringify(payload),
     });
-    console.log(JSON.stringify(payload, null, 2));
-    console.log(response);
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -122,7 +121,7 @@ export const updateLighthouseConfig = async (config: {
     // Prepare the request payload following the JSONAPI format
     const payload = {
       data: {
-        type: "lighthouse-configuration",
+        type: "lighthouse-configurations",
         id: configId,
         attributes: {
           model: config.model,
