@@ -2148,11 +2148,16 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
     def create(self, validated_data):
         api_key = validated_data.pop("api_key")
-
         instance = super().create(validated_data)
         instance.api_key_decoded = api_key
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Always mask the API key in the response
+        data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
 
 
 class LighthouseConfigUpdateSerializer(BaseWriteSerializer):

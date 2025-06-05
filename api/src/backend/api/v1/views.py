@@ -3300,18 +3300,3 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                 {"detail": f"Connection failed: {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-    def create(self, request, *args, **kwargs):
-        """Create new Lighthouse configuration"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            LighthouseConfigSerializer(
-                instance, context=self.get_serializer_context()
-            ).data,
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
