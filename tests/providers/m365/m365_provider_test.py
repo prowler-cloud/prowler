@@ -592,7 +592,7 @@ class TestM365Provider:
                 user="test@example.com",
                 password="",
             )
-        assert "The provided Encrypted Password is not valid." in str(exception.value)
+        assert "The provided Password is not valid." in str(exception.value)
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
