@@ -43,7 +43,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NotTenantIdButClientIdAndClientSecretError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
-    M365NotValidEncryptedPasswordError,
+    M365NotValidPasswordError,
     M365NotValidTenantIdError,
     M365NotValidUserError,
     M365SetUpRegionConfigError,
@@ -296,7 +296,7 @@ class M365Provider(Provider):
             client_id (str): The M365 Client ID.
             client_secret (str): The M365 Client Secret.
             user (str): The M365 User Account.
-            encrpted_password (str): The M365 Encrypted Password.
+            password (str): The M365 User Password.
 
         Raises:
             M365BrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
@@ -1032,9 +1032,9 @@ class M365Provider(Provider):
 
         # Validate the Encrypted Password
         if not password:
-            raise M365NotValidEncryptedPasswordError(
+            raise M365NotValidPasswordError(
                 file=os.path.basename(__file__),
-                message="The provided Encrypted Password is not valid.",
+                message="The provided Password is not valid.",
             )
 
         try:
