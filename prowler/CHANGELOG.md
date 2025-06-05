@@ -30,8 +30,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
-- Fix encrypted password typo in `formSchemas`. [(#7828)](https://github.com/prowler-cloud/prowler/pull/7828)
-- Remove warning of encrypted password for Prowler Cloud. [(#7886)](https://github.com/prowler-cloud/prowler/pull/7886)
 
 ---
 
