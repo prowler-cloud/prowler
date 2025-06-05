@@ -2,23 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [v1.9.0] (Prowler UNRELEASED)
-
-### Added
-- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
-- Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
-
-### Changed
-- Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
-
-### Fixed
-- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
-
----
-
->>>>>>> 845a0aa0d (fix(changelog): add entries for password encryption in v5.7.3 (#7939))
 ## [v1.8.3] (Prowler v5.7.3)
 
 ### Added
