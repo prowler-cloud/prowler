@@ -138,7 +138,7 @@ export const Accordion = ({
           indicator={<ChevronDown className="text-gray-500" />}
           classNames={{
             base: index === 0 || index === 1 ? "my-1" : "my-1",
-            title: "text-sm font-medium max-w-full overflow-hidden truncate",
+            title: "text-sm",
             subtitle: "text-xs text-gray-500",
             trigger:
               "py-2 px-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center",
