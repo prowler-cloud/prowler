@@ -8,6 +8,10 @@ If fixes an issue please add it with `Fix #XXXX`
 
 Please include a summary of the change and which issue is fixed. List any dependencies that are required for this change.
 
+### Steps to review
+
+Please add a detailed description of how to review this PR.
+
 ### Checklist
 
 - Are there new checks included in this PR? Yes / No
