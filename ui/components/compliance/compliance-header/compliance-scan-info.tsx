@@ -23,15 +23,13 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <div>
-        <EntityInfoShort
-          cloudProvider={scan.providerInfo.provider}
-          entityAlias={scan.providerInfo.alias}
-          entityId={scan.providerInfo.uid}
-          hideCopyButton
-          snippetWidth="max-w-[100px]"
-        />
-      </div>
+      <EntityInfoShort
+        cloudProvider={scan.providerInfo.provider}
+        entityAlias={scan.providerInfo.alias}
+        entityId={scan.providerInfo.uid}
+        hideCopyButton
+        snippetWidth="max-w-[100px]"
+      />
       <Divider orientation="vertical" className="h-6" />
       <div className="flex flex-col items-start whitespace-nowrap">
         <Tooltip
@@ -39,7 +37,6 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
           placement="top"
           size="sm"
         >
-          {/* <p className="max-w-[120px] truncate text-ellipsis text-xs text-default-500"> */}
           <p className="text-xs text-default-500">
             {scan.attributes.name || "- -"}
           </p>
