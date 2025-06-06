@@ -23,16 +23,14 @@ class apiserver_strong_ciphers_only(Check):
                 # Check if strong ciphers are set in "--tls-cipher-suites"
                 for command in container.command:
                     if command.startswith("--tls-cipher-suites"):
-                        if (
-                            command.split("=")[1]
-                            .split(",")
-                            .issubset(
-                                apiserver_client.audit_config.get(
-                                    "apiserver_strong_ciphers",
-                                    default_apiserver_strong_ciphers,
-                                )
+                        configured_ciphers = set(command.split("=")[1].split(","))
+                        allowed_ciphers = set(
+                            apiserver_client.audit_config.get(
+                                "apiserver_strong_ciphers",
+                                default_apiserver_strong_ciphers,
                             )
-                        ):
+                        )
+                        if configured_ciphers.issubset(allowed_ciphers):
                             strong_ciphers_set = True
                 if not strong_ciphers_set:
                     break
