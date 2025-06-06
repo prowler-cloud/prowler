@@ -5718,6 +5718,42 @@ class TestLighthouseConfigViewSet:
         assert data["attributes"]["model"] == "gpt-4o-mini"
         assert data["attributes"]["temperature"] == 0.5
 
+    @pytest.mark.parametrize(
+        "field_name, invalid_value",
+        [
+            ("model", "invalid-model"),  # Invalid model name
+            ("temperature", 2.5),  # Temperature too high
+            ("temperature", -0.5),  # Temperature too low
+            ("max_tokens", -1),  # Negative max tokens
+            ("max_tokens", 100000),  # Max tokens too high
+            ("name", "T"),  # Name too short
+            ("api_key", "invalid-key"),  # Invalid API key format
+        ],
+    )
+    def test_lighthouse_config_update_invalid(
+        self, authenticated_client, lighthouse_config_fixture, field_name, invalid_value
+    ):
+        update_payload = {
+            "data": {
+                "type": "lighthouse-configurations",
+                "id": str(lighthouse_config_fixture.id),
+                "attributes": {
+                    field_name: invalid_value,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
+            ),
+            data=update_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert any(field_name in error["source"]["pointer"] for error in errors)
+
     def test_lighthouse_config_delete(
         self, authenticated_client, lighthouse_config_fixture
     ):
