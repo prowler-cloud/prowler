@@ -57,34 +57,27 @@ Other Commands for Running Tests
 - Running tests for a provider check:
 `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>/<check>`
 
-???+ note Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) for more details.
+???+ note 
+    Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) for more details.
 
 ## AWS Testing Approaches
 
 For AWS providers, different testing approaches apply based on API coverage based on several criteria.
 
-???+ note Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests. ****
+???+ note 
+    Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests. ****
 
 - AWS API Calls Covered by [Moto](https://github.com/getmoto/moto):
+    - Service Tests: `@mock_aws`
+    - Checks Tests: `@mock_aws`
 
-  - Service Tests:
-`@mock_aws`
-  - Checks Tests:
-`@mock_aws`
 - AWS API Calls Not Covered by Moto:
-  - Service Tests:
-`mock_make_api_call`
-  - Checks Tests:
-[MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
+  - Service Tests: `mock_make_api_call`
+  - Checks Tests: [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
 
 - AWS API Calls Partially Covered by Moto:
-
-  - Service Tests:
-`@mock_aws`
-`mock_make_api_call`
-  - Check Tests:
-`@mock_aws`
-`mock_make_api_call`
+    - Service Tests: `@mock_aws` and `mock_make_api_call`
+    - Check Tests: `@mock_aws` and `mock_make_api_call`
 
 #### AWS Check Testing Scenarios
 
@@ -212,7 +205,8 @@ class Test_iam_password_policy_uppercase:
 
 If the IAM service required for testing is not supported by the Moto library, use [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) to inject objects into the service client. ⚠️ Note: As stated above, direct service instantiation must be avoided to prevent actual AWS API calls.
 
-???+ note The example below demonstrates the IAM GetAccountPasswordPolicy API, which is covered by Moto, but is used for instructional purposes only.
+???+ note 
+    The example below demonstrates the IAM GetAccountPasswordPolicy API, which is covered by Moto, but is used for instructional purposes only.
 
 #### Mocking Service Objects Using MagicMock
 
@@ -380,11 +374,12 @@ class Test_iam_password_policy_uppercase:
     # Refer to the previous section for the check test, as the implementation remains unchanged.
 ```
 
-\# This example does not use Moto to simplify the setup.
-\# However, if additional `moto` decorators are applied alongside the patch,Moto will automatically intercept the call to `orig(self, operation_name, kwarg)`.
+???+ note
+    This example does not use Moto to simplify the setup.
+    However, if additional `moto` decorators are applied alongside the patch, Moto will automatically intercept the call to `orig(self, operation_name, kwarg)`.
 
-???+ note The source of the above implementation can be found here:
-\[Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching\_other\_services.html)
+???+ note 
+    The source of the above implementation can be found here:[Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching\_other\_services.html)
 
 #### Mocking Several Services
 
@@ -441,18 +436,18 @@ Properly understanding patching versus importing is critical for unit testing wi
 
 1. `<check>.py`:
 
-```python
-from prowler.providers.<provider>.services.<service>.<service>_client import <service>_client
-```
+    ```python
+    from prowler.providers.<provider>.services.<service>.<service>_client import <service>_client
+    ```
 
 2. `<service>_client.py`:
 
-```python
-from prowler.providers.common.provider import Provider
-from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
+    ```python
+    from prowler.providers.common.provider import Provider
+    from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
-<service>_client = <SERVICE>(Provider.get_global_provider())
-```
+    <service>_client = <SERVICE>(Provider.get_global_provider())
+    ```
 
 Due to the import path structure, patching certain objects does not always ensure full isolation. If multiple tests—executed sequentially or in parallel—reuse service clients, some instances may already be initialized by another check. This can lead to unintended shared state, affecting test accuracy:
 
@@ -466,7 +461,7 @@ For a deeper understanding of mocking imports in Python, refer to the following 
 
 #### Approaches to Mocking a Service Client
 
-##### 1\. Mocking the Service Client at the Service Client Level
+1\. Mocking the Service Client at the Service Client Level
 
 2\. Mocking a Service Client via Below Code Implementation
 
@@ -526,7 +521,7 @@ For detailed guidance on test creation and existing service tests, refer to the 
 
 ## GCP
 
-### AWS Check Testing Approach
+### GCP Check Testing Approach
 
 Currently the GCP Provider does not have a dedicated library for mocking API calls. To ensure proper test isolation, objects must be manually injected into the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
@@ -640,9 +635,7 @@ class Test_compute_project_os_login_enabled:
 
 ```
 
-### Testing AWS Services
-
-Testing Google Cloud Services
+### Testing GCP Services
 
 The testing of Google Cloud Services follows the same principles as the one of Google Cloud checks. While all API calls must be mocked, attribute setup for API calls in this scenario is defined in the fixtures file, specifically within the [fixtures file](https://github.com/prowler-cloud/prowler/blob/master/tests/providers/gcp/gcp_fixtures.py) in the `mock_api_client` function.
 
@@ -728,15 +721,15 @@ Understanding where specific values originate can be challenging, so the followi
 
 - Step 1: Identify the API Call for Dataset Retrieval
 
-To determine how datasets are obtained, examine the API call used by the service. In this case, the relevant service call is: `self.client.datasets().list(projectId=project_id)`.
+    To determine how datasets are obtained, examine the API call used by the service. In this case, the relevant service call is: `self.client.datasets().list(projectId=project_id)`.
 
 - Step 2: Mocking the API Call in the Fixture File
 
-In the fixture file, mock this call in the `MagicMock` client, in the function `mock_api_client`.
+    In the fixture file, mock this call in the `MagicMock` client, in the function `mock_api_client`.
 
 - Step 3: Structuring the Mock Function
 
-The best approach for mocking is to adhere to the service’s existing format:
+    The best approach for mocking is to adhere to the service’s existing format:
 
 Define a dedicated function that modifies the client.
 
@@ -773,7 +766,7 @@ client.datasets().list().execute.return_value = {
 
 ## Azure
 
-### AWS Check Testing Approach
+### Azure Check Testing Approach
 
 Currently the Azure Provider does not have a dedicated library for mocking API calls. To ensure proper test isolation, objects must be manually injected into the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
@@ -906,13 +899,11 @@ class Test_app_ensure_http_is_redirected_to_https:
 
 ```
 
-### Testing AWS Services
-
-Testing Azure Services
+### Testing Azure Services
 
 The testing of Azure Services follows the same principles as the one of Google Cloud checks. All API calls are still mocked, but for methods that initialize attributes via an API call, use the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class to ensure proper mocking.
 
- ⚠ Rembember: Every method within a service must be tested to ensure full coverage and accurate validation.
+⚠ Rembember: Every method within a service must be tested to ensure full coverage and accurate validation.
 
 The following example presents a real testing class, but includes additional comments for educational purposes, explaining key concepts and implementation details.
 
