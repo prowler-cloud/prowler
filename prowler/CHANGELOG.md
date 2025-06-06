@@ -30,7 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
-
+- Handle `0` at the start and end of account uids in Prowler Dashboard. [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
 ---
 
 ## [v5.7.2] (Prowler v5.7.2)
