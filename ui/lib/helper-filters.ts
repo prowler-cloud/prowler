@@ -1,4 +1,4 @@
-import { ProvidersApiResponse, ScanProps } from "@/types";
+import { ProviderProps, ProvidersApiResponse, ScanProps } from "@/types";
 import { ScanEntity } from "@/types/scans";
 
 /**
@@ -70,7 +70,7 @@ export const createScanDetailsMapping = (
 
     if (!providerInfo && scan.relationships?.provider?.data?.id) {
       const provider = providersData?.data?.find(
-        (p: any) => p.id === scan.relationships.provider.data.id,
+        (p: ProviderProps) => p.id === scan.relationships.provider.data.id,
       );
       if (provider) {
         providerInfo = {
