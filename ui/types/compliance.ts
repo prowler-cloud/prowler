@@ -113,6 +113,16 @@ export interface AWSWellArchitectedAttributesMetadata {
   ImplementationGuidanceUrl: string;
 }
 
+export interface KISAAttributesMetadata {
+  Domain: string;
+  Subdomain: string;
+  Section: string;
+  AuditChecklist: string[];
+  RelatedRegulations: string[];
+  AuditEvidence: string[];
+  NonComplianceCases: string[];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -125,7 +135,8 @@ export interface AttributesItemData {
         | ENSAttributesMetadata[]
         | ISO27001AttributesMetadata[]
         | CISAttributesMetadata[]
-        | AWSWellArchitectedAttributesMetadata[];
+        | AWSWellArchitectedAttributesMetadata[]
+        | KISAAttributesMetadata[];
       check_ids: string[];
     };
   };

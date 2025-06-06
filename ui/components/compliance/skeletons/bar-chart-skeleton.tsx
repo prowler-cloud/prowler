@@ -4,7 +4,7 @@ import { Skeleton } from "@nextui-org/react";
 
 export const BarChartSkeleton = () => {
   return (
-    <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
+    <div className="flex w-[400px] flex-col items-center justify-between">
       {/* Title skeleton */}
       <Skeleton className="h-4 w-40 rounded-lg">
         <div className="h-4 bg-default-200" />

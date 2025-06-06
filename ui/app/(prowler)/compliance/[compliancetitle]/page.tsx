@@ -1,6 +1,6 @@
 import { Spacer } from "@nextui-org/react";
 import Image from "next/image";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import {
   getComplianceAttributes,
@@ -63,8 +63,18 @@ const ChartsWrapper = ({
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full flex-col items-center justify-between lg:flex-row">
-      {children}
+    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start">
+      {children &&
+        React.Children.toArray(children).map(
+          (child: React.ReactNode, index: number) => (
+            <div
+              key={index}
+              className="rounded-lg bg-gray-50 p-6 dark:bg-gray-900"
+            >
+              {child}
+            </div>
+          ),
+        )}
     </div>
   );
 };
