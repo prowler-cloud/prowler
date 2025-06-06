@@ -17,10 +17,7 @@ class storage_ensure_file_shares_soft_delete_is_enabled(Check):
                         )
                         report.subscription = subscription
                         report.resource_id = file_share.name
-                        if (
-                            file_share.soft_delete_enabled
-                            and file_share.retention_days > 0
-                        ):
+                        if file_share.soft_delete_enabled:
                             report.status = "PASS"
                             report.status_extended = (
                                 f"File share {file_share.name} in storage account {storage_account.name} "
