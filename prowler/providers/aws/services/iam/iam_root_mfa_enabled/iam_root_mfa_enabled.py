@@ -10,7 +10,7 @@ class iam_root_mfa_enabled(Check):
             for user in iam_client.credential_report:
                 if user["user"] == "<root_account>":
                     # Check if root has any credentials at all
-                    has_creds, cred_types = self._has_root_credentials(user)
+                    has_creds, cred_types = iam_client.has_credentials(user)
 
                     # Only report if root actually has credentials
                     if has_creds:
@@ -54,24 +54,3 @@ class iam_root_mfa_enabled(Check):
                         findings.append(report)
 
         return findings
-
-    def _has_root_credentials(self, user_data):
-        """Check if root user has any form of credentials set"""
-        credentials_exist = False
-        credential_types = []
-
-        # Check for password
-        if user_data["password_enabled"] == "true":
-            credentials_exist = True
-            credential_types.append("password")
-
-        # Check for access keys
-        if user_data["access_key_1_active"] == "true":
-            credentials_exist = True
-            credential_types.append("access_key_1")
-
-        if user_data["access_key_2_active"] == "true":
-            credentials_exist = True
-            credential_types.append("access_key_2")
-
-        return credentials_exist, credential_types

@@ -54,7 +54,7 @@ class IAM(AWSService):
         self.role_arn_template = f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:role"
         self.password_policy_arn_template = f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:password-policy"
         self.mfa_arn_template = (
-            f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:mfa"
+            f"arn:{self.audited_partition}:iam::{self.audited_account}:mfa"
         )
         self.users = self._get_users()
         self.roles = self._get_roles()
@@ -1028,6 +1028,27 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def has_credentials(self, user_data):
+        """Check if user has any form of credentials set"""
+        credentials_exist = False
+        credential_types = []
+
+        # Check for password
+        if user_data["password_enabled"] == "true":
+            credentials_exist = True
+            credential_types.append("password")
+
+        # Check for access keys
+        if user_data["access_key_1_active"] == "true":
+            credentials_exist = True
+            credential_types.append("access_key_1")
+
+        if user_data["access_key_2_active"] == "true":
+            credentials_exist = True
+            credential_types.append("access_key_2")
+
+        return credentials_exist, credential_types
 
 
 class MFADevice(BaseModel):
