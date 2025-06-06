@@ -6,7 +6,7 @@ import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
 import { DataCompliance } from "./data-compliance";
-import { SelectScanComplianceDataProps } from "./select-scan-compliance-data";
+import { SelectScanComplianceDataProps } from "./scan-selector";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];
