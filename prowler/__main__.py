@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import sys
 from os import environ
 
@@ -101,6 +100,7 @@ from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.ionos.models import IonosOutputOptions
 
 
 def prowler():
@@ -292,6 +292,10 @@ def prowler():
         )
     elif provider == "nhn":
         output_options = NHNOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "ionos":
+        output_options = IonosOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
