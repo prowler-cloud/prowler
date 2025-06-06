@@ -1660,7 +1660,7 @@ aws:
         ]
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
-        assert set(recovered_checks) == set(expected_checks)
+        assert recovered_checks == expected_checks
 
     @mock_aws
     @patch(
@@ -1676,7 +1676,7 @@ aws:
         ]
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
-        assert set(recovered_checks) == set(expected_checks)
+        assert recovered_checks == expected_checks
 
     @mock_aws
     @patch(
@@ -1692,7 +1692,7 @@ aws:
         ]
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
-        assert set(recovered_checks) == set(expected_checks)
+        assert recovered_checks == expected_checks
 
     @mock_aws
     @patch(
@@ -1708,7 +1708,7 @@ aws:
         ]
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
-        assert set(recovered_checks) == set(expected_checks)
+        assert recovered_checks == expected_checks
 
     @mock_aws
     @patch(
@@ -1724,7 +1724,7 @@ aws:
         ]
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
-        assert set(recovered_checks) == set(expected_checks)
+        assert recovered_checks == expected_checks
 
     @mock_aws
     def test_get_regions_from_audit_resources_with_regions(self):
@@ -1741,7 +1741,7 @@ aws:
         recovered_regions = aws_provider.get_regions_from_audit_resources(
             audit_resources
         )
-        assert set(recovered_regions) == expected_regions
+        assert recovered_regions == expected_regions
 
     @mock_aws
     def test_get_regions_from_audit_resources_without_regions(self):
