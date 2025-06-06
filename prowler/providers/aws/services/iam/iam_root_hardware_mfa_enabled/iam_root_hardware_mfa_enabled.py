@@ -7,40 +7,93 @@ class iam_root_hardware_mfa_enabled(Check):
         findings = []
         # This check is only available in Commercial Partition
         if iam_client.audited_partition == "aws":
-            # Check if the root credentials are managed by AWS Organizations
-            if (
-                iam_client.organization_features is not None
-                and "RootCredentialsManagement" not in iam_client.organization_features
-            ):
-                if iam_client.account_summary:
-                    virtual_mfa = False
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(),
-                        resource=iam_client.account_summary,
-                    )
-                    report.region = iam_client.region
-                    report.resource_id = "<root_account>"
-                    report.resource_arn = iam_client.mfa_arn_template
+            if iam_client.credential_report:
+                for user in iam_client.credential_report:
+                    if user["user"] == "<root_account>":
+                        # Check if root has any credentials at all
+                        has_creds, cred_types = self._has_root_credentials(user)
 
-                    if (
-                        iam_client.account_summary["SummaryMap"]["AccountMFAEnabled"]
-                        > 0
-                    ):
-                        for mfa in iam_client.virtual_mfa_devices:
-                            # If the ARN of the associated IAM user of the Virtual MFA device is "arn:aws:iam::[aws-account-id]:root", your AWS root account is not using a hardware-based MFA device for MFA protection.
-                            if "root" in mfa.get("User", {}).get("Arn", ""):
-                                virtual_mfa = True
-                                report.status = "FAIL"
-                                report.status_extended = "Root account has a virtual MFA instead of a hardware MFA device enabled."
-                        if not virtual_mfa:
-                            report.status = "PASS"
-                            report.status_extended = (
-                                "Root account has a hardware MFA device enabled."
+                        # Only report if root actually has credentials
+                        if has_creds and iam_client.account_summary:
+                            virtual_mfa = False
+                            report = Check_Report_AWS(
+                                metadata=self.metadata(),
+                                resource=user,
                             )
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = "MFA is not enabled for root account."
+                            report.region = iam_client.region
+                            report.resource_id = user["user"]
+                            report.resource_arn = iam_client.mfa_arn_template
 
-                    findings.append(report)
+                            # Check if organization manages root credentials
+                            org_managed = (
+                                iam_client.organization_features is not None
+                                and "RootCredentialsManagement"
+                                in iam_client.organization_features
+                            )
+
+                            if (
+                                iam_client.account_summary["SummaryMap"][
+                                    "AccountMFAEnabled"
+                                ]
+                                > 0
+                            ):
+                                for mfa in iam_client.virtual_mfa_devices:
+                                    # If the ARN of the associated IAM user of the Virtual MFA device is "arn:aws:iam::[aws-account-id]:root", your AWS root account is not using a hardware-based MFA device for MFA protection.
+                                    if "root" in mfa.get("User", {}).get("Arn", ""):
+                                        virtual_mfa = True
+                                        report.status = "FAIL"
+                                        if org_managed:
+                                            report.status_extended = (
+                                                f"Root account has {', '.join(cred_types)} credentials with virtual MFA "
+                                                "instead of hardware MFA despite organizational root management being enabled."
+                                            )
+                                        else:
+                                            report.status_extended = "Root account has a virtual MFA instead of a hardware MFA device enabled."
+                                        break
+
+                                if not virtual_mfa:
+                                    report.status = "PASS"
+                                    if org_managed and has_creds:
+                                        report.status_extended = (
+                                            f"Root account has {', '.join(cred_types)} credentials with hardware MFA enabled. "
+                                            "Consider removing individual root credentials since organizational "
+                                            "root management is active."
+                                        )
+                                    else:
+                                        report.status_extended = "Root account has a hardware MFA device enabled."
+                            else:
+                                report.status = "FAIL"
+                                if org_managed:
+                                    report.status_extended = (
+                                        f"Root account has {', '.join(cred_types)} credentials without MFA "
+                                        "despite organizational root management being enabled."
+                                    )
+                                else:
+                                    report.status_extended = (
+                                        "MFA is not enabled for root account."
+                                    )
+
+                            findings.append(report)
 
         return findings
+
+    def _has_root_credentials(self, user_data):
+        """Check if root user has any form of credentials set"""
+        credentials_exist = False
+        credential_types = []
+
+        # Check for password
+        if user_data["password_enabled"] == "true":
+            credentials_exist = True
+            credential_types.append("password")
+
+        # Check for access keys
+        if user_data["access_key_1_active"] == "true":
+            credentials_exist = True
+            credential_types.append("access_key_1")
+
+        if user_data["access_key_2_active"] == "true":
+            credentials_exist = True
+            credential_types.append("access_key_2")
+
+        return credentials_exist, credential_types
