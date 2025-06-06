@@ -1,3 +1,4 @@
+import { Tooltip } from "@nextui-org/react";
 import React from "react";
 
 import { IdIcon } from "@/components/icons";
@@ -19,21 +20,25 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   entityAlias,
   entityId,
   hideCopyButton = false,
-  snippetWidth,
 }) => {
   return (
-    <div className="flex items-center justify-between gap-x-2">
-      <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
-      <div className="flex flex-col">
-        {entityAlias && (
-          <span className="text-xs text-default-500">{entityAlias}</span>
-        )}
-        <SnippetChip
-          value={entityId ?? ""}
-          hideCopyButton={hideCopyButton}
-          icon={<IdIcon size={16} />}
-          className={snippetWidth}
-        />
+    <div className="flex items-center justify-start">
+      <div className="flex items-center justify-between gap-x-2">
+        <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
+        <div className="flex max-w-[120px] flex-col">
+          {entityAlias && (
+            <Tooltip content={entityAlias} placement="top" size="sm">
+              <span className="truncate text-ellipsis text-xs text-default-500">
+                {entityAlias}
+              </span>
+            </Tooltip>
+          )}
+          <SnippetChip
+            value={entityId ?? ""}
+            hideCopyButton={hideCopyButton}
+            icon={<IdIcon size={16} />}
+          />
+        </div>
       </div>
     </div>
   );

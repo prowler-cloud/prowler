@@ -22,7 +22,7 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
   scan,
 }) => {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-2">
       <div>
         <EntityInfoShort
           cloudProvider={scan.providerInfo.provider}
@@ -39,7 +39,8 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
           placement="top"
           size="sm"
         >
-          <p className="max-w-[120px] truncate text-ellipsis text-xs text-default-500">
+          {/* <p className="max-w-[120px] truncate text-ellipsis text-xs text-default-500"> */}
+          <p className="text-xs text-default-500">
             {scan.attributes.name || "- -"}
           </p>
         </Tooltip>
