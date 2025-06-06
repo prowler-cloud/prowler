@@ -16,7 +16,7 @@ export interface SelectScanComplianceDataProps {
   onSelectionChange: (selectedKey: string) => void;
 }
 
-export const SelectScanComplianceData = ({
+export const ScanSelector = ({
   scans,
   selectedScanId,
   onSelectionChange,
@@ -26,7 +26,7 @@ export const SelectScanComplianceData = ({
       aria-label="Select a Scan"
       placeholder="Select a scan"
       classNames={{
-        selectorIcon: "right-2",
+        trigger: "w-full min-w-[365px]",
       }}
       size="lg"
       labelPlacement="outside"
