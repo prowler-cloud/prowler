@@ -2,6 +2,7 @@ import glob
 import os
 from datetime import datetime, timedelta, timezone
 
+import openai
 import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -70,6 +71,7 @@ from api.filters import (
     IntegrationFilter,
     InvitationFilter,
     LatestFindingFilter,
+    LighthouseConfigFilter,
     MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -89,6 +91,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -132,6 +135,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -326,6 +332,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Integration",
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
+            },
+            {
+                "name": "Lighthouse",
+                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3208,3 +3219,85 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse"],
+        summary="List all Lighthouse configurations",
+        description="Retrieve a list of all Lighthouse configurations.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse"],
+        summary="Create a new Lighthouse configuration",
+        description="Create a new Lighthouse configuration with the specified details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse"],
+        summary="Partially update a Lighthouse configuration",
+        description="Update certain fields of an existing Lighthouse configuration.",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse"],
+        summary="Retrieve a Lighthouse configuration",
+        description="Fetch detailed information about a specific Lighthouse configuration by its ID. Add query param `fields[lighthouse-config]=api_key` to get API key.",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse"],
+        summary="Delete a Lighthouse configuration",
+        description="Remove a Lighthouse configuration by its ID.",
+    ),
+    check_connection=extend_schema(
+        tags=["Lighthouse"],
+        summary="Check the connection to the OpenAI API",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+    ),
+)
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing Lighthouse configuration.
+    """
+
+    filterset_class = LighthouseConfigFilter
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseConfigUpdateSerializer
+        return LighthouseConfigSerializer
+
+    @action(detail=True, methods=["get"])
+    def check_connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API.
+        """
+        instance = self.get_object()
+        if not instance.api_key_decoded:
+            return Response(
+                {"detail": "API key is invalid or missing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            client = openai.OpenAI(
+                api_key=instance.api_key_decoded,
+            )
+            models = client.models.list()
+            return Response(
+                {
+                    "detail": "Connection successful!",
+                    "available_models": [model.id for model in models.data],
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Connection failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
