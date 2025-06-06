@@ -71,6 +71,7 @@ from api.filters import (
     IntegrationFilter,
     InvitationFilter,
     LatestFindingFilter,
+    LighthouseConfigFilter,
     MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -331,6 +332,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Integration",
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
+            },
+            {
+                "name": "Lighthouse",
+                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3252,12 +3258,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     API endpoint for managing Lighthouse configuration.
     """
 
-    filterset_fields = {
-        "name": ["exact", "icontains"],
-        "model": ["exact", "icontains"],
-        "is_active": ["exact"],
-        "inserted_at": ["gte", "lte"],
-    }
+    filterset_class = LighthouseConfigFilter
     ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
     ordering = ["-inserted_at"]
 

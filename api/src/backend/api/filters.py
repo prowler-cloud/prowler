@@ -26,6 +26,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfiguration,
     Membership,
     PermissionChoices,
     Provider,
@@ -703,4 +704,17 @@ class IntegrationFilter(FilterSet):
         model = Integration
         fields = {
             "inserted_at": ["date", "gte", "lte"],
+        }
+
+
+class LighthouseConfigFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = {
+            "name": ["exact", "icontains"],
+            "model": ["exact", "icontains"],
+            "is_active": ["exact"],
+            "inserted_at": ["gte", "lte"],
         }

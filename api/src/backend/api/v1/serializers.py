@@ -2140,12 +2140,6 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             )
         return super().validate(attrs)
 
-    def validate_api_key(self, value):
-        """Validate the API key format."""
-        if not value:
-            raise serializers.ValidationError("API key is required")
-        return value
-
     def create(self, validated_data):
         api_key = validated_data.pop("api_key")
         instance = super().create(validated_data)
