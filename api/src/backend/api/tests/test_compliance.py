@@ -1,12 +1,12 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from api.compliance import (
+    generate_compliance_overview_template,
+    generate_scan_compliance,
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
-    load_prowler_compliance,
     load_prowler_checks,
-    generate_scan_compliance,
-    generate_compliance_overview_template,
+    load_prowler_compliance,
 )
 from api.models import Provider
 
@@ -69,7 +69,7 @@ class TestCompliance:
 
         load_prowler_compliance()
 
-        from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE, PROWLER_CHECKS
+        from api.compliance import PROWLER_CHECKS, PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
 
         assert PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE == {
             "template_key": "template_value"
@@ -268,7 +268,7 @@ class TestCompliance:
                                 "manual": 0,
                                 "total": 0,
                             },
-                            "status": "PASS",
+                            "status": "MANUAL",
                         },
                     },
                     "requirements_status": {

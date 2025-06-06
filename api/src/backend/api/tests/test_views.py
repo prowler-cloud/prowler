@@ -4837,6 +4837,24 @@ class TestComplianceOverviewViewSet:
             assert "description" in attributes
             assert "status" in attributes
 
+    def test_compliance_overview_requirements_manual(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        scan_id = str(compliance_requirements_overviews_fixture[0].scan.id)
+        # Compliance with a manual requirement
+        compliance_id = "aws_account_security_onboarding_aws"
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data[-1]["attributes"]["status"] == "MANUAL"
+
     def test_compliance_overview_requirements_missing_scan_id(
         self, authenticated_client
     ):

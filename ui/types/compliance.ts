@@ -1,16 +1,5 @@
 export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
 
-export type ComplianceId =
-  | "ens_rd2022_aws"
-  | "iso27001_2013_aws"
-  | "iso27001_2022_aws"
-  | "cis_1.4_aws"
-  | "cis_1.5_aws"
-  | "cis_2.0_aws"
-  | "cis_3.0_aws"
-  | "cis_4.0_aws"
-  | "cis_5.0_aws";
-
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
 }
@@ -112,6 +101,18 @@ export interface CISAttributesMetadata {
   References: string;
 }
 
+export interface AWSWellArchitectedAttributesMetadata {
+  Name: string;
+  WellArchitectedQuestionId: string;
+  WellArchitectedPracticeId: string;
+  Section: string;
+  SubSection: string;
+  LevelOfRisk: string;
+  AssessmentMethod: string;
+  Description: string;
+  ImplementationGuidanceUrl: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -120,7 +121,11 @@ export interface AttributesItemData {
     version: string;
     description: string;
     attributes: {
-      metadata: ENSAttributesMetadata[] | ISO27001AttributesMetadata[];
+      metadata:
+        | ENSAttributesMetadata[]
+        | ISO27001AttributesMetadata[]
+        | CISAttributesMetadata[]
+        | AWSWellArchitectedAttributesMetadata[];
       check_ids: string[];
     };
   };

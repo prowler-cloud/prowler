@@ -9,10 +9,10 @@ interface ComplianceScanInfoProps {
     providerInfo: {
       provider: ProviderType;
       alias?: string;
-      uid: string;
+      uid?: string;
     };
-    attributes: {
-      name: string;
+    attributes?: {
+      name?: string;
       completed_at: string;
     };
   };
@@ -29,13 +29,17 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
         entityId={scan.providerInfo.uid}
         hideCopyButton
       />
-      <Divider orientation="vertical" className="mx-2 h-6" />
-      <div className="flex flex-col items-start">
-        <p className="text-xs text-default-500">
-          {scan.attributes.name || "- -"}
-        </p>
-        <DateWithTime inline dateTime={scan.attributes.completed_at} />
-      </div>
+      {scan.attributes && (
+        <>
+          <Divider orientation="vertical" className="mx-2 h-6" />
+          <div className="flex flex-col items-start">
+            <p className="text-xs text-default-500">
+              {scan.attributes.name || "- -"}
+            </p>
+            <DateWithTime inline dateTime={scan.attributes.completed_at} />
+          </div>
+        </>
+      )}
     </div>
   );
 };
