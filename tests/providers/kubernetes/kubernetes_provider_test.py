@@ -1,5 +1,5 @@
 from argparse import Namespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from kubernetes.config.config_exception import ConfigException
 
@@ -354,61 +354,94 @@ class TestKubernetesProvider:
             assert isinstance(session, KubernetesSession)
             assert session.context["context"]["cluster"] == "cli-cluster-name"
 
-    def test_kubernetes_provider_proxy_from_env(self, monkeypatch):
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_provider_proxy_from_env(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+        monkeypatch,
+    ):
+
         monkeypatch.setenv("HTTPS_PROXY", "http://my.internal.proxy:8888")
 
-        captured = {}
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
 
-        def fake_api_client(configuration):
-            captured["proxy"] = getattr(configuration, "proxy", None)
-            return MagicMock()
+        kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
 
-        with (
-            patch(
-                "kubernetes.config.load_kube_config",
-                side_effect=ConfigException("No kubeconfig"),
-            ),
-            patch("kubernetes.config.load_incluster_config", return_value=None),
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.ApiClient",
-                side_effect=fake_api_client,
-            ),
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
-                return_value=["default"],
-            ),
-        ):
-            KubernetesProvider.setup_session()
+        session = KubernetesProvider.setup_session(
+            kubeconfig_content=kubeconfig_content,
+            context="example-context",
+        )
 
-        assert captured["proxy"] == "http://my.internal.proxy:8888"
+        assert isinstance(session, KubernetesSession)
+        assert isinstance(session.api_client, client.ApiClient)
+        assert isinstance(session.api_client.configuration, client.Configuration)
+        assert session.api_client.configuration.verify_ssl
+        assert session.api_client.configuration.proxy == "http://my.internal.proxy:8888"
 
-    def test_kubernetes_provider_disable_tls_verification(self, monkeypatch):
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_provider_disable_tls_verification(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+        monkeypatch,
+    ):
         monkeypatch.setenv("K8S_SKIP_TLS_VERIFY", "true")
 
-        captured = {}
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
 
-        def fake_api_client(configuration):
-            captured["verify_ssl"] = getattr(configuration, "verify_ssl", True)
-            return MagicMock()
+        kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
 
-        with (
-            patch(
-                "kubernetes.config.load_kube_config",
-                side_effect=ConfigException("No kubeconfig"),
-            ),
-            patch("kubernetes.config.load_incluster_config", return_value=None),
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.ApiClient",
-                side_effect=fake_api_client,
-            ),
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
-                return_value=["default"],
-            ),
-        ):
-            KubernetesProvider.setup_session()
+        session = KubernetesProvider.setup_session(
+            kubeconfig_content=kubeconfig_content,
+            context="example-context",
+        )
 
-        assert captured["verify_ssl"] is False
+        assert isinstance(session, KubernetesSession)
+        assert isinstance(session.api_client, client.ApiClient)
+        assert isinstance(session.api_client.configuration, client.Configuration)
+        assert session.api_client.configuration.verify_ssl is False
+        assert session.api_client.configuration.proxy is None
 
     @patch(
         "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
@@ -441,10 +474,8 @@ class TestKubernetesProvider:
         kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
 
         session = KubernetesProvider.setup_session(
-            kubeconfig_file=None,
             kubeconfig_content=kubeconfig_content,
-            provider_id="example-context",
-            raise_on_exception=False,
+            context="example-context",
         )
 
         assert isinstance(session, KubernetesSession)
@@ -457,6 +488,59 @@ class TestKubernetesProvider:
                 "user": "example-user",
             },
         }
+
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.list_kube_config_contexts")
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_kubernetes_provider_kubeconfig_content_proxy_settings(
+        self,
+        mock_load_kube_config_from_dict,
+        mock_list_kube_config_contexts,
+        mock_list_namespace,
+        monkeypatch,
+    ):
+        monkeypatch.setenv("HTTPS_PROXY", "http://my.internal.proxy:8888")
+        monkeypatch.setenv("K8S_SKIP_TLS_VERIFY", "true")
+
+        mock_load_kube_config_from_dict.return_value = None
+        mock_list_kube_config_contexts.return_value = (
+            [
+                {
+                    "name": "example-context",
+                    "context": {
+                        "cluster": "example-cluster",
+                        "user": "example-user",
+                    },
+                }
+            ],
+            None,
+        )
+        mock_list_namespace.return_value.items = [
+            client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
+        ]
+
+        kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
+
+        session = KubernetesProvider.setup_session(
+            kubeconfig_content=kubeconfig_content,
+            context="example-context",
+        )
+
+        assert isinstance(session, KubernetesSession)
+        assert isinstance(session.api_client, client.ApiClient)
+
+        assert session.context == {
+            "name": "example-context",
+            "context": {
+                "cluster": "example-cluster",
+                "user": "example-user",
+            },
+        }
+
+        assert session.api_client.configuration.proxy == "http://my.internal.proxy:8888"
+        assert session.api_client.configuration.verify_ssl is False
 
     def test_set_proxy_settings_no_proxy_no_tls_skip(self):
         """Test set_proxy_settings with no environment variables set."""
