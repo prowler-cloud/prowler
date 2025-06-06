@@ -23,6 +23,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
+### Fixed
+- Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
+
 ---
 
 ## [v5.7.3] (Prowler v5.7.3)
