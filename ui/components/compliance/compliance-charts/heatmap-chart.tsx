@@ -30,6 +30,12 @@ const capitalizeFirstLetter = (text: string): string => {
   );
 };
 
+const title = (
+  <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+    Sections Failure Rate
+  </h3>
+);
+
 export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   const { theme } = useTheme();
   const [hoveredItem, setHoveredItem] = useState<CategoryData | null>(null);
@@ -45,9 +51,7 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   if (!categories.length || heatmapData.length === 0) {
     return (
       <div className="flex w-[400px] flex-col items-center justify-between lg:w-[400px]">
-        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-          Sections Failure Rate
-        </h3>
+        {title}
         <div className="flex h-[320px] w-full items-center justify-center">
           <p className="text-sm text-gray-500">No category data available</p>
         </div>
@@ -70,11 +74,7 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
 
   return (
     <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
-      <div>
-        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-          Sections Failure Rate
-        </h3>
-      </div>
+      {title}
 
       <div className="h-full w-full p-2">
         <div
