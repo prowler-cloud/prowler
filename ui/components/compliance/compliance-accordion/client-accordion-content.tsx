@@ -116,7 +116,7 @@ export const ClientAccordionContent = ({
     return (
       <div className="w-full">
         {renderDetails()}
-        <p className="mt-2 text-sm font-medium text-gray-800">
+        <p className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
           ⚠️ This requirement has no checks; therefore, there are no findings.
         </p>
       </div>
@@ -165,7 +165,7 @@ export const ClientAccordionContent = ({
     }
 
     return (
-      <div className="text-sm font-medium text-gray-800">
+      <div className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
         ⚠️ There are no findings for this regions
       </div>
     );
