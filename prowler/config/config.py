@@ -31,6 +31,7 @@ class Provider(str, Enum):
     M365 = "m365"
     GITHUB = "github"
     NHN = "nhn"
+    IONOS = "ionos"
 
 
 # Compliance

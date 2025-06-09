@@ -243,6 +243,14 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                     )
+                elif "ionos" in provider_class_name.lower():
+                    provider_class(
+                        ionos_username=arguments.ionos_username,
+                        ionos_password=arguments.ionos_password,
+                        ionos_datacenter_name=arguments.ionos_datacenter_name,
+                        mutelist_path=arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                    )
 
         except TypeError as error:
             logger.critical(
