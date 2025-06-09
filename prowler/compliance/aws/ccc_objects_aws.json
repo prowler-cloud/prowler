@@ -305,7 +305,9 @@
         }
       ],
       "Checks": [
-        "s3_bucket_object_versioning"
+        "s3_bucket_object_versioning",
+        "s3_bucket_object_lock",
+        "s3_bucket_lifecycle_enabled"
       ]
     },
     {
@@ -841,9 +843,7 @@
         }
       ],
       "Checks": [
-        "s3_bucket_public_write_acl",
-        "s3_bucket_public_access",
-        "s3_bucket_cross_account_access"
+        "s3_bucket_public_write_acl"
       ]
     },
     {
