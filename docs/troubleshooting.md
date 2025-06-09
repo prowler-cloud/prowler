@@ -13,7 +13,7 @@
 
 See section [Logging](./tutorials/logging.md) for further information or [contact us](./contact.md).
 
-## Docker Pull Issues
+## Common Issues with Docker Pull Installation
 
 ???+ warning
     Docker pull is not officially supported.

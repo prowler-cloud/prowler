@@ -136,6 +136,14 @@ If your workstation's architecture is incompatible, you can resolve this by:
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
+### Common Issues with Docker Pull Installation
+
+???+ warning
+    Docker pull is not officially supported.
+
+You can find more information in the [Troubleshooting](./docs/troubleshooting.md) section.
+
+
 ### From GitHub
 
 **Requirements**
