@@ -67,6 +67,9 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            allow_cross_tenant_replication=getattr(
+                                storage_account, "allow_cross_tenant_replication", True
+                            ),
                         )
                     )
             except Exception as error:
@@ -165,4 +168,5 @@ class Account:
     private_endpoint_connections: List[PrivateEndpointConnection]
     key_expiration_period_in_days: str
     location: str
+    allow_cross_tenant_replication: bool = True
     blob_properties: Optional[BlobProperties] = None
