@@ -5634,7 +5634,7 @@ class TestSAMLConfigurationViewSet:
         )
         payload = {
             "data": {
-                "type": "saml-configuration",
+                "type": "saml-configurations",
                 "id": str(config.id),
                 "attributes": {
                     "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>

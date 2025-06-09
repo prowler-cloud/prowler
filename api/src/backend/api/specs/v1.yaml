@@ -4984,7 +4984,7 @@ paths:
       summary: List all SSO configurations
       parameters:
       - in: query
-        name: fields[saml-configuration]
+        name: fields[saml-configurations]
         schema:
           type: array
           items:
@@ -5082,7 +5082,7 @@ paths:
       summary: Retrieve SSO configuration details
       parameters:
       - in: query
-        name: fields[saml-configuration]
+        name: fields[saml-configurations]
         schema:
           type: array
           items:
@@ -9718,7 +9718,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - saml-configuration
+              - saml-configurations
             id:
               type: string
               format: uuid
@@ -11914,7 +11914,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - saml-configuration
+              - saml-configurations
             attributes:
               type: object
               properties:
@@ -11951,7 +11951,7 @@ components:
     SAMLConfigurationTypeEnum:
       type: string
       enum:
-      - saml-configuration
+      - saml-configurations
     Scan:
       type: object
       required:

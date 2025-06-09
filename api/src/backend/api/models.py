@@ -1424,7 +1424,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
     updated_at = models.DateTimeField(auto_now=True)
 
     class JSONAPIMeta:
-        resource_name = "saml-configuration"
+        resource_name = "saml-configurations"
 
     class Meta:
         db_table = "saml_configurations"

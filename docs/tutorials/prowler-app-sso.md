@@ -162,7 +162,7 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 --header 'Authorization: Bearer <TOKEN>' \
 --data '{
   "data": {
-    "type": "saml-configuration",
+    "type": "saml-configurations",
     "attributes": {
       "email_domain": "prowler.com",
       "metadata_xml": "<XML>"
