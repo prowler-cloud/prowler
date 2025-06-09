@@ -30,6 +30,7 @@ See section [Logging](./tutorials/logging.md) for further information or [contac
         - "${HOME}/.aws:/home/prowler/.aws:ro"
       ```
       This should be added to the `api`, `worker`, and `worker-beat` services.
+
     - Create or update your `~/.aws/config` and `~/.aws/credentials` files with the appropriate profiles and roles. For example:
 
       ```ini
