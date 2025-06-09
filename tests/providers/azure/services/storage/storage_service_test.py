@@ -35,6 +35,7 @@ def mock_storage_get_storage_accounts(_):
                 private_endpoint_connections=None,
                 location="westeurope",
                 blob_properties=blob_properties,
+                default_to_entra_authorization=True,
             )
         ]
     }
@@ -110,6 +111,9 @@ class Test_Storage_Service:
             default_service_version=None,
             container_delete_retention_policy=None,
         )
+        assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+            0
+        ].default_to_entra_authorization
 
     def test_get_blob_properties(self):
         storage = Storage(set_mocked_azure_provider())

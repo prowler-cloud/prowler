@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_account_default_to_entra_authorization_enabled",
+  "CheckTitle": "Default to Microsoft Entra authorization in the Azure portal setting",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "The Default to Microsoft Entra authorization in the Azure portal setting must be set to Enabled to ensure that access to blobs, files, queues, and tables is authorized using Microsoft Entra ID by default. This setting enforces a more secure and manageable authentication method compared to Shared Key access.",
+  "Risk": "Unauthorized access to Azure resources due to less secure authentication methods being used if Microsoft Entra authorization is not enabled by default.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "NativeIaC": "",
+      "Terraform": "",
+      "CLI": "",
+      "Other": ""
+    },
+    "Recommendation": {
+      "Text": "1. Navigate to the Azure portal. 2. Select the relevant storage account. 3. Under the 'Settings' section, select 'Configuration'. 4. Set 'Default to Microsoft Entra authorization' to 'Enabled'. 5. Save the changes.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-auth-aad"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling this setting ensures that Microsoft Entra ID is used for authentication, providing a more secure and manageable method compared to Shared Key access."
+}
