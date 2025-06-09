@@ -49,8 +49,7 @@ export default async function Scans({
     filters: { "filter[connected]": true },
     pageSize: 50,
   });
-  const thereIsNoProviders =
-    !providersCountConnected?.data || providersCountConnected.data.length === 0;
+  const thereIsNoProviders = !providersCountConnected?.data;
 
   const thereIsNoProvidersConnected = providersCountConnected?.data?.every(
     (provider: ProviderProps) => !provider.attributes.connection.connected,
