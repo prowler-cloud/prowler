@@ -262,6 +262,12 @@ class KubernetesProvider(Provider):
                             context = context_item
                 else:
                     context = config_data.get("contexts", [])[0]
+
+                return KubernetesSession(
+                    api_client=ApiClient(KubernetesProvider.set_proxy_settings()),
+                    context=context,
+                )
+
             else:
                 logger.info(f"Using kubeconfig file: {kubeconfig_file}...")
                 kubeconfig_file = (
@@ -287,19 +293,10 @@ class KubernetesProvider(Provider):
                             "user": "service-account-name",
                         },
                     }
-                    # Ensure proxy settings are respected
-                    configuration = Configuration.get_default_copy()
-                    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get(
-                        "https_proxy"
-                    )
-                    if proxy:
-                        configuration.proxy = proxy
-                    # Prevent SSL verification issues with internal proxies
-                    if os.environ.get("K8S_SKIP_TLS_VERIFY", "false").lower() == "true":
-                        configuration.verify_ssl = False
 
                     return KubernetesSession(
-                        api_client=ApiClient(configuration), context=context
+                        api_client=ApiClient(KubernetesProvider.set_proxy_settings()),
+                        context=context,
                     )
 
                 if context:
@@ -644,3 +641,18 @@ class KubernetesProvider(Provider):
             f"{Style.BRIGHT}Using the Kubernetes credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def set_proxy_settings() -> Configuration:
+        """
+        Returns the proxy settings respecting client's configuration from HTTPS_PROXY or K8S_SKIP_TLS_VERIFY.
+        """
+        configuration = Configuration.get_default_copy()
+        proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+        if proxy:
+            configuration.proxy = proxy
+        # Prevent SSL verification issues with internal proxies
+        if os.environ.get("K8S_SKIP_TLS_VERIFY", "false").lower() == "true":
+            configuration.verify_ssl = False
+
+        return configuration
