@@ -16,6 +16,7 @@ from tasks.jobs.backfill import backfill_resource_scan_summaries
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -32,6 +33,7 @@ from api.models import (
     Scan,
     ScanSummary,
     StateChoices,
+    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -778,6 +780,114 @@ def compliance_overviews_fixture(scans_fixture, tenants_fixture):
 
     # Return the created compliance overviews
     return compliance_overview1, compliance_overview2
+
+
+@pytest.fixture
+def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
+    """Fixture for ComplianceRequirementOverview objects used by the new ComplianceOverviewViewSet."""
+    tenant = tenants_fixture[0]
+    scan1, scan2, scan3 = scans_fixture
+
+    # Create ComplianceRequirementOverview objects for scan1
+    requirement_overview1 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-1",
+        requirement_id="requirement1",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview2 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-1",
+        requirement_id="requirement2",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview3 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-2",
+        requirement_id="requirement1",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview4 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-2",
+        requirement_id="requirement2",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=1,
+        failed_checks=1,
+        total_checks=2,
+    )
+
+    requirement_overview5 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding (MANUAL)",
+        region="eu-west-2",
+        requirement_id="requirement3",
+        requirement_status=StatusChoices.MANUAL,
+        passed_checks=0,
+        failed_checks=0,
+        total_checks=0,
+    )
+
+    # Create a different compliance framework for testing
+    requirement_overview6 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="cis_1.4_aws",
+        framework="CIS-1.4-AWS",
+        version="1.4",
+        description="CIS AWS Foundations Benchmark v1.4.0",
+        region="eu-west-1",
+        requirement_id="cis_requirement1",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=0,
+        failed_checks=3,
+        total_checks=3,
+    )
+
+    return (
+        requirement_overview1,
+        requirement_overview2,
+        requirement_overview3,
+        requirement_overview4,
+        requirement_overview5,
+        requirement_overview6,
+    )
 
 
 def get_api_tokens(

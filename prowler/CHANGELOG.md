@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.8.0] (Prowler v5.8.0)
+## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
@@ -23,12 +23,25 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
+---
+
+## [v5.7.3] (Prowler v5.7.3)
+
+### Fixed
+- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
+- Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
+
+---
+
+## [v5.7.2] (Prowler v5.7.2)
+
 ### Fixed
 - Fix `m365_powershell test_credentials` to use sanitized credentials. [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - Fix `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license. [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
 - Fix `m365_powershell` to close the PowerShell sessions in msgraph services. [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
 - Fix `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity. [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
 - Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive. [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
+- Split calls to list Azure Functions attributes. [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
 
 ---
 
@@ -57,14 +70,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update and upgrade CIS for all the providers [(#7738)](https://github.com/prowler-cloud/prowler/pull/7738)
 - Cover policies with conditions with SNS endpoint in `sns_topics_not_publicly_accessible`. [(#7750)](https://github.com/prowler-cloud/prowler/pull/7750)
 - Change severity logic for `ec2_securitygroup_allow_ingress_from_internet_to_all_ports` check. [(#7764)](https://github.com/prowler-cloud/prowler/pull/7764)
-- Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ---
 
 ## [v5.6.0] (Prowler v5.6.0)
 
 ### Added
-
 - Add SOC2 compliance framework to Azure. [(#7489)](https://github.com/prowler-cloud/prowler/pull/7489)
 - Add check for unused Service Accounts in GCP. [(#7419)](https://github.com/prowler-cloud/prowler/pull/7419)
 - Add Powershell to Microsoft365. [(#7331)](https://github.com/prowler-cloud/prowler/pull/7331)
@@ -114,7 +125,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
 
 ### Fixed
-
 - Fix package name location in pyproject.toml while replicating for prowler-cloud. [(#7531)](https://github.com/prowler-cloud/prowler/pull/7531)
 - Remove cache in PyPI release action. [(#7532)](https://github.com/prowler-cloud/prowler/pull/7532)
 - Add the correct values for logger.info inside iam service. [(#7526)](https://github.com/prowler-cloud/prowler/pull/7526)
@@ -135,7 +145,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.5.1] (Prowler v5.5.1)
 
 ### Fixed
-
 - Add default name to contacts in Azure Defender. [(#7483)](https://github.com/prowler-cloud/prowler/pull/7483)
 - Handle projects without ID in GCP. [(#7496)](https://github.com/prowler-cloud/prowler/pull/7496)
 - Restore packages location in PyProject. [(#7510)](https://github.com/prowler-cloud/prowler/pull/7510)

@@ -49,21 +49,20 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
-COPY src/backend/ ./backend/
-
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
 # Add `--no-root` to avoid installing the current project as a package
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
-
 RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
 
 # Prevents known compatibility error between lxml and libxml2/libxmlsec versions.
 # See: https://github.com/xmlsec/python-xmlsec/issues/320
 RUN poetry run pip install --force-reinstall --no-binary lxml lxml
+
+COPY src/backend/ ./backend/
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 WORKDIR /home/prowler/backend
 

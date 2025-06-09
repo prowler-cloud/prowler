@@ -4,18 +4,46 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
+### 🐞 Fixes
+
+- Fix sync between filter buttons and URL when filters change. [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
+- Improve heatmap perfomance. [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
+
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
 - Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
 - Possibility to edit the organization name. [(#7829)](https://github.com/prowler-cloud/prowler/pull/7829)
+- Add GCP credential method (Account Service Key). [(#7872)](https://github.com/prowler-cloud/prowler/pull/7872)
+- Add compliance detail view: ENS [(#7853)](https://github.com/prowler-cloud/prowler/pull/7853)
+- Add compliance detail view: ISO [(#7897)](https://github.com/prowler-cloud/prowler/pull/7897)
+- Add compliance detail view: CIS [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
+- Add compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
+- Improve `Scan ID` filter by adding more context and enhancing the UI/UX. [(#7949)](https://github.com/prowler-cloud/prowler/pull/7949)
+
+### 🔄 Changed
+
 - Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
-- Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
-- Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
-- Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
+- Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability. [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
+
+---
+
+## [v1.7.3] (Prowler v5.7.3)
 
 ### 🐞 Fixes
+
+- Fix encrypted password typo in `formSchemas`. [(#7828)](https://github.com/prowler-cloud/prowler/pull/7828)
+
+---
+
+## [v1.7.2] (Prowler v5.7.2)
+
+### 🐞 Fixes
+
+- Download report behaviour updated to show feedback based on API response. [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
+- Missing KISA and ProwlerThreat icons added to the compliance page. [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
 - Retrieve more than 10 scans in /compliance page. [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
+- Improve CustomDropdownFilter component. [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
 
 ---
 

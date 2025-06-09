@@ -95,11 +95,10 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required API permissions
 
 Assign the following Microsoft Graph permissions:
-
+- `AuditLog.Read.All`: Required for Entra service.
 - `Domain.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `AuditLog.Read.All`: Required for Entra service.
 - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
 
 Follow these steps to assign the permissions:
@@ -113,11 +112,11 @@ Follow these steps to assign the permissions:
     ![Add API Permission](./img/add-app-api-permission.png)
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
-
+    - `AuditLog.Read.All`: Required for Entra service.
     - `Domain.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
-    - `AuditLog.Read.All`: Required for Entra service.
+
 
     ![Permission Screenshots](./img/directory-permission.png)
 
@@ -138,6 +137,10 @@ Follow these steps to assign the permissions:
 7. Click `Add permissions`, then grant admin consent
 
     ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
 
 ---
 
