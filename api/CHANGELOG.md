@@ -24,7 +24,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
-- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
 
 
 ---
@@ -34,6 +33,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed task lookup to use task_kwargs instead of task_args for scan report resolution. [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
 - Fixed Kubernetes UID validation to allow valid context names [(#7871)](https://github.com/prowler-cloud/prowler/pull/7871)
+- Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
 - Fixed a race condition when creating background tasks [(#7876)](https://github.com/prowler-cloud/prowler/pull/7876).
 - Fixed an error when modifying or retrieving tenants due to missing user UUID in transaction context [(#7890)](https://github.com/prowler-cloud/prowler/pull/7890).
 
