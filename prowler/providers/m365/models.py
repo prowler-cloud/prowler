@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic.v1 import BaseModel
 
 from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
@@ -16,7 +18,7 @@ class M365IdentityInfo(BaseModel):
 
 class M365RegionConfig(BaseModel):
     name: str = ""
-    authority: str = None
+    authority: Optional[str] = None
     base_url: str = ""
     credential_scopes: list = []
 

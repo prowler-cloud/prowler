@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class AWSKISAISMSPModel(BaseModel):
@@ -19,10 +19,10 @@ class AWSKISAISMSPModel(BaseModel):
     Requirements_Attributes_Domain: str
     Requirements_Attributes_Subdomain: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_AuditChecklist: Optional[list[str]]
-    Requirements_Attributes_RelatedRegulations: Optional[list[str]]
-    Requirements_Attributes_AuditEvidence: Optional[list[str]]
-    Requirements_Attributes_NonComplianceCases: Optional[list[str]]
+    Requirements_Attributes_AuditChecklist: Optional[list[str]] = None
+    Requirements_Attributes_RelatedRegulations: Optional[list[str]] = None
+    Requirements_Attributes_AuditEvidence: Optional[list[str]] = None
+    Requirements_Attributes_NonComplianceCases: Optional[list[str]] = None
     Status: str
     StatusExtended: str
     ResourceId: str

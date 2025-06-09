@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -246,7 +246,7 @@ class Package(BaseModel):
     """Details of a package"""
 
     name: str
-    namespace: Optional[str]
+    namespace: Optional[str] = None
     format: str
     origin_configuration: OriginConfiguration
     latest_version: LatestPackageVersion

@@ -14,6 +14,10 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
+        # Bypass check loading for IAC provider since it uses Checkov directly
+        if provider == "iac":
+            return []
+
         checks = []
         modules = list_modules(provider, service)
         for module_name in modules:
@@ -59,6 +63,10 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     Returns a set of checks from the given services
     """
     try:
+        # Bypass check loading for IAC provider since it uses Checkov directly
+        if provider == "iac":
+            return set()
+
         checks = set()
         service_list = [
             "awslambda" if service == "lambda" else service for service in service_list

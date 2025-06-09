@@ -212,6 +212,21 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml:m365_coverage.xml tests/providers/m365
 
+      # Test IaC
+      - name: IaC - Check if any file has changed
+        id: iac-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/iac/**
+            ./tests/providers/iac/**
+            .poetry.lock
+
+      - name: IaC - Test
+        if: steps.iac-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/iac --cov-report=xml:iac_coverage.xml tests/providers/iac
+
       # Common Tests
       - name: Lib - Test
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'

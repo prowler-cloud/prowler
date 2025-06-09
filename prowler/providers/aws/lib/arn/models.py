@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.providers.aws.exceptions.exceptions import AWSIAMRoleARNMissingFieldsError
 
@@ -10,7 +10,7 @@ class ARN(BaseModel):
     arn: str
     partition: str
     service: str
-    region: Optional[str]  # In IAM ARN's do not have region
+    region: Optional[str] = None  # In IAM ARN's do not have region
     account_id: str
     resource: str
     resource_type: str

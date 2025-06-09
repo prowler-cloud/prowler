@@ -27,6 +27,11 @@ provider/github:
       - any-glob-to-any-file: "prowler/providers/github/**"
       - any-glob-to-any-file: "tests/providers/github/**"
 
+provider/iac:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/iac/**"
+      - any-glob-to-any-file: "tests/providers/iac/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
