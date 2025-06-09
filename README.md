@@ -138,8 +138,8 @@ If your workstation's architecture is incompatible, you can resolve this by:
 
 ### Common Issues with Docker Pull Installation
 
-???+ warning
-    Docker pull is not officially supported.
+???+ note
+  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.md) section for more details and examples.
 
 You can find more information in the [Troubleshooting](./docs/troubleshooting.md) section.
 
