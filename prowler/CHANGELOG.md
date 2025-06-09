@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
+- Add ISO 27001 2022 for M365 provider. [(#7985)](https://github.com/prowler-cloud/prowler/pull/7985)
 
 ---
 
