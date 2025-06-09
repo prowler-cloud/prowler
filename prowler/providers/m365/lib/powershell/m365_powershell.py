@@ -738,7 +738,7 @@ class M365PowerShell(PowerShellSession):
         return self.execute(
             "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true"
         )
-    
+
     def get_sharing_policy(self) -> dict:
         """
         Get Exchange Online Sharing Policy.
