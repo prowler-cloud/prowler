@@ -125,8 +125,13 @@ export const ClientAccordionContent = ({
 
   const checks = requirement.check_ids || [];
   const checksList = (
-    <div className="mb-2 flex items-center">
-      <span>{checks.join(", ")}</span>
+    <div className="flex items-center px-2 text-sm">
+      <div className="w-full flex-col">
+        <div className="mb-1 h-1 w-full border-b border-gray-200 dark:border-gray-800" />
+        <span className="text-gray-600 dark:text-gray-200">
+          {checks.join(", ")}
+        </span>
+      </div>
     </div>
   );
 
@@ -181,7 +186,7 @@ export const ClientAccordionContent = ({
             items={accordionChecksItems}
             variant="light"
             defaultExpandedKeys={[""]}
-            className="rounded-lg bg-white dark:bg-prowler-blue-400"
+            className="rounded-lg bg-gray-50 dark:bg-prowler-blue-400"
           />
         </div>
       )}
