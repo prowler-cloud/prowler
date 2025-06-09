@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 
-from api.models import Provider
+from api.models import LighthouseConfiguration, Provider
 from api.utils import prowler_provider_connection_test
 
 logger = get_task_logger(__name__)
@@ -39,3 +39,48 @@ def check_provider_connection(provider_id: str):
 
     connection_error = f"{connection_result.error}" if connection_result.error else None
     return {"connected": connection_result.is_connected, "error": connection_error}
+
+
+def check_lighthouse_connection(lighthouse_config_id: str):
+    """
+    Business logic to check the connection status of a Lighthouse configuration.
+
+    Args:
+        lighthouse_config_id (str): The primary key of the LighthouseConfiguration instance to check.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'connected' (bool): Indicates whether the connection is successful.
+            - 'error' (str or None): The error message if the connection failed, otherwise `None`.
+            - 'available_models' (list): List of available models if connection is successful.
+
+    Raises:
+        Model.DoesNotExist: If the lighthouse configuration does not exist.
+    """
+    import openai
+
+    lighthouse_config = LighthouseConfiguration.objects.get(pk=lighthouse_config_id)
+
+    if not lighthouse_config.api_key_decoded:
+        lighthouse_config.is_active = False
+        lighthouse_config.save()
+        return {
+            "connected": False,
+            "error": "API key is invalid or missing.",
+            "available_models": [],
+        }
+
+    try:
+        client = openai.OpenAI(api_key=lighthouse_config.api_key_decoded)
+        models = client.models.list()
+        lighthouse_config.is_active = True
+        lighthouse_config.save()
+        return {
+            "connected": True,
+            "error": None,
+            "available_models": [model.id for model in models.data],
+        }
+    except Exception as e:
+        lighthouse_config.is_active = False
+        lighthouse_config.save()
+        return {"connected": False, "error": str(e), "available_models": []}

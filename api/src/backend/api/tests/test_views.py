@@ -5851,3 +5851,41 @@ class TestLighthouseConfigViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_lighthouse_connection_task.delay")
+    def test_lighthouse_config_connection(
+        self,
+        mock_lighthouse_connection,
+        mock_task_get,
+        authenticated_client,
+        lighthouse_config_fixture,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        task_mock.status = "PENDING"
+        mock_lighthouse_connection.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        config_id = lighthouse_config_fixture.id
+        assert lighthouse_config_fixture.is_active is True
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": config_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_lighthouse_connection.assert_called_once_with(
+            lighthouse_config_id=str(config_id), tenant_id=ANY
+        )
+        assert "Content-Location" in response.headers
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
+
+    def test_lighthouse_config_connection_invalid_config(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

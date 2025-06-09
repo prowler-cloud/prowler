@@ -2,7 +2,6 @@ import glob
 import os
 from datetime import datetime, timedelta, timezone
 
-import openai
 import sentry_sdk
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -52,6 +51,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -3247,10 +3247,11 @@ class IntegrationViewSet(BaseRLSViewSet):
         summary="Delete a Lighthouse configuration",
         description="Remove a Lighthouse configuration by its ID.",
     ),
-    check_connection=extend_schema(
+    connection=extend_schema(
         tags=["Lighthouse"],
         summary="Check the connection to the OpenAI API",
         description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
 class LighthouseConfigViewSet(BaseRLSViewSet):
@@ -3272,32 +3273,24 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
             return LighthouseConfigUpdateSerializer
         return LighthouseConfigSerializer
 
-    @action(detail=True, methods=["get"])
-    def check_connection(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
         """
-        Check the connection to the OpenAI API.
+        Check the connection to the OpenAI API asynchronously.
         """
         instance = self.get_object()
-        if not instance.api_key_decoded:
-            return Response(
-                {"detail": "API key is invalid or missing."},
-                status=status.HTTP_400_BAD_REQUEST,
+        with transaction.atomic():
+            task = check_lighthouse_connection_task.delay(
+                lighthouse_config_id=str(instance.id), tenant_id=self.request.tenant_id
             )
-
-        try:
-            client = openai.OpenAI(
-                api_key=instance.api_key_decoded,
-            )
-            models = client.models.list()
-            return Response(
-                {
-                    "detail": "Connection successful!",
-                    "available_models": [model.id for model in models.data],
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Exception as e:
-            return Response(
-                {"detail": f"Connection failed: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
