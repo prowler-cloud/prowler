@@ -56,7 +56,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                     .tenant
                 )
 
-                with rls_transaction(tenant.id):
+                with rls_transaction(str(tenant.id)):
                     role_name = extra.get("userType", ["saml_default_role"])[0].strip()
 
                     try:

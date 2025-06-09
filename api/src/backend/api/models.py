@@ -24,6 +24,7 @@ from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
+from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
     FindingDeltaEnumField,
@@ -1458,7 +1459,9 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             )
 
         # The email domain must be unique in the entire system
-        qs = SAMLConfiguration.objects.filter(email_domain__iexact=self.email_domain)
+        qs = SAMLConfiguration.objects.using(MainRouter.admin_db).filter(
+            email_domain__iexact=self.email_domain
+        )
         if qs.exists() and old_email_domain != self.email_domain:
             raise ValidationError(
                 {"tenant": "There is a problem with your email domain."}
