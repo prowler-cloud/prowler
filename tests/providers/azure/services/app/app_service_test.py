@@ -225,6 +225,7 @@ class Test_App_Service:
                 public_access=True,
                 vnet_subnet_id="",
                 ftps_state="FtpsOnly",
+                resource_group_name="resource_group_name",
             )
 
             app_service = MagicMock()
