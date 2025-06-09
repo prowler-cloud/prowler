@@ -67,6 +67,11 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            default_to_entra_authorization=getattr(
+                                storage_account,
+                                "default_to_o_auth_authentication",
+                                False,
+                            ),
                         )
                     )
             except Exception as error:
@@ -166,3 +171,4 @@ class Account:
     key_expiration_period_in_days: str
     location: str
     blob_properties: Optional[BlobProperties] = None
+    default_to_entra_authorization: bool = False
