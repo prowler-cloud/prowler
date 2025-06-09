@@ -54,6 +54,7 @@ interface CustomButtonProps {
   isIconOnly?: boolean;
   ref?: React.RefObject<HTMLButtonElement>;
   asLink?: string;
+  as?: React.ElementType;
 }
 
 export const CustomButton = React.forwardRef<
@@ -79,12 +80,13 @@ export const CustomButton = React.forwardRef<
       isLoading = false,
       isIconOnly,
       asLink,
+      as,
       ...props
     },
     ref,
   ) => (
     <Button
-      as={asLink ? Link : undefined}
+      as={asLink ? Link : as || undefined}
       href={asLink}
       target={target}
       type={type}
