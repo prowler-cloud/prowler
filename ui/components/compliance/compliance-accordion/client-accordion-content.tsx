@@ -127,8 +127,8 @@ export const ClientAccordionContent = ({
   const checksList = (
     <div className="flex items-center px-2 text-sm">
       <div className="w-full flex-col">
-        <div className="mb-1 h-1 w-full border-b border-gray-200 dark:border-gray-800" />
-        <span className="text-gray-600 dark:text-gray-200">
+        <div className="mb-1 mt-[-8px] h-1 w-full border-b border-gray-200 dark:border-gray-800" />
+        <span className="text-gray-600 dark:text-gray-200" aria-label="Checks">
           {checks.join(", ")}
         </span>
       </div>
@@ -155,7 +155,9 @@ export const ClientAccordionContent = ({
 
     if (findings?.data?.length && findings.data.length > 0) {
       return (
-        <div className="p-1">
+        <>
+          <h4 className="mb-2 text-sm font-medium">Findings</h4>
+
           <DataTable
             // Remove the updated_at column as compliance is for the last scan
             columns={ColumnFindings.filter(
@@ -165,7 +167,7 @@ export const ClientAccordionContent = ({
             metadata={findings?.meta}
             disableScroll={true}
           />
-        </div>
+        </>
       );
     }
 
@@ -181,7 +183,7 @@ export const ClientAccordionContent = ({
       {renderDetails()}
 
       {checks.length > 0 && (
-        <div className="mb-2 mt-2">
+        <div className="my-4">
           <Accordion
             items={accordionChecksItems}
             variant="light"
