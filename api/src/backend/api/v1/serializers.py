@@ -2126,6 +2126,7 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
         ]
         extra_kwargs = {
             "id": {"read_only": True},
+            "is_active": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }
@@ -2175,6 +2176,7 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
         ]
         extra_kwargs = {
             "id": {"read_only": True},
+            "is_active": {"read_only": True},
             "name": {"required": False},
             "model": {"required": False},
             "temperature": {"required": False},
