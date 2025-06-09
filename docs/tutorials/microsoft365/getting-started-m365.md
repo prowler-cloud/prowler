@@ -138,6 +138,10 @@ Follow these steps to assign the permissions:
 
     ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
 
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
+
 ---
 
 ### Assign required roles to your user

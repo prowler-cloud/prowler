@@ -7,7 +7,7 @@ export const ISOCustomDetails = ({
 }) => {
   return (
     <div className="mb-4">
-      <div className="mb-2 text-sm text-gray-600">
+      <div className="mb-2 text-sm text-gray-800 dark:text-gray-200">
         {requirement.description}
       </div>
       <div className="flex flex-col gap-2 text-sm">
