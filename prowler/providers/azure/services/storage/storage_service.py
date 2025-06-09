@@ -179,5 +179,5 @@ class Account:
     private_endpoint_connections: List[PrivateEndpointConnection]
     key_expiration_period_in_days: str
     location: str
-    replication_settings: ReplicationSettings
+    replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
     blob_properties: Optional[BlobProperties] = None
