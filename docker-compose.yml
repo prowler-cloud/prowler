@@ -26,6 +26,25 @@ services:
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
 
+  postgres-proxy:
+    image: edoburu/pgbouncer:latest
+    hostname: "postgres-db-proxy"
+    environment:
+      - DB_HOST=postgres-db
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_ADMIN_USER}
+      - DB_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - ADMIN_USERS=prowler_admin
+      - AUTH_TYPE=scram-sha-256
+    env_file:
+      - path: ./.env
+        required: false
+    ports:
+      - "5432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16.3-alpine3.20
     hostname: "postgres-db"
@@ -38,8 +57,8 @@ services:
     env_file:
       - path: .env
         required: false
-    ports:
-      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    # ports:
+    #   - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
       interval: 5s
