@@ -75,6 +75,12 @@ class M365PowerShell(PowerShellSession):
         self.execute(
             '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
         )
+        self.execute(
+            '$SecureSecret = ConvertTo-SecureString "$ClientSecret" -AsPlainText -Force'
+        )
+        self.execute(
+            '$exchangeToken = Get-MsalToken -ClientId "$ApplicationID" -TenantId "$TenantID" -ClientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
+        )
 
     def encrypt_password(self, password: str) -> str:
         """
@@ -235,7 +241,7 @@ class M365PowerShell(PowerShellSession):
             This method requires the Exchange Online PowerShell module to be installed.
         """
         return self.execute(
-            "Connect-ExchangeOnline -AccessToken $graphToken -UserPrincipalName $Client"
+            'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$TenantID"'
         )
 
     def get_audit_log_config(self) -> dict:
@@ -718,24 +724,19 @@ def initialize_m365_powershell_modules():
         bool: True if all modules were successfully initialized, False otherwise
     """
 
-    REQUIRED_MODULES = [
-        "ExchangeOnlineManagement",
-        "MicrosoftTeams",
-    ]
+    REQUIRED_MODULES = ["ExchangeOnlineManagement", "MicrosoftTeams", "MSAL.PS"]
 
     pwsh = PowerShellSession()
     try:
         for module in REQUIRED_MODULES:
             try:
                 # Check if module is already installed
-                result = pwsh.execute(
-                    f"Get-Module -ListAvailable -Name {module}", timeout=5
-                )
+                result = pwsh.execute(f"Get-Module -ListAvailable {module}", timeout=5)
 
                 # Install module if not installed
                 if not result:
                     install_result = pwsh.execute(
-                        f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        f'Install-Module "{module}" -Force -AllowClobber -Scope CurrentUser',
                         timeout=30,
                     )
                     if install_result:
@@ -746,7 +747,7 @@ def initialize_m365_powershell_modules():
                         logger.info(f"Successfully installed module {module}")
 
                     # Import module
-                    pwsh.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
+                    pwsh.execute(f'Import-Module "{module}" -Force', timeout=1)
 
             except Exception as error:
                 logger.error(f"Failed to initialize module {module}: {str(error)}")
