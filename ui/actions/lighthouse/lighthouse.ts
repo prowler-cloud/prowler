@@ -4,7 +4,9 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 
 const getLighthouseConfigId = async (): Promise<string> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/lighthouse-configuration?filter[name]=OpenAI`);
+  const url = new URL(
+    `${apiBaseUrl}/lighthouse-configurations?filter[name]=OpenAI`,
+  );
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -35,7 +37,7 @@ export const getAIKey = async (): Promise<string> => {
   }
 
   const url = new URL(
-    `${apiBaseUrl}/lighthouse-configuration/${configId}?fields[lighthouse-config]=api_key`,
+    `${apiBaseUrl}/lighthouse-configurations/${configId}?fields[lighthouse-config]=api_key`,
   );
   const response = await fetch(url.toString(), {
     method: "GET",
@@ -52,7 +54,7 @@ export const createLighthouseConfig = async (config: {
   businessContext: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/lighthouse-configuration`);
+  const url = new URL(`${apiBaseUrl}/lighthouse-configurations`);
   try {
     const payload = {
       data: {
@@ -87,7 +89,7 @@ export const getLighthouseConfig = async () => {
     return undefined;
   }
 
-  const url = new URL(`${apiBaseUrl}/lighthouse-configuration/${configId}`);
+  const url = new URL(`${apiBaseUrl}/lighthouse-configurations/${configId}`);
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -114,7 +116,7 @@ export const updateLighthouseConfig = async (config: {
   }
 
   try {
-    const url = new URL(`${apiBaseUrl}/lighthouse-configuration/${configId}`);
+    const url = new URL(`${apiBaseUrl}/lighthouse-configurations/${configId}`);
 
     // Prepare the request payload following the JSONAPI format
     const payload = {
