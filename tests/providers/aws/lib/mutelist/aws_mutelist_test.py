@@ -304,7 +304,7 @@ class TestAWSMutelist:
 
         mutelist = AWSMutelist(mutelist_content=mutelist_fixture)
 
-        assert mutelist.validate_mutelist(mutelist_fixture)[0]
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) > 0
         assert mutelist.mutelist == mutelist_fixture
 
     def test_validate_mutelist_not_valid_key(self):
@@ -317,7 +317,7 @@ class TestAWSMutelist:
 
         mutelist = AWSMutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist(mutelist_fixture)[0]
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 

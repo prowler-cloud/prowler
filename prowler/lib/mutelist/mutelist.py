@@ -118,7 +118,7 @@ class Mutelist(ABC):
             self._mutelist = mutelist_content
 
         if self._mutelist:
-            self._mutelist = self.validate_mutelist(self._mutelist)[1]
+            self._mutelist = Mutelist.validate_mutelist(self._mutelist)
 
     @property
     def mutelist(self) -> dict:
@@ -439,7 +439,7 @@ class Mutelist(ABC):
             return False
 
     @staticmethod
-    def validate_mutelist(mutelist: dict) -> tuple[bool, dict]:
+    def validate_mutelist(mutelist: dict) -> dict:
         """
         Validate the mutelist against the schema.
 
@@ -447,13 +447,13 @@ class Mutelist(ABC):
             mutelist (dict): The mutelist to be validated.
 
         Returns:
-            tuple[bool, dict]: A tuple containing a boolean indicating if the mutelist is valid and the mutelist itself.
+            dict: The mutelist itself.
         """
         try:
             validate(mutelist, schema=mutelist_schema)
-            return True, mutelist
+            return mutelist
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
             )
-            return False, {}
+            return {}

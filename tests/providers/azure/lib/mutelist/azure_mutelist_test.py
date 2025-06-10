@@ -36,7 +36,7 @@ class TestAzureMutelist:
 
         mutelist = AzureMutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist(mutelist_fixture)[0]
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 

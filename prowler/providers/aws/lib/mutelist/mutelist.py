@@ -41,7 +41,7 @@ class AWSMutelist(Mutelist):
             else:
                 self.get_mutelist_file_from_local_file(mutelist_path)
         if self._mutelist:
-            self._mutelist = self.validate_mutelist(self._mutelist)[1]
+            self._mutelist = self.validate_mutelist(self._mutelist)
 
     def is_finding_muted(
         self,
