@@ -1,8 +1,17 @@
 import requests
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import (
+    Image,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 
 def generate_compliance_report(
@@ -61,6 +70,130 @@ def generate_compliance_report(
     compliance_version = resp_reqs[0]["attributes"]["version"]
 
     attrs_map = {item["id"]: item["attributes"] for item in resp_attrs}
+
+    def create_risk_component(risk_level, weight, score=0):
+        """Create a visual risk component similar to the UI design"""
+        # Define colors based on risk level
+        if risk_level >= 4:
+            risk_color = colors.Color(0.8, 0.2, 0.2)  # Red
+        elif risk_level >= 3:
+            risk_color = colors.Color(0.9, 0.6, 0.2)  # Orange
+        elif risk_level >= 2:
+            risk_color = colors.Color(0.9, 0.9, 0.2)  # Yellow
+        else:
+            risk_color = colors.Color(0.2, 0.8, 0.2)  # Green
+
+        # Weight color (green for high values)
+        if weight >= 100:
+            weight_color = colors.Color(0.2, 0.8, 0.2)  # Green
+        elif weight >= 50:
+            weight_color = colors.Color(0.9, 0.9, 0.2)  # Yellow
+        else:
+            weight_color = colors.Color(0.8, 0.2, 0.2)  # Red
+
+        # Score color (gray for 0)
+        score_color = colors.Color(0.4, 0.4, 0.4)  # Gray
+
+        # Create table data
+        data = [
+            [
+                "Risk Level:",
+                str(risk_level),
+                "Weight:",
+                str(weight),
+                "Score:",
+                str(score),
+            ]
+        ]
+
+        # Create table
+        table = Table(
+            data,
+            colWidths=[
+                0.8 * inch,
+                0.4 * inch,
+                0.6 * inch,
+                0.4 * inch,
+                0.5 * inch,
+                0.4 * inch,
+            ],
+        )
+
+        # Apply styling
+        table.setStyle(
+            TableStyle(
+                [
+                    # Risk Level styling
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("BACKGROUND", (1, 0), (1, 0), risk_color),
+                    ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                    ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+                    # Weight styling
+                    ("BACKGROUND", (2, 0), (2, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("BACKGROUND", (3, 0), (3, 0), weight_color),
+                    ("TEXTCOLOR", (3, 0), (3, 0), colors.white),
+                    ("FONTNAME", (3, 0), (3, 0), "Helvetica-Bold"),
+                    # Score styling
+                    ("BACKGROUND", (4, 0), (4, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("BACKGROUND", (5, 0), (5, 0), score_color),
+                    ("TEXTCOLOR", (5, 0), (5, 0), colors.white),
+                    ("FONTNAME", (5, 0), (5, 0), "Helvetica-Bold"),
+                    # General styling
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+
+        return table
+
+    def create_status_component(status):
+        """Create a visual status component with colors"""
+        # Define colors based on status
+        if status.upper() == "PASS":
+            status_color = colors.Color(0.2, 0.8, 0.2)  # Green
+        elif status.upper() == "FAIL":
+            status_color = colors.Color(0.8, 0.2, 0.2)  # Red
+        else:
+            status_color = colors.Color(0.4, 0.4, 0.4)  # Gray for unknown status
+
+        # Create table data
+        data = [["State:", status.upper()]]
+
+        # Create table
+        table = Table(data, colWidths=[0.6 * inch, 0.8 * inch])
+
+        # Apply styling
+        table.setStyle(
+            TableStyle(
+                [
+                    # Label styling
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("FONTNAME", (0, 0), (0, 0), "Helvetica"),
+                    # Status styling
+                    ("BACKGROUND", (1, 0), (1, 0), status_color),
+                    ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                    ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+                    # General styling
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 12),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ]
+            )
+        )
+
+        return table
 
     def get_finding_info(check_id: str):
         url_find = f"http://localhost:8080/api/v1/findings?filter[check_id]={check_id}&filter[scan_id]={scan_id}"
@@ -140,19 +273,27 @@ def generate_compliance_report(
         status = req["attributes"]["status"]
 
         elements.append(Paragraph(f"{req_id}: {attr.get('description', desc)}", h1))
-        elements.append(Paragraph(f"State: <b>{status}</b>", normal))
+
+        # Create visual status component
+        status_component = create_status_component(status)
+        elements.append(status_component)
         elements.append(Spacer(1, 0.1 * inch))
 
         metadata = attr.get("attributes", {}).get("metadata", [])
         if metadata:
             m = metadata[0]
             elements.append(
-                Paragraph(f"Descripción: {m.get('AttributeDescription')}", normal)
+                Paragraph(f"Description: {m.get('AttributeDescription')}", normal)
             )
-            elements.append(
-                Paragraph(f"Nivel de Riesgo: {m.get('LevelOfRisk')}", normal)
-            )
-            elements.append(Paragraph(f"Peso: {m.get('Weight')}", normal))
+            elements.append(Spacer(1, 0.1 * inch))
+
+            # Create visual risk component
+            risk_level = m.get("LevelOfRisk", 0)
+            weight = m.get("Weight", 0)
+            score = m.get("Score", 0)
+
+            risk_component = create_risk_component(risk_level, weight, score)
+            elements.append(risk_component)
             elements.append(Spacer(1, 0.1 * inch))
 
         checks = attr.get("attributes", {}).get("check_ids", [])
@@ -160,7 +301,7 @@ def generate_compliance_report(
             elements.append(Paragraph(f"Check: {cid}", h2))
             finds = get_finding_info(cid)
             if not finds:
-                elements.append(Paragraph("- Sin findings para este check.", normal))
+                elements.append(Paragraph("- No", normal))
             else:
                 for f in finds:
                     fid = f.get("id")
