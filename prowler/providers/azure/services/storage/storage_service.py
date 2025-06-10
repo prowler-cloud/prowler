@@ -68,6 +68,9 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            allow_shared_key_access=getattr(
+                                storage_account, "allow_shared_key_access", True
+                            ),
                         )
                     )
             except Exception as error:
@@ -214,6 +217,7 @@ class Account:
     private_endpoint_connections: List[PrivateEndpointConnection]
     key_expiration_period_in_days: str
     location: str
+    allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None
     file_shares: list = None
 
