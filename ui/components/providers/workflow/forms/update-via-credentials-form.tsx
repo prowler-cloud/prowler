@@ -104,6 +104,41 @@ export const UpdateViaCredentialsForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
+  // Error pointer to field name mapping
+  const errorPointerToFieldMap: Record<string, keyof FormType> = {
+    "/data/attributes/secret/aws_access_key_id": "aws_access_key_id",
+    "/data/attributes/secret/aws_secret_access_key": "aws_secret_access_key",
+    "/data/attributes/secret/aws_session_token": "aws_session_token",
+    "/data/attributes/secret/client_id": "client_id",
+    "/data/attributes/secret/client_secret": "client_secret",
+    "/data/attributes/secret/user": "user",
+    "/data/attributes/secret/password": "password",
+    "/data/attributes/secret/tenant_id": "tenant_id",
+    "/data/attributes/secret/kubeconfig_content": "kubeconfig_content",
+    "/data/attributes/name": "secretName",
+  };
+
+  const handleServerErrors = (errors: ApiError[]) => {
+    errors.forEach((error: ApiError) => {
+      const errorMessage = error.detail;
+      const fieldName = errorPointerToFieldMap[error.source.pointer];
+
+      if (fieldName) {
+        form.setError(fieldName, {
+          type: "server",
+          message: errorMessage,
+        });
+      } else {
+        // Handle unknown error pointers
+        toast({
+          variant: "destructive",
+          title: "Oops! Something went wrong",
+          description: errorMessage,
+        });
+      }
+    });
+  };
+
   const onSubmitClient = async (values: FormType) => {
     const formData = new FormData();
 
@@ -113,83 +148,24 @@ export const UpdateViaCredentialsForm = ({
 
     const data = await updateCredentialsProvider(providerSecretId, formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
-        switch (error.source.pointer) {
-          case "/data/attributes/secret/aws_access_key_id":
-            form.setError("aws_access_key_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/aws_secret_access_key":
-            form.setError("aws_secret_access_key", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/aws_session_token":
-            form.setError("aws_session_token", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/client_id":
-            form.setError("client_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/client_secret":
-            form.setError("client_secret", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/user":
-            form.setError("user", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/password":
-            form.setError("password", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/tenant_id":
-            form.setError("tenant_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/kubeconfig_content":
-            form.setError("kubeconfig_content", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/name":
-            form.setError("secretName", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          default:
-            toast({
-              variant: "destructive",
-              title: "Oops! Something went wrong",
-              description: errorMessage,
-            });
-        }
+    // Handle single error from server
+    if (data?.error) {
+      return toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: data.error,
       });
-    } else {
-      router.push(
-        `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
-      );
     }
+
+    // Handle multiple validation errors
+    if (data?.errors?.length > 0) {
+      return handleServerErrors(data.errors);
+    }
+
+    // Success: navigate to test connection page
+    router.push(
+      `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
+    );
   };
 
   return (

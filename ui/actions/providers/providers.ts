@@ -274,7 +274,6 @@ export const updateCredentialsProvider = async (
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/providers/secrets/${credentialsId}`);
 
-  const secretName = formData.get("secretName");
   const providerType = formData.get("providerType") as ProviderType;
 
   const isRole = formData.get("role_arn") !== null;
@@ -357,7 +356,6 @@ export const updateCredentialsProvider = async (
       type: "provider-secrets",
       id: credentialsId,
       attributes: {
-        name: secretName,
         secret,
       },
     },
@@ -370,11 +368,13 @@ export const updateCredentialsProvider = async (
       body: JSON.stringify(bodyData),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`Failed to update credentials: ${response.statusText}`);
+      // Return the API errors structure for proper handling in the UI
+      return parseStringify(data);
     }
 
-    const data = await response.json();
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {
