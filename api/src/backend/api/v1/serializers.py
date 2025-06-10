@@ -1722,6 +1722,7 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
+    framework_description = serializers.CharField()
     name = serializers.CharField()
     tactics = serializers.ListField(child=serializers.CharField())
     subtechniques = serializers.ListField(child=serializers.CharField())
