@@ -133,10 +133,20 @@ export interface KISAAttributesMetadata {
   NonComplianceCases: string[];
 }
 
+export interface GenericAttributesMetadata {
+  ItemId: string;
+  Section: string;
+  SubSection: string;
+  SubGroup: string | null;
+  Service: string | null;
+  Type: string | null;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
   attributes: {
+    name?: string;
     framework: string;
     version: string;
     description: string;
@@ -147,7 +157,8 @@ export interface AttributesItemData {
         | CISAttributesMetadata[]
         | AWSWellArchitectedAttributesMetadata[]
         | ThreatAttributesMetadata[]
-        | KISAAttributesMetadata[];
+        | KISAAttributesMetadata[]
+        | GenericAttributesMetadata[];
       check_ids: string[];
     };
   };
