@@ -171,9 +171,9 @@ module.exports = {
           "100%": { left: "100%", width: "100%" },
         },
         dropArrow: {
-          '0%': { transform: 'translateY(-8px)', opacity: '0' },
-          '50%': { opacity: '1' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+          "0%": { transform: "translateY(-8px)", opacity: "0" },
+          "50%": { opacity: "1" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
         },
       },
       animation: {

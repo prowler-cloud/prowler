@@ -6,12 +6,26 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
+- Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+### Changed
+- Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
+
+---
+
+## [v1.8.3] (Prowler v5.7.3)
+
+### Added
+- Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935).
 
 ### Changed
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ### Fixed
+- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
+- Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
 - Fixed the connection status verification before launching a scan [(#7831)](https://github.com/prowler-cloud/prowler/pull/7831)
+
 
 ---
 
@@ -21,13 +35,14 @@ All notable changes to the **Prowler API** are documented in this file.
 - Fixed task lookup to use task_kwargs instead of task_args for scan report resolution. [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
 - Fixed Kubernetes UID validation to allow valid context names [(#7871)](https://github.com/prowler-cloud/prowler/pull/7871)
 - Fixed a race condition when creating background tasks [(#7876)](https://github.com/prowler-cloud/prowler/pull/7876).
+- Fixed an error when modifying or retrieving tenants due to missing user UUID in transaction context [(#7890)](https://github.com/prowler-cloud/prowler/pull/7890).
 
 ---
 
 ## [v1.8.1] (Prowler v5.7.1)
 
 ### Fixed
-- Added database index to improve performance on finding lookup. [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800)
+- Added database index to improve performance on finding lookup [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800).
 
 ---
 
