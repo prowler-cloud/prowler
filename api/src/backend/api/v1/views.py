@@ -3436,7 +3436,7 @@ serializer_class = LighthouseConfigSerializer
             return LighthouseConfigCreateSerializer
         elif self.action == "partial_update":
             return LighthouseConfigUpdateSerializer
-        return LighthouseConfigSerializer
+        return super().get_serializer_class()
 
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
