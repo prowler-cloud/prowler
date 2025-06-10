@@ -76,6 +76,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     id.includes("iso") ||
     id.includes("cis_") ||
     id.includes("kisa") ||
+    id.includes("threat") ||
     id.includes("pillar");
 
   const navigateToDetail = () => {

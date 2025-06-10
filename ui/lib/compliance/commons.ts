@@ -5,6 +5,7 @@ import { CISCustomDetails } from "@/components/compliance/compliance-custom-deta
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
+import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
@@ -35,6 +36,10 @@ import {
   mapComplianceData as mapKISAComplianceData,
   toAccordionItems as toKISAAccordionItems,
 } from "./kisa";
+import {
+  mapComplianceData as mapThetaComplianceData,
+  toAccordionItems as toThetaAccordionItems,
+} from "./threat";
 
 export interface ComplianceMapper {
   mapComplianceData: (
@@ -130,6 +135,13 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     getTopFailedSections,
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(KISACustomDetails, { requirement }),
+  },
+  ProwlerThreatScore: {
+    mapComplianceData: mapThetaComplianceData,
+    toAccordionItems: toThetaAccordionItems,
+    getTopFailedSections,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ThreatCustomDetails, { requirement }),
   },
 };
 
