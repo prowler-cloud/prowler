@@ -69,18 +69,6 @@ class M365PowerShell(PowerShellSession):
         self.execute(
             '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
         )
-        self.execute(
-            '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $ApplicationID; Client_Secret = $ClientSecret }'
-        )
-        self.execute(
-            '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
-        )
-        self.execute(
-            '$SecureSecret = ConvertTo-SecureString "$ClientSecret" -AsPlainText -Force'
-        )
-        self.execute(
-            '$exchangeToken = Get-MsalToken -ClientId "$ApplicationID" -TenantId "$TenantID" -ClientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
-        )
 
     def encrypt_password(self, password: str) -> str:
         """
@@ -144,6 +132,12 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
+        self.execute(
+            '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $ApplicationID; Client_Secret = $ClientSecret }'
+        )
+        self.execute(
+            '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
+        )
         return self.execute(
             'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
         )
@@ -240,6 +234,12 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
+        self.execute(
+            '$SecureSecret = ConvertTo-SecureString "$ClientSecret" -AsPlainText -Force'
+        )
+        self.execute(
+            '$exchangeToken = Get-MsalToken -ClientId "$ApplicationID" -TenantId "$TenantID" -ClientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
+        )
         return self.execute(
             'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$TenantID"'
         )
