@@ -113,6 +113,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
+      - name: Install system dependencies for xmlsec
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
+
       - name: Install dependencies
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -130,6 +136,12 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry check --lock
+
+      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions - https://github.com/xmlsec/python-xmlsec/issues/320
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pip install --force-reinstall --no-binary lxml lxml
 
       - name: Lint with ruff
         working-directory: ./api

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from azure.mgmt.web import WebSiteManagementClient
 
@@ -124,14 +124,16 @@ class App(AzureService):
                     # Filter function apps
                     if getattr(function, "kind", "").startswith("functionapp"):
                         # List host keys
-                        host_keys = client.web_apps.list_host_keys(
-                            resource_group_name=function.resource_group,
-                            name=function.name,
-                        )  # Need to add role 'Logic App Contributor' to the service principal to get the host keys or add to the reader role the permission 'Microsoft.Web/sites/host/listkeys'
+                        host_keys = self._get_function_host_keys(
+                            subscription_name, function.resource_group, function.name
+                        )
+                        if host_keys is not None:
+                            function_keys = getattr(host_keys, "function_keys", {})
+                        else:
+                            function_keys = None
 
-                        function_config = client.web_apps.get_configuration(
-                            resource_group_name=function.resource_group,
-                            name=function.name,
+                        function_config = self._get_function_config(
+                            subscription_name, function.resource_group, function.name
                         )
 
                         functions[subscription_name].update(
@@ -141,16 +143,9 @@ class App(AzureService):
                                     name=function.name,
                                     location=function.location,
                                     kind=function.kind,
-                                    function_keys=getattr(
-                                        host_keys, "function_keys", {}
-                                    ),
+                                    function_keys=function_keys,
                                     enviroment_variables=getattr(
-                                        client.web_apps.list_application_settings(
-                                            resource_group_name=function.resource_group,
-                                            name=function.name,
-                                        ),
-                                        "properties",
-                                        {},
+                                        function_config, "properties", None
                                     ),
                                     identity=getattr(function, "identity", None),
                                     public_access=(
@@ -167,7 +162,7 @@ class App(AzureService):
                                         "",
                                     ),
                                     ftps_state=getattr(
-                                        function_config, "ftps_state", ""
+                                        function_config, "ftps_state", None
                                     ),
                                 )
                             }
@@ -208,6 +203,30 @@ class App(AzureService):
                 f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings
+
+    def _get_function_host_keys(self, subscription, resource_group, name):
+        try:
+            return self.clients[subscription].web_apps.list_host_keys(
+                resource_group_name=resource_group,
+                name=name,
+            )
+        except Exception as error:
+            logger.error(
+                f"Error getting host keys for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    def _get_function_config(self, subscription, resource_group, name):
+        try:
+            return self.clients[subscription].web_apps.list_application_settings(
+                resource_group_name=resource_group,
+                name=name,
+            )
+        except Exception as error:
+            logger.error(
+                f"Error getting configuration for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
 
 @dataclass
@@ -250,9 +269,9 @@ class FunctionApp:
     name: str
     location: str
     kind: str
-    function_keys: Dict[str, str]
-    enviroment_variables: Dict[str, str]
+    function_keys: Optional[Dict[str, str]]
+    enviroment_variables: Optional[Dict[str, str]]
     identity: ManagedServiceIdentity
     public_access: bool
     vnet_subnet_id: str
-    ftps_state: str
+    ftps_state: Optional[str]

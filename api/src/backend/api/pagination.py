@@ -1,4 +1,4 @@
-from rest_framework_json_api.pagination import JsonApiPageNumberPagination
+from drf_spectacular_jsonapi.schemas.pagination import JsonApiPageNumberPagination
 
 
 class ComplianceOverviewPagination(JsonApiPageNumberPagination):

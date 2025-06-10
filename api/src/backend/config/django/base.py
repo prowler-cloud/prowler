@@ -10,6 +10,7 @@ from config.settings.social_login import *  # noqa
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 
@@ -26,16 +27,19 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    "drf_spectacular_jsonapi",
     "django_guid",
     "rest_framework_json_api",
     "django_celery_results",
     "django_celery_beat",
     "rest_framework_simplejwt.token_blacklist",
     "allauth",
+    "django.contrib.sites",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "allauth.socialaccount.providers.saml",
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
 ]
@@ -127,6 +131,7 @@ DJANGO_GUID = {
 }
 
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]
+POSTGRES_EXTRA_DB_BACKEND_BASE = "database_backend"
 
 
 # Password validation
