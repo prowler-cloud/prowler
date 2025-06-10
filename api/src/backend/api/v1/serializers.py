@@ -2109,6 +2109,7 @@ class LighthouseConfigSerializer(RLSSerializer):
         ]
         extra_kwargs = {
             "id": {"read_only": True},
+            "is_active": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }

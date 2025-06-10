@@ -3423,7 +3423,8 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     """
     API endpoint for managing Lighthouse configuration.
     """
-serializer_class = LighthouseConfigSerializer
+
+    serializer_class = LighthouseConfigSerializer
     filterset_class = LighthouseConfigFilter
     ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
     ordering = ["-inserted_at"]
