@@ -1,7 +1,14 @@
-import Link from "next/link";
-
 import { SeverityBadge } from "@/components/ui/table";
 import { Requirement } from "@/types/compliance";
+
+import {
+  ComplianceBadge,
+  ComplianceBadgeContainer,
+  ComplianceDetailContainer,
+  ComplianceDetailSection,
+  ComplianceDetailText,
+  ComplianceLink,
+} from "./shared-components";
 
 export const AWSWellArchitectedCustomDetails = ({
   requirement,
@@ -9,83 +16,72 @@ export const AWSWellArchitectedCustomDetails = ({
   requirement: Requirement;
 }) => {
   return (
-    <div className="space-y-4">
+    <ComplianceDetailContainer>
       {requirement.description && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Description
-          </h4>
-          <p className="text-sm">{requirement.description}</p>
-        </div>
+        <ComplianceDetailSection title="Description">
+          <ComplianceDetailText>{requirement.description}</ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.well_architected_name && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Best Practice
-          </h4>
-          <p className="text-sm">{requirement.well_architected_name}</p>
-        </div>
+        <ComplianceDetailSection title="Best Practice">
+          <ComplianceDetailText>
+            {requirement.well_architected_name as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
-      {requirement.well_architected_question_id && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Question ID
-          </h4>
-          <p className="text-sm">{requirement.well_architected_question_id}</p>
-        </div>
-      )}
+      <ComplianceBadgeContainer>
+        {requirement.level_of_risk && (
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground text-sm font-medium">
+              Risk Level:
+            </span>
+            <SeverityBadge
+              severity={
+                requirement.level_of_risk.toString().toLowerCase() as
+                  | "low"
+                  | "medium"
+                  | "high"
+              }
+            />
+          </div>
+        )}
 
-      {requirement.well_architected_practice_id && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Practice ID
-          </h4>
-          <p className="text-sm">{requirement.well_architected_practice_id}</p>
-        </div>
-      )}
-
-      {requirement.level_of_risk && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Level of Risk
-          </h4>
-          <SeverityBadge
-            severity={
-              requirement.level_of_risk.toString().toLowerCase() as
-                | "low"
-                | "medium"
-                | "high"
-            }
+        {requirement.well_architected_question_id && (
+          <ComplianceBadge
+            label="Question ID"
+            value={requirement.well_architected_question_id as string}
+            color="indigo"
           />
-        </div>
-      )}
+        )}
 
-      {requirement.assessment_method && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Assessment Method
-          </h4>
-          <p className="text-sm">{requirement.assessment_method}</p>
-        </div>
-      )}
+        {requirement.well_architected_practice_id && (
+          <ComplianceBadge
+            label="Practice ID"
+            value={requirement.well_architected_practice_id as string}
+            color="indigo"
+          />
+        )}
+
+        {requirement.assessment_method && (
+          <ComplianceBadge
+            label="Assessment"
+            value={requirement.assessment_method as string}
+            color="blue"
+          />
+        )}
+      </ComplianceBadgeContainer>
 
       {requirement.implementation_guidance_url && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Implementation Guidance
-          </h4>
-          <Link
+        <ComplianceDetailSection title="Implementation Guidance">
+          <ComplianceLink
             href={requirement.implementation_guidance_url as string}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="break-all text-sm text-blue-600 underline hover:text-blue-800"
           >
             {requirement.implementation_guidance_url}
-          </Link>
-        </div>
+          </ComplianceLink>
+        </ComplianceDetailSection>
       )}
-    </div>
+    </ComplianceDetailContainer>
   );
 };

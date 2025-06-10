@@ -113,6 +113,16 @@ export interface AWSWellArchitectedAttributesMetadata {
   ImplementationGuidanceUrl: string;
 }
 
+export interface ThreatAttributesMetadata {
+  Title: string;
+  Section: string;
+  SubSection: string;
+  AttributeDescription: string;
+  AdditionalInformation: string;
+  LevelOfRisk: number;
+  Weight: number;
+}
+
 export interface KISAAttributesMetadata {
   Domain: string;
   Subdomain: string;
@@ -136,6 +146,7 @@ export interface AttributesItemData {
         | ISO27001AttributesMetadata[]
         | CISAttributesMetadata[]
         | AWSWellArchitectedAttributesMetadata[]
+        | ThreatAttributesMetadata[]
         | KISAAttributesMetadata[];
       check_ids: string[];
     };
