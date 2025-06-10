@@ -47,3 +47,15 @@ export interface ScanProps {
     alias: string;
   };
 }
+
+export interface ScanEntity {
+  providerInfo: {
+    provider: ProviderType;
+    alias?: string;
+    uid?: string;
+  };
+  attributes: {
+    name?: string;
+    completed_at: string;
+  };
+}

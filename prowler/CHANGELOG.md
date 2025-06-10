@@ -7,7 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
 - Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
-- Add Weight for Prowler ThreatScore scoring. [(7795)](https://github.com/prowler-cloud/prowler/pull/7795)
+- Add Weight for Prowler ThreatScore scoring. [(#7795)](https://github.com/prowler-cloud/prowler/pull/7795)
 - Add new check `entra_users_mfa_capable` for M365 provider. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
 - Add new check `admincenter_organization_customer_lockbox_enabled` for M365 provider. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
 - Add new check `admincenter_external_calendar_sharing_disabled` for M365 provider. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
@@ -19,12 +19,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_dependency_scanning_enabled` check for GitHub provider. [(#7771)](https://github.com/prowler-cloud/prowler/pull/7771)
 - Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
-- Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
-- Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
+- Add NIS 2 compliance framework for AWS. [(#7839)](https://github.com/prowler-cloud/prowler/pull/7839)
+- Add NIS 2 compliance framework for Azure. [(#7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 
 ### Fixed
 - Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
+- Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
 
 ---
 
