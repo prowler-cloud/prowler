@@ -1,13 +1,8 @@
 import os
 import platform
 
-import msal
-
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
-from prowler.providers.m365.exceptions.exceptions import (
-    M365UserNotBelongingToTenantError,
-)
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -65,20 +60,20 @@ class M365PowerShell(PowerShellSession):
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
-
-        credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
-
-        # Sanitize user and password
-        sanitized_user = self.sanitize(credentials.user)
-        sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
-
-        # Securely convert encrypted password to SecureString
-        self.execute(f'$user = "{sanitized_user}"')
+        self.execute(f'$ApplicationID = "{credentials.client_id}"')
+        self.execute(f'$ClientSecret = "{credentials.client_secret}"')
+        self.execute(f'$TenantID = "{credentials.tenant_id}"')
         self.execute(
-            f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
+            '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $ApplicationID; Client_Secret = $ClientSecret }'
         )
         self.execute(
-            "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
+            '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
+        )
+        self.execute(
+            '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $ApplicationID; Client_Secret = $ClientSecret }'
+        )
+        self.execute(
+            '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
         )
 
     def encrypt_password(self, password: str) -> str:
@@ -129,43 +124,6 @@ class M365PowerShell(PowerShellSession):
         Returns:
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
-        self.execute(
-            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
-        )
-        self.execute(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
-        )
-
-        # Validate user belongs to tenant
-        user_domain = credentials.user.split("@")[1]
-        if not any(
-            user_domain.endswith(domain)
-            for domain in self.tenant_identity.tenant_domains
-        ):
-            raise M365UserNotBelongingToTenantError(
-                file=os.path.basename(__file__),
-                message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
-            )
-
-        app = msal.ConfidentialClientApplication(
-            client_id=credentials.client_id,
-            client_credential=credentials.client_secret,
-            authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
-        )
-
-        # Validate credentials
-        result = app.acquire_token_by_username_password(
-            username=credentials.user,
-            password=credentials.passwd,
-            scopes=["https://graph.microsoft.com/.default"],
-        )
-
-        if result is None:
-            return False
-
-        if "access_token" not in result:
-            return False
-
         return True
 
     def connect_microsoft_teams(self) -> dict:
@@ -180,7 +138,9 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
-        return self.execute("Connect-MicrosoftTeams -Credential $credential")
+        return self.execute(
+            'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+        )
 
     def get_teams_settings(self) -> dict:
         """
@@ -274,7 +234,9 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
-        return self.execute("Connect-ExchangeOnline -Credential $credential")
+        return self.execute(
+            "Connect-ExchangeOnline -AccessToken $graphToken -UserPrincipalName $Client"
+        )
 
     def get_audit_log_config(self) -> dict:
         """
