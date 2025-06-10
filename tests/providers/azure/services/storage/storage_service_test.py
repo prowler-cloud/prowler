@@ -40,6 +40,7 @@ def mock_storage_get_storage_accounts(_):
                 private_endpoint_connections=None,
                 location="westeurope",
                 blob_properties=blob_properties,
+                allow_shared_key_access=True,
                 file_shares=file_shares,
             )
         ]
@@ -115,6 +116,10 @@ class Test_Storage_Service:
             type="type",
             default_service_version=None,
             container_delete_retention_policy=None,
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_shared_key_access
+            is True
         )
 
     def test_get_blob_properties(self):
