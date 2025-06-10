@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectItem, Spacer } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -48,15 +48,6 @@ export const ChatbotConfig = ({
     defaultValues: initialValues,
     mode: "onChange",
   });
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (name && type) {
-        console.log(`Form value changed: ${name} = ${JSON.stringify(value)}`);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   const onSubmit = async (data: FormValues) => {
     if (isLoading) return;

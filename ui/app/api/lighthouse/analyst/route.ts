@@ -1,7 +1,7 @@
 import { LangChainAdapter, Message } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
-import { getCachedDataSection } from "@/lib/lighthouse/cache";
+import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import {
   convertLangChainMessageToVercelMessage,
   convertVercelMessageToLangChainMessage,
@@ -27,8 +27,8 @@ export async function POST(req: Request) {
     const aiConfig = await getLighthouseConfig();
     const businessContext = aiConfig?.data?.attributes?.business_context;
 
-    // Get cached data
-    const cachedData = await getCachedDataSection();
+    // Get current user data
+    const currentData = await getCurrentDataSection();
 
     // Add context messages at the beginning
     const contextMessages: Message[] = [];
@@ -42,12 +42,12 @@ export async function POST(req: Request) {
       });
     }
 
-    // Add cached data if available
-    if (cachedData) {
+    // Add current data if available
+    if (currentData) {
       contextMessages.push({
-        id: "cached-data",
+        id: "current-data",
         role: "assistant",
-        content: cachedData,
+        content: currentData,
       });
     }
 
