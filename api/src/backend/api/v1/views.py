@@ -2995,6 +2995,11 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             attribute_data.append(
                 {
                     "id": requirement_id,
+                    "name": requirement.get("name", ""),
+                    "tactics": requirement.get("tactics", []),
+                    "subtechniques": requirement.get("subtechniques", []),
+                    "platforms": requirement.get("platforms", []),
+                    "technique_url": requirement.get("technique_url", ""),
                     "framework": compliance_framework.get("framework", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
