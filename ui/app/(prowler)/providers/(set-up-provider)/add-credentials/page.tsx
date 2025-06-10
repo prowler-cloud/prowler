@@ -1,7 +1,7 @@
 import React from "react";
 
 import {
-  ViaCredentialsForm,
+  AddViaCredentialsForm,
   ViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
@@ -29,7 +29,7 @@ export default function AddCredentialsPage({ searchParams }: Props) {
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         (searchParams.type === "gcp" && searchParams.via === "credentials") ||
         (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
-        <ViaCredentialsForm searchParams={searchParams} />
+        <AddViaCredentialsForm searchParams={searchParams} />
       )}
 
       {searchParams.type === "aws" && searchParams.via === "role" && (
