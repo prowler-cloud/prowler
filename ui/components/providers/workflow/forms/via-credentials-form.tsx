@@ -8,12 +8,12 @@ import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { addCredentialsProvider } from "@/actions/providers/providers";
-import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import {
   addCredentialsFormSchema,
-  ApiError,
   AWSCredentials,
   AzureCredentials,
   GCPDefaultCredentials,
@@ -47,8 +47,6 @@ export const ViaCredentialsForm = ({
   searchParams: { type: string; id: string };
 }) => {
   const router = useRouter();
-  const { toast } = useToast();
-
   const searchParamsObj = useSearchParams();
 
   // Handler for back button
@@ -62,7 +60,7 @@ export const ViaCredentialsForm = ({
   const providerId = searchParams.id;
   const formSchema = addCredentialsFormSchema(providerType);
 
-  const form = useForm<FormType>({
+  const formSetCredentials = useForm<FormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
@@ -101,7 +99,11 @@ export const ViaCredentialsForm = ({
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
+  const isLoading = formSetCredentials.formState.isSubmitting;
+  const { handleServerResponse } = useFormServerErrors(
+    formSetCredentials,
+    PROVIDER_CREDENTIALS_ERROR_MAPPING,
+  );
 
   const onSubmitClient = async (values: FormType) => {
     const formData = new FormData();
@@ -112,79 +114,8 @@ export const ViaCredentialsForm = ({
 
     const data = await addCredentialsProvider(formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
-        switch (error.source.pointer) {
-          case "/data/attributes/secret/aws_access_key_id":
-            form.setError("aws_access_key_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/aws_secret_access_key":
-            form.setError("aws_secret_access_key", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/aws_session_token":
-            form.setError("aws_session_token", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/client_id":
-            form.setError("client_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/client_secret":
-            form.setError("client_secret", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/user":
-            form.setError("user", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/password":
-            form.setError("password", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/tenant_id":
-            form.setError("tenant_id", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/secret/kubeconfig_content":
-            form.setError("kubeconfig_content", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/name":
-            form.setError("secretName", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          default:
-            toast({
-              variant: "destructive",
-              title: "Oops! Something went wrong",
-              description: errorMessage,
-            });
-        }
-      });
-    } else {
+    const isSuccess = handleServerResponse(data);
+    if (isSuccess) {
       router.push(
         `/providers/test-connection?type=${providerType}&id=${providerId}`,
       );
@@ -192,9 +123,9 @@ export const ViaCredentialsForm = ({
   };
 
   return (
-    <Form {...form}>
+    <Form {...formSetCredentials}>
       <form
-        onSubmit={form.handleSubmit(onSubmitClient)}
+        onSubmit={formSetCredentials.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
         <input type="hidden" name="providerId" value={providerId} />
@@ -206,27 +137,37 @@ export const ViaCredentialsForm = ({
 
         {providerType === "aws" && (
           <AWSStaticCredentialsForm
-            control={form.control as unknown as Control<AWSCredentials>}
+            control={
+              formSetCredentials.control as unknown as Control<AWSCredentials>
+            }
           />
         )}
         {providerType === "azure" && (
           <AzureCredentialsForm
-            control={form.control as unknown as Control<AzureCredentials>}
+            control={
+              formSetCredentials.control as unknown as Control<AzureCredentials>
+            }
           />
         )}
         {providerType === "m365" && (
           <M365CredentialsForm
-            control={form.control as unknown as Control<M365Credentials>}
+            control={
+              formSetCredentials.control as unknown as Control<M365Credentials>
+            }
           />
         )}
         {providerType === "gcp" && (
           <GCPDefaultCredentialsForm
-            control={form.control as unknown as Control<GCPDefaultCredentials>}
+            control={
+              formSetCredentials.control as unknown as Control<GCPDefaultCredentials>
+            }
           />
         )}
         {providerType === "kubernetes" && (
           <KubernetesCredentialsForm
-            control={form.control as unknown as Control<KubernetesCredentials>}
+            control={
+              formSetCredentials.control as unknown as Control<KubernetesCredentials>
+            }
           />
         )}
 

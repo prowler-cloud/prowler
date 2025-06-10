@@ -8,13 +8,13 @@ import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateCredentialsProvider } from "@/actions/providers/providers";
-import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { ProviderType } from "@/types";
 import {
   addCredentialsFormSchema,
-  ApiError,
   AWSCredentials,
   AzureCredentials,
   GCPDefaultCredentials,
@@ -47,8 +47,6 @@ export const UpdateViaCredentialsForm = ({
   searchParams: { type: string; id: string; secretId?: string };
 }) => {
   const router = useRouter();
-  const { toast } = useToast();
-
   const searchParamsObj = useSearchParams();
 
   // Handler for back button
@@ -63,7 +61,7 @@ export const UpdateViaCredentialsForm = ({
   const providerSecretId = searchParams.secretId || "";
   const formSchema = addCredentialsFormSchema(providerType);
 
-  const form = useForm<FormType>({
+  const formUpdateCredentials = useForm<FormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId,
@@ -102,42 +100,11 @@ export const UpdateViaCredentialsForm = ({
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
-
-  // Error pointer to field name mapping
-  const errorPointerToFieldMap: Record<string, keyof FormType> = {
-    "/data/attributes/secret/aws_access_key_id": "aws_access_key_id",
-    "/data/attributes/secret/aws_secret_access_key": "aws_secret_access_key",
-    "/data/attributes/secret/aws_session_token": "aws_session_token",
-    "/data/attributes/secret/client_id": "client_id",
-    "/data/attributes/secret/client_secret": "client_secret",
-    "/data/attributes/secret/user": "user",
-    "/data/attributes/secret/password": "password",
-    "/data/attributes/secret/tenant_id": "tenant_id",
-    "/data/attributes/secret/kubeconfig_content": "kubeconfig_content",
-    "/data/attributes/name": "secretName",
-  };
-
-  const handleServerErrors = (errors: ApiError[]) => {
-    errors.forEach((error: ApiError) => {
-      const errorMessage = error.detail;
-      const fieldName = errorPointerToFieldMap[error.source.pointer];
-
-      if (fieldName) {
-        form.setError(fieldName, {
-          type: "server",
-          message: errorMessage,
-        });
-      } else {
-        // Handle unknown error pointers
-        toast({
-          variant: "destructive",
-          title: "Oops! Something went wrong",
-          description: errorMessage,
-        });
-      }
-    });
-  };
+  const isLoading = formUpdateCredentials.formState.isSubmitting;
+  const { handleServerResponse } = useFormServerErrors(
+    formUpdateCredentials,
+    PROVIDER_CREDENTIALS_ERROR_MAPPING,
+  );
 
   const onSubmitClient = async (values: FormType) => {
     const formData = new FormData();
@@ -148,30 +115,18 @@ export const UpdateViaCredentialsForm = ({
 
     const data = await updateCredentialsProvider(providerSecretId, formData);
 
-    // Handle single error from server
-    if (data?.error) {
-      return toast({
-        variant: "destructive",
-        title: "Oops! Something went wrong",
-        description: data.error,
-      });
+    const isSuccess = handleServerResponse(data);
+    if (isSuccess) {
+      router.push(
+        `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
+      );
     }
-
-    // Handle multiple validation errors
-    if (data?.errors?.length > 0) {
-      return handleServerErrors(data.errors);
-    }
-
-    // Success: navigate to test connection page
-    router.push(
-      `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
-    );
   };
 
   return (
-    <Form {...form}>
+    <Form {...formUpdateCredentials}>
       <form
-        onSubmit={form.handleSubmit(onSubmitClient)}
+        onSubmit={formUpdateCredentials.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
         <input type="hidden" name="providerId" value={providerId} />
@@ -183,27 +138,37 @@ export const UpdateViaCredentialsForm = ({
 
         {providerType === "aws" && (
           <AWSStaticCredentialsForm
-            control={form.control as unknown as Control<AWSCredentials>}
+            control={
+              formUpdateCredentials.control as unknown as Control<AWSCredentials>
+            }
           />
         )}
         {providerType === "azure" && (
           <AzureCredentialsForm
-            control={form.control as unknown as Control<AzureCredentials>}
+            control={
+              formUpdateCredentials.control as unknown as Control<AzureCredentials>
+            }
           />
         )}
         {providerType === "m365" && (
           <M365CredentialsForm
-            control={form.control as unknown as Control<M365Credentials>}
+            control={
+              formUpdateCredentials.control as unknown as Control<M365Credentials>
+            }
           />
         )}
         {providerType === "gcp" && (
           <GCPDefaultCredentialsForm
-            control={form.control as unknown as Control<GCPDefaultCredentials>}
+            control={
+              formUpdateCredentials.control as unknown as Control<GCPDefaultCredentials>
+            }
           />
         )}
         {providerType === "kubernetes" && (
           <KubernetesCredentialsForm
-            control={form.control as unknown as Control<KubernetesCredentials>}
+            control={
+              formUpdateCredentials.control as unknown as Control<KubernetesCredentials>
+            }
           />
         )}
 
