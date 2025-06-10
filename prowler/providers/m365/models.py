@@ -22,12 +22,13 @@ class M365RegionConfig(BaseModel):
 
 
 class M365Credentials(BaseModel):
+    user: str = ""
+    passwd: str = ""
+    encrypted_passwd: str = ""
     client_id: str = ""
     client_secret: str = ""
     tenant_id: str = ""
     tenant_domains: list[str] = []
-    user: str = ""
-    passwd: str = ""
 
 
 class M365OutputOptions(ProviderOutputOptions):

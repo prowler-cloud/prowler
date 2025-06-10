@@ -19,12 +19,17 @@ import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import {
   createDict,
+  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { ProviderAccountProps, ProviderProps } from "@/types";
-import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
+import { ScanProps } from "@/types";
+import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -44,7 +49,7 @@ export default async function Findings({
       filters,
     }),
     getProviders({ pageSize: 50 }),
-    getScans({}),
+    getScans({ pageSize: 50 }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -53,44 +58,35 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
 
-  // Extract provider UIDs
-  const providerUIDs: string[] = Array.from(
-    new Set(
-      providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes?.uid)
-        .filter(Boolean),
-    ),
-  );
+  // Extract provider UIDs and details using helper functions
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
 
-  const providerDetails: Array<{ [uid: string]: ProviderAccountProps }> =
-    providerUIDs.map((uid) => {
-      const provider = providersData.data.find(
-        (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
-      );
-
+  // Update the Provider UID filter
+  const updatedFilters = filterFindings.map((filter) => {
+    if (filter.key === "provider_uid__in") {
       return {
-        [uid]: {
-          provider: provider?.attributes?.provider || "",
-          uid: uid,
-          alias: provider?.attributes?.alias ?? null,
-        },
+        ...filter,
+        values: providerUIDs,
+        valueLabelMapping: providerDetails,
       };
-    });
+    }
+    return filter;
+  });
 
   // Extract scan UUIDs with "completed" state and more than one resource
-  const completedScans = scansData?.data
-    ?.filter(
-      (scan: ScanProps) =>
-        scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1,
-    )
-    .map((scan: ScanProps) => ({
-      id: scan.id,
-      name: scan.attributes.name,
-    }));
+  const completedScans = scansData?.data?.filter(
+    (scan: ScanProps) =>
+      scan.attributes.state === "completed" &&
+      scan.attributes.unique_resource_count > 1,
+  );
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+
+  const scanDetails = createScanDetailsMapping(completedScans, providersData);
 
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
@@ -98,37 +94,37 @@ export default async function Findings({
       <Spacer y={8} />
       <DataTableFilterCustom
         filters={[
-          ...filterFindings,
+          ...updatedFilters,
           {
             key: "region__in",
             labelCheckboxGroup: "Regions",
             values: uniqueRegions,
+            index: 5,
           },
           {
             key: "service__in",
             labelCheckboxGroup: "Services",
             values: uniqueServices,
+            index: 6,
           },
           {
             key: "resource_type__in",
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
-          },
-          {
-            key: "provider_uid__in",
-            labelCheckboxGroup: "Provider UID",
-            values: providerUIDs,
-            valueLabelMapping: providerDetails,
+            index: 7,
           },
           {
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
+            valueLabelMapping: scanDetails,
+            index: 9,
           },
         ]}
         defaultOpen={true}
       />
       <Spacer y={8} />
+
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>

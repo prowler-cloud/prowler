@@ -75,6 +75,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@example.com",
             passwd="test_password",
+            encrypted_passwd="test_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -89,13 +90,19 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
+        # Mock encrypt_password to return a known value
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
         session.execute = MagicMock()
 
         session.init_credential(credentials)
 
+        # Verify encrypt_password was called
+        session.encrypt_password.assert_called_once_with(credentials.passwd)
+
+        # Verify execute was called with the correct commands
         session.execute.assert_any_call(f'$user = "{credentials.user}"')
         session.execute.assert_any_call(
-            f'$secureString = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$secureString = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
             "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
@@ -116,6 +123,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
             passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -130,11 +138,9 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock read_output to return the decrypted password
-        session.read_output = MagicMock(return_value="decrypted_password")
-
-        # Mock execute to return the result of read_output
-        session.execute = MagicMock(side_effect=lambda _: session.read_output())
+        # Mock encrypt_password to return a known value
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
+        session.execute = MagicMock()
 
         # Execute the test
         result = session.test_credentials(credentials)
@@ -142,13 +148,10 @@ class Testm365PowerShell:
 
         # Verify execute was called with the correct commands
         session.execute.assert_any_call(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
-        )
-        session.execute.assert_any_call(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"'
         )
 
         # Verify MSAL was called with the correct parameters
@@ -159,7 +162,7 @@ class Testm365PowerShell:
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
             username="test@contoso.onmicrosoft.com",
-            password="decrypted_password",
+            password="test_password",  # Original password, not encrypted
             scopes=["https://graph.microsoft.com/.default"],
         )
         session.close()
@@ -229,6 +232,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
             passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -262,7 +266,7 @@ class Testm365PowerShell:
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
             username="test@contoso.onmicrosoft.com",
-            password="decrypted_password",
+            password="test_password",
             scopes=["https://graph.microsoft.com/.default"],
         )
 
@@ -561,3 +565,55 @@ class Testm365PowerShell:
             )
             # Verify no info messages were logged
             mock_info.assert_not_called()
+
+    @patch("subprocess.Popen")
+    def test_encrypt_password(self, mock_popen):
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Test non-Windows system (should use utf-16le hex encoding)
+        from unittest import mock
+
+        with mock.patch("platform.system", return_value="Linux"):
+            result = session.encrypt_password("password123")
+            expected = "password123".encode("utf-16le").hex()
+            assert result == expected
+
+        # Test Windows system with tuple return
+        with mock.patch("platform.system", return_value="Windows"):
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.return_value = (None, b"encrypted_bytes")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            result = session.encrypt_password("password123")
+            assert result == b"encrypted_bytes".hex()
+
+            # Clean up mock
+            del sys.modules["win32crypt"]
+
+        # Test error handling
+        with mock.patch("platform.system", return_value="Windows"):
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.side_effect = Exception("Test error")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            with pytest.raises(Exception) as exc_info:
+                session.encrypt_password("password123")
+            assert "Error encrypting password: Test error" in str(exc_info.value)
+
+            # Clean up mock
+            del sys.modules["win32crypt"]
+
+        session.close()

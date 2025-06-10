@@ -10,6 +10,7 @@ import {
   parseStringify,
   wait,
 } from "@/lib";
+import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
   page = 1,
@@ -17,7 +18,7 @@ export const getProviders = async ({
   sort = "",
   filters = {},
   pageSize = 10,
-}) => {
+}): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
@@ -109,7 +110,7 @@ export const updateProvider = async (formData: FormData) => {
 export const addProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
-  const providerType = formData.get("providerType") as string;
+  const providerType = formData.get("providerType") as ProviderType;
   const providerUid = formData.get("providerUid") as string;
   const providerAlias = formData.get("providerAlias") as string;
 
@@ -151,9 +152,10 @@ export const addCredentialsProvider = async (formData: FormData) => {
 
   const secretName = formData.get("secretName");
   const providerId = formData.get("providerId");
-  const providerType = formData.get("providerType");
+  const providerType = formData.get("providerType") as ProviderType;
 
   const isRole = formData.get("role_arn") !== null;
+  const isServiceAccount = formData.get("service_account_key") !== null;
 
   let secret = {};
   let secretType = "static"; // Default to static credentials
@@ -195,22 +197,39 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
+    if (isServiceAccount) {
+      // Service account configuration for GCP
+      secretType = "service_account";
+      const serviceAccountKeyRaw = formData.get(
+        "service_account_key",
+      ) as string;
+
+      try {
+        const serviceAccountKey = JSON.parse(serviceAccountKeyRaw);
+        secret = {
+          service_account_key: serviceAccountKey,
+        };
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("error", error);
+      }
+    } else {
+      // Static credentials configuration for GCP
+      secret = {
+        client_id: formData.get("client_id"),
+        client_secret: formData.get("client_secret"),
+        refresh_token: formData.get("refresh_token"),
+      };
+    }
   } else if (providerType === "kubernetes") {
     // Static credentials configuration for Kubernetes
     secret = {
       kubeconfig_content: formData.get("kubeconfig_content"),
     };
   }
-
   const bodyData = {
     data: {
       type: "provider-secrets",
@@ -256,9 +275,10 @@ export const updateCredentialsProvider = async (
   const url = new URL(`${apiBaseUrl}/providers/secrets/${credentialsId}`);
 
   const secretName = formData.get("secretName");
-  const providerType = formData.get("providerType");
+  const providerType = formData.get("providerType") as ProviderType;
 
   const isRole = formData.get("role_arn") !== null;
+  const isServiceAccount = formData.get("service_account_key") !== null;
 
   let secret = {};
 
@@ -298,15 +318,33 @@ export const updateCredentialsProvider = async (
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
       user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
+    if (isServiceAccount) {
+      // Service account configuration for GCP
+      const serviceAccountKeyRaw = formData.get(
+        "service_account_key",
+      ) as string;
+
+      try {
+        // Parse the service account key as JSON
+        const serviceAccountKey = JSON.parse(serviceAccountKeyRaw);
+        secret = {
+          service_account_key: serviceAccountKey,
+        };
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("error", error);
+      }
+    } else {
+      // Static credentials configuration for GCP
+      secret = {
+        client_id: formData.get("client_id"),
+        client_secret: formData.get("client_secret"),
+        refresh_token: formData.get("refresh_token"),
+      };
+    }
   } else if (providerType === "kubernetes") {
     // Static credentials configuration for Kubernetes
     secret = {

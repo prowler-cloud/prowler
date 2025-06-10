@@ -329,9 +329,8 @@ class CheckMetadata(BaseModel):
         checks = set()
 
         if service:
-            # This is a special case for the AWS provider since `lambda` is a reserved keyword in Python
-            if service == "awslambda":
-                service = "lambda"
+            if service == "lambda":
+                service = "awslambda"
             checks = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
@@ -548,7 +547,7 @@ class CheckReportGithub(Check_Report):
 
     resource_name: str
     resource_id: str
-    repository: str
+    owner: str
 
     def __init__(
         self,
@@ -556,7 +555,7 @@ class CheckReportGithub(Check_Report):
         resource: Any,
         resource_name: str = None,
         resource_id: str = None,
-        repository: str = "global",
+        owner: str = None,
     ) -> None:
         """Initialize the GitHub Check's finding information.
 
@@ -565,12 +564,16 @@ class CheckReportGithub(Check_Report):
             resource: Basic information about the resource. Defaults to None.
             resource_name: The name of the resource related with the finding.
             resource_id: The id of the resource related with the finding.
-            repository: The repository of the resource related with the finding.
+            owner: The owner of the resource related with the finding.
         """
         super().__init__(metadata, resource)
         self.resource_name = resource_name or getattr(resource, "name", "")
         self.resource_id = resource_id or getattr(resource, "id", "")
-        self.repository = repository or getattr(resource, "repository", "")
+        self.owner = (
+            owner
+            or getattr(resource, "owner", "")  # For Repositories
+            or getattr(resource, "name", "")  # For Organizations
+        )
 
 
 @dataclass

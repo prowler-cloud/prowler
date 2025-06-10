@@ -190,6 +190,8 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                 total_checks = len(requirement.Checks)
                 checks_dict = {check: None for check in requirement.Checks}
 
+                req_status_val = "MANUAL" if total_checks == 0 else "PASS"
+
                 # Build requirement dictionary
                 requirement_dict = {
                     "name": requirement.Name or requirement.Id,
@@ -204,19 +206,17 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                         "manual": 0,
                         "total": total_checks,
                     },
-                    "status": "PASS",
+                    "status": req_status_val,
                 }
 
-                # Update requirements status
-                if total_checks == 0:
+                # Update requirements status counts for the framework
+                if req_status_val == "MANUAL":
                     requirements_status["manual"] += 1
+                elif req_status_val == "PASS":
+                    requirements_status["passed"] += 1
 
                 # Add requirement to compliance requirements
                 compliance_requirements[requirement.Id] = requirement_dict
-
-            # Calculate pending requirements
-            pending_requirements = total_requirements - requirements_status["manual"]
-            requirements_status["passed"] = pending_requirements
 
             # Build compliance dictionary
             compliance_dict = {

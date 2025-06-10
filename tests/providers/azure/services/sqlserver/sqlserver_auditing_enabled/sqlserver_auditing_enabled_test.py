@@ -122,7 +122,7 @@ class Test_sqlserver_auditing_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has a auditing policy configured."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has an auditing policy configured."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
