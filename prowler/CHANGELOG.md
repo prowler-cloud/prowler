@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
 - Add `storage_account_key_access_disabled` check for Azure provider. [(#7974)](https://github.com/prowler-cloud/prowler/pull/7974)
 - Add `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider. [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
+- Make `validate_mutelist` method static inside `Mutelist` class. [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
 
 ### Fixed
 - Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
