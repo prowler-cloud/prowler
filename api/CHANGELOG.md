@@ -104,14 +104,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
 - Handled exception when a provider has no secret in test connection [(#7283)](https://github.com/prowler-cloud/prowler/pull/7283).
 
-<<<<<<< HEAD
-
 ### Added
 
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
 
-=======
->>>>>>> c17129afe (revert: RLS transactions handling and DB custom backend (#7994))
 ---
 
 ## [v1.5.0] (Prowler v5.4.0)
