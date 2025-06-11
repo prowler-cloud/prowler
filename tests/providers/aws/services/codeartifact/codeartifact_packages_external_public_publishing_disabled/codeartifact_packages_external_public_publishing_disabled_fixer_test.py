@@ -38,7 +38,7 @@ def mock_make_api_call_codeartifact_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
+class TestCodeartifactPackagesExternalPublicPublishingDisabledFixer:
     @mock_aws
     def test_repository_package_public_publishing_origin_internal(self):
         with mock.patch(
@@ -57,12 +57,14 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
                     new=CodeArtifact(aws_provider),
                 ),
             ):
-                # Test Fixer
                 from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled_fixer import (
-                    fixer,
+                    CodeartifactPackagesExternalPublicPublishingDisabledFixer,
                 )
 
-                assert fixer("test/test-package", AWS_REGION_EU_WEST_1)
+                fixer = CodeartifactPackagesExternalPublicPublishingDisabledFixer()
+                assert fixer.fix(
+                    region=AWS_REGION_EU_WEST_1, resource_id="test/test-package"
+                )
 
     @mock_aws
     def test_repository_package_public_publishing_origin_internal_error(self):
@@ -70,7 +72,6 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_codeartifact_error,
         ):
-
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
             with (
@@ -83,9 +84,11 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
                     new=CodeArtifact(aws_provider),
                 ),
             ):
-                # Test Fixer
                 from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled_fixer import (
-                    fixer,
+                    CodeartifactPackagesExternalPublicPublishingDisabledFixer,
                 )
 
-                assert not fixer("non-existing-package", AWS_REGION_EU_WEST_1)
+                fixer = CodeartifactPackagesExternalPublicPublishingDisabledFixer()
+                assert not fixer.fix(
+                    region=AWS_REGION_EU_WEST_1, resource_id="non-existing-package"
+                )
