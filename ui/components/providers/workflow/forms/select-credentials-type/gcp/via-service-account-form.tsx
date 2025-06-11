@@ -51,7 +51,6 @@ export const ViaServiceAccountForm = ({
       ...(providerType === "gcp"
         ? {
             service_account_key: "",
-            secretName: "",
           }
         : {}),
     },

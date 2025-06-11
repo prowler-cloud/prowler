@@ -52,7 +52,6 @@ export const UpdateViaServiceAccountForm = ({
       ...(providerType === "gcp"
         ? {
             service_account_key: "",
-            secretName: "",
           }
         : {}),
     },

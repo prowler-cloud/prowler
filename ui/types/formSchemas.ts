@@ -105,7 +105,6 @@ export const addProviderFormSchema = z
 
 export const addCredentialsFormSchema = (providerType: string) =>
   z.object({
-    secretName: z.string().optional(),
     providerId: z.string(),
     providerType: z.string(),
     ...(providerType === "aws"
@@ -202,7 +201,6 @@ export const addCredentialsServiceAccountFormSchema = (
             message: "Invalid JSON format. Please provide a valid JSON object.",
           },
         ),
-        secretName: z.string().optional(),
       })
     : z.object({
         providerId: z.string(),

@@ -182,7 +182,6 @@ export type AWSCredentials = {
   aws_access_key_id: string;
   aws_secret_access_key: string;
   aws_session_token: string;
-  secretName: string;
   providerId: string;
 };
 
@@ -201,7 +200,6 @@ export type AzureCredentials = {
   client_id: string;
   client_secret: string;
   tenant_id: string;
-  secretName: string;
   providerId: string;
 };
 
@@ -211,7 +209,6 @@ export type M365Credentials = {
   tenant_id: string;
   user: string;
   password: string;
-  secretName: string;
   providerId: string;
 };
 
@@ -219,19 +216,16 @@ export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
-  secretName: string;
   providerId: string;
 };
 
 export type GCPServiceAccountKey = {
   service_account_key: string;
-  secretName: string;
   providerId: string;
 };
 
 export type KubernetesCredentials = {
   kubeconfig_content: string;
-  secretName: string;
   providerId: string;
 };
 

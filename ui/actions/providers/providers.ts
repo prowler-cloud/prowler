@@ -150,7 +150,6 @@ export const addCredentialsProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/providers/secrets`);
 
-  const secretName = formData.get("secretName");
   const providerId = formData.get("providerId");
   const providerType = formData.get("providerType") as ProviderType;
 
@@ -236,7 +235,6 @@ export const addCredentialsProvider = async (formData: FormData) => {
       attributes: {
         secret_type: secretType,
         secret,
-        name: secretName,
       },
       relationships: {
         provider: {

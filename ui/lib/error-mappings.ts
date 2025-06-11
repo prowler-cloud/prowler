@@ -1,3 +1,8 @@
+import {
+  ErrorPointers,
+  ProviderCredentialFields,
+} from "./provider-credentials/provider-credential-fields";
+
 /**
  * Error pointer to field name mappings for different types of forms
  * These can be imported and used with the useFormServerErrors hook
@@ -5,20 +10,22 @@
 
 // Mapping for provider credentials forms
 export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
-  "/data/attributes/secret/aws_access_key_id": "aws_access_key_id",
-  "/data/attributes/secret/aws_secret_access_key": "aws_secret_access_key",
-  "/data/attributes/secret/aws_session_token": "aws_session_token",
-  "/data/attributes/secret/client_id": "client_id",
-  "/data/attributes/secret/client_secret": "client_secret",
-  "/data/attributes/secret/user": "user",
-  "/data/attributes/secret/password": "password",
-  "/data/attributes/secret/tenant_id": "tenant_id",
-  "/data/attributes/secret/kubeconfig_content": "kubeconfig_content",
-  "/data/attributes/secret/refresh_token": "refresh_token",
-  "/data/attributes/secret/role_arn": "role_arn",
-  "/data/attributes/secret/external_id": "external_id",
-  "/data/attributes/secret/session_duration": "session_duration",
-  "/data/attributes/secret/role_session_name": "role_session_name",
-  "/data/attributes/secret/service_account_key": "service_account_key",
-  "/data/attributes/name": "secretName",
+  [ErrorPointers.AWS_ACCESS_KEY_ID]: ProviderCredentialFields.AWS_ACCESS_KEY_ID,
+  [ErrorPointers.AWS_SECRET_ACCESS_KEY]:
+    ProviderCredentialFields.AWS_SECRET_ACCESS_KEY,
+  [ErrorPointers.AWS_SESSION_TOKEN]: ProviderCredentialFields.AWS_SESSION_TOKEN,
+  [ErrorPointers.CLIENT_ID]: ProviderCredentialFields.CLIENT_ID,
+  [ErrorPointers.CLIENT_SECRET]: ProviderCredentialFields.CLIENT_SECRET,
+  [ErrorPointers.USER]: ProviderCredentialFields.USER,
+  [ErrorPointers.PASSWORD]: ProviderCredentialFields.PASSWORD,
+  [ErrorPointers.TENANT_ID]: ProviderCredentialFields.TENANT_ID,
+  [ErrorPointers.KUBECONFIG_CONTENT]:
+    ProviderCredentialFields.KUBECONFIG_CONTENT,
+  [ErrorPointers.REFRESH_TOKEN]: ProviderCredentialFields.REFRESH_TOKEN,
+  [ErrorPointers.ROLE_ARN]: ProviderCredentialFields.ROLE_ARN,
+  [ErrorPointers.EXTERNAL_ID]: ProviderCredentialFields.EXTERNAL_ID,
+  [ErrorPointers.SESSION_DURATION]: ProviderCredentialFields.SESSION_DURATION,
+  [ErrorPointers.ROLE_SESSION_NAME]: ProviderCredentialFields.ROLE_SESSION_NAME,
+  [ErrorPointers.SERVICE_ACCOUNT_KEY]:
+    ProviderCredentialFields.SERVICE_ACCOUNT_KEY,
 };

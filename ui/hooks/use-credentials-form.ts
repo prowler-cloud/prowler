@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { addCredentialsFormSchema, ProviderType } from "@/types";
 
@@ -32,45 +33,45 @@ export const useCredentialsForm = ({
   // Get default values based on provider type
   const getDefaultValues = (): CredentialsFormData => {
     const baseDefaults = {
-      providerId,
-      providerType,
+      [ProviderCredentialFields.PROVIDER_ID]: providerId,
+      [ProviderCredentialFields.PROVIDER_TYPE]: providerType,
     };
 
     switch (providerType) {
       case "aws":
         return {
           ...baseDefaults,
-          aws_access_key_id: "",
-          aws_secret_access_key: "",
-          aws_session_token: "",
+          [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
+          [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: "",
+          [ProviderCredentialFields.AWS_SESSION_TOKEN]: "",
         };
       case "azure":
         return {
           ...baseDefaults,
-          client_id: "",
-          client_secret: "",
-          tenant_id: "",
+          [ProviderCredentialFields.CLIENT_ID]: "",
+          [ProviderCredentialFields.CLIENT_SECRET]: "",
+          [ProviderCredentialFields.TENANT_ID]: "",
         };
       case "m365":
         return {
           ...baseDefaults,
-          client_id: "",
-          client_secret: "",
-          tenant_id: "",
-          user: "",
-          password: "",
+          [ProviderCredentialFields.CLIENT_ID]: "",
+          [ProviderCredentialFields.CLIENT_SECRET]: "",
+          [ProviderCredentialFields.TENANT_ID]: "",
+          [ProviderCredentialFields.USER]: "",
+          [ProviderCredentialFields.PASSWORD]: "",
         };
       case "gcp":
         return {
           ...baseDefaults,
-          client_id: "",
-          client_secret: "",
-          refresh_token: "",
+          [ProviderCredentialFields.CLIENT_ID]: "",
+          [ProviderCredentialFields.CLIENT_SECRET]: "",
+          [ProviderCredentialFields.REFRESH_TOKEN]: "",
         };
       case "kubernetes":
         return {
           ...baseDefaults,
-          kubeconfig_content: "",
+          [ProviderCredentialFields.KUBECONFIG_CONTENT]: "",
         };
       default:
         return baseDefaults;
