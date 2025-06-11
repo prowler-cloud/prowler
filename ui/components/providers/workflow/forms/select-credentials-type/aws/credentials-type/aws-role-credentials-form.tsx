@@ -4,6 +4,7 @@ import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
 import { AWSCredentialsRole } from "@/types";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export const AWSRoleCredentialsForm = ({
   control,
@@ -16,7 +17,7 @@ export const AWSRoleCredentialsForm = ({
 }) => {
   const credentialsType = useWatch({
     control,
-    name: "credentials_type" as const,
+    name: ProviderCredentialFields.CREDENTIALS_TYPE,
     defaultValue: "aws-sdk-default",
   });
 
@@ -34,7 +35,7 @@ export const AWSRoleCredentialsForm = ({
       <span className="text-xs font-bold text-default-500">Authentication</span>
 
       <Select
-        name="credentials_type"
+        name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
         defaultSelectedKeys={["aws-sdk-default"]}
@@ -42,7 +43,7 @@ export const AWSRoleCredentialsForm = ({
         variant="bordered"
         onSelectionChange={(keys) =>
           setValue(
-            "credentials_type",
+            ProviderCredentialFields.CREDENTIALS_TYPE,
             Array.from(keys)[0] as "aws-sdk-default" | "access-secret-key",
           )
         }
@@ -55,36 +56,48 @@ export const AWSRoleCredentialsForm = ({
         <>
           <CustomInput
             control={control}
-            name="aws_access_key_id"
+            name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
             type="password"
             label="AWS Access Key ID"
             labelPlacement="inside"
             placeholder="Enter the AWS Access Key ID"
             variant="bordered"
             isRequired
-            isInvalid={!!control._formState.errors.aws_access_key_id}
+            isInvalid={
+              !!control._formState.errors[
+                ProviderCredentialFields.AWS_ACCESS_KEY_ID
+              ]
+            }
           />
           <CustomInput
             control={control}
-            name="aws_secret_access_key"
+            name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
             type="password"
             label="AWS Secret Access Key"
             labelPlacement="inside"
             placeholder="Enter the AWS Secret Access Key"
             variant="bordered"
             isRequired
-            isInvalid={!!control._formState.errors.aws_secret_access_key}
+            isInvalid={
+              !!control._formState.errors[
+                ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
+              ]
+            }
           />
           <CustomInput
             control={control}
-            name="aws_session_token"
+            name={ProviderCredentialFields.AWS_SESSION_TOKEN}
             type="password"
             label="AWS Session Token (optional)"
             labelPlacement="inside"
             placeholder="Enter the AWS Session Token"
             variant="bordered"
             isRequired={false}
-            isInvalid={!!control._formState.errors.aws_session_token}
+            isInvalid={
+              !!control._formState.errors[
+                ProviderCredentialFields.AWS_SESSION_TOKEN
+              ]
+            }
           />
         </>
       )}
@@ -96,18 +109,20 @@ export const AWSRoleCredentialsForm = ({
 
       <CustomInput
         control={control}
-        name="role_arn"
+        name={ProviderCredentialFields.ROLE_ARN}
         type="text"
         label="Role ARN"
         labelPlacement="inside"
         placeholder="Enter the Role ARN"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.role_arn}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
+        }
       />
       <CustomInput
         control={control}
-        name="external_id"
+        name={ProviderCredentialFields.EXTERNAL_ID}
         type="text"
         label="External ID"
         labelPlacement="inside"
@@ -116,32 +131,42 @@ export const AWSRoleCredentialsForm = ({
         defaultValue={externalId}
         isDisabled
         isRequired
-        isInvalid={!!control._formState.errors.external_id}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
+        }
       />
 
       <span className="text-xs text-default-500">Optional fields</span>
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <CustomInput
           control={control}
-          name="role_session_name"
+          name={ProviderCredentialFields.ROLE_SESSION_NAME}
           type="text"
           label="Role Session Name"
           labelPlacement="inside"
           placeholder="Enter the Role Session Name"
           variant="bordered"
           isRequired={false}
-          isInvalid={!!control._formState.errors.role_session_name}
+          isInvalid={
+            !!control._formState.errors[
+              ProviderCredentialFields.ROLE_SESSION_NAME
+            ]
+          }
         />
         <CustomInput
           control={control}
-          name="session_duration"
+          name={ProviderCredentialFields.SESSION_DURATION}
           type="number"
           label="Session Duration (seconds)"
           labelPlacement="inside"
           placeholder="Enter the session duration (default: 3600)"
           variant="bordered"
           isRequired={false}
-          isInvalid={!!control._formState.errors.session_duration}
+          isInvalid={
+            !!control._formState.errors[
+              ProviderCredentialFields.SESSION_DURATION
+            ]
+          }
         />
       </div>
     </>

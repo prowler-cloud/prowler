@@ -1,3 +1,4 @@
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
@@ -179,36 +180,38 @@ export interface TaskDetails {
   };
 }
 export type AWSCredentials = {
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
-  aws_session_token: string;
-  providerId: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type AWSCredentialsRole = {
-  role_arn: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
-  aws_session_token?: string;
-  external_id?: string;
-  role_session_name?: string;
-  session_duration?: number;
-  credentials_type?: "aws-sdk-default" | "access-secret-key";
+  [ProviderCredentialFields.ROLE_ARN]: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]?: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]?: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;
+  [ProviderCredentialFields.EXTERNAL_ID]?: string;
+  [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
+  [ProviderCredentialFields.SESSION_DURATION]?: number;
+  [ProviderCredentialFields.CREDENTIALS_TYPE]?:
+    | "aws-sdk-default"
+    | "access-secret-key";
 };
 
 export type AzureCredentials = {
-  client_id: string;
-  client_secret: string;
-  tenant_id: string;
-  providerId: string;
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type M365Credentials = {
-  client_id: string;
-  client_secret: string;
-  tenant_id: string;
-  user: string;
-  password: string;
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.USER]: string;
+  [ProviderCredentialFields.PASSWORD]: string;
   providerId: string;
 };
 
@@ -220,13 +223,13 @@ export type GCPDefaultCredentials = {
 };
 
 export type GCPServiceAccountKey = {
-  service_account_key: string;
-  providerId: string;
+  [ProviderCredentialFields.SERVICE_ACCOUNT_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type KubernetesCredentials = {
-  kubeconfig_content: string;
-  providerId: string;
+  [ProviderCredentialFields.KUBECONFIG_CONTENT]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type CredentialsFormSchema =

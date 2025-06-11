@@ -5,9 +5,13 @@
 
 // Provider credential field names
 export const ProviderCredentialFields = {
+  CREDENTIALS_TYPE: "credentials_type",
+  CREDENTIALS_TYPE_AWS: "aws-sdk-default",
+  CREDENTIALS_TYPE_ACCESS_SECRET_KEY: "access-secret-key",
   // Base fields for all providers
   PROVIDER_ID: "providerId",
   PROVIDER_TYPE: "providerType",
+  PROVIDER_ALIAS: "providerAlias",
 
   // AWS fields
   AWS_ACCESS_KEY_ID: "aws_access_key_id",

@@ -18,6 +18,7 @@ import {
 } from "@/types";
 
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export const UpdateViaRoleForm = ({
   searchParams,
@@ -38,7 +39,9 @@ export const UpdateViaRoleForm = ({
 
   const formSchema = addCredentialsRoleFormSchema(providerType);
   type FormSchemaType = z.infer<typeof formSchema> & {
-    credentials_type: "aws-sdk-default" | "access-secret-key";
+    [ProviderCredentialFields.CREDENTIALS_TYPE]:
+      | typeof ProviderCredentialFields.CREDENTIALS_TYPE_AWS
+      | typeof ProviderCredentialFields.CREDENTIALS_TYPE_ACCESS_SECRET_KEY;
   };
 
   const form = useForm<FormSchemaType>({
@@ -46,15 +49,15 @@ export const UpdateViaRoleForm = ({
     defaultValues: {
       providerId,
       providerType,
-      credentials_type: "aws-sdk-default",
+      credentials_type: ProviderCredentialFields.CREDENTIALS_TYPE_AWS,
       ...(providerType === "aws" && {
-        role_arn: "",
-        external_id: externalId,
-        aws_access_key_id: "",
-        aws_secret_access_key: "",
-        aws_session_token: "",
-        role_session_name: "",
-        session_duration: "3600",
+        [ProviderCredentialFields.ROLE_ARN]: "",
+        [ProviderCredentialFields.EXTERNAL_ID]: externalId,
+        [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
+        [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: "",
+        [ProviderCredentialFields.AWS_SESSION_TOKEN]: "",
+        [ProviderCredentialFields.ROLE_SESSION_NAME]: "",
+        [ProviderCredentialFields.SESSION_DURATION]: "3600",
       }),
     },
   });
@@ -67,15 +70,21 @@ export const UpdateViaRoleForm = ({
       const formData = new FormData();
 
       Object.entries(values).forEach(([key, value]) => {
-        if (key === "credentials_type") return;
+        if (key === ProviderCredentialFields.CREDENTIALS_TYPE) return;
 
         if (
-          values.credentials_type === "access-secret-key" &&
+          values[ProviderCredentialFields.CREDENTIALS_TYPE] ===
+            ProviderCredentialFields.CREDENTIALS_TYPE_ACCESS_SECRET_KEY &&
           [
-            "aws_access_key_id",
-            "aws_secret_access_key",
-            "aws_session_token",
-          ].includes(key)
+            ProviderCredentialFields.AWS_ACCESS_KEY_ID,
+            ProviderCredentialFields.AWS_SECRET_ACCESS_KEY,
+            ProviderCredentialFields.AWS_SESSION_TOKEN,
+          ].includes(
+            key as
+              | typeof ProviderCredentialFields.AWS_ACCESS_KEY_ID
+              | typeof ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
+              | typeof ProviderCredentialFields.AWS_SESSION_TOKEN,
+          )
         ) {
           if (value !== undefined && value !== "") {
             formData.append(key, String(value));
