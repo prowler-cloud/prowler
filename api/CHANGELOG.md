@@ -14,14 +14,24 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.8.4] (Prowler v5.7.4)
+
+### Removed
+- Reverted RLS transaction handling and DB custom backend [(#7994)](https://github.com/prowler-cloud/prowler/pull/7994).
+
+---
+
 ## [v1.8.3] (Prowler v5.7.3)
+
+### Added
+- Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935).
 
 ### Changed
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ### Fixed
+- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
-
 
 ---
 
@@ -104,7 +114,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Added a handled response in case local files are missing [(#7183)](https://github.com/prowler-cloud/prowler/pull/7183).
 - Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
 - Handled exception when a provider has no secret in test connection [(#7283)](https://github.com/prowler-cloud/prowler/pull/7283).
-
 
 ---
 
