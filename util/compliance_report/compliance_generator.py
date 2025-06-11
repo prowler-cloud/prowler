@@ -24,7 +24,7 @@ def generate_compliance_report(
     output_path: str,
     email: str,
     password: str,
-    only_failed: bool = False,
+    only_failed: bool = True,
 ):
     """
     Generate a PDF compliance report based on Prowler endpoints.
@@ -370,7 +370,7 @@ def generate_compliance_report(
         pass
     elements.append(Spacer(1, 0.3 * inch))
     elements.append(Paragraph("Compliance Report - Prowler", title_style))
-    elements.append(Spacer(1, 0.3 * inch))
+    elements.append(Spacer(1, 5 * inch))
 
     info_data = [
         ["Compliance Framework:", compliance_name],
@@ -518,6 +518,147 @@ def generate_compliance_report(
     )
 
     elements.append(summary_table)
+
+    elements.append(PageBreak())
+
+    elements.append(Paragraph("Top Requirements by Level of Risk", h1))
+    elements.append(Spacer(1, 0.1 * inch))
+    elements.append(Paragraph("Critical Failed Requirements (Risk Level ≥ 4)", h2))
+    elements.append(Spacer(1, 0.2 * inch))
+
+    critical_reqs = []
+    for req in resp_reqs:
+        req_id = req["id"]
+        attr = attrs_map.get(req_id, {})
+        status = req["attributes"]["status"]
+
+        if status == "FAIL":
+            metadata = attr.get("attributes", {}).get("metadata", [])
+            if metadata:
+                m = metadata[0]
+                risk_level = m.get("LevelOfRisk", 0)
+                weight = m.get("Weight", 0)
+
+                if risk_level >= 4:
+                    critical_reqs.append(
+                        {
+                            "req": req,
+                            "attr": attr,
+                            "risk_level": risk_level,
+                            "weight": weight,
+                            "metadata": m,
+                        }
+                    )
+
+    critical_reqs.sort(key=lambda x: (x["risk_level"], x["weight"]), reverse=True)
+
+    if not critical_reqs:
+        elements.append(
+            Paragraph("✅ No critical failed requirements found. Great job!", normal)
+        )
+    else:
+        elements.append(
+            Paragraph(
+                f"Found {len(critical_reqs)} critical failed requirements that require immediate attention:",
+                normal,
+            )
+        )
+        elements.append(Spacer(1, 0.5 * inch))
+
+        table_data = [["Risk", "Weight", "Requirement ID", "Title", "Section"]]
+
+        for idx, critical_req in enumerate(critical_reqs):
+            req_id = critical_req["req"]["id"]
+            risk_level = critical_req["risk_level"]
+            weight = critical_req["weight"]
+            title = critical_req["metadata"].get("Title", "N/A")
+            section = critical_req["metadata"].get("Section", "N/A")
+
+            if len(title) > 50:
+                title = title[:47] + "..."
+
+            table_data.append([str(risk_level), str(weight), req_id, title, section])
+
+        critical_table = Table(
+            table_data,
+            colWidths=[0.6 * inch, 0.8 * inch, 1.2 * inch, 3 * inch, 1.4 * inch],
+        )
+
+        critical_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.8, 0.2, 0.2)),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 10),
+                    ("BACKGROUND", (0, 1), (0, -1), colors.Color(0.8, 0.2, 0.2)),
+                    ("TEXTCOLOR", (0, 1), (0, -1), colors.white),
+                    ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+                    ("ALIGN", (0, 1), (0, -1), "CENTER"),
+                    ("FONTSIZE", (0, 1), (0, -1), 12),
+                    ("ALIGN", (1, 1), (1, -1), "CENTER"),
+                    ("FONTNAME", (1, 1), (1, -1), "Helvetica-Bold"),
+                    ("FONTNAME", (2, 1), (2, -1), "Helvetica-Bold"),
+                    ("FONTSIZE", (2, 1), (2, -1), 9),
+                    ("FONTNAME", (3, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (3, 1), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("BACKGROUND", (1, 1), (-1, -1), colors.Color(0.98, 0.98, 0.98)),
+                ]
+            )
+        )
+
+        for idx, critical_req in enumerate(critical_reqs):
+            row_idx = idx + 1
+            weight = critical_req["weight"]
+
+            if weight >= 150:
+                weight_color = colors.Color(0.8, 0.2, 0.2)
+            elif weight >= 100:
+                weight_color = colors.Color(0.9, 0.6, 0.2)
+            else:
+                weight_color = colors.Color(0.9, 0.9, 0.2)
+
+            critical_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (1, row_idx), (1, row_idx), weight_color),
+                        ("TEXTCOLOR", (1, row_idx), (1, row_idx), colors.white),
+                    ]
+                )
+            )
+
+        elements.append(critical_table)
+        elements.append(Spacer(1, 0.2 * inch))
+
+        warning_text = """
+        <b>IMMEDIATE ACTION REQUIRED:</b><br/>
+        These requirements have the highest risk levels and have failed compliance checks.
+        Please prioritize addressing these issues to improve your security posture.
+        """
+
+        warning_style = ParagraphStyle(
+            "Warning",
+            parent=styles["Normal"],
+            fontSize=11,
+            textColor=colors.Color(0.8, 0.2, 0.2),
+            spaceBefore=10,
+            spaceAfter=10,
+            leftIndent=20,
+            rightIndent=20,
+            fontName="Helvetica",
+            backColor=colors.Color(1.0, 0.95, 0.95),
+            borderWidth=2,
+            borderColor=colors.Color(0.8, 0.2, 0.2),
+            borderPadding=10,
+        )
+
+        elements.append(Paragraph(warning_text, warning_style))
 
     elements.append(PageBreak())
 
