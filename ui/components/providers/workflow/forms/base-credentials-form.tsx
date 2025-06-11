@@ -7,6 +7,7 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   AWSCredentials,
   AWSCredentialsRole,
@@ -64,8 +65,16 @@ export const BaseCredentialsForm = ({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="flex flex-col space-y-4"
       >
-        <input type="hidden" name="providerId" value={providerId} />
-        <input type="hidden" name="providerType" value={providerType} />
+        <input
+          type="hidden"
+          name={ProviderCredentialFields.PROVIDER_ID}
+          value={providerId}
+        />
+        <input
+          type="hidden"
+          name={ProviderCredentialFields.PROVIDER_TYPE}
+          value={providerType}
+        />
 
         <ProviderTitleDocs providerType={providerType} />
 

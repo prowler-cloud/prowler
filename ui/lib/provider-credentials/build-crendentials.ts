@@ -8,7 +8,9 @@ import { ProviderCredentialFields } from "./provider-credential-fields";
 // Helper function to filter out null/undefined values
 const filterDefinedValues = (obj: Record<string, any>) => {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, value]) => value != null),
+    Object.entries(obj).filter(
+      ([_, value]) => value !== null && value !== undefined,
+    ),
   );
 };
 
