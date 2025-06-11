@@ -3,8 +3,8 @@ import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
-import { AWSCredentialsRole } from "@/types";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { AWSCredentialsRole } from "@/types";
 
 export const AWSRoleCredentialsForm = ({
   control,

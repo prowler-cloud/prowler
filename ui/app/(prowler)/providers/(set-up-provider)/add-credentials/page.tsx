@@ -2,12 +2,12 @@ import React from "react";
 
 import {
   AddViaCredentialsForm,
-  ViaRoleForm,
+  AddViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import {
+  AddViaServiceAccountForm,
   SelectViaGCP,
-  ViaServiceAccountForm,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { ProviderType } from "@/types/providers";
 
@@ -33,12 +33,12 @@ export default function AddCredentialsPage({ searchParams }: Props) {
       )}
 
       {searchParams.type === "aws" && searchParams.via === "role" && (
-        <ViaRoleForm searchParams={searchParams} />
+        <AddViaRoleForm searchParams={searchParams} />
       )}
 
       {searchParams.type === "gcp" &&
         searchParams.via === "service-account" && (
-          <ViaServiceAccountForm searchParams={searchParams} />
+          <AddViaServiceAccountForm searchParams={searchParams} />
         )}
     </>
   );

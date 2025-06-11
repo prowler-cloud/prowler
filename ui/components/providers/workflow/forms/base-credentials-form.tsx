@@ -9,8 +9,10 @@ import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import {
   AWSCredentials,
+  AWSCredentialsRole,
   AzureCredentials,
   GCPDefaultCredentials,
+  GCPServiceAccountKey,
   KubernetesCredentials,
   M365Credentials,
   ProviderType,
@@ -18,7 +20,9 @@ import {
 
 import { ProviderTitleDocs } from "../provider-title-docs";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
+import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
+import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
@@ -40,13 +44,19 @@ export const BaseCredentialsForm = ({
   submitButtonText = "Next",
   showBackButton = true,
 }: BaseCredentialsFormProps) => {
-  const { form, isLoading, handleSubmit, handleBackStep, searchParamsObj } =
-    useCredentialsForm({
-      providerType,
-      providerId,
-      onSubmit,
-      successNavigationUrl,
-    });
+  const {
+    form,
+    isLoading,
+    handleSubmit,
+    handleBackStep,
+    searchParamsObj,
+    externalId,
+  } = useCredentialsForm({
+    providerType,
+    providerId,
+    onSubmit,
+    successNavigationUrl,
+  });
 
   return (
     <Form {...form}>
@@ -61,7 +71,14 @@ export const BaseCredentialsForm = ({
 
         <Divider />
 
-        {providerType === "aws" && (
+        {providerType === "aws" && searchParamsObj.get("via") === "role" && (
+          <AWSRoleCredentialsForm
+            control={form.control as unknown as Control<AWSCredentialsRole>}
+            setValue={form.setValue as any}
+            externalId={externalId}
+          />
+        )}
+        {providerType === "aws" && searchParamsObj.get("via") !== "role" && (
           <AWSStaticCredentialsForm
             control={form.control as unknown as Control<AWSCredentials>}
           />
@@ -76,11 +93,20 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<M365Credentials>}
           />
         )}
-        {providerType === "gcp" && (
-          <GCPDefaultCredentialsForm
-            control={form.control as unknown as Control<GCPDefaultCredentials>}
-          />
-        )}
+        {providerType === "gcp" &&
+          searchParamsObj.get("via") === "service-account" && (
+            <GCPServiceAccountKeyForm
+              control={form.control as unknown as Control<GCPServiceAccountKey>}
+            />
+          )}
+        {providerType === "gcp" &&
+          searchParamsObj.get("via") !== "service-account" && (
+            <GCPDefaultCredentialsForm
+              control={
+                form.control as unknown as Control<GCPDefaultCredentials>
+              }
+            />
+          )}
         {providerType === "kubernetes" && (
           <KubernetesCredentialsForm
             control={form.control as unknown as Control<KubernetesCredentials>}
@@ -88,21 +114,24 @@ export const BaseCredentialsForm = ({
         )}
 
         <div className="flex w-full justify-end sm:space-x-6">
-          {showBackButton && searchParamsObj.get("via") === "credentials" && (
-            <CustomButton
-              type="button"
-              ariaLabel="Back"
-              className="w-1/2 bg-transparent"
-              variant="faded"
-              size="lg"
-              radius="lg"
-              onPress={handleBackStep}
-              startContent={!isLoading && <ChevronLeftIcon size={24} />}
-              isDisabled={isLoading}
-            >
-              <span>Back</span>
-            </CustomButton>
-          )}
+          {showBackButton &&
+            (searchParamsObj.get("via") === "credentials" ||
+              searchParamsObj.get("via") === "role" ||
+              searchParamsObj.get("via") === "service-account") && (
+              <CustomButton
+                type="button"
+                ariaLabel="Back"
+                className="w-1/2 bg-transparent"
+                variant="faded"
+                size="lg"
+                radius="lg"
+                onPress={handleBackStep}
+                startContent={!isLoading && <ChevronLeftIcon size={24} />}
+                isDisabled={isLoading}
+              >
+                <span>Back</span>
+              </CustomButton>
+            )}
           <CustomButton
             type="submit"
             ariaLabel="Save"

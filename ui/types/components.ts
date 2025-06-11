@@ -1,6 +1,7 @@
-import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
+
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;

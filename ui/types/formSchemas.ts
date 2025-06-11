@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-import { ProviderType } from "./providers";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
+import { ProviderType } from "./providers";
 
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),

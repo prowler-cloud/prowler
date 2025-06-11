@@ -1,8 +1,8 @@
 import { Control } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
-import { AWSCredentials } from "@/types";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { AWSCredentials } from "@/types";
 
 export const AWSStaticCredentialsForm = ({
   control,

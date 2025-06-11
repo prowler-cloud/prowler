@@ -10,8 +10,8 @@ import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { editProviderFormSchema } from "@/types";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { editProviderFormSchema } from "@/types";
 
 export const EditForm = ({
   providerId,
