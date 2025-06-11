@@ -410,24 +410,20 @@ class M365Provider(Provider):
             tenant_id = getenv("AZURE_TENANT_ID")
 
             if not m365_user or not m365_password:
-                logger.critical(
-                    "M365 provider: Missing M365_USER or M365_PASSWORD environment variables needed for credentials authentication"
-                )
-                raise M365MissingEnvironmentCredentialsError(
-                    file=os.path.basename(__file__),
-                    message="Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication.",
+                logger.info(
+                    "M365 provider: Missing M365_USER or M365_PASSWORD environment variables. Will use application authentication instead."
                 )
             credentials = M365Credentials(
                 client_id=client_id,
                 client_secret=client_secret,
                 tenant_id=tenant_id,
                 tenant_domains=identity.tenant_domains,
-                user=m365_user,
-                passwd=m365_password,
+                user=m365_user or "",
+                passwd=m365_password or "",
             )
 
         if credentials:
-            if identity:
+            if identity and credentials.user:
                 identity.user = credentials.user
             test_session = M365PowerShell(credentials, identity)
             try:

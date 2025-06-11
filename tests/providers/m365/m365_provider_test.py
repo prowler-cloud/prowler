@@ -490,27 +490,6 @@ class TestM365Provider:
             assert result.user == credentials_dict["user"]
             assert result.passwd == credentials_dict["password"]
 
-    def test_setup_powershell_invalid_env_credentials(self):
-        credentials = None
-
-        with patch(
-            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell"
-        ) as mock_powershell:
-            mock_session = MagicMock()
-            mock_session.test_credentials.return_value = False
-            mock_powershell.return_value = mock_session
-
-            with pytest.raises(M365MissingEnvironmentCredentialsError) as exc_info:
-                M365Provider.setup_powershell(
-                    env_auth=True, m365_credentials=credentials
-                )
-
-            assert (
-                "Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication"
-                in str(exc_info.value)
-            )
-            mock_session.test_credentials.assert_not_called()
-
     def test_test_connection_user_not_belonging_to_tenant(
         self,
     ):
