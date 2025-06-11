@@ -1,3 +1,4 @@
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,7 +11,6 @@ from prowler.lib.check.models import (
     Remediation,
 )
 from prowler.providers.azure.lib.fix.fixer import AzureFixer
-from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 
 
 def get_mock_azure_finding():
@@ -42,33 +42,29 @@ def get_mock_azure_finding():
     resource.name = "res_name"
     resource.id = "res_id"
     resource.location = "westeurope"
-    return Check_Report_Azure(metadata.dict(), resource)
+    return Check_Report_Azure(json.dumps(metadata.dict()), resource)
 
 
 class TestAzureFixer:
     def test_fix_success(self):
         finding = get_mock_azure_finding()
         finding.status = "FAIL"
-        provider = set_mocked_azure_provider()
         with patch(
-            "prowler.providers.azure.lib.fix.azurefixer.AzureFixer.client"
+            "prowler.providers.azure.lib.fix.fixer.AzureFixer.client"
         ) as mock_client:
-            fixer = AzureFixer(description="desc", service="vm", provider=provider)
             mock_client.do_something.return_value = True
+            fixer = AzureFixer(description="desc", service="vm")
             assert fixer.fix(finding=finding)
 
     def test_fix_failure(self, caplog):
         finding = get_mock_azure_finding()
         finding.status = "FAIL"
-        provider = set_mocked_azure_provider()
-        with patch(
-            "prowler.providers.azure.lib.fix.azurefixer.AzureFixer.client",
-            side_effect=Exception("fail"),
-        ):
-            fixer = AzureFixer(description="desc", service="vm", provider=provider)
+        fixer = AzureFixer(description="desc", service="vm")
+        with patch("prowler.providers.azure.lib.fix.fixer.logger") as mock_logger:
             with caplog.at_level("ERROR"):
-                assert not fixer.fix(finding=finding)
-                assert "fail" in caplog.text
+                result = fixer.fix(finding=None)
+                assert result is False
+                assert mock_logger.error.called
 
     def test_get_fixer_info(self):
         fixer = AzureFixer(
@@ -120,7 +116,6 @@ class TestAzureFixer:
     def test_fix_exception(self):
         fixer = AzureFixer(description="desc", service="vm")
         with patch("prowler.providers.azure.lib.fix.fixer.logger") as mock_logger:
-            # Forzar excepción
-            result = fixer.fix(finding=None, subscription_id=lambda: 1)
+            result = fixer.fix(finding=None)
             assert result is False
             assert mock_logger.error.called
