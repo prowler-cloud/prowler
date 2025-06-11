@@ -3,8 +3,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
-import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { addCredentialsFormSchema, ProviderType } from "@/types";
 
 type CredentialsFormData = {
