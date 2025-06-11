@@ -3,6 +3,7 @@ import React from "react";
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
+import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
 import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
@@ -28,6 +29,10 @@ import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
 } from "./ens";
+import {
+  mapComplianceData as mapGenericComplianceData,
+  toAccordionItems as toGenericAccordionItems,
+} from "./generic";
 import {
   mapComplianceData as mapISOComplianceData,
   toAccordionItems as toISOAccordionItems,
@@ -145,8 +150,14 @@ const complianceMappers: Record<string, ComplianceMapper> = {
   },
 };
 
-// Default mapper (fallback to ENS for backward compatibility)
-const defaultMapper: ComplianceMapper = complianceMappers.ENS;
+// Default mapper (fallback to generic for maximum compatibility)
+const defaultMapper: ComplianceMapper = {
+  mapComplianceData: mapGenericComplianceData,
+  toAccordionItems: toGenericAccordionItems,
+  getTopFailedSections,
+  getDetailsComponent: (requirement: Requirement) =>
+    React.createElement(GenericCustomDetails, { requirement }),
+};
 
 /**
  * Get the appropriate compliance mapper based on the framework name
