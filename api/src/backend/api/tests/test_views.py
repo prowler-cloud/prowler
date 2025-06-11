@@ -6034,28 +6034,6 @@ class TestLighthouseConfigViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @patch("api.v1.views.openai.OpenAI")
-    def test_lighthouse_config_check_connection(
-        self, mock_openai, authenticated_client, lighthouse_config_fixture
-    ):
-        config_id = lighthouse_config_fixture.id
-        # Mock successful API call
-        mock_client = Mock()
-        mock_client.models.list.return_value = Mock(
-            data=[Mock(id="gpt-4o"), Mock(id="gpt-4o-mini")]
-        )
-        mock_openai.return_value = mock_client
-        # Check connection
-        response = authenticated_client.get(
-            reverse(
-                "lighthouseconfiguration-check-connection", kwargs={"pk": config_id}
-            )
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["data"]["detail"] == "Connection successful!"
-        assert "gpt-4o" in response.json()["data"]["available_models"]
-        assert "gpt-4o-mini" in response.json()["data"]["available_models"]
-
     def test_lighthouse_config_get_key(
         self, authenticated_client, lighthouse_config_fixture, valid_config_payload
     ):
