@@ -45,7 +45,8 @@ from api.v1.serializer_utils.integrations import (
     IntegrationCredentialField,
     S3ConfigSerializer,
 )
-from api.v1.serializer_utils.providers import ProcessorConfigField, ProviderSecretField
+from api.v1.serializer_utils.providers import ProviderSecretField
+from api.v1.serializer_utils.processors import ProcessorConfigField
 
 # Tokens
 
