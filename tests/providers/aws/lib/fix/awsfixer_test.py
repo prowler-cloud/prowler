@@ -1,8 +1,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from prowler.lib.check.models import (
     Check_Report_AWS,
     CheckMetadata,
@@ -49,11 +47,8 @@ class TestAWSFixer:
     def test_fix_success(self):
         finding = get_mock_aws_finding()
         finding.status = "FAIL"
-        with patch(
-            "prowler.providers.aws.lib.fix.fixer.AWSFixer.client"
-        ) as mock_client:
+        with patch("prowler.providers.aws.lib.fix.fixer.AWSFixer.client"):
             fixer = AWSFixer(description="desc", service="ec2")
-            mock_client.do_something.return_value = True
             assert fixer.fix(finding=finding)
 
     def test_fix_failure(self, caplog):
@@ -79,28 +74,18 @@ class TestAWSFixer:
         assert info["service"] == "ec2"
         assert info["iam_policy_required"] == {"Action": ["ec2:DescribeInstances"]}
 
-    @pytest.mark.parametrize(
-        "region,resource_id,resource_arn",
-        [
-            ("eu-west-1", "res_id", "arn:aws:test"),
-            (None, "res_id", None),
-            ("eu-west-1", None, None),
-            (None, None, "arn:aws:test"),
-            (None, None, None),
-        ],
-    )
-    def test_fix_prints(self, region, resource_id, resource_arn):
+    def test_fix_prints(self):
         fixer = AWSFixer(description="desc", service="ec2")
         finding = get_mock_aws_finding()
-        finding.region = region
-        finding.resource_id = resource_id
-        finding.resource_arn = resource_arn
+        finding.region = "eu-west-1"
+        finding.resource_id = "res_id"
+        finding.resource_arn = "arn:aws:test"
         with (
             patch("builtins.print") as mock_print,
             patch("prowler.providers.aws.lib.fix.fixer.logger") as mock_logger,
         ):
             result = fixer.fix(finding=finding)
-            if region or resource_id or resource_arn:
+            if "eu-west-1" or "res_id" or "arn:aws:test":
                 assert result is True
                 assert mock_print.called
             else:

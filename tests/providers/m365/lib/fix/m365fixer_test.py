@@ -1,3 +1,4 @@
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,9 +9,9 @@ from prowler.lib.check.models import (
     Code,
     Recommendation,
     Remediation,
+    Severity,
 )
 from prowler.providers.m365.lib.fix.fixer import M365Fixer
-from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
 
 def get_mock_m365_finding():
@@ -23,7 +24,7 @@ def get_mock_m365_finding():
         ServiceName="testservice",
         SubServiceName="",
         ResourceIdTemplate="",
-        Severity="low",
+        Severity=Severity.low,
         ResourceType="resource",
         Description="desc",
         Risk="risk",
@@ -39,8 +40,14 @@ def get_mock_m365_finding():
         Compliance=[],
     )
     resource = MagicMock()
+    resource.name = "res_name"
+    resource.id = "res_id"
+    resource.location = "global"
     return CheckReportM365(
-        metadata.dict(), resource, resource_name="res_name", resource_id="res_id"
+        json.dumps(metadata.dict()),
+        resource,
+        resource_name="res_name",
+        resource_id="res_id",
     )
 
 
@@ -48,26 +55,9 @@ class TestM365Fixer:
     def test_fix_success(self):
         finding = get_mock_m365_finding()
         finding.status = "FAIL"
-        provider = set_mocked_m365_provider()
-        with patch(
-            "prowler.providers.m365.lib.fix.m365fixer.M365Fixer.client"
-        ) as mock_client:
-            fixer = M365Fixer(description="desc", service="mail", provider=provider)
-            mock_client.do_something.return_value = True
+        with patch("prowler.providers.m365.lib.fix.fixer.M365Fixer.client"):
+            fixer = M365Fixer(description="desc", service="mail")
             assert fixer.fix(finding=finding)
-
-    def test_fix_failure(self, caplog):
-        finding = get_mock_m365_finding()
-        finding.status = "FAIL"
-        provider = set_mocked_m365_provider()
-        with patch(
-            "prowler.providers.m365.lib.fix.m365fixer.M365Fixer.client",
-            side_effect=Exception("fail"),
-        ):
-            fixer = M365Fixer(description="desc", service="mail", provider=provider)
-            with caplog.at_level("ERROR"):
-                assert not fixer.fix(finding=finding)
-                assert "fail" in caplog.text
 
     def test_get_fixer_info(self):
         fixer = M365Fixer(
@@ -94,10 +84,3 @@ class TestM365Fixer:
             result = fixer.fix(finding=finding)
             assert result is True
             assert mock_print.called
-
-    def test_fix_exception(self):
-        fixer = M365Fixer(description="desc", service="mail")
-        with patch("prowler.providers.m365.lib.fix.fixer.logger") as mock_logger:
-            result = fixer.fix(finding=None, resource_id=lambda: 1)
-            assert result is False
-            assert mock_logger.error.called

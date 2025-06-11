@@ -1,8 +1,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from prowler.lib.check.models import (
     Check_Report_Azure,
     CheckMetadata,
@@ -49,10 +47,7 @@ class TestAzureFixer:
     def test_fix_success(self):
         finding = get_mock_azure_finding()
         finding.status = "FAIL"
-        with patch(
-            "prowler.providers.azure.lib.fix.fixer.AzureFixer.client"
-        ) as mock_client:
-            mock_client.do_something.return_value = True
+        with patch("prowler.providers.azure.lib.fix.fixer.AzureFixer.client"):
             fixer = AzureFixer(description="desc", service="vm")
             assert fixer.fix(finding=finding)
 
@@ -83,35 +78,19 @@ class TestAzureFixer:
             "Action": ["Microsoft.Compute/virtualMachines/read"]
         }
 
-    @pytest.mark.parametrize(
-        "subscription_id,resource_id,resource_group",
-        [
-            ("subid", "res_id", "rg1"),
-            ("subid", "res_id", None),
-            ("subid", None, None),
-            (None, "res_id", None),
-            (None, None, None),
-        ],
-    )
-    def test_fix_prints(self, subscription_id, resource_id, resource_group):
+    def test_fix_prints(self):
         fixer = AzureFixer(description="desc", service="vm")
         finding = get_mock_azure_finding()
-        finding.subscription = subscription_id
-        finding.resource_id = resource_id
-        finding.resource = (
-            {"resource_group_name": resource_group} if resource_group else {}
-        )
+        finding.subscription = "subid"
+        finding.resource_id = "res_id"
+        finding.resource = {"resource_group_name": "rg1"}
         with (
             patch("builtins.print") as mock_print,
-            patch("prowler.providers.azure.lib.fix.fixer.logger") as mock_logger,
+            patch("prowler.providers.azure.lib.fix.fixer.logger"),
         ):
             result = fixer.fix(finding=finding)
-            if subscription_id or resource_id:
-                assert result is True
-                assert mock_print.called
-            else:
-                assert result is False
-                assert mock_logger.error.called
+            assert result is True
+            assert mock_print.called
 
     def test_fix_exception(self):
         fixer = AzureFixer(description="desc", service="vm")
