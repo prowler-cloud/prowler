@@ -33,7 +33,6 @@ export const DownloadIconButton = ({
           isIconOnly
           ariaLabel={ariaLabel}
           size="sm"
-          as={"div"}
         >
           <DownloadIcon
             className={isDownloading ? "animate-download-icon" : ""}
