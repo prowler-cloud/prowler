@@ -85,7 +85,11 @@ class TestAWSFixer:
             patch("prowler.providers.aws.lib.fix.fixer.logger") as mock_logger,
         ):
             result = fixer.fix(finding=finding)
-            if "eu-west-1" or "res_id" or "arn:aws:test":
+            if (
+                finding.region
+                or finding.resource_id
+                or getattr(finding, "resource_arn", None)
+            ):
                 assert result is True
                 assert mock_print.called
             else:
