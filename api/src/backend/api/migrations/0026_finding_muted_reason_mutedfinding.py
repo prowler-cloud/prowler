@@ -8,7 +8,6 @@ from api.rls import RowLevelSecurityConstraint
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0025_processors"),
     ]
