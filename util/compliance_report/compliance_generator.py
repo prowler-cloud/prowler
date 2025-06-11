@@ -39,11 +39,13 @@ def generate_compliance_report(
     """
     styles = getSampleStyleSheet()
 
+    prowler_dark_green = colors.Color(0.1, 0.5, 0.2)
+
     title_style = ParagraphStyle(
         "CustomTitle",
         parent=styles["Title"],
         fontSize=24,
-        textColor=colors.Color(0.1, 0.2, 0.4),
+        textColor=prowler_dark_green,
         spaceAfter=20,
         fontName="Helvetica-Bold",
         alignment=TA_CENTER,
