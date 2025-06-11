@@ -71,13 +71,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     return "success";
   };
 
-  const isPressable =
-    id.includes("ens") ||
-    id.includes("iso") ||
-    id.includes("cis_") ||
-    id.includes("kisa") ||
-    id.includes("threat") ||
-    id.includes("pillar");
+  const isPressable = !id.includes("mitre");
 
   const navigateToDetail = () => {
     // We will unlock this while developing the rest of complainces.
