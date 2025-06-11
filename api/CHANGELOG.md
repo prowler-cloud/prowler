@@ -5,7 +5,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.9.0] (Prowler UNRELEASED)
 
 ### Added
-
 - Added SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822).
 - Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
@@ -24,7 +23,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
 ### Fixed
-- Fixed transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916).
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932).
 
 
