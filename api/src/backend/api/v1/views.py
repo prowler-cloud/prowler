@@ -260,7 +260,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.8.2"
+        spectacular_settings.VERSION = "1.8.4"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1489,10 +1489,10 @@ class ScanViewSet(BaseRLSViewSet):
                 },
             )
 
+        prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])
 
-        prowler_task = Task.objects.get(id=task.id)
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
 

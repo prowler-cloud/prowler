@@ -124,6 +124,7 @@ def perform_prowler_scan(
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
     start_time = time.time()
+    exc = None
 
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
@@ -139,7 +140,7 @@ def perform_prowler_scan(
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                raise ValueError(
+                exc = ValueError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
@@ -147,6 +148,11 @@ def perform_prowler_scan(
                     tz=timezone.utc
                 )
                 provider_instance.save()
+
+        # If the provider is not connected, raise an exception outside the transaction.
+        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked as not connected.
+        if exc:
+            raise exc
 
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
