@@ -4,12 +4,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.8.0) – Not released
 
-### 🐞 Fixed
-
-- Sync between filter buttons and URL when filters change. [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
-- Improve heatmap perfomance. [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
-- SelectScanProvider warning fixed with empty alias. [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
-
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
@@ -31,6 +25,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability. [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
 - Refactor credentials forms with reusable components and error handling. [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
+
+### 🐞 Fixed
+
+- Sync between filter buttons and URL when filters change. [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
+- Improve heatmap perfomance. [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
+- SelectScanProvider warning fixed with empty alias. [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
 
 ---
 
