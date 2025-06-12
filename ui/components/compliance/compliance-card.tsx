@@ -71,9 +71,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     return "success";
   };
 
+  const isPressable = !id.includes("mitre");
+
   const navigateToDetail = () => {
     // We will unlock this while developing the rest of complainces.
-    if (!id.includes("ens") && !id.includes("cis")) {
+    if (!isPressable) {
       return;
     }
 
@@ -101,7 +103,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       fullWidth
       isHoverable
       shadow="sm"
-      isPressable
+      isPressable={isPressable}
       onPress={navigateToDetail}
     >
       <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
