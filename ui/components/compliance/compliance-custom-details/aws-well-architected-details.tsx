@@ -78,7 +78,7 @@ export const AWSWellArchitectedCustomDetails = ({
           <ComplianceLink
             href={requirement.implementation_guidance_url as string}
           >
-            {requirement.implementation_guidance_url}
+            {requirement.implementation_guidance_url as string}
           </ComplianceLink>
         </ComplianceDetailSection>
       )}
