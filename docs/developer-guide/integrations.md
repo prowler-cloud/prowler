@@ -6,14 +6,13 @@ Integrating Prowler with external tools enhances its functionality and enables s
 
 ### Supported Integration Targets
 
-Messaging Platforms – Example: Slack
+- Messaging Platforms – Example: Slack
 
-Project Management Tools – Example: Jira
+- Project Management Tools – Example: Jira
 
-Cloud Services – Example: AWS Security Hub
+- Cloud Services – Example: AWS Security Hub
 
-* Integration Guidelines
-
+### Integration Guidelines
 To integrate Prowler with a specific product:
 
 Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand its architecture and integration mechanisms.
@@ -26,25 +25,25 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 
 * Before implementing an integration, clearly define its objective. Common purposes include:
 
-  * Sending Prowler findings to a platform for alerting, tracking, or further analysis.
-  * For inspiration and implementation examples, please review the existing integrations in the [`prowler/lib/outputs`](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/outputs) folder.
+    * Sending Prowler findings to a platform for alerting, tracking, or further analysis.
+    * For inspiration and implementation examples, please review the existing integrations in the [`prowler/lib/outputs`](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/outputs) folder.
 
 ### Developing the Integration
 
 * Script Development:
 
-  * Write a script to process Prowler’s output and interact with the target platform’s API.
-  * If the goal is to send findings, parse Prowler’s results and use the platform’s API to create entries or notifications.
+    * Write a script to process Prowler’s output and interact with the target platform’s API.
+    * If the goal is to send findings, parse Prowler’s results and use the platform’s API to create entries or notifications.
 
 * Configuration:
 
-  * Ensure the script supports environment-specific settings, such as:
+    * Ensure the script supports environment-specific settings, such as:
 
-    - API endpoints
+        - API endpoints
 
-    - Authentication tokens
+        - Authentication tokens
 
-    - Any necessary configurable parameters.
+        - Any necessary configurable parameters.
 
 ### Fundamental Structure
 
