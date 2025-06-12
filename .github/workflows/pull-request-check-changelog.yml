@@ -1,0 +1,87 @@
+name: Check Changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'api/**'
+      - 'ui/**'
+      - 'prowler/**'
+
+jobs:
+  check-changelog:
+    if: contains(github.event.pull_request.labels.*.name, 'no-backport') == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      MONITORED_FOLDERS: "api ui prowler"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get list of changed files
+        id: changed_files
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff --name-only origin/${{ github.base_ref }}...HEAD > changed_files.txt
+          cat changed_files.txt
+
+      - name: Check for folder changes and changelog presence
+        id: check_folders
+        run: |
+          missing_changelogs=""
+
+          for folder in $MONITORED_FOLDERS; do
+            if grep -q "^${folder}/" changed_files.txt; then
+              echo "Detected changes in ${folder}/"
+              if ! grep -q "^${folder}/CHANGELOG.md$" changed_files.txt; then
+                echo "No changelog update found for ${folder}/"
+                missing_changelogs="${missing_changelogs}- \`${folder}\`\n"
+              fi
+            fi
+          done
+
+          echo "missing_changelogs<<EOF" >> $GITHUB_OUTPUT
+          echo -e "${missing_changelogs}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Find existing changelog comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- changelog-check -->'
+
+      - name: Comment on PR if changelog is missing
+        if: steps.check_folders.outputs.missing_changelogs != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          body: |
+            <!-- changelog-check -->
+            ⚠️ **Changes detected in the following folders without a corresponding update to the `CHANGELOG.md`:**
+
+            ${{ steps.check_folders.outputs.missing_changelogs }}
+
+            Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.
+
+      - name: Comment on PR if all changelogs are present
+        if: steps.check_folders.outputs.missing_changelogs == ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          body: |
+            <!-- changelog-check -->
+            ✅ All necessary `CHANGELOG.md` files have been updated. Great job! 🎉
+
+      - name: Fail if changelog is missing
+        if: steps.check_folders.outputs.missing_changelogs != ''
+        run: |
+          echo "ERROR: Missing changelog updates in some folders."
+          exit 1
