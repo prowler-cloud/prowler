@@ -4902,6 +4902,41 @@ class TestComplianceOverviewViewSet:
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
 
+    def test_compliance_overview_requirements_technique_details(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview7 = compliance_requirements_overviews_fixture[6]
+        scan_id = str(requirement_overview7.scan.id)
+        compliance_id = requirement_overview7.compliance_id
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of requirements response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "status" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+            assert "technique_details" in attributes["attributes"]
+            assert "tactics" in attributes["attributes"]["technique_details"]
+            assert "subtechniques" in attributes["attributes"]["technique_details"]
+            assert "platforms" in attributes["attributes"]["technique_details"]
+            assert "technique_url" in attributes["attributes"]["technique_details"]
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):

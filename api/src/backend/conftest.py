@@ -880,6 +880,22 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         total_checks=3,
     )
 
+    # Create another compliance framework for testing MITRE ATT&CK
+    requirement_overview7 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="mitre_attack",
+        framework="MITRE-ATTACK",
+        version="1.0",
+        description="MITRE ATT&CK",
+        region="eu-west-1",
+        requirement_id="mitre_requirement1",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=0,
+        failed_checks=0,
+        total_checks=0,
+    )
+
     return (
         requirement_overview1,
         requirement_overview2,
@@ -887,6 +903,7 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
         requirement_overview4,
         requirement_overview5,
         requirement_overview6,
+        requirement_overview7,
     )
 
 
