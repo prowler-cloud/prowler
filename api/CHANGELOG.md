@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.8.5] (Prowler v5.7.5)
+
+### Fixed
+- Normalize provider UID to ensure safe and unique export directory paths [(#8007)](https://github.com/prowler-cloud/prowler/pull/8007).
+
+---
+
 ## [v1.8.4] (Prowler v5.7.4)
 
 ### Removed
