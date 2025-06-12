@@ -79,11 +79,9 @@ jobs:
         with:
           files: api/**
           files_ignore: |
-            api/.github/**
             api/docs/**
-            api/permissions/**
             api/README.md
-            api/mkdocs.yml
+            api/CHANGELOG.md
 
       - name: Replace @master with current branch in pyproject.toml
         working-directory: ./api
