@@ -13,22 +13,22 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - New profile page with details about the user and their roles. [(#7780)](https://github.com/prowler-cloud/prowler/pull/7780)
-- Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
 - Possibility to edit the organization name. [(#7829)](https://github.com/prowler-cloud/prowler/pull/7829)
-- Add GCP credential method (Account Service Key). [(#7872)](https://github.com/prowler-cloud/prowler/pull/7872)
-- Add compliance detail view: ENS [(#7853)](https://github.com/prowler-cloud/prowler/pull/7853)
-- Add compliance detail view: ISO [(#7897)](https://github.com/prowler-cloud/prowler/pull/7897)
-- Add compliance detail view: CIS [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
-- Add compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
-- Add compliance detail view: KISA [(#7965)](https://github.com/prowler-cloud/prowler/pull/7965)
-- Add compliance detail view: ProwlerThreatScore [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
-- Add compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
-- Add compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
-- Improve `Scan ID` filter by adding more context and enhancing the UI/UX. [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
+- GCP credential method (Account Service Key). [(#7872)](https://github.com/prowler-cloud/prowler/pull/7872)
+- Compliance detail view: ENS. [(#7853)](https://github.com/prowler-cloud/prowler/pull/7853)
+- Compliance detail view: ISO. [(#7897)](https://github.com/prowler-cloud/prowler/pull/7897)
+- Compliance detail view: CIS. [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
+- Compliance detail view: AWS Well-Architected Framework. [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
+- Compliance detail view: KISA. [(#7965)](https://github.com/prowler-cloud/prowler/pull/7965)
+- Compliance detail view: ProwlerThreatScore. [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
+- Compliance detail view: Generic (rest of the frameworks). [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
+- Compliance detail view: MITRE ATTACK. [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 
 ### 🔄 Changed
 
-- Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
+- Improved `SnippetChip` component and show resource name in new findings table. [(#7813)](https://github.com/prowler-cloud/prowler/pull/7813)
+- Improved `Scan ID` filter by adding more context and enhancing the UI/UX. [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
+- Added `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability. [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
 
 ---
