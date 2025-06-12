@@ -31,6 +31,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
 
 ---
+## [v5.7.5] (Prowler v5.7.5)
+
+### Fixed
+- Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
+
+---
 
 ## [v5.7.3] (Prowler v5.7.3)
 
