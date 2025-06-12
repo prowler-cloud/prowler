@@ -22,12 +22,21 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for AWS. [(#7839)](https://github.com/prowler-cloud/prowler/pull/7839)
 - Add NIS 2 compliance framework for Azure. [(#7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
+- Add NIS 2 compliance framework for GCP. [(#7912)](https://github.com/prowler-cloud/prowler/pull/7912)
 - Add `storage_account_key_access_disabled` check for Azure provider. [(#7974)](https://github.com/prowler-cloud/prowler/pull/7974)
 - Add `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider. [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
 - Make `validate_mutelist` method static inside `Mutelist` class. [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
 
 ### Fixed
 - Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
+
+---
+## [v5.7.5] (Prowler v5.7.5)
+
+### Fixed
+- Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
+- Handle `0` at the start and end of account uids in Prowler Dashboard. [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
+- Fix typo in PCI 4.0 for K8S provider. [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971) 
 
 ---
 
