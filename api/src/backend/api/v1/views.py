@@ -3006,15 +3006,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "technique_url": requirement.get("technique_url", ""),
                 }
 
-            attribute_data.append({
-                "id": requirement_id,
-                "framework_description": compliance_framework.get("description", ""),
-                "name": requirement.get("name", ""),
-                "framework": compliance_framework.get("framework", ""),
-                "version": compliance_framework.get("version", ""),
-                "description": requirement.get("description", ""),
-                "attributes": base_attributes,
-            })
+            attribute_data.append(
+                {
+                    "id": requirement_id,
+                    "framework_description": compliance_framework.get(
+                        "description", ""
+                    ),
+                    "name": requirement.get("name", ""),
+                    "framework": compliance_framework.get("framework", ""),
+                    "version": compliance_framework.get("version", ""),
+                    "description": requirement.get("description", ""),
+                    "attributes": base_attributes,
+                }
+            )
 
         serializer = self.get_serializer(attribute_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
