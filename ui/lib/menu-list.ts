@@ -3,7 +3,7 @@
 import {
   AlertCircle,
   Bookmark,
-  Bot,
+  // Bot,
   CloudCog,
   Cog,
   Group,
@@ -156,16 +156,16 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         },
       ],
     },
-    {
-      groupLabel: "Prowler Lighthouse",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse",
-          icon: Bot,
-        },
-      ],
-    },
+    // {
+    //   groupLabel: "Prowler Lighthouse",
+    //   menus: [
+    //     {
+    //       href: "/lighthouse",
+    //       label: "Lighthouse",
+    //       icon: Bot,
+    //     },
+    //   ],
+    // },
     {
       groupLabel: "",
       menus: [
