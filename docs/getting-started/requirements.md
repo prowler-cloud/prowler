@@ -202,11 +202,13 @@ Since this is a delegated permission authentication method, necessary permission
 Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
 
 - **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
-    - `Domain.Read.All`: Required for all services.
-    - `Policy.Read.All`: Required for all services.
-    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `AuditLog.Read.All`: Required for Entra service.
+    - `Domain.Read.All`: Required for all services.
+    - `Organization.Read.All`: Required for retrieving tenant information.
+    - `Policy.Read.All`: Required for all services.
+    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+
 
 - **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.

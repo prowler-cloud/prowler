@@ -7,7 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
 - Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
-- Add Weight for Prowler ThreatScore scoring. [(7795)](https://github.com/prowler-cloud/prowler/pull/7795)
+- Add Weight for Prowler ThreatScore scoring. [(#7795)](https://github.com/prowler-cloud/prowler/pull/7795)
 - Add new check `entra_users_mfa_capable` for M365 provider. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
 - Add new check `admincenter_organization_customer_lockbox_enabled` for M365 provider. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
 - Add new check `admincenter_external_calendar_sharing_disabled` for M365 provider. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
@@ -19,9 +19,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `repository_dependency_scanning_enabled` check for GitHub provider. [(#7771)](https://github.com/prowler-cloud/prowler/pull/7771)
 - Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
 - Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
-- Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
-- Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
+- Add NIS 2 compliance framework for AWS. [(#7839)](https://github.com/prowler-cloud/prowler/pull/7839)
+- Add NIS 2 compliance framework for Azure. [(#7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
+- Add NIS 2 compliance framework for GCP. [(#7912)](https://github.com/prowler-cloud/prowler/pull/7912)
+- Add `storage_account_key_access_disabled` check for Azure provider. [(#7974)](https://github.com/prowler-cloud/prowler/pull/7974)
+- Add `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider. [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
+- Make `validate_mutelist` method static inside `Mutelist` class. [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
+
+### Fixed
+- Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
+
+---
+## [v5.7.5] (Prowler v5.7.5)
+
+### Fixed
+- Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
+- Handle `0` at the start and end of account uids in Prowler Dashboard. [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
+- Fix typo in PCI 4.0 for K8S provider. [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971) 
 
 ---
 
@@ -30,7 +45,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
-- Handle `0` at the start and end of account uids in Prowler Dashboard. [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
+
 ---
 
 ## [v5.7.2] (Prowler v5.7.2)
