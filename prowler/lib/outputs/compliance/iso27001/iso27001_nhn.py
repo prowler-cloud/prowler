@@ -57,6 +57,8 @@ class NHNISO27001(ComplianceOutput):
                             CheckId=finding.check_id,
                             Muted=finding.muted,
                             ResourceName=finding.resource_name,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
 
@@ -83,5 +85,7 @@ class NHNISO27001(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)
