@@ -2992,6 +2992,23 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
             metadata = requirement.get("attributes", [])
 
+            technique_details = {}
+
+            if (
+                requirement.get("tactics", [])
+                or requirement.get("subtechniques", [])
+                or requirement.get("platforms", [])
+                or requirement.get("technique_url", "")
+            ):
+                technique_details["tactics"] = requirement.get("tactics", [])
+                technique_details["subtechniques"] = requirement.get(
+                    "subtechniques", []
+                )
+                technique_details["platforms"] = requirement.get("platforms", [])
+                technique_details["technique_url"] = requirement.get(
+                    "technique_url", ""
+                )
+
             attribute_data.append(
                 {
                     "id": requirement_id,
@@ -2999,14 +3016,14 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                         "description", ""
                     ),
                     "name": requirement.get("name", ""),
-                    "tactics": requirement.get("tactics", []),
-                    "subtechniques": requirement.get("subtechniques", []),
-                    "platforms": requirement.get("platforms", []),
-                    "technique_url": requirement.get("technique_url", ""),
                     "framework": compliance_framework.get("framework", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
-                    "attributes": {"metadata": metadata, "check_ids": check_ids},
+                    "attributes": {
+                        "metadata": metadata,
+                        "check_ids": check_ids,
+                        "technique_details": technique_details,
+                    },
                 }
             )
 
