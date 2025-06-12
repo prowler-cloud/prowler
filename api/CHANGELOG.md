@@ -5,10 +5,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.9.0] (Prowler UNRELEASED)
 
 ### Added
-
-- Added SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822).
-- Support GCP Service Account key. [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
-- Added new `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877).
 - SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822)
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
