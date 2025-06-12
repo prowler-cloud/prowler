@@ -24,7 +24,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer:
+class TestEc2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer:
     @mock_aws
     def test_ec2_sg_exposed_port_in_private_subnet_with_ip4_and_ip6(self):
         # Create EC2 Mocked Resources
@@ -76,12 +76,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
-                fixer,
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer,
             )
 
-            assert fixer(default_sg_id, AWS_REGION_EU_WEST_1)
+            assert (
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer().fix(
+                    resource_id=default_sg_id, region=AWS_REGION_EU_WEST_1
+                )
+            )
 
     @mock_aws
     def test_ec2_sg_exposed_port_error(self):
@@ -143,12 +146,13 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
                     new=EC2(aws_provider),
                 ),
             ):
-                # Test Fixer
                 from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
-                    fixer,
+                    Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer,
                 )
 
-                assert not fixer(default_sg_id, AWS_REGION_EU_WEST_1)
+                assert not Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer().fix(
+                    resource_id=default_sg_id, region=AWS_REGION_EU_WEST_1
+                )
 
     @mock_aws
     def test_ec2_sg_exposed_port_in_private_subnet_only_with_ip4(self):
@@ -200,12 +204,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
-                fixer,
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer,
             )
 
-            assert fixer(default_sg_id, AWS_REGION_EU_WEST_1)
+            assert (
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer().fix(
+                    resource_id=default_sg_id, region=AWS_REGION_EU_WEST_1
+                )
+            )
 
     @mock_aws
     def test_ec2_sg_exposed_port_in_private_subnet_only_with_ip6(self):
@@ -257,12 +264,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
-                fixer,
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer,
             )
 
-            assert fixer(default_sg_id, AWS_REGION_EU_WEST_1)
+            assert (
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer().fix(
+                    resource_id=default_sg_id, region=AWS_REGION_EU_WEST_1
+                )
+            )
 
     @mock_aws
     def test_ec2_sg_exposed_port_in_public_subnet_all_ports(self):
@@ -314,9 +324,12 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
-                fixer,
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer,
             )
 
-            assert fixer(default_sg_id, AWS_REGION_EU_WEST_1)
+            assert (
+                Ec2SecuritygroupAllowIngressFromInternetToHighRiskTcpPortsFixer().fix(
+                    resource_id=default_sg_id, region=AWS_REGION_EU_WEST_1
+                )
+            )
