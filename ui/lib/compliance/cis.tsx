@@ -13,6 +13,8 @@ import {
   RequirementStatus,
 } from "@/types/compliance";
 
+import { updateCounters } from "./commons";
+
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
@@ -117,13 +119,7 @@ export const mapComplianceData = (
     control.requirements.push(requirement);
 
     // Update control counters
-    if (requirement.status === "MANUAL") {
-      control.manual++;
-    } else if (requirement.status === "PASS") {
-      control.pass++;
-    } else if (requirement.status === "FAIL") {
-      control.fail++;
-    }
+    updateCounters(control, requirement.status);
 
     category.controls.push(control);
   }

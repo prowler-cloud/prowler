@@ -14,6 +14,8 @@ import {
   RequirementStatus,
 } from "@/types/compliance";
 
+import { updateCounters } from "./commons";
+
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
@@ -103,13 +105,7 @@ export const mapComplianceData = (
     (framework as any).requirements.push(requirement);
 
     // Update framework counters
-    if (requirement.status === "MANUAL") {
-      framework.manual++;
-    } else if (requirement.status === "PASS") {
-      framework.pass++;
-    } else if (requirement.status === "FAIL") {
-      framework.fail++;
-    }
+    updateCounters(framework, requirement.status);
   }
 
   return frameworks;

@@ -13,6 +13,8 @@ import {
   RequirementStatus,
 } from "@/types/compliance";
 
+import { updateCounters } from "./commons";
+
 export const translateType = (type: string) => {
   if (!type) {
     return "";
@@ -147,13 +149,7 @@ export const mapComplianceData = (
         control.manual = 0;
 
         control.requirements.forEach((requirement) => {
-          if (requirement.status === "MANUAL") {
-            control.manual++;
-          } else if (requirement.status === "PASS") {
-            control.pass++;
-          } else if (requirement.status === "FAIL") {
-            control.fail++;
-          }
+          updateCounters(control, requirement.status);
         });
 
         category.pass += control.pass;

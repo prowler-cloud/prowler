@@ -22,7 +22,7 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import { getComplianceMapper } from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { ScanProps } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
 
