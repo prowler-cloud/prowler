@@ -21,6 +21,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
 - Add compliance detail view: KISA [(#7965)](https://github.com/prowler-cloud/prowler/pull/7965)
 - Add compliance detail view: ProwlerThreatScore [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
+- Add compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
+- Add compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX. [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 
 ### 🔄 Changed

@@ -31,9 +31,12 @@ export const ScanSelector = ({
       size="lg"
       labelPlacement="outside"
       selectedKeys={new Set([selectedScanId])}
-      onSelectionChange={(keys) =>
-        onSelectionChange(Array.from(keys)[0] as string)
-      }
+      onSelectionChange={(keys) => {
+        const newSelectedId = Array.from(keys)[0] as string;
+        if (newSelectedId && newSelectedId !== selectedScanId) {
+          onSelectionChange(newSelectedId);
+        }
+      }}
       renderValue={() => {
         const selectedItem = scans.find((item) => item.id === selectedScanId);
         return selectedItem ? (

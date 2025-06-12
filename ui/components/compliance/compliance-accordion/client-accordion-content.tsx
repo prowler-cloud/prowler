@@ -173,7 +173,7 @@ export const ClientAccordionContent = ({
 
     return (
       <div className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
-        ⚠️ There are no findings for this regions
+        ⚠️ There are no findings for these regions
       </div>
     );
   };
