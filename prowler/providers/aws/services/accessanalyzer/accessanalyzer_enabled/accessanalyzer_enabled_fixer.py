@@ -16,8 +16,8 @@ class AccessAnalyzerEnabledFixer(AWSFixer):
     def __init__(self):
         super().__init__(
             description="Enable Access Analyzer in a region",
-            cost_impact=False,
-            cost_description=None,
+            cost_impact=True,
+            cost_description="Enabling Access Analyzer may incur costs for policy and resource analysis, especially in large accounts or organizations. See AWS Access Analyzer pricing.",
             service="accessanalyzer",
             iam_policy_required={
                 "Version": "2012-10-17",

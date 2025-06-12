@@ -40,7 +40,8 @@ class Test_iam_password_policy_uppercase_fixer:
                 hard_expiry=True,
             )
             from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase_fixer import (
-                fixer,
+                IamPasswordPolicyUppercaseFixer,
             )
 
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            fixer = IamPasswordPolicyUppercaseFixer()
+            assert fixer.fix(resource_id=AWS_ACCOUNT_NUMBER)

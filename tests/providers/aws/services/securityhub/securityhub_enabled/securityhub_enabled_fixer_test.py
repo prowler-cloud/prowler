@@ -8,7 +8,7 @@ from prowler.providers.aws.services.securityhub.securityhub_service import (
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
 
-class test_securityhub_enabled_fixer:
+class TestSecurityhubEnabledFixer:
     @mock_aws
     def test_securityhub_enabled_fixer(self):
         securityhub_client = mock.MagicMock
@@ -28,7 +28,8 @@ class test_securityhub_enabled_fixer:
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled_fixer import (
-                fixer,
+                SecurityhubEnabledFixer,
             )
 
-            assert fixer(AWS_REGION_EU_WEST_1)
+            fixer = SecurityhubEnabledFixer()
+            assert fixer.fix(region=AWS_REGION_EU_WEST_1)

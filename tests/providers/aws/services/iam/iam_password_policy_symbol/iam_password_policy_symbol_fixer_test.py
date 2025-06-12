@@ -40,7 +40,8 @@ class Test_iam_password_policy_symbol_fixer:
                 hard_expiry=True,
             )
             from prowler.providers.aws.services.iam.iam_password_policy_symbol.iam_password_policy_symbol_fixer import (
-                fixer,
+                IamPasswordPolicySymbolFixer,
             )
 
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            fixer = IamPasswordPolicySymbolFixer()
+            assert fixer.fix(resource_id=AWS_ACCOUNT_NUMBER)

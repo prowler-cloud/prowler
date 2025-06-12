@@ -33,7 +33,7 @@ def mock_make_api_call_public_vault_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_glacier_vaults_policy_public_access_fixer:
+class TestGlacierVaultsPolicyPublicAccessFixer:
     @mock_aws
     def test_glacier_vault_public(self):
         with mock.patch(
@@ -55,10 +55,12 @@ class Test_glacier_vaults_policy_public_access_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer import (
-                    fixer,
+                    GlacierVaultsPolicyPublicAccessFixer,
                 )
 
-                assert fixer(resource_id="test-vault", region=AWS_REGION_EU_WEST_1)
+                assert GlacierVaultsPolicyPublicAccessFixer().fix(
+                    resource_id="test-vault", region=AWS_REGION_EU_WEST_1
+                )
 
     @mock_aws
     def test_glacier_vault_public_error(self):
@@ -81,7 +83,9 @@ class Test_glacier_vaults_policy_public_access_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer import (
-                    fixer,
+                    GlacierVaultsPolicyPublicAccessFixer,
                 )
 
-                assert not fixer(resource_id="test-vault", region=AWS_REGION_EU_WEST_1)
+                assert not GlacierVaultsPolicyPublicAccessFixer().fix(
+                    resource_id="test-vault", region=AWS_REGION_EU_WEST_1
+                )

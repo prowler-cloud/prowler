@@ -32,10 +32,13 @@ class Test_rds_instance_no_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access_fixer import (
-                    fixer,
+                    RdsInstanceNoPublicAccessFixer,
                 )
 
-                assert fixer("db-primary-1", AWS_REGION_US_EAST_1)
+                fixer = RdsInstanceNoPublicAccessFixer()
+                assert fixer.fix(
+                    resource_id="db-primary-1", region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_rds_public(self):
@@ -64,10 +67,13 @@ class Test_rds_instance_no_public_access_fixer:
 
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access_fixer import (
-                    fixer,
+                    RdsInstanceNoPublicAccessFixer,
                 )
 
-                assert fixer("db-primary-1", AWS_REGION_US_EAST_1)
+                fixer = RdsInstanceNoPublicAccessFixer()
+                assert fixer.fix(
+                    resource_id="db-primary-1", region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_rds_cluster_public_snapshot_error(self):
@@ -96,7 +102,10 @@ class Test_rds_instance_no_public_access_fixer:
 
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access_fixer import (
-                    fixer,
+                    RdsInstanceNoPublicAccessFixer,
                 )
 
-                assert not fixer("db-primary-2", AWS_REGION_US_EAST_1)
+                fixer = RdsInstanceNoPublicAccessFixer()
+                assert not fixer.fix(
+                    resource_id="db-primary-2", region=AWS_REGION_US_EAST_1
+                )
