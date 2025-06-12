@@ -22,10 +22,7 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import {
-  calculateCategoryHeatmapData,
-  getComplianceMapper,
-} from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/commons";
 import { ScanProps } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
 
@@ -239,7 +236,7 @@ const SSRComplianceContent = async ({
   );
 
   // Calculate category heatmap data
-  const categoryHeatmapData = calculateCategoryHeatmapData(data);
+  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
 
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
@@ -271,6 +268,7 @@ const SSRComplianceContent = async ({
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper
+        hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
         defaultExpandedKeys={defaultKeys}
       />

@@ -113,6 +113,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
+      - name: Install system dependencies for xmlsec
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
+
       - name: Install dependencies
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -130,6 +136,12 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry check --lock
+
+      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions - https://github.com/xmlsec/python-xmlsec/issues/320
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pip install --force-reinstall --no-binary lxml lxml
 
       - name: Lint with ruff
         working-directory: ./api
@@ -181,7 +193,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -193,7 +205,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       - name: Build Container
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false
