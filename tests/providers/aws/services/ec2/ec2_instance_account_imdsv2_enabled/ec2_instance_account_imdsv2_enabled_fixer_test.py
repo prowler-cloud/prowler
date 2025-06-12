@@ -27,7 +27,7 @@ def mock_modify_instance_metadata_defaults(HttpTokens):
         return {"Return": True}
 
 
-class Test_ec2_instance_account_imdsv2_enabled_fixer:
+class TestEc2InstanceAccountImdsv2EnabledFixer:
     @mock_aws
     def test_ec2_instance_account_imdsv2_enabled_fixer(self):
         ec2_service = mock.MagicMock()
@@ -64,8 +64,9 @@ class Test_ec2_instance_account_imdsv2_enabled_fixer:
         ):
 
             from prowler.providers.aws.services.ec2.ec2_instance_account_imdsv2_enabled.ec2_instance_account_imdsv2_enabled_fixer import (
-                fixer,
+                Ec2InstanceAccountImdsv2EnabledFixer,
             )
 
-            # By default, the account has not public access blocked
-            assert fixer(region=AWS_REGION_US_EAST_1)
+            assert Ec2InstanceAccountImdsv2EnabledFixer().fix(
+                region=AWS_REGION_US_EAST_1
+            )

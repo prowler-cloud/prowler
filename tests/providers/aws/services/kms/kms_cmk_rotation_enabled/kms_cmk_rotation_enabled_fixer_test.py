@@ -30,7 +30,8 @@ class Test_kms_cmk_rotation_enabled_fixer:
         ):
             # Test Check
             from prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled_fixer import (
-                fixer,
+                KmsCmkRotationEnabledFixer,
             )
 
-            assert fixer(resource_id=key["KeyId"], region=AWS_REGION_US_EAST_1)
+            fixer = KmsCmkRotationEnabledFixer()
+            assert fixer.fix(resource_id=key["KeyId"], region=AWS_REGION_US_EAST_1)

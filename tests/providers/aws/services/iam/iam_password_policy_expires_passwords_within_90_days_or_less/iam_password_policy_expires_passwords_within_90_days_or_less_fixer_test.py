@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_iam_password_policy_expires_passwords_within_90_days_or_less_fixer:
+class TestIamPasswordPolicyExpiresPasswordsWithin90DaysOrLessFixer:
     @mock_aws
     def test_iam_password_policy_expires_passwords_within_90_days_or_less_fixer(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -40,7 +40,9 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less_fixer:
                 hard_expiry=True,
             )
             from prowler.providers.aws.services.iam.iam_password_policy_expires_passwords_within_90_days_or_less.iam_password_policy_expires_passwords_within_90_days_or_less_fixer import (
-                fixer,
+                IamPasswordPolicyExpiresPasswordsWithin90DaysOrLessFixer,
             )
 
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            assert IamPasswordPolicyExpiresPasswordsWithin90DaysOrLessFixer().fix(
+                resource_id=AWS_ACCOUNT_NUMBER
+            )

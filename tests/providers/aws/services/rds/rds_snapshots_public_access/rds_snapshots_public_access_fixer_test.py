@@ -36,10 +36,11 @@ class Test_rds_snapshots_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access_fixer import (
-                    fixer,
+                    RdsSnapshotsPublicAccessFixer,
                 )
 
-                assert fixer("snapshot-1", AWS_REGION_US_EAST_1)
+                fixer = RdsSnapshotsPublicAccessFixer()
+                assert fixer.fix(resource_id="snapshot-1", region=AWS_REGION_US_EAST_1)
 
     @mock_aws
     def test_rds_public_snapshot(self):
@@ -73,10 +74,11 @@ class Test_rds_snapshots_public_access_fixer:
 
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access_fixer import (
-                    fixer,
+                    RdsSnapshotsPublicAccessFixer,
                 )
 
-                assert fixer("snapshot-1", AWS_REGION_US_EAST_1)
+                fixer = RdsSnapshotsPublicAccessFixer()
+                assert fixer.fix(resource_id="snapshot-1", region=AWS_REGION_US_EAST_1)
 
     @mock_aws
     def test_rds_cluster_private_snapshot(self):
@@ -107,10 +109,11 @@ class Test_rds_snapshots_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access_fixer import (
-                    fixer,
+                    RdsSnapshotsPublicAccessFixer,
                 )
 
-                assert fixer("snapshot-1", AWS_REGION_US_EAST_1)
+                fixer = RdsSnapshotsPublicAccessFixer()
+                assert fixer.fix(resource_id="snapshot-1", region=AWS_REGION_US_EAST_1)
 
     @mock_aws
     def test_rds_cluster_public_snapshot(self):
@@ -144,10 +147,11 @@ class Test_rds_snapshots_public_access_fixer:
 
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access_fixer import (
-                    fixer,
+                    RdsSnapshotsPublicAccessFixer,
                 )
 
-                assert fixer("snapshot-1", AWS_REGION_US_EAST_1)
+                fixer = RdsSnapshotsPublicAccessFixer()
+                assert fixer.fix(resource_id="snapshot-1", region=AWS_REGION_US_EAST_1)
 
     @mock_aws
     def test_rds_cluster_public_snapshot_error(self):
@@ -181,7 +185,10 @@ class Test_rds_snapshots_public_access_fixer:
 
                 # Test Fixer
                 from prowler.providers.aws.services.rds.rds_snapshots_public_access.rds_snapshots_public_access_fixer import (
-                    fixer,
+                    RdsSnapshotsPublicAccessFixer,
                 )
 
-                assert not fixer("snapshot-2", AWS_REGION_US_EAST_1)
+                fixer = RdsSnapshotsPublicAccessFixer()
+                assert not fixer.fix(
+                    resource_id="snapshot-2", region=AWS_REGION_US_EAST_1
+                )

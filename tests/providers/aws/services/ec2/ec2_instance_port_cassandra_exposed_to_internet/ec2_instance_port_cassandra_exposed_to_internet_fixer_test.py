@@ -24,7 +24,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
+class TestEc2InstancePortCassandraExposedToInternetFixer:
     @mock_aws
     def test_ec2_instance_exposed_port_in_private_subnet_with_ip4_and_ip6(self):
         # Create EC2 Mocked Resources
@@ -83,12 +83,13 @@ class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_cassandra_exposed_to_internet.ec2_instance_port_cassandra_exposed_to_internet_fixer import (
-                fixer,
+                Ec2InstancePortCassandraExposedToInternetFixer,
             )
 
-            assert fixer(instance_id, AWS_REGION_EU_WEST_1)
+            assert Ec2InstancePortCassandraExposedToInternetFixer().fix(
+                resource_id=instance_id, region=AWS_REGION_EU_WEST_1
+            )
 
     @mock_aws
     def test_ec2_instance_exposed_port_error(self):
@@ -166,12 +167,13 @@ class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
                     new=EC2(aws_provider),
                 ),
             ):
-                # Test Fixer
                 from prowler.providers.aws.services.ec2.ec2_instance_port_cassandra_exposed_to_internet.ec2_instance_port_cassandra_exposed_to_internet_fixer import (
-                    fixer,
+                    Ec2InstancePortCassandraExposedToInternetFixer,
                 )
 
-                assert not fixer(instance_id, AWS_REGION_EU_WEST_1)
+                assert not Ec2InstancePortCassandraExposedToInternetFixer().fix(
+                    resource_id=instance_id, region=AWS_REGION_EU_WEST_1
+                )
 
     @mock_aws
     def test_ec2_instance_exposed_port_in_private_subnet_only_with_ip4(self):
@@ -223,12 +225,13 @@ class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_cassandra_exposed_to_internet.ec2_instance_port_cassandra_exposed_to_internet_fixer import (
-                fixer,
+                Ec2InstancePortCassandraExposedToInternetFixer,
             )
 
-            assert fixer(instance_id, AWS_REGION_EU_WEST_1)
+            assert Ec2InstancePortCassandraExposedToInternetFixer().fix(
+                resource_id=instance_id, region=AWS_REGION_EU_WEST_1
+            )
 
     @mock_aws
     def test_ec2_instance_exposed_port_in_private_subnet_only_with_ip6(self):
@@ -280,12 +283,13 @@ class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_cassandra_exposed_to_internet.ec2_instance_port_cassandra_exposed_to_internet_fixer import (
-                fixer,
+                Ec2InstancePortCassandraExposedToInternetFixer,
             )
 
-            assert fixer(instance_id, AWS_REGION_EU_WEST_1)
+            assert Ec2InstancePortCassandraExposedToInternetFixer().fix(
+                resource_id=instance_id, region=AWS_REGION_EU_WEST_1
+            )
 
     @mock_aws
     def test_ec2_instance_exposed_port_in_public_subnet_all_ports(self):
@@ -343,9 +347,10 @@ class Test_ec2_instance_port_cassandra_exposed_to_internet_fixer:
                 new=EC2(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_cassandra_exposed_to_internet.ec2_instance_port_cassandra_exposed_to_internet_fixer import (
-                fixer,
+                Ec2InstancePortCassandraExposedToInternetFixer,
             )
 
-            assert fixer(instance.id, AWS_REGION_EU_WEST_1)
+            assert Ec2InstancePortCassandraExposedToInternetFixer().fix(
+                resource_id=instance.id, region=AWS_REGION_EU_WEST_1
+            )

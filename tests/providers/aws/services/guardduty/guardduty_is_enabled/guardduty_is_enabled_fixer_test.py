@@ -39,7 +39,7 @@ def mock_make_api_call_create_detector_failure(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_guardduty_is_enabled_fixer:
+class TestGuarddutyIsEnabledFixer:
     @mock_aws
     def test_guardduty_is_enabled_fixer(self):
         with mock.patch(
@@ -64,10 +64,10 @@ class Test_guardduty_is_enabled_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled_fixer import (
-                    fixer,
+                    GuarddutyIsEnabledFixer,
                 )
 
-                assert fixer(AWS_REGION_EU_WEST_1)
+                assert GuarddutyIsEnabledFixer().fix(region=AWS_REGION_EU_WEST_1)
 
     @mock_aws
     def test_guardduty_is_enabled_fixer_failure(self):
@@ -93,7 +93,7 @@ class Test_guardduty_is_enabled_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled_fixer import (
-                    fixer,
+                    GuarddutyIsEnabledFixer,
                 )
 
-                assert not fixer(AWS_REGION_EU_WEST_1)
+                assert not GuarddutyIsEnabledFixer().fix(region=AWS_REGION_EU_WEST_1)

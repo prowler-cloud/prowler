@@ -28,7 +28,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer:
+class TestCloudtrailLogsS3BucketIsNotPubliclyAccessibleFixer:
     @mock_aws
     def test_trail_bucket_public_acl(self):
         aws_provider = set_mocked_aws_provider(
@@ -81,12 +81,12 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer:
                 new=S3(aws_provider),
             ),
         ):
-            # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer import (
-                fixer,
+                CloudtrailLogsS3BucketIsNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(trail_name_us, AWS_REGION_US_EAST_1)
+            fixer = CloudtrailLogsS3BucketIsNotPubliclyAccessibleFixer()
+            assert fixer.fix(region=AWS_REGION_US_EAST_1, resource_id=trail_name_us)
 
     @mock_aws
     def test_trail_bucket_public_acl_error(self):
@@ -145,9 +145,11 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer:
                     new=S3(aws_provider),
                 ),
             ):
-                # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer import (
-                    fixer,
+                    CloudtrailLogsS3BucketIsNotPubliclyAccessibleFixer,
                 )
 
-                assert not fixer(trail_name_us, AWS_REGION_US_EAST_1)
+                fixer = CloudtrailLogsS3BucketIsNotPubliclyAccessibleFixer()
+                assert not fixer.fix(
+                    region=AWS_REGION_US_EAST_1, resource_id=trail_name_us
+                )

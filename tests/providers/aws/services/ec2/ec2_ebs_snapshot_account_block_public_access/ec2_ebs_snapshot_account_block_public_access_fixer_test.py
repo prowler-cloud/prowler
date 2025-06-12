@@ -26,7 +26,7 @@ def mock_enable_snapshot_block_public_access(State):
     return {"State": State}
 
 
-class Test_ec2_ebs_snapshot_account_block_public_access_fixer:
+class TestEc2EbsSnapshotAccountBlockPublicAccessFixer:
     @mock_aws
     def test_ec2_ebs_snapshot_account_block_public_access_fixer(self):
         ec2_service = mock.MagicMock()
@@ -61,10 +61,9 @@ class Test_ec2_ebs_snapshot_account_block_public_access_fixer:
                 ec2_service,
             ),
         ):
-
             from prowler.providers.aws.services.ec2.ec2_ebs_snapshot_account_block_public_access.ec2_ebs_snapshot_account_block_public_access_fixer import (
-                fixer,
+                Ec2EbsSnapshotAccountBlockPublicAccessFixer,
             )
 
-            # By default, the account has not public access blocked
-            assert fixer(region=AWS_REGION_US_EAST_1)
+            fixer = Ec2EbsSnapshotAccountBlockPublicAccessFixer()
+            assert fixer.fix(region=AWS_REGION_US_EAST_1)

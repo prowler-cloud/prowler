@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
-class Test_sqs_queues_not_publicly_accessible_fixer:
+class TestSqsQueuesNotPubliclyAccessibleFixer:
     @mock_aws
     def test_queue_public(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
@@ -37,10 +37,11 @@ class Test_sqs_queues_not_publicly_accessible_fixer:
         ):
             # Test Fixer
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible_fixer import (
-                fixer,
+                SqsQueuesNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(queue_url, AWS_REGION_EU_WEST_1)
+            fixer = SqsQueuesNotPubliclyAccessibleFixer()
+            assert fixer.fix(resource_id=queue_url, region=AWS_REGION_EU_WEST_1)
 
     @mock_aws
     def test_queue_public_with_aws(self):
@@ -73,10 +74,11 @@ class Test_sqs_queues_not_publicly_accessible_fixer:
         ):
             # Test Fixer
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible_fixer import (
-                fixer,
+                SqsQueuesNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(queue_url, AWS_REGION_EU_WEST_1)
+            fixer = SqsQueuesNotPubliclyAccessibleFixer()
+            assert fixer.fix(resource_id=queue_url, region=AWS_REGION_EU_WEST_1)
 
     @mock_aws
     def test_queue_public_error(self):
@@ -109,7 +111,10 @@ class Test_sqs_queues_not_publicly_accessible_fixer:
         ):
             # Test Fixer
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible_fixer import (
-                fixer,
+                SqsQueuesNotPubliclyAccessibleFixer,
             )
 
-            assert not fixer("queue_url_non_existing", AWS_REGION_EU_WEST_1)
+            fixer = SqsQueuesNotPubliclyAccessibleFixer()
+            assert not fixer.fix(
+                resource_id="queue_url_non_existing", region=AWS_REGION_EU_WEST_1
+            )

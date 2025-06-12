@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.aws.utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
 
 
-class Test_accessanalyzer_enabled_fixer:
+class TestAccessAnalyzerEnabledFixer:
     def test_accessanalyzer_enabled_fixer(self):
         regional_client = mock.MagicMock()
         accessanalyzer_client = mock.MagicMock()
@@ -26,7 +26,7 @@ class Test_accessanalyzer_enabled_fixer:
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled_fixer import (
-                fixer,
+                AccessAnalyzerEnabledFixer,
             )
 
-            assert fixer(AWS_REGION_EU_WEST_1)
+            assert AccessAnalyzerEnabledFixer().fix(region=AWS_REGION_EU_WEST_1)
