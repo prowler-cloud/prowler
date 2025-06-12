@@ -135,13 +135,11 @@ export default async function ComplianceDetail({
 
   const selectedScanId = scanId || expandedScansData[0]?.id || null;
 
-  // Fetch metadata info for regions
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
     filters: {
       "filter[scan_id]": selectedScanId,
     },
   });
-
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
@@ -214,7 +212,6 @@ const SSRComplianceContent = async ({
     );
   }
 
-  // Get compliance data and attributes once
   const [attributesData, requirementsData] = await Promise.all([
     getComplianceAttributes(complianceId),
     getComplianceRequirements({
@@ -224,20 +221,14 @@ const SSRComplianceContent = async ({
     }),
   ]);
 
-  // Determine framework from the first attribute item
   const framework = attributesData?.data?.[0]?.attributes?.framework;
   const mapper = getComplianceMapper(framework);
-
-  // Use the same data for both compliance view and heatmap
   const data = mapper.mapComplianceData(
     attributesData,
     requirementsData,
     filter,
   );
-
-  // Calculate category heatmap data
   const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
-
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -246,13 +237,8 @@ const SSRComplianceContent = async ({
     }),
     { pass: 0, fail: 0, manual: 0 },
   );
-
   const accordionItems = mapper.toAccordionItems(data, scanId);
   const topFailedSections = mapper.getTopFailedSections(data);
-
-  // Todo: rethink as every compliance has a different number of items
-  // const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
-  const defaultKeys = [""];
 
   return (
     <div className="space-y-8">
@@ -270,7 +256,7 @@ const SSRComplianceContent = async ({
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
-        defaultExpandedKeys={defaultKeys}
+        defaultExpandedKeys={[]}
       />
     </div>
   );
