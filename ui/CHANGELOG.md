@@ -30,6 +30,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Add `Provider UID` filter to scans page. [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability. [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
+- Refactor credentials forms with reusable components and error handling. [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
 
 ---
 
