@@ -1,5 +1,4 @@
 import os
-import re
 import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -163,6 +162,5 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
 
-        sanitized_provider = re.sub(r"[^\w\-]", "-", provider)
-        assert path.endswith(f"{sanitized_provider}-{output_file_timestamp}")
-        assert compliance.endswith(f"{sanitized_provider}-{output_file_timestamp}")
+        assert path.endswith(f"aws-test-check-{output_file_timestamp}")
+        assert compliance.endswith(f"aws-test-check-{output_file_timestamp}")
