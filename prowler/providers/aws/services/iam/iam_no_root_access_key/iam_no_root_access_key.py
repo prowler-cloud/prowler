@@ -33,7 +33,7 @@ class iam_no_root_access_key(Check):
                             report.status = "PASS"
                             if org_managed:
                                 report.status_extended = (
-                                    "Root account has credentials but no access keys. "
+                                    "Root account has password configured but no access keys. "
                                     "Consider removing individual root credentials since organizational "
                                     "root management is active."
                                 )
@@ -45,7 +45,7 @@ class iam_no_root_access_key(Check):
                             report.status = "FAIL"
                             if org_managed:
                                 report.status_extended = (
-                                    "Root account has credentials including two active access keys "
+                                    "Root account has two active access keys "
                                     "despite organizational root management being enabled."
                                 )
                             else:
@@ -56,7 +56,7 @@ class iam_no_root_access_key(Check):
                             report.status = "FAIL"
                             if org_managed:
                                 report.status_extended = (
-                                    "Root account has credentials including one active access key "
+                                    "Root account has one active access key "
                                     "despite organizational root management being enabled."
                                 )
                             else:
