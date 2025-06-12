@@ -69,7 +69,6 @@ export interface ComplianceMapper {
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
-// Default mapper (fallback to generic for maximum compatibility)
 const defaultMapper: ComplianceMapper = {
   mapComplianceData: mapGenericComplianceData,
   toAccordionItems: toGenericAccordionItems,

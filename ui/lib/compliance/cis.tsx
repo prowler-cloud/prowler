@@ -8,12 +8,17 @@ import {
   CISAttributesMetadata,
   Framework,
   Requirement,
-  RequirementItemData,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 
-import { updateCounters } from "./commons";
+import {
+  calculateFrameworkCounters,
+  createRequirementsMap,
+  findOrCreateCategory,
+  findOrCreateFramework,
+  updateCounters,
+} from "./commons";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -21,14 +26,7 @@ export const mapComplianceData = (
   filter?: string, // "Level 1" or "Level 2" or undefined (show all)
 ): Framework[] => {
   const attributes = attributesData?.data || [];
-  const requirements = requirementsData?.data || [];
-
-  // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map<string, RequirementItemData>();
-  requirements.forEach((req: RequirementItemData) => {
-    requirementsMap.set(req.id, req);
-  });
-
+  const requirementsMap = createRequirementsMap(requirementsData);
   const frameworks: Framework[] = [];
 
   // Process attributes and merge with requirements data
@@ -55,34 +53,14 @@ export const mapComplianceData = (
     const checks = attributeItem.attributes.attributes.check_ids || [];
     const requirementName = id;
 
-    // Find or create framework
-    let framework = frameworks.find((f) => f.name === frameworkName);
-    if (!framework) {
-      framework = {
-        name: frameworkName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        categories: [],
-      };
-      frameworks.push(framework);
-    }
+    // Find or create framework using common helper
+    const framework = findOrCreateFramework(frameworks, frameworkName);
 
     const normalizedSectionName = sectionName.replace(/^(\d+)\s/, "$1. ");
-    let category = framework.categories.find(
-      (c) => c.name === normalizedSectionName,
+    const category = findOrCreateCategory(
+      framework.categories,
+      normalizedSectionName,
     );
-
-    if (!category) {
-      category = {
-        name: normalizedSectionName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        controls: [],
-      };
-      framework.categories.push(category);
-    }
 
     // Create a control for this requirement (each requirement is its own control)
     const controlLabel = `${id} - ${description}`;
@@ -118,34 +96,14 @@ export const mapComplianceData = (
 
     control.requirements.push(requirement);
 
-    // Update control counters
+    // Update control counters using common helper
     updateCounters(control, requirement.status);
 
     category.controls.push(control);
   }
 
-  // Calculate counters for categories and frameworks
-  frameworks.forEach((framework) => {
-    framework.pass = 0;
-    framework.fail = 0;
-    framework.manual = 0;
-
-    framework.categories.forEach((category) => {
-      category.pass = 0;
-      category.fail = 0;
-      category.manual = 0;
-
-      category.controls.forEach((control) => {
-        category.pass += control.pass;
-        category.fail += control.fail;
-        category.manual += control.manual;
-      });
-
-      framework.pass += category.pass;
-      framework.fail += category.fail;
-      framework.manual += category.manual;
-    });
-  });
+  // Calculate counters using common helper
+  calculateFrameworkCounters(frameworks);
 
   return frameworks;
 };

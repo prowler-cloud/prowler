@@ -9,26 +9,22 @@ import {
   Framework,
   MITREAttributesMetadata,
   Requirement,
-  RequirementItemData,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 
-import { updateCounters } from "./commons";
+import {
+  calculateFrameworkCounters,
+  createRequirementsMap,
+  findOrCreateFramework,
+} from "./commons";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
 ): Framework[] => {
   const attributes = attributesData?.data || [];
-  const requirements = requirementsData?.data || [];
-
-  // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map<string, RequirementItemData>();
-  requirements.forEach((req: RequirementItemData) => {
-    requirementsMap.set(req.id, req);
-  });
-
+  const requirementsMap = createRequirementsMap(requirementsData);
   const frameworks: Framework[] = [];
 
   // Process attributes and merge with requirements data
@@ -54,18 +50,8 @@ export const mapComplianceData = (
     const techniqueUrl = attributeItem.attributes.technique_url || "";
     const requirementName = `${id} - ${techniqueName}`;
 
-    // Find or create framework
-    let framework = frameworks.find((f) => f.name === frameworkName);
-    if (!framework) {
-      framework = {
-        name: frameworkName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        categories: [],
-      };
-      frameworks.push(framework);
-    }
+    // Find or create framework using common helper
+    const framework = findOrCreateFramework(frameworks, frameworkName);
 
     // Create requirement directly (flat structure - no categories)
     const finalStatus: RequirementStatus = status as RequirementStatus;
@@ -103,10 +89,10 @@ export const mapComplianceData = (
     // Add requirement directly to framework (store in a special property)
     (framework as any).requirements = (framework as any).requirements || [];
     (framework as any).requirements.push(requirement);
-
-    // Update framework counters
-    updateCounters(framework, requirement.status);
   }
+
+  // Calculate counters using common helper (works with flat structure)
+  calculateFrameworkCounters(frameworks);
 
   return frameworks;
 };

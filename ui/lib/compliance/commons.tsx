@@ -2,10 +2,12 @@ import {
   CategoryData,
   FailedSection,
   Framework,
+  Requirement,
+  RequirementItemData,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 
-// Helper function to update counters - shared across all compliance mappers
 export const updateCounters = (
   target: { pass: number; fail: number; manual: number },
   status: RequirementStatus,
@@ -19,7 +21,6 @@ export const updateCounters = (
   }
 };
 
-// Common function for getting top failed sections
 export const getTopFailedSections = (
   mappedData: Framework[],
 ): FailedSection[] => {
@@ -112,4 +113,109 @@ export const calculateCategoryHeatmapData = (
     console.error("Error calculating category heatmap data:", error);
     return [];
   }
+};
+
+export const createRequirementsMap = (
+  requirementsData: RequirementsData,
+): Map<string, RequirementItemData> => {
+  const requirementsMap = new Map<string, RequirementItemData>();
+  const requirements = requirementsData?.data || [];
+  requirements.forEach((req: RequirementItemData) => {
+    requirementsMap.set(req.id, req);
+  });
+  return requirementsMap;
+};
+
+export const findOrCreateFramework = (
+  frameworks: Framework[],
+  frameworkName: string,
+): Framework => {
+  let framework = frameworks.find((f) => f.name === frameworkName);
+  if (!framework) {
+    framework = {
+      name: frameworkName,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      categories: [],
+    };
+    frameworks.push(framework);
+  }
+  return framework;
+};
+
+export const findOrCreateCategory = (
+  categories: any[],
+  categoryName: string,
+) => {
+  let category = categories.find((c) => c.name === categoryName);
+  if (!category) {
+    category = {
+      name: categoryName,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      controls: [],
+    };
+    categories.push(category);
+  }
+  return category;
+};
+
+export const findOrCreateControl = (controls: any[], controlLabel: string) => {
+  let control = controls.find((c) => c.label === controlLabel);
+  if (!control) {
+    control = {
+      label: controlLabel,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      requirements: [],
+    };
+    controls.push(control);
+  }
+  return control;
+};
+
+export const calculateFrameworkCounters = (frameworks: Framework[]) => {
+  frameworks.forEach((framework) => {
+    // Reset framework counters
+    framework.pass = 0;
+    framework.fail = 0;
+    framework.manual = 0;
+
+    // Handle flat structure (requirements directly in framework)
+    const directRequirements = (framework as any).requirements || [];
+    if (directRequirements.length > 0) {
+      directRequirements.forEach((requirement: Requirement) => {
+        updateCounters(framework, requirement.status);
+      });
+      return;
+    }
+
+    // Handle hierarchical structure (categories -> controls -> requirements)
+    framework.categories.forEach((category) => {
+      category.pass = 0;
+      category.fail = 0;
+      category.manual = 0;
+
+      category.controls.forEach((control) => {
+        control.pass = 0;
+        control.fail = 0;
+        control.manual = 0;
+
+        control.requirements.forEach((requirement) => {
+          updateCounters(control, requirement.status);
+        });
+
+        category.pass += control.pass;
+        category.fail += control.fail;
+        category.manual += control.manual;
+      });
+
+      framework.pass += category.pass;
+      framework.fail += category.fail;
+      framework.manual += category.manual;
+    });
+  });
 };

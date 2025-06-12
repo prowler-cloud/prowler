@@ -8,18 +8,24 @@ import {
   Framework,
   GenericAttributesMetadata,
   Requirement,
-  RequirementItemData,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 
-import { updateCounters } from "./commons";
+import {
+  calculateFrameworkCounters,
+  createRequirementsMap,
+  findOrCreateCategory,
+  findOrCreateControl,
+  findOrCreateFramework,
+  updateCounters,
+} from "./commons";
 
 interface ProcessedItem {
   id: string;
   attrs: GenericAttributesMetadata;
   attributeItem: any;
-  requirementData: RequirementItemData;
+  requirementData: any;
 }
 
 const createRequirement = (itemData: ProcessedItem): Requirement => {
@@ -46,54 +52,6 @@ const createRequirement = (itemData: ProcessedItem): Requirement => {
   };
 };
 
-const findOrCreateFramework = (
-  frameworks: Framework[],
-  frameworkName: string,
-): Framework => {
-  let framework = frameworks.find((f) => f.name === frameworkName);
-  if (!framework) {
-    framework = {
-      name: frameworkName,
-      pass: 0,
-      fail: 0,
-      manual: 0,
-      categories: [],
-    };
-    frameworks.push(framework);
-  }
-  return framework;
-};
-
-const findOrCreateCategory = (categories: any[], categoryName: string) => {
-  let category = categories.find((c) => c.name === categoryName);
-  if (!category) {
-    category = {
-      name: categoryName,
-      pass: 0,
-      fail: 0,
-      manual: 0,
-      controls: [],
-    };
-    categories.push(category);
-  }
-  return category;
-};
-
-const findOrCreateControl = (controls: any[], controlLabel: string) => {
-  let control = controls.find((c) => c.label === controlLabel);
-  if (!control) {
-    control = {
-      label: controlLabel,
-      pass: 0,
-      fail: 0,
-      manual: 0,
-      requirements: [],
-    };
-    controls.push(control);
-  }
-  return control;
-};
-
 const shouldUseThreeLevelHierarchy = (items: ProcessedItem[]): boolean => {
   const itemsWithSection = items.filter(
     (item) =>
@@ -111,14 +69,7 @@ export const mapComplianceData = (
   requirementsData: RequirementsData,
 ): Framework[] => {
   const attributes = attributesData?.data || [];
-  const requirements = requirementsData?.data || [];
-
-  // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map<string, RequirementItemData>();
-  requirements.forEach((req: RequirementItemData) => {
-    requirementsMap.set(req.id, req);
-  });
-
+  const requirementsMap = createRequirementsMap(requirementsData);
   const frameworks: Framework[] = [];
   const itemsByFramework = new Map<string, ProcessedItem[]>();
 
@@ -194,30 +145,8 @@ export const mapComplianceData = (
     }
   }
 
-  // Calculate counters for hierarchical structures
-  frameworks.forEach((framework) => {
-    if (framework.categories.length > 0) {
-      framework.pass = 0;
-      framework.fail = 0;
-      framework.manual = 0;
-
-      framework.categories.forEach((category) => {
-        category.pass = 0;
-        category.fail = 0;
-        category.manual = 0;
-
-        category.controls.forEach((control) => {
-          category.pass += control.pass;
-          category.fail += control.fail;
-          category.manual += control.manual;
-        });
-
-        framework.pass += category.pass;
-        framework.fail += category.fail;
-        framework.manual += category.manual;
-      });
-    }
-  });
+  // Calculate counters using common helper
+  calculateFrameworkCounters(frameworks);
 
   return frameworks;
 };
