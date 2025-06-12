@@ -243,6 +243,27 @@ def mock_recover_checks_from_aws_provider_cognito_service(*_):
     return []
 
 
+def mock_recover_checks_from_aws_provider_eks_service(*_):
+    return [
+        (
+            "eks_cluster_not_publicly_accessible",
+            "/root_dir/fake_path/eks/eks_cluster_not_publicly_accessible",
+        ),
+        (
+            "eks_cluster_uses_a_supported_version",
+            "/root_dir/fake_path/eks/eks_cluster_uses_a_supported_version",
+        ),
+        (
+            "eks_cluster_network_policy_enabled",
+            "/root_dir/fake_path/eks/eks_cluster_network_policy_enabled",
+        ),
+        (
+            "eks_control_plane_logging_all_types_enabled",
+            "/root_dir/fake_path/eks/eks_control_plane_logging_all_types_enabled",
+        ),
+    ]
+
+
 class TestAWSProvider:
     @mock_aws
     def test_aws_provider_default(self):
@@ -1603,6 +1624,27 @@ aws:
         recovered_checks = aws_provider.get_checks_from_input_arn()
 
         assert recovered_checks == expected_checks
+
+    @mock_aws
+    @patch(
+        "prowler.lib.check.utils.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_eks_service,
+    )
+    def test_get_checks_from_input_arn_eks(self):
+        expected_checks = [
+            "eks_cluster_not_publicly_accessible",
+            "eks_cluster_uses_a_supported_version",
+            "eks_cluster_network_policy_enabled",
+            "eks_control_plane_logging_all_types_enabled",
+        ]
+
+        aws_provider = AwsProvider()
+        aws_provider._audit_resources = [
+            f"arn:aws:eks:us-east-1:{AWS_ACCOUNT_NUMBER}:cluster/test-eks"
+        ]
+        recovered_checks = aws_provider.get_checks_from_input_arn()
+
+        assert set(recovered_checks) == set(expected_checks)
 
     @mock_aws
     @patch(

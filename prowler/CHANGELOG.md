@@ -28,6 +28,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Make `validate_mutelist` method static inside `Mutelist` class. [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
 
 ### Fixed
+- Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
 - Add github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
 
 ---
