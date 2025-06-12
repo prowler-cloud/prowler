@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { filterEmptyValues } from "@/lib";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
@@ -142,9 +143,11 @@ export const useCredentialsForm = ({
   const handleSubmit = async (values: CredentialsFormData) => {
     const formData = new FormData();
 
-    Object.entries(values).forEach(
-      ([key, value]) => value !== undefined && formData.append(key, value),
-    );
+    // Filter out empty values first, then append all remaining values
+    const filteredValues = filterEmptyValues(values);
+    Object.entries(filteredValues).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
 
     const data = await onSubmit(formData);
 

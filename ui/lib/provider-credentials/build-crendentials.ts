@@ -1,18 +1,14 @@
 import { revalidatePath } from "next/cache";
 
-import { getErrorMessage, getFormValue, parseStringify } from "@/lib";
+import {
+  filterEmptyValues,
+  getErrorMessage,
+  getFormValue,
+  parseStringify,
+} from "@/lib";
 import { ProviderType } from "@/types";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
-
-// Helper function to filter out null/undefined values
-const filterDefinedValues = (obj: Record<string, any>) => {
-  return Object.fromEntries(
-    Object.entries(obj).filter(
-      ([_, value]) => value !== null && value !== undefined,
-    ),
-  );
-};
 
 // Helper functions for each provider type
 export const buildAWSSecret = (formData: FormData, isRole: boolean) => {
@@ -51,7 +47,7 @@ export const buildAWSSecret = (formData: FormData, isRole: boolean) => {
         ProviderCredentialFields.ROLE_SESSION_NAME,
       ),
     };
-    return filterDefinedValues(secret);
+    return filterEmptyValues(secret);
   }
 
   const secret = {
@@ -68,7 +64,7 @@ export const buildAWSSecret = (formData: FormData, isRole: boolean) => {
       ProviderCredentialFields.AWS_SESSION_TOKEN,
     ),
   };
-  return filterDefinedValues(secret);
+  return filterEmptyValues(secret);
 };
 
 export const buildAzureSecret = (formData: FormData) => {
@@ -86,7 +82,7 @@ export const buildAzureSecret = (formData: FormData) => {
       ProviderCredentialFields.TENANT_ID,
     ),
   };
-  return filterDefinedValues(secret);
+  return filterEmptyValues(secret);
 };
 
 export const buildM365Secret = (formData: FormData) => {
@@ -101,7 +97,7 @@ export const buildM365Secret = (formData: FormData) => {
       ProviderCredentialFields.PASSWORD,
     ),
   };
-  return filterDefinedValues(secret);
+  return filterEmptyValues(secret);
 };
 
 export const buildGCPSecret = (
@@ -138,7 +134,7 @@ export const buildGCPSecret = (
       ProviderCredentialFields.REFRESH_TOKEN,
     ),
   };
-  return filterDefinedValues(secret);
+  return filterEmptyValues(secret);
 };
 
 export const buildKubernetesSecret = (formData: FormData) => {
@@ -148,7 +144,7 @@ export const buildKubernetesSecret = (formData: FormData) => {
       ProviderCredentialFields.KUBECONFIG_CONTENT,
     ),
   };
-  return filterDefinedValues(secret);
+  return filterEmptyValues(secret);
 };
 
 // Main function to build secret configuration
