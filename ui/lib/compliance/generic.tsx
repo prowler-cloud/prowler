@@ -6,7 +6,7 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
   Framework,
-  ISO27001AttributesMetadata,
+  GenericAttributesMetadata,
   Requirement,
   RequirementItemData,
   RequirementsData,
@@ -32,7 +32,7 @@ export const mapComplianceData = (
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
     const metadataArray = attributeItem.attributes?.attributes
-      ?.metadata as unknown as ISO27001AttributesMetadata[];
+      ?.metadata as unknown as GenericAttributesMetadata[];
     const attrs = metadataArray?.[0];
     if (!attrs) continue;
 
@@ -41,14 +41,15 @@ export const mapComplianceData = (
     if (!requirementData) continue;
 
     const frameworkName = attributeItem.attributes.framework;
-    const categoryName = attrs.Category;
-    const controlLabel = `${attrs.Objetive_ID} - ${attrs.Objetive_Name}`;
+    const sectionName = attrs.Section; // Level 1: Section -> Category
+    const requirementName = attributeItem.attributes.name || id; // Level 2: name -> Control
     const description = attributeItem.attributes.description;
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
-    const requirementName = id;
-    const objetiveName = attrs.Objetive_Name;
-    const checkSummary = attrs.Check_Summary;
+
+    if (!sectionName) {
+      continue;
+    }
 
     // Find or create framework
     let framework = frameworks.find((f) => f.name === frameworkName);
@@ -63,11 +64,11 @@ export const mapComplianceData = (
       frameworks.push(framework);
     }
 
-    // Find or create category
-    let category = framework.categories.find((c) => c.name === categoryName);
+    // Find or create category (Section)
+    let category = framework.categories.find((c) => c.name === sectionName);
     if (!category) {
       category = {
-        name: categoryName,
+        name: sectionName,
         pass: 0,
         fail: 0,
         manual: 0,
@@ -76,18 +77,14 @@ export const mapComplianceData = (
       framework.categories.push(category);
     }
 
-    // Find or create control
-    let control = category.controls.find((c) => c.label === controlLabel);
-    if (!control) {
-      control = {
-        label: controlLabel,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        requirements: [],
-      };
-      category.controls.push(control);
-    }
+    // Create a control for this requirement (each requirement is its own control in this generic approach)
+    const control = {
+      label: requirementName,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      requirements: [] as Requirement[],
+    };
 
     // Create requirement
     const finalStatus: RequirementStatus = status as RequirementStatus;
@@ -99,15 +96,28 @@ export const mapComplianceData = (
       pass: finalStatus === "PASS" ? 1 : 0,
       fail: finalStatus === "FAIL" ? 1 : 0,
       manual: finalStatus === "MANUAL" ? 1 : 0,
-      objetive_name: objetiveName,
-      check_summary: checkSummary,
-      control_label: controlLabel,
+      item_id: attrs.ItemId,
+      subsection: attrs.SubSection,
+      subgroup: attrs.SubGroup || undefined,
+      service: attrs.Service || undefined,
+      type: attrs.Type || undefined,
     };
 
     control.requirements.push(requirement);
+
+    // Update control counters
+    if (requirement.status === "MANUAL") {
+      control.manual++;
+    } else if (requirement.status === "PASS") {
+      control.pass++;
+    } else if (requirement.status === "FAIL") {
+      control.fail++;
+    }
+
+    category.controls.push(control);
   }
 
-  // Calculate counters
+  // Calculate counters for categories and frameworks
   frameworks.forEach((framework) => {
     framework.pass = 0;
     framework.fail = 0;
@@ -119,20 +129,6 @@ export const mapComplianceData = (
       category.manual = 0;
 
       category.controls.forEach((control) => {
-        control.pass = 0;
-        control.fail = 0;
-        control.manual = 0;
-
-        control.requirements.forEach((requirement) => {
-          if (requirement.status === "MANUAL") {
-            control.manual++;
-          } else if (requirement.status === "PASS") {
-            control.pass++;
-          } else if (requirement.status === "FAIL") {
-            control.fail++;
-          }
-        });
-
         category.pass += control.pass;
         category.fail += control.fail;
         category.manual += control.manual;
@@ -153,10 +149,6 @@ export const toAccordionItems = (
 ): AccordionItemProps[] => {
   return data.flatMap((framework) =>
     framework.categories.map((category) => {
-      const allRequirements = category.controls.flatMap(
-        (control) => control.requirements,
-      );
-
       return {
         key: `${framework.name}-${category.name}`,
         title: (
@@ -169,15 +161,16 @@ export const toAccordionItems = (
           />
         ),
         content: "",
-        items: allRequirements.map((requirement, j: number) => {
-          const itemKey = `${framework.name}-${category.name}-req-${j}`;
+        items: category.controls.map((control, i: number) => {
+          const requirement = control.requirements[0]; // Each control has one requirement
+          const itemKey = `${framework.name}-${category.name}-control-${i}`;
 
           return {
             key: itemKey,
             title: (
               <ComplianceAccordionRequirementTitle
                 type=""
-                name={(requirement.control_label as string) || requirement.name}
+                name={control.label}
                 status={requirement.status as FindingStatus}
               />
             ),

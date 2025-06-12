@@ -17,7 +17,7 @@ interface CISDetailsProps {
 
 export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
   const processReferences = (
-    references: string | number | string[] | undefined,
+    references: string | number | string[] | object[] | undefined,
   ): string[] => {
     if (typeof references !== "string") return [];
 

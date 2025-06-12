@@ -101,9 +101,7 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
       <div className="flex w-[400px] flex-col items-center justify-between">
         {title}
         <div className="flex h-[320px] w-full items-center justify-center">
-          <p className="text-sm text-gray-800 dark:text-gray-200">
-            There are no failed sections
-          </p>
+          <p className="text-sm text-gray-500">There are no failed sections</p>
         </div>
       </div>
     );
