@@ -199,7 +199,17 @@ const SSRComplianceContent = async ({
   filter?: string;
   logoPath?: string;
 }) => {
-  if (!scanId) {
+  const [attributesData, requirementsData] = await Promise.all([
+    getComplianceAttributes(complianceId),
+    getComplianceRequirements({
+      complianceId,
+      scanId,
+      region,
+    }),
+  ]);
+  const type = requirementsData?.data?.[0]?.type;
+
+  if (!scanId || type === "tasks") {
     return (
       <div className="space-y-8">
         <ChartsWrapper logoPath={logoPath}>
@@ -211,15 +221,6 @@ const SSRComplianceContent = async ({
       </div>
     );
   }
-
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
 
   const framework = attributesData?.data?.[0]?.attributes?.framework;
   const mapper = getComplianceMapper(framework);

@@ -118,11 +118,14 @@ const SSRComplianceGrid = async ({
     query,
   });
 
+  const type = compliancesData?.data?.[0]?.type;
+
   // Check if the response contains no data
   if (
     !compliancesData ||
     !compliancesData.data ||
-    compliancesData.data.length === 0
+    compliancesData.data.length === 0 ||
+    type === "tasks"
   ) {
     return (
       <div className="flex h-full items-center">
