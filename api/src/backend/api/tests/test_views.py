@@ -4779,13 +4779,13 @@ class TestComplianceOverviewViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        assert len(data) == 2  # Two compliance frameworks
+        assert len(data) == 3  # Three compliance frameworks
 
         # Check that we get aggregated data for each compliance framework
         framework_ids = [item["id"] for item in data]
         assert "aws_account_security_onboarding_aws" in framework_ids
         assert "cis_1.4_aws" in framework_ids
-
+        assert "mitre_attack" in framework_ids
         # Check structure of response
         for item in data:
             assert "id" in item
@@ -4902,25 +4902,18 @@ class TestComplianceOverviewViewSet:
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
 
-    def test_compliance_overview_requirements_technique_details(
-        self, authenticated_client, compliance_requirements_overviews_fixture
+    def test_compliance_overview_attributes_technique_details(
+        self, authenticated_client
     ):
-        requirement_overview7 = compliance_requirements_overviews_fixture[6]
-        scan_id = str(requirement_overview7.scan.id)
-        compliance_id = requirement_overview7.compliance_id
-
         response = authenticated_client.get(
-            reverse("complianceoverview-requirements"),
-            {
-                "filter[scan_id]": scan_id,
-                "filter[compliance_id]": compliance_id,
-            },
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "mitre_attack"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) > 0
 
-        # Check structure of requirements response
+        # Check structure of attributes response
         for item in data:
             assert "id" in item
             assert "attributes" in item
@@ -4928,7 +4921,7 @@ class TestComplianceOverviewViewSet:
             assert "framework" in attributes
             assert "version" in attributes
             assert "description" in attributes
-            assert "status" in attributes
+            assert "attributes" in attributes
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
             assert "technique_details" in attributes["attributes"]
