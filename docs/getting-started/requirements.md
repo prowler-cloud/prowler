@@ -208,9 +208,12 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
     - `Policy.Read.All`: Required for all services.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+    - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication.
+    - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
 
-- **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
+
+- **Powershell Modules Permissions** (if using user credentials): These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.
     - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
 

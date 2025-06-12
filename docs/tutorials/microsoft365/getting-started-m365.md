@@ -92,7 +92,7 @@ With this done you will have all the needed keys, summarized in the following ta
 
 ---
 
-### Grant required API permissions
+### Grant required Graph API permissions
 
 Assign the following Microsoft Graph permissions:
 - `AuditLog.Read.All`: Required for Entra service.
@@ -128,13 +128,23 @@ Follow these steps to assign the permissions:
 
     ![Add API Permission](./img/add-delegated-api-permission.png)
 
-5. Search and select:
+
+### Grant PowerShell modules permissions
+
+The permissions you need to grant depends on whether you are using user credentials or service principal to authenticate to the M365 modules.
+
+???+ warning "Warning"
+    Make sure you add the correct set of permissions for the authentication method you are using.
+
+#### If using user authentication
+
+1. Search and select:
 
     - `User.Read`
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-6. Click `Add permissions`, then **grant admin consent**
+2. Click `Add permissions`, then **grant admin consent**
 
     ![Grant Admin Consent](./img/grant-admin-consent.png)
 
@@ -142,34 +152,67 @@ Follow these steps to assign the permissions:
 
     ![Final Permission Assignment](./img/final-permissions-m365.png)
 
----
+3. Assign **required roles** to your **user**
 
-### Assign required roles to your user
+    Assign one of the following roles to your User:
 
-Assign one of the following roles to your User:
+    - `Global Reader` (recommended): this allows you to read all roles needed.
+    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
 
-- `Global Reader` (recommended): this allows you to read all roles needed.
-- `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+    Follow these steps to assign the role:
 
-Follow these steps to assign the role:
+    1. Go to Users > All Users > Click on the email for the user you will use
 
-1. Go to Users > All Users > Click on the email for the user you will use
+        ![User Overview](./img/user-info-page.png)
 
-    ![User Overview](./img/user-info-page.png)
+    2. Click `Assigned Roles`
 
-2. Click `Assigned Roles`
+        ![User Roles](./img/user-role-page.png)
 
-    ![User Roles](./img/user-role-page.png)
+    3. Click on `Add assignments`, then search and select:
 
-3. Click on `Add assignments`, then search and select:
+        - `Global Reader` This is the recommended, if you want to use the others just search for them
 
-    - `Global Reader` This is the recommended, if you want to use the others just search for them
+        ![Global Reader Screenshots](./img/global-reader.png)
 
-    ![Global Reader Screenshots](./img/global-reader.png)
+    4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
 
-4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
+        ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
 
-    ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
+#### If using application(service principal) authentication
+
+To grant the permissions for the PowerShell modules via application authentication, you need to add the APIs to your app registration.
+
+???+ warning "Warning"
+    You need to have a license that allows you to use the APIs.
+
+1. Add Exchange API:
+
+    - Search and select`Office 365 Exchange Online` API in **APIs my organization uses**.
+
+    ![Office 365 Exchange Online API](./img/search-exchange-api.png)
+
+    - Select `Exchange.ManageAsApp` permission and click on `Add permissions`.
+
+    ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
+
+2. Add Teams API:
+
+    - Search and select `Skype and Teams Tenant Admin API` API in **APIs my organization uses**.
+
+    ![Skype and Teams Tenant Admin API](./img/search-skype-teams-tenant-admin-api.png)
+
+    - Select `application_access` permission and click on `Add permissions`.
+
+    ![application_access Permission](./img/teams-permission.png)
+
+3. Click on `Grant admin consent for <your-tenant-name>` to grant admin consent.
+
+    ![Grant Admin Consent](./img/grant-external-api-permissions.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions.png)
 
 ---
 
