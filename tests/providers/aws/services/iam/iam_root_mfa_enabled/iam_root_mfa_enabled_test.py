@@ -176,7 +176,7 @@ class Test_iam_root_mfa_enabled_test:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "Root account has password, access_key_1 credentials with MFA enabled. "
+                "Root account has credentials with MFA enabled. "
                 "Consider removing individual root credentials since organizational "
                 "root management is active.",
                 result[0].status_extended,
@@ -224,7 +224,7 @@ class Test_iam_root_mfa_enabled_test:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "Root account has password, access_key_2 credentials without MFA "
+                "Root account has credentials without MFA "
                 "despite organizational root management being enabled.",
                 result[0].status_extended,
             )

@@ -9,11 +9,12 @@ class iam_no_root_access_key(Check):
         if iam_client.credential_report:
             for user in iam_client.credential_report:
                 if user["user"] == "<root_account>":
-                    # Check if root has any credentials at all
-                    has_creds, cred_types = iam_client.has_credentials(user)
+                    password_enabled = user["password_enabled"] == "true"
+                    access_key_1_active = user["access_key_1_active"] == "true"
+                    access_key_2_active = user["access_key_2_active"] == "true"
 
                     # Only report if root actually has credentials
-                    if has_creds:
+                    if password_enabled or access_key_1_active or access_key_2_active:
                         report = Check_Report_AWS(
                             metadata=self.metadata(), resource=user
                         )
@@ -28,14 +29,11 @@ class iam_no_root_access_key(Check):
                             in iam_client.organization_features
                         )
 
-                        if (
-                            user["access_key_1_active"] == "false"
-                            and user["access_key_2_active"] == "false"
-                        ):
+                        if not access_key_1_active and not access_key_2_active:
                             report.status = "PASS"
                             if org_managed:
                                 report.status_extended = (
-                                    f"Root account has {', '.join(cred_types)} credentials but no access keys. "
+                                    "Root account has credentials but no access keys. "
                                     "Consider removing individual root credentials since organizational "
                                     "root management is active."
                                 )
@@ -43,14 +41,11 @@ class iam_no_root_access_key(Check):
                                 report.status_extended = (
                                     "Root account does not have access keys."
                                 )
-                        elif (
-                            user["access_key_1_active"] == "true"
-                            and user["access_key_2_active"] == "true"
-                        ):
+                        elif access_key_1_active and access_key_2_active:
                             report.status = "FAIL"
                             if org_managed:
                                 report.status_extended = (
-                                    f"Root account has {', '.join(cred_types)} credentials including two active access keys "
+                                    "Root account has credentials including two active access keys "
                                     "despite organizational root management being enabled."
                                 )
                             else:
@@ -61,7 +56,7 @@ class iam_no_root_access_key(Check):
                             report.status = "FAIL"
                             if org_managed:
                                 report.status_extended = (
-                                    f"Root account has {', '.join(cred_types)} credentials including one active access key "
+                                    "Root account has credentials including one active access key "
                                     "despite organizational root management being enabled."
                                 )
                             else:

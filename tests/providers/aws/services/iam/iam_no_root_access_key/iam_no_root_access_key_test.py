@@ -257,7 +257,7 @@ class Test_iam_no_root_access_key_test:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "Root account has password credentials but no access keys. Consider removing individual root credentials since organizational root management is active."
+                    == "Root account has credentials but no access keys. Consider removing individual root credentials since organizational root management is active."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (
@@ -304,7 +304,7 @@ class Test_iam_no_root_access_key_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "Root account has password, access_key_1 credentials including one active access key despite organizational root management being enabled."
+                    == "Root account has credentials including one active access key despite organizational root management being enabled."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (
@@ -351,7 +351,7 @@ class Test_iam_no_root_access_key_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "Root account has access_key_1, access_key_2 credentials including two active access keys despite organizational root management being enabled."
+                    == "Root account has credentials including two active access keys despite organizational root management being enabled."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (

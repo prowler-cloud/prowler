@@ -1029,28 +1029,6 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def has_credentials(self, user_data):
-        """Check if user has any form of credentials set"""
-        credentials_exist = False
-        credential_types = []
-
-        # Check for password
-        if user_data["password_enabled"] == "true":
-            credentials_exist = True
-            credential_types.append("password")
-
-        # Check for access keys
-        if user_data["access_key_1_active"] == "true":
-            credentials_exist = True
-            credential_types.append("access_key_1")
-
-        if user_data["access_key_2_active"] == "true":
-            credentials_exist = True
-            credential_types.append("access_key_2")
-
-        return credentials_exist, credential_types
-
-
 class MFADevice(BaseModel):
     serial_number: str
     type: str
