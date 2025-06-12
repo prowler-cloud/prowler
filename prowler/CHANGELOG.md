@@ -22,6 +22,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
 
 ---
+## [v5.7.5] (Prowler v5.7.5)
+
+### Fixed
+- Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
+
+---
 
 ## [v5.7.3] (Prowler v5.7.3)
 
