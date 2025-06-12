@@ -907,7 +907,8 @@ class Test_app_ensure_http_is_redirected_to_https:
 
 The testing of Azure Services follows the same principles as the one of Google Cloud checks. All API calls are still mocked, but for methods that initialize attributes via an API call, use the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class to ensure proper mocking.
 
-⚠ Rembember: Every method within a service must be tested to ensure full coverage and accurate validation.
+???+ important "Remember"
+    Every method within a service must be tested to ensure full coverage and accurate validation.
 
 The following example presents a real testing class, but includes additional comments for educational purposes, explaining key concepts and implementation details.
 
