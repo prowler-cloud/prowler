@@ -98,7 +98,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       shadow="sm"
       isPressable
       onPress={navigateToDetail}
-      as={"div"}
     >
       <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
         <div className="flex w-full items-center space-x-4">

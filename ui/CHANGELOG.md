@@ -8,7 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Fix sync between filter buttons and URL when filters change. [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
 - Improve heatmap perfomance. [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
-- Fixed hydration warning caused by invalid button nesting in `DownloadIconButton` on Compliance and Scan pages. [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
+- SelectScanProvider warning fixed with empty alias. [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
 
 ### 🚀 Added
 
