@@ -12,7 +12,7 @@ Below are key resources and insights gained throughout the testing process.
 
 - https://docs.python.org/3/library/unittest.mock.html#where-to-patch
 - https://stackoverflow.com/questions/893333/multiple-variables-in-a-with-statement
-- ​https://docs.python.org/3/reference/compound\_stmts.html#the-with-statement
+- ​https://docs.python.org/3/reference/compound_stmts.html#the-with-statement
 
 **Utilities for Tracing Mocking and Test Execution**
 
@@ -57,14 +57,14 @@ Other Commands for Running Tests
 - Running tests for a provider check:
 `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>/<check>`
 
-???+ note 
+???+ note
     Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) for more details.
 
 ## AWS Testing Approaches
 
 For AWS providers, different testing approaches apply based on API coverage based on several criteria.
 
-???+ note 
+???+ note
     Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests. ****
 
 - AWS API Calls Covered by [Moto](https://github.com/getmoto/moto):
@@ -205,7 +205,7 @@ class Test_iam_password_policy_uppercase:
 
 If the IAM service required for testing is not supported by the Moto library, use [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) to inject objects into the service client. ⚠️ Note: As stated above, direct service instantiation must be avoided to prevent actual AWS API calls.
 
-???+ note 
+???+ note
     The example below demonstrates the IAM GetAccountPasswordPolicy API, which is covered by Moto, but is used for instructional purposes only.
 
 #### Mocking Service Objects Using MagicMock
@@ -378,7 +378,7 @@ class Test_iam_password_policy_uppercase:
     This example does not use Moto to simplify the setup.
     However, if additional `moto` decorators are applied alongside the patch, Moto will automatically intercept the call to `orig(self, operation_name, kwarg)`.
 
-???+ note 
+???+ note
     The source of the above implementation can be found here:[Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching\_other\_services.html)
 
 #### Mocking Several Services
