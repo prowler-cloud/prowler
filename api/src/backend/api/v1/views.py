@@ -2992,40 +2992,29 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
             metadata = requirement.get("attributes", [])
 
-            technique_details = {}
+            base_attributes = {
+                "metadata": metadata,
+                "check_ids": check_ids,
+            }
 
-            if (
-                requirement.get("tactics", [])
-                or requirement.get("subtechniques", [])
-                or requirement.get("platforms", [])
-                or requirement.get("technique_url", "")
-            ):
-                technique_details["tactics"] = requirement.get("tactics", [])
-                technique_details["subtechniques"] = requirement.get(
-                    "subtechniques", []
-                )
-                technique_details["platforms"] = requirement.get("platforms", [])
-                technique_details["technique_url"] = requirement.get(
-                    "technique_url", ""
-                )
-
-            attribute_data.append(
-                {
-                    "id": requirement_id,
-                    "framework_description": compliance_framework.get(
-                        "description", ""
-                    ),
-                    "name": requirement.get("name", ""),
-                    "framework": compliance_framework.get("framework", ""),
-                    "version": compliance_framework.get("version", ""),
-                    "description": requirement.get("description", ""),
-                    "attributes": {
-                        "metadata": metadata,
-                        "check_ids": check_ids,
-                        "technique_details": technique_details,
-                    },
+            # Add technique details for MITRE-ATTACK framework
+            if compliance_framework.get("framework", "") == "MITRE-ATTACK":
+                base_attributes["technique_details"] = {
+                    "tactics": requirement.get("tactics", []),
+                    "subtechniques": requirement.get("subtechniques", []),
+                    "platforms": requirement.get("platforms", []),
+                    "technique_url": requirement.get("technique_url", ""),
                 }
-            )
+
+            attribute_data.append({
+                "id": requirement_id,
+                "framework_description": compliance_framework.get("description", ""),
+                "name": requirement.get("name", ""),
+                "framework": compliance_framework.get("framework", ""),
+                "version": compliance_framework.get("version", ""),
+                "description": requirement.get("description", ""),
+                "attributes": base_attributes,
+            })
 
         serializer = self.get_serializer(attribute_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
