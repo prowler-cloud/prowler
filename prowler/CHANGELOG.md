@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
 - Add NIS 2 compliance framework for Azure. [(7857)](https://github.com/prowler-cloud/prowler/pull/7857)
 - Add search bar in Dashboard Overview page. [(#7804)](https://github.com/prowler-cloud/prowler/pull/7804)
+- Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check to ensure workspaces are deployed in a customer-managed VNet. [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
 
 ---
 
