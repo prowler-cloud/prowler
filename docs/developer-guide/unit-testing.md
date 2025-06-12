@@ -62,10 +62,10 @@ Other Commands for Running Tests
 
 ## AWS Testing Approaches
 
-For AWS providers, different testing approaches apply based on API coverage based on several criteria.
+For AWS provider, different testing approaches apply based on API coverage based on several criteria.
 
 ???+ note
-    Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests. ****
+    Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests.
 
 - AWS API Calls Covered by [Moto](https://github.com/getmoto/moto):
     - Service Tests: `@mock_aws`
