@@ -72,8 +72,8 @@ For AWS provider, different testing approaches apply based on API coverage based
     - Checks Tests: `@mock_aws`
 
 - AWS API Calls Not Covered by Moto:
-  - Service Tests: `mock_make_api_call`
-  - Checks Tests: [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
+    - Service Tests: `mock_make_api_call`
+    - Checks Tests: [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
 
 - AWS API Calls Partially Covered by Moto:
     - Service Tests: `@mock_aws` and `mock_make_api_call`
