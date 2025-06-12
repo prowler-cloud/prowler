@@ -195,7 +195,7 @@ class <Item>(BaseModel):
      """<Items>[].tags"""
 ```
 
-#### Service Attributesº
+#### Service Attributes
 
 *Optimized Data Storage with Python Dictionaries*
 
