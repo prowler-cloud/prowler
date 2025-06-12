@@ -35,6 +35,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix `apiserver_strong_ciphers_only` check for K8S provider. [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
+- Handle `0` at the start and end of account uids in Prowler Dashboard. [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
+- Fix typo in PCI 4.0 for K8S provider. [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971) 
 
 ---
 
@@ -43,7 +45,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Automatically encrypt password in Microsoft365 provider. [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 - Remove last encrypted password appearances. [(#7825)](https://github.com/prowler-cloud/prowler/pull/7825)
-- Fix typo in PCI 4.0 for K8S provider. [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971) 
 
 ---
 
