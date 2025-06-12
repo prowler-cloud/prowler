@@ -71,14 +71,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     return "success";
   };
 
-  const isPressable = !id.includes("mitre");
-
   const navigateToDetail = () => {
-    // We will unlock this while developing the rest of complainces.
-    if (!isPressable) {
-      return;
-    }
-
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;
     const params = new URLSearchParams();
@@ -103,7 +96,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       fullWidth
       isHoverable
       shadow="sm"
-      isPressable={isPressable}
+      isPressable
       onPress={navigateToDetail}
       as={"div"}
     >

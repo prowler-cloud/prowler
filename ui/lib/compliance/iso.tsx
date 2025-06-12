@@ -101,6 +101,7 @@ export const mapComplianceData = (
       manual: finalStatus === "MANUAL" ? 1 : 0,
       objetive_name: objetiveName,
       check_summary: checkSummary,
+      control_label: controlLabel,
     };
 
     control.requirements.push(requirement);
@@ -152,6 +153,10 @@ export const toAccordionItems = (
 ): AccordionItemProps[] => {
   return data.flatMap((framework) =>
     framework.categories.map((category) => {
+      const allRequirements = category.controls.flatMap(
+        (control) => control.requirements,
+      );
+
       return {
         key: `${framework.name}-${category.name}`,
         title: (
@@ -164,46 +169,29 @@ export const toAccordionItems = (
           />
         ),
         content: "",
-        items: category.controls.map((control, i: number) => {
+        items: allRequirements.map((requirement, j: number) => {
+          const itemKey = `${framework.name}-${category.name}-req-${j}`;
+
           return {
-            key: `${framework.name}-${category.name}-control-${i}`,
+            key: itemKey,
             title: (
-              <ComplianceAccordionTitle
-                label={control.label}
-                pass={control.pass}
-                fail={control.fail}
-                manual={control.manual}
+              <ComplianceAccordionRequirementTitle
+                type=""
+                name={(requirement.control_label as string) || requirement.name}
+                status={requirement.status as FindingStatus}
               />
             ),
-            content: "",
-            items: control.requirements.map((requirement, j: number) => {
-              const itemKey = `${framework.name}-${category.name}-control-${i}-req-${j}`;
-
-              return {
-                key: itemKey,
-                title: (
-                  <ComplianceAccordionRequirementTitle
-                    type=""
-                    name={requirement.name}
-                    status={requirement.status as FindingStatus}
-                  />
-                ),
-                content: (
-                  <ClientAccordionContent
-                    requirement={requirement}
-                    scanId={scanId || ""}
-                    framework={framework.name}
-                    disableFindings={
-                      requirement.check_ids.length === 0 &&
-                      requirement.manual === 0
-                    }
-                  />
-                ),
-                items: [],
-              };
-            }),
-            isDisabled:
-              control.pass === 0 && control.fail === 0 && control.manual === 0,
+            content: (
+              <ClientAccordionContent
+                requirement={requirement}
+                scanId={scanId || ""}
+                framework={framework.name}
+                disableFindings={
+                  requirement.check_ids.length === 0 && requirement.manual === 0
+                }
+              />
+            ),
+            items: [],
           };
         }),
       };
