@@ -1029,6 +1029,7 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+
 class MFADevice(BaseModel):
     serial_number: str
     type: str
