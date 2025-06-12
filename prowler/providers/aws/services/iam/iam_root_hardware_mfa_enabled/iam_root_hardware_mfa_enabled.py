@@ -15,7 +15,11 @@ class iam_root_hardware_mfa_enabled(Check):
                         access_key_2_active = user["access_key_2_active"] == "true"
 
                         # Only report if root actually has credentials
-                        if (password_enabled or access_key_1_active or access_key_2_active) and iam_client.account_summary:
+                        if (
+                            password_enabled
+                            or access_key_1_active
+                            or access_key_2_active
+                        ) and iam_client.account_summary:
                             virtual_mfa = False
                             report = Check_Report_AWS(
                                 metadata=self.metadata(),
