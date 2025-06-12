@@ -14,6 +14,8 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Entra(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        if self.powershell:
+            self.powershell.close()
 
         loop = get_event_loop()
         self.tenant_domain = provider.identity.tenant_domain
@@ -491,6 +493,7 @@ class ConditionalAccessGrantControl(Enum):
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
     PASSWORD_CHANGE = "passwordChange"
+    COMPLIANT_DEVICE = "compliantDevice"
 
 
 class GrantControlOperator(Enum):

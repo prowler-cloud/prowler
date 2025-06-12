@@ -86,21 +86,27 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 564 | 82 | 34 | 10 |
-| GCP | 79 | 13 | 7 | 3 |
-| Azure | 140 | 18 | 8 | 3 |
+| AWS | 567 | 82 | 36 | 10 |
+| GCP | 79 | 13 | 10 | 3 |
+| Azure | 142 | 18 | 10 | 3 |
 | Kubernetes | 83 | 7 | 5 | 7 |
-| GitHub | 3 | 2 | 1 | 0 |
-| M365 | 44 | 2 | 2 | 0 |
+| GitHub | 16 | 2 | 1 | 0 |
+| M365 | 69 | 7 | 2 | 2 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
+> [!Note]
+> The numbers in the table are updated periodically.
+
+> [!Tip]
+> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
+
+> [!Note]
 > Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
 # 💻 Installation
 
 ## Prowler App
 
-Installing Prowler App
 Prowler App offers flexible installation methods tailored to various environments:
 
 > For detailed instructions on using Prowler App, refer to the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).

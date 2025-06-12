@@ -11,6 +11,7 @@ from prowler.providers.m365.m365_provider import M365Provider
 class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
@@ -200,7 +201,7 @@ class DirectoryRole(BaseModel):
 class Group(BaseModel):
     id: str
     name: str
-    visibility: str
+    visibility: Optional[str]
 
 
 class Domain(BaseModel):

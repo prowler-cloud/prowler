@@ -1,15 +1,18 @@
+import { Tooltip } from "@nextui-org/react";
 import React from "react";
 
+import { IdIcon } from "@/components/icons";
 import { ProviderType } from "@/types";
 
 import { getProviderLogo } from "./get-provider-logo";
-import { SnippetId } from "./snippet-id";
+import { SnippetChip } from "./snippet-chip";
 
 interface EntityInfoProps {
   cloudProvider: ProviderType;
   entityAlias?: string;
   entityId?: string;
   hideCopyButton?: boolean;
+  snippetWidth?: string;
 }
 
 export const EntityInfoShort: React.FC<EntityInfoProps> = ({
@@ -19,16 +22,21 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   hideCopyButton = false,
 }) => {
   return (
-    <div className="flex w-full items-center justify-between space-x-2">
-      <div className="flex items-center gap-x-2">
+    <div className="flex items-center justify-start">
+      <div className="flex items-center justify-between gap-x-2">
         <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
-        <div className="flex flex-col">
+        <div className="flex max-w-[120px] flex-col">
           {entityAlias && (
-            <span className="text-xs text-default-500">{entityAlias}</span>
+            <Tooltip content={entityAlias} placement="top" size="sm">
+              <span className="truncate text-ellipsis text-xs text-default-500">
+                {entityAlias}
+              </span>
+            </Tooltip>
           )}
-          <SnippetId
-            entityId={entityId ?? ""}
+          <SnippetChip
+            value={entityId ?? ""}
             hideCopyButton={hideCopyButton}
+            icon={<IdIcon size={16} />}
           />
         </div>
       </div>
