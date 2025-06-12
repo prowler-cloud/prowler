@@ -1,4 +1,5 @@
 import os
+import re
 import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -145,3 +146,23 @@ class TestOutputs:
 
         assert path.endswith(f"{provider}-{output_file_timestamp}")
         assert compliance.endswith(f"{provider}-{output_file_timestamp}")
+
+    def test_generate_output_directory_invalid_character(self, tmpdir):
+        from prowler.config.config import output_file_timestamp
+
+        base_tmp = Path(str(tmpdir.mkdir("generate_output")))
+        base_dir = str(base_tmp)
+        tenant_id = "t1"
+        scan_id = "s1"
+        provider = "aws/test@check"
+
+        path, compliance = _generate_output_directory(
+            base_dir, provider, tenant_id, scan_id
+        )
+
+        assert os.path.isdir(os.path.dirname(path))
+        assert os.path.isdir(os.path.dirname(compliance))
+
+        sanitized_provider = re.sub(r"[^\w\-]", "-", provider)
+        assert path.endswith(f"{sanitized_provider}-{output_file_timestamp}")
+        assert compliance.endswith(f"{sanitized_provider}-{output_file_timestamp}")
