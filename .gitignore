@@ -44,6 +44,7 @@ junit-reports/
 
 # Cursor files
 .cursorignore
+.cursor/
 
 # Terraform
 .terraform*

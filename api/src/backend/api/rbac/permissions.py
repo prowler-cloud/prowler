@@ -30,7 +30,9 @@ class HasPermissions(BasePermission):
             return True
 
         user_roles = (
-            User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
+            User.objects.using(MainRouter.admin_read)
+            .get(id=request.user.id)
+            .roles.all()
         )
         if not user_roles:
             return False
