@@ -203,7 +203,10 @@ class Test_iam_password_policy_uppercase:
 
 #### Handling API Calls Not Covered by Moto
 
-If the IAM service required for testing is not supported by the Moto library, use [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) to inject objects into the service client. ⚠️ Note: As stated above, direct service instantiation must be avoided to prevent actual AWS API calls.
+If the IAM service required for testing is not supported by the Moto library, use [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) to inject objects into the service client.
+
+???+ warning
+    As stated above, direct service instantiation must be avoided to prevent actual AWS API calls.
 
 ???+ note
     The example below demonstrates the IAM GetAccountPasswordPolicy API, which is covered by Moto, but is used for instructional purposes only.
@@ -639,7 +642,8 @@ class Test_compute_project_os_login_enabled:
 
 The testing of Google Cloud Services follows the same principles as the one of Google Cloud checks. While all API calls must be mocked, attribute setup for API calls in this scenario is defined in the fixtures file, specifically within the [fixtures file](https://github.com/prowler-cloud/prowler/blob/master/tests/providers/gcp/gcp_fixtures.py) in the `mock_api_client` function.
 
- ⚠ Important: Every method within a service must be tested to ensure full coverage and accurate validation.
+???+ important
+    Every method within a service must be tested to ensure full coverage and accurate validation.
 
 The following example presents a real testing class, but includes additional comments for educational purposes, explaining key concepts and implementation details.
 
