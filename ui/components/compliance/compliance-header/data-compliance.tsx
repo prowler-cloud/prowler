@@ -21,38 +21,25 @@ export const DataCompliance = ({ scans }: DataComplianceProps) => {
 
   useEffect(() => {
     if (!scanIdParam && scans.length > 0) {
-      const storedScanId = sessionStorage.getItem("lastSelectedScanId");
-
-      // Use stored scanId if it exists in current scans, otherwise use first scan
-      const scanIdToUse =
-        storedScanId && scans.find((scan) => scan.id === storedScanId)
-          ? storedScanId
-          : scans[0].id;
-
       const params = new URLSearchParams(searchParams);
-      params.set("scanId", scanIdToUse);
-      router.replace(`?${params.toString()}`);
+      params.set("scanId", scans[0].id);
+      router.push(`?${params.toString()}`);
     }
   }, [scans, scanIdParam, searchParams, router]);
 
   const handleScanChange = (selectedKey: string) => {
-    // Store in sessionStorage
-    sessionStorage.setItem("lastSelectedScanId", selectedKey);
-
     const params = new URLSearchParams(searchParams);
     params.set("scanId", selectedKey);
     router.push(`?${params.toString()}`);
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex max-w-fit">
-        <ScanSelector
-          scans={scans}
-          selectedScanId={selectedScanId}
-          onSelectionChange={handleScanChange}
-        />
-      </div>
+    <div className="flex max-w-fit">
+      <ScanSelector
+        scans={scans}
+        selectedScanId={selectedScanId}
+        onSelectionChange={handleScanChange}
+      />
     </div>
   );
 };

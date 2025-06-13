@@ -1,7 +1,5 @@
 "use client";
 
-import { Spacer } from "@nextui-org/react";
-
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
@@ -55,17 +53,16 @@ export const ComplianceHeader = ({
   const allFilters = [...frameworkFilters, ...regionFilters];
 
   return (
-    <>
-      {showSearch && <FilterControls search />}
-      <Spacer y={8} />
-      {showProviders && <DataCompliance scans={scans} />}
+    <div className="mb-8">
+      <div className="flex items-center justify-start gap-4">
+        {showProviders && <DataCompliance scans={scans} />}
+        {showSearch && <FilterControls search />}
+      </div>
       {allFilters.length > 0 && (
-        <>
-          {showProviders && <Spacer y={8} />}
+        <div className="mt-4">
           <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
-        </>
+        </div>
       )}
-      <Spacer y={12} />
-    </>
+    </div>
   );
 };

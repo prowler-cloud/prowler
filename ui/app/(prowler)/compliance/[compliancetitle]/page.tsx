@@ -14,6 +14,7 @@ import {
   BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
+  ComplianceScanInfo,
   HeatmapChart,
   HeatmapChartSkeleton,
   PieChart,
@@ -47,7 +48,7 @@ const ComplianceIconSmall = ({
         src={logoPath}
         alt={`${title} logo`}
         fill
-        className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
+        className="h-8 w-8 min-w-8 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );
@@ -153,6 +154,14 @@ export default async function ComplianceDetail({
         )
       }
     >
+      {selectedScanId && (
+        <div className="flex max-w-[328px] flex-col items-start gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
+          <p className="text-xs font-medium">Selected Scan:</p>
+          <ComplianceScanInfo
+            scan={expandedScansData.find((scan) => scan.id === selectedScanId)}
+          />
+        </div>
+      )}
       <ComplianceHeader
         scans={expandedScansData}
         uniqueRegions={uniqueRegions}
