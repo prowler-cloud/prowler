@@ -22,6 +22,7 @@ Prowler supports **auditing, incident response, continuous monitoring, hardening
 ![Prowler App](img/overview.png)
 
 Prowler App is a web application that simplifies running Prowler. It provides:
+
 - A **user-friendly interface** for configuring and executing scans.
 - A dashboard to **view results** and manage **security findings**.
 
