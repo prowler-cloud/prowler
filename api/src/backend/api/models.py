@@ -1666,6 +1666,7 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         choices=ModelChoices.choices,
         blank=False,
         null=False,
+        default=ModelChoices.GPT_4O_2024_08_06,
         help_text="Must be one of the supported model names",
     )
     temperature = models.FloatField(default=0, help_text="Must be between 0 and 1")
