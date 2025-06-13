@@ -13,7 +13,7 @@ interface EntityInfoProps {
   entityId?: string;
   hideCopyButton?: boolean;
   snippetWidth?: string;
-  connectionStatus?: boolean;
+  showConnectionStatus?: boolean;
 }
 
 export const EntityInfoShort: React.FC<EntityInfoProps> = ({
@@ -21,18 +21,21 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   entityAlias,
   entityId,
   hideCopyButton = false,
-  connectionStatus,
+  showConnectionStatus = false,
 }) => {
   return (
     <div className="flex items-center justify-start">
       <div className="flex items-center justify-between gap-x-2">
         <div className="relative flex-shrink-0">
           {getProviderLogo(cloudProvider)}
-          {typeof connectionStatus === "boolean" && (
-            <Tooltip content={connectionStatus ? "Connected" : "Not Connected"}>
+          {showConnectionStatus && (
+            <Tooltip
+              size="sm"
+              content={showConnectionStatus ? "Connected" : "Not Connected"}
+            >
               <span
                 className={`absolute right-[-0.2rem] top-[-0.1rem] h-2 w-2 cursor-pointer rounded-full ${
-                  connectionStatus ? "bg-green-500" : "bg-red-500"
+                  showConnectionStatus ? "bg-green-500" : "bg-red-500"
                 }`}
               />
             </Tooltip>
