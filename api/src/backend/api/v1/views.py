@@ -3427,6 +3427,7 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Lighthouse"],
         summary="Check the connection to the OpenAI API",
         description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
