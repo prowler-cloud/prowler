@@ -4901,6 +4901,7 @@ class TestComplianceOverviewViewSet:
             assert "attributes" in attributes
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
+            assert "technique_details" not in attributes["attributes"]
 
     def test_compliance_overview_attributes_technique_details(
         self, authenticated_client
