@@ -114,29 +114,33 @@ Follow these steps to assign the permissions:
 3. Search and select every permission below and once all are selected click on `Add permissions`:
     - `AuditLog.Read.All`: Required for Entra service.
     - `Domain.Read.All`
+    - `Organization.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
 
 
     ![Permission Screenshots](./img/directory-permission.png)
 
-4. Click `Add permissions`, then grant admin consent
+    ![Application Permissions](./img/app-permissions.png)
 
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
 
-5. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
+4. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
 
     ![Add API Permission](./img/add-delegated-api-permission.png)
 
-6. Search and select:
+5. Search and select:
 
     - `User.Read`
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-7. Click `Add permissions`, then grant admin consent
+6. Click `Add permissions`, then **grant admin consent**
 
-    ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
+    ![Grant Admin Consent](./img/grant-admin-consent.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
 
 ---
 

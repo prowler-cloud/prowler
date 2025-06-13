@@ -3,8 +3,10 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import sentry_sdk
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.saml.views import FinishACSView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
 from config.env import env
@@ -19,7 +21,8 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
@@ -63,6 +66,7 @@ from api.compliance import (
     get_compliance_frameworks,
 )
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
@@ -99,6 +103,8 @@ from api.models import (
     ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -152,6 +158,8 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
+    SAMLConfigurationSerializer,
+    SamlInitiateSerializer,
     ScanComplianceReportSerializer,
     ScanCreateSerializer,
     ScanReportSerializer,
@@ -381,6 +389,163 @@ class GithubSocialLoginView(SocialLoginView):
                 status=status.HTTP_200_OK,
             )
         return original_response
+
+
+@extend_schema(exclude=True)
+class SAMLInitiateAPIView(GenericAPIView):
+    serializer_class = SamlInitiateSerializer
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email_domain"]
+        domain = email.split("@", 1)[-1].lower()
+
+        try:
+            check = SAMLDomainIndex.objects.get(email_domain=domain)
+            with rls_transaction(str(check.tenant_id)):
+                config = SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+        except (SAMLDomainIndex.DoesNotExist, SAMLConfiguration.DoesNotExist):
+            return Response(
+                {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check certificates are not empty
+        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+
+        if not saml_public_cert or not saml_private_key:
+            return Response(
+                {"detail": "SAML configuration is invalid: missing certificates."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        saml_login_url = reverse(
+            "saml_login", kwargs={"organization_slug": config.email_domain}
+        )
+        return redirect(f"{saml_login_url}?email={email}")
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["SAML"],
+        summary="List all SSO configurations",
+        description="Returns all the SAML-based SSO configurations associated with the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["SAML"],
+        summary="Retrieve SSO configuration details",
+        description="Returns the details of a specific SAML configuration belonging to the current tenant.",
+    ),
+    create=extend_schema(
+        tags=["SAML"],
+        summary="Create the SSO configuration",
+        description="Creates a new SAML SSO configuration for the current tenant, including email domain and metadata XML.",
+    ),
+    partial_update=extend_schema(
+        tags=["SAML"],
+        summary="Update the SSO configuration",
+        description="Partially updates an existing SAML SSO configuration. Supports changes to email domain and metadata XML.",
+    ),
+    destroy=extend_schema(
+        tags=["SAML"],
+        summary="Delete the SSO configuration",
+        description="Deletes an existing SAML SSO configuration associated with the current tenant.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+@method_decorator(CACHE_DECORATOR, name="list")
+class SAMLConfigurationViewSet(BaseRLSViewSet):
+    """
+    ViewSet for managing SAML SSO configurations per tenant.
+
+    This endpoint allows authorized users to perform CRUD operations on SAMLConfiguration,
+    which define how a tenant integrates with an external SAML Identity Provider (IdP).
+
+    Typical use cases include:
+        - Listing all existing configurations for auditing or UI display.
+        - Retrieving a single configuration to show setup details.
+        - Creating or updating a configuration to onboard or modify SAML integration.
+        - Deleting a configuration when deactivating SAML for a tenant.
+    """
+
+    serializer_class = SAMLConfigurationSerializer
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    queryset = SAMLConfiguration.objects.all()
+
+    def get_queryset(self):
+        # If called during schema generation, return an empty queryset
+        if getattr(self, "swagger_fake_view", False):
+            return SAMLConfiguration.objects.none()
+        return SAMLConfiguration.objects.filter(tenant=self.request.tenant_id)
+
+
+class TenantFinishACSView(FinishACSView):
+    def dispatch(self, request, organization_slug):
+        response = super().dispatch(request, organization_slug)
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return response
+
+        try:
+            social_app = SocialApp.objects.get(
+                provider="saml", client_id=organization_slug
+            )
+            social_account = SocialAccount.objects.get(
+                user=user, provider=social_app.provider
+            )
+        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist):
+            return response
+
+        extra = social_account.extra_data
+        user.first_name = extra.get("firstName", [""])[0]
+        user.last_name = extra.get("lastName", [""])[0]
+        user.company_name = extra.get("organization", [""])[0]
+        user.name = f"{user.first_name} {user.last_name}".strip()
+        user.save()
+
+        email_domain = user.email.split("@")[-1]
+        tenant = (
+            SAMLConfiguration.objects.using(MainRouter.admin_db)
+            .get(email_domain=email_domain)
+            .tenant
+        )
+        role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+        try:
+            role = Role.objects.using(MainRouter.admin_db).get(
+                name=role_name, tenant=tenant
+            )
+        except Role.DoesNotExist:
+            role = Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                manage_users=False,
+                manage_account=False,
+                manage_billing=False,
+                manage_providers=False,
+                manage_integrations=False,
+                manage_scans=False,
+                unlimited_visibility=False,
+            )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user,
+            tenant_id=tenant.id,
+        ).delete()
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        serializer = TokenSocialLoginSerializer(data={"email": user.email})
+        serializer.is_valid(raise_exception=True)
+        return JsonResponse(
+            {
+                "type": "saml-social-tokens",
+                "attributes": serializer.validated_data,
+            }
+        )
 
 
 @extend_schema_view(
@@ -2733,7 +2898,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 "requirement_id", "framework", "version", "description"
             )
             .distinct()
-            .annotate(total_instances=Count("id"))
+            .annotate(
+                total_instances=Count("id"),
+                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            )
         )
 
         passed_instances = (
@@ -2751,8 +2919,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             requirement_id = requirement["requirement_id"]
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
-
-            requirement_status = "PASS" if passed_count == total_instances else "FAIL"
+            is_manual = requirement["manual_count"] == total_instances
+            if is_manual:
+                requirement_status = "MANUAL"
+            elif passed_count == total_instances:
+                requirement_status = "PASS"
+            else:
+                requirement_status = "FAIL"
 
             requirements_summary.append(
                 {

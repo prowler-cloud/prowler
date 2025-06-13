@@ -12,7 +12,7 @@ export * from "./compliance-custom-details/iso-details";
 export * from "./compliance-header/compliance-header";
 export * from "./compliance-header/compliance-scan-info";
 export * from "./compliance-header/data-compliance";
-export * from "./compliance-header/select-scan-compliance-data";
+export * from "./compliance-header/scan-selector";
 export * from "./no-scans-available";
 export * from "./skeletons/bar-chart-skeleton";
 export * from "./skeletons/compliance-accordion-skeleton";

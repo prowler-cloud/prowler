@@ -9,15 +9,19 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
 import pytest
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
+from django.http import JsonResponse
+from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import MainRouter
 from api.models import (
     Integration,
     Invitation,
@@ -28,6 +32,7 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     StateChoices,
     Task,
@@ -35,7 +40,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
-from api.v1.views import ComplianceOverviewViewSet
+from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
 
 TODAY = str(datetime.today().date())
 
@@ -4837,6 +4842,24 @@ class TestComplianceOverviewViewSet:
             assert "description" in attributes
             assert "status" in attributes
 
+    def test_compliance_overview_requirements_manual(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        scan_id = str(compliance_requirements_overviews_fixture[0].scan.id)
+        # Compliance with a manual requirement
+        compliance_id = "aws_account_security_onboarding_aws"
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data[-1]["attributes"]["status"] == "MANUAL"
+
     def test_compliance_overview_requirements_missing_scan_id(
         self, authenticated_client
     ):
@@ -5507,3 +5530,264 @@ class TestIntegrationViewSet:
             {f"filter[{filter_name}]": "whatever"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestSAMLInitiateAPIView:
+    def test_valid_email_domain_and_certificates(
+        self, authenticated_client, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
+        monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
+
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": saml_setup["email"]}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert f"email={saml_setup['email']}" in response.url
+        assert (
+            reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
+            in response.url
+        )
+
+    def test_invalid_email_domain(self, authenticated_client):
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": "user@unauthorized.com"}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()["errors"]["detail"] == "Unauthorized domain."
+
+    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
+        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
+        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
+
+        url = reverse("api_saml_initiate")
+        payload = {"email_domain": saml_setup["email"]}
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "SAML configuration is invalid: missing certificates."
+        )
+
+
+@pytest.mark.django_db
+class TestSAMLConfigurationViewSet:
+    def test_list_saml_configurations(self, authenticated_client, saml_setup):
+        config = SAMLConfiguration.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.get(reverse("saml-config-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"][0]["attributes"]["email_domain"]
+            == config.email_domain
+        )
+
+    def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfiguration.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.get(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
+        )
+
+    def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
+        payload = {
+            "email_domain": "newdomain.com",
+            "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+                    <md:KeyDescriptor use='signing'>
+                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                        <ds:X509Data>
+                        <ds:X509Certificate>TEST</ds:X509Certificate>
+                        </ds:X509Data>
+                    </ds:KeyInfo>
+                    </md:KeyDescriptor>
+                    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+                </md:IDPSSODescriptor>
+                </md:EntityDescriptor>
+            """,
+        }
+        response = authenticated_client.post(
+            reverse("saml-config-list"), data=payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
+
+    def test_update_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfiguration.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        payload = {
+            "data": {
+                "type": "saml-configurations",
+                "id": str(config.id),
+                "attributes": {
+                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+            <md:KeyDescriptor use='signing'>
+            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                <ds:X509Data>
+                <ds:X509Certificate>TEST2</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+            </md:KeyDescriptor>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+        </md:IDPSSODescriptor>
+        </md:EntityDescriptor>
+        """
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("saml-config-detail", kwargs={"pk": config.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        config.refresh_from_db()
+        assert (
+            config.metadata_xml.strip()
+            == payload["data"]["attributes"]["metadata_xml"].strip()
+        )
+
+    def test_delete_saml_configuration(self, authenticated_client, saml_setup):
+        config = SAMLConfiguration.objects.get(
+            email_domain=saml_setup["email"].split("@")[-1]
+        )
+        response = authenticated_client.delete(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+
+
+@pytest.mark.django_db
+class TestTenantFinishACSView:
+    def test_dispatch_skips_if_user_not_authenticated(self):
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = type("Anonymous", (), {"is_authenticated": False})()
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.return_value = SocialApp(
+                provider="saml",
+                client_id="testtenant",
+                name="Test App",
+                settings={},
+            )
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code in [200, 302]
+
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = users_fixture[0]
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.return_value = SocialApp(
+                provider="saml",
+                client_id="testtenant",
+                name="Test App",
+                settings={},
+            )
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
+
+    def test_dispatch_sets_user_profile_and_assigns_role(
+        self, create_test_user, tenants_fixture, saml_setup
+    ):
+        user = create_test_user
+        original_email = user.email
+        original_name = user.name
+        original_company = user.company_name
+        user.email = f"doe@{saml_setup['email']}"
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["TestOrg"],
+                "userType": ["saml_default_role"],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch("allauth.socialaccount.models.SocialApp.objects.get"),
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_socialaccount_get,
+            patch("api.v1.serializers.TokenSocialLoginSerializer") as mock_serializer,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+
+            mock_socialaccount_get.return_value = social_account
+
+            mock_instance = mock_serializer.return_value
+            mock_instance.is_valid.return_value = True
+            mock_instance.validated_data = {
+                "token": "mocktoken",
+                "refresh_token": "mockrefresh",
+            }
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 200
+        user.refresh_from_db()
+        assert user.name == "John Doe"
+        assert user.company_name == "TestOrg"
+
+        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        assert role.tenant == tenants_fixture[0]
+
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant_id=tenants_fixture[0].id)
+            .exists()
+        )
+        user.email = original_email
+        user.name = original_name
+        user.company_name = original_company
+        user.save()
