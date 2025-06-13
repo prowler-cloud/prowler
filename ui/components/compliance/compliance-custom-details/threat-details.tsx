@@ -24,7 +24,7 @@ export const ThreatCustomDetails = ({
       {requirement.attributeDescription && (
         <ComplianceDetailSection title="Attribute Description">
           <ComplianceDetailText>
-            {requirement.attributeDescription}
+            {requirement.attributeDescription as string}
           </ComplianceDetailText>
         </ComplianceDetailSection>
       )}
@@ -59,7 +59,7 @@ export const ThreatCustomDetails = ({
       {requirement.additionalInformation && (
         <ComplianceDetailSection title="Additional Information">
           <ComplianceDetailText>
-            {requirement.additionalInformation}
+            {requirement.additionalInformation as string}
           </ComplianceDetailText>
         </ComplianceDetailSection>
       )}

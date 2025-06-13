@@ -2992,13 +2992,31 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
             metadata = requirement.get("attributes", [])
 
+            base_attributes = {
+                "metadata": metadata,
+                "check_ids": check_ids,
+            }
+
+            # Add technique details for MITRE-ATTACK framework
+            if "mitre_attack" in compliance_id:
+                base_attributes["technique_details"] = {
+                    "tactics": requirement.get("tactics", []),
+                    "subtechniques": requirement.get("subtechniques", []),
+                    "platforms": requirement.get("platforms", []),
+                    "technique_url": requirement.get("technique_url", ""),
+                }
+
             attribute_data.append(
                 {
                     "id": requirement_id,
+                    "framework_description": compliance_framework.get(
+                        "description", ""
+                    ),
+                    "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
-                    "attributes": {"metadata": metadata, "check_ids": check_ids},
+                    "attributes": base_attributes,
                 }
             )
 
