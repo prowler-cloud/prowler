@@ -4779,13 +4779,13 @@ class TestComplianceOverviewViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        assert len(data) == 2  # Two compliance frameworks
+        assert len(data) == 3  # Three compliance frameworks
 
         # Check that we get aggregated data for each compliance framework
         framework_ids = [item["id"] for item in data]
         assert "aws_account_security_onboarding_aws" in framework_ids
         assert "cis_1.4_aws" in framework_ids
-
+        assert "mitre_attack_aws" in framework_ids
         # Check structure of response
         for item in data:
             assert "id" in item
@@ -4901,6 +4901,35 @@ class TestComplianceOverviewViewSet:
             assert "attributes" in attributes
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
+            assert "technique_details" not in attributes["attributes"]
+
+    def test_compliance_overview_attributes_technique_details(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "mitre_attack_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of attributes response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "attributes" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+            assert "technique_details" in attributes["attributes"]
+            assert "tactics" in attributes["attributes"]["technique_details"]
+            assert "subtechniques" in attributes["attributes"]["technique_details"]
+            assert "platforms" in attributes["attributes"]["technique_details"]
+            assert "technique_url" in attributes["attributes"]["technique_details"]
 
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client

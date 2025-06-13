@@ -167,6 +167,8 @@ paths:
             type: string
             enum:
             - id
+            - framework_description
+            - name
             - framework
             - version
             - description
@@ -5100,7 +5102,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this saml configurations.
+        description: A UUID string identifying this saml configuration.
         required: true
       tags:
       - SAML
@@ -5124,7 +5126,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this saml configurations.
+        description: A UUID string identifying this saml configuration.
         required: true
       tags:
       - SAML
@@ -5160,7 +5162,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this saml configurations.
+        description: A UUID string identifying this saml configuration.
         required: true
       tags:
       - SAML
@@ -7165,6 +7167,10 @@ components:
           properties:
             id:
               type: string
+            framework_description:
+              type: string
+            name:
+              type: string
             framework:
               type: string
             version:
@@ -7174,6 +7180,8 @@ components:
             attributes: {}
           required:
           - id
+          - framework_description
+          - name
           - framework
           - version
           - description
