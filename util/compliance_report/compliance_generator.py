@@ -136,6 +136,7 @@ def generate_compliance_report(
 
     compliance_name = resp_reqs[0]["attributes"]["framework"]
     compliance_version = resp_reqs[0]["attributes"]["version"]
+    compliance_description = resp_attrs[0]["attributes"]["framework_description"]
 
     attrs_map = {item["id"]: item["attributes"] for item in resp_attrs}
 
@@ -340,7 +341,7 @@ def generate_compliance_report(
         return buffer
 
     def get_finding_info(check_id: str):
-        url_find = f"http://localhost:8080/api/v1/findings?filter[check_id]={check_id}&filter[scan_id]={scan_id}"
+        url_find = f"http://localhost:8080/api/v1/findings?filter[check_id]={check_id}&filter[scan]={scan_id}"
         value = (
             requests.get(url_find, headers={"Authorization": f"Bearer {token}"})
             .json()
@@ -368,27 +369,41 @@ def generate_compliance_report(
         elements.append(logo)
     except Exception:
         pass
-    elements.append(Spacer(1, 0.3 * inch))
+    elements.append(Spacer(1, 0.5 * inch))
     elements.append(Paragraph("Compliance Report - Prowler", title_style))
-    elements.append(Spacer(1, 5 * inch))
+    elements.append(Spacer(1, 0.5 * inch))
+
+    pretty_description = (
+        (
+            "Prowler ThreatScore Compliance Framework for Azure ensures that the Azure subscription is compliant, "
+            "taking into account four main pillars:<br/>"
+            "- Identity and Access Management<br/>"
+            "- Attack Surface<br/>"
+            "- Forensic Readiness<br/>"
+            "- Encryption"
+        )
+        if compliance_id == "prowler_threatscore_azure"
+        else compliance_description
+    )
 
     info_data = [
         ["Compliance Framework:", compliance_name],
         ["Compliance ID:", compliance_id],
         ["Version:", compliance_version],
         ["Scan ID:", scan_id],
+        ["Description:", ""],
+        [Paragraph(pretty_description, normal), ""],
     ]
-
     info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
     info_table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, -1), colors.Color(0.2, 0.4, 0.6)),
-                ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
-                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                ("BACKGROUND", (1, 0), (1, -1), colors.Color(0.95, 0.97, 1.0)),
-                ("TEXTCOLOR", (1, 0), (1, -1), colors.Color(0.2, 0.2, 0.2)),
-                ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                ("BACKGROUND", (0, 0), (0, 4), colors.Color(0.2, 0.4, 0.6)),
+                ("TEXTCOLOR", (0, 0), (0, 4), colors.white),
+                ("FONTNAME", (0, 0), (0, 4), "Helvetica-Bold"),
+                ("BACKGROUND", (1, 0), (1, 3), colors.Color(0.95, 0.97, 1.0)),
+                ("TEXTCOLOR", (1, 0), (1, 3), colors.Color(0.2, 0.2, 0.2)),
+                ("FONTNAME", (1, 0), (1, 3), "Helvetica"),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -397,6 +412,8 @@ def generate_compliance_report(
                 ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("SPAN", (0, 5), (1, 5)),
+                ("VALIGN", (0, 5), (1, 5), "TOP"),
             ]
         )
     )
@@ -718,13 +735,90 @@ def generate_compliance_report(
                     Paragraph("- No information for this finding currently", normal)
                 )
             else:
+                # Render findings as a table
+                findings_table_data = [
+                    [
+                        "Finding",
+                        "Resource name",
+                        "Severity",
+                        "Status",
+                        "Last seen",
+                        "Region",
+                    ]
+                ]
                 for f in finds:
-                    fid = f.get("id")
-                    resource = f.get("attributes", {}).get("resource_id", "")
-                    message = f.get("attributes", {}).get("message", "")
-                    elements.append(
-                        Paragraph(f"- [{fid}] {resource}: {message}", normal)
+                    attr = f["attributes"]
+                    check_meta = attr.get("check_metadata", {})
+                    title = check_meta.get("checktitle", attr.get("check_id", ""))
+                    # Resource name: try to get from relationships/resources/data[0].id if not in attributes
+                    resource_name = attr.get("resource_id")
+                    if not resource_name:
+                        rel_resources = (
+                            f.get("relationships", {})
+                            .get("resources", {})
+                            .get("data", [])
+                        )
+                        if rel_resources and isinstance(rel_resources, list):
+                            resource_name = rel_resources[0].get("id", "")
+                        else:
+                            resource_name = ""
+                    severity = attr.get("severity", "").capitalize()
+                    status = attr.get("status", "").upper()
+                    last_seen = attr.get("inserted_at", "")
+                    if last_seen:
+                        last_seen = last_seen.replace("T", " ")[:16]
+                    region = attr.get("region", "global")
+
+                    findings_table_data.append(
+                        [
+                            Paragraph(title, normal),
+                            Paragraph(resource_name, normal),
+                            Paragraph(severity, normal),
+                            Paragraph(status, normal),
+                            Paragraph(last_seen, normal),
+                            Paragraph(region, normal),
+                        ]
                     )
+                findings_table = Table(
+                    findings_table_data,
+                    colWidths=[
+                        2.5 * inch,
+                        1.2 * inch,
+                        0.8 * inch,
+                        0.8 * inch,
+                        1.2 * inch,
+                        0.8 * inch,
+                    ],
+                )
+                findings_table.setStyle(
+                    TableStyle(
+                        [
+                            (
+                                "BACKGROUND",
+                                (0, 0),
+                                (-1, 0),
+                                colors.Color(0.2, 0.4, 0.6),
+                            ),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                            ("FONTSIZE", (0, 0), (-1, -1), 9),
+                            (
+                                "GRID",
+                                (0, 0),
+                                (-1, -1),
+                                0.5,
+                                colors.Color(0.7, 0.8, 0.9),
+                            ),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                            ("TOPPADDING", (0, 0), (-1, -1), 4),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                        ]
+                    )
+                )
+                elements.append(findings_table)
             elements.append(Spacer(1, 0.1 * inch))
 
         elements.append(PageBreak())
