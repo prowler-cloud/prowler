@@ -136,49 +136,6 @@ The permissions you need to grant depends on whether you are using user credenti
 ???+ warning "Warning"
     Make sure you add the correct set of permissions for the authentication method you are using.
 
-#### If using user authentication (Currently Prowler Cloud only supports this method)
-
-1. Search and select:
-
-    - `User.Read`
-
-    ![Permission Screenshots](./img/directory-permission-delegated.png)
-
-2. Click `Add permissions`, then **grant admin consent**
-
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
-
-    The final result of permission assignment should be this:
-
-    ![Final Permission Assignment](./img/final-permissions-m365.png)
-
-3. Assign **required roles** to your **user**
-
-    Assign one of the following roles to your User:
-
-    - `Global Reader` (recommended): this allows you to read all roles needed.
-    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
-
-    Follow these steps to assign the role:
-
-    1. Go to Users > All Users > Click on the email for the user you will use
-
-        ![User Overview](./img/user-info-page.png)
-
-    2. Click `Assigned Roles`
-
-        ![User Roles](./img/user-role-page.png)
-
-    3. Click on `Add assignments`, then search and select:
-
-        - `Global Reader` This is the recommended, if you want to use the others just search for them
-
-        ![Global Reader Screenshots](./img/global-reader.png)
-
-    4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
-
-        ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
-
 #### If using application(service principal) authentication
 
 ???+ warning "Warning"
@@ -243,3 +200,46 @@ To grant the permissions for the PowerShell modules via application authenticati
 4. Click `Launch Scan`
 
     ![Launch Scan M365](./img/launch-scan.png)
+
+#### If using user authentication (Currently Prowler Cloud only supports this method)
+
+1. Search and select:
+
+    - `User.Read`
+
+    ![Permission Screenshots](./img/directory-permission-delegated.png)
+
+2. Click `Add permissions`, then **grant admin consent**
+
+    ![Grant Admin Consent](./img/grant-admin-consent.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
+
+3. Assign **required roles** to your **user**
+
+    Assign one of the following roles to your User:
+
+    - `Global Reader` (recommended): this allows you to read all roles needed.
+    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+
+    Follow these steps to assign the role:
+
+    1. Go to Users > All Users > Click on the email for the user you will use
+
+        ![User Overview](./img/user-info-page.png)
+
+    2. Click `Assigned Roles`
+
+        ![User Roles](./img/user-role-page.png)
+
+    3. Click on `Add assignments`, then search and select:
+
+        - `Global Reader` This is the recommended, if you want to use the others just search for them
+
+        ![Global Reader Screenshots](./img/global-reader.png)
+
+    4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
+
+        ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
