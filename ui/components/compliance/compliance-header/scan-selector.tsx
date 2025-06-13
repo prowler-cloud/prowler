@@ -16,7 +16,7 @@ export interface SelectScanComplianceDataProps {
   onSelectionChange: (selectedKey: string) => void;
 }
 
-export const SelectScanComplianceData = ({
+export const ScanSelector = ({
   scans,
   selectedScanId,
   onSelectionChange,
@@ -26,14 +26,17 @@ export const SelectScanComplianceData = ({
       aria-label="Select a Scan"
       placeholder="Select a scan"
       classNames={{
-        selectorIcon: "right-2",
+        trigger: "w-full min-w-[365px]",
       }}
       size="lg"
       labelPlacement="outside"
       selectedKeys={new Set([selectedScanId])}
-      onSelectionChange={(keys) =>
-        onSelectionChange(Array.from(keys)[0] as string)
-      }
+      onSelectionChange={(keys) => {
+        const newSelectedId = Array.from(keys)[0] as string;
+        if (newSelectedId && newSelectedId !== selectedScanId) {
+          onSelectionChange(newSelectedId);
+        }
+      }}
       renderValue={() => {
         const selectedItem = scans.find((item) => item.id === selectedScanId);
         return selectedItem ? (
