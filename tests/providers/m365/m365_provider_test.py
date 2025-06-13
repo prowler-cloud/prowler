@@ -76,6 +76,16 @@ class TestM365Provider:
                     location=LOCATION,
                 ),
             ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_powershell",
+                return_value=M365Credentials(
+                    client_id=CLIENT_ID,
+                    tenant_id=TENANT_ID,
+                    client_secret=CLIENT_SECRET,
+                    user="",
+                    passwd="",
+                ),
+            ),
         ):
             m365_provider = M365Provider(
                 sp_env_auth=True,
