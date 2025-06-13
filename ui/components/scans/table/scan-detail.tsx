@@ -48,7 +48,8 @@ export const ScanDetail = ({
 }: {
   scanDetails: ScanProps & {
     taskDetails?: TaskDetails;
-    providerDetails: ProviderProps;
+    // TODO: Remove the "?" once we have a proper provider details type
+    providerDetails?: ProviderProps;
   };
 }) => {
   const scan = scanDetails.attributes;
@@ -68,10 +69,10 @@ export const ScanDetail = ({
           />
         </div>
         <EntityInfoShort
-          cloudProvider={providerDetails.provider as ProviderType}
-          entityAlias={providerDetails.alias}
-          entityId={providerDetails.uid}
-          showConnectionStatus={providerDetails.connection.connected}
+          cloudProvider={providerDetails?.provider as ProviderType}
+          entityAlias={providerDetails?.alias}
+          entityId={providerDetails?.uid}
+          showConnectionStatus={providerDetails?.connection.connected}
         />
       </div>
 
