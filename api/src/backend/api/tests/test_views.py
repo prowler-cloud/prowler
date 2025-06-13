@@ -4785,7 +4785,7 @@ class TestComplianceOverviewViewSet:
         framework_ids = [item["id"] for item in data]
         assert "aws_account_security_onboarding_aws" in framework_ids
         assert "cis_1.4_aws" in framework_ids
-        assert "mitre_attack" in framework_ids
+        assert "mitre_attack_aws" in framework_ids
         # Check structure of response
         for item in data:
             assert "id" in item
