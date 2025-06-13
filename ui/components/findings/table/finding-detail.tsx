@@ -91,7 +91,7 @@ export const FindingDetail = ({
             cloudProvider={providerDetails.provider as ProviderType}
             entityAlias={providerDetails.alias}
             entityId={providerDetails.uid}
-            connectionStatus={providerDetails.connection.connected}
+            showConnectionStatus={providerDetails.connection.connected}
           />
           <InfoField label="Service">
             {attributes.check_metadata.servicename}
