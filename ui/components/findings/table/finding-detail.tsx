@@ -87,11 +87,12 @@ export const FindingDetail = ({
       {/* Check Metadata */}
       <Section title="Finding Details">
         <div className="flex flex-wrap gap-4">
-          <InfoField label="Provider" variant="simple">
-            {getProviderLogo(
-              attributes.check_metadata.provider as ProviderType,
-            )}
-          </InfoField>
+          <EntityInfoShort
+            cloudProvider={providerDetails.provider as ProviderType}
+            entityAlias={providerDetails.alias}
+            entityId={providerDetails.uid}
+            connectionStatus={providerDetails.connection.connected}
+          />
           <InfoField label="Service">
             {attributes.check_metadata.servicename}
           </InfoField>
@@ -258,16 +259,8 @@ export const FindingDetail = ({
 
       {/* Add new Scan Details section */}
       <Section title="Scan Details">
-        {providerDetails && (
-          <EntityInfoShort
-            cloudProvider={providerDetails.provider as ProviderType}
-            entityAlias={providerDetails.alias}
-            entityId={providerDetails.uid}
-            connectionStatus={providerDetails.connection.connected}
-          />
-        )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Scan Name">{scan.name}</InfoField>
+          <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
           <InfoField label="Resources Scanned">
             {scan.unique_resource_count}
           </InfoField>
