@@ -401,8 +401,7 @@ def generate_compliance_report(
         ["Compliance ID:", compliance_id],
         ["Version:", compliance_version],
         ["Scan ID:", scan_id],
-        ["Description:", ""],
-        [Paragraph(pretty_description, normal), ""],
+        ["Description:", Paragraph(pretty_description, normal_center)],
     ]
     info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
     info_table.setStyle(
@@ -411,19 +410,17 @@ def generate_compliance_report(
                 ("BACKGROUND", (0, 0), (0, 4), colors.Color(0.2, 0.4, 0.6)),
                 ("TEXTCOLOR", (0, 0), (0, 4), colors.white),
                 ("FONTNAME", (0, 0), (0, 4), "Helvetica-Bold"),
-                ("BACKGROUND", (1, 0), (1, 3), colors.Color(0.95, 0.97, 1.0)),
-                ("TEXTCOLOR", (1, 0), (1, 3), colors.Color(0.2, 0.2, 0.2)),
-                ("FONTNAME", (1, 0), (1, 3), "Helvetica"),
+                ("BACKGROUND", (1, 0), (1, 4), colors.Color(0.95, 0.97, 1.0)),
+                ("TEXTCOLOR", (1, 0), (1, 4), colors.Color(0.2, 0.2, 0.2)),
+                ("FONTNAME", (1, 0), (1, 4), "Helvetica"),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("FONTSIZE", (0, 0), (-1, -1), 11),
                 ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.8, 0.9)),
                 ("LEFTPADDING", (0, 0), (-1, -1), 10),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("SPAN", (0, 5), (1, 5)),
-                ("VALIGN", (0, 5), (1, 5), "TOP"),
             ]
         )
     )
