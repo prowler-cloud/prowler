@@ -1,9 +1,13 @@
-**Prowler** is an open-source security tool designed to perform **security best practice assessments** across multiple cloud environments, including:
+**Prowler** is the open source cloud security platform trusted by thousands to **automate security and compliance** in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+
+The official supported providers right now are:
 
 - **AWS**
 - **Azure**
 - **Google Cloud**
 - **Kubernetes**
+- **M365**
+- **Github**
 
 Prowler supports **auditing, incident response, continuous monitoring, hardening, forensic readiness, and remediation**.
 
