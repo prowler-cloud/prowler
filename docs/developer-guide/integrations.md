@@ -2,66 +2,89 @@
 
 ## Introduction
 
-Integrating Prowler with external tools enhances its functionality and seamlessly embeds it into your workflows. Prowler supports a wide range of integrations to streamline security assessments and reporting. Common integration targets include messaging platforms like Slack, project management tools like Jira, and cloud services such as AWS Security Hub.
+Integrating Prowler with external tools enhances its functionality and enables seamless workflow automation. Prowler supports a variety of integrations to optimize security assessments and reporting.
 
-* Consult the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand how Prowler works and the way that you can integrate it with the desired product!
-* Identify the best approach for the specific platform you’re targeting.
+### Supported Integration Targets
+
+- Messaging Platforms – Example: Slack
+
+- Project Management Tools – Example: Jira
+
+- Cloud Services – Example: AWS Security Hub
+
+### Integration Guidelines
+To integrate Prowler with a specific product:
+
+Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand its architecture and integration mechanisms.
+
+* Identify the most suitable integration method for the intended platform.
 
 ## Steps to Create an Integration
 
-### Identify the Integration Purpose
+### Defining the Integration Purpose
 
-* Clearly define the objective of the integration. For example:
-    * Sending Prowler findings to a platform for alerts, tracking, or further analysis.
-    * Review existing integrations in the [`prowler/lib/outputs`](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/outputs) folder for inspiration and implementation examples.
+* Before implementing an integration, clearly define its objective. Common purposes include:
 
-### Develop the Integration
+    * Sending Prowler findings to a platform for alerting, tracking, or further analysis.
+    * For inspiration and implementation examples, please review the existing integrations in the [`prowler/lib/outputs`](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/outputs) folder.
+
+### Developing the Integration
 
 * Script Development:
+
     * Write a script to process Prowler’s output and interact with the target platform’s API.
-    * For example, to send findings, parse Prowler’s results and use the platform’s API to create entries or notifications.
+    * If the goal is to send findings, parse Prowler’s results and use the platform’s API to create entries or notifications.
+
 * Configuration:
-    * Ensure your script includes configurable options for environment-specific settings, such as API endpoints and authentication tokens.
+
+    * Ensure the script supports environment-specific settings, such as:
+
+        - API endpoints
+
+        - Authentication tokens
+
+        - Any necessary configurable parameters.
 
 ### Fundamental Structure
 
 * Integration Class:
-    * Create a class that encapsulates attributes and methods for the integration.
-    Here is an example with Jira integration:
+
+    * To implement an integration, create a class that encapsulates the required attributes and methods for interacting with the target platform. Example: Jira Integration
+
     ```python title="Jira Class"
     class Jira:
     """
     Jira class to interact with the Jira API
 
     [Note]
-    This integration is limited to a single Jira Cloud, therefore all the issues will be created for same Jira Cloud ID. We will need to work on the ability of providing a Jira Cloud ID if the user is present in more than one.
+    This integration is limited to a single Jira Cloud instance, meaning all issues will be created under the same Jira Cloud ID. Future improvements will include the ability to specify a Jira Cloud ID for users associated with multiple accounts.
 
-    Attributes:
-        - _redirect_uri: The redirect URI
-        - _client_id: The client ID
+    Attributes
+        - _redirect_uri: The redirect URI used
+        - _client_id: The client identifier
         - _client_secret: The client secret
         - _access_token: The access token
         - _refresh_token: The refresh token
         - _expiration_date: The authentication expiration
-        - _cloud_id: The cloud ID
+        - _cloud_id: The cloud identifier
         - _scopes: The scopes needed to authenticate, read:jira-user read:jira-work write:jira-work
         - AUTH_URL: The URL to authenticate with Jira
         - PARAMS_TEMPLATE: The template for the parameters to authenticate with Jira
         - TOKEN_URL: The URL to get the access token from Jira
         - API_TOKEN_URL: The URL to get the accessible resources from Jira
 
-    Methods:
-        - __init__: Initialize the Jira object
-        - input_authorization_code: Input the authorization code
-        - auth_code_url: Generate the URL to authorize the application
-        - get_auth: Get the access token and refresh token
-        - get_cloud_id: Get the cloud ID from Jira
-        - get_access_token: Get the access token
-        - refresh_access_token: Refresh the access token from Jira
-        - test_connection: Test the connection to Jira and return a Connection object
-        - get_projects: Get the projects from Jira
-        - get_available_issue_types: Get the available issue types for a project
-        - send_findings: Send the findings to Jira and create an issue
+    Methods
+        __init__: Initializes the Jira object
+        - input_authorization_code: Inputs the authorization code
+        - auth_code_url: Generates the URL to authorize the application
+        - get_auth: Gets the access token and refreshes it
+        - get_cloud_id: Gets the cloud identifier from Jira
+        - get_access_token: Gets the access token
+        - refresh_access_token: Refreshes the access token from Jira
+        - test_connection: Tests the connection to Jira and returns a Connection object
+        - get_projects: Gets the projects from Jira
+        - get_available_issue_types: Gets the available issue types for a project
+        - send_findings: Sends the findings to Jira and creates an issue
 
     Raises:
         - JiraGetAuthResponseError: Failed to get the access token and refresh token
@@ -128,9 +151,17 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
 
     # More properties and methods
     ```
+    
 * Test Connection Method:
-    * Implement a method to validate credentials or tokens, ensuring the connection to the target platform is successful.
-    The following is the code for the `test_connection` method for the `Jira` class:
+
+    * Validating Credentials or Tokens
+
+        To ensure a successful connection to the target platform, implement a method that validates authentication credentials or tokens.
+
+    #### Method Implementation
+
+    The following example demonstrates the `test_connection` method for the `Jira` class:
+
     ```python title="Test connection"
     @staticmethod
     def test_connection(
@@ -142,8 +173,8 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
         """Test the connection to Jira
 
         Args:
-            - redirect_uri: The redirect URI
-            - client_id: The client ID
+            - redirect_uri: The redirect URI used
+            - client_id: The client identifier
             - client_secret: The client secret
             - raise_on_exception: Whether to raise an exception or not
 
@@ -215,9 +246,15 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
                 )
             return Connection(is_connected=False, error=error)
     ```
+
 * Send Findings Method:
+
     * Add a method to send Prowler findings to the target platform, adhering to its API specifications.
-    The following is the code for the `send_findings` method for the `Jira` class:
+
+    #### Method Implementation
+
+    The following example demonstrates the `send_findings` method for the `Jira` class:
+
     ```python title="Send findings method"
     def send_findings(
         self,
@@ -321,16 +358,19 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
             )
     ```
 
-### Testing
+### Testing the Integration
 
-* Test the integration in a controlled environment to confirm it behaves as expected.
-* Verify that Prowler’s findings are accurately transmitted and correctly processed by the target platform.
-* Simulate edge cases to ensure robust error handling.
+* Conduct integration testing in a controlled environment to validate expected behavior. Ensure the following:
+
+    * Transmission Accuracy – Verify that Prowler findings are correctly sent and processed by the target platform.
+    * Error Handling – Simulate edge cases to assess robustness and failure recovery mechanisms.
 
 ### Documentation
 
-* Provide clear, detailed documentation for your integration:
-    * Setup instructions, including any required dependencies.
-    * Configuration details, such as environment variables or authentication steps.
-    * Example use cases and troubleshooting tips.
-* Good documentation ensures maintainability and simplifies onboarding for team members.
+* Ensure the following elements are included:
+
+    * Setup Instructions – List all necessary dependencies and installation steps.
+    * Configuration Details – Specify required environment variables, authentication steps, etc.
+    * Example Use Cases – Provide practical scenarios demonstrating functionality.
+    * Troubleshooting Guide – Document common issues and resolution steps.
+    * Comprehensive and clear documentation improves maintainability and simplifies onboarding.

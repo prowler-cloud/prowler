@@ -1,197 +1,184 @@
-# Create a new Provider Service
+# Prowler Services
 
-Here you can find how to create a new service, or to complement an existing one, for a Prowler Provider.
+Here you can find how to create a new service, or to complement an existing one, for a [Prowler Provider](./provider.md).
+
+???+note
+    First ensure that the provider you want to add the service is already created. It can be checked [here](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers). If the provider is not present, please refer to the [Provider](./provider.md) documentation to create it from scratch.
 
 ## Introduction
 
-In Prowler, a service is basically a solution that is offered by a cloud provider i.e. [ec2](https://aws.amazon.com/ec2/). Essentially it is a class that stores all the necessary stuff that we will need later in the checks to audit some aspects of our Cloud account.
+In Prowler, a **service** represents a specific solution or resource offered by one of the supported [Prowler Providers](./provider.md), for example, [EC2](https://aws.amazon.com/ec2/) in AWS, or [Microsoft Exchange](https://www.microsoft.com/en-us/microsoft-365/exchange/exchange-online) in M365. Services are the building blocks that allow Prowler interact directly with the various resources exposed by each provider.
 
-To create a new service, you will need to create a folder inside the specific provider, i.e. `prowler/providers/<provider>/services/<new_service_name>/`.
+Each service is implemented as a class that encapsulates all the logic, data models, and API interactions required to gather and store information about that service's resources. All of this data is used by the [Prowler checks](./checks.md) to generate the security findings.
 
-Inside that folder, you MUST create the following files:
+## Adding a New Service
 
-- An empty `__init__.py`: to make Python treat this service folder as a package.
-- A `<new_service_name>_service.py`, containing all the service's logic and API calls.
-- A `<new_service_name>_client_.py`, containing the initialization of the service's class we have just created so the checks's checks can use it.
+To create a new service, a new folder must be created inside the specific provider following this pattern: `prowler/providers/<provider>/services/<new_service_name>/`.
 
-## Service
+Within this folder the following files are also to be created:
 
-The Prowler's service structure is the following and the way to initialise it is just by importing the service client in a check.
+- `__init__.py` (empty) – Ensures Python recognizes this folder as a package.
+- `<new_service_name>_service.py` – Contains all the logic and API calls of the service.
+- `<new_service_name>_client_.py` – Contains the initialization of the freshly created service's class so that the checks can use it.
+
+## Service Structure and Initialisation
+
+The Prowler's service structure is as outlined below. To initialise it, just import the service client in a check.
 
 ### Service Base Class
 
-All the Prowler provider's services inherits from a base class depending on the provider used.
+All Prowler provider service should inherit from a common base class to avoid code duplication. This base class handles initialization and storage of functions and objects needed across services. The exact implementation depends on the provider's API requirements, but the following are the most common responsibilities:
+
+- Initialize/store clients to interact with the provider's API.
+- Store the audit and fixer configuration.
+- Implement threading logic where applicable.
+
+For reference, the base classes for each provider can be checked here:
 
 - [AWS Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/lib/service/service.py)
 - [GCP Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/lib/service/service.py)
 - [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/lib/service/service.py)
 - [Kubernetes Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/lib/service/service.py)
-
-Each class is used to initialize the credentials and the API's clients to be used in the service. If some threading is used it must be coded there.
+- [M365 Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/m365/lib/service/service.py)
+- [GitHub Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/lib/service/service.py)
 
 ### Service Class
 
-Due to the complexity and differences of each provider API we are going to use an example service to guide you in how can it be created.
+Due to the complexity and differences across provider APIs, the following example demonstrates best practices for structuring a service in Prowler.
 
-The following is the `<new_service_name>_service.py` file:
+File `<new_service_name>_service.py`:
 
-```python title="Service Class"
+```python title="Example Service Class"
 from datetime import datetime
 from typing import Optional
 
-# The following is just for the AWS provider
-from botocore.client import ClientError
-
-# To use the Pydantic's BaseModel
+# To use the Pydantic's BaseModel.
 from pydantic import BaseModel
 
-# Prowler logging library
+# Prowler logging library.
 from prowler.lib.logger import logger
 
-# Prowler resource filter, only for the AWS provider
-from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-
-# Provider parent class
+# Provider parent class.
 from prowler.providers.<provider>.lib.service.service import ServiceParentClass
 
-
-# Create a class for the Service
+# Create a class for the Service.
 class <Service>(ServiceParentClass):
-    def __init__(self, provider):
-        # Call Service Parent Class __init__
-        # We use the __class__.__name__ to get it automatically
-        # from the Service Class name but you can pass a custom
-        # string if the provider's API service name is different
+    def __init__(self, provider: Provider):
+        """Initialize the Service Class
+
+        Args:
+            provider: Prowler Provider object.
+        """
+        # Call Service Parent Class __init__.
+        # The __class__.__name__ is used to obtain it automatically.
+        # From the Service Class name, but a custom one can be passed.
+        # String in case the provider's API service name is different.
         super().__init__(__class__.__name__, provider)
 
-        # Create an empty dictionary of items to be gathered,
-        # using the unique ID as the dictionary key
-        # e.g., instances
+        # Create an empty dictionary of items to be gathered, using the unique ID as the dictionary’s key, e.g., instances.
         self.<items> = {}
 
-        # If you can parallelize by regions or locations
-        # you can use the __threading_call__ function
-        # available in the Service Parent Class
+        # If parallelization can be carried out by regions or locations, the function __threading_call__ to be used must be implemented in the Service Parent Class.
+        # If it is not implemented, you can make it in a sequential way, just calling the function.
         self.__threading_call__(self.__describe_<items>__)
 
-        # Optionally you can create another function to retrieve
-        # more data about each item without parallel
-        self.__describe_<item>__()
+        # If it is needed you can create another function to retrieve more data from the items.
+        # Here we are using the second parameter of the __threading_call__ function to create one thread per item.
+        # You can also make it sequential without using the __threading_call__ function iterating over the items inside the function.
+        self.__threading_call__(self.__describe_<item>__, self.<items>.values())
 
+    # In case of use the __threading_call__ function, you have to pass the regional_client to the function, as a parameter.
     def __describe_<items>__(self, regional_client):
-        """Get ALL <Service> <Items>"""
+        """Get all <items> and store in the self.<items> dictionary
+
+        Args:
+            regional_client: Regional client object.
+        """
         logger.info("<Service> - Describing <Items>...")
 
-        # We MUST include a try/except block in each function
+        # A try-except block must be created in each function.
         try:
-
-            # Call to the provider API to retrieve the data we want
+            # If pagination is supported by the provider, is always better to use it, call to the provider API to retrieve the desired data.
             describe_<items>_paginator = regional_client.get_paginator("describe_<items>")
 
-            # Paginator to get every item
+            # Paginator to get every item.
             for page in describe_<items>_paginator.paginate():
 
-                # Another try/except within the loop for to continue looping
-                # if something unexpected happens
+                # Another try-except within the for loop to continue iterating in case something unexpected happens.
                 try:
 
                     for <item> in page["<Items>"]:
 
-                        # For the AWS provider we MUST include the following lines to retrieve
-                        # or not data for the resource passed as argument using the --resource-arn
-                        if not self.audit_resources or (
-                            is_resource_filtered(<item>["<item_arn>"], self.audit_resources)
-                        ):
-                            # Then we have to include the retrieved resource in the object
-                            # previously created
-                            self.<items>[<item_unique_id>] =
-                                <Item>(
-                                    arn=stack["<item_arn>"],
-                                    name=stack["<item_name>"],
-                                    tags=stack.get("Tags", []),
-                                    region=regional_client.region,
-                                )
+                        # Adding Retrieved Resources to the Object
+
+                        # Once the resource has been retrieved, it must be included in the previously created object to ensure proper data handling within the service.
+                        self.<items>[<item_unique_id>] =
+                            <Item>(
+                                arn=stack["<item_arn>"],
+                                name=stack["<item_name>"],
+                                tags=stack.get("Tags", []),
+                                region=regional_client.region,
+                            )
 
                 except Exception as error:
                     logger.error(
                         f"{<provider_specific_field>} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-        # In the except part we have to use the following code to log the errors
-        except Exception as error:
-            # Depending on each provider we can use the following fields in the logger:
-            # - AWS: regional_client.region or self.region
-            # - GCP: project_id and location
-            # - Azure: subscription
+        # Logging Errors in Exception Handling
 
+        # When handling exceptions, use the following approach to log errors appropriately based on the cloud provider being used:
+        except Exception as error:
+            # Depending on each provider we can must use different fields in the logger, e.g.: AWS: regional_client.region or self.region, GCP: project_id and location, Azure: subscription
             logger.error(
                 f"{<provider_specific_field>} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_<item>__(self):
-        """Get Details for a <Service> <Item>"""
-        logger.info("<Service> - Describing <Item> to get specific details...")
+    def __describe_<item>__(self, item: <Item>):
+        """Get details for a <item>
 
-        # We MUST include a try/except block in each function
+        Args:
+            item: Item object.
+        """
+        logger.info("<Service> - Describing <Item> to get specific details...")
+        # A try-except block must be created in each function.
         try:
 
-            # Loop over the items retrieved in the previous function
-            for <item> in self.<items>:
+            <item>_details = self.regional_clients[<item>.region].describe_<item>(
+                <Attribute>=<item>.name
+            )
 
-                # When we perform calls to the Provider API within a for loop we have
-                # to include another try/except block because in the cloud there are
-                # ephemeral resources that can be deleted at the time we are checking them
-                try:
-                    <item>_details = self.regional_clients[<item>.region].describe_<item>(
-                        <Attribute>=<item>.name
-                    )
-
-                    # For example, check if item is Public. Here is important if we are
-                    # getting values from a dictionary we have to use the "dict.get()"
-                    # function with a default value in the case this value is not present
-                    <item>.public = <item>_details.get("Public", False)
-
-
-                # In this except block, for example for the AWS Provider we can use
-                # the botocore.ClientError exception and check for a specific error code
-                # to raise a WARNING instead of an ERROR if some resource is not present.
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
-                        logger.warning(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
-                        logger.error(
-                            f"{<provider_specific_field>} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    continue
-
-         # In the except part we have to use the following code to log the errors
+            # E.g., check if item is Public. This case is important: if values are being retrieved from a dictionary, the function "dict.get()" must be used with a default value in case this value is not present.
+            <item>.public = <item>_details.get("Public", False)
         except Exception as error:
-            # Depending on each provider we can use the following fields in the logger:
-            # - AWS: regional_client.region or self.region
-            # - GCP: project_id and location
-            # - Azure: subscription
-
+            # Fields for logging errors with relevant item information, e.g.: AWS: <item>.region, GCP: <item>.project_id, Azure: <item>.region
             logger.error(
                 f"{<item>.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 ```
+
 ???+note
-    To avoid fake findings, when Prowler can't retrieve the items, because an Access Denied or similar error, we set that items value as `None`.
+    To prevent false findings, when Prowler fails to retrieve items due to Access Denied or similar errors, the affected item's value is set to `None`.
 
 #### Service Models
 
-Service models are classes that are used in the service to design all that we need to store in each class object extrated from API calls. We use the Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to take advantage of the data validation.
+Service models define structured classes used within services to store and process data extracted from API calls.
+
+Using Pydantic for Data Validation
+
+Prowler leverages Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to enforce data validation.
 
 ```python title="Service Model"
-# In each service class we have to create some classes using
-# the Pydantic's Basemodel for the resources we want to audit.
+
+# Implementation Approach
+
+# Each service class should include custom model classes using Pydantic's BaseModel for the resources being audited.
+
 class <Item>(BaseModel):
     """<Item> holds a <Service> <Item>"""
 
-    arn: str
-    """<Items>[].arn"""
+    id: str
+    """<Items>[].id"""
 
     name: str
     """<Items>[].name"""
@@ -202,26 +189,34 @@ class <Item>(BaseModel):
     public: bool
     """<Items>[].public"""
 
-    # We can create Optional attributes set to None by default
+    # Optional attributes can be created set to None by default.
+
     tags: Optional[list]
      """<Items>[].tags"""
 ```
-#### Service Objects
-In the service each group of resources should be created as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries). This is because we are performing lookups all the time and the Python dictionary lookup has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions).
 
-We MUST set as the dictionary key a unique ID, like the resource Unique ID or ARN.
+#### Service Attributes
+
+*Optimized Data Storage with Python Dictionaries*
+
+Each group of resources within a service should be structured as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries) to enable efficient lookups. The dictionary lookup operation has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions), and lookups are constantly executed.
+
+*Assigning Unique Identifiers*
+
+Each dictionary key must be a unique ID to identify the resource in a univocal way.
 
 Example:
+
 ```python
-self.vpcs = {}
-self.vpcs["vpc-01234567890abcdef"] = VPC_Object_Class()
+self.virtual_machines = {}
+self.virtual_machines["vm-01234567890abcdef"] = VirtualMachine()
 ```
 
 ### Service Client
 
 Each Prowler service requires a service client to use the service in the checks.
 
-The following is the `<new_service_name>_client.py` containing the initialization of the service's class we have just created so the service's checks can use them:
+The following is the `<new_service_name>_client.py` file, which contains the initialization of the freshly created service's class so that service checks can use it. This file is almost the same for all the services among the providers:
 
 ```python
 from prowler.providers.common.provider import Provider
@@ -230,11 +225,13 @@ from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>
 <new_service_name>_client = <Service>(Provider.get_global_provider())
 ```
 
-## Permissions
+## Provider Permissions in Prowler
 
-It is really important to check if the current Prowler's permissions for each provider are enough to implement a new service. If we need to include more please refer to the following documentaion and update it:
+Before implementing a new service, verify that Prowler’s existing permissions for each provider are sufficient. If additional permissions are required, refer to the relevant documentation and update accordingly.
 
-- AWS: https://docs.prowler.cloud/en/latest/getting-started/requirements/#aws-authentication
-- Azure: https://docs.prowler.cloud/en/latest/getting-started/requirements/#permissions
-- GCP: https://docs.prowler.cloud/en/latest/getting-started/requirements/#gcp-authentication
-- M365: https://docs.prowler.cloud/en/latest/getting-started/requirements/#m365-authentication
+Provider-Specific Permissions Documentation:
+
+- [AWS](../getting-started/requirements.md#authentication)
+- [Azure](../getting-started/requirements.md#needed-permissions)
+- [GCP](../getting-started/requirements.md#needed-permissions_1)
+- [M365](../getting-started/requirements.md#needed-permissions_2)
