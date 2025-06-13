@@ -3448,6 +3448,8 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
             return LighthouseConfigCreateSerializer
         elif self.action == "partial_update":
             return LighthouseConfigUpdateSerializer
+        elif self.action == "connection":
+            return TaskSerializer
         return super().get_serializer_class()
 
     @extend_schema(exclude=True)
