@@ -44,10 +44,12 @@ export const mapComplianceData = (
     const description = attributeItem.attributes.description;
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
-    const tactics = attributeItem.attributes.tactics || [];
-    const subtechniques = attributeItem.attributes.subtechniques || [];
-    const platforms = attributeItem.attributes.platforms || [];
-    const techniqueUrl = attributeItem.attributes.technique_url || "";
+    const techniqueDetails =
+      attributeItem.attributes.attributes.technique_details;
+    const tactics = techniqueDetails?.tactics || [];
+    const subtechniques = techniqueDetails?.subtechniques || [];
+    const platforms = techniqueDetails?.platforms || [];
+    const techniqueUrl = techniqueDetails?.technique_url || "";
     const requirementName = `${id} - ${techniqueName}`;
 
     // Find or create framework using common helper

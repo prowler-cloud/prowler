@@ -154,15 +154,11 @@ export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
   attributes: {
+    framework_description: string;
     name?: string;
     framework: string;
     version: string;
     description: string;
-    // MITRE specific fields
-    tactics?: string[];
-    subtechniques?: string[];
-    platforms?: string[];
-    technique_url?: string;
     attributes: {
       metadata:
         | ENSAttributesMetadata[]
@@ -174,6 +170,13 @@ export interface AttributesItemData {
         | MITREAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
+      // MITRE structure
+      technique_details?: {
+        tactics: string[];
+        subtechniques: string[];
+        platforms: string[];
+        technique_url: string;
+      };
     };
   };
 }
