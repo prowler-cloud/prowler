@@ -68,7 +68,7 @@ Prowler includes hundreds of security controls aligned with widely recognized in
 
 ## Quick Start
 
-## Prowler App Installation
+### Prowler App Installation
 
 Prowler App supports multiple installation methods based on your environment.
 
@@ -430,8 +430,7 @@ Go to [http://localhost:3000](http://localhost:3000) after installing the app (s
 <img src="img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="img/sign-up.png" alt="Sign Up" width="285"/>
 
-???+ note
-    "User creation and default tenant behavior"
+???+ note "User creation and default tenant behavior"
 
     When creating a new user, the behavior depends on whether an invitation is provided:
 
@@ -457,11 +456,12 @@ To configure a cloud provider for scanning:
 
 1. Navigate to `Settings > Cloud Providers` and click `Add Account`.
 2. Select the cloud provider you wish to scan (**AWS, GCP, Azure, Kubernetes**).
-3. Enter the provider's identifier:
-   - **AWS**: Account ID
-   - **GCP**: Project ID
-   - **Azure**: Subscription ID
-   - **Kubernetes**: Cluster ID (Optional: Add an alias)
+3. Enter the provider's identifier (Optional: Add an alias):
+    - **AWS**: Account ID
+    - **GCP**: Project ID
+    - **Azure**: Subscription ID
+    - **Kubernetes**: Cluster ID
+    - **M36**: Domain ID
 4. Follow the guided instructions to add and authenticate your credentials.
 
 #### Start a Scan
@@ -470,7 +470,7 @@ Once credentials are successfully added and validated, Prowler initiates a scan 
 
 Click `Go to Scans` to monitor progress.
 
-## View Results
+#### View Results
 
 While the scan is running, you can review findings in the following sections:
 
@@ -480,7 +480,7 @@ While the scan is running, you can review findings in the following sections:
 - **Compliance** – Displays compliance insights based on security frameworks.
   <img src="img/compliance.png" alt="Compliance" width="700"/>
 
-For detailed usage instructions, refer to the [Prowler App Guide](tutorials/prowler-app.md).
+> For detailed usage instructions, refer to the [Prowler App Guide](tutorials/prowler-app.md).
 
 ???+ note
     Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
@@ -489,7 +489,7 @@ For detailed usage instructions, refer to the [Prowler App Guide](tutorials/prow
 
 #### Running Prowler
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365`, `github` or `kubernetes`):
 
 ???+ note
     If no provider is specified, AWS is used by default for backward compatibility with Prowler v2.
@@ -504,7 +504,7 @@ prowler <provider>
 
 #### Verbose Output
 
-If you prefer the former verbose output, use: `--verbose`. Prowler v4 runs efficiently, so minimal output is displayed unless verbosity is enabled.
+If you prefer the former verbose output, use: `--verbose`. This allows seeing more info while Prowler is running, minimal output is displayed unless verbosity is enabled.
 
 #### Report Generation
 
@@ -557,8 +557,6 @@ prowler --help
 
 #### AWS
 
-##### Custom Profile
-
 Use a custom AWS profile with `-p`/`--profile` and/or the AWS regions you want to audit with `-f`/`--filter-region`:
 
 ```console
@@ -571,8 +569,6 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 See more details about AWS Authentication in the [Requirements](getting-started/requirements.md#aws) section.
 
 #### Azure
-
-##### The auth Method
 
 Azure requires specifying the auth method:
 
@@ -599,65 +595,64 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
 ```
 #### Google Cloud
 
-##### User Account Credentials
+- **User Account Credentials**
 
-By default, Prowler uses **User Account credentials**. You can configure your account using:
+    By default, Prowler uses **User Account credentials**. You can configure your account using:
 
-- `gcloud init` – Set up a new account.
-- `gcloud config set account <account>` – Switch to an existing account.
+    - `gcloud init` – Set up a new account.
+    - `gcloud config set account <account>` – Switch to an existing account.
 
-Once configured, obtain access credentials using: `gcloud auth application-default login`.
+    Once configured, obtain access credentials using: `gcloud auth application-default login`.
 
-##### Service Account Authentication
+- **Service Account Authentication**
 
-Alternatively, you can use Service Account credentials:
+    Alternatively, you can use Service Account credentials:
 
-Generate and download Service Account keys in JSON format. Refer to [Google IAM documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) for details.
+    Generate and download Service Account keys in JSON format. Refer to [Google IAM documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) for details.
 
-Provide the key file location using this argument:
+    Provide the key file location using this argument:
 
-```console
-prowler gcp --credentials-file path
-```
-##### Scanning Specific GCP Projects
+    ```console
+    prowler gcp --credentials-file path
+    ```
 
-By default, Prowler scans all accessible GCP projects. To scan specific projects, use the `--project-ids` flag:
+- **Scanning Specific GCP Projects**
 
-```console
-prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
-```
+    By default, Prowler scans all accessible GCP projects. To scan specific projects, use the `--project-ids` flag:
 
-#### Kubernetes Scanning with Prowler
+    ```console
+    prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
+    ```
+
+#### Kubernetes
 
 Prowler enables security scanning of Kubernetes clusters, supporting both **in-cluster** and **external** execution.
 
-##### Non In-Cluster Execution
+- **Non In-Cluster Execution**
 
-```console
-prowler kubernetes --kubeconfig-file path
-```
-???+ note
-    If no `--kubeconfig-file` is provided, Prowler will use the default KubeConfig file location (`~/.kube/config`).
+    ```console
+    prowler kubernetes --kubeconfig-file path
+    ```
+    ???+ note
+        If no `--kubeconfig-file` is provided, Prowler will use the default KubeConfig file location (`~/.kube/config`).
 
-##### In-Cluster Execution
+- **In-Cluster Execution**
 
-To run Prowler inside the cluster, apply the provided YAML configuration to deploy a job in a new namespace:
+    To run Prowler inside the cluster, apply the provided YAML configuration to deploy a job in a new namespace:
 
-```console
-kubectl apply -f kubernetes/prowler-sa.yaml
-kubectl apply -f kubernetes/job.yaml
-kubectl apply -f kubernetes/prowler-role.yaml
-kubectl apply -f kubernetes/prowler-rolebinding.yaml
-kubectl get pods --namespace prowler-ns --> prowler-XXXXX
-kubectl logs prowler-XXXXX --namespace prowler-ns
-```
+    ```console
+    kubectl apply -f kubernetes/prowler-sa.yaml
+    kubectl apply -f kubernetes/job.yaml
+    kubectl apply -f kubernetes/prowler-role.yaml
+    kubectl apply -f kubernetes/prowler-rolebinding.yaml
+    kubectl get pods --namespace prowler-ns --> prowler-XXXXX
+    kubectl logs prowler-XXXXX --namespace prowler-ns
+    ```
 
-???+ note
-    By default, Prowler scans all namespaces in the active Kubernetes context. Use the `--context`flag to specify the context to be scanned and `--namespaces` to restrict scanning to specific namespaces.
+    ???+ note
+        By default, Prowler scans all namespaces in the active Kubernetes context. Use the `--context`flag to specify the context to be scanned and `--namespaces` to restrict scanning to specific namespaces.
 
 #### Microsoft 365
-
-##### The auth Method
 
 Microsoft 365 requires specifying the auth method:
 
@@ -681,34 +676,29 @@ See more details about M365 Authentication in the [Requirements](getting-started
 
 #### GitHub
 
-# GitHub Authentication with Prowler
+Prowler enables security scanning of your **GitHub account**, including **Repositories**, **Organizations** and **Applications**.
 
-Prowler enables security scanning of your **GitHub account**, including:
-- **Repositories**
-- **Organizations**
-- **Applications**
+- **Supported Authentication Methods**
 
-## Supported Authentication Methods
+    Authenticate using one of the following methods:
 
-Authenticate using one of the following methods:
+    ```console
+    # Personal Access Token (PAT):
+    prowler github --personal-access-token pat
 
-```console
-# Personal Access Token (PAT):
-prowler github --personal-access-token pat
+    # OAuth App Token:
+    prowler github --oauth-app-token oauth_token
 
-# OAuth App Token:
-prowler github --oauth-app-token oauth_token
+    # GitHub App Credentials:
+    prowler github --github-app-id app_id --github-app-key app_key
+    ```
 
-# GitHub App Credentials:
-prowler github --github-app-id app_id --github-app-key app_key
-```
+    ???+ note
+        If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
-???+ note
-    If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
-
-      1. `GITHUB_PERSONAL_ACCESS_TOKEN`
-      2. `OAUTH_APP_TOKEN`
-      3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
+        1. `GITHUB_PERSONAL_ACCESS_TOKEN`
+        2. `OAUTH_APP_TOKEN`
+        3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
 ## Prowler v2 Documentation
 
