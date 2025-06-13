@@ -29,7 +29,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
-- Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
 
 ---
 ## [v5.7.5] (Prowler v5.7.5)
@@ -39,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Handle `0` at the start and end of account uids in Prowler Dashboard [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
 - Typo in PCI 4.0 for K8S provider [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971)
 - AWS root credentials checks always verify if root credentials are enabled [(#7967)](https://github.com/prowler-cloud/prowler/pull/7967)
+- Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
 
 ---
 
