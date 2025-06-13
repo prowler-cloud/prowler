@@ -791,10 +791,10 @@ def generate_compliance_report(
                     findings_table_data,
                     colWidths=[
                         2.5 * inch,
-                        2.7 * inch,
-                        1 * inch,
-                        1 * inch,
-                        1 * inch,
+                        3 * inch,
+                        0.9 * inch,
+                        0.9 * inch,
+                        0.9 * inch,
                     ],
                 )
                 findings_table.setStyle(
