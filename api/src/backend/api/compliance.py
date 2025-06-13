@@ -196,6 +196,10 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                 requirement_dict = {
                     "name": requirement.Name or requirement.Id,
                     "description": requirement.Description,
+                    "tactics": getattr(requirement, "Tactics", []),
+                    "subtechniques": getattr(requirement, "SubTechniques", []),
+                    "platforms": getattr(requirement, "Platforms", []),
+                    "technique_url": getattr(requirement, "TechniqueURL", ""),
                     "attributes": [
                         dict(attribute) for attribute in requirement.Attributes
                     ],
