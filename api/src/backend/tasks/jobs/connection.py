@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import openai
 from celery.utils.log import get_task_logger
 
 from api.models import LighthouseConfiguration, Provider
@@ -57,8 +58,6 @@ def check_lighthouse_connection(lighthouse_config_id: str):
     Raises:
         Model.DoesNotExist: If the lighthouse configuration does not exist.
     """
-    import openai
-
     lighthouse_config = LighthouseConfiguration.objects.get(pk=lighthouse_config_id)
 
     if not lighthouse_config.api_key_decoded:
