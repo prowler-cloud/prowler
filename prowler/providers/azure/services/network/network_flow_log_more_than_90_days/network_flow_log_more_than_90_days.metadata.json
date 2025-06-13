@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "network_flow_log_more_than_90_days",
-  "CheckTitle": "Ensure that Network Security Group Flow Log retention period is 'greater than 90 days'",
+  "CheckTitle": "Ensure that Network Security Group Flow Log retention period is 0, 90 days or greater",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
