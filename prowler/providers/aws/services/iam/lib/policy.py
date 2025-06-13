@@ -1,5 +1,5 @@
-from ipaddress import ip_address, ip_network
 import re
+from ipaddress import ip_address, ip_network
 
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
