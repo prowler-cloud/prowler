@@ -2998,7 +2998,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             }
 
             # Add technique details for MITRE-ATTACK framework
-            if compliance_framework.get("framework", "") == "MITRE-ATTACK":
+            if "mitre_attack" in compliance_id:
                 base_attributes["technique_details"] = {
                     "tactics": requirement.get("tactics", []),
                     "subtechniques": requirement.get("subtechniques", []),
