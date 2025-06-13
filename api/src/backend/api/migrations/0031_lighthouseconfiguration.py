@@ -89,14 +89,19 @@ class Migration(migrations.Migration):
                 "db_table": "lighthouse_configurations",
                 "abstract": False,
                 "constraints": [
-                    api.rls.RowLevelSecurityConstraint(
-                        "tenant_id", name="rls_on_lighthouseconfiguration"
-                    ),
                     models.UniqueConstraint(
                         fields=("tenant_id",),
                         name="unique_lighthouse_config_per_tenant",
                     ),
                 ],
             },
+        ),
+        migrations.AddConstraint(
+            model_name="lighthouseconfiguration",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_lighthouseconfiguration",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
         ),
     ]
