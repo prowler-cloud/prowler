@@ -1,8 +1,7 @@
+from py_iam_expand.actions import expand_actions
+
 from prowler.lib.logger import logger
-from prowler.providers.aws.services.iam.lib.policy import (
-    check_invalid_not_actions,
-    process_actions,
-)
+from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
 
 # Does the tool analyze both users and roles, or just one or the other? --> Everything using AttachementCount.
 # Does the tool take a principal-centric or policy-centric approach? --> Policy-centric approach.
@@ -69,7 +68,6 @@ privilege_escalation_policies_combination = {
         "datapipeline:ActivatePipeline",
     },
     "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
-    "GlueUpdateDevEndpoints": {"glue:UpdateDevEndpoints"},
     "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
     "iam:CreateAccessKey": {"iam:CreateAccessKey"},
     "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
@@ -93,148 +91,55 @@ privilege_escalation_policies_combination = {
 }
 
 
-def find_privilege_escalation_combinations(
-    allowed_actions: set,
-    denied_actions: set,
-    allowed_not_actions: set,
-    denied_not_actions: set,
-) -> set:
-    """
-    find_privilege_escalation_combinations finds the privilege escalation combinations.
-    Args:
-        allowed_actions (set): The allowed actions.
-        denied_actions (set): The denied actions.
-        allowed_not_actions (set): The allowed not actions.
-        denied_not_actions (set): The denied not actions.
-    Returns:
-        set: The privilege escalation combinations.
-    """
-
-    # Store all the action's combinations
-    policies_combination = set()
-    hard_allowed_not_actions = set()
-
-    try:
-        # First, we need to perform a difference with allowed_actions and denied_actions
-        allowed_actions = allowed_actions.difference(denied_actions)
-        # Then, we need to do perform a difference with allowed_not_actions and denied_not_actions
-        allowed_not_actions = allowed_not_actions.difference(denied_not_actions)
-        # If there are allowed_not_actions, we have to check if there are allowed_actions that are not allowed by allowed_not_actions
-        if allowed_not_actions:
-            # If allowed_actions is *, we need to save allowed_not_actions since we cannot subtract them
-            if "*" in allowed_actions:
-                hard_allowed_not_actions = allowed_not_actions
-            else:
-                allowed_actions = allowed_actions - allowed_not_actions
-        # If there are denied_not_actions, means that every other action is denied
-        if denied_not_actions:
-            allowed_actions = allowed_actions.intersection(denied_not_actions)
-        for values in privilege_escalation_policies_combination.values():
-            for val in values:
-                val_set = set()
-                val_set.add(val)
-                # Look for specific api:action
-                if allowed_actions.intersection(val_set) == val_set:
-                    policies_combination.add(val)
-                # Look for api:*
-                else:
-                    for permission in allowed_actions:
-                        # Here we have to handle if the api-action is admin, so "*"
-                        api_action = permission.split(":")
-                        # len() == 2, so api:action
-                        if len(api_action) == 2:
-                            api = api_action[0]
-                            action = api_action[1]
-                            # Add permissions if the API is present
-                            if action == "*":
-                                val_api = val.split(":")[0]
-                                if api == val_api:
-                                    policies_combination.add(val)
-
-                        # len() == 1, so *
-                        elif len(api_action) == 1:
-                            # Unless the action is *, we have to check if the action to evaluate is in the hard_allowed_not_actions
-                            if (
-                                not hard_allowed_not_actions
-                                or val not in hard_allowed_not_actions
-                            ):
-                                api = api_action[0]
-                                # Add permissions if the API is present
-                                if api == "*":
-                                    policies_combination.add(val)
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-    return policies_combination
-
-
 def check_privilege_escalation(policy: dict) -> str:
     """
-    check_privilege_escalation checks if the policy allows privilege escalation.
+    Checks if the policy allows known privilege escalation combinations.
+
     Args:
-        policy (dict): The policy to check.
+        policy (dict): The IAM policy document.
+
     Returns:
-        str: The policies affected by privilege escalation, separated by commas.
+        str: A comma-separated string of the privilege escalation actions found,
+            or an empty string if none are found.
     """
-
     policies_affected = ""
+    if not policy:
+        return policies_affected
 
-    if policy:
-        allowed_actions = set()
-        allowed_not_actions = set()
-        denied_actions = set()
-        denied_not_actions = set()
+    try:
+        effective_allowed_actions = get_effective_actions(policy)
 
-        statements = policy.get("Statement", [])
-        if not isinstance(statements, list):
-            statements = [statements]
+        matched_combo_actions = set()
+        matched_combo_keys = set()
 
-        for statement in statements:
-            effect = statement.get("Effect")
-            actions = statement.get("Action")
-            not_actions = statement.get("NotAction")
-
-            if effect == "Allow":
-                process_actions(effect, actions, allowed_actions)
-                process_actions(effect, not_actions, allowed_not_actions)
-            elif effect == "Deny":
-                process_actions(effect, actions, denied_actions)
-                process_actions(effect, not_actions, denied_not_actions)
-
-        # If there is only NotAction, it allows the rest of the actions
-        if not allowed_actions and allowed_not_actions:
-            allowed_actions.add("*")
-        # Check for invalid services in allowed NotAction
-        if allowed_not_actions:
-            invalid_not_actions = check_invalid_not_actions(allowed_not_actions)
-            if invalid_not_actions:
-                # Since it is an invalid NotAction, it allows all AWS actions
-                allowed_actions.add("*")
-
-        policies_combination = find_privilege_escalation_combinations(
-            allowed_actions, denied_actions, allowed_not_actions, denied_not_actions
-        )
-
-        # Check all policies combinations and see if matches with some combo key
-        combos = set()
         for (
-            key,
-            values,
+            combo_key,
+            required_actions_patterns,
         ) in privilege_escalation_policies_combination.items():
-            intersection = policies_combination.intersection(values)
-            if intersection == values:
-                combos.add(key)
+            # Expand the required actions for the current combo
+            expanded_required_actions = set()
+            for action_pattern in required_actions_patterns:
+                expanded_required_actions.update(expand_actions(action_pattern))
 
-        if combos:
-            policies_affected = (
-                ", ".join(
-                    str(privilege_escalation_policies_combination[key])
-                    for key in combos
-                )
-                .replace("{", "")
-                .replace("}", "")
+            # Check if all expanded required actions are present in the effective actions
+            if expanded_required_actions and expanded_required_actions.issubset(
+                effective_allowed_actions
+            ):
+                # If match, store the original patterns and the key
+                matched_combo_actions.update(required_actions_patterns)
+                matched_combo_keys.add(combo_key)
+
+        if matched_combo_keys:
+            # Use the original patterns from the matched combos for the output
+            policies_affected = ", ".join(
+                f"'{action}'" for action in sorted(list(matched_combo_actions))
             )
+            # Alternative: Output based on combo keys
+            # print("DEBUG: matched_combo_keys =", ", ".join(sorted(list(matched_combo_keys))))
+
+    except Exception as error:
+        logger.error(
+            f"Error checking privilege escalation for policy: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return policies_affected
