@@ -103,6 +103,14 @@ def generate_compliance_report(
         fontName="Helvetica",
     )
 
+    normal_center = ParagraphStyle(
+        "CustomNormalCenter",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.Color(0.2, 0.2, 0.2),
+        fontName="Helvetica",
+    )
+
     url_credentials = "http://localhost:8080/api/v1/tokens"
     payload = {
         "data": {
@@ -222,6 +230,8 @@ def generate_compliance_report(
             status_color = colors.Color(0.4, 0.4, 0.4)
 
         data = [["State:", status.upper()]]
+
+        elements.append(Spacer(1, 0.1 * inch))
 
         table = Table(data, colWidths=[0.6 * inch, 0.8 * inch])
 
@@ -709,9 +719,16 @@ def generate_compliance_report(
         metadata = attr.get("attributes", {}).get("metadata", [])
         if metadata:
             m = metadata[0]
-            elements.append(
-                Paragraph(f"Description: {m.get('AttributeDescription')}", normal)
-            )
+            elements.append(Paragraph("Title: ", h3))
+            elements.append(Paragraph(f"{m.get('Title')}", normal))
+            elements.append(Paragraph("Section: ", h3))
+            elements.append(Paragraph(f"{m.get('Section')}", normal))
+            elements.append(Paragraph("SubSection: ", h3))
+            elements.append(Paragraph(f"{m.get('SubSection')}", normal))
+            elements.append(Paragraph("Description: ", h3))
+            elements.append(Paragraph(f"{m.get('AttributeDescription')}", normal))
+            elements.append(Paragraph("Additional Information: ", h3))
+            elements.append(Paragraph(f"{m.get('AdditionalInformation')}", normal))
             elements.append(Spacer(1, 0.1 * inch))
 
             risk_level = m.get("LevelOfRisk", 0)
@@ -729,20 +746,19 @@ def generate_compliance_report(
         checks = attr.get("attributes", {}).get("check_ids", [])
         for cid in checks:
             elements.append(Paragraph(f"Check: {cid}", h2))
+            elements.append(Spacer(1, 0.1 * inch))
             finds = get_finding_info(cid)
             if not finds:
                 elements.append(
                     Paragraph("- No information for this finding currently", normal)
                 )
             else:
-                # Render findings as a table
                 findings_table_data = [
                     [
                         "Finding",
                         "Resource name",
                         "Severity",
                         "Status",
-                        "Last seen",
                         "Region",
                     ]
                 ]
@@ -750,7 +766,6 @@ def generate_compliance_report(
                     attr = f["attributes"]
                     check_meta = attr.get("check_metadata", {})
                     title = check_meta.get("checktitle", attr.get("check_id", ""))
-                    # Resource name: try to get from relationships/resources/data[0].id if not in attributes
                     resource_name = attr.get("resource_id")
                     if not resource_name:
                         rel_resources = (
@@ -764,30 +779,25 @@ def generate_compliance_report(
                             resource_name = ""
                     severity = attr.get("severity", "").capitalize()
                     status = attr.get("status", "").upper()
-                    last_seen = attr.get("inserted_at", "")
-                    if last_seen:
-                        last_seen = last_seen.replace("T", " ")[:16]
                     region = attr.get("region", "global")
 
                     findings_table_data.append(
                         [
-                            Paragraph(title, normal),
-                            Paragraph(resource_name, normal),
-                            Paragraph(severity, normal),
-                            Paragraph(status, normal),
-                            Paragraph(last_seen, normal),
-                            Paragraph(region, normal),
+                            Paragraph(title, normal_center),
+                            Paragraph(resource_name, normal_center),
+                            Paragraph(severity, normal_center),
+                            Paragraph(status, normal_center),
+                            Paragraph(region, normal_center),
                         ]
                     )
                 findings_table = Table(
                     findings_table_data,
                     colWidths=[
                         2.5 * inch,
-                        1.2 * inch,
-                        0.8 * inch,
-                        0.8 * inch,
-                        1.2 * inch,
-                        0.8 * inch,
+                        2.7 * inch,
+                        1 * inch,
+                        1 * inch,
+                        1 * inch,
                     ],
                 )
                 findings_table.setStyle(
@@ -801,18 +811,18 @@ def generate_compliance_report(
                             ),
                             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("ALIGN", (0, 0), (0, 0), "CENTER"),
                             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                             ("FONTSIZE", (0, 0), (-1, -1), 9),
                             (
                                 "GRID",
                                 (0, 0),
                                 (-1, -1),
-                                0.5,
+                                0.1,
                                 colors.Color(0.7, 0.8, 0.9),
                             ),
-                            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                            ("LEFTPADDING", (0, 0), (0, 0), 0),
+                            ("RIGHTPADDING", (0, 0), (0, 0), 0),
                             ("TOPPADDING", (0, 0), (-1, -1), 4),
                             ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                         ]
