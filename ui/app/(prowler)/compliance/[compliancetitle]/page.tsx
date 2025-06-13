@@ -1,6 +1,6 @@
 import { Spacer } from "@nextui-org/react";
 import Image from "next/image";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import {
   getComplianceAttributes,
@@ -22,11 +22,7 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import {
-  calculateCategoryHeatmapData,
-  calculateRegionHeatmapData,
-  getComplianceMapper,
-} from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/commons";
 import { ScanProps } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
 
@@ -64,8 +60,18 @@ const ChartsWrapper = ({
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full flex-col items-center justify-between lg:flex-row">
-      {children}
+    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start">
+      {children &&
+        React.Children.toArray(children).map(
+          (child: React.ReactNode, index: number) => (
+            <div
+              key={index}
+              className="rounded-lg bg-gray-50 p-6 dark:bg-gray-900"
+            >
+              {child}
+            </div>
+          ),
+        )}
     </div>
   );
 };
@@ -154,6 +160,7 @@ export default async function ComplianceDetail({
         uniqueRegions={uniqueRegions}
         showSearch={false}
         framework={compliancetitle}
+        showProviders={false}
       />
 
       <Suspense
@@ -175,11 +182,6 @@ export default async function ComplianceDetail({
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
-          uniqueRegions={uniqueRegions}
-          isRegionFiltered={
-            !!regionFilter &&
-            regionFilter.split(",").length < uniqueRegions.length
-          }
         />
       </Suspense>
     </ContentLayout>
@@ -192,16 +194,12 @@ const SSRComplianceContent = async ({
   region,
   filter,
   logoPath,
-  uniqueRegions,
-  isRegionFiltered,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   logoPath?: string;
-  uniqueRegions: string[];
-  isRegionFiltered: boolean;
 }) => {
   if (!scanId) {
     return (
@@ -209,14 +207,7 @@ const SSRComplianceContent = async ({
         <ChartsWrapper logoPath={logoPath}>
           <PieChart pass={0} fail={0} manual={0} />
           <BarChart sections={[]} />
-          <HeatmapChart
-            regions={[]}
-            categories={[]}
-            isRegionFiltered={
-              !!region && region.split(",").length < uniqueRegions.length
-            }
-            filteredRegionName={region}
-          />
+          <HeatmapChart categories={[]} />
         </ChartsWrapper>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
@@ -236,21 +227,16 @@ const SSRComplianceContent = async ({
   // Determine framework from the first attribute item
   const framework = attributesData?.data?.[0]?.attributes?.framework;
   const mapper = getComplianceMapper(framework);
+
+  // Use the same data for both compliance view and heatmap
   const data = mapper.mapComplianceData(
     attributesData,
     requirementsData,
     filter,
   );
 
-  // Calculate region heatmap data using already obtained data
-  const regionHeatmapData = await calculateRegionHeatmapData(
-    complianceId,
-    scanId,
-    uniqueRegions,
-    attributesData,
-    mapper,
-  );
-  const categoryHeatmapData = calculateCategoryHeatmapData(data);
+  // Calculate category heatmap data
+  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
 
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
@@ -277,16 +263,12 @@ const SSRComplianceContent = async ({
           manual={totalRequirements.manual}
         />
         <BarChart sections={topFailedSections} />
-        <HeatmapChart
-          regions={regionHeatmapData}
-          categories={categoryHeatmapData}
-          isRegionFiltered={isRegionFiltered}
-          filteredRegionName={region}
-        />
+        <HeatmapChart categories={categoryHeatmapData} />
       </ChartsWrapper>
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper
+        hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
         defaultExpandedKeys={defaultKeys}
       />

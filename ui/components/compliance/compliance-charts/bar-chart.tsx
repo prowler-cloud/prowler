@@ -14,12 +14,36 @@ import {
 import { translateType } from "@/lib/compliance/ens";
 import { FailedSection } from "@/types/compliance";
 
+const CustomYAxisTick = (props: any) => {
+  const { x, y, payload, theme } = props;
+  const text = payload.value;
+  const maxLength = 50;
+
+  const truncatedText =
+    text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={10}
+        y={-24}
+        fill={theme === "dark" ? "#94a3b8" : "#374151"}
+        fontSize={12}
+        textAnchor="start"
+        dominantBaseline="middle"
+      >
+        {truncatedText}
+      </text>
+    </g>
+  );
+};
+
 interface FailedSectionsListProps {
   sections: FailedSection[];
 }
 
 const title = (
-  <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+  <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
     Failed Sections (Top 5)
   </h3>
 );
@@ -74,7 +98,7 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
   // Check if there are no failed sections
   if (!sections || sections.length === 0) {
     return (
-      <div className="flex w-[400px] flex-col items-center justify-between lg:w-[600px]">
+      <div className="flex w-[400px] flex-col items-center justify-between">
         {title}
         <div className="flex h-[320px] w-full items-center justify-center">
           <p className="text-sm text-gray-500">There are no failed sections</p>
@@ -84,16 +108,16 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
   }
 
   return (
-    <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
-      <div>{title}</div>
+    <div className="flex h-[320px] w-[400px] flex-col items-center justify-between">
+      {title}
 
       <div className="h-full w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RechartsBarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 12, bottom: 0 }}
-            maxBarSize={32}
+            margin={{ top: 12, bottom: 0, right: 0, left: -56 }}
+            maxBarSize={30}
           >
             <XAxis
               type="number"
@@ -111,16 +135,7 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
             <YAxis
               type="category"
               dataKey="name"
-              width={1}
-              tick={{
-                fontSize: 12,
-                fill: theme === "dark" ? "#94a3b8" : "#374151",
-                textAnchor: "start",
-                style: {
-                  transform: "translateX(10px) translateY(-26px)",
-                },
-                width: 400,
-              }}
+              tick={(props) => <CustomYAxisTick {...props} theme={theme} />}
               axisLine={false}
               tickLine={false}
             />
@@ -153,8 +168,13 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
                     }}
                   >
                     {props.payload.map((entry: any, index: number) => (
-                      <div key={index} style={{ color: entry.color }}>
-                        {translateType(entry.dataKey)}: {entry.value}
+                      <div key={index} className="max-w-[200px]">
+                        <p>{data.name}</p>
+                        <p>
+                          <span style={{ color: entry.color }}>
+                            {translateType(entry.dataKey)}: {entry.value}
+                          </span>
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -180,6 +200,7 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
                 width: "100%",
                 paddingTop: "16px",
                 marginBottom: "16px",
+                marginLeft: "56px",
               }}
               iconType="circle"
               layout="horizontal"
