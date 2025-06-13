@@ -7,25 +7,25 @@ import {
   AttributesData,
   Framework,
   Requirement,
-  RequirementItemData,
   RequirementsData,
   RequirementStatus,
   ThreatAttributesMetadata,
 } from "@/types/compliance";
+
+import {
+  createRequirementsMap,
+  findOrCreateCategory,
+  findOrCreateControl,
+  findOrCreateFramework,
+  updateCounters,
+} from "./commons";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
 ): Framework[] => {
   const attributes = attributesData?.data || [];
-  const requirements = requirementsData?.data || [];
-
-  // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map<string, RequirementItemData>();
-  requirements.forEach((req: RequirementItemData) => {
-    requirementsMap.set(req.id, req);
-  });
-
+  const requirementsMap = createRequirementsMap(requirementsData);
   const frameworks: Framework[] = [];
 
   // Process attributes and merge with requirements data
@@ -56,44 +56,14 @@ export const mapComplianceData = (
     // Calculate score: if PASS = levelOfRisk * weight, if FAIL = 0
     const score = status === "PASS" ? levelOfRisk * weight : 0;
 
-    // Find or create framework
-    let framework = frameworks.find((f) => f.name === frameworkName);
-    if (!framework) {
-      framework = {
-        name: frameworkName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        categories: [],
-      };
-      frameworks.push(framework);
-    }
+    // Find or create framework using common helper
+    const framework = findOrCreateFramework(frameworks, frameworkName);
 
-    // Find or create category (Section)
-    let category = framework.categories.find((c) => c.name === sectionName);
-    if (!category) {
-      category = {
-        name: sectionName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        controls: [],
-      };
-      framework.categories.push(category);
-    }
+    // Find or create category (Section) using common helper
+    const category = findOrCreateCategory(framework.categories, sectionName);
 
-    // Find or create control (SubSection)
-    let control = category.controls.find((c) => c.label === subSectionName);
-    if (!control) {
-      control = {
-        label: subSectionName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        requirements: [],
-      };
-      category.controls.push(control);
-    }
+    // Find or create control (SubSection) using common helper
+    const control = findOrCreateControl(category.controls, subSectionName);
 
     // Create requirement
     const finalStatus: RequirementStatus = status as RequirementStatus;
@@ -116,7 +86,7 @@ export const mapComplianceData = (
     control.requirements.push(requirement);
   }
 
-  // Calculate counters and percentualScore
+  // Calculate counters and percentualScore (Threat-specific logic)
   frameworks.forEach((framework) => {
     framework.pass = 0;
     framework.fail = 0;
@@ -137,13 +107,7 @@ export const mapComplianceData = (
         control.manual = 0;
 
         control.requirements.forEach((requirement) => {
-          if (requirement.status === "MANUAL") {
-            control.manual++;
-          } else if (requirement.status === "PASS") {
-            control.pass++;
-          } else if (requirement.status === "FAIL") {
-            control.fail++;
-          }
+          updateCounters(control, requirement.status);
 
           // Add to total section score (actual score obtained)
           totalSectionScore += (requirement.score as number) || 0;

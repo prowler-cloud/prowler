@@ -11,7 +11,7 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { getComplianceMapper } from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 

@@ -20,7 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
-  
+
 ### 🔄 Changed
 
 - `Provider UID` filter to scans page [(#7820)](https://github.com/prowler-cloud/prowler/pull/7820)
@@ -73,7 +73,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `Accordion` component [(#7700)](https://github.com/prowler-cloud/prowler/pull/7700)
 - Improve `Provider UID` filter by adding more context and enhancing the UI/UX [(#7741)](https://github.com/prowler-cloud/prowler/pull/7741)
 - AWS CloudFormation Quick Link to the IAM Role credentials step [(#7735)](https://github.com/prowler-cloud/prowler/pull/7735)
-– Use `getLatestFindings` on findings page when no scan or date filters are applied [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
+  – Use `getLatestFindings` on findings page when no scan or date filters are applied [(#7756)](https://github.com/prowler-cloud/prowler/pull/7756)
 
 ### 🐞 Fixed
 
@@ -82,6 +82,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Added filter to retrieve only connected providers on the scan page [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
 
 ### Removed
+
 - Alias if not added from findings detail page [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
 
 ---

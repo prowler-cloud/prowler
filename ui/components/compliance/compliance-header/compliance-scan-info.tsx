@@ -1,5 +1,4 @@
 import { Divider, Tooltip } from "@nextui-org/react";
-import React from "react";
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { ProviderType } from "@/types";
@@ -18,9 +17,7 @@ interface ComplianceScanInfoProps {
   };
 }
 
-export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
-  scan,
-}) => {
+export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
   return (
     <div className="flex items-center gap-2">
       <EntityInfoShort

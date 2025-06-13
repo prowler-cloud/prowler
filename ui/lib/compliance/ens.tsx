@@ -8,10 +8,17 @@ import {
   ENSAttributesMetadata,
   Framework,
   Requirement,
-  RequirementItemData,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
+
+import {
+  calculateFrameworkCounters,
+  createRequirementsMap,
+  findOrCreateCategory,
+  findOrCreateControl,
+  findOrCreateFramework,
+} from "./commons";
 
 export const translateType = (type: string) => {
   if (!type) {
@@ -37,14 +44,7 @@ export const mapComplianceData = (
   requirementsData: RequirementsData,
 ): Framework[] => {
   const attributes = attributesData?.data || [];
-  const requirements = requirementsData?.data || [];
-
-  // Create a map for quick lookup of requirements by id
-  const requirementsMap = new Map<string, RequirementItemData>();
-  requirements.forEach((req: RequirementItemData) => {
-    requirementsMap.set(req.id, req);
-  });
-
+  const requirementsMap = createRequirementsMap(requirementsData);
   const frameworks: Framework[] = [];
 
   // Process attributes and merge with requirements data
@@ -71,44 +71,14 @@ export const mapComplianceData = (
     const requirementName = id;
     const groupControlLabel = `${groupControl} - ${description}`;
 
-    // Find or create framework
-    let framework = frameworks.find((f) => f.name === frameworkName);
-    if (!framework) {
-      framework = {
-        name: frameworkName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        categories: [],
-      };
-      frameworks.push(framework);
-    }
+    // Find or create framework using common helper
+    const framework = findOrCreateFramework(frameworks, frameworkName);
 
-    // Find or create category
-    let category = framework.categories.find((c) => c.name === categoryName);
-    if (!category) {
-      category = {
-        name: categoryName,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        controls: [],
-      };
-      framework.categories.push(category);
-    }
+    // Find or create category using common helper
+    const category = findOrCreateCategory(framework.categories, categoryName);
 
-    // Find or create control
-    let control = category.controls.find((c) => c.label === groupControlLabel);
-    if (!control) {
-      control = {
-        label: groupControlLabel,
-        pass: 0,
-        fail: 0,
-        manual: 0,
-        requirements: [],
-      };
-      category.controls.push(control);
-    }
+    // Find or create control using common helper
+    const control = findOrCreateControl(category.controls, groupControlLabel);
 
     // Create requirement
     const finalStatus: RequirementStatus = isManual
@@ -130,42 +100,8 @@ export const mapComplianceData = (
     control.requirements.push(requirement);
   }
 
-  // Calculate counters
-  frameworks.forEach((framework) => {
-    framework.pass = 0;
-    framework.fail = 0;
-    framework.manual = 0;
-
-    framework.categories.forEach((category) => {
-      category.pass = 0;
-      category.fail = 0;
-      category.manual = 0;
-
-      category.controls.forEach((control) => {
-        control.pass = 0;
-        control.fail = 0;
-        control.manual = 0;
-
-        control.requirements.forEach((requirement) => {
-          if (requirement.status === "MANUAL") {
-            control.manual++;
-          } else if (requirement.status === "PASS") {
-            control.pass++;
-          } else if (requirement.status === "FAIL") {
-            control.fail++;
-          }
-        });
-
-        category.pass += control.pass;
-        category.fail += control.fail;
-        category.manual += control.manual;
-      });
-
-      framework.pass += category.pass;
-      framework.fail += category.fail;
-      framework.manual += category.manual;
-    });
-  });
+  // Calculate counters using common helper
+  calculateFrameworkCounters(frameworks);
 
   return frameworks;
 };
