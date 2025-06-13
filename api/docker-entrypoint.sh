@@ -3,6 +3,10 @@
 
 apply_migrations() {
   echo "Applying database migrations..."
+
+  # Fix Inconsistent migration history after adding sites app
+  poetry run python manage.py check_and_fix_socialaccount_sites_migration --database admin
+
   poetry run python manage.py migrate --database admin
 }
 

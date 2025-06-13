@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
 from django.db import connections as django_connections
@@ -27,6 +28,8 @@ from api.models import (
     Resource,
     ResourceTag,
     Role,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     StateChoices,
@@ -1078,6 +1081,64 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
     return finding
+
+
+@pytest.fixture
+def saml_setup(tenants_fixture):
+    tenant_id = tenants_fixture[0].id
+    domain = "example.com"
+
+    SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
+
+    metadata_xml = """<?xml version='1.0' encoding='UTF-8'?>
+    <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+    <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+        <md:KeyDescriptor use='signing'>
+        <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+            <ds:X509Data>
+            <ds:X509Certificate>TEST</ds:X509Certificate>
+            </ds:X509Data>
+        </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+    </md:IDPSSODescriptor>
+    </md:EntityDescriptor>
+    """
+    SAMLConfiguration.objects.create(
+        tenant_id=str(tenant_id),
+        email_domain=domain,
+        metadata_xml=metadata_xml,
+    )
+
+    return {
+        "email": f"user@{domain}",
+        "domain": domain,
+        "tenant_id": tenant_id,
+    }
+
+
+@pytest.fixture
+def saml_sociallogin(users_fixture):
+    user = users_fixture[0]
+    user.email = "samlsso@acme.com"
+    extra_data = {
+        "firstName": ["Test"],
+        "lastName": ["User"],
+        "organization": ["Prowler"],
+        "userType": ["member"],
+    }
+
+    account = MagicMock()
+    account.provider = "saml"
+    account.extra_data = extra_data
+
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.account = account
+    sociallogin.user = user
+
+    return sociallogin
 
 
 def get_authorization_header(access_token: str) -> dict:

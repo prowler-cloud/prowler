@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account.",
+      "Text": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account. If using AWS Organizations, consider enabling Centralized Root Management and removing individual root credentials.",
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa"
     }
   },
