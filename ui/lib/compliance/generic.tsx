@@ -30,14 +30,14 @@ interface ProcessedItem {
 
 const createRequirement = (itemData: ProcessedItem): Requirement => {
   const { id, attrs, attributeItem, requirementData } = itemData;
-  const requirementName = attributeItem.attributes.name || id;
+  const name = attributeItem.attributes.name || id;
   const description = attributeItem.attributes.description;
   const status = requirementData.attributes.status || "";
   const checks = attributeItem.attributes.attributes.check_ids || [];
   const finalStatus: RequirementStatus = status as RequirementStatus;
 
   return {
-    name: requirementName,
+    name: attributeItem.attributes.framework === "PCI" ? id : name,
     description: description,
     status: finalStatus,
     check_ids: checks,
@@ -106,13 +106,11 @@ export const mapComplianceData = (
     // Process each item in the framework
     for (const itemData of items) {
       const requirement = createRequirement(itemData);
-      const requirementName =
-        itemData.attributeItem.attributes.name || itemData.id;
       const sectionName = itemData.attrs.Section;
       const subSectionName = itemData.attrs.SubSection;
 
       // Determine structure: flat, 2-level, or 3-level hierarchy
-      if (!sectionName || sectionName === requirementName) {
+      if (!sectionName || sectionName === requirement.name) {
         // Flat structure: store requirements directly in framework
         (framework as any).requirements = (framework as any).requirements || [];
         (framework as any).requirements.push(requirement);
@@ -133,7 +131,7 @@ export const mapComplianceData = (
           sectionName,
         );
         const control = {
-          label: requirementName,
+          label: requirement.name,
           pass: 0,
           fail: 0,
           manual: 0,
