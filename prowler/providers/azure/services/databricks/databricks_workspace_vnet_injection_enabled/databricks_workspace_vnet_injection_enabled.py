@@ -5,7 +5,14 @@ from prowler.providers.azure.services.databricks.databricks_client import (
 
 
 class databricks_workspace_vnet_injection_enabled(Check):
-    """Ensure Azure Databricks workspaces are deployed in a customer-managed VNet (VNet Injection)"""
+    """
+    Ensure Azure Databricks workspaces are deployed in a customer-managed VNet (VNet Injection).
+
+    This check evaluates whether each Azure Databricks workspace in the subscription is configured to use VNet Injection, meaning it is deployed in a customer-managed virtual network (VNet).
+
+    - PASS: The workspace is deployed in a customer-managed VNet (custom_managed_vnet_id is set).
+    - FAIL: The workspace is not deployed in a customer-managed VNet (VNet Injection is not enabled).
+    """
 
     def execute(self):
         findings = []
