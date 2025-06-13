@@ -54,6 +54,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -93,6 +94,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -138,6 +140,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -334,6 +339,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Integration",
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
+            },
+            {
+                "name": "Lighthouse",
+                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3024,9 +3034,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Overview"])
 @extend_schema_view(
-    providers=extend_schema(
+    list=extend_schema(
+        tags=["Overview"],
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -3273,7 +3283,6 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
@@ -3391,3 +3400,80 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse"],
+        summary="List all Lighthouse configurations",
+        description="Retrieve a list of all Lighthouse configurations.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse"],
+        summary="Create a new Lighthouse configuration",
+        description="Create a new Lighthouse configuration with the specified details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse"],
+        summary="Partially update a Lighthouse configuration",
+        description="Update certain fields of an existing Lighthouse configuration.",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse"],
+        summary="Delete a Lighthouse configuration",
+        description="Remove a Lighthouse configuration by its ID.",
+    ),
+    connection=extend_schema(
+        tags=["Lighthouse"],
+        summary="Check the connection to the OpenAI API",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    ),
+)
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing Lighthouse configuration.
+    """
+
+    serializer_class = LighthouseConfigSerializer
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseConfigUpdateSerializer
+        elif self.action == "connection":
+            return TaskSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API asynchronously.
+        """
+        instance = self.get_object()
+        with transaction.atomic():
+            task = check_lighthouse_connection_task.delay(
+                lighthouse_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
