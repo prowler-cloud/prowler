@@ -97,7 +97,7 @@ class Testm365PowerShell:
         session.init_credential(credentials)
 
         # Verify encrypt_password was called
-        session.encrypt_password.assert_called_once_with(credentials.passwd)
+        session.encrypt_password.assert_any_call(credentials.passwd)
 
         # Verify execute was called with the correct commands
         session.execute.assert_any_call(f'$user = "{credentials.user}"')
@@ -166,6 +166,37 @@ class Testm365PowerShell:
             scopes=["https://graph.microsoft.com/.default"],
         )
         session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_credentials_application_auth(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        with patch(
+            "prowler.providers.m365.lib.powershell.m365_powershell.M365Credentials",
+            autospec=True,
+        ) as mock_creds:
+            credentials = mock_creds.return_value
+            credentials.user = ""
+            credentials.passwd = ""
+            credentials.encrypted_passwd = ""
+            credentials.client_id = "test_client_id"
+            credentials.client_secret = "test_client_secret"
+            credentials.tenant_id = "test_tenant_id"
+            identity = M365IdentityInfo(
+                identity_id="test_id",
+                identity_type="Application",
+                tenant_id="test_tenant",
+                tenant_domain="contoso.onmicrosoft.com",
+                tenant_domains=["contoso.onmicrosoft.com"],
+                location="test_location",
+            )
+            session = M365PowerShell(credentials, identity)
+            session.execute = MagicMock(return_value="sometoken")
+
+            result = session.test_credentials(credentials)
+            assert result is True
+            session.execute.assert_any_call("Write-Output $graphToken")
+            session.close()
 
     @patch("subprocess.Popen")
     @patch("msal.ConfidentialClientApplication")
@@ -451,12 +482,13 @@ class Testm365PowerShell:
             # Verify successful initialization
             assert result is True
             # Verify that execute was called for each module
-            assert mock_execute_obj.call_count == 6  # 2 modules * 3 commands each
+            assert mock_execute_obj.call_count == 9  # 3 modules * 3 commands each
             # Verify success messages were logged
             mock_info.assert_any_call(
                 "Successfully installed module ExchangeOnlineManagement"
             )
             mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
+            mock_info.assert_any_call("Successfully installed module MSAL.PS")
 
     @patch("subprocess.Popen")
     def test_initialize_m365_powershell_modules_failure(self, mock_popen):
@@ -519,11 +551,12 @@ class Testm365PowerShell:
             main()
 
             # Verify all info messages were logged in the correct order
-            assert mock_info.call_count == 3
+            assert mock_info.call_count == 4
             mock_info.assert_has_calls(
                 [
                     call("Successfully installed module ExchangeOnlineManagement"),
                     call("Successfully installed module MicrosoftTeams"),
+                    call("Successfully installed module MSAL.PS"),
                     call("M365 PowerShell modules initialized successfully"),
                 ]
             )
