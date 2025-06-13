@@ -71,6 +71,7 @@ Detailed documentation at https://docs.prowler.com
         self.__init_config_parser__()
         self.__init_custom_checks_metadata_parser__()
         self.__init_third_party_integrations_parser__()
+        self.__init_fixer_parser__()
 
         # Init Providers Arguments
         init_providers_parser(self)
@@ -391,4 +392,13 @@ Detailed documentation at https://docs.prowler.com
             "--slack",
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
+        )
+
+    def __init_fixer_parser__(self):
+        """Initialize the fixer parser with its arguments"""
+        fixer_parser = self.common_providers_parser.add_argument_group("Fixer")
+        fixer_parser.add_argument(
+            "--fixer",
+            action="store_true",
+            help="Fix the failed findings that can be fixed by Prowler",
         )

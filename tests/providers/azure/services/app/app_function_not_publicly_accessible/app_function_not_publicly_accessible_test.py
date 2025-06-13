@@ -87,6 +87,7 @@ class Test_app_function_not_publicly_accessible:
                         public_access=False,
                         vnet_subnet_id=None,
                         ftps_state="AllAllowed",
+                        resource_group_name="resource_group_name",
                     )
                 }
             }
@@ -137,6 +138,7 @@ class Test_app_function_not_publicly_accessible:
                         public_access=True,
                         vnet_subnet_id=None,
                         ftps_state="AllAllowed",
+                        resource_group_name="resource_group_name",
                     )
                 }
             }
