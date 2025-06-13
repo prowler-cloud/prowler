@@ -27,6 +27,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
 - Make `validate_mutelist` method static inside `Mutelist` class [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
 - Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check to ensure workspaces are deployed in a customer-managed VNet [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
+- Azure Databricks check `databricks_workspace_cmk_encryption_enabled` to ensure workspaces use customer-managed keys (CMK) for encryption at rest [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
+
 
 ### Fixed
 - Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
