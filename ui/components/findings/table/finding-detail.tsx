@@ -6,7 +6,6 @@ import Link from "next/link";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { getProviderLogo } from "@/components/ui/entities/get-provider-logo";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps, ProviderType } from "@/types";
 

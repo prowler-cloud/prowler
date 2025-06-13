@@ -48,7 +48,7 @@ export const ScanDetail = ({
 }: {
   scanDetails: ScanProps & {
     taskDetails?: TaskDetails;
-    providerDetails?: ProviderProps;
+    providerDetails: ProviderProps;
   };
 }) => {
   const scan = scanDetails.attributes;
@@ -58,30 +58,25 @@ export const ScanDetail = ({
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <StatusBadge
-          size="md"
-          className="w-fit"
-          status={scan.state}
-          loadingProgress={scan.progress}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center">
+          <StatusBadge
+            size="md"
+            className="w-fit"
+            status={scan.state}
+            loadingProgress={scan.progress}
+          />
+        </div>
+        <EntityInfoShort
+          cloudProvider={providerDetails.provider as ProviderType}
+          entityAlias={providerDetails.alias}
+          entityId={providerDetails.uid}
+          showConnectionStatus={providerDetails.connection.connected}
         />
       </div>
 
       {/* Scan Details */}
       <Section title="Scan Details">
-        {providerDetails ? (
-          <EntityInfoShort
-            cloudProvider={providerDetails.provider as ProviderType}
-            entityAlias={providerDetails.alias}
-            entityId={providerDetails.uid}
-            connectionStatus={providerDetails.connection.connected}
-          />
-        ) : (
-          <span className="text-sm text-gray-500">
-            No provider details available
-          </span>
-        )}
-
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <InfoField label="Scan Name">{renderValue(scan.name)}</InfoField>
           <InfoField label="Resources Scanned">
