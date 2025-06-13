@@ -75,7 +75,6 @@ from api.filters import (
     IntegrationFilter,
     InvitationFilter,
     LatestFindingFilter,
-    LighthouseConfigFilter,
     MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -3017,9 +3016,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Overview"])
 @extend_schema_view(
-    providers=extend_schema(
+    list=extend_schema(
+        tags=["Overview"],
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -3266,7 +3265,6 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
@@ -3402,11 +3400,6 @@ class IntegrationViewSet(BaseRLSViewSet):
         summary="Partially update a Lighthouse configuration",
         description="Update certain fields of an existing Lighthouse configuration.",
     ),
-    retrieve=extend_schema(
-        tags=["Lighthouse"],
-        summary="Retrieve a Lighthouse configuration",
-        description="Fetch detailed information about a specific Lighthouse configuration by its ID. Add query param `fields[lighthouse-config]=api_key` to get API key.",
-    ),
     destroy=extend_schema(
         tags=["Lighthouse"],
         summary="Delete a Lighthouse configuration",
@@ -3425,7 +3418,6 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     """
 
     serializer_class = LighthouseConfigSerializer
-    filterset_class = LighthouseConfigFilter
     ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
     ordering = ["-inserted_at"]
 
@@ -3438,6 +3430,10 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return LighthouseConfigUpdateSerializer
         return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
 
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):

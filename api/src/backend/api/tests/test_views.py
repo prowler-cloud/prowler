@@ -5912,7 +5912,7 @@ class TestLighthouseConfigViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
         # Check for required fields
-        required_fields = ["name", "api_key", "model"]
+        required_fields = ["name", "api_key"]
         for field in required_fields:
             assert any(field in error["source"]["pointer"] for error in errors)
 
@@ -5937,23 +5937,6 @@ class TestLighthouseConfigViewSet:
         assert (
             "Lighthouse configuration already exists for this tenant"
             in response.json()["errors"][0]["detail"]
-        )
-
-    def test_lighthouse_config_retrieve(
-        self, authenticated_client, lighthouse_config_fixture
-    ):
-        """Test retrieving a lighthouse config"""
-        response = authenticated_client.get(
-            reverse(
-                "lighthouseconfiguration-detail",
-                kwargs={"pk": lighthouse_config_fixture.id},
-            )
-        )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert data["attributes"]["name"] == lighthouse_config_fixture.name
-        assert data["attributes"]["api_key"] == "*" * len(
-            lighthouse_config_fixture.api_key
         )
 
     def test_lighthouse_config_update(
@@ -6028,52 +6011,59 @@ class TestLighthouseConfigViewSet:
             reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        # Verify deletion
-        response = authenticated_client.get(
-            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
-        )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_lighthouse_config_get_key(
+        # Verify deletion by checking list endpoint returns no items
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_lighthouse_config_list_masked_api_key_default(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        """Test that list view returns all fields with masked API key by default"""
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
+
+        # All fields should be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
+
+        # API key should be masked (asterisks)
+        api_key = config["api_key"]
+        assert api_key.startswith("*")
+        assert all(c == "*" for c in api_key)
+
+    def test_lighthouse_config_unmasked_api_key_single_field(
         self, authenticated_client, lighthouse_config_fixture, valid_config_payload
     ):
-        config_id = lighthouse_config_fixture.id
+        """Test that specifying api_key in fields param returns all fields with unmasked API key"""
         expected_api_key = valid_config_payload["data"]["attributes"]["api_key"]
         response = authenticated_client.get(
-            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
+            reverse("lighthouseconfiguration-list")
             + "?fields[lighthouse-config]=api_key"
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["data"]["attributes"]["api_key"] == expected_api_key
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
 
-    @pytest.mark.parametrize(
-        "filter_param, filter_value_source, expected_count",
-        [
-            ("name", "fixture_name", 1),  # Test name filter
-            ("model", "gpt-4o", 1),  # Test model filter
-            ("is_active", "true", 1),  # Test is_active filter
-        ],
-    )
-    def test_lighthouse_config_filters(
-        self,
-        authenticated_client,
-        lighthouse_config_fixture,
-        filter_param,
-        filter_value_source,
-        expected_count,
-    ):
-        """Test filtering lighthouse configurations by various parameters"""
-        if filter_value_source == "fixture_name":
-            filter_value = lighthouse_config_fixture.name
-        else:
-            filter_value = filter_value_source
+        # All fields should still be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
 
-        response = authenticated_client.get(
-            reverse("lighthouseconfiguration-list")
-            + f"?filter[{filter_param}]={filter_value}"
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == expected_count
+        # API key should be unmasked
+        assert config["api_key"] == expected_api_key
 
     @pytest.mark.parametrize(
         "sort_field, expected_count",
