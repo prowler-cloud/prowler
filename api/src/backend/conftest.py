@@ -884,7 +884,7 @@ def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
     requirement_overview7 = ComplianceRequirementOverview.objects.create(
         tenant=tenant,
         scan=scan1,
-        compliance_id="mitre_attack",
+        compliance_id="mitre_attack_aws",
         framework="MITRE-ATTACK",
         version="1.0",
         description="MITRE ATT&CK",

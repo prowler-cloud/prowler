@@ -4907,7 +4907,7 @@ class TestComplianceOverviewViewSet:
     ):
         response = authenticated_client.get(
             reverse("complianceoverview-attributes"),
-            {"filter[compliance_id]": "mitre_attack"},
+            {"filter[compliance_id]": "mitre_attack_aws"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
