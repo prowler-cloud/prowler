@@ -136,7 +136,7 @@ The permissions you need to grant depends on whether you are using user credenti
 ???+ warning "Warning"
     Make sure you add the correct set of permissions for the authentication method you are using.
 
-#### If using user authentication
+#### If using user authentication (Currently Prowler Cloud only supports this method)
 
 1. Search and select:
 
@@ -180,6 +180,9 @@ The permissions you need to grant depends on whether you are using user credenti
         ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
 
 #### If using application(service principal) authentication
+
+???+ warning "Warning"
+    Currently Prowler Cloud only supports user authentication.
 
 To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
 

@@ -135,7 +135,7 @@ Prowler for M365 currently supports the following authentication types:
 ???+ warning
     For Prowler App only the Service Principal with User Credentials authentication method is supported.
 
-### Service Principal authentication
+### Service Principal authentication (recommended)
 
 Authentication flag: `--sp-env-auth`
 
@@ -150,9 +150,11 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/getting-started-m365.md#create-the-service-principal-app) section to create a service principal.
 
-With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
+If you don't add the external API permissions described in the mentioned section above you will only be able to run the checks that work through MS Graph. This means that you won't run all the provider.
 
-### Service Principal and User Credentials authentication (recommended)
+If you want to scan all the checks from M365 you will need to use the recommended authentication method or add the external API permissions.
+
+### Service Principal and User Credentials authentication
 
 Authentication flag: `--env-auth`
 
