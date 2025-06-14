@@ -404,16 +404,20 @@ class M365Provider(Provider):
                 tenant_id=m365_credentials.get("tenant_id", ""),
                 tenant_domains=identity.tenant_domains,
             )
-        elif env_auth or sp_env_auth:
+        elif env_auth:
             m365_user = getenv("M365_USER")
             m365_password = getenv("M365_PASSWORD")
             client_id = getenv("AZURE_CLIENT_ID")
             client_secret = getenv("AZURE_CLIENT_SECRET")
             tenant_id = getenv("AZURE_TENANT_ID")
 
-            if (not m365_user or not m365_password) and env_auth:
-                logger.info(
-                    "M365 provider: Missing M365_USER or M365_PASSWORD environment variables. Will use application authentication instead."
+            if not m365_user or not m365_password:
+                logger.critical(
+                    "M365 provider: Missing M365_USER or M365_PASSWORD environment variables needed for credentials authentication"
+                )
+                raise M365MissingEnvironmentCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication.",
                 )
 
             credentials = M365Credentials(
@@ -423,6 +427,17 @@ class M365Provider(Provider):
                 tenant_domains=identity.tenant_domains,
                 user=m365_user or "",
                 passwd=m365_password or "",
+            )
+
+        elif sp_env_auth:
+            client_id = getenv("AZURE_CLIENT_ID")
+            client_secret = getenv("AZURE_CLIENT_SECRET")
+            tenant_id = getenv("AZURE_TENANT_ID")
+            credentials = M365Credentials(
+                client_id=client_id,
+                client_secret=client_secret,
+                tenant_id=tenant_id,
+                tenant_domains=identity.tenant_domains,
             )
 
         if credentials:

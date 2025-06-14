@@ -81,7 +81,7 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
             )
-        elif self.execute("Write-Output $credential") == "":
+        else:
             # Application Auth
             self.execute(f'$clientID = "{credentials.client_id}"')
             self.execute(f'$clientSecret = "{credentials.client_secret}"')
