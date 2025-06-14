@@ -25,6 +25,7 @@ def generate_compliance_report(
     email: str,
     password: str,
     only_failed: bool = True,
+    base_url: str = "http://localhost:8080",
 ):
     """
     Generate a PDF compliance report based on Prowler endpoints.
@@ -111,7 +112,7 @@ def generate_compliance_report(
         fontName="Helvetica",
     )
 
-    url_credentials = "http://localhost:8080/api/v1/tokens"
+    url_credentials = f"{base_url}/api/v1/tokens"
     payload = {
         "data": {
             "type": "tokens",
@@ -126,16 +127,19 @@ def generate_compliance_report(
         json=payload,
         headers={"Content-Type": "application/vnd.api+json"},
     ).json()
+    if resp_credentials.get("errors"):
+        print(resp_credentials.get("errors"))
+        raise Exception(resp_credentials.get("errors"))
     token = resp_credentials.get("data", {}).get("attributes", {}).get("access")
 
-    url_reqs = f"http://localhost:8080/api/v1/compliance-overviews/requirements?filter[compliance_id]={compliance_id}&filter[scan_id]={scan_id}"
+    url_reqs = f"{base_url}/api/v1/compliance-overviews/requirements?filter[compliance_id]={compliance_id}&filter[scan_id]={scan_id}"
     resp_reqs = (
         requests.get(url_reqs, headers={"Authorization": f"Bearer {token}"})
         .json()
         .get("data", [])
     )
 
-    url_attrs = f"http://localhost:8080/api/v1/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
+    url_attrs = f"{base_url}/api/v1/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
     resp_attrs = (
         requests.get(url_attrs, headers={"Authorization": f"Bearer {token}"})
         .json()
@@ -351,7 +355,7 @@ def generate_compliance_report(
         return buffer
 
     def get_finding_info(check_id: str):
-        url_find = f"http://localhost:8080/api/v1/findings?filter[check_id]={check_id}&filter[scan]={scan_id}"
+        url_find = f"{base_url}/api/v1/findings?filter[check_id]={check_id}&filter[scan]={scan_id}"
         value = (
             requests.get(url_find, headers={"Authorization": f"Bearer {token}"})
             .json()
@@ -851,6 +855,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Only include failed requirements in the list of requirements",
     )
+    parser.add_argument(
+        "--base-url",
+        default="http://localhost:8080",
+        help="Base URL for the API",
+    )
     args = parser.parse_args()
 
     generate_compliance_report(
@@ -860,4 +869,5 @@ if __name__ == "__main__":
         args.email,
         args.password,
         args.only_failed,
+        args.base_url,
     )
