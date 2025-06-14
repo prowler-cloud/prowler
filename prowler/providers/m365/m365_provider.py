@@ -202,6 +202,7 @@ class M365Provider(Provider):
         # Set up PowerShell session credentials
         self._credentials = self.setup_powershell(
             env_auth=env_auth,
+            sp_env_auth=sp_env_auth,
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
@@ -377,6 +378,7 @@ class M365Provider(Provider):
     @staticmethod
     def setup_powershell(
         env_auth: bool = False,
+        sp_env_auth: bool = False,
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
@@ -417,17 +419,29 @@ class M365Provider(Provider):
                     file=os.path.basename(__file__),
                     message="Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication.",
                 )
+
             credentials = M365Credentials(
                 client_id=client_id,
                 client_secret=client_secret,
                 tenant_id=tenant_id,
                 tenant_domains=identity.tenant_domains,
-                user=m365_user,
-                passwd=m365_password,
+                user=m365_user or "",
+                passwd=m365_password or "",
+            )
+
+        elif sp_env_auth:
+            client_id = getenv("AZURE_CLIENT_ID")
+            client_secret = getenv("AZURE_CLIENT_SECRET")
+            tenant_id = getenv("AZURE_TENANT_ID")
+            credentials = M365Credentials(
+                client_id=client_id,
+                client_secret=client_secret,
+                tenant_id=tenant_id,
+                tenant_domains=identity.tenant_domains,
             )
 
         if credentials:
-            if identity:
+            if identity and credentials.user:
                 identity.user = credentials.user
             test_session = M365PowerShell(credentials, identity)
             try:
