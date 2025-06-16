@@ -15,9 +15,6 @@ class codebuild_project_uses_allowed_github_organizations(Check):
         )
 
         for project in codebuild_client.projects.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource=project)
-            report.status = "PASS"
-
             if project.source.type in ("GITHUB", "GITHUB_ENTERPRISE"):
                 project_github_repo_url = project.source.location
                 project_role = next(
@@ -32,25 +29,27 @@ class codebuild_project_uses_allowed_github_organizations(Check):
                     project_role.assume_role_policy if project_role else None
                 )
 
-                if project_iam_trust_policy:
-                    if not has_codebuild_trusted_principal(project_iam_trust_policy):
-                        report.status_extended = f"CodeBuild project {project.name} does not use an IAM role with codebuild.amazonaws.com as a trusted principal, skipping GitHub organization check."
+                if not project_iam_trust_policy or not has_codebuild_trusted_principal(
+                    project_iam_trust_policy
+                ):
+                    continue
+
+                report = Check_Report_AWS(metadata=self.metadata(), resource=project)
+                report.status = "PASS"
+
+                is_allowed, org_name = is_codebuild_using_allowed_github_org(
+                    project_iam_trust_policy,
+                    project_github_repo_url,
+                    allowed_organizations,
+                )
+                if org_name is not None:
+                    if is_allowed:
+                        report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is in the allowed organizations."
                     else:
-                        is_allowed, org_name = is_codebuild_using_allowed_github_org(
-                            project_iam_trust_policy,
-                            project_github_repo_url,
-                            allowed_organizations,
-                        )
-                        if org_name is not None:
-                            if is_allowed:
-                                report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is in the allowed organizations."
-                            else:
-                                report.status = "FAIL"
-                                report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is not in the allowed organizations."
-                        else:
-                            report.status_extended = f"CodeBuild project {project.name} uses a GitHub repository with an invalid or unrecognized organization in the URL."
+                        report.status = "FAIL"
+                        report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is not in the allowed organizations."
                 else:
-                    report.status_extended = f"CodeBuild project {project.name} does not use an IAM role with codebuild.amazonaws.com as a trusted principal, skipping GitHub organization check."
+                    report.status_extended = f"CodeBuild project {project.name} uses a GitHub repository with an invalid or unrecognized organization in the URL."
 
                 findings.append(report)
 

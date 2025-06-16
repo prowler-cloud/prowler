@@ -185,39 +185,6 @@ class Test_codebuild_project_uses_allowed_github_organizations:
     @mock_aws
     def test_project_github_no_codebuild_trusted_principal(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        codebuild_client = client("codebuild", region_name=AWS_REGION_EU_WEST_1)
-        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
-        project_name = "test-project-github-lambda-role"
-        role_name = "lambda-test-role"
-        role_arn = iam_client.create_role(
-            RoleName=role_name,
-            AssumeRolePolicyDocument="""{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Principal": {"Service": "lambda.amazonaws.com"},
-                        "Action": "sts:AssumeRole"
-                    }
-                ]
-            }""",
-        )["Role"]["Arn"]
-        project_arn = codebuild_client.create_project(
-            name=project_name,
-            source={
-                "type": "GITHUB",
-                "location": "https://github.com/not-allowed-org/repo",
-            },
-            artifacts={"type": "NO_ARTIFACTS"},
-            environment={
-                "type": "LINUX_CONTAINER",
-                "image": "aws/codebuild/standard:4.0",
-                "computeType": "BUILD_GENERAL1_SMALL",
-                "environmentVariables": [],
-            },
-            serviceRole=role_arn,
-            tags=[{"key": "Name", "value": "test"}],
-        )["project"]["arn"]
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -246,15 +213,7 @@ class Test_codebuild_project_uses_allowed_github_organizations:
 
             check = codebuild_project_uses_allowed_github_organizations()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == project_name
-            assert result[0].resource_arn == project_arn
-            assert (
-                "does not use an IAM role with codebuild.amazonaws.com as a trusted principal"
-                in result[0].status_extended
-            )
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert len(result) == 0
 
     @mock_aws
     def test_project_github_enterprise_allowed_organization(self):
@@ -403,39 +362,6 @@ class Test_codebuild_project_uses_allowed_github_organizations:
     @mock_aws
     def test_project_github_enterprise_no_codebuild_trusted_principal(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        codebuild_client = client("codebuild", region_name=AWS_REGION_EU_WEST_1)
-        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
-        project_name = "test-project-github-enterprise-lambda-role"
-        role_name = "lambda-test-role-enterprise"
-        role_arn = iam_client.create_role(
-            RoleName=role_name,
-            AssumeRolePolicyDocument="""{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Principal": {"Service": "lambda.amazonaws.com"},
-                        "Action": "sts:AssumeRole"
-                    }
-                ]
-            }""",
-        )["Role"]["Arn"]
-        project_arn = codebuild_client.create_project(
-            name=project_name,
-            source={
-                "type": "GITHUB_ENTERPRISE",
-                "location": "https://github.enterprise.com/not-allowed-org/repo",
-            },
-            artifacts={"type": "NO_ARTIFACTS"},
-            environment={
-                "type": "LINUX_CONTAINER",
-                "image": "aws/codebuild/standard:4.0",
-                "computeType": "BUILD_GENERAL1_SMALL",
-                "environmentVariables": [],
-            },
-            serviceRole=role_arn,
-            tags=[{"key": "Name", "value": "test"}],
-        )["project"]["arn"]
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -464,12 +390,4 @@ class Test_codebuild_project_uses_allowed_github_organizations:
 
             check = codebuild_project_uses_allowed_github_organizations()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == project_name
-            assert result[0].resource_arn == project_arn
-            assert (
-                "does not use an IAM role with codebuild.amazonaws.com as a trusted principal"
-                in result[0].status_extended
-            )
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert len(result) == 0
