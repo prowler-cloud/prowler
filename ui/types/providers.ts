@@ -45,7 +45,7 @@ export interface ProviderProps {
   groupNames?: string[];
 }
 
-export interface ProviderAccountProps {
+export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;

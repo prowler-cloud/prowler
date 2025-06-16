@@ -4,6 +4,9 @@ The **Prowler App** supports multiple users within a single tenant, enabling sea
 
 [Roles](#roles) help you control user permissions, determining what actions each user can perform and the data they can access within Prowler. By default, each account includes an immutable **admin** role, ensuring that your account always retains administrative access.
 
+???+ note
+    If the account is created without an invitation, a new tenant will be provisioned for it. However, if the account is created through an invitation, the user will join the inviter’s tenant.
+
 ## Membership
 
 To get to User-Invitation Management we will focus on the Membership section.
@@ -155,6 +158,9 @@ Follow these steps to create a role for your account:
 4. In the Groups and Account Visibility section, you will see a list of available groups with checkboxes next to them. To assign a group to the user role, simply click the checkbox next to the group name. If you need to assign multiple groups, repeat the process for each group you wish to add.
 
     <img src="../img/rbac/role_create_1.png" alt="Role parameters" width="700"/>
+
+???+ note
+    To assign read-only access, select only the `Unlimited Visibility` permission when creating the role. Then, go to the Users page and assign this role to the appropriate user.
 
 #### Editing a Role
 

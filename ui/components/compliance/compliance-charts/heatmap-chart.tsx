@@ -1,15 +1,13 @@
 "use client";
 
+import { cn } from "@nextui-org/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
-import { CategoryData, RegionData } from "@/types/compliance";
+import { CategoryData } from "@/types/compliance";
 
 interface HeatmapChartProps {
-  regions: RegionData[];
   categories?: CategoryData[];
-  isRegionFiltered?: boolean; // Indicates if a region filter is active
-  filteredRegionName?: string; // Name of the filtered region
 }
 
 const getHeatmapColor = (percentage: number): string => {
@@ -32,48 +30,36 @@ const capitalizeFirstLetter = (text: string): string => {
   );
 };
 
-export const HeatmapChart = ({
-  regions,
-  categories = [],
-  isRegionFiltered = false,
-}: HeatmapChartProps) => {
+const title = (
+  <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+    Sections Failure Rate
+  </h3>
+);
+
+export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   const { theme } = useTheme();
-  const [hoveredItem, setHoveredItem] = useState<
-    RegionData | CategoryData | null
-  >(null);
+  const [hoveredItem, setHoveredItem] = useState<CategoryData | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  // Determine what data to show and prepare it
-  const dataToShow = isRegionFiltered ? categories : regions;
-  const heatmapData = dataToShow
+  // Use categories data and prepare it
+  const heatmapData = categories
     .filter((item) => item.totalRequirements > 0)
     .sort((a, b) => b.failurePercentage - a.failurePercentage)
     .slice(0, 9); // Exactly 9 items for 3x3 grid
 
   // Check if there are no items with data
-  if (!dataToShow || dataToShow.length === 0 || heatmapData.length === 0) {
-    const noDataMessage = isRegionFiltered
-      ? "No category data available"
-      : "No regional data available";
-
+  if (!categories.length || heatmapData.length === 0) {
     return (
       <div className="flex w-[400px] flex-col items-center justify-between lg:w-[400px]">
-        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-          {isRegionFiltered
-            ? "Categories Failure Rate"
-            : "Failure Rate by Region"}
-        </h3>
+        {title}
         <div className="flex h-[320px] w-full items-center justify-center">
-          <p className="text-sm text-gray-500">{noDataMessage}</p>
+          <p className="text-sm text-gray-500">No category data available</p>
         </div>
       </div>
     );
   }
 
-  const handleMouseEnter = (
-    item: RegionData | CategoryData,
-    event: React.MouseEvent,
-  ) => {
+  const handleMouseEnter = (item: CategoryData, event: React.MouseEvent) => {
     setHoveredItem(item);
     setMousePosition({ x: event.clientX, y: event.clientY });
   };
@@ -88,21 +74,25 @@ export const HeatmapChart = ({
 
   return (
     <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
-      <div>
-        <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-          {isRegionFiltered
-            ? "Categories Failure Rate"
-            : "Failure Rate by Region"}
-        </h3>
-      </div>
+      {title}
 
-      <div className="h-full w-full p-4">
-        {/* 3x3 Grid */}
-        <div className="grid h-full w-full grid-cols-3 gap-1">
+      <div className="h-full w-full p-2">
+        <div
+          className={cn(
+            "grid h-full w-full gap-1",
+            heatmapData.length < 3 ? "grid-cols-1" : "grid-cols-3",
+          )}
+          style={{
+            gridTemplateRows:
+              heatmapData.length < 3
+                ? `repeat(${heatmapData.length}, ${heatmapData.length}fr)`
+                : `repeat(${Math.min(Math.ceil(heatmapData.length / 3), 3)}, 1fr)`,
+          }}
+        >
           {heatmapData.map((item) => (
             <div
               key={item.name}
-              className="flex items-center justify-center rounded border"
+              className="flex items-center justify-center rounded border p-1"
               style={{
                 backgroundColor: getHeatmapColor(item.failurePercentage),
                 borderColor: theme === "dark" ? "#374151" : "#e5e7eb",
@@ -111,16 +101,15 @@ export const HeatmapChart = ({
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="text-center">
+              <div className="w-full px-1 text-center">
                 <div
-                  className="text-xs font-semibold"
+                  className="truncate text-xs font-semibold"
                   style={{
                     color: theme === "dark" ? "#ffffff" : "#000000",
                   }}
+                  title={capitalizeFirstLetter(item.name)}
                 >
-                  {isRegionFiltered
-                    ? capitalizeFirstLetter(item.name)
-                    : item.name}
+                  {capitalizeFirstLetter(item.name)}
                 </div>
                 <div
                   className="text-xs"
@@ -148,9 +137,7 @@ export const HeatmapChart = ({
             }}
           >
             <div className="mb-1 font-semibold">
-              {isRegionFiltered
-                ? capitalizeFirstLetter(hoveredItem.name)
-                : hoveredItem.name}
+              {capitalizeFirstLetter(hoveredItem.name)}
             </div>
             <div>Failure Rate: {hoveredItem.failurePercentage}%</div>
             <div>

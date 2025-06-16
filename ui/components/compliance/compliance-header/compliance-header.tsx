@@ -6,7 +6,7 @@ import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
 import { DataCompliance } from "./data-compliance";
-import { SelectScanComplianceDataProps } from "./select-scan-compliance-data";
+import { SelectScanComplianceDataProps } from "./scan-selector";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];
@@ -14,6 +14,7 @@ interface ComplianceHeaderProps {
   showSearch?: boolean;
   showRegionFilter?: boolean;
   framework?: string; // Framework name to show specific filters
+  showProviders?: boolean;
 }
 
 export const ComplianceHeader = ({
@@ -22,6 +23,7 @@ export const ComplianceHeader = ({
   showSearch = true,
   showRegionFilter = true,
   framework,
+  showProviders = true,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
 
@@ -56,10 +58,10 @@ export const ComplianceHeader = ({
     <>
       {showSearch && <FilterControls search />}
       <Spacer y={8} />
-      <DataCompliance scans={scans} />
+      {showProviders && <DataCompliance scans={scans} />}
       {allFilters.length > 0 && (
         <>
-          <Spacer y={8} />
+          {showProviders && <Spacer y={8} />}
           <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
         </>
       )}

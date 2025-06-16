@@ -1,19 +1,27 @@
 import React from "react";
 
+import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
+import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
+import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
+import { MITRECustomDetails } from "@/components/compliance/compliance-custom-details/mitre-details";
+import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
   CategoryData,
   FailedSection,
   Framework,
-  RegionData,
   Requirement,
   RequirementsData,
 } from "@/types/compliance";
 
+import {
+  mapComplianceData as mapAWSWellArchitectedComplianceData,
+  toAccordionItems as toAWSWellArchitectedAccordionItems,
+} from "./aws-well-architected";
 import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
@@ -23,9 +31,27 @@ import {
   toAccordionItems as toENSAccordionItems,
 } from "./ens";
 import {
+  mapComplianceData as mapGenericComplianceData,
+  toAccordionItems as toGenericAccordionItems,
+} from "./generic";
+import {
   mapComplianceData as mapISOComplianceData,
   toAccordionItems as toISOAccordionItems,
 } from "./iso";
+import {
+  mapComplianceData as mapKISAComplianceData,
+  toAccordionItems as toKISAAccordionItems,
+} from "./kisa";
+import {
+  calculateCategoryHeatmapData as calculateMITRECategoryHeatmapData,
+  getTopFailedSections as getMITRETopFailedSections,
+  mapComplianceData as mapMITREComplianceData,
+  toAccordionItems as toMITREAccordionItems,
+} from "./mitre";
+import {
+  mapComplianceData as mapThetaComplianceData,
+  toAccordionItems as toThetaAccordionItems,
+} from "./threat";
 
 export interface ComplianceMapper {
   mapComplianceData: (
@@ -38,6 +64,7 @@ export interface ComplianceMapper {
     scanId: string | undefined,
   ) => AccordionItemProps[];
   getTopFailedSections: (mappedData: Framework[]) => FailedSection[];
+  calculateCategoryHeatmapData: (complianceData: Framework[]) => CategoryData[];
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
@@ -84,6 +111,8 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     mapComplianceData: mapENSComplianceData,
     toAccordionItems: toENSAccordionItems,
     getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(ENSCustomDetails, { requirement }),
   },
@@ -91,6 +120,8 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     mapComplianceData: mapISOComplianceData,
     toAccordionItems: toISOAccordionItems,
     getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(ISOCustomDetails, { requirement }),
   },
@@ -98,13 +129,67 @@ const complianceMappers: Record<string, ComplianceMapper> = {
     mapComplianceData: mapCISComplianceData,
     toAccordionItems: toCISAccordionItems,
     getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(CISCustomDetails, { requirement }),
   },
+  "AWS-Well-Architected-Framework-Security-Pillar": {
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+  },
+  "AWS-Well-Architected-Framework-Reliability-Pillar": {
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+  },
+  "KISA-ISMS-P": {
+    mapComplianceData: mapKISAComplianceData,
+    toAccordionItems: toKISAAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(KISACustomDetails, { requirement }),
+  },
+  "MITRE-ATTACK": {
+    mapComplianceData: mapMITREComplianceData,
+    toAccordionItems: toMITREAccordionItems,
+    getTopFailedSections: getMITRETopFailedSections,
+    calculateCategoryHeatmapData: calculateMITRECategoryHeatmapData,
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(MITRECustomDetails, { requirement }),
+  },
+  ProwlerThreatScore: {
+    mapComplianceData: mapThetaComplianceData,
+    toAccordionItems: toThetaAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (complianceData: Framework[]) =>
+      calculateCategoryHeatmapData(complianceData),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ThreatCustomDetails, { requirement }),
+  },
 };
 
-// Default mapper (fallback to ENS for backward compatibility)
-const defaultMapper: ComplianceMapper = complianceMappers.ENS;
+// Default mapper (fallback to generic for maximum compatibility)
+const defaultMapper: ComplianceMapper = {
+  mapComplianceData: mapGenericComplianceData,
+  toAccordionItems: toGenericAccordionItems,
+  getTopFailedSections,
+  calculateCategoryHeatmapData: (data: Framework[]) =>
+    calculateCategoryHeatmapData(data),
+  getDetailsComponent: (requirement: Requirement) =>
+    React.createElement(GenericCustomDetails, { requirement }),
+};
 
 /**
  * Get the appropriate compliance mapper based on the framework name
@@ -117,85 +202,6 @@ export const getComplianceMapper = (framework?: string): ComplianceMapper => {
   }
 
   return complianceMappers[framework] || defaultMapper;
-};
-
-export const calculateRegionHeatmapData = async (
-  complianceId: string,
-  scanId: string,
-  uniqueRegions: string[],
-  attributesData: AttributesData,
-  mapper: ComplianceMapper,
-): Promise<RegionData[]> => {
-  if (!complianceId || !scanId || !uniqueRegions?.length) {
-    return [];
-  }
-
-  try {
-    const { getComplianceRequirements } = await import("@/actions/compliances");
-
-    // Get data for each region in parallel
-    const regionPromises = uniqueRegions.map(async (region) => {
-      try {
-        // Only need to fetch requirements data per region
-        const regionRequirementsData = await getComplianceRequirements({
-          complianceId,
-          scanId,
-          region, // Filter by specific region
-        });
-
-        // Map the data using the provided mapper
-        const mappedData = mapper.mapComplianceData(
-          attributesData,
-          regionRequirementsData,
-        );
-
-        // Calculate totals for this region
-        const regionTotals = mappedData.reduce(
-          (acc, framework) => ({
-            pass: acc.pass + framework.pass,
-            fail: acc.fail + framework.fail,
-            manual: acc.manual + framework.manual,
-          }),
-          { pass: 0, fail: 0, manual: 0 },
-        );
-
-        const totalRequirements =
-          regionTotals.pass + regionTotals.fail + regionTotals.manual;
-        const failurePercentage =
-          totalRequirements > 0
-            ? Math.round((regionTotals.fail / totalRequirements) * 100)
-            : 0;
-
-        return {
-          name: region,
-          failurePercentage,
-          totalRequirements,
-          failedRequirements: regionTotals.fail,
-        };
-      } catch (error) {
-        console.error(`Error fetching data for region ${region}:`, error);
-        return {
-          name: region,
-          failurePercentage: 0,
-          totalRequirements: 0,
-          failedRequirements: 0,
-        };
-      }
-    });
-
-    const regionData = await Promise.all(regionPromises);
-
-    // Filter, sort and limit to top 9 regions for 3x3 grid
-    const filteredData = regionData
-      .filter((region) => region.totalRequirements > 0)
-      .sort((a, b) => b.failurePercentage - a.failurePercentage)
-      .slice(0, 9);
-
-    return filteredData;
-  } catch (error) {
-    console.error("Error calculating region heatmap data:", error);
-    return [];
-  }
 };
 
 export const calculateCategoryHeatmapData = (

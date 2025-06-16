@@ -13,6 +13,7 @@ class Storage(AzureService):
         super().__init__(StorageManagementClient, provider)
         self.storage_accounts = self._get_storage_accounts()
         self._get_blob_properties()
+        self._get_file_share_properties()
 
     def _get_storage_accounts(self):
         logger.info("Storage - Getting storage accounts...")
@@ -67,6 +68,9 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            allow_shared_key_access=getattr(
+                                storage_account, "allow_shared_key_access", True
+                            ),
                         )
                     )
             except Exception as error:
@@ -126,6 +130,54 @@ class Storage(AzureService):
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_file_share_properties(self):
+        logger.info("Storage - Getting file share properties...")
+        for subscription, accounts in self.storage_accounts.items():
+            client = self.clients[subscription]
+            for account in accounts:
+                try:
+                    service_properties = client.file_services.get_service_properties(
+                        account.resouce_group_name, account.name
+                    )
+                    soft_delete_enabled = False
+                    retention_days = 0
+                    if (
+                        hasattr(service_properties, "share_delete_retention_policy")
+                        and service_properties.share_delete_retention_policy
+                    ):
+                        soft_delete_enabled = getattr(
+                            service_properties.share_delete_retention_policy,
+                            "enabled",
+                            False,
+                        )
+                        retention_days = (
+                            getattr(
+                                service_properties.share_delete_retention_policy,
+                                "days",
+                                0,
+                            )
+                            if soft_delete_enabled
+                            else 0
+                        )
+
+                    file_shares = client.file_shares.list(
+                        account.resouce_group_name, account.name
+                    )
+                    account.file_shares = []
+                    for file_share in file_shares:
+                        account.file_shares.append(
+                            FileShare(
+                                id=file_share.id,
+                                name=file_share.name,
+                                soft_delete_enabled=soft_delete_enabled,
+                                retention_days=retention_days,
+                            )
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
 
 @dataclass
 class DeleteRetentionPolicy:
@@ -170,4 +222,14 @@ class Account:
     private_endpoint_connections: List[PrivateEndpointConnection]
     key_expiration_period_in_days: str
     location: str
+    allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None
+    file_shares: list = None
+
+
+@dataclass
+class FileShare:
+    id: str
+    name: str
+    soft_delete_enabled: bool
+    retention_days: int
