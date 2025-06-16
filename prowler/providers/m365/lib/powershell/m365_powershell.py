@@ -174,9 +174,13 @@ class M365PowerShell(PowerShellSession):
             )
 
             if result is None:
+                logger.error(
+                    "Unexpected error: Acquiring token in behalf of user did not return a result."
+                )
                 return False
 
             if "access_token" not in result:
+                logger.error(f"MsGraph Error {result.get('error_description')}")
                 return False
 
             return True
