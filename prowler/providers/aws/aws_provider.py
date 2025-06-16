@@ -796,6 +796,7 @@ class AwsProvider(Provider):
                 "elb",
                 "efs",
                 "sqs",
+                "eks",
             ]
             service_list = set()
             sub_service_list = set()
