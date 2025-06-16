@@ -41,6 +41,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
 - `network_flow_log_more_than_90_days` check to pass when retention policy is 0 days [(#7975)](https://github.com/prowler-cloud/prowler/pull/7975)
 - Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
+<<<<<<< HEAD
+=======
+- Validate ResourceType in CheckMetadata [(#8035)](https://github.com/prowler-cloud/prowler/pull/8035)
+- Missing ResourceType values in check's metadata [(#8028)](https://github.com/prowler-cloud/prowler/pull/8028)
+>>>>>>> a0d169470 (chore(metadata): add validator for ResourceType (#8035))
 
 ---
 
