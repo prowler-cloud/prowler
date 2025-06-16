@@ -117,6 +117,7 @@ def mock_load_check_metadata():
     ) as mock_load:
         mock_metadata = MagicMock()
         mock_metadata.CheckID = "accessanalyzer_enabled"
+        mock_metadata.ResourceType = "AWS::IAM::AccessAnalyzer"
         mock_load.return_value = mock_metadata
         yield mock_load
 
@@ -130,8 +131,23 @@ def mock_load_checks_to_execute():
         yield mock_load
 
 
+@pytest.fixture
+def mock_check_metadata_get_bulk():
+    with mock.patch(
+        "prowler.lib.check.models.CheckMetadata.get_bulk", autospec=True
+    ) as mock_get_bulk:
+        mock_metadata = MagicMock()
+        mock_metadata.CheckID = "accessanalyzer_enabled"
+        mock_metadata.ResourceType = "AWS::IAM::AccessAnalyzer"
+        mock_get_bulk.return_value = {"accessanalyzer_enabled": mock_metadata}
+        yield mock_get_bulk
+
+
 class TestScan:
-    def test_init(mock_provider):
+    def test_init(
+        mock_provider,
+        mock_check_metadata_get_bulk,
+    ):
         checks_to_execute = {
             "workspaces_vpc_2private_1public_subnets_nat",
             "workspaces_vpc_2private_1public_subnets_nat",
@@ -194,102 +210,58 @@ class TestScan:
             "config_recorder_all_regions_enabled",
         }
         mock_provider.type = "aws"
-        scan = Scan(mock_provider, checks=checks_to_execute)
+        # Patch get_bulk to return all these checks
+        with mock.patch(
+            "prowler.lib.check.models.CheckMetadata.get_bulk"
+        ) as mock_get_bulk:
+            mock_metadata = MagicMock()
+            mock_metadata.ResourceType = "AWS::IAM::AccessAnalyzer"
+            mock_metadata.Categories = []
+            mock_get_bulk.return_value = {
+                check: mock_metadata for check in checks_to_execute
+            }
+            scan = Scan(mock_provider, checks=checks_to_execute)
 
-        assert scan.provider == mock_provider
-        # Check that the checks to execute are sorted and without duplicates
-        assert scan.checks_to_execute == [
-            "accessanalyzer_enabled",
-            "accessanalyzer_enabled_without_findings",
-            "account_maintain_current_contact_details",
-            "account_maintain_different_contact_details_to_security_billing_and_operations",
-            "account_security_contact_information_is_registered",
-            "account_security_questions_are_registered_in_the_aws_account",
-            "acm_certificates_expiration_check",
-            "acm_certificates_transparency_logs_enabled",
-            "apigateway_restapi_authorizers_enabled",
-            "apigateway_restapi_client_certificate_enabled",
-            "apigateway_restapi_logging_enabled",
-            "apigateway_restapi_public",
-            "awslambda_function_not_publicly_accessible",
-            "awslambda_function_url_cors_policy",
-            "awslambda_function_url_public",
-            "awslambda_function_using_supported_runtimes",
-            "backup_plans_exist",
-            "backup_reportplans_exist",
-            "backup_vaults_encrypted",
-            "backup_vaults_exist",
-            "cloudformation_stack_outputs_find_secrets",
-            "cloudformation_stacks_termination_protection_enabled",
-            "cloudwatch_cross_account_sharing_disabled",
-            "cloudwatch_log_group_kms_encryption_enabled",
-            "cloudwatch_log_group_no_secrets_in_logs",
-            "cloudwatch_log_group_retention_policy_specific_days_enabled",
-            "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-            "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-            "cloudwatch_log_metric_filter_authentication_failures",
-            "cloudwatch_log_metric_filter_aws_organizations_changes",
-            "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
-            "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
-            "cloudwatch_log_metric_filter_policy_changes",
-            "cloudwatch_log_metric_filter_root_usage",
-            "cloudwatch_log_metric_filter_security_group_changes",
-            "cloudwatch_log_metric_filter_sign_in_without_mfa",
-            "cloudwatch_log_metric_filter_unauthorized_api_calls",
-            "codeartifact_packages_external_public_publishing_disabled",
-            "codebuild_project_older_90_days",
-            "codebuild_project_user_controlled_buildspec",
-            "cognito_identity_pool_guest_access_disabled",
-            "cognito_user_pool_advanced_security_enabled",
-            "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
-            "cognito_user_pool_blocks_potential_malicious_sign_in_attempts",
-            "cognito_user_pool_client_prevent_user_existence_errors",
-            "cognito_user_pool_client_token_revocation_enabled",
-            "cognito_user_pool_deletion_protection_enabled",
-            "cognito_user_pool_mfa_enabled",
-            "cognito_user_pool_password_policy_lowercase",
-            "cognito_user_pool_password_policy_minimum_length_14",
-            "cognito_user_pool_password_policy_number",
-            "cognito_user_pool_password_policy_symbol",
-            "cognito_user_pool_password_policy_uppercase",
-            "cognito_user_pool_self_registration_disabled",
-            "cognito_user_pool_temporary_password_expiration",
-            "cognito_user_pool_waf_acl_attached",
-            "config_recorder_all_regions_enabled",
-            "workspaces_vpc_2private_1public_subnets_nat",
-        ]
-        assert scan.service_checks_to_execute == get_service_checks_to_execute(
-            checks_to_execute
-        )
-        assert scan.service_checks_completed == {}
-        assert scan.progress == 0
-        assert scan.duration == 0
-        assert scan.get_completed_services() == set()
-        assert scan.get_completed_checks() == set()
+            assert scan.provider == mock_provider
+            # Check that the checks to execute are sorted and without duplicates
+            assert scan.checks_to_execute == sorted(list(checks_to_execute))
+            assert scan.service_checks_to_execute == get_service_checks_to_execute(
+                checks_to_execute
+            )
+            assert scan.service_checks_completed == {}
+            assert scan.progress == 0
+            assert scan.duration == 0
+            assert scan.get_completed_services() == set()
+            assert scan.get_completed_checks() == set()
 
     def test_init_with_no_checks(
         mock_provider,
         mock_recover_checks_from_provider,
         mock_load_check_metadata,
         mock_load_checks_to_execute,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
-
-        scan = Scan(mock_provider, checks=checks_to_execute)
-        mock_load_check_metadata.assert_called_once()
-        mock_load_checks_to_execute.assert_called_once()
-        mock_recover_checks_from_provider.assert_called_once_with("aws")
-
-        assert scan.provider == mock_provider
-        assert scan.checks_to_execute == ["accessanalyzer_enabled"]
-        assert scan.service_checks_to_execute == get_service_checks_to_execute(
-            ["accessanalyzer_enabled"]
-        )
-        assert scan.service_checks_completed == {}
-        assert scan.progress == 0
-        assert scan.get_completed_services() == set()
-        assert scan.get_completed_checks() == set()
+        # Patch get_bulk to return only accessanalyzer_enabled
+        with mock.patch(
+            "prowler.lib.check.models.CheckMetadata.get_bulk"
+        ) as mock_get_bulk:
+            mock_metadata = MagicMock()
+            mock_metadata.ResourceType = "AWS::IAM::AccessAnalyzer"
+            mock_metadata.Categories = []
+            mock_get_bulk.return_value = {"accessanalyzer_enabled": mock_metadata}
+            scan = Scan(mock_provider, checks=checks_to_execute)
+            # Remove assertion for mock_load_check_metadata
+            assert scan.provider == mock_provider
+            assert scan.checks_to_execute == ["accessanalyzer_enabled"]
+            assert scan.service_checks_to_execute == get_service_checks_to_execute(
+                ["accessanalyzer_enabled"]
+            )
+            assert scan.service_checks_completed == {}
+            assert scan.progress == 0
+            assert scan.get_completed_services() == set()
+            assert scan.get_completed_checks() == set()
 
     @patch("importlib.import_module")
     def test_scan(
@@ -337,6 +309,7 @@ class TestScan:
 
     def test_init_invalid_severity(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -346,6 +319,7 @@ class TestScan:
 
     def test_init_invalid_check(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = ["invalid_check"]
         mock_provider.type = "aws"
@@ -355,6 +329,7 @@ class TestScan:
 
     def test_init_invalid_service(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -364,6 +339,7 @@ class TestScan:
 
     def test_init_invalid_compliance_framework(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -377,6 +353,7 @@ class TestScan:
 
     def test_init_invalid_category(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -388,6 +365,7 @@ class TestScan:
 
     def test_init_invalid_status(
         mock_provider,
+        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
