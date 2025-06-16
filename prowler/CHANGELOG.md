@@ -26,20 +26,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `storage_account_key_access_disabled` check for Azure provider [(#7974)](https://github.com/prowler-cloud/prowler/pull/7974)
 - `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
 - Make `validate_mutelist` method static inside `Mutelist` class [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
-- Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check to ensure workspaces are deployed in a customer-managed VNet [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
-
-### Fixed
-- Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
+- Avoid bypassing IAM check using wildcards [(#7708)](https://github.com/prowler-cloud/prowler/pull/7708)
+- Add new method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
+- Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
 
 ---
-
-## [v5.7.5] (Prowler v5.7.5)
+## [v5.7.5] (Prowler UNRELEASED)
 
 ### Fixed
+- Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
 - `apiserver_strong_ciphers_only` check for K8S provider [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
 - Handle `0` at the start and end of account uids in Prowler Dashboard [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
 - Typo in PCI 4.0 for K8S provider [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971)
 - AWS root credentials checks always verify if root credentials are enabled [(#7967)](https://github.com/prowler-cloud/prowler/pull/7967)
+- Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
+- `network_flow_log_more_than_90_days` check to pass when retention policy is 0 days [(#7975)](https://github.com/prowler-cloud/prowler/pull/7975)
+- Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
 
 ---
 

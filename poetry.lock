@@ -2038,6 +2038,18 @@ files = [
 ]
 
 [[package]]
+name = "iamdata"
+version = "0.1.202505091"
+description = "IAM data for AWS actions, resources, and conditions based on IAM policy documents. Checked for updates daily."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "iamdata-0.1.202505091-py3-none-any.whl", hash = "sha256:006536cb6ee32c0567e04ba7582586596c67b599ab0ed10166efae4153acf120"},
+    {file = "iamdata-0.1.202505091.tar.gz", hash = "sha256:b8538dde82282e89c5ca6e98662008e3c50e21252e3a3a532f0c1b7387488036"},
+]
+
+[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -3691,6 +3703,21 @@ files = [
 
 [package.extras]
 test = ["enum34 ; python_version <= \"3.4\"", "ipaddress ; python_version < \"3.0\"", "mock ; python_version < \"3.0\"", "pywin32 ; sys_platform == \"win32\"", "wmi ; sys_platform == \"win32\""]
+
+[[package]]
+name = "py-iam-expand"
+version = "0.1.0"
+description = "This is a Python package to expand and deobfuscate IAM policies."
+optional = false
+python-versions = "<3.14,>3.9.1"
+groups = ["main"]
+files = [
+    {file = "py_iam_expand-0.1.0-py3-none-any.whl", hash = "sha256:b845ce7b50ac895b02b4f338e09c62a68ea51849794f76e189b02009bd388510"},
+    {file = "py_iam_expand-0.1.0.tar.gz", hash = "sha256:5a2884dc267ac59a02c3a80fefc0b34c309dac681baa0f87c436067c6cf53a96"},
+]
+
+[package.dependencies]
+iamdata = ">=0.1.202504091"
 
 [[package]]
 name = "py-ocsf-models"
@@ -5478,4 +5505,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<3.13"
-content-hash = "f7d10e8e44f7fb3206c8ad3b8cc3e903880385eb0725001084f0528f34661356"
+content-hash = "f27df039085e29b1eee7ec340c012b6e551618580fd78f2cfb02bad6be51126d"
