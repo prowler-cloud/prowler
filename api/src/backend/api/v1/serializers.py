@@ -1199,8 +1199,8 @@ class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     tenant_id = serializers.CharField()
-    user = serializers.EmailField()
-    password = serializers.CharField()
+    user = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
