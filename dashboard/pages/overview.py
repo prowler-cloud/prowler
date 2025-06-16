@@ -83,7 +83,18 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        account_columns = ["ACCOUNT_ID", "ACCOUNT_UID", "SUBSCRIPTION"]
+
+        df_sample = pd.read_csv(file, sep=";", on_bad_lines="skip", nrows=1)
+
+        dtype_dict = {}
+        for col in account_columns:
+            if col in df_sample.columns:
+                dtype_dict[col] = str
+
+        # Read the full file with proper dtypes
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", dtype=dtype_dict)
+
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -120,7 +131,6 @@ if data is None:
         ]
     )
 else:
-
     # This handles the case where we are using v3 outputs
     if "ASSESSMENT_START_TIME" in data.columns:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
@@ -518,6 +528,7 @@ else:
     Input("service-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
     Input("gcp_card", "n_clicks"),
@@ -540,6 +551,7 @@ def filter_data(
     service_values,
     table_row_values,
     status_values,
+    search_value,
     aws_clicks,
     azure_clicks,
     gcp_clicks,
@@ -1144,6 +1156,15 @@ def filter_data(
         }
 
         index_count = 0
+        if search_value:
+            search_value = search_value.lower()
+            filtered_data = filtered_data[
+                filtered_data["CHECK_TITLE"].str.lower().str.contains(search_value)
+                | filtered_data["SERVICE_NAME"].str.lower().str.contains(search_value)
+                | filtered_data["REGION"].str.lower().str.contains(search_value)
+                | filtered_data["STATUS"].str.lower().str.contains(search_value)
+            ]
+
         full_filtered_data = filtered_data.copy()
         filtered_data = filtered_data.head(table_row_values)
         # Sort the filtered_data

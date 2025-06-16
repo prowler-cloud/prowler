@@ -1,4 +1,4 @@
-import { RolePermissionAttributes } from "@/types/users/users";
+import { RolePermissionAttributes } from "@/types/users";
 
 export const isUserOwnerAndHasManageAccount = (
   roles: any[],
