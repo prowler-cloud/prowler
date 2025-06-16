@@ -51,18 +51,18 @@ export const filterFindings = [
     values: ["PASS", "FAIL", "MANUAL"],
     index: 2,
   },
-  {
-    key: "provider_type__in",
-    labelCheckboxGroup: "Cloud Provider",
-    values: ["aws", "azure", "m365", "gcp", "kubernetes"],
-    index: 4,
-  },
-  {
-    key: "provider_uid__in",
-    labelCheckboxGroup: "Provider UID",
-    values: [],
-    index: 8,
-  },
+  // {
+  //   key: "provider_type__in",
+  //   labelCheckboxGroup: "Cloud Provider",
+  //   values: ["aws", "azure", "m365", "gcp", "kubernetes"],
+  //   index: 4,
+  // },
+  // {
+  //   key: "provider_uid__in",
+  //   labelCheckboxGroup: "Provider UID",
+  //   values: [],
+  //   index: 8,
+  // },
   {
     key: "delta__in",
     labelCheckboxGroup: "Delta",

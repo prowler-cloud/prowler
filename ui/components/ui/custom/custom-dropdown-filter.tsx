@@ -282,7 +282,12 @@ export const CustomDropdownFilter = ({
               onValueChange={onSelectionChange}
               className="font-bold"
             >
-              {filter?.showSelectAll !== false && (
+              {filterValues.length === 0 && (
+                <span className="text-small text-default-500">
+                  No results found
+                </span>
+              )}
+              {filter?.showSelectAll !== false && filterValues.length > 0 && (
                 <>
                   <Checkbox
                     classNames={{
@@ -296,45 +301,49 @@ export const CustomDropdownFilter = ({
                   <Divider orientation="horizontal" className="mt-2" />
                 </>
               )}
-              <ScrollShadow
-                hideScrollBar
-                className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"
-              >
-                {filterValues.map((value) => {
-                  const entity: FilterEntity | undefined =
-                    filter.valueLabelMapping?.find((entry) => entry[value])?.[
-                      value
-                    ];
-
-                  return (
-                    <Checkbox
-                      classNames={{
-                        label: "text-small font-normal",
-                        wrapper: "checkbox-update",
-                      }}
-                      key={value}
-                      value={value}
-                    >
-                      {entity ? (
-                        isScanEntity(entity as ScanEntity) ? (
-                          <ComplianceScanInfo scan={entity as ScanEntity} />
-                        ) : (
-                          <EntityInfoShort
-                            cloudProvider={(entity as ProviderEntity).provider}
-                            entityAlias={
-                              (entity as ProviderEntity).alias ?? undefined
-                            }
-                            entityId={(entity as ProviderEntity).uid}
-                            hideCopyButton
-                          />
-                        )
-                      ) : (
+              {filterValues.length > 0 && (
+                <ScrollShadow
+                  hideScrollBar
+                  className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"
+                >
+                  {filterValues.map((value) => {
+                    const entity: FilterEntity | undefined =
+                      filter.valueLabelMapping?.find((entry) => entry[value])?.[
                         value
-                      )}
-                    </Checkbox>
-                  );
-                })}
-              </ScrollShadow>
+                      ];
+
+                    return (
+                      <Checkbox
+                        classNames={{
+                          label: "text-small font-normal",
+                          wrapper: "checkbox-update",
+                        }}
+                        key={value}
+                        value={value}
+                      >
+                        {entity ? (
+                          isScanEntity(entity as ScanEntity) ? (
+                            <ComplianceScanInfo scan={entity as ScanEntity} />
+                          ) : (
+                            <EntityInfoShort
+                              cloudProvider={
+                                (entity as ProviderEntity).provider
+                              }
+                              entityAlias={
+                                (entity as ProviderEntity).alias ?? undefined
+                              }
+                              entityId={(entity as ProviderEntity).uid}
+                              hideCopyButton
+                            />
+                          )
+                        ) : (
+                          value
+                        )}
+                      </Checkbox>
+                    );
+                  })}
+                </ScrollShadow>
+              )}
             </CheckboxGroup>
           </div>
         </PopoverContent>
