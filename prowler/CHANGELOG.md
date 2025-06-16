@@ -5,23 +5,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.8.0] (Prowler v5.8.0)
 
 ### Added
-<<<<<<< HEAD
-- Add CIS 1.11 compliance framework for Kubernetes. [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
-- Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes. [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
-- Add Weight for Prowler ThreatScore scoring. [(7795)](https://github.com/prowler-cloud/prowler/pull/7795)
-- Add new check `entra_users_mfa_capable` for M365 provider. [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
-- Add new check `admincenter_organization_customer_lockbox_enabled` for M365 provider. [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
-- Add new check `admincenter_external_calendar_sharing_disabled` for M365 provider. [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
-- Add a level for Prowler ThreatScore in the accordion in Dashboard. [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
-- Add CIS 4.0 compliance framework for GCP. [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
-- Add `repository_has_codeowners_file` check for GitHub provider. [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
-- Add `repository_default_branch_requires_signed_commits` check for GitHub provider. [(#7777)](https://github.com/prowler-cloud/prowler/pull/7777)
-- Add `repository_inactive_not_archived` check for GitHub provider. [(#7786)](https://github.com/prowler-cloud/prowler/pull/7786)
-- Add `repository_dependency_scanning_enabled` check for GitHub provider. [(#7771)](https://github.com/prowler-cloud/prowler/pull/7771)
-- Add `repository_secret_scanning_enabled` check for GitHub provider. [(#7759)](https://github.com/prowler-cloud/prowler/pull/7759)
-- Add `repository_default_branch_requires_codeowners_review` check for GitHub provider. [(#7753)](https://github.com/prowler-cloud/prowler/pull/7753)
-- Add NIS 2 compliance framework for AWS. [(7839)](https://github.com/prowler-cloud/prowler/pull/7839)
-=======
 - CIS 1.11 compliance framework for Kubernetes [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
 - Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
 - Weight for Prowler ThreatScore scoring [(#7795)](https://github.com/prowler-cloud/prowler/pull/7795)
@@ -43,7 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `storage_account_key_access_disabled` check for Azure provider [(#7974)](https://github.com/prowler-cloud/prowler/pull/7974)
 - `storage_ensure_file_shares_soft_delete_is_enabled` check for Azure provider [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
 - Make `validate_mutelist` method static inside `Mutelist` class [(#7811)](https://github.com/prowler-cloud/prowler/pull/7811)
->>>>>>> e34e59ff2 (fix(network): allow `0` as compliant value (#7926))
 
 ---
 ## [v5.7.5] (Prowler UNRELEASED)
@@ -53,12 +35,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Handle `0` at the start and end of account uids in Prowler Dashboard [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
 - Typo in PCI 4.0 for K8S provider [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971)
 - AWS root credentials checks always verify if root credentials are enabled [(#7967)](https://github.com/prowler-cloud/prowler/pull/7967)
-<<<<<<< HEAD
-=======
 - Github provider to `usage` section of `prowler -h`: [(#7906)](https://github.com/prowler-cloud/prowler/pull/7906)
 - `network_flow_log_more_than_90_days` check to pass when retention policy is 0 days [(#7975)](https://github.com/prowler-cloud/prowler/pull/7975)
 - Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
->>>>>>> e34e59ff2 (fix(network): allow `0` as compliant value (#7926))
+- Update SDK Azure call for ftps_state in the App Service [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
 
 ---
 
