@@ -1909,6 +1909,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
@@ -2010,6 +2012,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
