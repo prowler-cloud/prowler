@@ -100,7 +100,7 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="w-full px-1 text-center">
+              <div className="w-full px-1 text-center antialiased">
                 <div
                   className="truncate text-xs font-semibold"
                   style={{

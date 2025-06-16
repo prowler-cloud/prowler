@@ -14,9 +14,9 @@ import { ComplianceHeader } from "@/components/compliance/compliance-header/comp
 import { ContentLayout } from "@/components/ui";
 import {
   ExpandedScanData,
+  ScanEntity,
   ScanProps,
   SearchParamsProps,
-  SelectedScanData,
 } from "@/types";
 import { ComplianceOverviewData } from "@/types/compliance";
 
@@ -74,18 +74,16 @@ export default async function Compliance({
     (scan) => scan.id === selectedScanId,
   );
 
-  // Convertir a SelectedScanData si existe
-  const selectedScanData: SelectedScanData | undefined =
-    selectedScan?.providerInfo
-      ? {
-          id: selectedScan.id,
-          providerInfo: selectedScan.providerInfo,
-          attributes: {
-            name: selectedScan.attributes.name,
-            completed_at: selectedScan.attributes.completed_at,
-          },
-        }
-      : undefined;
+  const selectedScanData: ScanEntity | undefined = selectedScan?.providerInfo
+    ? {
+        id: selectedScan.id,
+        providerInfo: selectedScan.providerInfo,
+        attributes: {
+          name: selectedScan.attributes.name,
+          completed_at: selectedScan.attributes.completed_at,
+        },
+      }
+    : undefined;
 
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
     query,
@@ -123,7 +121,7 @@ const SSRComplianceGrid = async ({
   selectedScan,
 }: {
   searchParams: SearchParamsProps;
-  selectedScan?: SelectedScanData;
+  selectedScan?: ScanEntity;
 }) => {
   const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";

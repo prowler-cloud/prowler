@@ -7,7 +7,7 @@ import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
-import { SelectedScanData } from "@/types";
+import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
 
@@ -21,7 +21,7 @@ interface ComplianceCardProps {
   scanId: string;
   complianceId: string;
   id: string;
-  selectedScan?: SelectedScanData;
+  selectedScan?: ScanEntity;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({

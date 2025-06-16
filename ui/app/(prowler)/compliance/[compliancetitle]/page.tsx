@@ -22,8 +22,8 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import { SelectedScanData } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
+import { ScanEntity } from "@/types/scans";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -97,7 +97,7 @@ export default async function ComplianceDetail({
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
-  let selectedScan: SelectedScanData | null = null;
+  let selectedScan: ScanEntity | null = null;
 
   if (scanData) {
     selectedScan = JSON.parse(decodeURIComponent(scanData));
