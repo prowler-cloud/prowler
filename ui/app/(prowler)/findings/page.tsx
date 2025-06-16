@@ -19,6 +19,7 @@ import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import {
   createDict,
+  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
@@ -48,7 +49,7 @@ export default async function Findings({
       filters,
     }),
     getProviders({ pageSize: 50 }),
-    getScans({}),
+    getScans({ pageSize: 50 }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -76,19 +77,16 @@ export default async function Findings({
   });
 
   // Extract scan UUIDs with "completed" state and more than one resource
-  const completedScans = scansData?.data
-    ?.filter(
-      (scan: ScanProps) =>
-        scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1,
-    )
-    .map((scan: ScanProps) => ({
-      id: scan.id,
-      name: scan.attributes.name,
-    }));
+  const completedScans = scansData?.data?.filter(
+    (scan: ScanProps) =>
+      scan.attributes.state === "completed" &&
+      scan.attributes.unique_resource_count > 1,
+  );
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+
+  const scanDetails = createScanDetailsMapping(completedScans, providersData);
 
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
@@ -119,6 +117,7 @@ export default async function Findings({
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
+            valueLabelMapping: scanDetails,
             index: 9,
           },
         ]}
