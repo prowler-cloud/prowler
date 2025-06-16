@@ -196,6 +196,8 @@ class M365Provider(Provider):
         self._identity = self.setup_identity(
             sp_env_auth,
             env_auth,
+            browser_auth,
+            az_cli_auth,
             self._session,
         )
 
@@ -717,6 +719,8 @@ class M365Provider(Provider):
             identity = M365Provider.setup_identity(
                 sp_env_auth,
                 env_auth,
+                browser_auth,
+                az_cli_auth,
                 session,
             )
 
@@ -876,6 +880,8 @@ class M365Provider(Provider):
     def setup_identity(
         sp_env_auth,
         env_auth,
+        browser_auth,
+        az_cli_auth,
         session,
     ):
         """
@@ -943,7 +949,7 @@ class M365Provider(Provider):
                 identity.identity_type = "Service Principal"
             elif env_auth:
                 identity.identity_type = "Service Principal and User Credentials"
-            else:
+            elif browser_auth or az_cli_auth:
                 identity.identity_type = "User"
                 try:
                     logger.info(
