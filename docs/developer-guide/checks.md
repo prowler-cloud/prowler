@@ -190,9 +190,20 @@ Each check **must** populate the report with an unique identifier for the audite
 - M365
 
     - Resource ID — `report.resource_id`.
-        - TBD
+        - If the audited resource has a globally unique identifier such as a `guid`, use it as the `resource_id`.
+        - If no `guid` exists, use another unique and relevant identifier for the resource, such as the tenant domain, the internal policy ID, or a representative string following the format `<resource_type>/<name_or_id>`.
     - Resource Name — `report.resource_name`.
-        - TBD
+        - Use the visible or descriptive name of the audited resource. If no explicit name is available, use a clear description of the resource or configuration being evaluated.
+    - Examples:
+        - For an organization:
+            - `resource_id`: Organization GUID
+            - `resource_name`: Organization name
+        - For a policy:
+            - `resource_id`: Unique policy ID
+            - `resource_name`: Policy display name
+        - For global configurations:
+            - `resource_id`: Tenant domain or representative string (e.g., "userSettings")
+            - `resource_name`: Description of the configuration (e.g., "SharePoint Settings")
 
 - GitHub
 
