@@ -2383,3 +2383,71 @@ def test_has_codebuild_trusted_principal_false():
 def test_has_codebuild_trusted_principal_empty():
     trust_policy = {}
     assert has_codebuild_trusted_principal(trust_policy) is False
+
+
+def test_is_codebuild_using_allowed_github_org_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_has_codebuild_trusted_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+def test_has_codebuild_trusted_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True

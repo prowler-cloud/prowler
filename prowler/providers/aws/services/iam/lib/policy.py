@@ -757,22 +757,30 @@ def is_codebuild_using_allowed_github_org(
         statements = [statements]
 
     for statement in statements:
-        if (
-            statement.get("Effect") == "Allow"
-            and "Principal" in statement
-            and isinstance(statement["Principal"], dict)
-            and statement["Principal"].get("Service") == "codebuild.amazonaws.com"
-        ):
-            # Extract org name from GitHub repo URL
-            try:
-                org_name = github_repo_url.split("/")[3]
-                if not org_name:
+        if statement.get("Effect") == "Allow" and "Principal" in statement:
+            principal = statement["Principal"]
+            found_codebuild = False
+            if isinstance(principal, dict):
+                service = principal.get("Service")
+                if isinstance(service, str):
+                    found_codebuild = service == "codebuild.amazonaws.com"
+                elif isinstance(service, list):
+                    found_codebuild = "codebuild.amazonaws.com" in service
+            elif isinstance(principal, str):
+                found_codebuild = principal == "codebuild.amazonaws.com"
+            elif isinstance(principal, list):
+                found_codebuild = "codebuild.amazonaws.com" in principal
+            if found_codebuild:
+                # Extract org name from GitHub repo URL
+                try:
+                    org_name = github_repo_url.split("/")[3]
+                    if not org_name:
+                        org_name = None
+                except IndexError:
                     org_name = None
-            except IndexError:
-                org_name = None
-            if org_name and org_name in allowed_organizations:
-                return True, org_name
-            return False, org_name
+                if org_name and org_name in allowed_organizations:
+                    return True, org_name
+                return False, org_name
     return False, None
 
 
@@ -788,7 +796,28 @@ def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
     return any(
         s.get("Effect") == "Allow"
         and "Principal" in s
-        and isinstance(s["Principal"], dict)
-        and s["Principal"].get("Service") == "codebuild.amazonaws.com"
+        and (
+            (
+                isinstance(s["Principal"], dict)
+                and (
+                    (
+                        isinstance(s["Principal"].get("Service"), str)
+                        and s["Principal"].get("Service") == "codebuild.amazonaws.com"
+                    )
+                    or (
+                        isinstance(s["Principal"].get("Service"), list)
+                        and "codebuild.amazonaws.com" in s["Principal"].get("Service")
+                    )
+                )
+            )
+            or (
+                isinstance(s["Principal"], str)
+                and s["Principal"] == "codebuild.amazonaws.com"
+            )
+            or (
+                isinstance(s["Principal"], list)
+                and "codebuild.amazonaws.com" in s["Principal"]
+            )
+        )
         for s in statements
     )
