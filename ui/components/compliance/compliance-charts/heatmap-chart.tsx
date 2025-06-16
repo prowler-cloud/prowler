@@ -11,11 +11,11 @@ interface HeatmapChartProps {
 }
 
 const getHeatmapColor = (percentage: number): string => {
-  if (percentage === 0) return "#3CEC6D"; // Verde (éxito)
-  if (percentage <= 25) return "#fcd34d"; // Amarillo
-  if (percentage <= 50) return "#FA7315"; // Naranja
-  if (percentage <= 100) return "#F31260"; // Rosa (fallo)
-  return "#F31260"; // Default fallback
+  if (percentage === 0) return "#3CEC6D";
+  if (percentage <= 25) return "#fcd34d";
+  if (percentage <= 50) return "#FA7315";
+  if (percentage <= 100) return "#F31260";
+  return "#F31260";
 };
 const capitalizeFirstLetter = (text: string): string => {
   const lowerText = text.toLowerCase();

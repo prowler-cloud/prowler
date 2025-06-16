@@ -33,9 +33,8 @@ export function Navbar({ title, icon, user }: NavbarProps) {
       .split("/")
       .filter((segment) => segment !== "");
 
-    //if home, no show breadcrumbs
     if (pathSegments.length === 0) {
-      return [];
+      return [{ name: "Home", path: "/", isLast: true }];
     }
 
     const breadcrumbs: BreadcrumbItem[] = [];
@@ -73,6 +72,23 @@ export function Navbar({ title, icon, user }: NavbarProps) {
     return path;
   };
 
+  const renderTitleWithIcon = (titleText: string, isLink: boolean = false) => (
+    <>
+      {typeof icon === "string" ? (
+        <Icon className="text-default-500" height={24} icon={icon} width={24} />
+      ) : (
+        <div className="flex h-8 w-8 items-center justify-center [&>*]:h-full [&>*]:w-full">
+          {icon}
+        </div>
+      )}
+      <h1
+        className={`text-sm font-bold text-default-700 ${isLink ? "transition-colors hover:text-primary" : ""}`}
+      >
+        {titleText}
+      </h1>
+    </>
+  );
+
   const breadcrumbs = generateBreadcrumbs();
 
   return (
@@ -80,41 +96,22 @@ export function Navbar({ title, icon, user }: NavbarProps) {
       <div className="mx-4 flex h-14 items-center sm:mx-8">
         <div className="flex items-center space-x-2">
           <SheetMenu />
-
-          {breadcrumbs.length > 0 && (
-            <Breadcrumbs separator="/">
-              {breadcrumbs.map((breadcrumb) => (
-                <BreadcrumbItem key={breadcrumb.path}>
-                  {breadcrumb.isLast ? (
-                    <>
-                      {typeof icon === "string" ? (
-                        <Icon
-                          className="text-default-500"
-                          height={24}
-                          icon={icon}
-                          width={24}
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center [&>*]:h-full [&>*]:w-full">
-                          {icon}
-                        </div>
-                      )}
-                      <span className="text-sm font-bold text-default-700">
-                        {title}
-                      </span>
-                    </>
-                  ) : (
-                    <Link
-                      href={buildNavigationUrl("scanId", breadcrumb.path)}
-                      className="cursor-pointer text-sm font-bold text-default-700 transition-colors hover:text-primary"
-                    >
-                      {breadcrumb.name}
-                    </Link>
-                  )}
-                </BreadcrumbItem>
-              ))}
-            </Breadcrumbs>
-          )}
+          <Breadcrumbs separator="/">
+            {breadcrumbs.map((breadcrumb) => (
+              <BreadcrumbItem key={breadcrumb.path}>
+                {breadcrumb.isLast ? (
+                  renderTitleWithIcon(title)
+                ) : (
+                  <Link
+                    href={buildNavigationUrl("scanId", breadcrumb.path)}
+                    className="flex cursor-pointer items-center space-x-2"
+                  >
+                    {renderTitleWithIcon(breadcrumb.name, true)}
+                  </Link>
+                )}
+              </BreadcrumbItem>
+            ))}
+          </Breadcrumbs>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           <ThemeSwitch />
