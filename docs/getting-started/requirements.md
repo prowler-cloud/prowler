@@ -171,6 +171,9 @@ These two new environment variables are **required** to execute the PowerShell m
 - `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
 
     ???+ warning
+        The user must not be MFA capable. Microsoft does not allow MFA capable users to authenticate programmatically. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-desktop-acquire-token-username-password?tabs=dotnet) for more information.
+
+    ???+ warning
         Using a tenant domain other than the one assigned — even if it belongs to the same tenant — will cause Prowler to fail, as Microsoft authentication will not succeed.
 
     Ensure you are using the right domain for the user you are trying to authenticate with.
@@ -199,11 +202,13 @@ Since this is a delegated permission authentication method, necessary permission
 Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
 
 - **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
-    - `Domain.Read.All`: Required for all services.
-    - `Policy.Read.All`: Required for all services.
-    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `AuditLog.Read.All`: Required for Entra service.
+    - `Domain.Read.All`: Required for all services.
+    - `Organization.Read.All`: Required for retrieving tenant information.
+    - `Policy.Read.All`: Required for all services.
+    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+
 
 - **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.

@@ -5,8 +5,8 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
+  ENSAttributesMetadata,
   Framework,
-  MappedComplianceData,
   Requirement,
   RequirementItemData,
   RequirementsData,
@@ -14,6 +14,10 @@ import {
 } from "@/types/compliance";
 
 export const translateType = (type: string) => {
+  if (!type) {
+    return "";
+  }
+
   switch (type.toLowerCase()) {
     case "requisito":
       return "Requirement";
@@ -31,7 +35,7 @@ export const translateType = (type: string) => {
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
-): MappedComplianceData => {
+): Framework[] => {
   const attributes = attributesData?.data || [];
   const requirements = requirementsData?.data || [];
 
@@ -46,7 +50,9 @@ export const mapComplianceData = (
   // Process attributes and merge with requirements data
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
-    const attrs = attributeItem.attributes?.attributes?.metadata?.[0];
+    const attrs = attributeItem.attributes?.attributes
+      ?.metadata?.[0] as ENSAttributesMetadata;
+
     if (!attrs) continue;
 
     // Get corresponding requirement data
@@ -96,7 +102,6 @@ export const mapComplianceData = (
     if (!control) {
       control = {
         label: groupControlLabel,
-        type,
         pass: 0,
         fail: 0,
         manual: 0,
@@ -166,7 +171,7 @@ export const mapComplianceData = (
 };
 
 export const toAccordionItems = (
-  data: MappedComplianceData,
+  data: Framework[],
   scanId: string | undefined,
 ): AccordionItemProps[] => {
   return data.map((framework) => {
@@ -178,6 +183,7 @@ export const toAccordionItems = (
           pass={framework.pass}
           fail={framework.fail}
           manual={framework.manual}
+          isParentLevel={true}
         />
       ),
       content: "",
@@ -212,7 +218,7 @@ export const toAccordionItems = (
                   key: itemKey,
                   title: (
                     <ComplianceAccordionRequirementTitle
-                      type={requirement.type}
+                      type={requirement.type as string}
                       name={requirement.name}
                       status={requirement.status as FindingStatus}
                     />
@@ -221,12 +227,13 @@ export const toAccordionItems = (
                     <ClientAccordionContent
                       requirement={requirement}
                       scanId={scanId || ""}
+                      framework={framework.name}
+                      disableFindings={
+                        requirement.check_ids.length === 0 &&
+                        requirement.manual === 0
+                      }
                     />
                   ),
-                  items: [],
-                  isDisabled:
-                    requirement.check_ids.length === 0 &&
-                    requirement.manual === 0,
                 };
               }),
               isDisabled:

@@ -1,5 +1,4 @@
 import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
-import { translateType } from "@/lib/compliance/ens";
 
 interface ComplianceAccordionRequirementTitleProps {
   type: string;
@@ -8,17 +7,13 @@ interface ComplianceAccordionRequirementTitleProps {
 }
 
 export const ComplianceAccordionRequirementTitle = ({
-  type,
   name,
   status,
 }: ComplianceAccordionRequirementTitleProps) => {
   return (
     <div className="flex w-full items-center justify-between gap-2">
-      <div className="flex w-3/4 items-center gap-1">
-        <span className="whitespace-nowrap text-sm font-bold capitalize">
-          {translateType(type)}:
-        </span>
-        <span className="whitespace-nowrap text-sm uppercase">{name}</span>
+      <div className="flex w-5/6 items-center gap-1">
+        <span>{name}</span>
       </div>
       <StatusFindingBadge status={status} />
     </div>
