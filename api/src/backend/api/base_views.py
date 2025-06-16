@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
@@ -46,9 +47,11 @@ class BaseViewSet(ModelViewSet):
 
 
 class BaseRLSViewSet(BaseViewSet):
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
 
+    def initial(self, request, *args, **kwargs):
         # Ideally, this logic would be in the `.setup()` method but DRF view sets don't call it
         # https://docs.djangoproject.com/en/5.1/ref/class-based-views/base/#django.views.generic.base.View.setup
         if request.auth is None:
@@ -58,19 +61,9 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        self.request.tenant_id = tenant_id
-
-        self._rls_cm = rls_transaction(tenant_id)
-        self._rls_cm.__enter__()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-
-        if hasattr(self, "_rls_cm"):
-            self._rls_cm.__exit__(None, None, None)
-            del self._rls_cm
-
-        return response
+        with rls_transaction(tenant_id):
+            self.request.tenant_id = tenant_id
+            return super().initial(request, *args, **kwargs)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -80,7 +73,8 @@ class BaseRLSViewSet(BaseViewSet):
 
 class BaseTenantViewset(BaseViewSet):
     def dispatch(self, request, *args, **kwargs):
-        tenant = super().dispatch(request, *args, **kwargs)
+        with transaction.atomic():
+            tenant = super().dispatch(request, *args, **kwargs)
 
         try:
             # If the request is a POST, create the admin role
@@ -115,8 +109,6 @@ class BaseTenantViewset(BaseViewSet):
                 pass  # Tenant might not exist, handle gracefully
 
     def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-
         if request.auth is None:
             raise NotAuthenticated
 
@@ -125,27 +117,19 @@ class BaseTenantViewset(BaseViewSet):
             raise NotAuthenticated("Tenant ID is not present in token")
 
         user_id = str(request.user.id)
-
-        self._rls_cm = rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR)
-        self._rls_cm.__enter__()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-
-        if hasattr(self, "_rls_cm"):
-            self._rls_cm.__exit__(None, None, None)
-            del self._rls_cm
-
-        return response
+        with rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
+            return super().initial(request, *args, **kwargs)
 
 
 class BaseUserViewset(BaseViewSet):
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
 
+    def initial(self, request, *args, **kwargs):
         # TODO refactor after improving RLS on users
         if request.stream is not None and request.stream.method == "POST":
-            return
+            return super().initial(request, *args, **kwargs)
         if request.auth is None:
             raise NotAuthenticated
 
@@ -153,16 +137,6 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        self.request.tenant_id = tenant_id
-
-        self._rls_cm = rls_transaction(tenant_id)
-        self._rls_cm.__enter__()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
-
-        if hasattr(self, "_rls_cm"):
-            self._rls_cm.__exit__(None, None, None)
-            del self._rls_cm
-
-        return response
+        with rls_transaction(tenant_id):
+            self.request.tenant_id = tenant_id
+            return super().initial(request, *args, **kwargs)
