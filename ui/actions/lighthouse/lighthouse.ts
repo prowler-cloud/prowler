@@ -29,6 +29,26 @@ export const getAIKey = async (): Promise<string> => {
   }
 };
 
+export const checkLighthouseConnection = async (configId: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(
+    `${apiBaseUrl}/lighthouse-configurations/${configId}/connection`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("[Server] Error in checkLighthouseConnection:", error);
+    return undefined;
+  }
+};
+
 export const createLighthouseConfig = async (config: {
   model: string;
   apiKey: string;
@@ -55,9 +75,15 @@ export const createLighthouseConfig = async (config: {
       body: JSON.stringify(payload),
     });
     const data = await response.json();
+
+    // Trigger connection check in background
+    if (data?.data?.id) {
+      checkLighthouseConnection(data.data.id);
+    }
+
     return data;
   } catch (error) {
-    console.error("[Server] Error in createAIConfiguration:", error);
+    console.error("[Server] Error in createLighthouseConfig:", error);
     return undefined;
   }
 };
@@ -132,6 +158,12 @@ export const updateLighthouseConfig = async (config: {
     });
 
     const updateData = await updateResponse.json();
+
+    // Trigger connection check in background
+    if (updateData?.data?.id || configId) {
+      checkLighthouseConnection(configId);
+    }
+
     return updateData;
   } catch (error) {
     console.error("[Server] Error in updateLighthouseConfig:", error);
