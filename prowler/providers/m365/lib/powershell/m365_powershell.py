@@ -6,6 +6,7 @@ import msal
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
+    M365HTTPResponseError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
@@ -174,14 +175,14 @@ class M365PowerShell(PowerShellSession):
             )
 
             if result is None:
-                logger.error(
+                raise M365HTTPResponseError(
                     "Unexpected error: Acquiring token in behalf of user did not return a result."
                 )
-                return False
 
             if "access_token" not in result:
-                logger.error(f"MsGraph Error {result.get('error_description')}")
-                return False
+                raise M365HTTPResponseError(
+                    f"MsGraph Error {result.get('error_description')}"
+                )
 
             return True
         else:
