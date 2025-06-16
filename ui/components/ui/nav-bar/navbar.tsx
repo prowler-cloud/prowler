@@ -106,7 +106,9 @@ export function Navbar({ title, icon, user }: NavbarProps) {
                     href={buildNavigationUrl("scanId", breadcrumb.path)}
                     className="flex cursor-pointer items-center space-x-2"
                   >
-                    {renderTitleWithIcon(breadcrumb.name, true)}
+                    <h1 className="text-sm font-bold text-default-700 transition-colors hover:text-primary">
+                      {breadcrumb.name}
+                    </h1>
                   </Link>
                 )}
               </BreadcrumbItem>
