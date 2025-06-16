@@ -59,7 +59,6 @@ export const M365CredentialsForm = ({
         labelPlacement="inside"
         placeholder="Enter the User"
         variant="bordered"
-        isRequired
         isInvalid={!!control._formState.errors.user}
       />
       <CustomInput
@@ -70,7 +69,6 @@ export const M365CredentialsForm = ({
         labelPlacement="inside"
         placeholder="Enter the Password"
         variant="bordered"
-        isRequired
         isInvalid={!!control._formState.errors.password}
       />
     </>
