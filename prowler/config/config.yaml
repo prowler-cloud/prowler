@@ -421,7 +421,6 @@ aws:
   # aws.codebuild_project_uses_allowed_github_organizations
   codebuild_github_allowed_organizations:
     [
-      "andoniaf",
     ]
 
 # Azure Configuration
