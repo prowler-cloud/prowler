@@ -750,17 +750,14 @@ class M365Provider(Provider):
                     message=f"The provider ID {provider_id} does not match any of the service principal tenant domains: {', '.join(identity.tenant_domains)}",
                 )
 
+            logger.info("M365 provider: Identity retrieved successfully")
+
             # Set up PowerShell credentials
-            if user and password:
-                M365Provider.setup_powershell(
-                    env_auth,
-                    m365_credentials,
-                    identity,
-                )
-            else:
-                logger.info(
-                    "M365 provider: Connection to PowerShell has not been requested"
-                )
+            M365Provider.setup_powershell(
+                env_auth,
+                m365_credentials,
+                identity,
+            )
 
             logger.info("M365 provider: Connection to PowerShell successful")
 
