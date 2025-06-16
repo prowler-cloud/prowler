@@ -1,38 +1,66 @@
-from locust import HttpUser, task, events
-from utils.helpers import get_api_token, get_auth_headers, get_random_resource_id
+from locust import task, events
+from utils.helpers import (
+        APIUserBase, 
+        get_api_token, 
+        get_auth_headers, 
+        get_sort_value, 
+        get_available_resource_filters ,
+        get_next_resource_filter
+)
+from utils.config import (
+    RESOURCES_UI_SORT_VALUES,
+    RESOURCE_INSERTED_AT,
+)
 
-GLOBAL = {"token": None, "resource_ids": []}
+GLOBAL = {"token": None, "resource_ids": [], "resource_filters": None}
 
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
     GLOBAL["token"] = get_api_token(environment.host)
+    GLOBAL["resource_filters"] = get_available_resource_filters(environment.host, GLOBAL["token"])
 
 
-class ResourceUser(HttpUser):
+class ResourceUser(APIUserBase):
     def on_start(self):
         self.token = GLOBAL["token"]
         self.headers = get_auth_headers(self.token)
+        self.available_resource_filters = GLOBAL["resource_filters"]
 
-        with self.client.get(
-            "/resources", headers=self.headers, name="/resources", catch_response=True
-        ) as response:
-            if response.status_code == 200:
-                json_data = response.json()
-                GLOBAL["resource_ids"] = [
-                    item["id"] for item in json_data.get("data", [])[:10]
-                ]
-            else:
-                response.failure("Failed to load /resources")
+    @task
+    def resources_default(self):
+        name = "GET /resources"
+        page_number = self._next_page(name)
+        endpoint = (
+            f"/resources?page[number]={page_number}"
+            f"&{get_sort_value(RESOURCES_UI_SORT_VALUES)}"
+        )
+        self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
     @task(3)
-    def list_resources(self):
-        self.client.get("/resources", headers=self.headers, name="/resources")
+    def resource_with_include(self):
+        name = "GET /resources (with include)"
+        page = self._next_page(name)
+        endpoint = (
+            f"/resources?page[number]={page}"
+            f"&{get_sort_value(RESOURCES_UI_SORT_VALUES)}"
+            f"&include=findings,provider"  
+        )
+        self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
     @task(2)
-    def get_single_resource(self):
-        if GLOBAL["resource_ids"]:
-            resource_id = get_random_resource_id(GLOBAL["resource_ids"])
-            self.client.get(
-                f"/resources/{resource_id}", headers=self.headers, name="/resources/:id"
-            )
+    def resource_filter(self):
+        name = "GET /resources (random filter)"
+        filter_type, filter_value = get_next_resource_filter(self.available_resource_filters)
+        endpoint = f"/resources?filter[{filter_type}]={filter_value}"
+        self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
+
+    @task(2)
+    def resource_filter_with_include(self):
+        name = "GET /resources (random filter + include)"
+        filter_type, filter_value = get_next_resource_filter(self.available_resource_filters)
+        endpoint = (
+            f"/resources?filter[{filter_type}]={filter_value}"
+            f"&include=findings,provider"
+        )
+        self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)

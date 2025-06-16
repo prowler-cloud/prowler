@@ -167,23 +167,42 @@ def get_sort_value(sort_values: list) -> str:
     """
     return f"sort={','.join(sort_values)}"
 
-
-def get_random_resource_id(resource_list):
+def get_available_resource_filters(host: str, token: str) -> dict:
     """
-    Selects and returns a random resource ID from the provided list.
+    Fetches and returns available resource filter values from the API.
 
     Args:
-        resource_list (list): A list of resource IDs.
+        host (str): The host URL of the API.
+        token (str): Bearer token for authentication.
 
     Returns:
-        Any: A randomly selected resource ID from the list.
+        dict: A dictionary containing lists of unique values for each resource filter type.
+              Example:
+              {
+                  "service": ["ec2", "s3", "rds"],
+                  "type": ["instance", "bucket"],
+                  "region": ["us-east-1", "us-west-2"]
+              }
 
     Raises:
-        ValueError: If the provided list is empty.
-
-    Example:
-        resource_id = get_random_resource_id(GLOBAL["resource_ids"])
+        AssertionError: If the API request fails or does not return a 200 status code.
     """
-    if not resource_list:
-        raise ValueError("The resource list is empty.")
-    return random.choice(resource_list)
+    
+    url = f"{host}/resources"
+    params = {
+        "fields[resources]": "type,region,service"
+    }
+
+    response = requests.get(url, headers=get_auth_headers(token), params=params)
+    assert response.status_code == 200, f"Failed to fetch filters: {response.text}"
+
+    resources = response.json()["data"]
+    filters = {"service": set(), "type": set(), "region": set()}
+
+    for res in resources:
+        attr = res["attributes"]
+        filters["service"].add(attr["service"])
+        filters["type"].add(attr["type"])
+        filters["region"].add(attr["region"])
+
+    return {k: list(v) for k, v in filters.items()}
