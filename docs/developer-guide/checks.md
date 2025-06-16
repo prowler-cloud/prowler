@@ -197,9 +197,9 @@ Each check **must** populate the report with an unique identifier for the audite
 - GitHub
 
     - Resource ID — `report.resource_id`.
-        - TBD
+        - The ID of the Github resource. This is a system-generated integer that uniquely identifies the resource within the Github platform.
     - Resource Name — `report.resource_name`.
-        - TBD
+        - The name of the Github resource. In the case of a repository, this is just the repository name. For full repository names use the resource `full_name`.
 
 ### Using the Audit Configuration
 
