@@ -146,7 +146,6 @@ def mock_check_metadata_get_bulk():
 class TestScan:
     def test_init(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = {
             "workspaces_vpc_2private_1public_subnets_nat",
@@ -238,8 +237,6 @@ class TestScan:
         mock_provider,
         mock_recover_checks_from_provider,
         mock_load_check_metadata,
-        mock_load_checks_to_execute,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -309,7 +306,6 @@ class TestScan:
 
     def test_init_invalid_severity(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -319,7 +315,6 @@ class TestScan:
 
     def test_init_invalid_check(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = ["invalid_check"]
         mock_provider.type = "aws"
@@ -329,7 +324,6 @@ class TestScan:
 
     def test_init_invalid_service(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -339,7 +333,6 @@ class TestScan:
 
     def test_init_invalid_compliance_framework(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -353,7 +346,6 @@ class TestScan:
 
     def test_init_invalid_category(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
@@ -365,7 +357,6 @@ class TestScan:
 
     def test_init_invalid_status(
         mock_provider,
-        mock_check_metadata_get_bulk,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
