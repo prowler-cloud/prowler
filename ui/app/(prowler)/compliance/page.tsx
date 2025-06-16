@@ -12,7 +12,12 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
-import { ScanProps, SearchParamsProps } from "@/types";
+import {
+  ExpandedScanData,
+  ScanProps,
+  SearchParamsProps,
+  SelectedScanData,
+} from "@/types";
 import { ComplianceOverviewData } from "@/types/compliance";
 
 export default async function Compliance({
@@ -37,36 +42,50 @@ export default async function Compliance({
     return <NoScansAvailable />;
   }
 
-  // Expand scans with provider information
-  const expandedScansData = await Promise.all(
-    scansData.data.map(async (scan: ScanProps) => {
-      const providerId = scan.relationships?.provider?.data?.id;
+  // Expand scans with provider information - only include scans with valid provider
+  const expandedScansData: ExpandedScanData[] = await Promise.all(
+    scansData.data
+      .filter((scan: ScanProps) => scan.relationships?.provider?.data?.id)
+      .map(async (scan: ScanProps) => {
+        const providerId = scan.relationships!.provider!.data!.id;
 
-      if (!providerId) {
-        return { ...scan, providerInfo: null };
-      }
+        const formData = new FormData();
+        formData.append("id", providerId);
 
-      const formData = new FormData();
-      formData.append("id", providerId);
+        const providerData = await getProvider(formData);
 
-      const providerData = await getProvider(formData);
-
-      return {
-        ...scan,
-        providerInfo: providerData?.data
-          ? {
-              provider: providerData.data.attributes.provider,
-              uid: providerData.data.attributes.uid,
-              alias: providerData.data.attributes.alias,
-            }
-          : null,
-      };
-    }),
+        return {
+          ...scan,
+          providerInfo: {
+            provider: providerData.data.attributes.provider,
+            uid: providerData.data.attributes.uid,
+            alias: providerData.data.attributes.alias,
+          },
+        };
+      }),
   );
 
   const selectedScanId =
     searchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
+
+  // Find the selected scan
+  const selectedScan = expandedScansData.find(
+    (scan) => scan.id === selectedScanId,
+  );
+
+  // Convertir a SelectedScanData si existe
+  const selectedScanData: SelectedScanData | undefined =
+    selectedScan?.providerInfo
+      ? {
+          id: selectedScan.id,
+          providerInfo: selectedScan.providerInfo,
+          attributes: {
+            name: selectedScan.attributes.name,
+            completed_at: selectedScan.attributes.completed_at,
+          },
+        }
+      : undefined;
 
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
     query,
@@ -86,7 +105,10 @@ export default async function Compliance({
             uniqueRegions={uniqueRegions}
           />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
-            <SSRComplianceGrid searchParams={searchParams} />
+            <SSRComplianceGrid
+              searchParams={searchParams}
+              selectedScan={selectedScanData}
+            />
           </Suspense>
         </>
       ) : (
@@ -98,8 +120,10 @@ export default async function Compliance({
 
 const SSRComplianceGrid = async ({
   searchParams,
+  selectedScan,
 }: {
   searchParams: SearchParamsProps;
+  selectedScan?: SelectedScanData;
 }) => {
   const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
@@ -164,6 +188,7 @@ const SSRComplianceGrid = async ({
             scanId={scanId}
             complianceId={id}
             id={id}
+            selectedScan={selectedScan}
           />
         );
       })}

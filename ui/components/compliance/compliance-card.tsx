@@ -7,6 +7,7 @@ import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
+import { SelectedScanData } from "@/types";
 
 import { getComplianceIcon } from "../icons";
 
@@ -20,6 +21,7 @@ interface ComplianceCardProps {
   scanId: string;
   complianceId: string;
   id: string;
+  selectedScan?: SelectedScanData;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -30,6 +32,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   scanId,
   complianceId,
   id,
+  selectedScan,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -79,6 +82,17 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     params.set("complianceId", id);
     params.set("version", version);
     params.set("scanId", scanId);
+
+    if (selectedScan) {
+      params.set(
+        "scanData",
+        JSON.stringify({
+          id: selectedScan.id,
+          providerInfo: selectedScan.providerInfo,
+          attributes: selectedScan.attributes,
+        }),
+      );
+    }
 
     router.push(`${path}?${params.toString()}`);
   };

@@ -59,3 +59,15 @@ export interface ScanEntity {
     completed_at: string;
   };
 }
+
+export interface SelectedScanData extends ScanEntity {
+  id: string;
+}
+
+export interface ExpandedScanData extends ScanProps {
+  providerInfo: {
+    provider: ProviderType;
+    uid: string;
+    alias: string;
+  };
+}

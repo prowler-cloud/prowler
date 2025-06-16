@@ -7,8 +7,6 @@ import {
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
-import { getProvider } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
 import {
   BarChart,
   BarChartSkeleton,
@@ -24,13 +22,14 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import { ScanProps } from "@/types";
+import { SelectedScanData } from "@/types";
 import { Framework, RequirementsTotals } from "@/types/compliance";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
   scanId?: string;
+  scanData?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
 }
@@ -85,7 +84,7 @@ export default async function ComplianceDetail({
   searchParams: ComplianceDetailSearchParams;
 }) {
   const { compliancetitle } = params;
-  const { complianceId, version, scanId } = searchParams;
+  const { complianceId, version, scanId, scanData } = searchParams;
   const regionFilter = searchParams["filter[region__in]"];
   const cisProfileFilter = searchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
@@ -98,43 +97,13 @@ export default async function ComplianceDetail({
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
-  // Fetch scans data
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-    },
-  });
+  let selectedScan: SelectedScanData | null = null;
 
-  // Expand scans with provider information
-  const expandedScansData = scansData?.data?.length
-    ? await Promise.all(
-        scansData.data.map(async (scan: ScanProps) => {
-          const providerId = scan.relationships?.provider?.data?.id;
+  if (scanData) {
+    selectedScan = JSON.parse(decodeURIComponent(scanData));
+  }
 
-          if (!providerId) {
-            return { ...scan, providerInfo: null };
-          }
-
-          const formData = new FormData();
-          formData.append("id", providerId);
-
-          const providerData = await getProvider(formData);
-
-          return {
-            ...scan,
-            providerInfo: providerData?.data
-              ? {
-                  provider: providerData.data.attributes.provider,
-                  uid: providerData.data.attributes.uid,
-                  alias: providerData.data.attributes.alias,
-                }
-              : null,
-          };
-        }),
-      )
-    : [];
-
-  const selectedScanId = scanId || expandedScansData[0]?.id || null;
+  const selectedScanId = scanId || selectedScan?.id || null;
 
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
     filters: {
@@ -154,16 +123,14 @@ export default async function ComplianceDetail({
         )
       }
     >
-      {selectedScanId && (
+      {selectedScanId && selectedScan && (
         <div className="flex max-w-[328px] flex-col items-start gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
           <p className="text-xs font-medium">Selected Scan:</p>
-          <ComplianceScanInfo
-            scan={expandedScansData.find((scan) => scan.id === selectedScanId)}
-          />
+          <ComplianceScanInfo scan={selectedScan} />
         </div>
       )}
       <ComplianceHeader
-        scans={expandedScansData}
+        scans={[]}
         uniqueRegions={uniqueRegions}
         showSearch={false}
         framework={compliancetitle}
@@ -185,7 +152,7 @@ export default async function ComplianceDetail({
       >
         <SSRComplianceContent
           complianceId={complianceId}
-          scanId={selectedScanId}
+          scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
