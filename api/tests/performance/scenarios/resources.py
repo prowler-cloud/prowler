@@ -4,12 +4,11 @@ from utils.helpers import (
         get_api_token, 
         get_auth_headers, 
         get_sort_value, 
-        get_available_resource_filters ,
+        get_available_resource_filters,
         get_next_resource_filter
 )
 from utils.config import (
     RESOURCES_UI_SORT_VALUES,
-    RESOURCE_INSERTED_AT,
 )
 
 GLOBAL = {"token": None, "resource_ids": [], "resource_filters": None}
