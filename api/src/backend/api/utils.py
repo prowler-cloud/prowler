@@ -84,7 +84,7 @@ def return_prowler_provider(
 
 
 def get_prowler_provider_kwargs(
-    provider: Provider, mutelist_processor: Processor
+    provider: Provider, mutelist_processor: Processor | None = None
 ) -> dict:
     """Get the Prowler provider kwargs based on the given provider type.
 
@@ -117,7 +117,7 @@ def get_prowler_provider_kwargs(
 
 def initialize_prowler_provider(
     provider: Provider,
-    mutelist_processor: Processor,
+    mutelist_processor: Processor | None = None,
 ) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider:
     """Initialize a Prowler provider instance based on the given provider type.
 
