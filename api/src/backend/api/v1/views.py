@@ -3,8 +3,10 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import sentry_sdk
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.saml.views import FinishACSView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
 from config.env import env
@@ -17,19 +19,20 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
-    OpenApiTypes,
     extend_schema,
     extend_schema_view,
 )
@@ -51,6 +54,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -58,8 +62,13 @@ from tasks.tasks import (
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
-from api.compliance import get_compliance_frameworks
+from api.compliance import (
+    PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
+    get_compliance_frameworks,
+)
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
+from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
@@ -81,9 +90,11 @@ from api.filters import (
 )
 from api.models import (
     ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -94,6 +105,8 @@ from api.models import (
     ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -111,9 +124,10 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin
+from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
-    ComplianceOverviewFullSerializer,
+    ComplianceOverviewAttributesSerializer,
+    ComplianceOverviewDetailSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -126,6 +140,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -146,6 +163,8 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
+    SAMLConfigurationSerializer,
+    SamlInitiateSerializer,
     ScanComplianceReportSerializer,
     ScanCreateSerializer,
     ScanReportSerializer,
@@ -321,6 +340,11 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
+            {
+                "name": "Lighthouse",
+                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+            },
         ]
         return super().get(request, *args, **kwargs)
 
@@ -375,6 +399,163 @@ class GithubSocialLoginView(SocialLoginView):
                 status=status.HTTP_200_OK,
             )
         return original_response
+
+
+@extend_schema(exclude=True)
+class SAMLInitiateAPIView(GenericAPIView):
+    serializer_class = SamlInitiateSerializer
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email_domain"]
+        domain = email.split("@", 1)[-1].lower()
+
+        try:
+            check = SAMLDomainIndex.objects.get(email_domain=domain)
+            with rls_transaction(str(check.tenant_id)):
+                config = SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+        except (SAMLDomainIndex.DoesNotExist, SAMLConfiguration.DoesNotExist):
+            return Response(
+                {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check certificates are not empty
+        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+
+        if not saml_public_cert or not saml_private_key:
+            return Response(
+                {"detail": "SAML configuration is invalid: missing certificates."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        saml_login_url = reverse(
+            "saml_login", kwargs={"organization_slug": config.email_domain}
+        )
+        return redirect(f"{saml_login_url}?email={email}")
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["SAML"],
+        summary="List all SSO configurations",
+        description="Returns all the SAML-based SSO configurations associated with the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["SAML"],
+        summary="Retrieve SSO configuration details",
+        description="Returns the details of a specific SAML configuration belonging to the current tenant.",
+    ),
+    create=extend_schema(
+        tags=["SAML"],
+        summary="Create the SSO configuration",
+        description="Creates a new SAML SSO configuration for the current tenant, including email domain and metadata XML.",
+    ),
+    partial_update=extend_schema(
+        tags=["SAML"],
+        summary="Update the SSO configuration",
+        description="Partially updates an existing SAML SSO configuration. Supports changes to email domain and metadata XML.",
+    ),
+    destroy=extend_schema(
+        tags=["SAML"],
+        summary="Delete the SSO configuration",
+        description="Deletes an existing SAML SSO configuration associated with the current tenant.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+@method_decorator(CACHE_DECORATOR, name="list")
+class SAMLConfigurationViewSet(BaseRLSViewSet):
+    """
+    ViewSet for managing SAML SSO configurations per tenant.
+
+    This endpoint allows authorized users to perform CRUD operations on SAMLConfiguration,
+    which define how a tenant integrates with an external SAML Identity Provider (IdP).
+
+    Typical use cases include:
+        - Listing all existing configurations for auditing or UI display.
+        - Retrieving a single configuration to show setup details.
+        - Creating or updating a configuration to onboard or modify SAML integration.
+        - Deleting a configuration when deactivating SAML for a tenant.
+    """
+
+    serializer_class = SAMLConfigurationSerializer
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    queryset = SAMLConfiguration.objects.all()
+
+    def get_queryset(self):
+        # If called during schema generation, return an empty queryset
+        if getattr(self, "swagger_fake_view", False):
+            return SAMLConfiguration.objects.none()
+        return SAMLConfiguration.objects.filter(tenant=self.request.tenant_id)
+
+
+class TenantFinishACSView(FinishACSView):
+    def dispatch(self, request, organization_slug):
+        response = super().dispatch(request, organization_slug)
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return response
+
+        try:
+            social_app = SocialApp.objects.get(
+                provider="saml", client_id=organization_slug
+            )
+            social_account = SocialAccount.objects.get(
+                user=user, provider=social_app.provider
+            )
+        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist):
+            return response
+
+        extra = social_account.extra_data
+        user.first_name = extra.get("firstName", [""])[0]
+        user.last_name = extra.get("lastName", [""])[0]
+        user.company_name = extra.get("organization", [""])[0]
+        user.name = f"{user.first_name} {user.last_name}".strip()
+        user.save()
+
+        email_domain = user.email.split("@")[-1]
+        tenant = (
+            SAMLConfiguration.objects.using(MainRouter.admin_db)
+            .get(email_domain=email_domain)
+            .tenant
+        )
+        role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+        try:
+            role = Role.objects.using(MainRouter.admin_db).get(
+                name=role_name, tenant=tenant
+            )
+        except Role.DoesNotExist:
+            role = Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                manage_users=False,
+                manage_account=False,
+                manage_billing=False,
+                manage_providers=False,
+                manage_integrations=False,
+                manage_scans=False,
+                unlimited_visibility=False,
+            )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user,
+            tenant_id=tenant.id,
+        ).delete()
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        serializer = TokenSocialLoginSerializer(data={"email": user.email})
+        serializer.is_valid(raise_exception=True)
+        return JsonResponse(
+            {
+                "type": "saml-social-tokens",
+                "attributes": serializer.validated_data,
+            }
+        )
 
 
 @extend_schema_view(
@@ -1489,10 +1670,10 @@ class ScanViewSet(BaseRLSViewSet):
                 },
             )
 
+        prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])
 
-        prowler_task = Task.objects.get(id=task.id)
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
 
@@ -1909,6 +2090,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
@@ -2010,6 +2193,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
@@ -2391,8 +2576,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     list=extend_schema(
         tags=["Compliance Overview"],
         summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan. If no region filters are provided, the"
-        " region with the most fails will be returned by default.",
+        description="Retrieve an overview of all the compliance in a given scan.",
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
@@ -2402,12 +2586,18 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Related scan ID.",
             ),
         ],
-    ),
-    retrieve=extend_schema(
-        tags=["Compliance Overview"],
-        summary="Retrieve data from a specific compliance overview",
-        description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
-        "requirement information and check's status.",
+        responses={
+            200: OpenApiResponse(
+                description="Compliance overviews obtained successfully",
+                response=ComplianceOverviewSerializer(many=True),
+            ),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
     ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
@@ -2423,19 +2613,84 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Related scan ID.",
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance overviews metadata obtained successfully",
+                response=ComplianceOverviewMetadataSerializer,
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
+    ),
+    requirements=extend_schema(
+        tags=["Compliance Overview"],
+        summary="List compliance requirements overview for a scan",
+        description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
+        "framework. This endpoint provides requirement-level details and aggregates status across regions.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+            OpenApiParameter(
+                name="filter[compliance_id]",
+                required=True,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Compliance ID.",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance requirement details obtained successfully",
+                response=ComplianceOverviewDetailSerializer(many=True),
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            500: OpenApiResponse(
+                description="Compliance overviews generation task failed"
+            ),
+        },
+        filters=True,
+    ),
+    attributes=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Get compliance requirement attributes",
+        description="Retrieve detailed attribute information for all requirements in a specific compliance framework "
+        "along with the associated check IDs for each requirement.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[compliance_id]",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Compliance framework ID to get attributes for.",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Compliance attributes obtained successfully",
+                response=ComplianceOverviewAttributesSerializer(many=True),
+            ),
+        },
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-@method_decorator(CACHE_DECORATOR, name="retrieve")
-class ComplianceOverviewViewSet(BaseRLSViewSet):
+@method_decorator(CACHE_DECORATOR, name="requirements")
+@method_decorator(CACHE_DECORATOR, name="attributes")
+class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     pagination_class = ComplianceOverviewPagination
-    queryset = ComplianceOverview.objects.all()
+    queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
     filterset_class = ComplianceOverviewFilter
     http_method_names = ["get"]
     search_fields = ["compliance_id"]
     ordering = ["compliance_id"]
-    ordering_fields = ["inserted_at", "compliance_id", "framework", "region"]
+    ordering_fields = ["compliance_id"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -2446,51 +2701,44 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
 
-        if self.action == "retrieve":
-            if unlimited_visibility:
-                # User has unlimited visibility, return all compliance
-                return ComplianceOverview.objects.filter(
-                    tenant_id=self.request.tenant_id
-                )
-
-            providers = get_providers(role)
-            return ComplianceOverview.objects.filter(
-                tenant_id=self.request.tenant_id, scan__provider__in=providers
-            )
-
         if unlimited_visibility:
             base_queryset = self.filter_queryset(
-                ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
+                ComplianceRequirementOverview.objects.filter(
+                    tenant_id=self.request.tenant_id
+                )
             )
         else:
             providers = Provider.objects.filter(
                 provider_groups__in=role.provider_groups.all()
             ).distinct()
             base_queryset = self.filter_queryset(
-                ComplianceOverview.objects.filter(
+                ComplianceRequirementOverview.objects.filter(
                     tenant_id=self.request.tenant_id, scan__provider__in=providers
                 )
             )
 
-        max_failed_ids = (
-            base_queryset.filter(compliance_id=OuterRef("compliance_id"))
-            .order_by("-requirements_failed")
-            .values("id")[:1]
-        )
-
-        return base_queryset.filter(id__in=Subquery(max_failed_ids)).order_by(
-            "compliance_id"
-        )
+        return base_queryset
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
-            return ComplianceOverviewFullSerializer
+        if hasattr(self, "response_serializer_class"):
+            return self.response_serializer_class
+        elif self.action == "list":
+            return ComplianceOverviewSerializer
         elif self.action == "metadata":
             return ComplianceOverviewMetadataSerializer
+        elif self.action == "attributes":
+            return ComplianceOverviewAttributesSerializer
+        elif self.action == "requirements":
+            return ComplianceOverviewDetailSerializer
         return super().get_serializer_class()
 
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
     def list(self, request, *args, **kwargs):
-        if not request.query_params.get("filter[scan_id]"):
+        scan_id = request.query_params.get("filter[scan_id]")
+        if not scan_id:
             raise ValidationError(
                 [
                     {
@@ -2501,7 +2749,82 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-        return super().list(request, *args, **kwargs)
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
+
+        requirement_status_subquery = queryset.values(
+            "compliance_id", "requirement_id"
+        ).annotate(
+            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
+            pass_count=Count("id", filter=Q(requirement_status="PASS")),
+            total_count=Count("id"),
+        )
+
+        compliance_data = {}
+        framework_info = {}
+
+        for item in queryset.values("compliance_id", "framework", "version").distinct():
+            framework_info[item["compliance_id"]] = {
+                "framework": item["framework"],
+                "version": item["version"],
+            }
+
+        for item in requirement_status_subquery:
+            compliance_id = item["compliance_id"]
+
+            if item["fail_count"] > 0:
+                req_status = "FAIL"
+            elif item["pass_count"] == item["total_count"]:
+                req_status = "PASS"
+            else:
+                req_status = "MANUAL"
+
+            if compliance_id not in compliance_data:
+                compliance_data[compliance_id] = {
+                    "total_requirements": 0,
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                }
+
+            compliance_data[compliance_id]["total_requirements"] += 1
+            if req_status == "PASS":
+                compliance_data[compliance_id]["requirements_passed"] += 1
+            elif req_status == "FAIL":
+                compliance_data[compliance_id]["requirements_failed"] += 1
+            else:
+                compliance_data[compliance_id]["requirements_manual"] += 1
+
+        response_data = []
+        for compliance_id, data in compliance_data.items():
+            framework = framework_info.get(compliance_id, {})
+
+            response_data.append(
+                {
+                    "id": compliance_id,
+                    "compliance_id": compliance_id,
+                    "framework": framework.get("framework", ""),
+                    "version": framework.get("version", ""),
+                    "requirements_passed": data["requirements_passed"],
+                    "requirements_failed": data["requirements_failed"],
+                    "requirements_manual": data["requirements_manual"],
+                    "total_requirements": data["total_requirements"],
+                }
+            )
+
+        serializer = self.get_serializer(response_data, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
@@ -2517,11 +2840,21 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                     }
                 ]
             )
-
-        tenant_id = self.request.tenant_id
-
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         regions = list(
-            ComplianceOverview.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            self.get_queryset()
+            .filter(scan_id=scan_id)
             .values_list("region", flat=True)
             .order_by("region")
             .distinct()
@@ -2532,10 +2865,182 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"], url_name="requirements")
+    def requirements(self, request):
+        scan_id = request.query_params.get("filter[scan_id]")
+        compliance_id = request.query_params.get("filter[compliance_id]")
 
-@extend_schema(tags=["Overview"])
+        if not scan_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        if not compliance_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[compliance_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+        try:
+            if task := self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            ):
+                return task
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+
+        all_requirements = (
+            filtered_queryset.values(
+                "requirement_id", "framework", "version", "description"
+            )
+            .distinct()
+            .annotate(
+                total_instances=Count("id"),
+                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            )
+        )
+
+        passed_instances = (
+            filtered_queryset.filter(requirement_status="PASS")
+            .values("requirement_id")
+            .annotate(pass_count=Count("id"))
+        )
+
+        passed_counts = {
+            item["requirement_id"]: item["pass_count"] for item in passed_instances
+        }
+
+        requirements_summary = []
+        for requirement in all_requirements:
+            requirement_id = requirement["requirement_id"]
+            total_instances = requirement["total_instances"]
+            passed_count = passed_counts.get(requirement_id, 0)
+            is_manual = requirement["manual_count"] == total_instances
+            if is_manual:
+                requirement_status = "MANUAL"
+            elif passed_count == total_instances:
+                requirement_status = "PASS"
+            else:
+                requirement_status = "FAIL"
+
+            requirements_summary.append(
+                {
+                    "id": requirement_id,
+                    "framework": requirement["framework"],
+                    "version": requirement["version"],
+                    "description": requirement["description"],
+                    "status": requirement_status,
+                }
+            )
+
+        serializer = self.get_serializer(requirements_summary, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="attributes")
+    def attributes(self, request):
+        compliance_id = request.query_params.get("filter[compliance_id]")
+        if not compliance_id:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[compliance_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        provider_type = None
+        try:
+            sample_requirement = (
+                self.get_queryset().filter(compliance_id=compliance_id).first()
+            )
+
+            if sample_requirement:
+                provider_type = sample_requirement.scan.provider.provider
+        except Exception:
+            pass
+
+        # If we couldn't determine from database, try each provider type
+        if not provider_type:
+            for pt in Provider.ProviderChoices.values:
+                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
+                    provider_type = pt
+                    break
+
+        if not provider_type:
+            raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
+
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(
+            provider_type, {}
+        )
+        compliance_framework = compliance_template.get(compliance_id)
+
+        if not compliance_framework:
+            raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
+
+        attribute_data = []
+        for requirement_id, requirement in compliance_framework.get(
+            "requirements", {}
+        ).items():
+            check_ids = list(requirement.get("checks", {}).keys())
+
+            metadata = requirement.get("attributes", [])
+
+            base_attributes = {
+                "metadata": metadata,
+                "check_ids": check_ids,
+            }
+
+            # Add technique details for MITRE-ATTACK framework
+            if "mitre_attack" in compliance_id:
+                base_attributes["technique_details"] = {
+                    "tactics": requirement.get("tactics", []),
+                    "subtechniques": requirement.get("subtechniques", []),
+                    "platforms": requirement.get("platforms", []),
+                    "technique_url": requirement.get("technique_url", ""),
+                }
+
+            attribute_data.append(
+                {
+                    "id": requirement_id,
+                    "framework_description": compliance_framework.get(
+                        "description", ""
+                    ),
+                    "name": requirement.get("name", ""),
+                    "framework": compliance_framework.get("framework", ""),
+                    "version": compliance_framework.get("version", ""),
+                    "description": requirement.get("description", ""),
+                    "attributes": base_attributes,
+                }
+            )
+
+        serializer = self.get_serializer(attribute_data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @extend_schema_view(
-    providers=extend_schema(
+    list=extend_schema(
+        tags=["Overview"],
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -2578,7 +3083,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 class OverviewViewSet(BaseRLSViewSet):
     queryset = ComplianceOverview.objects.all()
     http_method_names = ["get"]
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -2782,7 +3287,6 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
@@ -2900,3 +3404,80 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse"],
+        summary="List all Lighthouse configurations",
+        description="Retrieve a list of all Lighthouse configurations.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse"],
+        summary="Create a new Lighthouse configuration",
+        description="Create a new Lighthouse configuration with the specified details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse"],
+        summary="Partially update a Lighthouse configuration",
+        description="Update certain fields of an existing Lighthouse configuration.",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse"],
+        summary="Delete a Lighthouse configuration",
+        description="Remove a Lighthouse configuration by its ID.",
+    ),
+    connection=extend_schema(
+        tags=["Lighthouse"],
+        summary="Check the connection to the OpenAI API",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    ),
+)
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing Lighthouse configuration.
+    """
+
+    serializer_class = LighthouseConfigSerializer
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseConfigUpdateSerializer
+        elif self.action == "connection":
+            return TaskSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API asynchronously.
+        """
+        instance = self.get_object()
+        with transaction.atomic():
+            task = check_lighthouse_connection_task.delay(
+                lighthouse_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )

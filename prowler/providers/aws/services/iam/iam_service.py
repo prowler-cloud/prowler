@@ -54,7 +54,7 @@ class IAM(AWSService):
         self.role_arn_template = f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:role"
         self.password_policy_arn_template = f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:password-policy"
         self.mfa_arn_template = (
-            f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:mfa"
+            f"arn:{self.audited_partition}:iam::{self.audited_account}:mfa"
         )
         self.users = self._get_users()
         self.roles = self._get_roles()

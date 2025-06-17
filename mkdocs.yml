@@ -53,6 +53,7 @@ nav:
           - Getting Started: tutorials/prowler-app.md
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
           - Social Login: tutorials/prowler-app-social-login.md
+          - SSO with SAML: tutorials/prowler-app-sso.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
@@ -107,7 +108,7 @@ nav:
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
-      - Provider: developer-guide/provider.md
+      - Providers: developer-guide/provider.md
       - Services: developer-guide/services.md
       - Checks: developer-guide/checks.md
       - Documentation: developer-guide/documentation.md

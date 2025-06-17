@@ -95,11 +95,10 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required API permissions
 
 Assign the following Microsoft Graph permissions:
-
-- `Directory.Read.All`: Required for all services.
+- `AuditLog.Read.All`: Required for Entra service.
+- `Domain.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `AuditLog.Read.All`: Required for Entra service.
 - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
 
 Follow these steps to assign the permissions:
@@ -113,31 +112,35 @@ Follow these steps to assign the permissions:
     ![Add API Permission](./img/add-app-api-permission.png)
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
-
-    - `Directory.Read.All`
+    - `AuditLog.Read.All`: Required for Entra service.
+    - `Domain.Read.All`
+    - `Organization.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
-    - `AuditLog.Read.All`: Required for Entra service.
+
 
     ![Permission Screenshots](./img/directory-permission.png)
 
-4. Click `Add permissions`, then grant admin consent
+    ![Application Permissions](./img/app-permissions.png)
 
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
 
-5. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
+4. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
 
     ![Add API Permission](./img/add-delegated-api-permission.png)
 
-6. Search and select:
+5. Search and select:
 
     - `User.Read`
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-7. Click `Add permissions`, then grant admin consent
+6. Click `Add permissions`, then **grant admin consent**
 
-    ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
+    ![Grant Admin Consent](./img/grant-admin-consent.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
 
 ---
 
@@ -175,20 +178,6 @@ Follow these steps to assign the role:
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
-
-???+ warning
-    For Prowler Cloud encrypted password is still needed (when we update Prowler Cloud and regular password is accepted this warning will be deleted), so the password that you paste in the next step should be generated following this steps:
-
-    - UNIX: Open a PowerShell cmd with a [supported version](../../getting-started/requirements.md#supported-powershell-versions) and then run the following command:
-
-        ```console
-        $securePassword = ConvertTo-SecureString "examplepassword" -AsPlainText -Force
-        $encryptedPassword = $securePassword | ConvertFrom-SecureString
-        Write-Output $encryptedPassword
-        6500780061006d0070006c006500700061007300730077006f0072006400
-        ```
-
-    - Windows: Install WSL using `wsl --install -d Ubuntu-22.04`, then open the Ubuntu terminal, install powershell and run the same command above.
 
 
 2. Go to Prowler Cloud/App and paste:

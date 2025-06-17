@@ -64,6 +64,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
 )
+from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
@@ -761,6 +762,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = M365ISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

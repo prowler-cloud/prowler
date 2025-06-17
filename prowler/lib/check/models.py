@@ -96,6 +96,7 @@ class CheckMetadata(BaseModel):
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
         valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
+        valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
     """
 
     Provider: str
@@ -140,6 +141,12 @@ class CheckMetadata(BaseModel):
         if re.match(r"^https?://", remediation.Code.CLI):
             raise ValueError("CLI command cannot be an URL")
         return remediation
+
+    @validator("ResourceType", pre=True, always=True)
+    def valid_resource_type(resource_type):
+        if not resource_type or not isinstance(resource_type, str):
+            raise ValueError("ResourceType must be a non-empty string")
+        return resource_type
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -669,7 +676,6 @@ def load_check_metadata(metadata_file: str) -> CheckMetadata:
         check_metadata = CheckMetadata.parse_file(metadata_file)
     except ValidationError as error:
         logger.critical(f"Metadata from {metadata_file} is not valid: {error}")
-        # TODO: remove this exit and raise an exception
-        sys.exit(1)
+        raise error
     else:
         return check_metadata
