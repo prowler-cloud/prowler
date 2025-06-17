@@ -128,7 +128,7 @@ class TestInitializeProwlerProvider:
         provider.secret.secret = {"key": "value"}
         mock_return_prowler_provider.return_value = MagicMock()
 
-        initialize_prowler_provider(provider)
+        initialize_prowler_provider(provider, None)
         mock_return_prowler_provider.return_value.assert_called_once_with(key="value")
 
 
@@ -195,7 +195,7 @@ class TestGetProwlerProviderKwargs:
         provider.secret = secret_mock
         provider.uid = provider_uid
 
-        result = get_prowler_provider_kwargs(provider)
+        result = get_prowler_provider_kwargs(provider, None)
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
@@ -212,7 +212,7 @@ class TestGetProwlerProviderKwargs:
         provider.secret = secret_mock
         provider.uid = provider_uid
 
-        result = get_prowler_provider_kwargs(provider)
+        result = get_prowler_provider_kwargs(provider, None)
 
         expected_result = secret_dict.copy()
         assert result == expected_result
@@ -228,7 +228,7 @@ class TestGetProwlerProviderKwargs:
         provider.secret = secret_mock
         provider.uid = provider_uid
 
-        result = get_prowler_provider_kwargs(provider)
+        result = get_prowler_provider_kwargs(provider, None)
 
         expected_result = {}
         assert result == expected_result

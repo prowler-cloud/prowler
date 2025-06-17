@@ -18,6 +18,7 @@ from api.models import (
     ComplianceRequirementOverview,
     Finding,
     Provider,
+    Processor,
     Resource,
     ResourceScanSummary,
     ResourceTag,
@@ -132,10 +133,24 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Find the mutelist processor if it exists
+    with rls_transaction(tenant_id):
+        try:
+            mutelist_processor = Processor.objects.get(
+                tenant_id=tenant_id, processor_type="mutelist"
+            )
+        except Processor.DoesNotExist:
+            mutelist_processor = None
+        except Exception as e:
+            logger.error(f"Error processing mutelist rules: {e}")
+            mutelist_processor = None
+
     try:
         with rls_transaction(tenant_id):
             try:
-                prowler_provider = initialize_prowler_provider(provider_instance)
+                prowler_provider = initialize_prowler_provider(
+                    provider_instance, mutelist_processor
+                )
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
