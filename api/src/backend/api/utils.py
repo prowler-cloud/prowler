@@ -110,7 +110,9 @@ def get_prowler_provider_kwargs(
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
 
     if mutelist_processor:
-        prowler_provider_kwargs["mutelist_content"] = mutelist_processor.configuration
+        mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
+        if mutelist_content:
+            prowler_provider_kwargs["mutelist_content"] = mutelist_content
 
     return prowler_provider_kwargs
 
