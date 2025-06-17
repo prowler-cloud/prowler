@@ -1,11 +1,12 @@
 "use client";
 
+import { Spacer } from "@nextui-org/react";
+
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
 import { DataCompliance } from "./data-compliance";
 import { SelectScanComplianceDataProps } from "./scan-selector";
-import { Spacer } from "@nextui-org/react";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];
