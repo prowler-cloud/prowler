@@ -84,7 +84,7 @@ export default async function Scans({
   });
 
   return (
-    <>
+    <ContentLayout title="Scans" icon="lucide:scan-search">
       {thereIsNoProviders && (
         <>
           <Spacer y={4} />
@@ -92,38 +92,27 @@ export default async function Scans({
         </>
       )}
 
-      {!thereIsNoProviders && (
+      {thereIsNoProvidersConnected ? (
         <>
-          {thereIsNoProvidersConnected ? (
-            <ContentLayout title="Scans" icon="lucide:scan-search">
-              <Spacer y={8} />
-              <NoProvidersConnected />
-              <Spacer y={8} />
-            </ContentLayout>
-          ) : (
-            <ContentLayout title="Scans" icon="lucide:scan-search">
-              <AutoRefresh hasExecutingScan={hasExecutingScan} />
-              <LaunchScanWorkflow providers={providerInfo} />
-              <Spacer y={8} />
-            </ContentLayout>
-          )}
+          <Spacer y={8} />
+          <NoProvidersConnected />
+          <Spacer y={8} />
+        </>
+      ) : (
+        <>
+          <AutoRefresh hasExecutingScan={hasExecutingScan} />
+          <LaunchScanWorkflow providers={providerInfo} />
+          <Spacer y={8} />
+          <DataTableFilterCustom filters={updatedFilters || []} />
+          <FilterControls />
 
-          <div className="grid grid-cols-12 items-start gap-4 px-6 py-4 sm:px-8 xl:px-10">
-            <div className="col-span-12">
-              <div className="flex flex-row items-center justify-between">
-                <DataTableFilterCustom filters={updatedFilters || []} />
-                <Spacer x={4} />
-                <FilterControls />
-              </div>
-              <Spacer y={8} />
-              <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-                <SSRDataTableScans searchParams={searchParams} />
-              </Suspense>
-            </div>
-          </div>
+          <Spacer y={8} />
+          <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+            <SSRDataTableScans searchParams={searchParams} />
+          </Suspense>
         </>
       )}
-    </>
+    </ContentLayout>
   );
 }
 

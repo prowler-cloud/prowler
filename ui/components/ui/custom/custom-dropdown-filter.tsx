@@ -283,9 +283,7 @@ export const CustomDropdownFilter = ({
               className="font-bold"
             >
               {filterValues.length === 0 && (
-                <span className="text-small text-default-500">
-                  No results found
-                </span>
+                <span className="text-small font-normal">No results found</span>
               )}
               {filter?.showSelectAll !== false && filterValues.length > 0 && (
                 <>

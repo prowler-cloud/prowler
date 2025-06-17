@@ -43,11 +43,7 @@ export const DataTableFilterCustom = ({
   );
 
   return (
-    <div
-      className={`flex ${
-        sortedFilters.length > 4 ? "flex-col" : "flex-col md:flex-row"
-      } gap-4`}
-    >
+    <div className="flex flex-col gap-4">
       <CustomButton
         ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
         variant="flat"
@@ -65,17 +61,11 @@ export const DataTableFilterCustom = ({
       <div
         className={`transition-all duration-700 ease-in-out ${
           showFilters
-            ? "max-h-96 w-full translate-x-0 overflow-visible opacity-100"
-            : "max-h-0 -translate-x-full overflow-hidden opacity-0"
+            ? "w-full translate-x-0 overflow-visible opacity-100"
+            : "mt-[-16px] max-h-0 -translate-x-full overflow-hidden opacity-0"
         }`}
       >
-        <div
-          className={`grid gap-4 ${
-            sortedFilters.length >= 4
-              ? "grid-cols-1 md:grid-cols-4"
-              : "grid-cols-1 md:grid-cols-3"
-          }`}
-        >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {sortedFilters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}
