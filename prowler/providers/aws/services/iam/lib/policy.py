@@ -749,39 +749,45 @@ def is_codebuild_using_allowed_github_org(
     in the repo URL is in the allowed organizations list.
     Returns (is_allowed: bool, org_name: str or None)
     """
-    if not trust_policy or not github_repo_url:
-        return False, None
+    try:
+        if not trust_policy or not github_repo_url:
+            return False, None
 
-    statements = trust_policy.get("Statement", [])
-    if not isinstance(statements, list):
-        statements = [statements]
+        statements = trust_policy.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
 
-    for statement in statements:
-        if statement.get("Effect") == "Allow" and "Principal" in statement:
-            principal = statement["Principal"]
-            found_codebuild = False
-            if isinstance(principal, dict):
-                service = principal.get("Service")
-                if isinstance(service, str):
-                    found_codebuild = service == "codebuild.amazonaws.com"
-                elif isinstance(service, list):
-                    found_codebuild = "codebuild.amazonaws.com" in service
-            elif isinstance(principal, str):
-                found_codebuild = principal == "codebuild.amazonaws.com"
-            elif isinstance(principal, list):
-                found_codebuild = "codebuild.amazonaws.com" in principal
-            if found_codebuild:
-                # Extract org name from GitHub repo URL
-                try:
+        for statement in statements:
+            if statement.get("Effect") == "Allow" and "Principal" in statement:
+                principal = statement["Principal"]
+                found_codebuild = False
+                if isinstance(principal, dict):
+                    service = principal.get("Service")
+                    if isinstance(service, str):
+                        found_codebuild = service == "codebuild.amazonaws.com"
+                    elif isinstance(service, list):
+                        found_codebuild = "codebuild.amazonaws.com" in service
+                elif isinstance(principal, str):
+                    found_codebuild = principal == "codebuild.amazonaws.com"
+                elif isinstance(principal, list):
+                    found_codebuild = "codebuild.amazonaws.com" in principal
+
+                if found_codebuild:
+                    # Extract org name from GitHub repo URL
                     org_name = github_repo_url.split("/")[3]
-                except IndexError:
-                    raise ValueError(f"Malformed GitHub repo URL: {github_repo_url}")
-                if not org_name:
-                    raise ValueError(f"Malformed GitHub repo URL: {github_repo_url}")
-                if org_name in allowed_organizations:
-                    return True, org_name
-                return False, org_name
-    return False, None
+                    if not org_name:
+                        raise ValueError(
+                            f"Malformed GitHub repo URL: {github_repo_url}"
+                        )
+                    if org_name in allowed_organizations:
+                        return True, org_name
+                    return False, org_name
+        return False, None
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return False, None
 
 
 def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
