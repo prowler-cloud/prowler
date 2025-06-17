@@ -22,6 +22,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
@@ -382,6 +383,18 @@ def providers_fixture(tenants_fixture):
     )
 
     return provider1, provider2, provider3, provider4, provider5
+
+
+@pytest.fixture
+def processor_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    processor = Processor.objects.create(
+        tenant_id=tenant.id,
+        processor_type="mutelist",
+        configuration="Mutelist:\n  Accounts:\n    *:\n      Checks:\n        iam_user_hardware_mfa_enabled:\n          Regions:\n            - *\n          Resources:\n            - *",
+    )
+
+    return processor
 
 
 @pytest.fixture

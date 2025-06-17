@@ -26,6 +26,7 @@ from api.models import (
     Integration,
     Invitation,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -5677,6 +5678,84 @@ class TestSAMLConfigurationViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+
+
+@pytest.mark.django_db
+class TestProcessorViewSet:
+    def test_list_processors(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(reverse("processor-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_retrieve_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.get(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_create_processor(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": "Mutelist:\n  Accounts:\n    '*':\n      Checks:\n        iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          Resources:\n            - '*'",
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_update_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": {
+                        "Mutelist": {
+                            "Accounts": {
+                                "1234567890": {
+                                    "Checks": {
+                                        "iam_user_hardware_mfa_enabled": {
+                                            "Regions": ["*"],
+                                            "Resources": ["*"],
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        processor.refresh_from_db()
+        assert (
+            processor.configuration["Mutelist"]["Accounts"]["1234567890"]
+            == payload["data"]["attributes"]["configuration"]["Mutelist"]["Accounts"][
+                "1234567890"
+            ]
+        )
+
+    def test_delete_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.delete(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Processor.objects.filter(id=processor.id).exists()
 
 
 @pytest.mark.django_db
