@@ -45,7 +45,9 @@ export const FindingsFilters = ({
     useState<string[]>(providerUIDs);
   const previousProviders = useRef<string[]>([]);
   const previousProviderTypes = useRef<ProviderType[]>([]);
+  const isManualDeselection = useRef(false);
 
+  // Helper functions for getting provider and scan information
   const getScanProvider = (scanId: string) => {
     const scanDetail = scanDetails.find(
       (detail) => Object.keys(detail)[0] === scanId,
@@ -73,113 +75,109 @@ export const FindingsFilters = ({
     return null;
   };
 
-  useEffect(() => {
-    const scanParam = searchParams.get("filter[scan__in]");
-    const providerParam = searchParams.get("filter[provider_uid__in]");
-    const providerTypeParam = searchParams.get("filter[provider_type__in]");
+  // Functions to handle different filter updates
+  const handleScanSelection = (
+    scanParam: string | null,
+    currentProviders: string[],
+    currentProviderTypes: ProviderType[],
+    deselectedProviders: string[],
+    deselectedProviderTypes: ProviderType[],
+  ) => {
+    if (!scanParam) return;
 
-    const currentProviders = providerParam ? providerParam.split(",") : [];
-    const currentProviderTypes = providerTypeParam
-      ? (providerTypeParam.split(",") as ProviderType[])
-      : [];
+    const scanProviderId = getScanProvider(scanParam);
+    const scanProviderType = getScanProviderType(scanParam);
 
-    // Detect deselected providers and provider types
-    const deselectedProviders = previousProviders.current.filter(
-      (provider) => !currentProviders.includes(provider),
-    );
-    const deselectedProviderTypes = previousProviderTypes.current.filter(
-      (type) => !currentProviderTypes.includes(type),
-    );
+    // Check if scan should be deselected - but ignore provider type deselection if it's manual
+    const shouldDeselectScan =
+      (scanProviderId &&
+        (deselectedProviders.includes(scanProviderId) ||
+          (currentProviders.length > 0 &&
+            !currentProviders.includes(scanProviderId)))) ||
+      (scanProviderType &&
+        !isManualDeselection.current &&
+        (deselectedProviderTypes.includes(scanProviderType) ||
+          (currentProviderTypes.length > 0 &&
+            !currentProviderTypes.includes(scanProviderType))));
 
-    // Update the reference of providers and provider types
-    previousProviders.current = currentProviders;
-    previousProviderTypes.current = currentProviderTypes;
-
-    // Handle scan selection
-    if (scanParam) {
-      const scanProviderId = getScanProvider(scanParam);
-      const scanProviderType = getScanProviderType(scanParam);
-
-      // If the scan's provider was deselected or its type was deselected
-      if (
-        (scanProviderId &&
-          (deselectedProviders.includes(scanProviderId) ||
-            (currentProviders.length > 0 &&
-              !currentProviders.includes(scanProviderId)))) ||
-        (scanProviderType &&
-          (deselectedProviderTypes.includes(scanProviderType) ||
-            (currentProviderTypes.length > 0 &&
-              !currentProviderTypes.includes(scanProviderType))))
-      ) {
-        // Deselect the scan
-        updateFilter("scan__in", null);
-        return;
-      }
-
-      // Add provider and provider type if not already selected
-      if (scanProviderId && !currentProviders.includes(scanProviderId)) {
-        updateFilter("provider_uid__in", [...currentProviders, scanProviderId]);
-      }
-      if (
-        scanProviderType &&
-        !currentProviderTypes.includes(scanProviderType)
-      ) {
-        updateFilter("provider_type__in", [
-          ...currentProviderTypes,
-          scanProviderType,
-        ]);
-      }
+    if (shouldDeselectScan) {
+      updateFilter("scan__in", null);
+      return;
     }
 
-    // Handle provider selection
-    if (currentProviders.length > 0 && !deselectedProviders.length) {
-      // Get unique provider types from selected providers
-      const providerTypes = currentProviders
-        .map(getProviderType)
-        .filter((type): type is ProviderType => type !== null);
-      const selectedProviderTypes = Array.from(new Set(providerTypes));
-
-      // Update provider types if different from current selection
-      if (selectedProviderTypes.length > 0) {
-        const newTypes = selectedProviderTypes.filter(
-          (type) => !currentProviderTypes.includes(type),
-        );
-        if (newTypes.length > 0) {
-          updateFilter("provider_type__in", [
-            ...currentProviderTypes,
-            ...newTypes,
-          ]);
-        }
-      }
+    // Add provider if not already selected
+    if (scanProviderId && !currentProviders.includes(scanProviderId)) {
+      updateFilter("provider_uid__in", [...currentProviders, scanProviderId]);
     }
 
-    // Update available provider UIDs based on selected provider types
+    // Only add provider type if there are none selected and it's not a manual deselection
+    if (
+      scanProviderType &&
+      currentProviderTypes.length === 0 &&
+      !isManualDeselection.current
+    ) {
+      updateFilter("provider_type__in", [scanProviderType]);
+    }
+  };
+
+  const handleProviderSelection = (
+    currentProviders: string[],
+    currentProviderTypes: ProviderType[],
+    deselectedProviders: string[],
+  ) => {
+    // No hacer nada si es una deselección manual o no hay providers seleccionados
+    if (
+      currentProviders.length === 0 ||
+      deselectedProviders.length > 0 ||
+      isManualDeselection.current
+    )
+      return;
+
+    // Get unique provider types from selected providers
+    const providerTypes = currentProviders
+      .map(getProviderType)
+      .filter((type): type is ProviderType => type !== null);
+    const selectedProviderTypes = Array.from(new Set(providerTypes));
+
+    // Only add provider types if there are none selected
+    if (selectedProviderTypes.length > 0 && currentProviderTypes.length === 0) {
+      updateFilter("provider_type__in", selectedProviderTypes);
+    }
+  };
+
+  const updateAvailableProviders = (
+    currentProviderTypes: ProviderType[],
+    currentProviders: string[],
+  ) => {
     if (currentProviderTypes.length > 0) {
+      // Filter available provider UIDs
       const filteredProviderUIDs = providerUIDs.filter((uid) => {
         const providerType = getProviderType(uid);
         return providerType && currentProviderTypes.includes(providerType);
       });
       setAvailableProviderUIDs(filteredProviderUIDs);
 
-      // If there are selected providers that don't match the current provider types, deselect them
-      if (currentProviders.length > 0) {
-        const validProviders = currentProviders.filter((uid) => {
-          const providerType = getProviderType(uid);
-          return providerType && currentProviderTypes.includes(providerType);
-        });
+      // Handle selected providers that don't match current types
+      const validProviders = currentProviders.filter((uid) => {
+        const providerType = getProviderType(uid);
+        return providerType && currentProviderTypes.includes(providerType);
+      });
 
-        if (validProviders.length !== currentProviders.length) {
-          updateFilter(
-            "provider_uid__in",
-            validProviders.length > 0 ? validProviders : null,
-          );
-        }
+      if (validProviders.length !== currentProviders.length) {
+        updateFilter(
+          "provider_uid__in",
+          validProviders.length > 0 ? validProviders : null,
+        );
       }
     } else {
       setAvailableProviderUIDs(providerUIDs);
     }
+  };
 
-    // Update available scans based on selected providers and provider types
+  const updateAvailableScans = (
+    currentProviders: string[],
+    currentProviderTypes: ProviderType[],
+  ) => {
     if (currentProviders.length > 0 || currentProviderTypes.length > 0) {
       const filteredScans = completedScanIds.filter((scanId) => {
         const scanProviderId = getScanProvider(scanId);
@@ -197,6 +195,56 @@ export const FindingsFilters = ({
     } else {
       setAvailableScans(completedScanIds);
     }
+  };
+
+  useEffect(() => {
+    // Extract current filter values
+    const scanParam = searchParams.get("filter[scan__in]");
+    const providerParam = searchParams.get("filter[provider_uid__in]");
+    const providerTypeParam = searchParams.get("filter[provider_type__in]");
+
+    const currentProviders = providerParam ? providerParam.split(",") : [];
+    const currentProviderTypes = providerTypeParam
+      ? (providerTypeParam.split(",") as ProviderType[])
+      : [];
+
+    // Detect deselected items
+    const deselectedProviders = previousProviders.current.filter(
+      (provider) => !currentProviders.includes(provider),
+    );
+    const deselectedProviderTypes = previousProviderTypes.current.filter(
+      (type) => !currentProviderTypes.includes(type),
+    );
+
+    // Check if it's a manual deselection of provider types
+    if (deselectedProviderTypes.length > 0) {
+      isManualDeselection.current = true;
+    } else if (
+      currentProviderTypes.length === 0 &&
+      previousProviderTypes.current.length === 0
+    ) {
+      isManualDeselection.current = false;
+    }
+
+    // Update references
+    previousProviders.current = currentProviders;
+    previousProviderTypes.current = currentProviderTypes;
+
+    // Handle different filter updates
+    handleScanSelection(
+      scanParam,
+      currentProviders,
+      currentProviderTypes,
+      deselectedProviders,
+      deselectedProviderTypes,
+    );
+    handleProviderSelection(
+      currentProviders,
+      currentProviderTypes,
+      deselectedProviders,
+    );
+    updateAvailableProviders(currentProviderTypes, currentProviders);
+    updateAvailableScans(currentProviders, currentProviderTypes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, scanDetails, completedScanIds, updateFilter]);
 
