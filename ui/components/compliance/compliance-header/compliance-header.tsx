@@ -5,6 +5,7 @@ import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-c
 
 import { DataCompliance } from "./data-compliance";
 import { SelectScanComplianceDataProps } from "./scan-selector";
+import { Spacer } from "@nextui-org/react";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];
@@ -53,16 +54,19 @@ export const ComplianceHeader = ({
   const allFilters = [...frameworkFilters, ...regionFilters];
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-start gap-4">
-        {showProviders && <DataCompliance scans={scans} />}
-        {showSearch && <FilterControls search />}
-      </div>
+    <>
+      {showProviders ||
+        (showSearch && (
+          <div className="flex items-center justify-start gap-4">
+            {showProviders && <DataCompliance scans={scans} />}
+            {showSearch && <FilterControls search />}
+            <Spacer x={8} />
+          </div>
+        ))}
       {allFilters.length > 0 && (
-        <div className="mt-4">
-          <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
-        </div>
+        <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
       )}
-    </div>
+      <Spacer y={8} />
+    </>
   );
 };

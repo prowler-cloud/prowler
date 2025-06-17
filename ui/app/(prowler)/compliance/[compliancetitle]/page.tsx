@@ -60,18 +60,8 @@ const ChartsWrapper = ({
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start">
-      {children &&
-        React.Children.toArray(children).map(
-          (child: React.ReactNode, index: number) => (
-            <div
-              key={index}
-              className="rounded-lg bg-gray-50 p-6 dark:bg-gray-900"
-            >
-              {child}
-            </div>
-          ),
-        )}
+    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
+      {children}
     </div>
   );
 };
@@ -124,9 +114,9 @@ export default async function ComplianceDetail({
       }
     >
       {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
-          <p className="text-xs font-medium">Selected Scan:</p>
+        <div className="flex max-w-[328px] flex-col items-start">
           <ComplianceScanInfo scan={selectedScan} />
+          <Spacer y={8} />
         </div>
       )}
       <ComplianceHeader
