@@ -250,6 +250,7 @@ def register_enum(apps, schema_editor, enum_class):  # noqa: F841
         register_adapter(enum_class, enum_adapter)
 
 
+# DEPRECATED
 def _should_create_index_on_partition(
     partition_name: str, all_partitions: bool = False
 ) -> bool:
@@ -316,6 +317,7 @@ def _should_create_index_on_partition(
         return True
 
 
+# DEPRECATED
 def create_index_on_partitions(
     apps,  # noqa: F841
     schema_editor,
@@ -381,6 +383,7 @@ def create_index_on_partitions(
             schema_editor.execute(sql)
 
 
+# DEPRECATED
 def drop_index_on_partitions(
     apps,  # noqa: F841
     schema_editor,
