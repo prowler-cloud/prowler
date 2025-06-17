@@ -561,28 +561,6 @@ class TestM365Provider:
             )
         assert "The provided Client Secret is not valid." in str(exception.value)
 
-    def test_validate_static_credentials_missing_user(self):
-        with pytest.raises(M365NotValidUserError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="",
-                password="test_password",
-            )
-        assert "The provided User is not valid." in str(exception.value)
-
-    def test_validate_static_credentials_missing_password(self):
-        with pytest.raises(M365NotValidPasswordError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="test@example.com",
-                password="",
-            )
-        assert "The provided Password is not valid." in str(exception.value)
-
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
             M365Provider.validate_arguments(

@@ -43,9 +43,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NotTenantIdButClientIdAndClientSecretError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
-    M365NotValidPasswordError,
     M365NotValidTenantIdError,
-    M365NotValidUserError,
     M365SetUpRegionConfigError,
     M365SetUpSessionError,
     M365TenantIdAndClientIdNotBelongingToClientSecretError,
@@ -172,7 +170,7 @@ class M365Provider(Provider):
 
         # Get the dict from the static credentials
         m365_credentials = None
-        if tenant_id and client_id and client_secret and user and password:
+        if tenant_id and client_id and client_secret:
             m365_credentials = self.validate_static_credentials(
                 tenant_id=tenant_id,
                 client_id=client_id,
@@ -537,6 +535,8 @@ class M365Provider(Provider):
                             tenant_id=m365_credentials["tenant_id"],
                             client_id=m365_credentials["client_id"],
                             client_secret=m365_credentials["client_secret"],
+                            user=m365_credentials["user"] or "",
+                            password=m365_credentials["password"] or "",
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -1045,28 +1045,14 @@ class M365Provider(Provider):
                 message="The provided Client Secret is not valid.",
             )
 
-        # Validate the User
-        if not user:
-            raise M365NotValidUserError(
-                file=os.path.basename(__file__),
-                message="The provided User is not valid.",
-            )
-
-        # Validate the Password
-        if not password:
-            raise M365NotValidPasswordError(
-                file=os.path.basename(__file__),
-                message="The provided Password is not valid.",
-            )
-
         try:
             M365Provider.verify_client(tenant_id, client_id, client_secret)
             return {
                 "tenant_id": tenant_id,
                 "client_id": client_id,
                 "client_secret": client_secret,
-                "user": user,
-                "password": password,
+                "user": user or "",
+                "password": password or "",
             }
         except M365NotValidTenantIdError as tenant_id_error:
             logger.error(
