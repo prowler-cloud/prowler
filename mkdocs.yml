@@ -108,7 +108,7 @@ nav:
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
-      - Provider: developer-guide/provider.md
+      - Providers: developer-guide/provider.md
       - Services: developer-guide/services.md
       - Checks: developer-guide/checks.md
       - Documentation: developer-guide/documentation.md
