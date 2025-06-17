@@ -1,3 +1,5 @@
+import { FilterType } from "@/types/filters";
+
 export const filterProviders = [
   {
     key: "connected",
@@ -41,25 +43,25 @@ export const filterScans = [
 //Static filters for findings
 export const filterFindings = [
   {
-    key: "severity__in",
+    key: FilterType.SEVERITY,
     labelCheckboxGroup: "Severity",
     values: ["critical", "high", "medium", "low", "informational"],
     index: 0,
   },
   {
-    key: "status__in",
+    key: FilterType.STATUS,
     labelCheckboxGroup: "Status",
     values: ["PASS", "FAIL", "MANUAL"],
     index: 1,
   },
   {
-    key: "provider_type__in",
+    key: FilterType.PROVIDER_TYPE,
     labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "m365", "gcp", "kubernetes"],
     index: 5,
   },
   {
-    key: "delta__in",
+    key: FilterType.DELTA,
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
     index: 2,

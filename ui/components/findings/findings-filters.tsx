@@ -11,6 +11,7 @@ import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isScanEntity } from "@/lib/helper-filters";
 import {
   FilterEntity,
+  FilterType,
   ProviderEntity,
   ProviderType,
   ScanEntity,
@@ -47,7 +48,6 @@ export const FindingsFilters = ({
   const previousProviderTypes = useRef<ProviderType[]>([]);
   const isManualDeselection = useRef(false);
 
-  // Helper functions for getting provider and scan information
   const getScanProvider = (scanId: string) => {
     const scanDetail = scanDetails.find(
       (detail) => Object.keys(detail)[0] === scanId,
@@ -75,7 +75,6 @@ export const FindingsFilters = ({
     return null;
   };
 
-  // Functions to handle different filter updates
   const handleScanSelection = (
     scanParam: string | null,
     currentProviders: string[],
@@ -101,13 +100,16 @@ export const FindingsFilters = ({
             !currentProviderTypes.includes(scanProviderType))));
 
     if (shouldDeselectScan) {
-      updateFilter("scan__in", null);
+      updateFilter(FilterType.SCAN, null);
       return;
     }
 
     // Add provider if not already selected
     if (scanProviderId && !currentProviders.includes(scanProviderId)) {
-      updateFilter("provider_uid__in", [...currentProviders, scanProviderId]);
+      updateFilter(FilterType.PROVIDER_UID, [
+        ...currentProviders,
+        scanProviderId,
+      ]);
     }
 
     // Only add provider type if there are none selected and it's not a manual deselection
@@ -116,7 +118,7 @@ export const FindingsFilters = ({
       currentProviderTypes.length === 0 &&
       !isManualDeselection.current
     ) {
-      updateFilter("provider_type__in", [scanProviderType]);
+      updateFilter(FilterType.PROVIDER_TYPE, [scanProviderType]);
     }
   };
 
@@ -125,7 +127,7 @@ export const FindingsFilters = ({
     currentProviderTypes: ProviderType[],
     deselectedProviders: string[],
   ) => {
-    // No hacer nada si es una deselección manual o no hay providers seleccionados
+    // Do nothing if it's a manual deselection or no providers are selected
     if (
       currentProviders.length === 0 ||
       deselectedProviders.length > 0 ||
@@ -141,7 +143,7 @@ export const FindingsFilters = ({
 
     // Only add provider types if there are none selected
     if (selectedProviderTypes.length > 0 && currentProviderTypes.length === 0) {
-      updateFilter("provider_type__in", selectedProviderTypes);
+      updateFilter(FilterType.PROVIDER_TYPE, selectedProviderTypes);
     }
   };
 
@@ -165,7 +167,7 @@ export const FindingsFilters = ({
 
       if (validProviders.length !== currentProviders.length) {
         updateFilter(
-          "provider_uid__in",
+          FilterType.PROVIDER_UID,
           validProviders.length > 0 ? validProviders : null,
         );
       }
@@ -198,10 +200,13 @@ export const FindingsFilters = ({
   };
 
   useEffect(() => {
-    // Extract current filter values
-    const scanParam = searchParams.get("filter[scan__in]");
-    const providerParam = searchParams.get("filter[provider_uid__in]");
-    const providerTypeParam = searchParams.get("filter[provider_type__in]");
+    const scanParam = searchParams.get(`filter[${FilterType.SCAN}]`);
+    const providerParam = searchParams.get(
+      `filter[${FilterType.PROVIDER_UID}]`,
+    );
+    const providerTypeParam = searchParams.get(
+      `filter[${FilterType.PROVIDER_TYPE}]`,
+    );
 
     const currentProviders = providerParam ? providerParam.split(",") : [];
     const currentProviderTypes = providerTypeParam
@@ -256,32 +261,32 @@ export const FindingsFilters = ({
         filters={[
           ...filterFindings,
           {
-            key: "provider_uid__in",
+            key: FilterType.PROVIDER_UID,
             labelCheckboxGroup: "Provider UID",
             values: availableProviderUIDs,
             valueLabelMapping: providerDetails,
             index: 6,
           },
           {
-            key: "region__in",
+            key: FilterType.REGION,
             labelCheckboxGroup: "Regions",
             values: uniqueRegions,
             index: 3,
           },
           {
-            key: "service__in",
+            key: FilterType.SERVICE,
             labelCheckboxGroup: "Services",
             values: uniqueServices,
             index: 4,
           },
           {
-            key: "resource_type__in",
+            key: FilterType.RESOURCE_TYPE,
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
             index: 8,
           },
           {
-            key: "scan__in",
+            key: FilterType.SCAN,
             labelCheckboxGroup: "Scan ID",
             values: availableScans,
             valueLabelMapping: scanDetails,

@@ -9,7 +9,7 @@ import {
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { FindingsFilters } from "@/components/filters/findings-filters";
+import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   ColumnFindings,
   SkeletonTableFindings,
