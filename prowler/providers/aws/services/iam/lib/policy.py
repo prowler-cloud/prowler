@@ -774,11 +774,11 @@ def is_codebuild_using_allowed_github_org(
                 # Extract org name from GitHub repo URL
                 try:
                     org_name = github_repo_url.split("/")[3]
-                    if not org_name:
-                        org_name = None
                 except IndexError:
-                    org_name = None
-                if org_name and org_name in allowed_organizations:
+                    raise ValueError(f"Malformed GitHub repo URL: {github_repo_url}")
+                if not org_name:
+                    raise ValueError(f"Malformed GitHub repo URL: {github_repo_url}")
+                if org_name in allowed_organizations:
                     return True, org_name
                 return False, org_name
     return False, None

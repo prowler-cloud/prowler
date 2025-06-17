@@ -2343,13 +2343,13 @@ def test_is_codebuild_using_allowed_github_org_invalid_url():
             }
         ],
     }
-    github_repo_url = "https://github.com/"
+    github_repo_url = "https://github.com/"  # Malformed, no org
     allowed_organizations = ["allowed-org"]
-    is_allowed, org_name = is_codebuild_using_allowed_github_org(
-        trust_policy, github_repo_url, allowed_organizations
-    )
-    assert is_allowed is False
-    assert org_name is None
+    with pytest.raises(ValueError) as excinfo:
+        is_codebuild_using_allowed_github_org(
+            trust_policy, github_repo_url, allowed_organizations
+        )
+    assert "Malformed GitHub repo URL" in str(excinfo.value)
 
 
 def test_has_codebuild_trusted_principal_true():

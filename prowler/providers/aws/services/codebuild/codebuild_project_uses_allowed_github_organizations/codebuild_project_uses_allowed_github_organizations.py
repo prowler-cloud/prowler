@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.logger import logger
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 from prowler.providers.aws.services.iam.iam_client import iam_client
 from prowler.providers.aws.services.iam.lib.policy import (
@@ -37,19 +38,24 @@ class codebuild_project_uses_allowed_github_organizations(Check):
                 report = Check_Report_AWS(metadata=self.metadata(), resource=project)
                 report.status = "PASS"
 
-                is_allowed, org_name = is_codebuild_using_allowed_github_org(
-                    project_iam_trust_policy,
-                    project_github_repo_url,
-                    allowed_organizations,
-                )
-                if org_name is not None:
-                    if is_allowed:
-                        report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is in the allowed organizations."
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is not in the allowed organizations."
-                else:
-                    report.status_extended = f"CodeBuild project {project.name} uses a GitHub repository with an invalid or unrecognized organization in the URL."
+                try:
+                    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+                        project_iam_trust_policy,
+                        project_github_repo_url,
+                        allowed_organizations,
+                    )
+                    if org_name is not None:
+                        if is_allowed:
+                            report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is in the allowed organizations."
+                        else:
+                            report.status = "FAIL"
+                            report.status_extended = f"CodeBuild project {project.name} uses GitHub organization '{org_name}', which is not in the allowed organizations."
+                except ValueError as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    report.status = "FAIL"
+                    report.status_extended = f"CodeBuild project {project.name} uses an invalid GitHub repo URL: {error}"
 
                 findings.append(report)
 
