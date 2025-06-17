@@ -167,6 +167,7 @@ def get_sort_value(sort_values: list) -> str:
     """
     return f"sort={','.join(sort_values)}"
 
+
 def get_available_resource_filters(host: str, token: str) -> dict:
     """
     Fetches and returns available resource filter values from the API.
@@ -187,11 +188,9 @@ def get_available_resource_filters(host: str, token: str) -> dict:
     Raises:
         AssertionError: If the API request fails or does not return a 200 status code.
     """
-    
+
     url = f"{host}/resources"
-    params = {
-        "fields[resources]": "type,region,service"
-    }
+    params = {"fields[resources]": "type,region,service"}
 
     response = requests.get(url, headers=get_auth_headers(token), params=params)
     assert response.status_code == 200, f"Failed to fetch filters: {response.text}"
