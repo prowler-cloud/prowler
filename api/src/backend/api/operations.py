@@ -26,10 +26,10 @@ class CreatePartitionedIndex(Operation):
         self.all_partitions = all_partitions
         self.create_parent_index = create_parent_index
 
-    def state_forwards(self, app_label, state):
+    def state_forwards(self, app_label, state):  # noqa: F841
         pass  # No state change
 
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):  # noqa: F841
         parent_index_name = f"{self.index_name}"
         where_sql = f" WHERE {self.where}" if self.where else ""
 
@@ -74,7 +74,7 @@ class CreatePartitionedIndex(Operation):
                             f"Warning: Could not attach index {child_index_name}: {e}"
                         )
 
-    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):  # noqa: F841
         if self.create_parent_index:
             parent_index_name = self.index_name
             drop_parent_sql = f"DROP INDEX IF EXISTS {parent_index_name};"
