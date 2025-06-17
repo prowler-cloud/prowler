@@ -15,7 +15,10 @@ class codebuild_project_uses_allowed_github_organizations(Check):
         )
 
         for project in codebuild_client.projects.values():
-            if project.source.type in ("GITHUB", "GITHUB_ENTERPRISE"):
+            if project.source and project.source.type in (
+                "GITHUB",
+                "GITHUB_ENTERPRISE",
+            ):
                 project_github_repo_url = project.source.location
                 project_role = next(
                     (
