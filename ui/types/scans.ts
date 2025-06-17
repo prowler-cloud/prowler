@@ -49,6 +49,7 @@ export interface ScanProps {
 }
 
 export interface ScanEntity {
+  id: string;
   providerInfo: {
     provider: ProviderType;
     alias?: string;
@@ -57,5 +58,12 @@ export interface ScanEntity {
   attributes: {
     name?: string;
     completed_at: string;
+  };
+}
+export interface ExpandedScanData extends ScanProps {
+  providerInfo: {
+    provider: ProviderType;
+    uid: string;
+    alias: string;
   };
 }
