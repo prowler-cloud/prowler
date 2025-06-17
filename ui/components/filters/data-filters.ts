@@ -44,27 +44,26 @@ export const filterFindings = [
     key: "severity__in",
     labelCheckboxGroup: "Severity",
     values: ["critical", "high", "medium", "low", "informational"],
-    index: 1,
+    index: 0,
   },
   {
     key: "status__in",
     labelCheckboxGroup: "Status",
     values: ["PASS", "FAIL", "MANUAL"],
-    index: 2,
+    index: 1,
   },
   {
     key: "provider_type__in",
     labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "m365", "gcp", "kubernetes"],
-    index: 4,
+    index: 5,
   },
   {
     key: "delta__in",
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
-    index: 3,
+    index: 2,
   },
-  // Add more filter categories as needed
 ];
 
 export const filterUsers = [
