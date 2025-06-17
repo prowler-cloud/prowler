@@ -56,14 +56,15 @@ export const ComplianceHeader = ({
 
   return (
     <>
-      {showProviders ||
-        (showSearch && (
+      {(showProviders || showSearch) && (
+        <>
           <div className="flex items-center justify-start gap-4">
             {showProviders && <DataCompliance scans={scans} />}
             {showSearch && <FilterControls search />}
-            <Spacer x={8} />
           </div>
-        ))}
+          <Spacer y={8} />
+        </>
+      )}
       {allFilters.length > 0 && (
         <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
       )}
