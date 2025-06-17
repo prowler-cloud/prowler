@@ -132,7 +132,9 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         path, _, kwargs = super().deconstruct()
         return (path, (self.target_field,), kwargs)
 
-    def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):  # noqa: F841
+    def validate(
+        self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS
+    ):  # noqa: F841
         if not hasattr(instance, "tenant_id"):
             raise ValidationError(f"{model.__name__} does not have a tenant_id field.")
 
@@ -145,7 +147,7 @@ class BaseSecurityConstraint(models.BaseConstraint):
     """
 
     drop_sql_query = """
-        REVOKE ALL ON TABLE %(table_name) TO %(db_user)s;
+        REVOKE ALL ON TABLE %(table_name)s FROM %(db_user)s;
     """
 
     def __init__(self, name: str, statements: list | None = None) -> None:
