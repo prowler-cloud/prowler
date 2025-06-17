@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -212,16 +212,16 @@ class Project(BaseModel):
     name: str
     arn: str
     region: str
-    last_build: Optional[Build]
-    last_invoked_time: Optional[datetime.datetime]
-    buildspec: Optional[str]
-    source: Optional[Source]
+    last_build: Optional[Build] = None
+    last_invoked_time: Optional[datetime.datetime] = None
+    buildspec: Optional[str] = None
+    source: Optional[Source] = None
     secondary_sources: Optional[list[Source]] = []
+    service_role_arn: Optional[str] = None
     environment_variables: Optional[List[EnvironmentVariable]]
     s3_logs: Optional[s3Logs]
     cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
-    service_role_arn: Optional[str] = None
 
 
 class ExportConfig(BaseModel):
@@ -235,6 +235,6 @@ class ReportGroup(BaseModel):
     arn: str
     name: str
     region: str
-    status: Optional[str]
-    export_config: Optional[ExportConfig]
-    tags: Optional[list]
+    status: Optional[str] = None
+    export_config: Optional[ExportConfig] = None
+    tags: Optional[list] = []
