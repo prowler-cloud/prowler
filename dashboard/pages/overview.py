@@ -83,7 +83,18 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        account_columns = ["ACCOUNT_ID", "ACCOUNT_UID", "SUBSCRIPTION"]
+
+        df_sample = pd.read_csv(file, sep=";", on_bad_lines="skip", nrows=1)
+
+        dtype_dict = {}
+        for col in account_columns:
+            if col in df_sample.columns:
+                dtype_dict[col] = str
+
+        # Read the full file with proper dtypes
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", dtype=dtype_dict)
+
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -120,7 +131,6 @@ if data is None:
         ]
     )
 else:
-
     # This handles the case where we are using v3 outputs
     if "ASSESSMENT_START_TIME" in data.columns:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(

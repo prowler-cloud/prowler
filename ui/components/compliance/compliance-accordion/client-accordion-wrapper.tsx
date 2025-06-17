@@ -8,9 +8,11 @@ import { CustomButton } from "@/components/ui/custom";
 export const ClientAccordionWrapper = ({
   items,
   defaultExpandedKeys,
+  hideExpandButton = false,
 }: {
   items: AccordionItemProps[];
   defaultExpandedKeys: string[];
+  hideExpandButton?: boolean;
 }) => {
   const [selectedKeys, setSelectedKeys] =
     useState<string[]>(defaultExpandedKeys);
@@ -56,16 +58,18 @@ export const ClientAccordionWrapper = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <CustomButton
-          variant="flat"
-          size="sm"
-          onPress={handleToggleExpand}
-          ariaLabel={isExpanded ? "Collapse all" : "Expand all"}
-        >
-          {isExpanded ? "Collapse all" : "Expand all"}
-        </CustomButton>
-      </div>
+      {!hideExpandButton && (
+        <div className="flex justify-end">
+          <CustomButton
+            variant="flat"
+            size="sm"
+            onPress={handleToggleExpand}
+            ariaLabel={isExpanded ? "Collapse all" : "Expand all"}
+          >
+            {isExpanded ? "Collapse all" : "Expand all"}
+          </CustomButton>
+        </div>
+      )}
       <Accordion
         items={items}
         variant="light"
