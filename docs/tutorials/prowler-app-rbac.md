@@ -4,6 +4,9 @@
 
 [Roles](#roles) help you control user permissions, determining what actions each user can perform and the data they can access within Prowler. By default, each account includes an immutable **admin** role, ensuring that your account always retains administrative access.
 
+???+ note
+    If the account is created without an invitation, a new tenant will be provisioned for it. However, if the account is created through an invitation, the user will join the inviter’s tenant.
+
 ## Membership
 
 To get to User-Invitation Management we will focus on the Membership section.
@@ -169,6 +172,9 @@ Follow these steps to create a role for your account:
 
 <img src="../img/rbac/role_create_1.png" alt="Role parameters" width="700"/>
 
+
+???+ note
+    To assign read-only access, select only the `Unlimited Visibility` permission when creating the role. Then, go to the Users page and assign this role to the appropriate user.
 
 #### Editing a Role
 

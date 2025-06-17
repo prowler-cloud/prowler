@@ -1,5 +1,5 @@
 import {
-  ProviderAccountProps,
+  ProviderEntity,
   ProviderProps,
   ProvidersApiResponse,
 } from "@/types/providers";
@@ -21,7 +21,7 @@ export const extractProviderUIDs = (
 export const createProviderDetailsMapping = (
   providerUIDs: string[],
   providersData: ProvidersApiResponse,
-): Array<{ [uid: string]: ProviderAccountProps }> => {
+): Array<{ [uid: string]: ProviderEntity }> => {
   if (!providersData?.data) return [];
 
   return providerUIDs.map((uid) => {

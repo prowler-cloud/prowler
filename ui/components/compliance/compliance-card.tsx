@@ -7,6 +7,7 @@ import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
+import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
 
@@ -20,6 +21,7 @@ interface ComplianceCardProps {
   scanId: string;
   complianceId: string;
   id: string;
+  selectedScan?: ScanEntity;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -30,6 +32,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   scanId,
   complianceId,
   id,
+  selectedScan,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -72,11 +75,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   const navigateToDetail = () => {
-    // We will unlock this while developing the rest of complainces.
-    if (!id.includes("ens") && !id.includes("iso")) {
-      return;
-    }
-
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;
     const params = new URLSearchParams();
@@ -84,6 +82,17 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     params.set("complianceId", id);
     params.set("version", version);
     params.set("scanId", scanId);
+
+    if (selectedScan) {
+      params.set(
+        "scanData",
+        JSON.stringify({
+          id: selectedScan.id,
+          providerInfo: selectedScan.providerInfo,
+          attributes: selectedScan.attributes,
+        }),
+      );
+    }
 
     router.push(`${path}?${params.toString()}`);
   };

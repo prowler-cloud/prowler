@@ -1,10 +1,5 @@
 export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
 
-export type ComplianceId =
-  | "ens_rd2022_aws"
-  | "iso27001_2013_aws"
-  | "iso27001_2022_aws";
-
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
 }
@@ -32,7 +27,7 @@ export interface Requirement {
   check_ids: string[];
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
-  [key: string]: string | string[] | number | undefined;
+  [key: string]: string | string[] | number | object[] | undefined;
 }
 
 export interface Control {
@@ -91,16 +86,97 @@ export interface ISO27001AttributesMetadata {
   Check_Summary: string;
 }
 
+export interface CISAttributesMetadata {
+  Section: string;
+  SubSection: string | null;
+  Profile: string; // "Level 1" or "Level 2"
+  AssessmentStatus: string; // "Manual" or "Automated"
+  Description: string;
+  RationaleStatement: string;
+  ImpactStatement: string;
+  RemediationProcedure: string;
+  AuditProcedure: string;
+  AdditionalInformation: string;
+  DefaultValue: string | null;
+  References: string;
+}
+
+export interface AWSWellArchitectedAttributesMetadata {
+  Name: string;
+  WellArchitectedQuestionId: string;
+  WellArchitectedPracticeId: string;
+  Section: string;
+  SubSection: string;
+  LevelOfRisk: string;
+  AssessmentMethod: string;
+  Description: string;
+  ImplementationGuidanceUrl: string;
+}
+
+export interface ThreatAttributesMetadata {
+  Title: string;
+  Section: string;
+  SubSection: string;
+  AttributeDescription: string;
+  AdditionalInformation: string;
+  LevelOfRisk: number;
+  Weight: number;
+}
+
+export interface KISAAttributesMetadata {
+  Domain: string;
+  Subdomain: string;
+  Section: string;
+  AuditChecklist: string[];
+  RelatedRegulations: string[];
+  AuditEvidence: string[];
+  NonComplianceCases: string[];
+}
+
+export interface MITREAttributesMetadata {
+  // Dynamic cloud service field - could be AWSService, GCPService, AzureService, etc.
+  [key: string]: string;
+  Category: string; // "Protect", "Detect", "Respond"
+  Value: string; // "Minimal", "Partial", "Significant"
+  Comment: string;
+}
+
+export interface GenericAttributesMetadata {
+  ItemId: string;
+  Section: string;
+  SubSection: string;
+  SubGroup: string | null;
+  Service: string | null;
+  Type: string | null;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
   attributes: {
+    framework_description: string;
+    name?: string;
     framework: string;
     version: string;
     description: string;
     attributes: {
-      metadata: ENSAttributesMetadata[] | ISO27001AttributesMetadata[];
+      metadata:
+        | ENSAttributesMetadata[]
+        | ISO27001AttributesMetadata[]
+        | CISAttributesMetadata[]
+        | AWSWellArchitectedAttributesMetadata[]
+        | ThreatAttributesMetadata[]
+        | KISAAttributesMetadata[]
+        | MITREAttributesMetadata[]
+        | GenericAttributesMetadata[];
       check_ids: string[];
+      // MITRE structure
+      technique_details?: {
+        tactics: string[];
+        subtechniques: string[];
+        platforms: string[];
+        technique_url: string;
+      };
     };
   };
 }
@@ -122,4 +198,18 @@ export interface AttributesData {
 
 export interface RequirementsData {
   data: RequirementItemData[];
+}
+
+export interface RegionData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
+}
+
+export interface CategoryData {
+  name: string;
+  failurePercentage: number;
+  totalRequirements: number;
+  failedRequirements: number;
 }
