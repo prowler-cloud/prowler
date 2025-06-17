@@ -120,6 +120,7 @@ class Codebuild(AWSService):
                 stream_name=cloudwatch_logs.get("streamName", ""),
             )
             project.tags = project_info.get("tags", [])
+            project.service_role_arn = project_info.get("serviceRole", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -216,10 +217,11 @@ class Project(BaseModel):
     buildspec: Optional[str] = None
     source: Optional[Source] = None
     secondary_sources: Optional[list[Source]] = []
-    environment_variables: Optional[List[EnvironmentVariable]] = []
-    s3_logs: Optional[s3Logs] = None
-    cloudwatch_logs: Optional[CloudWatchLogs] = None
-    tags: Optional[list] = []
+    service_role_arn: Optional[str] = None
+    environment_variables: Optional[List[EnvironmentVariable]]
+    s3_logs: Optional[s3Logs]
+    cloudwatch_logs: Optional[CloudWatchLogs]
+    tags: Optional[list]
 
 
 class ExportConfig(BaseModel):
