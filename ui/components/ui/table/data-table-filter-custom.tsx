@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useCallback, useMemo } from "react";
 
-import { CustomFilterIcon } from "@/components/icons";
+import { CrossIcon, CustomFilterIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
@@ -11,13 +11,15 @@ import { FilterOption } from "@/types";
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
   defaultOpen?: boolean;
+  showClearButton?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
   defaultOpen = false,
+  showClearButton = false,
 }: DataTableFilterCustomProps) => {
-  const { updateFilter } = useUrlFilters();
+  const { updateFilter, clearAllFilters } = useUrlFilters();
   const [showFilters, setShowFilters] = useState(defaultOpen);
 
   // Sort filters by index property, with fallback to original order for filters without index
@@ -44,19 +46,35 @@ export const DataTableFilterCustom = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <CustomButton
-        ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
-        variant="flat"
-        color={showFilters ? "action" : "primary"}
-        size="md"
-        startContent={<CustomFilterIcon size={16} />}
-        onPress={() => setShowFilters(!showFilters)}
-        className="w-full max-w-fit"
-      >
-        <h3 className="text-small">
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </h3>
-      </CustomButton>
+      <div className="flex flex-row gap-4">
+        <CustomButton
+          ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
+          variant="flat"
+          color={showFilters ? "action" : "primary"}
+          size="md"
+          startContent={<CustomFilterIcon size={16} />}
+          onPress={() => setShowFilters(!showFilters)}
+          className="w-full max-w-fit"
+        >
+          <h3 className="text-small">
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </h3>
+        </CustomButton>
+
+        {showClearButton && (
+          <CustomButton
+            ariaLabel="Reset"
+            className="w-full md:w-fit"
+            onPress={clearAllFilters}
+            variant="dashed"
+            size="md"
+            endContent={<CrossIcon size={24} />}
+            radius="sm"
+          >
+            Clear all filters
+          </CustomButton>
+        )}
+      </div>
 
       <div
         className={`transition-all duration-700 ease-in-out ${

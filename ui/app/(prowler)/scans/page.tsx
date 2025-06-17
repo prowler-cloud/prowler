@@ -13,7 +13,7 @@ import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import {
   createProviderDetailsMapping,
   extractProviderUIDs,
@@ -103,8 +103,7 @@ export default async function Scans({
           <AutoRefresh hasExecutingScan={hasExecutingScan} />
           <LaunchScanWorkflow providers={providerInfo} />
           <Spacer y={8} />
-          <DataTableFilterCustom filters={updatedFilters || []} />
-          <FilterControls />
+          <FilterControls customFilters={updatedFilters || []} />
 
           <Spacer y={8} />
           <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>

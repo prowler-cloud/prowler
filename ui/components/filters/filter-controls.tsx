@@ -3,11 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterControlsProps } from "@/types";
 
-import { CrossIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
 import { DataTableFilterCustom } from "../ui/table";
 import { CustomAccountSelection } from "./custom-account-selection";
 import { CustomCheckboxMutedFindings } from "./custom-checkbox-muted-findings";
@@ -26,7 +23,6 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   customFilters,
 }) => {
   const searchParams = useSearchParams();
-  const { clearAllFilters } = useUrlFilters();
   const [showClearButton, setShowClearButton] = useState(false);
 
   useEffect(() => {
@@ -45,22 +41,14 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         {regions && <CustomRegionSelection />}
         {accounts && <CustomAccountSelection />}
         {mutedFindings && <CustomCheckboxMutedFindings />}
-
-        {showClearButton && (
-          <CustomButton
-            ariaLabel="Reset"
-            className="w-full md:w-fit"
-            onPress={clearAllFilters}
-            variant="dashed"
-            size="md"
-            endContent={<CrossIcon size={24} />}
-            radius="sm"
-          >
-            Clear all filters
-          </CustomButton>
-        )}
       </div>
-      {customFilters && <DataTableFilterCustom filters={customFilters} />}
+      {customFilters && (
+        <DataTableFilterCustom
+          filters={customFilters}
+          showClearButton={showClearButton}
+          defaultOpen
+        />
+      )}
     </div>
   );
 };

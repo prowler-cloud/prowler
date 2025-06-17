@@ -1,12 +1,10 @@
 "use client";
 
-import { Spacer } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { filterFindings } from "@/components/filters/data-filters";
 import { FilterControls } from "@/components/filters/filter-controls";
-import { DataTableFilterCustom } from "@/components/ui/table";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isScanEntity } from "@/lib/helper-filters";
 import {
@@ -255,10 +253,10 @@ export const FindingsFilters = ({
 
   return (
     <>
-      <FilterControls search date />
-      <Spacer y={8} />
-      <DataTableFilterCustom
-        filters={[
+      <FilterControls
+        search
+        date
+        customFilters={[
           ...filterFindings,
           {
             key: FilterType.PROVIDER_UID,
@@ -293,7 +291,6 @@ export const FindingsFilters = ({
             index: 7,
           },
         ]}
-        defaultOpen={true}
       />
     </>
   );
