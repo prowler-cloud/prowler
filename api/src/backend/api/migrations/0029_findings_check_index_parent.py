@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -7,11 +7,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddIndex(
-            model_name="finding",
-            index=models.Index(
-                fields=["tenant_id", "scan_id", "check_id"],
-                name="find_tenant_scan_check_idx",
-            ),
-        ),
+        # No-op: Index managed manually via CratePartitionedIndex in the previous migrations
+        # Deprecated
     ]
