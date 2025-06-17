@@ -257,7 +257,70 @@ class Testm365PowerShell:
         session.process.stdin.write = MagicMock()
         session.read_output = MagicMock(return_value="decrypted_password")
 
-        assert session.test_credentials(credentials) is False
+        with pytest.raises(Exception) as exc_info:
+            session.test_credentials(credentials)
+        assert (
+            "Unexpected error: Acquiring token in behalf of user did not return a result."
+            in str(exc_info.value)
+        )
+
+        mock_msal.assert_called_once_with(
+            client_id="test_client_id",
+            client_credential="test_client_secret",
+            authority="https://login.microsoftonline.com/test_tenant_id",
+        )
+        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
+            username="test@contoso.onmicrosoft.com",
+            password="test_password",
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    @patch("msal.ConfidentialClientApplication")
+    def test_test_credentials_auth_failure_no_access_token(self, mock_msal, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_msal_instance = MagicMock()
+        mock_msal.return_value = mock_msal_instance
+        mock_msal_instance.acquire_token_by_username_password.return_value = {
+            "error_description": "invalid_grant: authentication failed"
+        }
+
+        credentials = M365Credentials(
+            user="test@contoso.onmicrosoft.com",
+            passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="contoso.onmicrosoft.com",
+            tenant_domains=["contoso.onmicrosoft.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+        session.process.stdin.write = MagicMock()
+        session.read_output = MagicMock(return_value="decrypted_password")
+
+        with pytest.raises(Exception) as exc_info:
+            session.test_credentials(credentials)
+        assert "MsGraph Error invalid_grant: authentication failed" in str(
+            exc_info.value
+        )
 
         mock_msal.assert_called_once_with(
             client_id="test_client_id",
