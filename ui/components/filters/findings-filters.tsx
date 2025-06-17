@@ -1,12 +1,13 @@
 "use client";
 
 import { Spacer } from "@nextui-org/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
 import { filterFindings } from "@/components/filters/data-filters";
 import { FilterControls } from "@/components/filters/filter-controls";
 import { DataTableFilterCustom } from "@/components/ui/table";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterEntity, ScanEntity } from "@/types";
 import { ScanProps } from "@/types";
 
@@ -30,40 +31,17 @@ export const FindingsFilters = ({
   uniqueServices,
   uniqueResourceTypes,
 }: FindingsFiltersProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [updatedScanFilters, setUpdatedScanFilters] = useState<string[]>([]);
+  const { updateFilter } = useUrlFilters();
+  const [availableScans, setAvailableScans] =
+    useState<string[]>(completedScanIds);
   const previousProviders = useRef<string[]>([]);
 
-  // Function to get the provider of a scan
   const getScanProvider = (scanId: string) => {
     const scanDetail = scanDetails.find(
       (detail) => Object.keys(detail)[0] === scanId,
     );
     return scanDetail ? scanDetail[scanId]?.providerInfo?.uid : null;
-  };
-
-  // Function to update the URL with the new parameters
-  const updateUrlParams = (updates: {
-    scan?: string | null;
-    provider?: string[] | null;
-  }) => {
-    const currentParams = new URLSearchParams(searchParams.toString());
-
-    if (updates.scan === null) {
-      currentParams.delete("filter[scan__in]");
-    } else if (updates.scan !== undefined) {
-      currentParams.set("filter[scan__in]", updates.scan);
-    }
-
-    if (updates.provider === null) {
-      currentParams.delete("filter[provider_uid__in]");
-    } else if (updates.provider !== undefined) {
-      currentParams.set("filter[provider_uid__in]", updates.provider.join(","));
-    }
-
-    const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-    router.push(newUrl);
   };
 
   useEffect(() => {
@@ -91,7 +69,7 @@ export const FindingsFilters = ({
             !currentProviders.includes(scanProviderId)))
       ) {
         // Deselect the scan
-        updateUrlParams({ scan: null });
+        updateFilter("scan__in", null);
         return; // Exit to avoid additional updates
       }
     }
@@ -102,26 +80,24 @@ export const FindingsFilters = ({
 
       if (scanProviderId && !currentProviders.includes(scanProviderId)) {
         // Add the scan's provider to the list of selected providers
-        updateUrlParams({ provider: [...currentProviders, scanProviderId] });
+        updateFilter("provider_uid__in", [...currentProviders, scanProviderId]);
       }
     }
 
-    // Update the list of scans based on the selected providers
+    // Update available scans based on selected providers
     if (currentProviders.length > 0) {
-      const filteredScans = scanDetails
-        .filter((detail) => {
-          const scanId = Object.keys(detail)[0];
-          const scanInfo = detail[scanId];
-          return currentProviders.includes(scanInfo?.providerInfo?.uid || "");
-        })
-        .map((detail) => Object.keys(detail)[0]);
-
-      setUpdatedScanFilters(filteredScans);
+      // Filter scans that belong to any of the selected providers
+      const filteredScans = completedScanIds.filter((scanId) => {
+        const scanProviderId = getScanProvider(scanId);
+        return scanProviderId && currentProviders.includes(scanProviderId);
+      });
+      setAvailableScans(filteredScans);
     } else {
-      setUpdatedScanFilters(completedScanIds);
+      // If no providers selected, show all completed scans
+      setAvailableScans(completedScanIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, scanDetails, completedScanIds, router]);
+  }, [searchParams, scanDetails, completedScanIds, updateFilter]);
 
   return (
     <>
@@ -158,7 +134,7 @@ export const FindingsFilters = ({
           {
             key: "scan__in",
             labelCheckboxGroup: "Scan ID",
-            values: updatedScanFilters,
+            values: availableScans,
             valueLabelMapping: scanDetails,
             index: 9,
           },
