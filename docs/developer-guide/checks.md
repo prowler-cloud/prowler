@@ -4,7 +4,7 @@ This guide explains how to create new checks in Prowler.
 
 ## Introduction
 
-Checks are the core component of Prowler. A check is a simple piece of code designed to validate whether a configuration aligns with cybersecurity best practices. Execution of a check yields a finding, which includes the result and contextual metadata (e.g., outcome, risks, remediation).
+Checks are the core component of Prowler. A check is a piece of code designed to validate whether a configuration aligns with cybersecurity best practices. Execution of a check yields a finding, which includes the result and contextual metadata (e.g., outcome, risks, remediation).
 
 ### Creating a Check
 
@@ -39,7 +39,7 @@ Each check in Prowler follows a straightforward structure. Within the newly crea
 
 ## Prowler's Check Code Structure
 
-Prowler's check structure is really uncomplicated. It follows a dynamic loading approach based on predefined paths, ensuring seamless integration of new checks into a provider's service without additional manual steps.
+Prowler's check structure is designed for clarity and maintainability. It follows a dynamic loading approach based on predefined paths, ensuring seamless integration of new checks into a provider's service without additional manual steps.
 
 Below the code for a generic check is presented. It is strongly recommended to consult other checks from the same provider and service to understand provider-specific details and patterns. This will help ensure consistency and proper implementation of provider-specific requirements.
 
