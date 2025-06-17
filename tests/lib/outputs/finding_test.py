@@ -28,7 +28,7 @@ def mock_check_metadata(provider):
         SubServiceName="",
         ResourceIdTemplate="",
         Severity="high",
-        ResourceType="",
+        ResourceType="mock_resource_type",
         Description="",
         Risk="",
         RelatedUrl="",
@@ -209,7 +209,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -230,7 +230,7 @@ class TestFinding:
         assert finding_output.check_id == "mock_check_id"
         assert finding_output.severity == Severity.high.value
         assert finding_output.status == Status.PASS.value
-        assert finding_output.resource_type == ""
+        assert finding_output.resource_type == "mock_resource_type"
         assert finding_output.service_name == "mock_service_name"
         assert finding_output.raw == {}
 
@@ -310,7 +310,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -405,7 +405,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -490,7 +490,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""

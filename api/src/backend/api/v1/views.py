@@ -3,8 +3,10 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import sentry_sdk
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.saml.views import FinishACSView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
 from config.env import env
@@ -19,7 +21,8 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
@@ -51,6 +54,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -63,6 +67,7 @@ from api.compliance import (
     get_compliance_frameworks,
 )
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
@@ -89,6 +94,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -99,6 +105,8 @@ from api.models import (
     ResourceScanSummary,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -132,6 +140,9 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    LighthouseConfigCreateSerializer,
+    LighthouseConfigSerializer,
+    LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
@@ -152,6 +163,8 @@ from api.v1.serializers import (
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
     RoleUpdateSerializer,
+    SAMLConfigurationSerializer,
+    SamlInitiateSerializer,
     ScanComplianceReportSerializer,
     ScanCreateSerializer,
     ScanReportSerializer,
@@ -327,6 +340,11 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing third-party integrations, including registration, configuration,"
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
+            {
+                "name": "Lighthouse",
+                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+            },
         ]
         return super().get(request, *args, **kwargs)
 
@@ -381,6 +399,163 @@ class GithubSocialLoginView(SocialLoginView):
                 status=status.HTTP_200_OK,
             )
         return original_response
+
+
+@extend_schema(exclude=True)
+class SAMLInitiateAPIView(GenericAPIView):
+    serializer_class = SamlInitiateSerializer
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email_domain"]
+        domain = email.split("@", 1)[-1].lower()
+
+        try:
+            check = SAMLDomainIndex.objects.get(email_domain=domain)
+            with rls_transaction(str(check.tenant_id)):
+                config = SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+        except (SAMLDomainIndex.DoesNotExist, SAMLConfiguration.DoesNotExist):
+            return Response(
+                {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check certificates are not empty
+        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+
+        if not saml_public_cert or not saml_private_key:
+            return Response(
+                {"detail": "SAML configuration is invalid: missing certificates."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        saml_login_url = reverse(
+            "saml_login", kwargs={"organization_slug": config.email_domain}
+        )
+        return redirect(f"{saml_login_url}?email={email}")
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["SAML"],
+        summary="List all SSO configurations",
+        description="Returns all the SAML-based SSO configurations associated with the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["SAML"],
+        summary="Retrieve SSO configuration details",
+        description="Returns the details of a specific SAML configuration belonging to the current tenant.",
+    ),
+    create=extend_schema(
+        tags=["SAML"],
+        summary="Create the SSO configuration",
+        description="Creates a new SAML SSO configuration for the current tenant, including email domain and metadata XML.",
+    ),
+    partial_update=extend_schema(
+        tags=["SAML"],
+        summary="Update the SSO configuration",
+        description="Partially updates an existing SAML SSO configuration. Supports changes to email domain and metadata XML.",
+    ),
+    destroy=extend_schema(
+        tags=["SAML"],
+        summary="Delete the SSO configuration",
+        description="Deletes an existing SAML SSO configuration associated with the current tenant.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+@method_decorator(CACHE_DECORATOR, name="list")
+class SAMLConfigurationViewSet(BaseRLSViewSet):
+    """
+    ViewSet for managing SAML SSO configurations per tenant.
+
+    This endpoint allows authorized users to perform CRUD operations on SAMLConfiguration,
+    which define how a tenant integrates with an external SAML Identity Provider (IdP).
+
+    Typical use cases include:
+        - Listing all existing configurations for auditing or UI display.
+        - Retrieving a single configuration to show setup details.
+        - Creating or updating a configuration to onboard or modify SAML integration.
+        - Deleting a configuration when deactivating SAML for a tenant.
+    """
+
+    serializer_class = SAMLConfigurationSerializer
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    queryset = SAMLConfiguration.objects.all()
+
+    def get_queryset(self):
+        # If called during schema generation, return an empty queryset
+        if getattr(self, "swagger_fake_view", False):
+            return SAMLConfiguration.objects.none()
+        return SAMLConfiguration.objects.filter(tenant=self.request.tenant_id)
+
+
+class TenantFinishACSView(FinishACSView):
+    def dispatch(self, request, organization_slug):
+        response = super().dispatch(request, organization_slug)
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return response
+
+        try:
+            social_app = SocialApp.objects.get(
+                provider="saml", client_id=organization_slug
+            )
+            social_account = SocialAccount.objects.get(
+                user=user, provider=social_app.provider
+            )
+        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist):
+            return response
+
+        extra = social_account.extra_data
+        user.first_name = extra.get("firstName", [""])[0]
+        user.last_name = extra.get("lastName", [""])[0]
+        user.company_name = extra.get("organization", [""])[0]
+        user.name = f"{user.first_name} {user.last_name}".strip()
+        user.save()
+
+        email_domain = user.email.split("@")[-1]
+        tenant = (
+            SAMLConfiguration.objects.using(MainRouter.admin_db)
+            .get(email_domain=email_domain)
+            .tenant
+        )
+        role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+        try:
+            role = Role.objects.using(MainRouter.admin_db).get(
+                name=role_name, tenant=tenant
+            )
+        except Role.DoesNotExist:
+            role = Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                manage_users=False,
+                manage_account=False,
+                manage_billing=False,
+                manage_providers=False,
+                manage_integrations=False,
+                manage_scans=False,
+                unlimited_visibility=False,
+            )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user,
+            tenant_id=tenant.id,
+        ).delete()
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        serializer = TokenSocialLoginSerializer(data={"email": user.email})
+        serializer.is_valid(raise_exception=True)
+        return JsonResponse(
+            {
+                "type": "saml-social-tokens",
+                "attributes": serializer.validated_data,
+            }
+        )
 
 
 @extend_schema_view(
@@ -1915,6 +2090,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
@@ -2016,6 +2193,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
         resource_types = list(
             queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
             .distinct()
             .order_by("resource_type")
         )
@@ -2827,13 +3006,31 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
             metadata = requirement.get("attributes", [])
 
+            base_attributes = {
+                "metadata": metadata,
+                "check_ids": check_ids,
+            }
+
+            # Add technique details for MITRE-ATTACK framework
+            if "mitre_attack" in compliance_id:
+                base_attributes["technique_details"] = {
+                    "tactics": requirement.get("tactics", []),
+                    "subtechniques": requirement.get("subtechniques", []),
+                    "platforms": requirement.get("platforms", []),
+                    "technique_url": requirement.get("technique_url", ""),
+                }
+
             attribute_data.append(
                 {
                     "id": requirement_id,
+                    "framework_description": compliance_framework.get(
+                        "description", ""
+                    ),
+                    "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
-                    "attributes": {"metadata": metadata, "check_ids": check_ids},
+                    "attributes": base_attributes,
                 }
             )
 
@@ -2841,9 +3038,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Overview"])
 @extend_schema_view(
-    providers=extend_schema(
+    list=extend_schema(
+        tags=["Overview"],
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -3090,7 +3287,6 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
@@ -3208,3 +3404,80 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse"],
+        summary="List all Lighthouse configurations",
+        description="Retrieve a list of all Lighthouse configurations.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse"],
+        summary="Create a new Lighthouse configuration",
+        description="Create a new Lighthouse configuration with the specified details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse"],
+        summary="Partially update a Lighthouse configuration",
+        description="Update certain fields of an existing Lighthouse configuration.",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse"],
+        summary="Delete a Lighthouse configuration",
+        description="Remove a Lighthouse configuration by its ID.",
+    ),
+    connection=extend_schema(
+        tags=["Lighthouse"],
+        summary="Check the connection to the OpenAI API",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    ),
+)
+class LighthouseConfigViewSet(BaseRLSViewSet):
+    """
+    API endpoint for managing Lighthouse configuration.
+    """
+
+    serializer_class = LighthouseConfigSerializer
+    ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
+    ordering = ["-inserted_at"]
+
+    def get_queryset(self):
+        return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseConfigUpdateSerializer
+        elif self.action == "connection":
+            return TaskSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        """
+        Check the connection to the OpenAI API asynchronously.
+        """
+        instance = self.get_object()
+        with transaction.atomic():
+            task = check_lighthouse_connection_task.delay(
+                lighthouse_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
