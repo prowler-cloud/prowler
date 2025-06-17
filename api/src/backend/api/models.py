@@ -121,7 +121,7 @@ class User(AbstractBaseUser):
         max_length=254,
         unique=True,
         help_text="Case insensitive",
-        error_messages={"unique": "Please check the email address and try again."},
+        error_messages={"unique": "An account with this email address already exists."},
     )
     company_name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
