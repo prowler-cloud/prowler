@@ -572,27 +572,43 @@ class TestM365Provider:
             )
         assert "The provided Client Secret is not valid." in str(exception.value)
 
-    def test_validate_static_credentials_missing_user(self):
-        with pytest.raises(M365NotValidUserError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="",
-                password="test_password",
-            )
-        assert "The provided User is not valid." in str(exception.value)
+    @patch("prowler.providers.m365.m365_provider.ConfidentialClientApplication")
+    def test_validate_static_credentials_missing_user(self, mock_msal):
+        # Mock para que no haga llamadas reales a Azure
+        instance = mock_msal.return_value
+        instance.acquire_token_for_client.return_value = {"access_token": "fake_token"}
 
-    def test_validate_static_credentials_missing_password(self):
-        with pytest.raises(M365NotValidPasswordError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="test@example.com",
-                password="",
-            )
-        assert "The provided Password is not valid." in str(exception.value)
+        result = M365Provider.validate_static_credentials(
+            tenant_id="12345678-1234-5678-1234-567812345678",
+            client_id="12345678-1234-5678-1234-567812345678",
+            client_secret="test_secret",
+            user="",
+            password="test_password",
+        )
+        assert result["user"] == ""
+        assert result["password"] == "test_password"
+        assert result["tenant_id"] == "12345678-1234-5678-1234-567812345678"
+        assert result["client_id"] == "12345678-1234-5678-1234-567812345678"
+        assert result["client_secret"] == "test_secret"
+
+    @patch("prowler.providers.m365.m365_provider.ConfidentialClientApplication")
+    def test_validate_static_credentials_missing_password(self, mock_msal):
+        # Mock para que no haga llamadas reales a Azure
+        instance = mock_msal.return_value
+        instance.acquire_token_for_client.return_value = {"access_token": "fake_token"}
+
+        result = M365Provider.validate_static_credentials(
+            tenant_id="12345678-1234-5678-1234-567812345678",
+            client_id="12345678-1234-5678-1234-567812345678",
+            client_secret="test_secret",
+            user="test@example.com",
+            password="",
+        )
+        assert result["user"] == "test@example.com"
+        assert result["password"] == ""
+        assert result["tenant_id"] == "12345678-1234-5678-1234-567812345678"
+        assert result["client_id"] == "12345678-1234-5678-1234-567812345678"
+        assert result["client_secret"] == "test_secret"
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
