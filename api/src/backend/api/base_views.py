@@ -15,6 +15,8 @@ from api.rbac.permissions import HasPermissions
 
 
 class BaseViewSet(ModelViewSet):
+    _rls_ctx = None
+
     authentication_classes = [JWTAuthentication]
     required_permissions = []
     permission_classes = [permissions.IsAuthenticated, HasPermissions]
@@ -45,25 +47,29 @@ class BaseViewSet(ModelViewSet):
     def get_queryset(self):
         raise NotImplementedError
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        try:
+            return super().finalize_response(request, response, *args, **kwargs)
+        finally:
+            if self._rls_ctx:
+                self._rls_ctx.__exit__(None, None, None)
+                self._rls_ctx = None
+
 
 class BaseRLSViewSet(BaseViewSet):
-    def dispatch(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().dispatch(request, *args, **kwargs)
-
     def initial(self, request, *args, **kwargs):
-        # Ideally, this logic would be in the `.setup()` method but DRF view sets don't call it
-        # https://docs.djangoproject.com/en/5.1/ref/class-based-views/base/#django.views.generic.base.View.setup
         if request.auth is None:
             raise NotAuthenticated
 
         tenant_id = request.auth.get("tenant_id")
-        if tenant_id is None:
-            raise NotAuthenticated("Tenant ID is not present in token")
+        if not tenant_id:
+            raise NotAuthenticated("Tenant ID missing in JWT")
 
-        with rls_transaction(tenant_id):
-            self.request.tenant_id = tenant_id
-            return super().initial(request, *args, **kwargs)
+        self._rls_ctx = rls_transaction(tenant_id)
+        self._rls_ctx.__enter__()
+
+        self.request.tenant_id = tenant_id
+        return super().initial(request, *args, **kwargs)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -117,17 +123,15 @@ class BaseTenantViewset(BaseViewSet):
             raise NotAuthenticated("Tenant ID is not present in token")
 
         user_id = str(request.user.id)
-        with rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
-            return super().initial(request, *args, **kwargs)
+
+        self._rls_ctx = rls_transaction(value=user_id, parameter=POSTGRES_USER_VAR)
+        self._rls_ctx.__enter__()
+
+        return super().initial(request, *args, **kwargs)
 
 
 class BaseUserViewset(BaseViewSet):
-    def dispatch(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().dispatch(request, *args, **kwargs)
-
     def initial(self, request, *args, **kwargs):
-        # TODO refactor after improving RLS on users
         if request.stream is not None and request.stream.method == "POST":
             return super().initial(request, *args, **kwargs)
         if request.auth is None:
@@ -137,6 +141,8 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with rls_transaction(tenant_id):
-            self.request.tenant_id = tenant_id
-            return super().initial(request, *args, **kwargs)
+        self._rls_ctx = rls_transaction(tenant_id)
+        self._rls_ctx.__enter__()
+
+        self.request.tenant_id = tenant_id
+        return super().initial(request, *args, **kwargs)

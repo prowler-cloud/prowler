@@ -1155,6 +1155,8 @@ def pytest_configure(config):
     # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()
     patch("api.db_router.MainRouter.admin_read", new="default").start()
+    patch("api.db_router.MainRouter.prowler_user", new="default").start()
+    patch("api.db_router.MainRouter.default_read", new="default").start()
 
 
 def pytest_unconfigure(config):

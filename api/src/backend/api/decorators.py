@@ -1,10 +1,6 @@
-import uuid
 from functools import wraps
 
-from django.db import connection, transaction
-from rest_framework_json_api.serializers import ValidationError
-
-from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
+from api.db_utils import rls_transaction
 
 
 def set_tenant(func=None, *, keep_tenant=False):
@@ -42,7 +38,6 @@ def set_tenant(func=None, *, keep_tenant=False):
 
     def decorator(func):
         @wraps(func)
-        @transaction.atomic
         def wrapper(*args, **kwargs):
             try:
                 if not keep_tenant:
@@ -51,14 +46,8 @@ def set_tenant(func=None, *, keep_tenant=False):
                     tenant_id = kwargs["tenant_id"]
             except KeyError:
                 raise KeyError("This task requires the tenant_id")
-            try:
-                uuid.UUID(tenant_id)
-            except ValueError:
-                raise ValidationError("Tenant ID must be a valid UUID")
-            with connection.cursor() as cursor:
-                cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
-
-            return func(*args, **kwargs)
+            with rls_transaction(tenant_id):
+                return func(*args, **kwargs)
 
         return wrapper
 

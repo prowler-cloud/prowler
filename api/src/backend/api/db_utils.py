@@ -1,16 +1,18 @@
 import re
 import secrets
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
-from django.db import connection, models, transaction
+from django.db import connection, connections, models, transaction
 from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
+
+from api.db_router import MainRouter
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
 DB_PASSWORD = (
@@ -58,15 +60,29 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
         value (str): Database configuration parameter value.
         parameter (str): Database configuration parameter name, by default is 'api.tenant_id'.
     """
-    with transaction.atomic():
-        with connection.cursor() as cursor:
-            try:
-                # just in case the value is an UUID object
-                uuid.UUID(str(value))
-            except ValueError:
-                raise ValidationError("Must be a valid UUID")
+    try:
+        # just in case the value is a UUID object
+        uuid.UUID(str(value))
+    except ValueError:
+        raise ValidationError("Must be a valid UUID")
+
+    aliases = (
+        MainRouter.default_db,
+        MainRouter.admin_db,
+        MainRouter.prowler_user,
+        MainRouter.default_read,
+    )
+
+    with ExitStack() as stack:
+        cursors = []
+        for alias in aliases:
+            stack.enter_context(transaction.atomic(using=alias))
+            cursor = connections[alias].cursor()
             cursor.execute(SET_CONFIG_QUERY, [parameter, value])
-            yield cursor
+            cursors.append(cursor)
+
+            stack.callback(cursor.close)
+        yield
 
 
 class CustomUserManager(BaseUserManager):

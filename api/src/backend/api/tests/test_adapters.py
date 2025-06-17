@@ -67,7 +67,7 @@ class TestProwlerSocialAccountAdapter:
         tenant = Tenant.objects.using(MainRouter.admin_db).get(
             id=saml_setup["tenant_id"]
         )
-        saml_config = SAMLConfiguration.objects.using(MainRouter.admin_db).get(
+        saml_config = SAMLConfiguration.objects.using(MainRouter.admin_read).get(
             tenant=tenant
         )
         assert saml_config.email_domain == saml_setup["domain"]
@@ -76,7 +76,7 @@ class TestProwlerSocialAccountAdapter:
 
         assert user.email == saml_setup["email"]
         assert (
-            Membership.objects.using(MainRouter.admin_db)
+            Membership.objects.using(MainRouter.admin_read)
             .filter(user=user, tenant=tenant)
             .exists()
         )

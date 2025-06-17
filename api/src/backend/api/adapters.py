@@ -51,7 +51,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
 
                 email_domain = user.email.split("@")[-1]
                 tenant = (
-                    SAMLConfiguration.objects.using(MainRouter.admin_db)
+                    SAMLConfiguration.objects.using(MainRouter.admin_read)
                     .get(email_domain=email_domain)
                     .tenant
                 )
@@ -60,7 +60,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                     role_name = extra.get("userType", ["saml_default_role"])[0].strip()
 
                     try:
-                        role = Role.objects.using(MainRouter.admin_db).get(
+                        role = Role.objects.using(MainRouter.admin_read).get(
                             name=role_name, tenant_id=tenant.id
                         )
                     except Role.DoesNotExist:

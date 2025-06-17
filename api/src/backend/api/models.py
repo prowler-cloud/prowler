@@ -1459,7 +1459,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             )
 
         # The email domain must be unique in the entire system
-        qs = SAMLConfiguration.objects.using(MainRouter.admin_db).filter(
+        qs = SAMLConfiguration.objects.using(MainRouter.admin_read).filter(
             email_domain__iexact=self.email_domain
         )
         if qs.exists() and old_email_domain != self.email_domain:

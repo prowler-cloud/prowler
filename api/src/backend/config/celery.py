@@ -40,6 +40,7 @@ class RLSTask(Task):
     ):
         from django_celery_results.models import TaskResult
 
+        from api.db_router import MainRouter
         from api.models import Task as APITask
 
         result = super().apply_async(
@@ -52,14 +53,14 @@ class RLSTask(Task):
             shadow=shadow,
             **options,
         )
-        task_result_instance = TaskResult.objects.get(task_id=result.task_id)
-        from api.db_utils import rls_transaction
+        task_result_instance = TaskResult.objects.using(MainRouter.admin_db).get(
+            task_id=result.task_id
+        )
 
         tenant_id = kwargs.get("tenant_id")
-        with rls_transaction(tenant_id):
-            APITask.objects.update_or_create(
-                id=task_result_instance.task_id,
-                tenant_id=tenant_id,
-                defaults={"task_runner_task": task_result_instance},
-            )
+        APITask.objects.using(MainRouter.admin_db).update_or_create(
+            id=task_result_instance.task_id,
+            tenant_id=tenant_id,
+            defaults={"task_runner_task": task_result_instance},
+        )
         return result
