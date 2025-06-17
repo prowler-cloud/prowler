@@ -507,6 +507,7 @@ class M365Provider(Provider):
             Exception: If failed to retrieve M365 credentials.
 
         """
+        logger.info("M365 provider: Setting up session...")
         if not browser_auth:
             if sp_env_auth or env_auth:
                 try:
@@ -736,6 +737,8 @@ class M365Provider(Provider):
                     message=f"The provider ID {provider_id} does not match any of the service principal tenant domains: {', '.join(identity.tenant_domains)}",
                 )
 
+            logger.info("M365 provider: Identity retrieved successfully")
+
             # Set up PowerShell credentials
             if user and password:
                 M365Provider.setup_powershell(
@@ -743,12 +746,11 @@ class M365Provider(Provider):
                     m365_credentials,
                     identity,
                 )
+                logger.info("M365 provider: Connection to PowerShell successful")
             else:
                 logger.info(
                     "M365 provider: Connection to PowerShell has not been requested"
                 )
-
-            logger.info("M365 provider: Connection to PowerShell successful")
 
             return Connection(is_connected=True)
 
@@ -897,7 +899,7 @@ class M365Provider(Provider):
         Returns:
             M365IdentityInfo: An instance of M365IdentityInfo containing the identity information.
         """
-        logger.info("M365 provider: Setting up identity ...")
+        logger.info("M365 provider: Setting up identity...")
         # TODO: fill this object with real values not default and set to none
         identity = M365IdentityInfo()
 
