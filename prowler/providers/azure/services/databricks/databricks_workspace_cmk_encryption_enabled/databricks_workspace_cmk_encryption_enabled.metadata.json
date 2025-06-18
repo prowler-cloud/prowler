@@ -7,7 +7,7 @@
   "SubServiceName": "workspace",
   "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Databricks/workspaces/{workspaceName}",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "AzureDatabricksWorkspace",
   "Description": "Checks whether Azure Databricks workspaces are configured to use customer-managed keys (CMK) for encryption at rest, providing greater control over data encryption and compliance.",
   "Risk": "Without CMK, organizations have less control over encryption keys, which may impact regulatory compliance and increase risk of unauthorized data access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/databricks/security/keys/customer-managed-keys",
