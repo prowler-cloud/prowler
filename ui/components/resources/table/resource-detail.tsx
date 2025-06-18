@@ -1,7 +1,6 @@
 import { Snippet } from "@nextui-org/react";
 import { format, parseISO } from "date-fns";
 import { InfoIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import {
   DateWithTime,
@@ -41,13 +40,13 @@ export const ResourceDetail = ({
   resourceDetails,
   resourceData,
   isLoading,
+  fetchFindings,
 }: {
   resourceDetails: ResourceApiResponse | null;
   resourceData: ResourceProps;
   isLoading: boolean;
+  fetchFindings: (uid: string, inserted_at: string, resourceId: string) => void;
 }) => {
-  const router = useRouter();
-
   const failedFindings = resourceDetails?.included.filter(
     (item) =>
       item.type === "findings" &&
@@ -61,9 +60,7 @@ export const ResourceDetail = ({
     resourceId: string,
   ) => {
     const formattedDate = format(parseISO(inserted_at), "yyyy-MM-dd");
-    router.push(
-      `/findings?filter[uid]=${uid}&filter[inserted_at]=${formattedDate}&id=${resourceId}`,
-    );
+    fetchFindings(uid, formattedDate, resourceId);
   };
 
   return (
