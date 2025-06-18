@@ -143,8 +143,8 @@ export const addCredentialsFormSchema = (providerType: string) =>
                     .string()
                     .nonempty("Client Secret is required"),
                   tenant_id: z.string().nonempty("Tenant ID is required"),
-                  user: z.string().optional(),
-                  password: z.string().optional(),
+                  user: z.string().nonempty("User is required"),
+                  password: z.string().nonempty("Password is required"),
                 }
               : {}),
   });

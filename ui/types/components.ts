@@ -209,8 +209,8 @@ export type M365Credentials = {
   client_id: string;
   client_secret: string;
   tenant_id: string;
-  user?: string;
-  password?: string;
+  user: string;
+  password: string;
   secretName: string;
   providerId: string;
 };
