@@ -1,4 +1,4 @@
-# Developer Guide
+# Introduction to developing in Prowler
 
 Extending Prowler
 
