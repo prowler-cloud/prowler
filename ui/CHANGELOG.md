@@ -19,7 +19,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
-- Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
+- Add Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
 
 ### 🔄 Changed
 
