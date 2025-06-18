@@ -3,7 +3,7 @@ from prowler.providers.azure.services.storage.storage_client import storage_clie
 from prowler.providers.azure.services.storage.storage_service import ReplicationSettings
 
 
-class storage_account_geo_redundant_enabled(Check):
+class storage_geo_redundant_enabled(Check):
     """Check if geo-redundant storage (GRS) is enabled on critical Azure Storage Accounts.
 
     Attributes:

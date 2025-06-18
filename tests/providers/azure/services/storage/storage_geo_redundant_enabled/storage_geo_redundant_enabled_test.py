@@ -11,7 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_storage_account_geo_redundant_enabled:
+class Test_storage_geo_redundant_enabled:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
         storage_client.storage_accounts = {}
@@ -22,19 +22,19 @@ class Test_storage_account_geo_redundant_enabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled import (
-                storage_account_geo_redundant_enabled,
+            from prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled import (
+                storage_geo_redundant_enabled,
             )
 
-            check = storage_account_geo_redundant_enabled()
+            check = storage_geo_redundant_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_storage_account_geo_redundant_enabled(self):
+    def test_storage_geo_redundant_enabled(self):
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account GRS"
         storage_client = mock.MagicMock()
@@ -64,15 +64,15 @@ class Test_storage_account_geo_redundant_enabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled import (
-                storage_account_geo_redundant_enabled,
+            from prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled import (
+                storage_geo_redundant_enabled,
             )
 
-            check = storage_account_geo_redundant_enabled()
+            check = storage_geo_redundant_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -115,15 +115,15 @@ class Test_storage_account_geo_redundant_enabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_account_geo_redundant_enabled.storage_account_geo_redundant_enabled import (
-                storage_account_geo_redundant_enabled,
+            from prowler.providers.azure.services.storage.storage_geo_redundant_enabled.storage_geo_redundant_enabled import (
+                storage_geo_redundant_enabled,
             )
 
-            check = storage_account_geo_redundant_enabled()
+            check = storage_geo_redundant_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
