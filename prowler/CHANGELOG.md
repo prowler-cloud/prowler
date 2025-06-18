@@ -34,6 +34,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - ISO 27001 2022 for M365 provider. [(#7985)](https://github.com/prowler-cloud/prowler/pull/7985)
 - `codebuild_project_uses_allowed_github_organizations` check for AWS provider [(#7595)](https://github.com/prowler-cloud/prowler/pull/7595)
 - IaC provider [(#7852)](https://github.com/prowler-cloud/prowler/pull/7852)
+- Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
 
 ---
 
