@@ -1,13 +1,16 @@
-import { getAIKey } from "@/actions/lighthouse/lighthouse";
+import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
 
 export default async function AIChatbot() {
-  const apiKey = await getAIKey();
+  const config = await getLighthouseConfig();
+
+  const hasConfig = !!config;
+  const isActive = config?.attributes?.is_active ?? false;
 
   return (
     <ContentLayout title="Cloud Security Analyst" icon="lucide:bot">
-      <Chat hasApiKey={!!apiKey} />
+      <Chat hasConfig={hasConfig} isActive={isActive} />
     </ContentLayout>
   );
 }

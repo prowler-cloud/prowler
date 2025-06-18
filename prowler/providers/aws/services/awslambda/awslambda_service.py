@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 import requests
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -196,12 +196,12 @@ class Function(BaseModel):
     name: str
     arn: str
     security_groups: list
-    runtime: Optional[str]
+    runtime: Optional[str] = None
     environment: dict = None
     region: str
-    policy: dict = None
+    policy: dict = {}
     code: LambdaCode = None
     url_config: URLConfig = None
-    vpc_id: Optional[str]
-    subnet_ids: Optional[set]
+    vpc_id: Optional[str] = None
+    subnet_ids: Optional[set] = None
     tags: Optional[list] = []
