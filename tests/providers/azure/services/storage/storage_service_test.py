@@ -3,8 +3,8 @@ from unittest.mock import patch
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
-    ReplicationSettings,
     FileShare,
+    ReplicationSettings,
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -123,7 +123,6 @@ class Test_Storage_Service:
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].replication_settings
             == ReplicationSettings.STANDARD_LRS
-            is True
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
