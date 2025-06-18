@@ -3,11 +3,11 @@ import { Suspense } from "react";
 
 import { getProvider, getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
-import { FilterControls, filterScans } from "@/components/filters";
 import {
   AutoRefresh,
   NoProvidersAdded,
   NoProvidersConnected,
+  ScansFilters,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -71,18 +71,6 @@ export default async function Scans({
     ? createProviderDetailsMapping(providerUIDs, providersData)
     : [];
 
-  // Update the Provider UID filter
-  const updatedFilters = filterScans.map((filter) => {
-    if (filter.key === "provider_uid__in") {
-      return {
-        ...filter,
-        values: providerUIDs,
-        valueLabelMapping: providerDetails,
-      };
-    }
-    return filter;
-  });
-
   if (thereIsNoProviders) {
     return (
       <ContentLayout title="Scans" icon="lucide:scan-search">
@@ -104,7 +92,10 @@ export default async function Scans({
       <>
         <AutoRefresh hasExecutingScan={hasExecutingScan} />
         <LaunchScanWorkflow providers={providerInfo} />
-        <FilterControls customFilters={updatedFilters || []} />
+        <ScansFilters
+          providerUIDs={providerUIDs}
+          providerDetails={providerDetails}
+        />
         <Spacer y={8} />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
           <SSRDataTableScans searchParams={searchParams} />
