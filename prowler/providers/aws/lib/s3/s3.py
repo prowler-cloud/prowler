@@ -317,4 +317,4 @@ class S3:
         except Exception as error:
             if raise_on_exception:
                 raise S3TestConnectionError(original_exception=error)
-            return False
+            return Connection(is_connected=False, error=error)

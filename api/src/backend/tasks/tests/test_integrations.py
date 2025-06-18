@@ -147,3 +147,31 @@ class TestS3IntegrationUploads:
         mock_logger.error.assert_called_once_with(
             "No S3 integrations found for provider provider"
         )
+
+    @patch(
+        "tasks.jobs.integrations.get_s3_client_from_integration",
+        side_effect=Exception("failed"),
+    )
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.logger")
+    def test_upload_s3_integration_logs_connection_exception_and_continues(
+        self, mock_logger, mock_integration_model, mock_rls, mock_get_s3
+    ):
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+
+        integration = MagicMock()
+        integration.id = "i-1"
+        integration.configuration = {
+            "bucket_name": "bucket",
+            "output_directory": "prefix",
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        result = upload_s3_integration(tenant_id, provider_id, "/tmp/fake")
+
+        assert result is False
+        mock_logger.error.assert_any_call(
+            "S3 connection failed for integration i-1: failed"
+        )
