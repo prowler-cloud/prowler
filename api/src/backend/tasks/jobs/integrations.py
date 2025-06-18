@@ -64,6 +64,10 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str):
             integration_type=Integration.IntegrationChoices.S3,
         )
 
+    if not integrations:
+        logger.error(f"No S3 integrations found for provider {provider_id}")
+        return
+
     for integration in integrations:
         integration_configuration = integration.configuration
         integration_bucket_name = integration_configuration.get("bucket_name")
@@ -107,5 +111,3 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str):
             logger.error(
                 f"S3 upload failed for integration {integration.id}: {s3.error}"
             )
-    else:
-        logger.error(f"No S3 integrations found for provider {provider_id}")
