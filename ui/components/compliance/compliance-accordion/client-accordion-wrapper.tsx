@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { Accordion, AccordionItemProps } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 
 export const ClientAccordionWrapper = ({
   items,
@@ -57,17 +56,15 @@ export const ClientAccordionWrapper = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div>
       {!hideExpandButton && (
-        <div className="flex justify-end">
-          <CustomButton
-            variant="flat"
-            size="sm"
-            onPress={handleToggleExpand}
-            ariaLabel={isExpanded ? "Collapse all" : "Expand all"}
+        <div className="mt-[-16px] flex justify-end text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+          <button
+            onClick={handleToggleExpand}
+            aria-label={isExpanded ? "Collapse all" : "Expand all"}
           >
             {isExpanded ? "Collapse all" : "Expand all"}
-          </CustomButton>
+          </button>
         </div>
       )}
       <Accordion

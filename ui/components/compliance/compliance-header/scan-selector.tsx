@@ -26,7 +26,8 @@ export const ScanSelector = ({
       aria-label="Select a Scan"
       placeholder="Select a scan"
       classNames={{
-        trigger: "w-full min-w-[365px]",
+        trigger: "w-full min-w-[365px] rounded-lg",
+        popoverContent: "rounded-lg",
       }}
       size="lg"
       labelPlacement="outside"

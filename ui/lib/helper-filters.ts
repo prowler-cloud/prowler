@@ -109,6 +109,7 @@ export const createScanDetailsMapping = (
 
     return {
       [scan.id]: {
+        id: scan.id,
         providerInfo: {
           provider: providerInfo?.provider || "aws",
           alias: providerInfo?.alias,

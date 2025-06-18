@@ -1,0 +1,896 @@
+{
+  "Framework": "ISO27001",
+  "Version": "2022",
+  "Provider": "M365",
+  "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
+  "Requirements": [
+    {
+      "Id": "A.5.1",
+      "Description": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "Name": "Policies for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.1",
+          "Objetive_Name": "Policies for information security",
+          "Check_Summary": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur."
+        }
+      ],
+      "Checks": [
+        "defender_antiphishing_policy_configured",
+        "defender_antispam_policy_inbound_no_allowed_domains",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.2",
+      "Description": "Information security roles and responsibilities should be defined and allocated according to the organisation needs.",
+      "Name": "Roles and Responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.2",
+          "Objetive_Name": "Roles and Responsibilities",
+          "Check_Summary": "Information security roles and responsibilities should be defined and allocated according to the organisation needs."
+        }
+      ],
+      "Checks": [
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_mfa_enabled",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "exchange_roles_assignment_policy_addins_disabled",
+        "teams_meeting_external_control_disabled",
+        "admincenter_external_calendar_sharing_disabled",
+        "admincenter_groups_not_public_visibility",
+        "admincenter_organization_customer_lockbox_enabled",
+        "admincenter_settings_password_never_expire",
+        "admincenter_users_admins_reduced_license_footprint",
+        "admincenter_users_between_two_and_four_global_admins",
+        "defender_antispam_outbound_policy_configured",
+        "entra_admin_consent_workflow_enabled",
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_cloud_only",
+        "entra_admin_users_mfa_enabled",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ]
+    },
+    {
+      "Id": "A.5.3",
+      "Description": "Conflicting duties and conflicting areas of responsibility should be segregated.",
+      "Name": "Segregation of Duties",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.3",
+          "Objetive_Name": "Segregation of Duties",
+          "Check_Summary": "Conflicting duties and conflicting areas of responsibility should be segregated."
+        }
+      ],
+      "Checks": [
+        "entra_admin_consent_workflow_enabled",
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_cloud_only",
+        "entra_admin_users_mfa_enabled",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ]
+    },
+    {
+      "Id": "A.5.5",
+      "Description": "The organisation should establish and maintain contact with relevant authorities.",
+      "Name": "Contact With Authorities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.5",
+          "Objetive_Name": "Contact With Authorities",
+          "Check_Summary": "The organisation should establish and maintain contact with relevant authorities."
+        }
+      ],
+      "Checks": [
+        "defender_antispam_outbound_policy_configured",
+        "defender_malware_policy_notifications_internal_users_malware_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.7",
+      "Description": "Information relating to information security threats should be collected and analysed to produce threat intelligence.",
+      "Name": "Threat Intelligence",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.7",
+          "Objetive_Name": "Threat Intelligence",
+          "Check_Summary": "Information relating to information security threats should be collected and analysed to produce threat intelligence."
+        }
+      ],
+      "Checks": [
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled",
+        "defender_antispam_outbound_policy_configured",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_antiphishing_policy_configured",
+        "entra_admin_users_phishing_resistant_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.10",
+      "Description": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented.",
+      "Name": "Acceptable Use Of Information And Other Associated Assets",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.10",
+          "Objetive_Name": "Acceptable Use Of Information And Other Associated Assets",
+          "Check_Summary": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_managed",
+        "sharepoint_external_sharing_restricted",
+        "entra_admin_portals_access_restriction",
+        "entra_policy_guest_users_access_restrictions"
+      ]
+    },
+    {
+      "Id": "A.5.13",
+      "Description": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation.",
+      "Name": "Labelling Of Information",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.13",
+          "Objetive_Name": "Labelling Of Information",
+          "Check_Summary": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_managed",
+        "exchange_external_email_tagging_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.14",
+      "Description": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties.",
+      "Name": "Information Transfer",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.14",
+          "Objetive_Name": "Information Transfer",
+          "Check_Summary": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties."
+        }
+      ],
+      "Checks": [
+        "teams_external_file_sharing_restricted",
+        "sharepoint_external_sharing_managed",
+        "sharepoint_external_sharing_restricted",
+        "sharepoint_guest_sharing_restricted",
+        "sharepoint_modern_authentication_required",
+        "sharepoint_onedrive_sync_restricted_unmanaged_devices",
+        "teams_external_file_sharing_restricted",
+        "exchange_transport_config_smtp_auth_disabled",
+        "exchange_transport_rules_mail_forwarding_disabled",
+        "exchange_transport_rules_whitelist_disabled"
+      ]
+    },
+    {
+      "Id": "A.5.15",
+      "Description": "Rules to control physical and logical access to information and other associated assets should be established",
+      "Name": "Access Control",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.15",
+          "Objetive_Name": "Access Control",
+          "Check_Summary": "Rules to control physical and logical access to information and other associated assets should be established"
+        }
+      ],
+      "Checks": [
+        "admincenter_users_admins_reduced_license_footprint",
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_policy_guest_users_access_restrictions"
+      ]
+    },
+    {
+      "Id": "A.5.16",
+      "Description": "The full lifecycle of identities should be managed.",
+      "Name": "Identity Management",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.16",
+          "Objetive_Name": "Identity Management",
+          "Check_Summary": "The full lifecycle of identities should be managed."
+        }
+      ],
+      "Checks": [
+        "admincenter_settings_password_never_expire"
+      ]
+    },
+    {
+      "Id": "A.5.17",
+      "Description": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information.",
+      "Name": "Authentication Information",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.17",
+          "Objetive_Name": "Authentication Information",
+          "Check_Summary": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information."
+        }
+      ],
+      "Checks": [
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_admin_users_mfa_enabled",
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_legacy_authentication_blocked",
+        "entra_managed_device_required_for_authentication",
+        "entra_users_mfa_enabled",
+        "exchange_organization_modern_authentication_enabled",
+        "exchange_transport_config_smtp_auth_disabled",
+        "sharepoint_modern_authentication_required"
+      ]
+    },
+    {
+      "Id": "A.5.18",
+      "Description": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisations topic-specific policy on and rules for access control.",
+      "Name": "Access Rights",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.18",
+          "Objetive_Name": "Access Rights",
+          "Check_Summary": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisations topic-specific policy on and rules for access control."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_restricted",
+        "sharepoint_external_sharing_managed",
+        "sharepoint_guest_sharing_restricted",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_admin_portals_access_restriction"
+      ]
+    },
+    {
+      "Id": "A.5.19",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of suppliers products or services.",
+      "Name": "Information Security In Supplier Relationships",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.19",
+          "Objetive_Name": "Information Security In Supplier Relationships",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of suppliers products or services."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_managed",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.21",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain.",
+      "Name": "Managing Information Security In The ICT Supply Chain",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.21",
+          "Objetive_Name": "Managing Information Security In The ICT Supply Chain",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_managed",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.22",
+      "Description": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+      "Name": "Monitor, Review And Change Management Of Supplier Services",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.22",
+          "Objetive_Name": "Monitor, Review And Change Management Of Supplier Services",
+          "Check_Summary": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery."
+        }
+      ],
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.24",
+      "Description": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities.",
+      "Name": "Information Security Incident Management Planning and Preparation",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.24",
+          "Objetive_Name": "Information Security Incident Management Planning and Preparation",
+          "Check_Summary": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities."
+        }
+      ],
+      "Checks": [
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_mfa_enabled",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "exchange_roles_assignment_policy_addins_disabled"
+      ]
+    },
+    {
+      "Id": "A.5.25",
+      "Description": "The organisation should assess information security events and decide if they are to be categorised as information security incidents.",
+      "Name": "Assessment And Decision On Information Security Events",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.25",
+          "Objetive_Name": "Assessment And Decision On Information Security Events",
+          "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
+        }
+      ],
+      "Checks": [
+        "defender_antispam_outbound_policy_configured",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+        "defender_antispam_connection_filter_policy_safe_list_off",
+        "defender_antispam_outbound_policy_configured",
+        "defender_antispam_outbound_policy_forwarding_disabled",
+        "defender_antispam_policy_inbound_no_allowed_domains"
+      ]
+    },
+    {
+      "Id": "A.5.26",
+      "Description": "Information security incidents should be responded to in accordance with the documented procedures.",
+      "Name": "Response To Information Security Incidents",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.26",
+          "Objetive_Name": "Response To Information Security Incidents",
+          "Check_Summary": "Information security incidents should be responded to in accordance with the documented procedures."
+        }
+      ],
+      "Checks": [
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_antispam_outbound_policy_configured",
+        "defender_malware_policy_notifications_internal_users_malware_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.28",
+      "Description": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+      "Name": "Collection Of Evidence",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.28",
+          "Objetive_Name": "Collection Of Evidence",
+          "Check_Summary": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events."
+        }
+      ],
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.33",
+      "Description": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release.",
+      "Name": "Protection Of Records",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.33",
+          "Objetive_Name": "Protection Of Records",
+          "Check_Summary": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release."
+        }
+      ],
+      "Checks": [
+        "admincenter_groups_not_public_visibility",
+        "teams_meeting_recording_disabled"
+      ]
+    },
+    {
+      "Id": "A.5.34",
+      "Description": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements.",
+      "Name": "Privacy And Protection Of PII",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.34",
+          "Objetive_Name": "Privacy And Protection Of PII",
+          "Check_Summary": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_restricted",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.36",
+      "Description": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. ",
+      "Name": "Compliance With Policies, Rules And Standards For Information Security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.36",
+          "Objetive_Name": "Compliance With Policies, Rules And Standards For Information Security",
+          "Check_Summary": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. "
+        }
+      ],
+      "Checks": [
+        "admincenter_settings_password_never_expire",
+        "defender_antiphishing_policy_configured",
+        "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+        "defender_antispam_connection_filter_policy_safe_list_off",
+        "defender_antispam_outbound_policy_configured",
+        "defender_antispam_outbound_policy_forwarding_disabled",
+        "defender_antispam_policy_inbound_no_allowed_domains",
+        "defender_chat_report_policy_configured",
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled",
+        "entra_legacy_authentication_blocked",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "exchange_mailbox_policy_additional_storage_restricted",
+        "exchange_roles_assignment_policy_addins_disabled"
+      ]
+    },
+    {
+      "Id": "A.5.37",
+      "Description": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. ",
+      "Name": "Documented Operating Procedures",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.37",
+          "Objetive_Name": "Documented Operating Procedures",
+          "Check_Summary": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. "
+        }
+      ],
+      "Checks": [
+        "defender_antiphishing_policy_configured",
+        "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+        "defender_antispam_connection_filter_policy_safe_list_off",
+        "defender_antispam_outbound_policy_configured",
+        "defender_antispam_outbound_policy_forwarding_disabled",
+        "defender_antispam_policy_inbound_no_allowed_domains"
+      ]
+    },
+    {
+      "Id": "A.6.4",
+      "Description": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation.",
+      "Name": "Disciplinary Process",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.4",
+          "Objetive_Name": "Disciplinary Process",
+          "Check_Summary": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation."
+        }
+      ],
+      "Checks": [
+        "defender_antispam_outbound_policy_configured",
+        "defender_malware_policy_notifications_internal_users_malware_enabled"
+      ]
+    },
+    {
+      "Id": "A.6.7",
+      "Description": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisations premises.",
+      "Name": "Remote Working",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.7",
+          "Objetive_Name": "Remote Working",
+          "Check_Summary": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisations premises."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_restricted",
+        "sharepoint_external_sharing_managed",
+        "teams_external_file_sharing_restricted"
+      ]
+    },
+    {
+      "Id": "A.6.8",
+      "Description": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner.",
+      "Name": "Information Security Event Reporting",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.8",
+          "Objetive_Name": "Information Security Event Reporting",
+          "Check_Summary": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner."
+        }
+      ],
+      "Checks": [
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied"
+      ]
+    },
+    {
+      "Id": "A.7.4",
+      "Description": "Premises should be continuously monitored for unauthorised physical access.",
+      "Name": "Physical Security Monitoring",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.4",
+          "Objetive_Name": "Physical Security Monitoring",
+          "Check_Summary": "Premises should be continuously monitored for unauthorised physical access."
+        }
+      ],
+      "Checks": [
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_admin_portals_access_restriction",
+        "entra_policy_guest_users_access_restrictions"
+      ]
+    },
+    {
+      "Id": "A.7.10",
+      "Description": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements.",
+      "Name": "Storage Media",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.10",
+          "Objetive_Name": "Storage Media",
+          "Check_Summary": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements."
+        }
+      ],
+      "Checks": [
+        "exchange_mailbox_policy_additional_storage_restricted",
+        "teams_external_file_sharing_restricted"
+      ]
+    },
+    {
+      "Id": "A.7.14",
+      "Description": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+      "Name": "Secure Disposal Or Re-Use Of Equipment",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.14",
+          "Objetive_Name": "Secure Disposal Or Re-Use Of Equipment",
+          "Check_Summary": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use."
+        }
+      ],
+      "Checks": [
+        "exchange_mailbox_policy_additional_storage_restricted",
+        "teams_external_file_sharing_restricted"
+      ]
+    },
+    {
+      "Id": "A.8.1",
+      "Description": "Information stored on, processed by or accessible via user endpoint devices should be protected.",
+      "Name": "User Endpoint Devices",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.1",
+          "Objetive_Name": "User Endpoint Devices",
+          "Check_Summary": "Information stored on, processed by or accessible via user endpoint devices should be protected."
+        }
+      ],
+      "Checks": [
+        "entra_managed_device_required_for_authentication",
+        "entra_users_mfa_enabled",
+        "entra_managed_device_required_for_mfa_registration",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_users_mfa_capable"
+      ]
+    },
+    {
+      "Id": "A.8.2",
+      "Description": "The allocation and use of privileged access rights should be restricted and managed.",
+      "Name": "Privileged Access Rights",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.2",
+          "Objetive_Name": "Privileged Access Rights",
+          "Check_Summary": "The allocation and use of privileged access rights should be restricted and managed."
+        }
+      ],
+      "Checks": [
+        "admincenter_external_calendar_sharing_disabled",
+        "admincenter_groups_not_public_visibility",
+        "admincenter_organization_customer_lockbox_enabled",
+        "admincenter_settings_password_never_expire",
+        "admincenter_users_admins_reduced_license_footprint",
+        "admincenter_users_between_two_and_four_global_admins",
+        "defender_antispam_outbound_policy_configured",
+        "entra_admin_consent_workflow_enabled",
+        "entra_admin_portals_access_restriction",
+        "entra_admin_users_cloud_only",
+        "entra_admin_users_mfa_enabled",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ]
+    },
+    {
+      "Id": "A.8.3",
+      "Description": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control.",
+      "Name": "Information Access Restriction",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.3",
+          "Objetive_Name": "Information Access Restriction",
+          "Check_Summary": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control."
+        }
+      ],
+      "Checks": [
+        "sharepoint_external_sharing_restricted",
+        "entra_admin_portals_access_restriction",
+        "entra_policy_guest_users_access_restrictions"
+      ]
+    },
+    {
+      "Id": "A.8.5",
+      "Description": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control.",
+      "Name": "Secure Authentication",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.5",
+          "Objetive_Name": "Secure Authentication",
+          "Check_Summary": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control."
+        }
+      ],
+      "Checks": [
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_admin_users_mfa_enabled",
+        "entra_managed_device_required_for_authentication",
+        "entra_users_mfa_enabled",
+        "entra_identity_protection_sign_in_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.7",
+      "Description": "Protection against malware should be implemented and supported by appropriate user awareness.",
+      "Name": "Protection Against Malware",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.7",
+          "Objetive_Name": "Protection Against Malware",
+          "Check_Summary": "Protection against malware should be implemented and supported by appropriate user awareness."
+        }
+      ],
+      "Checks": [
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "teams_external_domains_restricted",
+        "teams_external_users_cannot_start_conversations"
+      ]
+    },
+    {
+      "Id": "A.8.8",
+      "Description": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken.",
+      "Name": "Management of Technical Vulnerabilities",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.8",
+          "Objetive_Name": "Management of Technical Vulnerabilities",
+          "Check_Summary": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken."
+        }
+      ],
+      "Checks": [
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_malware_policy_notifications_internal_users_malware_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.12",
+      "Description": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+      "Name": "Data Leakage Prevention",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.12",
+          "Objetive_Name": "Data Leakage Prevention",
+          "Check_Summary": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information."
+        }
+      ],
+      "Checks": [
+        "defender_antiphishing_policy_configured",
+        "entra_admin_users_phishing_resistant_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.15",
+      "Description": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed.",
+      "Name": "Logging",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.15",
+          "Objetive_Name": "Logging",
+          "Check_Summary": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed."
+        }
+      ],
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.18",
+      "Description": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled",
+      "Name": "Use of Privileged Utility Programs",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.18",
+          "Objetive_Name": "Use of Privileged Utility Programs",
+          "Check_Summary": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled"
+        }
+      ],
+      "Checks": [
+        "entra_thirdparty_integrated_apps_not_allowed",
+        "entra_policy_restricts_user_consent_for_apps",
+        "teams_external_domains_restricted",
+        "teams_external_users_cannot_start_conversations"
+      ]
+    },
+    {
+      "Id": "A.8.19",
+      "Description": "Procedures and measures should be implemented to securely manage software installation on operational systems.",
+      "Name": "Installation of Software on Operational Systems",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.19",
+          "Objetive_Name": "Installation of Software on Operational Systems",
+          "Check_Summary": "Procedures and measures should be implemented to securely manage software installation on operational systems."
+        }
+      ],
+      "Checks": [
+        "admincenter_users_admins_reduced_license_footprint"
+      ]
+    },
+    {
+      "Id": "A.8.20",
+      "Description": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications.",
+      "Name": "Network Security",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.20",
+          "Objetive_Name": "Network Security",
+          "Check_Summary": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications."
+        }
+      ],
+      "Checks": [
+        "teams_external_file_sharing_restricted",
+        "admincenter_external_calendar_sharing_disabled"
+      ]
+    },
+    {
+      "Id": "A.8.21",
+      "Description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "Name": "Security of Network Services",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.21",
+          "Objetive_Name": "Security of Network Services",
+          "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+        }
+      ],
+      "Checks": [
+        "defender_antispam_policy_inbound_no_allowed_domains",
+        "defender_domain_dkim_enabled",
+        "exchange_transport_rules_whitelist_disabled",
+        "sharepoint_external_sharing_managed",
+        "teams_external_domains_restricted"
+      ]
+    },
+    {
+      "Id": "A.8.23",
+      "Description": "Access to external websites should be managed to reduce exposure to malicious content.",
+      "Name": "Web Filtering",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.23",
+          "Objetive_Name": "Web Filtering",
+          "Check_Summary": "Access to external websites should be managed to reduce exposure to malicious content."
+        }
+      ],
+      "Checks": [
+        "teams_external_domains_restricted",
+        "teams_external_users_cannot_start_conversations",
+        "sharepoint_external_sharing_restricted",
+        "sharepoint_external_sharing_managed"
+      ]
+    },
+    {
+      "Id": "A.8.26",
+      "Description": "Information security requirements should be identified, specified and approved when developing or acquiring applications.",
+      "Name": "Application Security Requirements",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.26",
+          "Objetive_Name": "Application Security Requirements",
+          "Check_Summary": "Information security requirements should be identified, specified and approved when developing or acquiring applications."
+        }
+      ],
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps",
+        "admincenter_users_admins_reduced_license_footprint",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "entra_thirdparty_integrated_apps_not_allowed",
+        "sharepoint_modern_authentication_required"
+      ]
+    },
+    {
+      "Id": "A.8.30",
+      "Description": "The organisation should direct, monitor and review the activities related to outsourced system development.",
+      "Name": "Outsourced Development",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.30",
+          "Objetive_Name": "Outsourced Development",
+          "Check_Summary": "The organisation should direct, monitor and review the activities related to outsourced system development."
+        }
+      ],
+      "Checks": [
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.34",
+      "Description": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management.",
+      "Name": "Protection of Information Systems During Audit Testing",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.34",
+          "Objetive_Name": "Protection of Information Systems During Audit Testing",
+          "Check_Summary": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management."
+        }
+      ],
+      "Checks": [
+        "exchange_organization_mailbox_auditing_enabled",
+        "exchange_mailbox_audit_bypass_disabled",
+        "exchange_user_mailbox_auditing_enabled",
+        "purview_audit_log_search_enabled"
+      ]
+    }
+  ]
+}
