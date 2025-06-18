@@ -56,16 +56,19 @@ export const ComplianceHeader = ({
 
   return (
     <>
-      {showSearch && <FilterControls search />}
-      <Spacer y={8} />
-      {showProviders && <DataCompliance scans={scans} />}
-      {allFilters.length > 0 && (
+      {(showProviders || showSearch) && (
         <>
-          {showProviders && <Spacer y={8} />}
-          <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
+          <div className="flex items-center justify-start gap-4">
+            {showProviders && <DataCompliance scans={scans} />}
+            {showSearch && <FilterControls search />}
+          </div>
+          <Spacer y={8} />
         </>
       )}
-      <Spacer y={12} />
+      {allFilters.length > 0 && (
+        <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
+      )}
+      <Spacer y={8} />
     </>
   );
 };

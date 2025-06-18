@@ -79,9 +79,16 @@ def before_send(event, hint):
         log_msg = hint["log_record"].msg
         log_lvl = hint["log_record"].levelno
 
-        # Handle Error events and discard the rest
-        if log_lvl == 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
-            return
+        # Handle Error and Critical events and discard the rest
+        if log_lvl <= 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
+            return None  # Explicitly return None to drop the event
+
+    # Ignore exceptions with the ignored_exceptions
+    if "exc_info" in hint and hint["exc_info"]:
+        exc_value = str(hint["exc_info"][1])
+        if any(ignored in exc_value for ignored in IGNORED_EXCEPTIONS):
+            return None  # Explicitly return None to drop the event
+
     return event
 
 

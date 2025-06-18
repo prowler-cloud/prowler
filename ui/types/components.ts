@@ -211,16 +211,16 @@ export type M365Credentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;
   [ProviderCredentialFields.CLIENT_SECRET]: string;
   [ProviderCredentialFields.TENANT_ID]: string;
-  [ProviderCredentialFields.USER]: string;
-  [ProviderCredentialFields.PASSWORD]: string;
-  providerId: string;
+  [ProviderCredentialFields.USER]?: string;
+  [ProviderCredentialFields.PASSWORD]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
-  providerId: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPServiceAccountKey = {

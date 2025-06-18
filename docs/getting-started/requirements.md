@@ -238,6 +238,9 @@ User Credentials for Microsoft PowerShell module authentication.
     ❌ Using a domain different from all of the assigned domains on the tenant will fail.
 
     ???+ warning
+        If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
+
+    ???+ warning
         The user must not be MFA capable. Microsoft does not allow MFA capable users to authenticate programmatically. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-desktop-acquire-token-username-password?tabs=dotnet) for more information.
 
     Ensure you are using the right domain for the user you are trying to authenticate with.
