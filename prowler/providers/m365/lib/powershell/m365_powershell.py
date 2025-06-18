@@ -181,6 +181,8 @@ class M365PowerShell(PowerShellSession):
             if "access_token" not in result:
                 raise Exception(f"MsGraph Error {result.get('error_description')}")
 
+            return True
+
         else:
             return self.execute("Write-Output $graphToken") != ""
 
