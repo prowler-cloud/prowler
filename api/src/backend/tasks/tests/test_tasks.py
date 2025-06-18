@@ -3,7 +3,12 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tasks.tasks import _perform_scan_complete_tasks, generate_outputs_task
+from tasks.tasks import (
+    _perform_scan_complete_tasks,
+    generate_outputs_task,
+    check_integrations_task,
+    s3_integration_task,
+)
 
 
 # TODO Move this to outputs/reports jobs
@@ -106,7 +111,7 @@ class TestGenerateOutputs:
                 tenant_id=self.tenant_id,
             )
 
-            assert result == {"upload": True}
+            assert result == {"upload": True, "output_directory": "/tmp"}
             mock_scan_update.return_value.update.assert_called_once_with(
                 output_location="s3://bucket/zipped.zip"
             )
@@ -157,7 +162,7 @@ class TestGenerateOutputs:
                 tenant_id=self.tenant_id,
             )
 
-            assert result == {"upload": False}
+            assert result == {"upload": False, "output_directory": "/tmp"}
             mock_scan_update.return_value.update.assert_called_once()
 
     def test_generate_outputs_triggers_html_extra_update(self):
@@ -283,7 +288,7 @@ class TestGenerateOutputs:
                     tenant_id=self.tenant_id,
                 )
 
-        assert result == {"upload": True}
+        assert result == {"upload": True, "output_directory": ""}
         assert len(writer_instances) == 1
         writer = writer_instances[0]
         assert writer.transform_called == 1
@@ -356,7 +361,7 @@ class TestGenerateOutputs:
         assert len(writer_instances) == 1
         writer = writer_instances[0]
         assert writer.transform_calls == [([raw2], compliance_obj, "cis")]
-        assert result == {"upload": True}
+        assert result == {"upload": True, "output_directory": ""}
 
     def test_generate_outputs_logs_rmtree_exception(self, caplog):
         mock_finding_output = MagicMock()
@@ -436,3 +441,87 @@ class TestScanCompleteTasks:
             provider_id="provider-id",
             tenant_id="tenant-id",
         )
+
+
+@pytest.mark.django_db
+class TestCheckIntegrationsTask:
+    def setup_method(self):
+        self.scan_id = str(uuid.uuid4())
+        self.provider_id = str(uuid.uuid4())
+        self.tenant_id = str(uuid.uuid4())
+        self.output_directory = "/tmp/some-output-dir"
+
+    @patch("tasks.tasks.logger")
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.Integration")
+    def test_check_integrations_no_integrations(
+        self, mock_integration_model, mock_group, mock_logger
+    ):
+        mock_integration_model.objects.filter.return_value.exists.return_value = False
+
+        result = check_integrations_task(
+            generate_outputs_result={"output_directory": self.output_directory},
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+        )
+
+        assert result == {"integrations_processed": 0}
+        mock_logger.info.assert_any_call(
+            f"No integrations configured for provider {self.provider_id}"
+        )
+
+    @patch("tasks.tasks.logger")
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.Integration")
+    def test_check_integrations_s3_success(
+        self, mock_integration_model, mock_group, mock_logger
+    ):
+        mock_qs = MagicMock()
+        mock_qs.exists.return_value = True
+        mock_qs.count.return_value = 2
+
+        mock_integration_model.objects.filter.return_value = mock_qs
+        mock_qs.filter.return_value = mock_qs
+
+        result = check_integrations_task(
+            generate_outputs_result={"output_directory": self.output_directory},
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+        )
+
+        assert result == {"integrations_processed": 1}
+        mock_group.return_value.apply_async.assert_called_once()
+        mock_logger.info.assert_any_call("Found 2 S3 integration(s)")
+        mock_logger.info.assert_any_call("Launched 1 integration task(s)")
+
+    @patch("tasks.tasks.logger")
+    @patch("tasks.tasks.upload_s3_integration")
+    def test_s3_integration_task_success(self, mock_upload, mock_logger):
+
+        result = s3_integration_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+            output_directory=self.output_directory,
+        )
+
+        assert result == {"success": True}
+        mock_upload.assert_called_once_with(
+            self.tenant_id, self.provider_id, self.output_directory
+        )
+        mock_logger.info.assert_any_call(
+            f"S3 integration completed successfully for provider {self.provider_id}"
+        )
+
+    @patch("tasks.tasks.logger")
+    @patch("tasks.tasks.upload_s3_integration", side_effect=Exception("upload failed"))
+    def test_s3_integration_task_failure(self, mock_upload, mock_logger):
+
+        result = s3_integration_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+            output_directory=self.output_directory,
+        )
+
+        assert result["success"] is False
+        assert "upload failed" in result["error"]
+        mock_logger.error.assert_called_once()
