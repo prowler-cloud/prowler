@@ -58,6 +58,7 @@ from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
     check_lighthouse_connection_task,
+    check_integration_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -1795,7 +1796,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    "checks_to_execute": ["accessanalyzer_enabled"],
                 },
             )
 
@@ -3837,6 +3838,17 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        get_object_or_404(Integration, pk=pk)
+        with transaction.atomic():
+            task = check_integration_connection_task.delay(
+                integration_id=pk, tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 @extend_schema_view(

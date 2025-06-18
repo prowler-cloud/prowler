@@ -7,9 +7,13 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation, Processor, Provider, Resource
+from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
+from prowler.lib.outputs.jira.jira import Jira
+from prowler.lib.outputs.slack.slack import Slack
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -173,6 +177,52 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )
+
+
+def prowler_integration_connection_test(integration: Integration) -> Connection:
+    """Test the connection to a Prowler integration based on the given integration type.
+
+    Args:
+        integration (Integration): The integration object containing the integration type and associated credentials.
+
+    Returns:
+        Connection: A connection object representing the result of the connection test for the specified integration.
+    """
+    if integration.integration_type in [
+        Integration.IntegrationChoices.S3,
+        Integration.IntegrationChoices.AWS_SECURITY_HUB,
+    ]:
+        try:
+            session = AwsProvider(**integration.credentials).session.current_session
+        except Exception as e:
+            return Connection(is_connected=False, error=e)
+
+    if integration.integration_type == Integration.IntegrationChoices.S3:
+        provider = S3
+        return provider.test_connection(
+            session=session,
+            bucket_name=integration.configuration["bucket_name"],
+            raise_on_exception=False,
+        )
+    elif (
+        integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+    ):
+        provider = SecurityHub
+    elif integration.integration_type == Integration.IntegrationChoices.JIRA:
+        provider = Jira
+    elif integration.integration_type == Integration.IntegrationChoices.SLACK:
+        provider = Slack
+    else:
+        raise ValueError(
+            f"Integration type {integration.integration_type} not supported"
+        )
+
+    try:
+        prowler_provider_kwargs = integration.credentials
+    except Provider.secret.RelatedObjectDoesNotExist as secret_error:
+        return Connection(is_connected=False, error=secret_error)
+
+    return provider.test_connection(**prowler_provider_kwargs, raise_on_exception=False)
 
 
 def validate_invitation(

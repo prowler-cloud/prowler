@@ -3,8 +3,11 @@ from datetime import datetime, timezone
 import openai
 from celery.utils.log import get_task_logger
 
-from api.models import LighthouseConfiguration, Provider
-from api.utils import prowler_provider_connection_test
+from api.models import LighthouseConfiguration, Provider, Integration, Provider
+from api.utils import (
+    prowler_integration_connection_test,
+    prowler_provider_connection_test,
+)
 
 logger = get_task_logger(__name__)
 
@@ -83,3 +86,30 @@ def check_lighthouse_connection(lighthouse_config_id: str):
         lighthouse_config.is_active = False
         lighthouse_config.save()
         return {"connected": False, "error": str(e), "available_models": []}
+
+
+def check_integration_connection(integration_id: str):
+    """
+    Business logic to check the connection status of an integration.
+
+    Args:
+        integration_id (str): The primary key of the Integration instance to check.
+    """
+    integration = Integration.objects.get(pk=integration_id)
+    try:
+        result = prowler_integration_connection_test(integration)
+    except Exception as e:
+        logger.warning(
+            f"Unexpected exception checking {integration.integration_type} integration connection: {str(e)}"
+        )
+        raise e
+
+    # Update integration connection status
+    integration.connected = result.is_connected
+    integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+    integration.save()
+
+    return {
+        "connected": result.is_connected,
+        "error": str(result.error) if result.error else None,
+    }
