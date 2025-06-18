@@ -172,6 +172,9 @@ Follow these steps to assign the role:
 
     ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
 
+???+ warning
+    Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
+
 ---
 
 ### Get your encrypted password
