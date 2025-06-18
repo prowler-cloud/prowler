@@ -10,7 +10,7 @@ import {
   SkeletonTableProviders,
 } from "@/components/providers/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Providers({
@@ -22,14 +22,12 @@ export default async function Providers({
 
   return (
     <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
-      <FilterControls search />
+      <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
       <div className="flex items-center gap-4 md:justify-end">
         <ManageGroupsButton />
         <AddProviderButton />
       </div>
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterProviders || []} />
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 gap-4">
