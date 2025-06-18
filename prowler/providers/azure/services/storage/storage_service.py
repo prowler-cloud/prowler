@@ -71,7 +71,6 @@ class Storage(AzureService):
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
                             replication_settings=replication_settings,
-                            ),
                             allow_cross_tenant_replication=getattr(
                                 storage_account, "allow_cross_tenant_replication", True
                             ),
