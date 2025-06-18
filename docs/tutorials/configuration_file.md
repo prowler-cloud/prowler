@@ -11,7 +11,6 @@ Additionally, you can input a custom configuration file using the `--config-file
 ## AWS
 
 ### Configurable Checks
-
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
@@ -34,6 +33,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
+| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
 | `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
@@ -67,10 +67,10 @@ The following list includes all the AWS checks with configurable variables that 
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 
+
 ## Azure
 
 ### Configurable Checks
-
 The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
@@ -81,6 +81,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 
+
 ## GCP
 
 ### Configurable Checks
@@ -88,7 +89,6 @@ The following list includes all the Azure checks with configurable variables tha
 ## Kubernetes
 
 ### Configurable Checks
-
 The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
@@ -99,26 +99,38 @@ The following list includes all the Kubernetes checks with configurable variable
 | `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
-## Microsoft365
+
+## M365
 
 ### Configurable Checks
-
-The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
+| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
+
+
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
 ## Config YAML File Structure
 
 ???+ note
-  This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
+    This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
 
 ```yaml title="config.yaml"
 # AWS Configuration
 aws:
   # AWS Global Configuration
-  # aws.mute_non_default_regions - Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
+  # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
@@ -448,7 +460,7 @@ aws:
     ]
 
 # Azure Configuration
-Azure:
+azure:
   # Azure Network Configuration
   # azure.network_public_ip_shodan
   # TODO: create common config
@@ -506,10 +518,29 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180
+
 
 ```

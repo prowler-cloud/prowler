@@ -1,13 +1,15 @@
 # Mutelisting
 
-Muting Findings for Intentional Configurations
+**Muting Findings for Intentional Configurations**
+
 In some cases, certain AWS resources may be intentionally configured in a way that deviates from security best practices but serves a valid use case. Examples include:
 
 An AWS S3 bucket open to the Internet, used for hosting a public website.
 
 An AWS security group with an open port necessary for a specific application.
 
-Mutelist Option Behavior
+**Mutelist Option Behavior**
+
 The Mutelist option works in combination with other filtering mechanisms and modifies the output in the following way when a finding is muted:
 
 - JSON-OCSF: `status_id` is `Suppressed`.
@@ -20,14 +22,14 @@ The **Mutelist** uses both "AND" and "OR" logic to determine which resources, ch
 If any of the criteria do not match, the check is not muted.
 
 ???+ note
-  Remember that mutelist can be used with regular expressions.
+    Remember that mutelist can be used with regular expressions.
 
 ## Mutelist Specification
 
 ???+ note
-- For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
-- For GCP provider, the Account ID is the Project ID and the Region is the Zone.
-- For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
+    - For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+    - For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+    - For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
 The Mutelist file uses the [YAML](https://en.wikipedia.org/wiki/YAML) format with the following syntax:
 
@@ -202,7 +204,7 @@ prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ```
 
 ???+ note
-  Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
+    Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
 
 #### AWS DynamoDB Table ARN
 
@@ -212,26 +214,30 @@ You will need to pass the DynamoDB Mutelist Table ARN:
 prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 ```
 
-The DynamoDB Table must have the following String keys: <img src="../img/mutelist-keys.png"/>
+The DynamoDB Table must have the following String keys:
 
-- The Mutelist Table must have the following columns:
-    - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
+  <img src="../img/mutelist-keys.png"/>
 
-    - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
+The Mutelist Table must have the following columns:
 
-    - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
+  - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
 
-    - Resources (List): This field contains a list of regular expressions (regex) that applies to the resources that are wanted to be muted.
+  - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
 
-    - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be muted.
+  - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
 
-    - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the mutelist.
+  - Resources (List): This field contains a list of regular expressions (regex) that applies to the resources that are wanted to be muted.
+
+  - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be muted.
+
+  - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the mutelist.
 
 The following example will mute all resources in all accounts for the EC2 checks in the regions `eu-west-1` and `us-east-1` with the tags `environment=dev` and `environment=prod`, except the resources containing the string `test` in the account `012345678912` and region `eu-west-1` with the tag `environment=prod`:
 
 <img src="../img/mutelist-row.png"/>
+
 ???+ note
-  Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
+    Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
 
 #### AWS Lambda ARN
 

@@ -39,19 +39,19 @@ If Amazon Elastic Block Store (EBS) default encyption is not enabled, sensitive 
 
 - `ec2_ebs_default_encryption`
 
-\*Security Groups\*: Misconfigured security groups increase the attack surface.
+**Security Groups**: Misconfigured security groups increase the attack surface.
 
 Prowler scans only attached security groups to report vulnerabilities in actively used configurations. Applies to:
 
-\- 15 security group-related checks, including open ports and ingress/egress traffic rules.
+- 15 security group-related checks, including open ports and ingress/egress traffic rules.
 
-- `ec2_securitygroup_allow_ingress_from_internet_to_port_X`
-- `ec2_securitygroup_default_restrict_traffic`
-- `ec2_securitygroup_allow_wide_open_public_ipv4`
+    - `ec2_securitygroup_allow_ingress_from_internet_to_port_X`
+    - `ec2_securitygroup_default_restrict_traffic`
+    - `ec2_securitygroup_allow_wide_open_public_ipv4`
 
-\- 3 network ACL-related checks, ensuring only active ACLs with open ports are flagged.
+- 3 network ACL-related checks, ensuring only active ACLs with open ports are flagged.
 
-- `ec2_networkacl_allow_ingress_X_port`
+    - `ec2_networkacl_allow_ingress_X_port`
 
 #### AWS Glue
 
@@ -92,18 +92,18 @@ Public Access Block should be enabled at the account level. Prowler only checks 
 
 VPC settings directly impact network security and availability.
 
-\- VPC Flow Logs: Provide visibility into network traffic for security monitoring. Prowler only checks if Flow Logs are enabled for VPCs in use, i.e., those with active ENIs.
+- VPC Flow Logs: Provide visibility into network traffic for security monitoring. Prowler only checks if Flow Logs are enabled for VPCs in use, i.e., those with active ENIs.
 
-- `vpc_flow_logs_enabled`
+    - `vpc_flow_logs_enabled`
 
-\- VPC Subnet Public IP Restrictions: Prevent unintended exposure of resources to the internet. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+- VPC Subnet Public IP Restrictions: Prevent unintended exposure of resources to the internet. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
 
-- `vpc_subnet_no_public_ip_by_default`
+    - `vpc_subnet_no_public_ip_by_default`
 
-\- Separate Private and Public Subnets: Best practice to avoid exposure risks. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+- Separate Private and Public Subnets: Best practice to avoid exposure risks. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
 
-- `vpc_subnet_separate_private_public`
+    - `vpc_subnet_separate_private_public`
 
-\- Multi-AZ Subnet Distribution: VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
+- Multi-AZ Subnet Distribution: VPCs should have subnets in different availability zones to prevent a single point of failure. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
 
-- `vpc_subnet_different_az`
+    - `vpc_subnet_different_az`

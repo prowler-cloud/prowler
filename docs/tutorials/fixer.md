@@ -11,9 +11,9 @@ prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
 ???+ note
     You can see all the available fixes for each provider with the `--list-remediations` or \`--list-fixers flag.
 
-        ```sh
-        prowler <provider> --list-fixers
-        ```
+    ```sh
+    prowler <provider> --list-fixers
+    ```
 
 It's important to note that using the fixers for `Access Analyzer`, `GuardDuty`, and `SecurityHub` may incur additional costs. These AWS services might trigger actions or deploy resources that can lead to charges on your AWS account.
 
