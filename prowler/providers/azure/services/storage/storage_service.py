@@ -92,6 +92,9 @@ class Storage(AzureService):
                         container_delete_retention_policy = getattr(
                             properties, "container_delete_retention_policy", None
                         )
+                        versioning_enabled = getattr(
+                            properties, "is_versioning_enabled", False
+                        )
                         account.blob_properties = BlobProperties(
                             id=properties.id,
                             name=properties.name,
@@ -107,6 +110,7 @@ class Storage(AzureService):
                                     container_delete_retention_policy, "days", 0
                                 ),
                             ),
+                            versioning_enabled=versioning_enabled,
                         )
                     except Exception as error:
                         if (
@@ -188,6 +192,7 @@ class BlobProperties:
     type: str
     default_service_version: str
     container_delete_retention_policy: DeleteRetentionPolicy
+    versioning_enabled: bool = False
 
 
 @dataclass
