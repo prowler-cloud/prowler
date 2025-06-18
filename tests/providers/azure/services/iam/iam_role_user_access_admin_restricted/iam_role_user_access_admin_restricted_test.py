@@ -87,7 +87,7 @@ class Test_iam_role_user_access_admin_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Role assignment test-assignment in subscription subscription-name-1 grants 'User Access Administrator' to User {agent_id}."
+                == f"Role assignment test-assignment in subscription subscription-name-1 grants User Access Administrator role to User {agent_id}."
             )
             assert result[0].subscription == "subscription-name-1"
             assert result[0].resource_id == role_assignment_id
@@ -147,7 +147,7 @@ class Test_iam_role_user_access_admin_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Role assignment test-assignment in subscription subscription-name-1 is not for 'User Access Administrator' role."
+                == "Role assignment test-assignment in subscription subscription-name-1 does not grant User Access Administrator role."
             )
             assert result[0].subscription == "subscription-name-1"
             assert result[0].resource_id == role_assignment_id

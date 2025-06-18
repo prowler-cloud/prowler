@@ -21,9 +21,9 @@ class iam_role_user_access_admin_restricted(Check):
                 report.subscription = subscription_name
                 if role_assignment_name == "User Access Administrator":
                     report.status = "FAIL"
-                    report.status_extended = f"Role assignment {assignment.name} in subscription {subscription_name} grants 'User Access Administrator' to {getattr(assignment, 'agent_type', '')} {getattr(assignment, 'agent_id', '')}."
+                    report.status_extended = f"Role assignment {assignment.name} in subscription {subscription_name} grants User Access Administrator role to {getattr(assignment, 'agent_type', '')} {getattr(assignment, 'agent_id', '')}."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Role assignment {assignment.name} in subscription {subscription_name} is not for 'User Access Administrator' role."
+                    report.status_extended = f"Role assignment {assignment.name} in subscription {subscription_name} does not grant User Access Administrator role."
                 findings.append(report)
         return findings
