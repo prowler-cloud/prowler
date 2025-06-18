@@ -114,5 +114,5 @@ class DatabricksWorkspace(BaseModel):
     id: str
     name: str
     location: str
-    custom_managed_vnet_id: Optional[str]
-    managed_disk_encryption: Optional[ManagedDiskEncryption]
+    custom_managed_vnet_id: Optional[str] = None
+    managed_disk_encryption: Optional[ManagedDiskEncryption] = None
