@@ -16,8 +16,6 @@ class ComplianceOutput(Output):
     Attributes:
         _data (list): A list to store transformed data from findings.
         _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-        provider (str): The provider of the compliance assessment.
-        assessment_date (str): The date of the compliance assessment.
 
     Methods:
         __init__: Initializes the Output class with findings, optionally creates a file descriptor.
@@ -43,8 +41,6 @@ class ComplianceOutput(Output):
         self.file_descriptor = None
         # This parameter is to avoid refactoring more code, the CLI does not write in batches, the API does
         self._from_cli = from_cli
-        self.provider = compliance.Framework
-        self.assessment_date = str(timestamp)
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)
@@ -93,13 +89,3 @@ class ComplianceOutput(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-    def transform(
-        self, findings: List[Finding], compliance: Compliance, compliance_name: str
-    ) -> None:
-        # Implementation of the transform method
-        pass
-
-    def create_file_descriptor(self, file_path: str) -> None:
-        # Implementation of the create_file_descriptor method
-        pass

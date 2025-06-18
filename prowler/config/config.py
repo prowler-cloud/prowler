@@ -34,20 +34,23 @@ class Provider(str, Enum):
     NHN = "nhn"
 
 
-def get_available_compliance_frameworks():
-    """
-    get_available_compliance_frameworks returns a list of available compliance frameworks
-    """
-    compliance_frameworks = []
-    compliance_dir = (
-        pathlib.Path(os.path.dirname(os.path.realpath(__file__))).parent / "compliance"
-    )
-    for provider in Provider:
-        provider_dir = compliance_dir / provider.value
-        if provider_dir.exists():
-            for file in provider_dir.glob("*.json"):
-                compliance_frameworks.append(file.stem)
-    return compliance_frameworks
+# Compliance
+actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+
+
+def get_available_compliance_frameworks(provider=None):
+    available_compliance_frameworks = []
+    providers = [p.value for p in Provider]
+    if provider:
+        providers = [provider]
+    for provider in providers:
+        with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    available_compliance_frameworks.append(
+                        file.name.removesuffix(".json")
+                    )
+    return available_compliance_frameworks
 
 
 available_compliance_frameworks = get_available_compliance_frameworks()
