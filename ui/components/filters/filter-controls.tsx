@@ -13,6 +13,7 @@ import { CustomDatePicker } from "./custom-date-picker";
 import { CustomRegionSelection } from "./custom-region-selection";
 import { CustomSearchInput } from "./custom-search-input";
 import { CustomSelectProvider } from "./custom-select-provider";
+import { ClearFiltersButton } from "./clear-filters-button";
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
   search = false,
@@ -42,6 +43,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         {regions && <CustomRegionSelection />}
         {accounts && <CustomAccountSelection />}
         {mutedFindings && <CustomCheckboxMutedFindings />}
+        {!customFilters && showClearButton && <ClearFiltersButton />}
       </div>
       <Spacer y={8} />
       {customFilters && (

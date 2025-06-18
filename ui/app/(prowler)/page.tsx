@@ -33,9 +33,7 @@ export default function Home({
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
-      <Spacer y={4} />
       <FilterControls providers />
-      <ClearFiltersButton />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
         <div className="col-span-12 lg:col-span-4">
