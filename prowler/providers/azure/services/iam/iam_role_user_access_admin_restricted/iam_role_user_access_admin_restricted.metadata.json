@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "AzureIAMRoleassignment",
   "Description": "Checks for active assignments of the highly privileged 'User Access Administrator' role in Azure subscriptions.",
   "Risk": "Persistent assignment of this role can lead to privilege escalation and unauthorized access, increasing the risk of security breaches.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator",
