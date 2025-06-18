@@ -8,7 +8,7 @@ import {
   getFindingsByStatus,
   getProvidersOverview,
 } from "@/actions/overview/overview";
-import { FilterControls } from "@/components/filters";
+import { ClearFiltersButton, FilterControls } from "@/components/filters";
 import {
   FindingsBySeverityChart,
   FindingsByStatusChart,
@@ -35,35 +35,35 @@ export default function Home({
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
       <Spacer y={4} />
       <FilterControls providers />
-      <div className="mx-auto space-y-8 px-0 py-6">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonProvidersOverview />}>
-              <SSRProvidersOverview />
-            </Suspense>
-          </div>
+      <ClearFiltersButton />
 
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-              <SSRFindingsBySeverity searchParams={searchParams} />
-            </Suspense>
-          </div>
+      <div className="grid grid-cols-12 gap-12 lg:gap-6">
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonProvidersOverview />}>
+            <SSRProvidersOverview />
+          </Suspense>
+        </div>
 
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-              <SSRFindingsByStatus searchParams={searchParams} />
-            </Suspense>
-          </div>
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
+            <SSRFindingsBySeverity searchParams={searchParams} />
+          </Suspense>
+        </div>
 
-          <div className="col-span-12">
-            <Spacer y={16} />
-            <Suspense
-              key={searchParamsKey}
-              fallback={<SkeletonTableNewFindings />}
-            >
-              <SSRDataNewFindingsTable />
-            </Suspense>
-          </div>
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonFindingsByStatusChart />}>
+            <SSRFindingsByStatus searchParams={searchParams} />
+          </Suspense>
+        </div>
+
+        <div className="col-span-12">
+          <Spacer y={16} />
+          <Suspense
+            key={searchParamsKey}
+            fallback={<SkeletonTableNewFindings />}
+          >
+            <SSRDataNewFindingsTable />
+          </Suspense>
         </div>
       </div>
     </ContentLayout>

@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useCallback, useMemo } from "react";
 
-import { CrossIcon, CustomFilterIcon } from "@/components/icons";
+import { ClearFiltersButton } from "@/components/filters";
+import { CustomFilterIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
@@ -19,7 +20,7 @@ export const DataTableFilterCustom = ({
   defaultOpen = false,
   showClearButton = false,
 }: DataTableFilterCustomProps) => {
-  const { updateFilter, clearAllFilters } = useUrlFilters();
+  const { updateFilter } = useUrlFilters();
   const [showFilters, setShowFilters] = useState(defaultOpen);
 
   // Sort filters by index property, with fallback to original order for filters without index
@@ -61,19 +62,7 @@ export const DataTableFilterCustom = ({
           </h3>
         </CustomButton>
 
-        {showClearButton && (
-          <CustomButton
-            ariaLabel="Reset"
-            className="w-full md:w-fit"
-            onPress={clearAllFilters}
-            variant="dashed"
-            size="md"
-            endContent={<CrossIcon size={24} />}
-            radius="sm"
-          >
-            Clear all filters
-          </CustomButton>
-        )}
+        {showClearButton && <ClearFiltersButton />}
       </div>
 
       <div
