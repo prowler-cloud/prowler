@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.7.5] (Prowler UNRELEASED)
 
 ### Fixed
+- Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
 - Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
 - `apiserver_strong_ciphers_only` check for K8S provider [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
 - Handle `0` at the start and end of account uids in Prowler Dashboard [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
