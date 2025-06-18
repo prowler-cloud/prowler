@@ -1,7 +1,5 @@
 # Getting Started with GCP on Prowler Cloud/App
 
-<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding GCP" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
-
 Set up your GCP project to enable security scanning using Prowler Cloud/App.
 
 ## Requirements

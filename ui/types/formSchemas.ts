@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
 import { ProviderType } from "./providers";
 
 export const addRoleFormSchema = z.object({
@@ -42,7 +44,7 @@ export const editScanFormSchema = (currentName: string) =>
 
 export const onDemandScanFormSchema = () =>
   z.object({
-    providerId: z.string(),
+    [ProviderCredentialFields.PROVIDER_ID]: z.string(),
     scanName: z.string().optional(),
     scannerArgs: z
       .object({
@@ -73,30 +75,29 @@ export const addProviderFormSchema = z
     z.discriminatedUnion("providerType", [
       z.object({
         providerType: z.literal("aws"),
-        providerAlias: z.string(),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
       z.object({
         providerType: z.literal("azure"),
-        providerAlias: z.string(),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("m365"),
-        providerAlias: z.string(),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
-        awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("gcp"),
-        providerAlias: z.string(),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("kubernetes"),
-        providerAlias: z.string(),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
@@ -104,73 +105,117 @@ export const addProviderFormSchema = z
   );
 
 export const addCredentialsFormSchema = (providerType: string) =>
-  z.object({
-    secretName: z.string().optional(),
-    providerId: z.string(),
-    providerType: z.string(),
-    ...(providerType === "aws"
-      ? {
-          aws_access_key_id: z
-            .string()
-            .nonempty("AWS Access Key ID is required"),
-          aws_secret_access_key: z
-            .string()
-            .nonempty("AWS Secret Access Key is required"),
-          aws_session_token: z.string().optional(),
-        }
-      : providerType === "azure"
+  z
+    .object({
+      [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+      [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+      ...(providerType === "aws"
         ? {
-            client_id: z.string().nonempty("Client ID is required"),
-            client_secret: z.string().nonempty("Client Secret is required"),
-            tenant_id: z.string().nonempty("Tenant ID is required"),
+            [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
+              .string()
+              .nonempty("AWS Access Key ID is required"),
+            [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
+              .string()
+              .nonempty("AWS Secret Access Key is required"),
+            [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
           }
-        : providerType === "gcp"
+        : providerType === "azure"
           ? {
-              client_id: z.string().nonempty("Client ID is required"),
-              client_secret: z.string().nonempty("Client Secret is required"),
-              refresh_token: z.string().nonempty("Refresh Token is required"),
+              [ProviderCredentialFields.CLIENT_ID]: z
+                .string()
+                .nonempty("Client ID is required"),
+              [ProviderCredentialFields.CLIENT_SECRET]: z
+                .string()
+                .nonempty("Client Secret is required"),
+              [ProviderCredentialFields.TENANT_ID]: z
+                .string()
+                .nonempty("Tenant ID is required"),
             }
-          : providerType === "kubernetes"
+          : providerType === "gcp"
             ? {
-                kubeconfig_content: z
+                [ProviderCredentialFields.CLIENT_ID]: z
                   .string()
-                  .nonempty("Kubeconfig Content is required"),
+                  .nonempty("Client ID is required"),
+                [ProviderCredentialFields.CLIENT_SECRET]: z
+                  .string()
+                  .nonempty("Client Secret is required"),
+                [ProviderCredentialFields.REFRESH_TOKEN]: z
+                  .string()
+                  .nonempty("Refresh Token is required"),
               }
-            : providerType === "m365"
+            : providerType === "kubernetes"
               ? {
-                  client_id: z.string().nonempty("Client ID is required"),
-                  client_secret: z
+                  [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .nonempty("Client Secret is required"),
-                  tenant_id: z.string().nonempty("Tenant ID is required"),
-                  user: z.string().nonempty("User is required"),
-                  password: z.string().nonempty("Password is required"),
+                    .nonempty("Kubeconfig Content is required"),
                 }
-              : {}),
-  });
+              : providerType === "m365"
+                ? {
+                    [ProviderCredentialFields.CLIENT_ID]: z
+                      .string()
+                      .nonempty("Client ID is required"),
+                    [ProviderCredentialFields.CLIENT_SECRET]: z
+                      .string()
+                      .nonempty("Client Secret is required"),
+                    [ProviderCredentialFields.TENANT_ID]: z
+                      .string()
+                      .nonempty("Tenant ID is required"),
+                    [ProviderCredentialFields.USER]: z.string().optional(),
+                    [ProviderCredentialFields.PASSWORD]: z.string().optional(),
+                  }
+                : {}),
+    })
+    .superRefine((data: Record<string, any>, ctx) => {
+      if (providerType === "m365") {
+        const hasUser = !!data[ProviderCredentialFields.USER];
+        const hasPassword = !!data[ProviderCredentialFields.PASSWORD];
+
+        if (hasUser && !hasPassword) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "If you provide a user, you must also provide a password",
+            path: [ProviderCredentialFields.PASSWORD],
+          });
+        }
+
+        if (hasPassword && !hasUser) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "If you provide a password, you must also provide a user",
+            path: [ProviderCredentialFields.USER],
+          });
+        }
+      }
+    });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
   providerType === "aws"
     ? z
         .object({
-          providerId: z.string(),
-          providerType: z.string(),
-          role_arn: z.string().nonempty("AWS Role ARN is required"),
-          external_id: z.string().optional(),
-          aws_access_key_id: z.string().optional(),
-          aws_secret_access_key: z.string().optional(),
-          aws_session_token: z.string().optional(),
-          session_duration: z.string().optional(),
-          role_session_name: z.string().optional(),
-          credentials_type: z.string().optional(),
+          [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+          [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+          [ProviderCredentialFields.ROLE_ARN]: z
+            .string()
+            .nonempty("AWS Role ARN is required"),
+          [ProviderCredentialFields.EXTERNAL_ID]: z.string().optional(),
+          [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z.string().optional(),
+          [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
+            .string()
+            .optional(),
+          [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
+          [ProviderCredentialFields.SESSION_DURATION]: z.string().optional(),
+          [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
+          [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
         .refine(
           (data) =>
-            data.credentials_type !== "access-secret-key" ||
-            (data.aws_access_key_id && data.aws_secret_access_key),
+            data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
+              "access-secret-key" ||
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
+              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
           {
             message: "AWS Access Key ID and Secret Access Key are required.",
-            path: ["aws_access_key_id"],
+            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
           },
         )
     : z.object({
@@ -183,9 +228,9 @@ export const addCredentialsServiceAccountFormSchema = (
 ) =>
   providerType === "gcp"
     ? z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-        service_account_key: z.string().refine(
+        [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+        [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+        [ProviderCredentialFields.SERVICE_ACCOUNT_KEY]: z.string().refine(
           (val) => {
             try {
               const parsed = JSON.parse(val);
@@ -202,22 +247,21 @@ export const addCredentialsServiceAccountFormSchema = (
             message: "Invalid JSON format. Please provide a valid JSON object.",
           },
         ),
-        secretName: z.string().optional(),
       })
     : z.object({
-        providerId: z.string(),
-        providerType: z.string(),
+        [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+        [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
       });
 
 export const testConnectionFormSchema = z.object({
-  providerId: z.string(),
+  [ProviderCredentialFields.PROVIDER_ID]: z.string(),
   runOnce: z.boolean().default(false),
 });
 
 export const launchScanFormSchema = () =>
   z.object({
-    providerId: z.string(),
-    providerType: z.string(),
+    [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+    [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
     scannerArgs: z
       .object({
         checksToExecute: z.array(z.string()).optional(),
@@ -227,7 +271,7 @@ export const launchScanFormSchema = () =>
 
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({
-    alias: z
+    [ProviderCredentialFields.PROVIDER_ALIAS]: z
       .string()
       .refine((val) => val === "" || val.length >= 3, {
         message: "The alias must be empty or have at least 3 characters.",
@@ -236,7 +280,7 @@ export const editProviderFormSchema = (currentAlias: string) =>
         message: "The new alias must be different from the current one.",
       })
       .optional(),
-    providerId: z.string(),
+    [ProviderCredentialFields.PROVIDER_ID]: z.string(),
   });
 
 export const editInviteFormSchema = z.object({

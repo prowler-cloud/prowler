@@ -4,6 +4,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
     FileShare,
+    ReplicationSettings,
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -40,6 +41,8 @@ def mock_storage_get_storage_accounts(_):
                 private_endpoint_connections=None,
                 location="westeurope",
                 blob_properties=blob_properties,
+                replication_settings=ReplicationSettings.STANDARD_LRS,
+                allow_cross_tenant_replication=True,
                 allow_shared_key_access=True,
                 file_shares=file_shares,
             )
@@ -116,6 +119,16 @@ class Test_Storage_Service:
             type="type",
             default_service_version=None,
             container_delete_retention_policy=None,
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].replication_settings
+            == ReplicationSettings.STANDARD_LRS
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].allow_cross_tenant_replication
+            is True
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_shared_key_access

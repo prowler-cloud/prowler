@@ -180,6 +180,9 @@ class TestCheckLoader:
     def test_load_checks_to_execute_with_compliance_frameworks(
         self,
     ):
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
         bulk_compliance_frameworks = {
             "soc2_aws": Compliance(
                 Framework="SOC2",
@@ -199,6 +202,7 @@ class TestCheckLoader:
         compliance_frameworks = ["soc2_aws"]
 
         assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_frameworks=compliance_frameworks,
             provider=self.provider,

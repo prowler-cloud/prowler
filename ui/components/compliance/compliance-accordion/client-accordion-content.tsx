@@ -11,7 +11,7 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { getComplianceMapper } from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
@@ -173,7 +173,7 @@ export const ClientAccordionContent = ({
 
     return (
       <div className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
-        ⚠️ There are no findings for this regions
+        ⚠️ There are no findings for these regions
       </div>
     );
   };

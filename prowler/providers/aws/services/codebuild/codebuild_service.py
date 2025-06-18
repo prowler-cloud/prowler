@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -120,6 +120,7 @@ class Codebuild(AWSService):
                 stream_name=cloudwatch_logs.get("streamName", ""),
             )
             project.tags = project_info.get("tags", [])
+            project.service_role_arn = project_info.get("serviceRole", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -211,11 +212,12 @@ class Project(BaseModel):
     name: str
     arn: str
     region: str
-    last_build: Optional[Build]
-    last_invoked_time: Optional[datetime.datetime]
-    buildspec: Optional[str]
-    source: Optional[Source]
+    last_build: Optional[Build] = None
+    last_invoked_time: Optional[datetime.datetime] = None
+    buildspec: Optional[str] = None
+    source: Optional[Source] = None
     secondary_sources: Optional[list[Source]] = []
+    service_role_arn: Optional[str] = None
     environment_variables: Optional[List[EnvironmentVariable]]
     s3_logs: Optional[s3Logs]
     cloudwatch_logs: Optional[CloudWatchLogs]
@@ -233,6 +235,6 @@ class ReportGroup(BaseModel):
     arn: str
     name: str
     region: str
-    status: Optional[str]
-    export_config: Optional[ExportConfig]
-    tags: Optional[list]
+    status: Optional[str] = None
+    export_config: Optional[ExportConfig] = None
+    tags: Optional[list] = []
