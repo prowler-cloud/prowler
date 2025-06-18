@@ -1796,7 +1796,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    "checks_to_execute": ["accessanalyzer_enabled"],
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
             )
 
@@ -3839,6 +3839,13 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
+    @extend_schema(
+        tags=["Integration"],
+        summary="Check integration connection",
+        description="Try to verify integration connection",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
         get_object_or_404(Integration, pk=pk)
