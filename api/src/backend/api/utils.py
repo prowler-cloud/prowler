@@ -204,6 +204,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             bucket_name=integration.configuration["bucket_name"],
             raise_on_exception=False,
         )
+    # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
@@ -216,13 +218,6 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
         raise ValueError(
             f"Integration type {integration.integration_type} not supported"
         )
-
-    try:
-        prowler_provider_kwargs = integration.credentials
-    except Provider.secret.RelatedObjectDoesNotExist as secret_error:
-        return Connection(is_connected=False, error=secret_error)
-
-    return provider.test_connection(**prowler_provider_kwargs, raise_on_exception=False)
 
 
 def validate_invitation(
