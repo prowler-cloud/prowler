@@ -17,3 +17,6 @@ FINDINGS_RESOURCE_METADATA = {
 S_PROVIDER_NAME = "provider-50k"
 M_PROVIDER_NAME = "provider-250k"
 L_PROVIDER_NAME = "provider-500k"
+
+RESOURCES_UI_SORT_VALUES = ["name", "region", "inserted_at"]
+RESOURCE_INSERTED_AT = os.environ.get("RESOURCE_INSERTED_AT", "2025-04-14")
