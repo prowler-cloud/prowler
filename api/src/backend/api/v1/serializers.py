@@ -1871,6 +1871,16 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    def validate(self, attrs):
+        if Integration.objects.filter(
+            configuration=attrs.get("configuration")
+        ).exists():
+            raise serializers.ValidationError(
+                {"name": "This integration already exists."}
+            )
+
+        return super().validate(attrs)
+
     @staticmethod
     def validate_integration_data(
         integration_type: str,
@@ -1980,6 +1990,7 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
+        super().validate(attrs)
         integration_type = attrs.get("integration_type")
         providers = attrs.get("providers")
         configuration = attrs.get("configuration")
@@ -2039,6 +2050,7 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
+        super().validate(attrs)
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
         configuration = attrs.get("configuration") or self.instance.configuration
