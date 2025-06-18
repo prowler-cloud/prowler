@@ -11,7 +11,6 @@ from prowler.providers.common.models import Connection
 
 @pytest.mark.django_db
 class TestS3IntegrationUploads:
-
     @patch("tasks.jobs.integrations.AwsProvider")
     @patch("tasks.jobs.integrations.S3")
     def test_get_s3_client_from_integration_success(

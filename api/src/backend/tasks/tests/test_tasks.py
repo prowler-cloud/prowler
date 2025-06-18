@@ -493,7 +493,6 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.logger")
     @patch("tasks.tasks.upload_s3_integration")
     def test_s3_integration_task_success(self, mock_upload, mock_logger):
-
         result = s3_integration_task(
             tenant_id=self.tenant_id,
             provider_id=self.provider_id,
@@ -511,7 +510,6 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.logger")
     @patch("tasks.tasks.upload_s3_integration", side_effect=Exception("upload failed"))
     def test_s3_integration_task_failure(self, mock_upload, mock_logger):
-
         result = s3_integration_task(
             tenant_id=self.tenant_id,
             provider_id=self.provider_id,
