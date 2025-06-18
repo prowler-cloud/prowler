@@ -1,5 +1,4 @@
 import uuid
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,7 +25,6 @@ class TestGenerateOutputs:
             assert result == {"upload": False}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
 
-    @patch("tasks.tasks.rmtree")
     @patch("tasks.tasks._upload_to_s3")
     @patch("tasks.tasks._compress_output_files")
     @patch("tasks.tasks.get_compliance_frameworks")
@@ -45,7 +43,6 @@ class TestGenerateOutputs:
         mock_get_available_frameworks,
         mock_compress,
         mock_upload,
-        mock_rmtree,
     ):
         mock_scan_summary_filter.return_value.exists.return_value = True
 
@@ -108,9 +105,6 @@ class TestGenerateOutputs:
             assert result == {"upload": True, "output_directory": "/tmp"}
             mock_scan_update.return_value.update.assert_called_once_with(
                 output_location="s3://bucket/zipped.zip"
-            )
-            mock_rmtree.assert_called_once_with(
-                Path("/tmp/zipped.zip").parent, ignore_errors=True
             )
 
     def test_generate_outputs_fails_upload(self):
@@ -254,7 +248,6 @@ class TestGenerateOutputs:
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
-            patch("tasks.tasks.rmtree"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch(
                 "tasks.tasks.batched",
@@ -332,7 +325,6 @@ class TestGenerateOutputs:
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
-            patch("tasks.tasks.rmtree"),
             patch(
                 "tasks.tasks.Scan.all_objects.filter",
                 return_value=MagicMock(update=lambda **kw: None),
@@ -357,62 +349,63 @@ class TestGenerateOutputs:
         assert writer.transform_calls == [([raw2], compliance_obj, "cis")]
         assert result == {"upload": True, "output_directory": ""}
 
-    def test_generate_outputs_logs_rmtree_exception(self, caplog):
-        mock_finding_output = MagicMock()
-        mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
+    # TODO: We need to add a periodic task to delete old output files
+    # def test_generate_outputs_logs_rmtree_exception(self, caplog):
+    #     mock_finding_output = MagicMock()
+    #     mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
-        with (
-            patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
-            patch("tasks.tasks.initialize_prowler_provider"),
-            patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
-            patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
-            patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
-            patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
-            ),
-            patch(
-                "tasks.tasks.FindingOutput._transform_findings_stats",
-                return_value={"some": "stats"},
-            ),
-            patch(
-                "tasks.tasks.FindingOutput.transform_api_finding",
-                return_value=mock_finding_output,
-            ),
-            patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
-            patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
-            patch("tasks.tasks.Scan.all_objects.filter"),
-            patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
-        ):
-            mock_filter.return_value.exists.return_value = True
-            mock_findings.return_value.order_by.return_value.iterator.return_value = [
-                [MagicMock()],
-                True,
-            ]
+    #     with (
+    #         patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+    #         patch("tasks.tasks.Provider.objects.get"),
+    #         patch("tasks.tasks.initialize_prowler_provider"),
+    #         patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
+    #         patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
+    #         patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+    #         patch(
+    #             "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+    #         ),
+    #         patch(
+    #             "tasks.tasks.FindingOutput._transform_findings_stats",
+    #             return_value={"some": "stats"},
+    #         ),
+    #         patch(
+    #             "tasks.tasks.FindingOutput.transform_api_finding",
+    #             return_value=mock_finding_output,
+    #         ),
+    #         patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
+    #         patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
+    #         patch("tasks.tasks.Scan.all_objects.filter"),
+    #         patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
+    #     ):
+    #         mock_filter.return_value.exists.return_value = True
+    #         mock_findings.return_value.order_by.return_value.iterator.return_value = [
+    #             [MagicMock()],
+    #             True,
+    #         ]
 
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "json": {
-                            "class": lambda *args, **kwargs: MagicMock(),
-                            "suffix": ".json",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                with caplog.at_level("ERROR"):
-                    generate_outputs(
-                        scan_id=self.scan_id,
-                        provider_id=self.provider_id,
-                        tenant_id=self.tenant_id,
-                    )
-                    assert "Error deleting output files" in caplog.text
+    #         with (
+    #             patch(
+    #                 "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+    #                 {
+    #                     "json": {
+    #                         "class": lambda *args, **kwargs: MagicMock(),
+    #                         "suffix": ".json",
+    #                         "kwargs": {},
+    #                     }
+    #                 },
+    #             ),
+    #             patch(
+    #                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
+    #                 {"aws": [(lambda x: True, MagicMock())]},
+    #             ),
+    #         ):
+    #             with caplog.at_level("ERROR"):
+    #                 generate_outputs(
+    #                     scan_id=self.scan_id,
+    #                     provider_id=self.provider_id,
+    #                     tenant_id=self.tenant_id,
+    #                 )
+    #                 assert "Error deleting output files" in caplog.text
 
 
 @pytest.mark.django_db
@@ -448,12 +441,15 @@ class TestCheckIntegrationsTask:
     def test_check_integrations_s3_success(
         self, mock_integration_model, mock_group, mock_logger
     ):
-        mock_qs = MagicMock()
-        mock_qs.exists.return_value = True
-        mock_qs.count.return_value = 2
+        mock_integration1 = MagicMock()
+        mock_integration2 = MagicMock()
+        mock_integration_model.IntegrationChoices.S3 = "S3"
 
-        mock_integration_model.objects.filter.return_value = mock_qs
-        mock_qs.filter.return_value = mock_qs
+        mock_outer_qs = MagicMock()
+        mock_outer_qs.exists.return_value = True
+        mock_outer_qs.filter.return_value = [mock_integration1, mock_integration2]
+
+        mock_integration_model.objects.filter.return_value = mock_outer_qs
 
         result = check_integrations_task(
             generate_outputs_result={"output_directory": self.output_directory},
@@ -481,7 +477,7 @@ class TestCheckIntegrationsTask:
             self.tenant_id, self.provider_id, self.output_directory
         )
         mock_logger.info.assert_any_call(
-            f"S3 integration completed successfully for provider {self.provider_id}"
+            f"All the S3 integrations completed successfully for provider {self.provider_id}"
         )
 
     @patch("tasks.tasks.logger")
