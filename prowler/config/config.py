@@ -10,7 +10,6 @@ from packaging import version
 
 from prowler.lib.logger import logger
 
-# Initialize timestamp variables
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "5.8.0"
