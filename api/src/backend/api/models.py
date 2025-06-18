@@ -1,11 +1,13 @@
 import json
+import logging
 import re
 import xml.etree.ElementTree as ET
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
+from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
@@ -55,6 +57,8 @@ fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
+
+logger = logging.getLogger(BackendLogger.API)
 
 
 class StatusChoices(models.TextChoices):
@@ -1640,6 +1644,133 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
         ]
 
 
+class LighthouseConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Stores configuration and API keys for LLM services.
+    """
+
+    class ModelChoices(models.TextChoices):
+        GPT_4O_2024_11_20 = "gpt-4o-2024-11-20", _("GPT-4o v2024-11-20")
+        GPT_4O_2024_08_06 = "gpt-4o-2024-08-06", _("GPT-4o v2024-08-06")
+        GPT_4O_2024_05_13 = "gpt-4o-2024-05-13", _("GPT-4o v2024-05-13")
+        GPT_4O = "gpt-4o", _("GPT-4o Default")
+        GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
+        GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        blank=False,
+        null=False,
+        help_text="Name of the configuration",
+    )
+    api_key = models.BinaryField(
+        blank=False, null=False, help_text="Encrypted API key for the LLM service"
+    )
+    model = models.CharField(
+        max_length=50,
+        choices=ModelChoices.choices,
+        blank=False,
+        null=False,
+        default=ModelChoices.GPT_4O_2024_08_06,
+        help_text="Must be one of the supported model names",
+    )
+    temperature = models.FloatField(default=0, help_text="Must be between 0 and 1")
+    max_tokens = models.IntegerField(
+        default=4000, help_text="Must be between 500 and 5000"
+    )
+    business_context = models.TextField(
+        blank=True,
+        null=False,
+        default="",
+        help_text="Additional business context for this AI model configuration",
+    )
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+
+        # Validate temperature
+        if not 0 <= self.temperature <= 1:
+            raise ModelValidationError(
+                detail="Temperature must be between 0 and 1",
+                code="invalid_temperature",
+                pointer="/data/attributes/temperature",
+            )
+
+        # Validate max_tokens
+        if not 500 <= self.max_tokens <= 5000:
+            raise ModelValidationError(
+                detail="Max tokens must be between 500 and 5000",
+                code="invalid_max_tokens",
+                pointer="/data/attributes/max_tokens",
+            )
+
+    @property
+    def api_key_decoded(self):
+        """Return the decrypted API key, or None if unavailable or invalid."""
+        if not self.api_key:
+            return None
+
+        try:
+            decrypted_key = fernet.decrypt(bytes(self.api_key))
+            return decrypted_key.decode()
+
+        except InvalidToken:
+            logger.warning("Invalid token while decrypting API key.")
+        except Exception as e:
+            logger.exception("Unexpected error while decrypting API key: %s", e)
+
+    @api_key_decoded.setter
+    def api_key_decoded(self, value):
+        """Store the encrypted API key."""
+        if not value:
+            raise ModelValidationError(
+                detail="API key is required",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
+
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, value):
+            raise ModelValidationError(
+                detail="Invalid OpenAI API key format.",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
+        self.api_key = fernet.encrypt(value.encode())
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_configurations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            # Add unique constraint for name within a tenant
+            models.UniqueConstraint(
+                fields=["tenant_id"], name="unique_lighthouse_config_per_tenant"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-configurations"
+
+
 class Processor(RowLevelSecurityProtectedModel):
     class ProcessorChoices(models.TextChoices):
         MUTELIST = "mutelist", _("Mutelist")
@@ -1677,65 +1808,3 @@ class Processor(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "processors"
-
-
-class MutedFinding(RowLevelSecurityProtectedModel):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-    finding_uid = models.TextField(max_length=300, blank=False, null=False)
-    check_id = models.CharField(max_length=100, blank=False, null=False)
-    service = models.CharField(max_length=100, blank=False, null=False)
-    region = models.CharField(max_length=100, blank=False, null=False)
-    resource_type = models.CharField(max_length=100, blank=False, null=False)
-    reason = models.TextField(
-        blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
-    )
-
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-        related_name="muted_findings",
-        related_query_name="muted_finding",
-    )
-
-    class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "muted_findings"
-        unique_together = (("tenant_id", "provider", "finding_uid"),)
-
-        constraints = [
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s",
-                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["tenant_id", "provider_id"],
-                name="mf_tenant_provider_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "finding_uid"],
-                name="mf_tenant_uid_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "check_id"],
-                name="mf_tenant_check_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "service"],
-                name="mf_tenant_service_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "region"],
-                name="mf_tenant_region_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "resource_type"],
-                name="mf_tenant_resource_type_idx",
-            ),
-        ]
-
-    class JSONAPIMeta:
-        resource_name = "muted-findings"

@@ -12,7 +12,7 @@ from api.rls import RowLevelSecurityConstraint
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0031_processors_enum"),
+        ("api", "0032_processors_enum"),
     ]
 
     operations = [

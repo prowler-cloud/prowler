@@ -4780,13 +4780,13 @@ class TestComplianceOverviewViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        assert len(data) == 2  # Two compliance frameworks
+        assert len(data) == 3  # Three compliance frameworks
 
         # Check that we get aggregated data for each compliance framework
         framework_ids = [item["id"] for item in data]
         assert "aws_account_security_onboarding_aws" in framework_ids
         assert "cis_1.4_aws" in framework_ids
-
+        assert "mitre_attack_aws" in framework_ids
         # Check structure of response
         for item in data:
             assert "id" in item
@@ -4902,6 +4902,35 @@ class TestComplianceOverviewViewSet:
             assert "attributes" in attributes
             assert "metadata" in attributes["attributes"]
             assert "check_ids" in attributes["attributes"]
+            assert "technique_details" not in attributes["attributes"]
+
+    def test_compliance_overview_attributes_technique_details(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "mitre_attack_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of attributes response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "attributes" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+            assert "technique_details" in attributes["attributes"]
+            assert "tactics" in attributes["attributes"]["technique_details"]
+            assert "subtechniques" in attributes["attributes"]["technique_details"]
+            assert "platforms" in attributes["attributes"]["technique_details"]
+            assert "technique_url" in attributes["attributes"]["technique_details"]
 
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
@@ -5943,3 +5972,335 @@ class TestTenantFinishACSView:
         user.name = original_name
         user.company_name = original_company
         user.save()
+
+
+@pytest.mark.django_db
+class TestLighthouseConfigViewSet:
+    @pytest.fixture
+    def valid_config_payload(self):
+        return {
+            "data": {
+                "type": "lighthouse-configurations",
+                "attributes": {
+                    "name": "OpenAI",
+                    "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
+                    "model": "gpt-4o",
+                    "temperature": 0.7,
+                    "max_tokens": 4000,
+                    "business_context": "Test business context",
+                    "is_active": True,
+                },
+            }
+        }
+
+    @pytest.fixture
+    def invalid_config_payload(self):
+        return {
+            "data": {
+                "type": "lighthouse-configurations",
+                "attributes": {
+                    "name": "T",  # Too short
+                    "api_key": "invalid-key",  # Invalid format
+                    "model": "invalid-model",
+                    "temperature": 2.0,  # Invalid range
+                    "max_tokens": -1,  # Invalid value
+                },
+            }
+        }
+
+    def test_lighthouse_config_list(self, authenticated_client):
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_lighthouse_config_create(self, authenticated_client, valid_config_payload):
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()["data"]
+        assert (
+            data["attributes"]["name"]
+            == valid_config_payload["data"]["attributes"]["name"]
+        )
+        assert (
+            data["attributes"]["model"]
+            == valid_config_payload["data"]["attributes"]["model"]
+        )
+        assert (
+            data["attributes"]["temperature"]
+            == valid_config_payload["data"]["attributes"]["temperature"]
+        )
+        assert (
+            data["attributes"]["max_tokens"]
+            == valid_config_payload["data"]["attributes"]["max_tokens"]
+        )
+        assert (
+            data["attributes"]["business_context"]
+            == valid_config_payload["data"]["attributes"]["business_context"]
+        )
+        assert (
+            data["attributes"]["is_active"]
+            == valid_config_payload["data"]["attributes"]["is_active"]
+        )
+        # Check that API key is masked with asterisks only
+        masked_api_key = data["attributes"]["api_key"]
+        assert all(
+            c == "*" for c in masked_api_key
+        ), "API key should contain only asterisks"
+
+    @pytest.mark.parametrize(
+        "field_name, invalid_value",
+        [
+            ("name", "T"),  # Too short
+            ("api_key", "invalid-key"),  # Invalid format
+            ("model", "invalid-model"),  # Invalid model
+            ("temperature", 2.0),  # Out of range
+            ("max_tokens", -1),  # Invalid value
+        ],
+    )
+    def test_lighthouse_config_create_invalid_fields(
+        self, authenticated_client, valid_config_payload, field_name, invalid_value
+    ):
+        """Test that validation fails for various invalid field values"""
+        payload = valid_config_payload.copy()
+        payload["data"]["attributes"][field_name] = invalid_value
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+
+        # All field validation errors now follow the same pattern
+        assert any(field_name in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_create_missing_required_fields(
+        self, authenticated_client
+    ):
+        """Test that validation fails when required fields are missing"""
+        payload = {"data": {"type": "lighthouse-configurations", "attributes": {}}}
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        # Check for required fields
+        required_fields = ["name", "api_key"]
+        for field in required_fields:
+            assert any(field in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_create_duplicate(
+        self, authenticated_client, valid_config_payload
+    ):
+        # Create first config
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Try to create second config for same tenant
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            "Lighthouse configuration already exists for this tenant"
+            in response.json()["errors"][0]["detail"]
+        )
+
+    def test_lighthouse_config_update(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        update_payload = {
+            "data": {
+                "type": "lighthouse-configurations",
+                "id": str(lighthouse_config_fixture.id),
+                "attributes": {
+                    "name": "Updated Config",
+                    "model": "gpt-4o-mini",
+                    "temperature": 0.5,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
+            ),
+            data=update_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["attributes"]["name"] == "Updated Config"
+        assert data["attributes"]["model"] == "gpt-4o-mini"
+        assert data["attributes"]["temperature"] == 0.5
+
+    @pytest.mark.parametrize(
+        "field_name, invalid_value",
+        [
+            ("model", "invalid-model"),  # Invalid model name
+            ("temperature", 2.5),  # Temperature too high
+            ("temperature", -0.5),  # Temperature too low
+            ("max_tokens", -1),  # Negative max tokens
+            ("max_tokens", 100000),  # Max tokens too high
+            ("name", "T"),  # Name too short
+            ("api_key", "invalid-key"),  # Invalid API key format
+        ],
+    )
+    def test_lighthouse_config_update_invalid(
+        self, authenticated_client, lighthouse_config_fixture, field_name, invalid_value
+    ):
+        update_payload = {
+            "data": {
+                "type": "lighthouse-configurations",
+                "id": str(lighthouse_config_fixture.id),
+                "attributes": {
+                    field_name: invalid_value,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
+            ),
+            data=update_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert any(field_name in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_delete(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        config_id = lighthouse_config_fixture.id
+        response = authenticated_client.delete(
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify deletion by checking list endpoint returns no items
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_lighthouse_config_list_masked_api_key_default(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        """Test that list view returns all fields with masked API key by default"""
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
+
+        # All fields should be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
+
+        # API key should be masked (asterisks)
+        api_key = config["api_key"]
+        assert api_key.startswith("*")
+        assert all(c == "*" for c in api_key)
+
+    def test_lighthouse_config_unmasked_api_key_single_field(
+        self, authenticated_client, lighthouse_config_fixture, valid_config_payload
+    ):
+        """Test that specifying api_key in fields param returns all fields with unmasked API key"""
+        expected_api_key = valid_config_payload["data"]["attributes"]["api_key"]
+        response = authenticated_client.get(
+            reverse("lighthouseconfiguration-list")
+            + "?fields[lighthouse-config]=api_key"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
+
+        # All fields should still be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
+
+        # API key should be unmasked
+        assert config["api_key"] == expected_api_key
+
+    @pytest.mark.parametrize(
+        "sort_field, expected_count",
+        [
+            ("name", 1),  # Test sorting by name
+            ("-inserted_at", 1),  # Test sorting by inserted_at
+        ],
+    )
+    def test_lighthouse_config_sorting(
+        self,
+        authenticated_client,
+        lighthouse_config_fixture,
+        sort_field,
+        expected_count,
+    ):
+        """Test sorting lighthouse configurations by various fields"""
+        response = authenticated_client.get(
+            reverse("lighthouseconfiguration-list") + f"?sort={sort_field}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_lighthouse_connection_task.delay")
+    def test_lighthouse_config_connection(
+        self,
+        mock_lighthouse_connection,
+        mock_task_get,
+        authenticated_client,
+        lighthouse_config_fixture,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        task_mock.status = "PENDING"
+        mock_lighthouse_connection.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        config_id = lighthouse_config_fixture.id
+        assert lighthouse_config_fixture.is_active is True
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": config_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_lighthouse_connection.assert_called_once_with(
+            lighthouse_config_id=str(config_id), tenant_id=ANY
+        )
+        assert "Content-Location" in response.headers
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
+
+    def test_lighthouse_config_connection_invalid_config(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

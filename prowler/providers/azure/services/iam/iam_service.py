@@ -20,45 +20,40 @@ class IAM(AzureService):
         custom_roles = {}
         for subscription, client in self.clients.items():
             try:
-                builtin_roles.update({subscription: []})
-                custom_roles.update({subscription: []})
+                builtin_roles.update({subscription: {}})
+                custom_roles.update({subscription: {}})
                 all_roles = client.role_definitions.list(
                     scope=f"/subscriptions/{self.subscriptions[subscription]}",
                 )
                 for role in all_roles:
                     if role.role_type == "CustomRole":
-                        custom_roles[subscription].append(
-                            Role(
-                                id=role.id,
-                                name=role.role_name,
-                                type=role.role_type,
-                                assignable_scopes=role.assignable_scopes,
-                                permissions=[
-                                    Permission(
-                                        condition=getattr(permission, "condition", ""),
-                                        condition_version=getattr(
-                                            permission, "condition_version", ""
-                                        ),
-                                        actions=getattr(permission, "actions", []),
-                                    )
-                                    for permission in getattr(role, "permissions", [])
-                                ],
-                            )
+                        custom_roles[subscription][role.id] = Role(
+                            id=role.id,
+                            name=role.role_name,
+                            type=role.role_type,
+                            assignable_scopes=role.assignable_scopes,
+                            permissions=[
+                                Permission(
+                                    condition=getattr(permission, "condition", ""),
+                                    condition_version=getattr(
+                                        permission, "condition_version", ""
+                                    ),
+                                    actions=getattr(permission, "actions", []),
+                                )
+                                for permission in getattr(role, "permissions", [])
+                            ],
                         )
                     else:
-                        builtin_roles[subscription].append(
-                            Role(
-                                id=role.id,
-                                name=role.role_name,
-                                type=role.role_type,
-                                assignable_scopes=role.assignable_scopes,
-                                permissions=role.permissions,
-                            )
+                        builtin_roles[subscription][role.id] = Role(
+                            id=role.id,
+                            name=role.role_name,
+                            type=role.role_type,
+                            assignable_scopes=role.assignable_scopes,
+                            permissions=role.permissions,
                         )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return builtin_roles, custom_roles
 
@@ -75,6 +70,9 @@ class IAM(AzureService):
                     role_assignments[subscription].update(
                         {
                             role_assignment.id: RoleAssignment(
+                                id=role_assignment.id,
+                                name=role_assignment.name,
+                                scope=role_assignment.scope,
                                 agent_id=role_assignment.principal_id,
                                 agent_type=role_assignment.principal_type,
                                 role_id=role_assignment.role_definition_id.split("/")[
@@ -84,9 +82,8 @@ class IAM(AzureService):
                         }
                     )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return role_assignments
 
@@ -109,6 +106,21 @@ class Role:
 
 @dataclass
 class RoleAssignment:
+    """
+    Represents an Azure Role Assignment.
+
+    Attributes:
+        id: The unique identifier of the role assignment.
+        name: The name of the role assignment.
+        scope: The scope at which the role assignment applies.
+        agent_id: The principal (user, group, service principal, etc.) ID assigned the role.
+        agent_type: The type of the principal. Known values: "User", "Group", "ServicePrincipal", "ForeignGroup", and "Device".
+        role_id: The ID of the role definition assigned.
+    """
+
+    id: str
+    name: str
+    scope: str
     agent_id: str
     agent_type: str
     role_id: str

@@ -66,9 +66,17 @@ export const useUrlFilters = () => {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, searchParams, pathname]);
 
+  const hasFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    return Array.from(params.keys()).some(
+      (key) => key.startsWith("filter[") || key === "sort",
+    );
+  }, [searchParams]);
+
   return {
     updateFilter,
     clearFilter,
     clearAllFilters,
+    hasFilters,
   };
 };

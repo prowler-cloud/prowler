@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0030_samlconfigurations"),
+        ("api", "0031_lighthouseconfiguration"),
     ]
 
     operations = [
