@@ -31,6 +31,7 @@ class Provider(str, Enum):
     KUBERNETES = "kubernetes"
     M365 = "m365"
     GITHUB = "github"
+    IAC = "iac"
     NHN = "nhn"
 
 

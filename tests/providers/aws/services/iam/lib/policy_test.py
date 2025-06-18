@@ -5,6 +5,8 @@ from prowler.providers.aws.services.iam.lib.policy import (
     check_admin_access,
     check_full_service_access,
     get_effective_actions,
+    has_codebuild_trusted_principal,
+    is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
@@ -2268,3 +2270,184 @@ class Test_Policy:
             ],
         }
         assert check_admin_access(policy)
+
+
+def test_is_codebuild_using_allowed_github_org_allows():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_denies():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/not-allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name == "not-allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_no_codebuild_principal():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name is None
+
+
+def test_is_codebuild_using_allowed_github_org_invalid_url():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com//test"  # Malformed, no org
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name is None
+
+
+def test_has_codebuild_trusted_principal_true():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+def test_has_codebuild_trusted_principal_false():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is False
+
+
+def test_has_codebuild_trusted_principal_empty():
+    trust_policy = {}
+    assert has_codebuild_trusted_principal(trust_policy) is False
+
+
+def test_is_codebuild_using_allowed_github_org_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_has_codebuild_trusted_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+def test_has_codebuild_trusted_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
