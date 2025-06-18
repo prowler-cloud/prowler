@@ -41,6 +41,7 @@ def mock_storage_get_storage_accounts(_):
                 private_endpoint_connections=None,
                 location="westeurope",
                 blob_properties=blob_properties,
+                default_to_entra_authorization=True,
                 replication_settings=ReplicationSettings.STANDARD_LRS,
                 allow_cross_tenant_replication=True,
                 allow_shared_key_access=True,
@@ -120,6 +121,9 @@ class Test_Storage_Service:
             default_service_version=None,
             container_delete_retention_policy=None,
         )
+        assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+            0
+        ].default_to_entra_authorization
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].replication_settings
             == ReplicationSettings.STANDARD_LRS
