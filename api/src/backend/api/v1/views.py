@@ -86,6 +86,7 @@ from api.filters import (
     TaskFilter,
     TenantFilter,
     UserFilter,
+    ProcessorFilter,
 )
 from api.models import (
     ComplianceOverview,
@@ -3418,7 +3419,7 @@ class ProcessorViewSet(BaseRLSViewSet):
     queryset = Processor.objects.all()
     serializer_class = ProcessorSerializer
     http_method_names = ["get", "post", "patch", "delete"]
-    # filterset_class = IntegrationFilter
+    filterset_class = ProcessorFilter
     ordering = ["processor_type", "-inserted_at"]
     # RBAC required permissions
     required_permissions = []

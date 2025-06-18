@@ -13,6 +13,8 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from prowler.lib.mutelist.mutelist import mutelist_schema
+from jsonschema import validate as validate_jsonschema
 
 from api.models import (
     Finding,
@@ -2112,17 +2114,35 @@ class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
             )
         ]
 
-    # def validate(self, attrs):
-    #     integration_type = attrs.get("integration_type")
-    #     providers = attrs.get("providers")
-    #     configuration = attrs.get("configuration")
-    #     credentials = attrs.get("credentials")
-    #
-    #     validated_attrs = super().validate(attrs)
-    #     self.validate_integration_data(
-    #         integration_type, providers, configuration, credentials
-    #     )
-    #     return validated_attrs
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = attrs.get("processor_type")
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            validate_jsonschema(mutelist_configuration, mutelist_schema)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
 
 
 class ProcessorUpdateSerializer(BaseWriteSerializer):
@@ -2140,17 +2160,35 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
             "updated_at": {"read_only": True},
         }
 
-    # def validate(self, attrs):
-    #     integration_type = self.instance.integration_type
-    #     providers = attrs.get("providers")
-    #     configuration = attrs.get("configuration") or self.instance.configuration
-    #     credentials = attrs.get("credentials") or self.instance.credentials
-    #
-    #     validated_attrs = super().validate(attrs)
-    #     self.validate_integration_data(
-    #         integration_type, providers, configuration, credentials
-    #     )
-    #     return validated_attrs
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = self.instance.processor_type
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            validate_jsonschema(mutelist_configuration, mutelist_schema)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
 
 
 # SSO
