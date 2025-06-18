@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import openai
 from celery.utils.log import get_task_logger
 
-from api.models import LighthouseConfiguration, Provider, Integration, Provider
+from api.models import Integration, LighthouseConfiguration, Provider
 from api.utils import (
     prowler_integration_connection_test,
     prowler_provider_connection_test,

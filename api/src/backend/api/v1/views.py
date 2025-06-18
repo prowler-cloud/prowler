@@ -57,8 +57,8 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
-    check_lighthouse_connection_task,
     check_integration_connection_task,
+    check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
@@ -3855,7 +3855,15 @@ class IntegrationViewSet(BaseRLSViewSet):
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
-        return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
 
 
 @extend_schema_view(
