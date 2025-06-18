@@ -196,8 +196,8 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_id: formData.get("client_id"),
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
-      ...(formData.get("user") && { user: formData.get("user") }),
-      ...(formData.get("password") && { password: formData.get("password") }),
+      user: formData.get("user"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     if (isServiceAccount) {
@@ -317,8 +317,8 @@ export const updateCredentialsProvider = async (
       client_id: formData.get("client_id"),
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
-      ...(formData.get("user") && { user: formData.get("user") }),
-      ...(formData.get("password") && { password: formData.get("password") }),
+      user: formData.get("user"),
+      password: formData.get("password"),
     };
   } else if (providerType === "gcp") {
     if (isServiceAccount) {

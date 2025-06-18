@@ -107,24 +107,16 @@ export const UpdateViaCredentialsForm = ({
   const onSubmitClient = async (values: FormType) => {
     const formData = new FormData();
 
-    Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        formData.append(key, String(value));
-      }
-    });
+    Object.entries(values).forEach(
+      ([key, value]) => value !== undefined && formData.append(key, value),
+    );
 
     const data = await updateCredentialsProvider(providerSecretId, formData);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
         const errorMessage = error.detail;
-        const pointer = error.source?.pointer;
-
-        if (!pointer) {
-          return;
-        }
-
-        switch (pointer) {
+        switch (error.source.pointer) {
           case "/data/attributes/secret/aws_access_key_id":
             form.setError("aws_access_key_id", {
               type: "server",
