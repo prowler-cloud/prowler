@@ -1,7 +1,5 @@
 import os
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from shutil import rmtree
 
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
@@ -384,10 +382,12 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
 
     if upload_uri:
-        try:
-            rmtree(Path(compressed).parent, ignore_errors=True)
-        except Exception as e:
-            logger.error(f"Error deleting output files: {e}")
+        # TODO: This should be removed, the s3 integration can't work with this block of code, we need to create a new periodic task to delete the output files
+        # In addition, this task shouldn't be responsible for deleting the output files
+        # try:
+        #     rmtree(Path(compressed).parent, ignore_errors=True)
+        # except Exception as e:
+        #     logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True
     else:
         final_location, did_upload = compressed, False
@@ -449,11 +449,9 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
 
 
 @shared_task(
-    base=RLSTask,
-    name="check-integrations",
+    name="integration-check",
     queue="integrations",
 )
-@set_tenant(keep_tenant=True)
 def check_integrations_task(
     generate_outputs_result: dict, tenant_id: str, provider_id: str
 ):
@@ -466,23 +464,26 @@ def check_integrations_task(
         provider_id (str): The provider identifier
     """
     logger.info(f"Checking integrations for provider {provider_id}")
-    integrations = Integration.objects.filter(
-        integrationproviderrelationship__provider_id=provider_id
-    )
+    with rls_transaction(tenant_id):
+        integrations = Integration.objects.filter(
+            integrationproviderrelationship__provider_id=provider_id
+        )
 
-    if not integrations.exists():
-        logger.info(f"No integrations configured for provider {provider_id}")
-        return {"integrations_processed": 0}
+        if not integrations.exists():
+            logger.info(f"No integrations configured for provider {provider_id}")
+            return {"integrations_processed": 0}
 
     integration_tasks = []
 
     # S3 integrations (need output_directory)
     output_directory = generate_outputs_result.get("output_directory")
-    s3_integrations = integrations.filter(
-        integration_type=Integration.IntegrationChoices.S3
-    )
-    if s3_integrations.exists() and output_directory:
-        logger.info(f"Found {s3_integrations.count()} S3 integration(s)")
+    with rls_transaction(tenant_id):
+        s3_integrations = list(
+            integrations.filter(integration_type=Integration.IntegrationChoices.S3)
+        )
+
+    if s3_integrations and output_directory:
+        logger.info(f"Found {len(s3_integrations)} S3 integration(s)")
         integration_tasks.append(
             s3_integration_task.s(
                 tenant_id=tenant_id,
@@ -514,10 +515,9 @@ def check_integrations_task(
 
 @shared_task(
     base=RLSTask,
-    name="s3-integration",
+    name="integration-s3",
     queue="integrations",
 )
-@set_tenant(keep_tenant=True)
 def s3_integration_task(tenant_id: str, provider_id: str, output_directory: str):
     """
     Process S3 integrations for a provider.
@@ -530,9 +530,18 @@ def s3_integration_task(tenant_id: str, provider_id: str, output_directory: str)
     logger.info(f"Processing S3 integrations for provider {provider_id}")
 
     try:
-        upload_s3_integration(tenant_id, provider_id, output_directory)
-        logger.info(f"S3 integration completed successfully for provider {provider_id}")
-        return {"success": True}
+        result = upload_s3_integration(tenant_id, provider_id, output_directory)
+        if result:
+            logger.info(
+                f"All the S3 integrations completed successfully for provider {provider_id}"
+            )
+            return {"success": True}
+        else:
+            logger.error(f"Some S3 integrations failed for provider {provider_id}")
+            return {
+                "success": False,
+                "error": "There were some S3 integrations that failed",
+            }
     except Exception as e:
-        logger.error(f"S3 integration failed for provider {provider_id}: {str(e)}")
+        logger.error(f"S3 integrations failed for provider {provider_id}: {str(e)}")
         return {"success": False, "error": str(e)}

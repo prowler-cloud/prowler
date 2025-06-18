@@ -40,7 +40,7 @@ def get_s3_client_from_integration(
     return False, connection
 
 
-def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str):
+def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str) -> bool:
     """
     Upload the specified output files to an S3 bucket from an integration.
     If the S3 bucket environment variables are not configured,
@@ -52,28 +52,35 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str):
         file_path (str): The local file system path to the output files to be uploaded.
 
     Returns:
-        str: The S3 URI of the uploaded file (e.g., "s3://<bucket>/<key>") if successful.
-        None: If the required environment variables for the S3 bucket are not set.
+        bool: True if all integrations were executed, False otherwise.
 
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
     with rls_transaction(tenant_id):
-        integrations = Integration.objects.filter(
-            integrationproviderrelationship__provider_id=provider_id,
-            integration_type=Integration.IntegrationChoices.S3,
+        integrations = list(
+            Integration.objects.filter(
+                integrationproviderrelationship__provider_id=provider_id,
+                integration_type=Integration.IntegrationChoices.S3,
+            )
         )
 
     if not integrations:
         logger.error(f"No S3 integrations found for provider {provider_id}")
-        return
+        return False
 
+    integration_executions = 0
     for integration in integrations:
         integration_configuration = integration.configuration
         integration_bucket_name = integration_configuration.get("bucket_name")
         integration_output_directory = integration_configuration.get("output_directory")
 
-        connected, s3 = get_s3_client_from_integration(integration)
+        try:
+            connected, s3 = get_s3_client_from_integration(integration)
+        except Exception as e:
+            logger.error(f"S3 connection failed for integration {integration.id}: {e}")
+            continue
+
         if connected:
             try:
                 for filename in os.listdir(file_path):
@@ -107,7 +114,10 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str):
                 logger.error(
                     f"S3 compliance upload failed for integration {integration.id}: {e}"
                 )
+            integration_executions += 1
         else:
             logger.error(
                 f"S3 upload failed for integration {integration.id}: {s3.error}"
             )
+
+    return integration_executions == len(integrations)
