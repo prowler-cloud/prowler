@@ -32,20 +32,24 @@ This page allows for multiple functions:
 
 * Apply filters:
 
-* Assesment Date
-* Account
-* Region
-* Severity
-* Service
-* Status
+    * Assesment Date
+    * Account
+    * Region
+    * Severity
+    * Service
+    * Status
 
-* See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon: <img src="../img/dashboard/dashboard-files-scanned.png">
+* See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon:
+
+    <img src="../img/dashboard/dashboard-files-scanned.png">
 
 * Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
 
 * Click the provider cards to filter by provider.
 
-* On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns: <img src="../img/dashboard/dropdown.png">
+* On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns:
+
+    <img src="../img/dashboard/dropdown.png">
 
 ## Compliance Page
 
@@ -90,10 +94,8 @@ def get_table(data):
 If you are using Prowler SaaS with the S3 integration or that integration from Prowler Open Source and you want to use your data from your S3 bucket, you can run the following command in order to load the dashboard with the new files:
 
 ```sh
-aws s3 cp s3://<your-bucket>/output/csv ./output
+aws s3 cp s3://<your-bucket>/output/csv ./output --recursive
 ```
-
---recursive.
 
 ## Output Path
 
@@ -115,3 +117,5 @@ Prowler dashboard supports the detailed outputs:
 | Azure| ❌| ✅| ❌| ✅
 | Kubernetes| ❌| ✅| ❌| ✅
 | GCP| ❌| ✅| ❌| ✅
+| M365| ❌| ✅| ❌| ✅
+| GitHub| ❌| ✅| ❌| ✅
