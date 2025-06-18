@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pydantic import ValidationError
+from pydantic.v1 import ValidationError
 
 from prowler.lib.check.models import (
     CheckMetadata,
@@ -28,7 +28,7 @@ def mock_check_metadata(provider):
         SubServiceName="",
         ResourceIdTemplate="",
         Severity="high",
-        ResourceType="",
+        ResourceType="mock_resource_type",
         Description="",
         Risk="",
         RelatedUrl="",
@@ -209,7 +209,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -230,7 +230,7 @@ class TestFinding:
         assert finding_output.check_id == "mock_check_id"
         assert finding_output.severity == Severity.high.value
         assert finding_output.status == Status.PASS.value
-        assert finding_output.resource_type == ""
+        assert finding_output.resource_type == "mock_resource_type"
         assert finding_output.service_name == "mock_service_name"
         assert finding_output.raw == {}
 
@@ -310,7 +310,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -405,7 +405,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -490,7 +490,7 @@ class TestFinding:
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
-        assert finding_output.metadata.ResourceType == ""
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
         assert finding_output.metadata.Description == ""
         assert finding_output.metadata.Risk == ""
         assert finding_output.metadata.RelatedUrl == ""
@@ -573,6 +573,16 @@ class TestFinding:
         inserted_at = 1234567890
         provider = DummyProvider(uid="account123")
         provider.type = "aws"
+        provider.organizations_metadata = SimpleNamespace(
+            account_name="test-account",
+            account_email="test@example.com",
+            organization_arn="arn:aws:organizations::123456789012:organization/o-abcdef123456",
+            organization_id="o-abcdef123456",
+            account_tags={"Environment": "prod", "Project": "test"},
+        )
+        provider.identity = SimpleNamespace(
+            account="123456789012", partition="aws", profile="default"
+        )
         scan = DummyScan(provider=provider)
 
         # Create a dummy resource with one tag
@@ -655,7 +665,10 @@ class TestFinding:
         assert meta.Notes == "Some notes"
 
         # Check other Finding fields
-        assert finding_obj.uid == "prowler-aws-check-001--us-east-1-ResourceName1"
+        assert (
+            finding_obj.uid
+            == "prowler-aws-check-001-123456789012-us-east-1-ResourceName1"
+        )
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
         # From the dummy resource

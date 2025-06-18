@@ -34,7 +34,7 @@ class TestGCPMutelist:
 
         mutelist = GCPMutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist()
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
@@ -89,7 +89,7 @@ class TestGCPMutelist:
             account_uid="project_1",
             region="test-region",
             resource_uid="test_resource",
-            resource_tags=[],
+            resource_tags={},
             muted=False,
         )
 

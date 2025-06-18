@@ -4,6 +4,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
     ReplicationSettings,
+    FileShare,
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -20,6 +21,10 @@ def mock_storage_get_storage_accounts(_):
         default_service_version=None,
         container_delete_retention_policy=None,
     )
+    file_shares = [
+        FileShare(id="fs1", name="share1", soft_delete_enabled=True, retention_days=7),
+        FileShare(id="fs2", name="share2", soft_delete_enabled=False, retention_days=0),
+    ]
     return {
         AZURE_SUBSCRIPTION_ID: [
             Account(
@@ -37,6 +42,9 @@ def mock_storage_get_storage_accounts(_):
                 location="westeurope",
                 blob_properties=blob_properties,
                 replication_settings=ReplicationSettings.STANDARD_LRS,
+                allow_cross_tenant_replication=True,
+                allow_shared_key_access=True,
+                file_shares=file_shares,
             )
         ]
     }
@@ -115,6 +123,17 @@ class Test_Storage_Service:
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].replication_settings
             == ReplicationSettings.STANDARD_LRS
+            is True
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].allow_cross_tenant_replication
+            is True
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_shared_key_access
+            is True
         )
 
     def test_get_blob_properties(self):
@@ -149,3 +168,15 @@ class Test_Storage_Service:
             ].blob_properties.container_delete_retention_policy
             is None
         )
+
+    def test_get_file_shares_properties(self):
+        storage = Storage(set_mocked_azure_provider())
+        account = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0]
+        assert hasattr(account, "file_shares")
+        assert len(account.file_shares) == 2
+        assert account.file_shares[0].name == "share1"
+        assert account.file_shares[0].soft_delete_enabled is True
+        assert account.file_shares[0].retention_days == 7
+        assert account.file_shares[1].name == "share2"
+        assert account.file_shares[1].soft_delete_enabled is False
+        assert account.file_shares[1].retention_days == 0

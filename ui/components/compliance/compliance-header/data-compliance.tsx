@@ -34,14 +34,12 @@ export const DataCompliance = ({ scans }: DataComplianceProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex max-w-fit">
-        <ScanSelector
-          scans={scans}
-          selectedScanId={selectedScanId}
-          onSelectionChange={handleScanChange}
-        />
-      </div>
+    <div className="flex max-w-fit">
+      <ScanSelector
+        scans={scans}
+        selectedScanId={selectedScanId}
+        onSelectionChange={handleScanChange}
+      />
     </div>
   );
 };
