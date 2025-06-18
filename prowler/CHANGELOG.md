@@ -54,7 +54,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Validate ResourceType in CheckMetadata [(#8035)](https://github.com/prowler-cloud/prowler/pull/8035)
 - Missing ResourceType values in check's metadata [(#8028)](https://github.com/prowler-cloud/prowler/pull/8028)
 
-
 ---
 
 ## [v5.7.3] (Prowler v5.7.3)

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
-class storage_account_default_to_entra_authorization_enabled(Check):
+class storage_default_to_entra_authorization_enabled(Check):
     """Check if the default to Microsoft Entra authorization is enabled for the storage account.
 
     Attributes:

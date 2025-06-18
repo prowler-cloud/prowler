@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "storage_account_default_to_entra_authorization_enabled",
+  "CheckID": "storage_default_to_entra_authorization_enabled",
   "CheckTitle": "Ensure Microsoft Entra authorization is enabled by default for Azure Storage Accounts",
   "CheckType": [],
   "ServiceName": "storage",
