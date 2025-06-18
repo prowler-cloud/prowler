@@ -304,13 +304,14 @@ class TestCheckMetada:
         # Assertions
         assert result == {"accessanalyzer_enabled"}
 
-    def test_list_by_compliance_empty(self):
+    @mock.patch("prowler.lib.check.models.CheckMetadata.get_bulk")
+    def test_list_by_compliance_empty(self, mock_get_bulk):
+        mock_get_bulk.return_value = {}
         bulk_compliance_frameworks = custom_compliance_metadata
         result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
         )
-
         # Assertions
         assert result == set()
 
