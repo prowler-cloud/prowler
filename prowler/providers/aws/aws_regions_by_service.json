@@ -1181,6 +1181,16 @@
         ]
       }
     },
+    "awstransform": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "b2bi": {
       "regions": {
         "aws": [
@@ -5072,6 +5082,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5358,6 +5369,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -10920,6 +10932,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
