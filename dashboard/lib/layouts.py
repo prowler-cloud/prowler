@@ -9,6 +9,7 @@ def create_layout_overview(
     download_button_xlsx: html.Button,
     severity_dropdown: html.Div,
     service_dropdown: html.Div,
+    provider_dropdown: html.Div,
     table_row_dropdown: html.Div,
     status_dropdown: html.Div,
     table_div_header: html.Div,
@@ -47,9 +48,10 @@ def create_layout_overview(
                 [
                     html.Div([severity_dropdown], className=""),
                     html.Div([service_dropdown], className=""),
+                    html.Div([provider_dropdown], className=""),
                     html.Div([status_dropdown], className=""),
                 ],
-                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-3",
+                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-4",
             ),
             html.Div(
                 [

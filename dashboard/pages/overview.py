@@ -38,6 +38,7 @@ from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
     create_date_dropdown,
+    create_provider_dropdown,
     create_region_dropdown,
     create_service_dropdown,
     create_severity_dropdown,
@@ -298,6 +299,13 @@ else:
 
     service_dropdown = create_service_dropdown(services)
 
+    # Provider Dropdown
+    providers = ["All"] + list(data["PROVIDER"].unique())
+    providers = [
+        x for x in providers if str(x) != "nan" and x.__class__.__name__ == "str"
+    ]
+    provider_dropdown = create_provider_dropdown(providers)
+
     # Create the download button
     download_button_csv = html.Button(
         "Download this table as CSV",
@@ -479,6 +487,7 @@ else:
         download_button_xlsx,
         severity_dropdown,
         service_dropdown,
+        provider_dropdown,
         table_row_dropdown,
         status_dropdown,
         table_div_header,
@@ -508,6 +517,8 @@ else:
         Output("severity-filter", "value"),
         Output("severity-filter", "options"),
         Output("service-filter", "value"),
+        Output("provider-filter", "value"),
+        Output("provider-filter", "options"),
         Output("service-filter", "options"),
         Output("table-rows", "value"),
         Output("table-rows", "options"),
@@ -526,6 +537,7 @@ else:
     Input("download_link_xlsx", "n_clicks"),
     Input("severity-filter", "value"),
     Input("service-filter", "value"),
+    Input("provider-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
     Input("search-input", "value"),
@@ -549,6 +561,7 @@ def filter_data(
     n_clicks_xlsx,
     severity_values,
     service_values,
+    provider_values,
     table_row_values,
     status_values,
     search_value,
@@ -872,6 +885,25 @@ def filter_data(
 
     filtered_data = filtered_data[
         filtered_data["SERVICE_NAME"].isin(updated_service_values)
+    ]
+
+    provider_filter_options = ["All"] + list(filtered_data["PROVIDER"].unique())
+
+    # Filter Provider
+    if provider_values == ["All"]:
+        updated_provider_values = filtered_data["PROVIDER"].unique()
+    elif "All" in provider_values and len(provider_values) > 1:
+        # Remove 'All' from the list
+        provider_values.remove("All")
+        updated_provider_values = provider_values
+    elif len(provider_values) == 0:
+        updated_provider_values = filtered_data["PROVIDER"].unique()
+        provider_values = ["All"]
+    else:
+        updated_provider_values = provider_values
+
+    filtered_data = filtered_data[
+        filtered_data["PROVIDER"].isin(updated_provider_values)
     ]
 
     # Filter Status
@@ -1445,6 +1477,8 @@ def filter_data(
             severity_values,
             severity_filter_options,
             service_values,
+            provider_values,
+            provider_filter_options,
             service_filter_options,
             table_row_values,
             table_row_options,
