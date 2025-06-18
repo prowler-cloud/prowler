@@ -7,13 +7,13 @@ import React, { useEffect, useState } from "react";
 import { FilterControlsProps } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
+import { ClearFiltersButton } from "./clear-filters-button";
 import { CustomAccountSelection } from "./custom-account-selection";
 import { CustomCheckboxMutedFindings } from "./custom-checkbox-muted-findings";
 import { CustomDatePicker } from "./custom-date-picker";
 import { CustomRegionSelection } from "./custom-region-selection";
 import { CustomSearchInput } from "./custom-search-input";
 import { CustomSelectProvider } from "./custom-select-provider";
-import { ClearFiltersButton } from "./clear-filters-button";
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
   search = false,

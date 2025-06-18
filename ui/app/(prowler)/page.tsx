@@ -8,7 +8,7 @@ import {
   getFindingsByStatus,
   getProvidersOverview,
 } from "@/actions/overview/overview";
-import { ClearFiltersButton, FilterControls } from "@/components/filters";
+import { FilterControls } from "@/components/filters";
 import {
   FindingsBySeverityChart,
   FindingsByStatusChart,
