@@ -56,29 +56,25 @@ prowler <provider> --no-color
 
 Prowler provides various security checks per cloud provider. Use the following options to list, execute, or exclude specific checks:
 
-- \*List Available Checks\*
-To display all available checks for the chosen provider:
+- **List Available Checks**: To display all available checks for the chosen provider:
 
 ```console
 prowler <provider> --list-checks
 ```
 
-- \*Execute Specific Checks\*
-Run one or more specific security checks using:
+- **Execute Specific Checks**: Run one or more specific security checks using:
 
 ```console
 prowler <provider> -c/--checks s3_bucket_public_access
 ```
 
-- \*Exclude Specific Checks\*
-Exclude checks from execution with:
+- **Exclude Specific Checks**: Exclude checks from execution with:
 
 ```console
 prowler <provider> -e/--excluded-checks ec2 rds
 ```
 
-- \*Execute Checks from a JSON File\*
-To run checks defined in a JSON file, structure the file as follows:
+- **Execute Checks from a JSON File**: To run checks defined in a JSON file, structure the file as follows:
 
 ```json
 <checks_list>.json
