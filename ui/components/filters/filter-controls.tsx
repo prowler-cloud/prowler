@@ -1,5 +1,6 @@
 "use client";
 
+import { Spacer } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -33,7 +34,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   }, [searchParams]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
         {search && <CustomSearchInput />}
         {providers && <CustomSelectProvider />}
@@ -42,6 +43,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         {accounts && <CustomAccountSelection />}
         {mutedFindings && <CustomCheckboxMutedFindings />}
       </div>
+      <Spacer y={8} />
       {customFilters && (
         <DataTableFilterCustom
           filters={customFilters}

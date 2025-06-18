@@ -83,34 +83,33 @@ export default async function Scans({
     return filter;
   });
 
+  if (thereIsNoProviders) {
+    return (
+      <ContentLayout title="Scans" icon="lucide:scan-search">
+        <NoProvidersAdded />
+      </ContentLayout>
+    );
+  }
+
   return (
     <ContentLayout title="Scans" icon="lucide:scan-search">
-      {thereIsNoProviders && (
-        <>
-          <Spacer y={4} />
-          <NoProvidersAdded />
-        </>
-      )}
-
-      {thereIsNoProvidersConnected ? (
+      {thereIsNoProvidersConnected && (
         <>
           <Spacer y={8} />
           <NoProvidersConnected />
           <Spacer y={8} />
         </>
-      ) : (
-        <>
-          <AutoRefresh hasExecutingScan={hasExecutingScan} />
-          <LaunchScanWorkflow providers={providerInfo} />
-          <Spacer y={8} />
-          <FilterControls customFilters={updatedFilters || []} />
-
-          <Spacer y={8} />
-          <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-            <SSRDataTableScans searchParams={searchParams} />
-          </Suspense>
-        </>
       )}
+
+      <>
+        <AutoRefresh hasExecutingScan={hasExecutingScan} />
+        <LaunchScanWorkflow providers={providerInfo} />
+        <FilterControls customFilters={updatedFilters || []} />
+        <Spacer y={8} />
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+          <SSRDataTableScans searchParams={searchParams} />
+        </Suspense>
+      </>
     </ContentLayout>
   );
 }
