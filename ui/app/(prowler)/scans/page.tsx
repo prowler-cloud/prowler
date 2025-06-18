@@ -81,17 +81,17 @@ export default async function Scans({
 
   return (
     <ContentLayout title="Scans" icon="lucide:scan-search">
-      {thereIsNoProvidersConnected && (
-        <>
-          <Spacer y={8} />
-          <NoProvidersConnected />
-          <Spacer y={8} />
-        </>
-      )}
-
+      <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        <AutoRefresh hasExecutingScan={hasExecutingScan} />
-        <LaunchScanWorkflow providers={providerInfo} />
+        {thereIsNoProvidersConnected ? (
+          <>
+            <Spacer y={8} />
+            <NoProvidersConnected />
+            <Spacer y={8} />
+          </>
+        ) : (
+          <LaunchScanWorkflow providers={providerInfo} />
+        )}
         <ScansFilters
           providerUIDs={providerUIDs}
           providerDetails={providerDetails}
