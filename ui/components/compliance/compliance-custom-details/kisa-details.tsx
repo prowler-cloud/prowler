@@ -1,5 +1,12 @@
 import { Requirement } from "@/types/compliance";
 
+import {
+  ComplianceBulletList,
+  ComplianceDetailContainer,
+  ComplianceDetailSection,
+  ComplianceDetailText,
+} from "./shared-components";
+
 export const KISACustomDetails = ({
   requirement,
 }: {
@@ -15,79 +22,32 @@ export const KISACustomDetails = ({
     | undefined;
 
   return (
-    <div className="space-y-4">
+    <ComplianceDetailContainer>
       {requirement.description && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Description
-          </h4>
-          <p className="text-sm">{requirement.description}</p>
-        </div>
+        <ComplianceDetailSection title="Description">
+          <ComplianceDetailText>{requirement.description}</ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
-      {auditChecklist && auditChecklist.length > 0 && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Audit Checklist
-          </h4>
-          <div className="space-y-2">
-            {auditChecklist.map((item: string, index: number) => (
-              <div key={index} className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1 text-xs">•</span>
-                <p className="text-sm">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <ComplianceBulletList
+        title="Audit Checklist"
+        items={auditChecklist || []}
+      />
 
-      {relatedRegulations && relatedRegulations.length > 0 && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Related Regulations
-          </h4>
-          <div className="space-y-2">
-            {relatedRegulations.map((regulation: string, index: number) => (
-              <div key={index} className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1 text-xs">•</span>
-                <p className="text-sm">{regulation}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <ComplianceBulletList
+        title="Related Regulations"
+        items={relatedRegulations || []}
+      />
 
-      {auditEvidence && auditEvidence.length > 0 && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Audit Evidence
-          </h4>
-          <div className="space-y-2">
-            {auditEvidence.map((evidence: string, index: number) => (
-              <div key={index} className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1 text-xs">•</span>
-                <p className="text-sm">{evidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <ComplianceBulletList
+        title="Audit Evidence"
+        items={auditEvidence || []}
+      />
 
-      {nonComplianceCases && nonComplianceCases.length > 0 && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Non-Compliance Cases
-          </h4>
-          <div className="space-y-2">
-            {nonComplianceCases.map((caseItem: string, index: number) => (
-              <div key={index} className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1 text-xs">•</span>
-                <p className="text-sm">{caseItem}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+      <ComplianceBulletList
+        title="Non-Compliance Cases"
+        items={nonComplianceCases || []}
+      />
+    </ComplianceDetailContainer>
   );
 };

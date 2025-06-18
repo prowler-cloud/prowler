@@ -218,6 +218,10 @@ class TestCompliance:
             Description="Description of requirement 1",
             Attributes=[],
             Checks=["check1", "check2"],
+            Tactics=["tactic1"],
+            SubTechniques=["subtechnique1"],
+            Platforms=["platform1"],
+            TechniqueURL="https://example.com",
         )
         requirement2 = MagicMock(
             Id="requirement2",
@@ -225,6 +229,10 @@ class TestCompliance:
             Description="Description of requirement 2",
             Attributes=[],
             Checks=[],
+            Tactics=[],
+            SubTechniques=[],
+            Platforms=[],
+            TechniqueURL="",
         )
         compliance1 = MagicMock(
             Requirements=[requirement1, requirement2],
@@ -247,6 +255,10 @@ class TestCompliance:
                         "requirement1": {
                             "name": "Requirement 1",
                             "description": "Description of requirement 1",
+                            "tactics": ["tactic1"],
+                            "subtechniques": ["subtechnique1"],
+                            "platforms": ["platform1"],
+                            "technique_url": "https://example.com",
                             "attributes": [],
                             "checks": {"check1": None, "check2": None},
                             "checks_status": {
@@ -260,6 +272,10 @@ class TestCompliance:
                         "requirement2": {
                             "name": "Requirement 2",
                             "description": "Description of requirement 2",
+                            "tactics": [],
+                            "subtechniques": [],
+                            "platforms": [],
+                            "technique_url": "",
                             "attributes": [],
                             "checks": {},
                             "checks_status": {
