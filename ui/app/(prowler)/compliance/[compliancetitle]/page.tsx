@@ -7,13 +7,12 @@ import {
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
-import { getProvider } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
 import {
   BarChart,
   BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
+  ComplianceScanInfo,
   HeatmapChart,
   HeatmapChartSkeleton,
   PieChart,
@@ -22,17 +21,15 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
-import {
-  calculateCategoryHeatmapData,
-  getComplianceMapper,
-} from "@/lib/compliance/commons";
-import { ScanProps } from "@/types";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Framework, RequirementsTotals } from "@/types/compliance";
+import { ScanEntity } from "@/types/scans";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
   scanId?: string;
+  scanData?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
 }
@@ -50,7 +47,7 @@ const ComplianceIconSmall = ({
         src={logoPath}
         alt={`${title} logo`}
         fill
-        className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
+        className="h-8 w-8 min-w-8 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );
@@ -63,18 +60,8 @@ const ChartsWrapper = ({
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start">
-      {children &&
-        React.Children.toArray(children).map(
-          (child: React.ReactNode, index: number) => (
-            <div
-              key={index}
-              className="rounded-lg bg-gray-50 p-6 dark:bg-gray-900"
-            >
-              {child}
-            </div>
-          ),
-        )}
+    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
+      {children}
     </div>
   );
 };
@@ -87,7 +74,7 @@ export default async function ComplianceDetail({
   searchParams: ComplianceDetailSearchParams;
 }) {
   const { compliancetitle } = params;
-  const { complianceId, version, scanId } = searchParams;
+  const { complianceId, version, scanId, scanData } = searchParams;
   const regionFilter = searchParams["filter[region__in]"];
   const cisProfileFilter = searchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
@@ -100,51 +87,19 @@ export default async function ComplianceDetail({
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
-  // Fetch scans data
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-    },
-  });
+  let selectedScan: ScanEntity | null = null;
 
-  // Expand scans with provider information
-  const expandedScansData = scansData?.data?.length
-    ? await Promise.all(
-        scansData.data.map(async (scan: ScanProps) => {
-          const providerId = scan.relationships?.provider?.data?.id;
+  if (scanData) {
+    selectedScan = JSON.parse(decodeURIComponent(scanData));
+  }
 
-          if (!providerId) {
-            return { ...scan, providerInfo: null };
-          }
+  const selectedScanId = scanId || selectedScan?.id || null;
 
-          const formData = new FormData();
-          formData.append("id", providerId);
-
-          const providerData = await getProvider(formData);
-
-          return {
-            ...scan,
-            providerInfo: providerData?.data
-              ? {
-                  provider: providerData.data.attributes.provider,
-                  uid: providerData.data.attributes.uid,
-                  alias: providerData.data.attributes.alias,
-                }
-              : null,
-          };
-        }),
-      )
-    : [];
-
-  const selectedScanId = scanId || expandedScansData[0]?.id || null;
-
-  // Fetch metadata info for regions
   const metadataInfoData = await getComplianceOverviewMetadataInfo({
     filters: {
       "filter[scan_id]": selectedScanId,
     },
   });
-
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
@@ -158,8 +113,14 @@ export default async function ComplianceDetail({
         )
       }
     >
+      {selectedScanId && selectedScan && (
+        <div className="flex max-w-[328px] flex-col items-start">
+          <ComplianceScanInfo scan={selectedScan} />
+          <Spacer y={8} />
+        </div>
+      )}
       <ComplianceHeader
-        scans={expandedScansData}
+        scans={[]}
         uniqueRegions={uniqueRegions}
         showSearch={false}
         framework={compliancetitle}
@@ -181,7 +142,7 @@ export default async function ComplianceDetail({
       >
         <SSRComplianceContent
           complianceId={complianceId}
-          scanId={selectedScanId}
+          scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
@@ -204,7 +165,17 @@ const SSRComplianceContent = async ({
   filter?: string;
   logoPath?: string;
 }) => {
-  if (!scanId) {
+  const [attributesData, requirementsData] = await Promise.all([
+    getComplianceAttributes(complianceId),
+    getComplianceRequirements({
+      complianceId,
+      scanId,
+      region,
+    }),
+  ]);
+  const type = requirementsData?.data?.[0]?.type;
+
+  if (!scanId || type === "tasks") {
     return (
       <div className="space-y-8">
         <ChartsWrapper logoPath={logoPath}>
@@ -217,30 +188,14 @@ const SSRComplianceContent = async ({
     );
   }
 
-  // Get compliance data and attributes once
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
-
-  // Determine framework from the first attribute item
   const framework = attributesData?.data?.[0]?.attributes?.framework;
   const mapper = getComplianceMapper(framework);
-
-  // Use the same data for both compliance view and heatmap
   const data = mapper.mapComplianceData(
     attributesData,
     requirementsData,
     filter,
   );
-
-  // Calculate category heatmap data
-  const categoryHeatmapData = calculateCategoryHeatmapData(data);
-
+  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -249,13 +204,8 @@ const SSRComplianceContent = async ({
     }),
     { pass: 0, fail: 0, manual: 0 },
   );
-
   const accordionItems = mapper.toAccordionItems(data, scanId);
   const topFailedSections = mapper.getTopFailedSections(data);
-
-  // Todo: rethink as every compliance has a different number of items
-  // const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
-  const defaultKeys = [""];
 
   return (
     <div className="space-y-8">
@@ -271,8 +221,9 @@ const SSRComplianceContent = async ({
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper
+        hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
-        defaultExpandedKeys={defaultKeys}
+        defaultExpandedKeys={[]}
       />
     </div>
   );

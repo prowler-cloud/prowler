@@ -1,5 +1,5 @@
 from azure.mgmt.search import SearchManagementClient
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider

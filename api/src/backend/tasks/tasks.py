@@ -8,7 +8,7 @@ from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import backfill_resource_scan_summaries
-from tasks.jobs.connection import check_provider_connection
+from tasks.jobs.connection import check_lighthouse_connection, check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
     COMPLIANCE_CLASS_MAP,
@@ -395,3 +395,22 @@ def create_compliance_requirements_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return create_compliance_requirements(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-connection-check")
+@set_tenant
+def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str = None):
+    """
+    Task to check the connection status of a Lighthouse configuration.
+
+    Args:
+        lighthouse_config_id (str): The primary key of the LighthouseConfiguration instance to check.
+        tenant_id (str): The tenant ID for the task.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'connected' (bool): Indicates whether the connection is successful.
+            - 'error' (str or None): The error message if the connection failed, otherwise `None`.
+            - 'available_models' (list): List of available models if connection is successful.
+    """
+    return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)

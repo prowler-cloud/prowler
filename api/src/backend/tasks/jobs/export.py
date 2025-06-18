@@ -1,4 +1,5 @@
 import os
+import re
 import zipfile
 
 import boto3
@@ -238,15 +239,18 @@ def _generate_output_directory(
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
     """
+    # Sanitize the prowler provider name to ensure it is a valid directory name
+    prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
+
     path = (
         f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{output_file_timestamp}"
     )
     os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
     compliance_path = (
         f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{output_file_timestamp}"
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 
