@@ -41,6 +41,26 @@ class Databricks(AzureService):
 
                 for workspace in client.workspaces.list_by_subscription():
                     workspace_parameters = getattr(workspace, "parameters", None)
+                    workspace_managed_disk_encryption = getattr(
+                        getattr(
+                            getattr(workspace, "encryption", None), "entities", None
+                        ),
+                        "managed_disk",
+                        None,
+                    )
+
+                    key_vault_properties = getattr(
+                        workspace_managed_disk_encryption, "key_vault_properties", None
+                    )
+
+                    if key_vault_properties:
+                        managed_disk_encryption = ManagedDiskEncryption(
+                            key_name=key_vault_properties.key_name,
+                            key_version=key_vault_properties.key_version,
+                            key_vault_uri=key_vault_properties.key_vault_uri,
+                        )
+                    else:
+                        managed_disk_encryption = None
 
                     workspaces[subscription][workspace.id] = DatabricksWorkspace(
                         id=workspace.id,
@@ -55,12 +75,28 @@ class Databricks(AzureService):
                             )
                             else None
                         ),
+                        managed_disk_encryption=managed_disk_encryption,
                     )
             except Exception as error:
                 logger.error(
                     f"Subscription: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return workspaces
+
+
+class ManagedDiskEncryption(BaseModel):
+    """
+    Pydantic model representing the encryption settings for a workspace's managed disks.
+
+    Attributes:
+        key_name: The name of the key used for encryption.
+        key_version: The version of the key used for encryption.
+        key_vault_uri: The URI of the key vault containing the key used for encryption.
+    """
+
+    key_name: str
+    key_version: str
+    key_vault_uri: str
 
 
 class DatabricksWorkspace(BaseModel):
@@ -72,9 +108,11 @@ class DatabricksWorkspace(BaseModel):
         name: The name of the workspace.
         location: The Azure region where the workspace is deployed.
         custom_managed_vnet_id: The ID of the custom managed virtual network, if configured.
+        managed_disk_encryption: The encryption settings for the workspace's managed disks.
     """
 
     id: str
     name: str
     location: str
-    custom_managed_vnet_id: Optional[str]
+    custom_managed_vnet_id: Optional[str] = None
+    managed_disk_encryption: Optional[ManagedDiskEncryption] = None
