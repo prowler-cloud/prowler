@@ -288,6 +288,9 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
+                    # If the finding is muted at this time the reason must be the configured Mutelist
+                    muted_reason = "Muted by mutelist" if finding.muted else None
+
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -303,6 +306,7 @@ def perform_prowler_scan(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
+                        muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
