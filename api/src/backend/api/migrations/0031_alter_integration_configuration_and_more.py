@@ -15,7 +15,6 @@ class Migration(migrations.Migration):
             name="configuration",
             field=models.JSONField(
                 default=dict,
-                error_messages={"unique": "This integration already exists."},
             ),
         ),
         migrations.AddConstraint(
