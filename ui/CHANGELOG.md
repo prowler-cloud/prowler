@@ -20,6 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
+- Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
 
 ### 🔄 Changed
 
@@ -27,6 +28,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
 - Refactor credentials forms with reusable components and error handling [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
 - Updated the provider details section in Scan and Findings detail pages [(#7968)](https://github.com/prowler-cloud/prowler/pull/7968)
+- Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 
 ### 🐞 Fixed
 

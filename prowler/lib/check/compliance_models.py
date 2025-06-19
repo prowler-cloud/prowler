@@ -3,7 +3,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic.v1 import BaseModel, ValidationError, root_validator
 
 from prowler.lib.check.utils import list_compliance_modules
 from prowler.lib.logger import logger
@@ -56,22 +56,26 @@ class ENS_Requirement_Attribute(BaseModel):
 class Generic_Compliance_Requirement_Attribute(BaseModel):
     """Generic Compliance Requirement Attribute"""
 
-    ItemId: Optional[str]
-    Section: Optional[str]
-    SubSection: Optional[str]
-    SubGroup: Optional[str]
-    Service: Optional[str]
-    Type: Optional[str]
+    ItemId: Optional[str] = None
+    Section: Optional[str] = None
+    SubSection: Optional[str] = None
+    SubGroup: Optional[str] = None
+    Service: Optional[str] = None
+    Type: Optional[str] = None
 
 
-class CIS_Requirement_Attribute_Profile(str):
+class CIS_Requirement_Attribute_Profile(str, Enum):
     """CIS Requirement Attribute Profile"""
 
     Level_1 = "Level 1"
     Level_2 = "Level 2"
+    E3_Level_1 = "E3 Level 1"
+    E3_Level_2 = "E3 Level 2"
+    E5_Level_1 = "E5 Level 1"
+    E5_Level_2 = "E5 Level 2"
 
 
-class CIS_Requirement_Attribute_AssessmentStatus(str):
+class CIS_Requirement_Attribute_AssessmentStatus(str, Enum):
     """CIS Requirement Attribute Assessment Status"""
 
     Manual = "Manual"
@@ -83,7 +87,7 @@ class CIS_Requirement_Attribute(BaseModel):
     """CIS Requirement Attribute"""
 
     Section: str
-    SubSection: Optional[str]
+    SubSection: Optional[str] = None
     Profile: CIS_Requirement_Attribute_Profile
     AssessmentStatus: CIS_Requirement_Attribute_AssessmentStatus
     Description: str
@@ -92,7 +96,7 @@ class CIS_Requirement_Attribute(BaseModel):
     RemediationProcedure: str
     AuditProcedure: str
     AdditionalInformation: str
-    DefaultValue: Optional[str]
+    DefaultValue: Optional[str] = None
     References: str
 
 
@@ -104,7 +108,7 @@ class AWS_Well_Architected_Requirement_Attribute(BaseModel):
     WellArchitectedQuestionId: str
     WellArchitectedPracticeId: str
     Section: str
-    SubSection: Optional[str]
+    SubSection: Optional[str] = None
     LevelOfRisk: str
     AssessmentMethod: str
     Description: str
@@ -177,10 +181,10 @@ class KISA_ISMSP_Requirement_Attribute(BaseModel):
     Domain: str
     Subdomain: str
     Section: str
-    AuditChecklist: Optional[list[str]]
-    RelatedRegulations: Optional[list[str]]
-    AuditEvidence: Optional[list[str]]
-    NonComplianceCases: Optional[list[str]]
+    AuditChecklist: Optional[list[str]] = None
+    RelatedRegulations: Optional[list[str]] = None
+    AuditEvidence: Optional[list[str]] = None
+    NonComplianceCases: Optional[list[str]] = None
 
 
 # Prowler ThreatScore Requirement Attribute
@@ -203,7 +207,7 @@ class Compliance_Requirement(BaseModel):
 
     Id: str
     Description: str
-    Name: Optional[str]
+    Name: Optional[str] = None
     Attributes: list[
         Union[
             CIS_Requirement_Attribute,
@@ -224,7 +228,7 @@ class Compliance(BaseModel):
 
     Framework: str
     Provider: str
-    Version: Optional[str]
+    Version: Optional[str] = None
     Description: str
     Requirements: list[
         Union[
