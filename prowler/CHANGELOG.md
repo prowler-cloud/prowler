@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Avoid bypassing IAM check using wildcards [(#7708)](https://github.com/prowler-cloud/prowler/pull/7708)
 - Add new method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
 - Add ISO 27001 2022 for M365 provider. [(#7985)](https://github.com/prowler-cloud/prowler/pull/7985)
+- New check `monitor_alert_service_health` for Azure provider
 
 ---
 ## [v5.7.5] (Prowler UNRELEASED)
