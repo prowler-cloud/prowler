@@ -10,7 +10,7 @@ on:
 
 jobs:
   check-changelog:
-    if: contains(github.event.pull_request.labels.*.name, 'no-backport') == false
+    if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
