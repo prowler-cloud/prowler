@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from azure.mgmt.monitor import MonitorManagementClient
 
@@ -131,4 +131,4 @@ class AlertRule:
     name: str
     condition: AlertRuleAllOfCondition
     enabled: bool
-    description: str
+    description: Optional[str]
