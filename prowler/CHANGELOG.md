@@ -35,6 +35,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `codebuild_project_uses_allowed_github_organizations` check for AWS provider [(#7595)](https://github.com/prowler-cloud/prowler/pull/7595)
 - IaC provider [(#7852)](https://github.com/prowler-cloud/prowler/pull/7852)
 
+### Removed
+- OCSF version number references to point always to the latest [(#8064)](https://github.com/prowler-cloud/prowler/pull/8064)
+
 ---
 
 ## [v5.7.5] (Prowler UNRELEASED)
