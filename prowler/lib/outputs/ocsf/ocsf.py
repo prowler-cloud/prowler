@@ -40,7 +40,7 @@ class OCSF(Output):
         - get_finding_status_id(muted: bool) -> StatusID: Returns the StatusID based on the muted value.
 
     References:
-        - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
+        - OCSF: https://schema.ocsf.io/classes/detection_finding
         - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
