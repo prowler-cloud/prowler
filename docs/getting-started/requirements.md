@@ -212,7 +212,7 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
     - `Policy.Read.All`: Required for all services.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication.
+    - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Exchange Administrator` role to the app.
     - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
 

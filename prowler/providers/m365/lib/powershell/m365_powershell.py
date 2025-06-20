@@ -152,13 +152,6 @@ class M365PowerShell(PowerShellSession):
                 f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
             )
 
-            # Validate user belongs to tenant
-            if "@" not in credentials.user:
-                raise M365UserNotBelongingToTenantError(
-                    file=os.path.basename(__file__),
-                    message=f"Invalid user email format: {credentials.user}. Email must contain '@' symbol.",
-                )
-
             user_domain = credentials.user.split("@")[1]
             if not any(
                 user_domain.endswith(domain)
@@ -920,7 +913,7 @@ def initialize_m365_powershell_modules():
                 if not result:
                     install_result = pwsh.execute(
                         f'Install-Module "{module}" -Force -AllowClobber -Scope CurrentUser',
-                        timeout=30,
+                        timeout=60,
                     )
                     if install_result:
                         logger.warning(

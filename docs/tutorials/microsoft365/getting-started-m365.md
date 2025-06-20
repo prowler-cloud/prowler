@@ -156,6 +156,20 @@ To grant the permissions for the PowerShell modules via application authenticati
 
     ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
 
+    You also need to assign the `Exchange Administrator` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
+
+    ![Roles and administrators](./img/here.png)
+
+    Once in the directory level assignment, search for `Exchange Administrator` and click on it to open the assginments page of that role.
+
+    ![Exchange Administrator Role](./img/exchange-administrator-role.png)
+
+    Click on `Add assignments`, search for your app and click on `Assign`.
+
+    You have to select it as `Active` and click on `Assign` to assign the role to the app.
+
+    ![Assign Exchange Administrator Role](./img/assign-exchange-administrator-role.png)
+
 2. Add Teams API:
 
     - Search and select `Skype and Teams Tenant Admin API` API in **APIs my organization uses**.
