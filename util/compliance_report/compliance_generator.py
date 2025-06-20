@@ -24,8 +24,9 @@ def generate_compliance_report(
     output_path: str,
     email: str,
     password: str,
+    base_url: str,
     only_failed: bool = True,
-    base_url: str = "http://localhost:8080",
+    min_risk_level: int = 4,
 ):
     """
     Generate a PDF compliance report based on Prowler endpoints.
@@ -33,10 +34,12 @@ def generate_compliance_report(
     Parameters:
     - scan_id: ID of the scan executed by Prowler.
     - compliance_id: ID of the compliance framework (e.g., "nis2_azure").
-    - output_path: Output PDF file path (e.g., "compliance_report.pdf").
+    - output_path: Output PDF file path (e.g., "threatscore_report.pdf").
     - email: Email for the API authentication.
     - password: Password for the API.
+    - base_url: Base URL for the API.
     - only_failed: If True, only requirements with status "FAIL" will be included in the list of requirements.
+    - min_risk_level: Minimum risk level for critical failed requirements.
     """
     styles = getSampleStyleSheet()
 
@@ -551,7 +554,9 @@ def generate_compliance_report(
 
     elements.append(Paragraph("Top Requirements by Level of Risk", h1))
     elements.append(Spacer(1, 0.1 * inch))
-    elements.append(Paragraph("Critical Failed Requirements (Risk Level ≥ 4)", h2))
+    elements.append(
+        Paragraph(f"Critical Failed Requirements (Risk Level ≥ {min_risk_level})", h2)
+    )
     elements.append(Spacer(1, 0.2 * inch))
 
     critical_reqs = []
@@ -567,7 +572,7 @@ def generate_compliance_report(
                 risk_level = m.get("LevelOfRisk", 0)
                 weight = m.get("Weight", 0)
 
-                if risk_level >= 4:
+                if risk_level >= min_risk_level:
                     critical_reqs.append(
                         {
                             "req": req,
@@ -846,7 +851,7 @@ if __name__ == "__main__":
     parser.add_argument("--scan-id", required=True, help="Scan ID")
     parser.add_argument("--compliance-id", required=True, help="Compliance ID")
     parser.add_argument(
-        "--output", default="compliance_report.pdf", help="Output PDF file path"
+        "--output", default="threatscore_report.pdf", help="Output PDF file path"
     )
     parser.add_argument("--email", required=True, help="Email for the API")
     parser.add_argument("--password", required=True, help="Password for the API")
@@ -860,6 +865,12 @@ if __name__ == "__main__":
         default="http://localhost:8080",
         help="Base URL for the API",
     )
+    parser.add_argument(
+        "--min-risk-level",
+        type=int,
+        default=4,
+        help="Minimum risk level for critical failed requirements",
+    )
     args = parser.parse_args()
 
     generate_compliance_report(
@@ -868,6 +879,7 @@ if __name__ == "__main__":
         args.output,
         args.email,
         args.password,
-        args.only_failed,
         args.base_url,
+        args.only_failed,
+        args.min_risk_level,
     )
