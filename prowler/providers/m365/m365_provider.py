@@ -756,6 +756,7 @@ class M365Provider(Provider):
             if user and password:
                 M365Provider.setup_powershell(
                     env_auth,
+                    sp_env_auth,
                     m365_credentials,
                     identity,
                 )
