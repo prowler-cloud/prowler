@@ -193,27 +193,46 @@ class M365PowerShell(PowerShellSession):
             return True
 
         else:
-            # Test application authentication by validating all required service connections
+            # Test Microsoft Graph connection
             try:
+                logger.info("Testing Microsoft Graph connection...")
                 self.test_graph_connection()
-                logger.info("✓ Microsoft Graph connection successful")
+                logger.info("Microsoft Graph connection successful")
+            except Exception as e:
+                logger.error(f"Microsoft Graph connection failed: {e}")
+                raise M365GraphConnectionError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="Check your Microsoft Application credentials and ensure the app has proper permissions",
+                )
 
+            # Test Microsoft Teams connection
+            try:
+                logger.info("Testing Microsoft Teams connection...")
                 self.test_teams_connection()
-                logger.info("✓ Microsoft Teams connection successful")
+                logger.info("Microsoft Teams connection successful")
+            except Exception as e:
+                logger.error(f"Microsoft Teams connection failed: {e}")
+                raise M365TeamsConnectionError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="Ensure the application has proper permission granted to access Microsoft Teams.",
+                )
 
+            # Test Exchange Online connection
+            try:
+                logger.info("Testing Exchange Online connection...")
                 self.test_exchange_connection()
-                logger.info("✓ Exchange Online connection successful")
+                logger.info("Exchange Online connection successful")
+            except Exception as e:
+                logger.error(f"Exchange Online connection failed: {e}")
+                raise M365ExchangeConnectionError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="Ensure the application has proper permission granted to access Exchange Online.",
+                )
 
-                return True
-
-            except (
-                M365GraphConnectionError,
-                M365TeamsConnectionError,
-                M365ExchangeConnectionError,
-            ) as e:
-                # Log the specific error and re-raise
-                logger.error(f"M365 service connection failed: {e}")
-                raise e
+            return True
 
     def test_graph_connection(self) -> bool:
         """Test Microsoft Graph API connection and raise exception if it fails."""
