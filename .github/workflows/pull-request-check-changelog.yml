@@ -3,6 +3,12 @@ name: Check Changelog
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'api/**'
+      - 'ui/**'
+      - 'prowler/**'
+  pull_request_target:
+    types: [labeled, unlabeled]
 
 jobs:
   check-changelog:
