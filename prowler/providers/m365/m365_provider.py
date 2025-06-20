@@ -392,6 +392,7 @@ class M365Provider(Provider):
                 If env_auth is True, retrieves from environment variables.
                 If False, returns empty credentials.
         """
+        logger.info("M365 provider: Setting up PowerShell session...")
         credentials = None
 
         if m365_credentials:
@@ -702,8 +703,8 @@ class M365Provider(Provider):
                         tenant_id=tenant_id,
                         client_id=client_id,
                         client_secret=client_secret,
-                        user="user",
-                        password="password",
+                        user=None,
+                        password=None,
                     )
                 else:
                     m365_credentials = M365Provider.validate_static_credentials(
