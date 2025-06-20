@@ -396,8 +396,8 @@ class M365Provider(Provider):
 
         if m365_credentials:
             credentials = M365Credentials(
-                user=m365_credentials.get("user", ""),
-                passwd=m365_credentials.get("password", ""),
+                user=m365_credentials.get("user", None),
+                passwd=m365_credentials.get("password", None),
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
@@ -424,8 +424,8 @@ class M365Provider(Provider):
                 client_secret=client_secret,
                 tenant_id=tenant_id,
                 tenant_domains=identity.tenant_domains,
-                user=m365_user or "",
-                passwd=m365_password or "",
+                user=m365_user,
+                passwd=m365_password,
             )
 
         elif sp_env_auth:
@@ -535,8 +535,8 @@ class M365Provider(Provider):
                             tenant_id=m365_credentials["tenant_id"],
                             client_id=m365_credentials["client_id"],
                             client_secret=m365_credentials["client_secret"],
-                            user=m365_credentials["user"] or "",
-                            password=m365_credentials["password"] or "",
+                            user=m365_credentials["user"],
+                            password=m365_credentials["password"],
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -1046,8 +1046,8 @@ class M365Provider(Provider):
                 "tenant_id": tenant_id,
                 "client_id": client_id,
                 "client_secret": client_secret,
-                "user": user or "",
-                "password": password or "",
+                "user": user,
+                "password": password,
             }
         except M365NotValidTenantIdError as tenant_id_error:
             logger.error(
