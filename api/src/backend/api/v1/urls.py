@@ -16,6 +16,7 @@ from api.v1.views import (
     LighthouseConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
+    ProcessorViewSet,
     ProviderGroupProvidersRelationshipView,
     ProviderGroupViewSet,
     ProviderSecretViewSet,
@@ -53,6 +54,7 @@ router.register(
 router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
 router.register(r"integrations", IntegrationViewSet, basename="integration")
+router.register(r"processors", ProcessorViewSet, basename="processor")
 router.register(r"saml-config", SAMLConfigurationViewSet, basename="saml-config")
 router.register(
     r"lighthouse-configurations",
