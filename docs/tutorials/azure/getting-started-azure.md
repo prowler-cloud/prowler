@@ -90,11 +90,13 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
 Assign the following Microsoft Graph permissions:
 
-    - Domain.Read.All
+- Domain.Read.All
 
-    - Policy.Read.All
+- Policy.Read.All
 
-    - UserAuthenticationMethod.Read.All (optional, for MFA checks)
+- UserAuthenticationMethod.Read.All (optional, for MFA checks)
+
+In order to assign the permissions, you can use the following steps:
 
 1. Go to your App Registration > `API permissions`
 

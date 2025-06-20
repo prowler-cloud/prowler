@@ -1,22 +1,22 @@
 # Miscellaneous
 
-## Context Filtering
+## Context Filtering in Prowler
 
 Prowler will scan the active Kubernetes context by default.
 
-To specify the Kubernetes context to be scanned, use the `--context` flag followed by the desired context name. For example:
+To specify a different Kubernetes context for scanning, use the `--context` flag followed by the desired context name, for example:
 
 ```console
 prowler --context my-context
 ```
 
-This will ensure that Prowler scans the specified context/cluster for vulnerabilities and misconfigurations.
+This ensures that Prowler analyzes the selected context or cluster for vulnerabilities and misconfigurations.
 
 ## Namespace Filtering
 
-By default, `prowler` will scan all namespaces in the context you specify.
+By default, `prowler` scans all namespaces within the specified context.
 
-To specify the namespace(s) to be scanned, use the `--namespace` flag followed by the desired namespace(s) separated by spaces. For example:
+To limit the scan to specific namespaces, use the `--namespace` flag followed by the desired namespace names, separated by spaces: for example:
 
 ```console
 prowler --namespace namespace1 namespace2

@@ -1,6 +1,6 @@
 # Custom Checks Metadata
 
-In certain organizations, the severity of specific checks might differ from the default values defined in the check's metadata. For instance, while `s3_bucket_level_public_access_block` could be deemed `critical` for some organizations, others might assign a different severity level.
+In certain organizations, the severity of specific checks might differ from the default values defined in the check's metadata. For instance, while `s3_bucket_level_public_access_block` could be deemed `critical` for some organizations, others might assign a different severity level to it.
 
 The custom metadata option offers a means to override default metadata set by Prowler
 
@@ -15,18 +15,20 @@ The list of supported check's metadata fields that can be override are listed as
 - Risk
 - RelatedUrl
 - Remediation
-  - Code
-    - CLI
-    - NativeIaC
-    - Other
-    - Terraform
-  - Recommendation
-    - Text
-    - Url
+    - Code
+        - CLI
+        - NativeIaC
+        - Other
+        - Terraform
+    - Recommendation
+        - Text
+        - Url
+
 
 ## File Syntax
 
-This feature is available for all the providers supported in Prowler since the metadata format is common between all the providers. The following is the YAML format for the custom checks metadata file:
+This feature is available for all the providers supported in Prowler since the metadata format is common between all the providers. The YAML format for the custom checks metadata file is as follows:
+
 ```yaml title="custom_checks_metadata.yaml"
 CustomChecksMetadata:
   aws:
@@ -117,6 +119,7 @@ CustomChecksMetadata:
 ## Usage
 
 Executing the following command will assess all checks and generate a report while overriding the metadata for those checks:
+
 ```sh
 prowler <provider> --custom-checks-metadata-file <path/to/custom/metadata>
 ```

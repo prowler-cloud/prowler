@@ -1,8 +1,12 @@
-
 # Prowler Check Kreator
 
 ???+ note
     Currently, this tool is only available for creating checks for the AWS provider.
+
+???+ note
+    If you are looking for a way to create new checks for all the supported providers, you can use [Prowler Studio](https://github.com/prowler-cloud/prowler-studio), it is an AI-powered toolkit for generating and managing security checks for Prowler (better version of the Check Kreator).
+
+## Introduction
 
 **Prowler Check Kreator** is a utility designed to streamline the creation of new checks for Prowler. This tool generates all necessary files required to add a new check to the Prowler repository. Specifically, it creates:
 
@@ -18,6 +22,7 @@ To use the tool, execute the main script with the following command:
 ```bash
 python util/prowler_check_kreator/prowler_check_kreator.py <prowler_provider> <check_name>
 ```
+
 Parameters:
 
 - `<prowler_provider>`: Currently only AWS is supported.
