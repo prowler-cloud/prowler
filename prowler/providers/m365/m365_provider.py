@@ -753,18 +753,13 @@ class M365Provider(Provider):
             logger.info("M365 provider: Identity retrieved successfully")
 
             # Set up PowerShell credentials
-            if user and password:
-                M365Provider.setup_powershell(
-                    env_auth,
-                    sp_env_auth,
-                    m365_credentials,
-                    identity,
-                )
-                logger.info("M365 provider: Connection to PowerShell successful")
-            else:
-                logger.info(
-                    "M365 provider: Connection to PowerShell has not been requested"
-                )
+            M365Provider.setup_powershell(
+                env_auth,
+                sp_env_auth,
+                m365_credentials,
+                identity,
+            )
+            logger.info("M365 provider: Connection to PowerShell successful")
 
             return Connection(is_connected=True)
 
