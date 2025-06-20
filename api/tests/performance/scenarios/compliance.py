@@ -9,7 +9,12 @@ GLOBAL = {
     "token": None,
     "available_scans_info": {},
 }
-COMMON_COMPLIANCE_IDS = ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"]
+SUPPORTED_COMPLIANCE_IDS = {
+    "aws": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
+    "gcp": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
+    "azure": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
+    "m365": ["cis_4.0", "iso27001_2022", "prowler_threatscore"],
+}
 
 
 def _get_random_scan() -> tuple:
@@ -19,7 +24,7 @@ def _get_random_scan() -> tuple:
 
 
 def _get_random_compliance_id(provider: str) -> str:
-    return f"{random.choice(COMMON_COMPLIANCE_IDS)}_{provider}"
+    return f"{random.choice(SUPPORTED_COMPLIANCE_IDS[provider])}_{provider}"
 
 
 def _get_compliance_available_scans_by_provider_type(host: str, token: str) -> dict:
@@ -27,7 +32,7 @@ def _get_compliance_available_scans_by_provider_type(host: str, token: str) -> d
 
     response_dict = defaultdict(list)
     provider_response = requests.get(
-        f"{host}/providers?fields[providers]=id,provider",
+        f"{host}/providers?fields[providers]=id,provider&filter[connected]=true",
         headers=get_auth_headers(token),
     )
     for provider in provider_response.json()["data"]:
@@ -49,7 +54,6 @@ def _get_compliance_available_scans_by_provider_type(host: str, token: str) -> d
 
 
 def _get_compliance_regions_from_scan(host: str, token: str, scan_id: str) -> list:
-
     response = requests.get(
         f"{host}/compliance-overviews/metadata?filter[scan_id]={scan_id}",
         headers=get_auth_headers(token),
