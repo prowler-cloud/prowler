@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import List, Optional
 
 from azure.mgmt.storage import StorageManagementClient
@@ -34,6 +35,7 @@ class Storage(AzureService):
                         key_expiration_period_in_days = (
                             storage_account.key_policy.key_expiration_period_in_days
                         )
+                    replication_settings = ReplicationSettings(storage_account.sku.name)
                     storage_accounts[subscription].append(
                         Account(
                             id=storage_account.id,
@@ -68,6 +70,12 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            default_to_entra_authorization=getattr(
+                                storage_account,
+                                "default_to_o_auth_authentication",
+                                False,
+                            ),
+                            replication_settings=replication_settings,
                             allow_cross_tenant_replication=getattr(
                                 storage_account, "allow_cross_tenant_replication", True
                             ),
@@ -211,6 +219,17 @@ class PrivateEndpointConnection:
     type: str
 
 
+class ReplicationSettings(Enum):
+    STANDARD_LRS = "Standard_LRS"
+    STANDARD_GRS = "Standard_GRS"
+    STANDARD_RAGRS = "Standard_RAGRS"
+    STANDARD_ZRS = "Standard_ZRS"
+    PREMIUM_LRS = "Premium_LRS"
+    PREMIUM_ZRS = "Premium_ZRS"
+    STANDARD_GZRS = "Standard_GZRS"
+    STANDARD_RAGZRS = "Standard_RAGZRS"
+
+
 @dataclass
 class Account:
     id: str
@@ -225,9 +244,11 @@ class Account:
     private_endpoint_connections: List[PrivateEndpointConnection]
     key_expiration_period_in_days: str
     location: str
+    replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
     allow_cross_tenant_replication: bool = True
     allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None
+    default_to_entra_authorization: bool = False
     file_shares: list = None
 
 
