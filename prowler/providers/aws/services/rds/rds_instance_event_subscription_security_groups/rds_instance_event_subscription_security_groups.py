@@ -10,8 +10,6 @@ class rds_instance_event_subscription_security_groups(Check):
                 report = Check_Report_AWS(metadata=self.metadata(), resource=db_event)
                 report.status = "FAIL"
                 report.status_extended = "RDS security group event categories of configuration change and failure are not subscribed."
-                report.resource_id = rds_client.audited_account
-                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 report.resource_tags = []
                 if db_event.source_type == "db-security-group" and db_event.enabled:
                     report = Check_Report_AWS(
@@ -33,6 +31,9 @@ class rds_instance_event_subscription_security_groups(Check):
                     elif db_event.event_list == ["failure"]:
                         report.status = "FAIL"
                         report.status_extended = "RDS security group event category of configuration change is not subscribed."
+
+                report.resource_id = rds_client.audited_account
+                report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
 
                 findings.append(report)
 
