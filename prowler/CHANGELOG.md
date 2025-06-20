@@ -36,6 +36,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - IaC provider [(#7852)](https://github.com/prowler-cloud/prowler/pull/7852)
 - Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
 - Azure Databricks check `databricks_workspace_cmk_encryption_enabled` to ensure workspaces use customer-managed keys (CMK) for encryption at rest [(#8017)](https://github.com/prowler-cloud/prowler/pull/8017)
+- Appication auth for PowerShell in M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 
 ---
 
