@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "keyvault_access_only_through_private_endpoints",
+  "CheckTitle": "Ensure that public network access when using private endpoint is disabled.",
+  "CheckType": [],
+  "ServiceName": "keyvault",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{vault_name}",
+  "Severity": "high",
+  "ResourceType": "KeyVault",
+  "Description": "Checks if Key Vaults with private endpoints have public network access disabled.",
+  "Risk": "Allowing public network access to Key Vault when using private endpoint can expose sensitive data to unauthorized access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/key-vault/general/network-security",
+  "Remediation": {
+    "Code": {
+      "CLI": "az keyvault update --resource-group <resource_group> --name <vault_name> --public-network-access disabled",
+      "NativeIaC": "{\n  \"type\": \"Microsoft.KeyVault/vaults\",\n  \"apiVersion\": \"2022-07-01\",\n  \"properties\": {\n    \"publicNetworkAccess\": \"disabled\"\n  }\n}",
+      "Terraform": "resource \"azurerm_key_vault\" \"example\" {\n  # ... other configuration ...\n\n  public_network_access_enabled = false\n}",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/use-private-endpoints.html"
+    },
+    "Recommendation": {
+      "Text": "Disable public network access for Key Vaults that use private endpoint to ensure network traffic only flows through the private endpoint.",
+      "Url": "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
