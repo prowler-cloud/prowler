@@ -6,6 +6,9 @@ import msal
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
+    M365ExchangeConnectionError,
+    M365GraphConnectionError,
+    M365TeamsConnectionError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
@@ -150,6 +153,12 @@ class M365PowerShell(PowerShellSession):
             )
 
             # Validate user belongs to tenant
+            if "@" not in credentials.user:
+                raise M365UserNotBelongingToTenantError(
+                    file=os.path.basename(__file__),
+                    message=f"Invalid user email format: {credentials.user}. Email must contain '@' symbol.",
+                )
+
             user_domain = credentials.user.split("@")[1]
             if not any(
                 user_domain.endswith(domain)
@@ -184,7 +193,90 @@ class M365PowerShell(PowerShellSession):
             return True
 
         else:
-            return self.execute("Write-Output $graphToken") != ""
+            # Test application authentication by validating all required service connections
+            try:
+                self.test_graph_connection()
+                logger.info("✓ Microsoft Graph connection successful")
+
+                self.test_teams_connection()
+                logger.info("✓ Microsoft Teams connection successful")
+
+                self.test_exchange_connection()
+                logger.info("✓ Exchange Online connection successful")
+
+                return True
+
+            except (
+                M365GraphConnectionError,
+                M365TeamsConnectionError,
+                M365ExchangeConnectionError,
+            ) as e:
+                # Log the specific error and re-raise
+                logger.error(f"M365 service connection failed: {e}")
+                raise e
+
+    def test_graph_connection(self) -> bool:
+        """Test Microsoft Graph API connection and raise exception if it fails."""
+        try:
+            if self.execute("Write-Output $graphToken") == "":
+                raise M365GraphConnectionError(
+                    file=os.path.basename(__file__),
+                    message="Microsoft Graph token is empty or invalid.",
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Microsoft Graph connection failed: {e}")
+            raise M365GraphConnectionError(
+                file=os.path.basename(__file__),
+                original_exception=e,
+                message=f"Failed to connect to Microsoft Graph API: {str(e)}",
+            )
+
+    def test_teams_connection(self) -> bool:
+        """Test Microsoft Teams API connection and raise exception if it fails."""
+        try:
+            self.execute(
+                '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
+            )
+            self.execute(
+                '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
+            )
+            if self.execute("Write-Output $teamsToken") == "":
+                raise M365TeamsConnectionError(
+                    file=os.path.basename(__file__),
+                    message="Microsoft Teams token is empty or invalid.",
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Microsoft Teams connection failed: {e}")
+            raise M365TeamsConnectionError(
+                file=os.path.basename(__file__),
+                original_exception=e,
+                message=f"Failed to connect to Microsoft Teams API: {str(e)}",
+            )
+
+    def test_exchange_connection(self) -> bool:
+        """Test Exchange Online API connection and raise exception if it fails."""
+        try:
+            self.execute(
+                '$SecureSecret = ConvertTo-SecureString "$clientSecret" -AsPlainText -Force'
+            )
+            self.execute(
+                '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
+            )
+            if self.execute("Write-Output $exchangeToken") == "":
+                raise M365ExchangeConnectionError(
+                    file=os.path.basename(__file__),
+                    message="Exchange Online token is empty or invalid.",
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Exchange Online connection failed: {e}")
+            raise M365ExchangeConnectionError(
+                file=os.path.basename(__file__),
+                original_exception=e,
+                message=f"Failed to connect to Exchange Online API: {str(e)}",
+            )
 
     def connect_microsoft_teams(self) -> dict:
         """
