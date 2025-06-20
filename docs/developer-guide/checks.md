@@ -8,15 +8,19 @@ Checks are the core component of Prowler. A check is a piece of code designed to
 
 ### Creating a Check
 
-To create a new check:
+The most common high level steps to create a new check are:
 
-- Prerequisites: A Prowler provider and service must exist. Verify support and check for pre-existing checks via [Prowler Hub](https://hub.prowler.com). If the provider or service is not present, please refer to the [Provider](./provider.md) and [Service](./services.md) documentation for creation instructions.
-
-- Navigate to the service directory. The path should be as follows: `prowler/providers/<provider>/services/<service>`.
-
-- Create a check-specific folder. The path should follow this pattern: `prowler/providers/<provider>/services/<service>/<check_name>`. Adhere to the [Naming Format for Checks](#naming-format-for-checks).
-
-- Populate the folder with files as specified in [File Creation](#file-creation).
+1. Prerequisites:
+    - Verify the check does not already exist by searching [Prowler Hub](https://hub.prowler.com) or checking `prowler/providers/<provider>/services/<service>/<check_name_want_to_implement>/`.
+    - Ensure required provider and service exist. If not, follow the [Provider](./provider.md) and [Service](./services.md) documentation to create them.
+    - Confirm the service has implemented all required methods and attributes for the check (in most cases, you will need to add or modify some methods in the service to get the data you need for the check).
+2. Navigate to the service directory. The path should be as follows: `prowler/providers/<provider>/services/<service>`.
+3. Create a check-specific folder. The path should follow this pattern: `prowler/providers/<provider>/services/<service>/<check_name_want_to_implement>`. Adhere to the [Naming Format for Checks](#naming-format-for-checks).
+4. Populate the folder with files as specified in [File Creation](#file-creation).
+5. Run the check locally to ensure it works as expected. For checking you can use the CLI in the next way:
+    - To ensure the check has been detected by Prowler: `poetry run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
+    - To run the check, to find possible issues: `poetry run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
+6. If the check is working as expected, you can submit a PR to Prowler.
 
 ### Naming Format for Checks
 
@@ -59,13 +63,19 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 # Each check must be implemented as a Python class with the same name as its corresponding file.
 # The class must inherit from the Check base class.
 class <check_name>(Check):
-    """Short description of what is being checked"""
+    """
+    Ensure that <resource> meets <security_requirement>.
+
+    This check evaluates whether <specific_condition> to ensure <security_benefit>.
+    - PASS: <description_of_compliant_state(s)>.
+    - FAIL: <description_of_non_compliant_state(s)>.
+    """
 
     def execute(self):
-        """Execute <check short description>
+        """Execute the check logic.
 
         Returns:
-            List[CheckReport<Provider>]: A list of reports containing the result of the check.
+            A list of reports containing the result of the check.
         """
         findings = []
         # Iterate over the target resources using the provider service client
@@ -147,12 +157,10 @@ else:
 Each check **must** populate the report with an unique identifier for the audited resource. This identifier or identifiers are going to depend on the provider and the resource that is being audited. Here are the criteria for each provider:
 
 - AWS
-
     - Amazon Resource ID — `report.resource_id`.
         - The resource identifier. This is the name of the resource, the ID of the resource, or a resource path. Some resource identifiers include a parent resource (sub-resource-type/parent-resource/sub-resource) or a qualifier such as a version (resource-type:resource-name:qualifier).
         - If the resource ID cannot be retrieved directly from the audited resource, it can be extracted from the ARN. It is the last part of the ARN after the last slash (`/`) or colon (`:`).
         - If no actual resource to audit exists, this format can be used: `<resource_type>/unknown`
-
     - Amazon Resource Name — `report.resource_arn`.
         - The [Amazon Resource Name (ARN)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) of the audited entity.
         - If the ARN cannot be retrieved directly from the audited resource, construct a valid ARN using the `resource_id` component as the audited entity. Examples:
@@ -163,32 +171,24 @@ Each check **must** populate the report with an unique identifier for the audite
                 - AWS Security Hub — `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`.
                 - Access Analyzer — `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`.
                 - GuardDuty — `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`.
-
 - GCP
-
     - Resource ID — `report.resource_id`.
         - Resource ID represents the full, [unambiguous path to a resource](https://google.aip.dev/122#full-resource-names), known as the full resource name. Typically, it follows the format: `//{api_service/resource_path}`.
         - If the resource ID cannot be retrieved directly from the audited resource, by default the resource name is used.
     - Resource Name — `report.resource_name`.
         - Resource Name usually refers to the name of a resource within its service.
-
 - Azure
-
     - Resource ID — `report.resource_id`.
         - Resource ID represents the full Azure Resource Manager path to a resource, which follows the format: `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}`.
     - Resource Name — `report.resource_name`.
         - Resource Name usually refers to the name of a resource within its service.
         - If the [resource name](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules) cannot be retrieved directly from the audited resource, the last part of the resource ID can be used.
-
 - Kubernetes
-
     - Resource ID — `report.resource_id`.
         - The UID of the Kubernetes object. This is a system-generated string that uniquely identifies the object within the cluster for its entire lifetime. See [Kubernetes Object Names and IDs - UIDs](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids).
     - Resource Name — `report.resource_name`.
         - The name of the Kubernetes object. This is a client-provided string that must be unique for the resource type within a namespace (for namespaced resources) or cluster (for cluster-scoped resources). Names typically follow DNS subdomain or label conventions. See [Kubernetes Object Names and IDs - Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names).
-
 - M365
-
     - Resource ID — `report.resource_id`.
         - If the audited resource has a globally unique identifier such as a `guid`, use it as the `resource_id`.
         - If no `guid` exists, use another unique and relevant identifier for the resource, such as the tenant domain, the internal policy ID, or a representative string following the format `<resource_type>/<name_or_id>`.
@@ -204,9 +204,7 @@ Each check **must** populate the report with an unique identifier for the audite
         - For global configurations:
             - `resource_id`: Tenant domain or representative string (e.g., "userSettings")
             - `resource_name`: Description of the configuration (e.g., "SharePoint Settings")
-
 - GitHub
-
     - Resource ID — `report.resource_id`.
         - The ID of the Github resource. This is a system-generated integer that uniquely identifies the resource within the Github platform.
     - Resource Name — `report.resource_name`.
@@ -285,44 +283,25 @@ Below is a generic example of a check metadata file. **Do not include comments i
 ### Metadata Fields and Their Purpose
 
 - **Provider** — The Prowler provider related to the check. The name **must** be lowercase and match the provider folder name. For supported providers refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
-
 - **CheckID** — The unique identifier for the check inside the provider, this field **must** match the check's folder and python file and json metadata file name. For more information about the naming refer to the [Naming Format for Checks](#naming-format-for-checks) section.
-
 - **CheckTitle** — A concise, descriptive title for the check.
-
 - **CheckType** — *For now this field is only standardized for the AWS provider*.
     - For AWS this field must follow the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format. So the common pattern to follow is `namespace/category/classifier`, refer to the attached documentation for the valid values for this fields.
-
 - **ServiceName** — The name of the provider service being audited. This field **must** be in lowercase and match with the service folder name. For supported services refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
-
 - **SubServiceName** — The subservice or resource within the service, if applicable. For more information refer to the [Naming Format for Checks](#naming-format-for-checks) section.
-
 - **ResourceIdTemplate** — A template for the unique resource identifier. For more information refer to the [Prowler's Resource Identification](#prowlers-resource-identification) section.
-
 - **Severity** — The severity of the finding if the check fails. Must be one of: `critical`, `high`, `medium`, `low`, or `informational`, this field **must** be in lowercase. To get more information about the severity levels refer to the [Prowler's Check Severity Levels](#prowlers-check-severity-levels) section.
-
 - **ResourceType** — The type of resource being audited. *For now this field is only standardized for the AWS provider*.
-
     - For AWS use the [Security Hub resource types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html) or, if not available, the PascalCase version of the [CloudFormation type](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) (e.g., `AwsEc2Instance`). Use "Other" if no match exists.
-
 - **Description** — A short description of what the check does.
-
 - **Risk** — The risk or impact if the check fails, explaining why the finding matters.
-
 - **RelatedUrl** — A URL to official documentation or further reading about the check's purpose. If no official documentation is available, use the risk and recommendation text from trusted third-party sources.
-
 - **Remediation** — Guidance for fixing a failed check, including:
-
     - **Code** — Remediation commands or code snippets for CLI, Terraform, native IaC, or other tools like the Web Console.
-
     - **Recommendation** — A textual human readable recommendation. Here it is not necessary to include actual steps, but rather a general recommendation about what to do to fix the check.
-
 - **Categories** — One or more categories for grouping checks in execution (e.g., `internet-exposed`). For the current list of categories, refer to the [Prowler Hub](https://hub.prowler.com/check).
-
 - **DependsOn** — Currently not used.
-
 - **RelatedTo** — Currently not used.
-
 - **Notes** — Any additional information not covered by other fields.
 
 ### Remediation Code Guidelines
@@ -337,3 +316,28 @@ When providing remediation steps, reference the following sources:
 ### Python Model Reference
 
 The metadata structure is enforced in code using a Pydantic model. For reference, see the [`CheckMetadata`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py).
+
+## Generic Check Patterns and Best Practices
+
+### Common Patterns
+
+- Every check is implemented as a class inheriting from `Check` (from `prowler.lib.check.models`).
+- The main logic is implemented in the `execute()` method (**only method that must be implemented**), which always returns a list of provider-specific report objects (e.g., `CheckReport<Provider>`)—one per finding/resource. If there are no findings/resources, return an empty list.
+- **Never** use the provider's client directly; instead, use the service client (e.g., `<service>_client`) and iterate over its resources.
+- For each resource, create a provider-specific report object, populate it with metadata, resource details, status (`PASS`, `FAIL`, etc.), and a human-readable `status_extended` message.
+- Use the `metadata()` method to attach check metadata to each report.
+- Checks are designed to be idempotent and stateless: they do not modify resources, only report on their state.
+
+### Best Practices
+
+- Use clear, actionable, and user-friendly language in `status_extended` to explain the result. Always provide information to identify the resource.
+- Use helper functions/utilities for repeated logic to avoid code duplication. Save them in the `lib` folder of the service.
+- Handle exceptions gracefully: catch errors per resource, log them, and continue processing other resources.
+- Document the check with a class and function level docstring explaining what it does, what it checks, and any caveats or provider-specific behaviors.
+- Use type hints for the `execute()` method (e.g., `-> list[CheckReport<Provider>]`) for clarity and static analysis.
+- Ensure checks are efficient; avoid excessive nested loops. If the complexity is high, consider refactoring the check.
+- Keep the check logic focused: one check = one control/requirement. Avoid combining unrelated logic in a single check.
+
+## Specific Check Patterns
+
+Details for specific providers can be found in documentation pages named using the pattern `<provider_name>-details`.
