@@ -18,7 +18,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
@@ -2761,73 +2761,68 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 {"detail": "Task failed to generate compliance overview data."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
 
-        base_queryset = self.filter_queryset(self.get_queryset())
+        requirement_status_subquery = queryset.values(
+            "compliance_id", "requirement_id"
+        ).annotate(
+            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
+            pass_count=Count("id", filter=Q(requirement_status="PASS")),
+            total_count=Count("id"),
+        )
 
-        sql, params = base_queryset.query.sql_with_params()
+        compliance_data = {}
+        framework_info = {}
 
-        with connection.cursor() as cursor:
-            optimized_sql = f"""
-                WITH filtered_data AS (
-                    {sql}
-                ),
-                requirement_statuses AS (
-                    SELECT
-                        compliance_id,
-                        requirement_id,
-                        MAX(framework) as framework,
-                        MAX(version) as version,
-                        SUM(CASE WHEN requirement_status = 'FAIL' THEN 1 ELSE 0 END) as fail_count,
-                        SUM(CASE WHEN requirement_status = 'PASS' THEN 1 ELSE 0 END) as pass_count,
-                        COUNT(*) as total_count
-                    FROM filtered_data
-                    GROUP BY compliance_id, requirement_id
-                ),
-                compliance_aggregated AS (
-                    SELECT
-                        compliance_id,
-                        MAX(framework) as framework,
-                        MAX(version) as version,
-                        COUNT(*) as total_requirements,
-                        SUM(CASE
-                            WHEN fail_count = 0 AND pass_count = total_count THEN 1
-                            ELSE 0
-                        END) as requirements_passed,
-                        SUM(CASE
-                            WHEN fail_count > 0 THEN 1
-                            ELSE 0
-                        END) as requirements_failed
-                    FROM requirement_statuses
-                    GROUP BY compliance_id
-                )
-                SELECT
-                    compliance_id,
-                    framework,
-                    version,
-                    total_requirements,
-                    requirements_passed,
-                    requirements_failed,
-                    (total_requirements - requirements_passed - requirements_failed) as requirements_manual
-                FROM compliance_aggregated
-                ORDER BY compliance_id
-            """
-
-            cursor.execute(optimized_sql, params)
-            compliance_results = cursor.fetchall()
-
-        response_data = [
-            {
-                "id": row[0],
-                "compliance_id": row[0],
-                "framework": row[1] or "",
-                "version": row[2] or "",
-                "requirements_passed": row[4],
-                "requirements_failed": row[5],
-                "requirements_manual": row[6],
-                "total_requirements": row[3],
+        for item in queryset.values("compliance_id", "framework", "version").distinct():
+            framework_info[item["compliance_id"]] = {
+                "framework": item["framework"],
+                "version": item["version"],
             }
-            for row in compliance_results
-        ]
+
+        for item in requirement_status_subquery:
+            compliance_id = item["compliance_id"]
+
+            if item["fail_count"] > 0:
+                req_status = "FAIL"
+            elif item["pass_count"] == item["total_count"]:
+                req_status = "PASS"
+            else:
+                req_status = "MANUAL"
+
+            if compliance_id not in compliance_data:
+                compliance_data[compliance_id] = {
+                    "total_requirements": 0,
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                }
+
+            compliance_data[compliance_id]["total_requirements"] += 1
+            if req_status == "PASS":
+                compliance_data[compliance_id]["requirements_passed"] += 1
+            elif req_status == "FAIL":
+                compliance_data[compliance_id]["requirements_failed"] += 1
+            else:
+                compliance_data[compliance_id]["requirements_manual"] += 1
+
+        response_data = []
+        for compliance_id, data in compliance_data.items():
+            framework = framework_info.get(compliance_id, {})
+
+            response_data.append(
+                {
+                    "id": compliance_id,
+                    "compliance_id": compliance_id,
+                    "framework": framework.get("framework", ""),
+                    "version": framework.get("version", ""),
+                    "requirements_passed": data["requirements_passed"],
+                    "requirements_failed": data["requirements_failed"],
+                    "requirements_manual": data["requirements_manual"],
+                    "total_requirements": data["total_requirements"],
+                }
+            )
+
         serializer = self.get_serializer(response_data, many=True)
         return Response(serializer.data)
 
