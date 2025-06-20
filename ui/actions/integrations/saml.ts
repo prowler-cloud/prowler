@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
 
 const samlConfigFormSchema = z.object({
   email_domain: z
@@ -60,12 +60,34 @@ export async function createSamlConfig(prevState: any, formData: FormData) {
     revalidatePath("/integrations");
     return { success: "SAML configuration created successfully!" };
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error creating SAML config:", error);
     return {
       errors: {
         general: "Error creating SAML configuration. Please try again.",
       },
     };
+  }
+}
+
+export async function getSamlConfig() {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/saml-config`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SAML config: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching SAML config:", error);
+    return undefined;
   }
 }

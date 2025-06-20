@@ -15,7 +15,7 @@ export const SamlConfigForm = ({
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [state, formAction] = useFormState(createSamlConfig, null);
+  const [state, formAction, isPending] = useFormState(createSamlConfig, null);
   const [emailDomain, setEmailDomain] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{
     name: string;
@@ -114,35 +114,6 @@ export const SamlConfigForm = ({
     reader.readAsText(file);
   };
 
-  // Listen for changes in the email domain input and file input
-  useEffect(() => {
-    const handleFormChange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-
-      // Handle email domain changes
-      if (target.name === "email_domain") {
-        const domain = target.value;
-        if (domain !== emailDomain) {
-          setEmailDomain(domain || "");
-        }
-      }
-
-      // Handle file upload changes
-      if (target.name === "metadata_xml_file" && target.type === "file") {
-        handleFileUpload({ target } as React.ChangeEvent<HTMLInputElement>);
-      }
-    };
-
-    const form = formRef.current;
-    if (form) {
-      form.addEventListener("change", handleFormChange);
-
-      return () => {
-        form.removeEventListener("change", handleFormChange);
-      };
-    }
-  }, [emailDomain]);
-
   const acsUrl = emailDomain
     ? `https://app.prowler.pro/saml/sp/consume/${emailDomain}`
     : "https://app.prowler.pro/saml/sp/consume/your-domain.com";
@@ -159,6 +130,10 @@ export const SamlConfigForm = ({
           isRequired={true}
           isInvalid={!!state?.errors?.email_domain}
           errorMessage={state?.errors?.email_domain}
+          value={emailDomain}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setEmailDomain(e.target.value);
+          }}
         />
 
         <div className="flex flex-col items-start space-y-2">
@@ -167,7 +142,8 @@ export const SamlConfigForm = ({
           </span>
           <CustomButton
             type="button"
-            ariaLabel={`Select Metadata XML File`}
+            ariaLabel="Select Metadata XML File"
+            isDisabled={isPending}
             onPress={() => {
               const fileInput = document.getElementById(
                 "metadata_xml_file",
@@ -202,6 +178,8 @@ export const SamlConfigForm = ({
             name="metadata_xml_file"
             accept=".xml,application/xml,text/xml"
             className="hidden"
+            disabled={isPending}
+            onChange={handleFileUpload}
           />
           <input type="hidden" id="metadata_xml" name="metadata_xml" />
           <p className="text-xs text-gray-500">

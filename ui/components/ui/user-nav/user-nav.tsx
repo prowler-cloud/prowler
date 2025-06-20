@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Puzzle, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 
 import { logOut } from "@/actions/auth";
@@ -81,12 +81,6 @@ export const UserNav = ({ user }: { user?: UserProfileProps }) => {
             <Link href="/profile" className="flex items-center">
               <User className="text-muted-foreground mr-3 h-4 w-4" />
               Account
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <Link href="/integrations" className="flex items-center">
-              <Puzzle className="text-muted-foreground mr-3 h-4 w-4" />
-              Integrations
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
