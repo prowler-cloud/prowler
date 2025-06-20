@@ -95,10 +95,17 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required API permissions
 
 Assign the following Microsoft Graph permissions:
+
 - `AuditLog.Read.All`: Required for Entra service.
+
 - `Domain.Read.All`: Required for all services.
+
+- `Organization.Read.All`: Required for all services.
+
 - `Policy.Read.All`: Required for all services.
+
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+
 - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
 
 Follow these steps to assign the permissions:
