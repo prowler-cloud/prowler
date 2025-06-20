@@ -95,11 +95,17 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required API permissions
 
 Assign the following Microsoft Graph permissions:
+
 - `AuditLog.Read.All`: Required for Entra service.
-- `Domain.Read.All`: Required for all services.
+- `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+
+???+ note
+    You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
+    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
 
 Follow these steps to assign the permissions:
 
@@ -113,8 +119,7 @@ Follow these steps to assign the permissions:
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
     - `AuditLog.Read.All`: Required for Entra service.
-    - `Domain.Read.All`
-    - `Organization.Read.All`
+    - `Directory.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
 
@@ -134,7 +139,7 @@ Follow these steps to assign the permissions:
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-6. Click `Add permissions`, then **grant admin consent**
+6. After adding all the permissions, click on `Grant admin consent`
 
     ![Grant Admin Consent](./img/grant-admin-consent.png)
 

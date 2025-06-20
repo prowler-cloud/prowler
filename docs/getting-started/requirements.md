@@ -70,9 +70,13 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 Prowler for Azure needs two types of permission scopes to be set:
 
 - **Microsoft Entra ID permissions**: used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
-    - `Domain.Read.All`
+    - `Directory.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+
+    ???+ note
+        You can replace `Directory.Read.All` with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
 - **Subscription scope permissions**: required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
     - `Reader`
     - `ProwlerRole` (custom role with minimal permissions defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
@@ -205,11 +209,16 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
 
 - **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
     - `AuditLog.Read.All`: Required for Entra service.
-    - `Domain.Read.All`: Required for all services.
-    - `Organization.Read.All`: Required for retrieving tenant information.
+    - `Directory.Read.All`: Required for all services.
     - `Policy.Read.All`: Required for all services.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+
+    ???+ note
+        You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
+        > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
+
 
 
 - **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:

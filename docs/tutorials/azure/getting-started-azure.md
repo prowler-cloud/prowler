@@ -90,11 +90,14 @@ A Service Principal is required to grant Prowler the necessary privileges.
 
 Assign the following Microsoft Graph permissions:
 
-    - Domain.Read.All
+- Directory.Read.All
 
-    - Policy.Read.All
+- Policy.Read.All
 
-    - UserAuthenticationMethod.Read.All (optional, for MFA checks)
+- UserAuthenticationMethod.Read.All (optional, for MFA checks)
+
+???+ note
+    You can replace `Directory.Read.All` with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
 
 1. Go to your App Registration > `API permissions`
 
@@ -107,7 +110,7 @@ Assign the following Microsoft Graph permissions:
 
 3. Search and select:
 
-    - `Domain.Read.All`
+    - `Directory.Read.All`
     - `Policy.Read.All`
     - `UserAuthenticationMethod.Read.All`
 

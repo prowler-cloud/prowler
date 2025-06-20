@@ -45,38 +45,45 @@ class Entra(AzureService):
             for tenant, client in self.clients.items():
                 users_list = await client.users.get()
                 users.update({tenant: {}})
-                for user in users_list.value:
-                    users[tenant].update(
-                        {
-                            user.id: User(
-                                id=user.id,
-                                name=user.display_name,
-                                authentication_methods=[
-                                    AuthMethod(
-                                        id=auth_method.id,
-                                        type=getattr(auth_method, "odata_type", None),
-                                    )
-                                    for auth_method in (
-                                        await client.users.by_user_id(
-                                            user.id
-                                        ).authentication.methods.get()
-                                    ).value
-                                ],
-                            )
-                        }
-                    )
+                try:
+                    for user in users_list.value:
+                        users[tenant].update(
+                            {
+                                user.id: User(
+                                    id=user.id,
+                                    name=user.display_name,
+                                    authentication_methods=[
+                                        AuthMethod(
+                                            id=auth_method.id,
+                                            type=getattr(
+                                                auth_method, "odata_type", None
+                                            ),
+                                        )
+                                        for auth_method in (
+                                            await client.users.by_user_id(
+                                                user.id
+                                            ).authentication.methods.get()
+                                        ).value
+                                    ],
+                                )
+                            }
+                        )
+                except Exception as error:
+                    if (
+                        error.__class__.__name__ == "ODataError"
+                        and error.__dict__.get("response_status_code", None) == 403
+                    ):
+                        logger.error(
+                            "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
+                        )
+                    else:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
-            if (
-                error.__class__.__name__ == "ODataError"
-                and error.__dict__.get("response_status_code", None) == 403
-            ):
-                logger.error(
-                    "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
-                )
-            else:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         return users
 
