@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_keyvault_ensure_public_network_access_disabled:
+class Test_keyvault_access_only_through_private_endpoints:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {}
@@ -18,15 +18,15 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled.keyvault_client",
+                "prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints.keyvault_client",
                 new=keyvault_client,
             ),
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled import (
-                keyvault_ensure_public_network_access_disabled,
+            from prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints import (
+                keyvault_access_only_through_private_endpoints,
             )
 
-            check = keyvault_ensure_public_network_access_disabled()
+            check = keyvault_access_only_through_private_endpoints()
             result = check.execute()
             assert len(result) == 0
 
@@ -41,12 +41,12 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled.keyvault_client",
+                "prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints.keyvault_client",
                 new=keyvault_client,
             ),
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled import (
-                keyvault_ensure_public_network_access_disabled,
+            from prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints import (
+                keyvault_access_only_through_private_endpoints,
             )
             from prowler.providers.azure.services.keyvault.keyvault_service import (
                 KeyVaultInfo,
@@ -72,7 +72,7 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 ]
             }
 
-            check = keyvault_ensure_public_network_access_disabled()
+            check = keyvault_access_only_through_private_endpoints()
             result = check.execute()
             assert len(result) == 0
 
@@ -87,12 +87,12 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled.keyvault_client",
+                "prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints.keyvault_client",
                 new=keyvault_client,
             ),
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled import (
-                keyvault_ensure_public_network_access_disabled,
+            from prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints import (
+                keyvault_access_only_through_private_endpoints,
             )
             from prowler.providers.azure.services.keyvault.keyvault_service import (
                 KeyVaultInfo,
@@ -121,7 +121,7 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 ]
             }
 
-            check = keyvault_ensure_public_network_access_disabled()
+            check = keyvault_access_only_through_private_endpoints()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -145,12 +145,12 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled.keyvault_client",
+                "prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints.keyvault_client",
                 new=keyvault_client,
             ),
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_ensure_public_network_access_disabled.keyvault_ensure_public_network_access_disabled import (
-                keyvault_ensure_public_network_access_disabled,
+            from prowler.providers.azure.services.keyvault.keyvault_access_only_through_private_endpoints.keyvault_access_only_through_private_endpoints import (
+                keyvault_access_only_through_private_endpoints,
             )
             from prowler.providers.azure.services.keyvault.keyvault_service import (
                 KeyVaultInfo,
@@ -179,7 +179,7 @@ class Test_keyvault_ensure_public_network_access_disabled:
                 ]
             }
 
-            check = keyvault_ensure_public_network_access_disabled()
+            check = keyvault_access_only_through_private_endpoints()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

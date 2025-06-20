@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.keyvault.keyvault_client import keyvault_client
 
 
-class keyvault_ensure_public_network_access_disabled(Check):
+class keyvault_access_only_through_private_endpoints(Check):
     """
     Ensure that Public Network Access when using Private Endpoint is disabled.
 
