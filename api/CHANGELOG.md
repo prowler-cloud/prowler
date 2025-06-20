@@ -13,6 +13,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 
+### Fixed
+- Add missing mapping for ISO 27001 compliance for M365 provider [(#8069)](https://github.com/prowler-cloud/prowler/pull/8069)
+
 ---
 
 ## [v1.8.5] (Prowler v5.7.5)
