@@ -40,18 +40,18 @@ To scan an account in the AWS China partition (`aws-cn`):
 
 - By using the `-f/--region` flag:
 
-```
-prowler aws --region cn-north-1 cn-northwest-1
-```
+    ```
+    prowler aws --region cn-north-1 cn-northwest-1
+    ```
 
 - By using the region configured in your AWS profile at `~/.aws/credentials` or `~/.aws/config`:
 
-```
-[default]
-aws_access_key_id = XXXXXXXXXXXXXXXXXXX
-aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
-region = cn-north-1
-```
+    ```
+    [default]
+    aws_access_key_id = XXXXXXXXXXXXXXXXXXX
+    aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+    region = cn-north-1
+    ```
 
 ???+ note
     With this configuration, all partition regions will be scanned without needing the `-f/--region` flag
@@ -62,18 +62,18 @@ To scan an account in the AWS GovCloud (US) partition (`aws-us-gov`):
 
 - By using the `-f/--region` flag:
 
-```
-prowler aws --region us-gov-east-1 us-gov-west-1
-```
+    ```
+    prowler aws --region us-gov-east-1 us-gov-west-1
+    ```
 
 - By using the region configured in your AWS profile at `~/.aws/credentials` or `~/.aws/config`:
 
-```
-[default]
-aws_access_key_id = XXXXXXXXXXXXXXXXXXX
-aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
-region = us-gov-east-1
-```
+    ```
+    [default]
+    aws_access_key_id = XXXXXXXXXXXXXXXXXXX
+    aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+    region = us-gov-east-1
+    ```
 
 ???+ note
     With this configuration, all partition regions will be scanned without needing the `-f/--region` flag

@@ -17,7 +17,7 @@ These details will be included alongside each security finding in the output.
 To retrieve AWS Organizations account details, use the `-O`/`--organizations-role <organizations_role_arn>` argument. If this argument is not provided, Prowler will attempt to fetch the data automatically—provided the AWS account is a delegated administrator for the AWS Organization.
 
 ???+ note
-  For more information on AWS Organizations delegated administrator, refer to the official documentation [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html).
+    For more information on AWS Organizations delegated administrator, refer to the official documentation [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html).
 
 The following command is an example:
 
@@ -27,7 +27,7 @@ prowler aws \
 ```
 
 ???+ note
-  Ensure the IAM role used in your AWS Organizations management account has the following permissions:`organizations:DescribeAccount` and `organizations:ListTagsForResource`.
+    Ensure the IAM role used in your AWS Organizations management account has the following permissions:`organizations:DescribeAccount` and `organizations:ListTagsForResource`.
 
 Prowler will scan the AWS account and get the account details from AWS Organizations.
 
@@ -57,23 +57,23 @@ The additional fields in CSV header output are as follows:
 
 1. To run Prowler across all accounts in AWS Organizations, first retrieve a list of accounts that are not suspended:
 
-  ```shell
-  ACCOUNTS_IN_ORGS=$(aws organizations list-accounts \
-    --query "Accounts[?Status=='ACTIVE'].Id" \
-    --output text \
-  )
-  ```
+    ```shell
+    ACCOUNTS_IN_ORGS=$(aws organizations list-accounts \
+      --query "Accounts[?Status=='ACTIVE'].Id" \
+      --output text \
+    )
+    ```
 
 2. Then run Prowler to assume a role (same in all members) per each account:
 
-  ```shell
-  for accountId in $ACCOUNTS_IN_ORGS;
-  do
-    prowler aws \
-      -O arn:aws:iam::<management_organizations_account_id>:role/<role_name> \
-      -R arn:aws:iam::"${accountId}":role/<role_name>;
-  done
-  ```
+    ```shell
+    for accountId in $ACCOUNTS_IN_ORGS;
+    do
+      prowler aws \
+        -O arn:aws:iam::<management_organizations_account_id>:role/<role_name> \
+        -R arn:aws:iam::"${accountId}":role/<role_name>;
+    done
+    ```
 
 ???+ note
     This same loop structure can be adapted to scan a predefined list of accounts using a variable like the following: </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

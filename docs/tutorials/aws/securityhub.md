@@ -50,11 +50,11 @@ Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhu
 
 6. Click “**Accept Findings**”, to authorize **AWS Security Hub** to receive findings from Prowler. ![](./img/enable-partner-integration-4.png)
 
-### Enabling AWS Security Hub via AWS CLI
+### Using AWS CLI
 
 To enable **AWS Security Hub** and integrate **Prowler**, execute the following AWS CLI commands:
 
-Step 1: Enable AWS Security Hub
+**Step 1: Enable AWS Security Hub**
 
 Run the following command to activate AWS Security Hub in the desired region:
 
@@ -65,7 +65,7 @@ aws securityhub enable-security-hub --region <region>
 ???+ note
     This command requires the `securityhub:EnableSecurityHub` permission. Ensure you set the correct AWS region where you want to enable AWS Security Hub.
 
-Step 2: Enable Prowler Integration
+**Step 2: Enable Prowler Integration**
 
 Once **AWS Security Hub** is activated, **Prowler** must be enabled as partner integration to allow security findings to be sent to it. Run the following AWS CLI commands:
 
@@ -92,23 +92,12 @@ For a specific region (e.g., eu-west-1):
 prowler --security-hub --region eu-west-1
 ```
 
-#### Sending Only Failed Findings
+???+ note
+    It is recommended to send only fails to Security Hub and that is possible adding `--status FAIL` to the command. You can use, instead of the `--status FAIL` argument, the `--send-sh-only-fails` argument to save all the findings in the Prowler outputs but just to send FAIL findings to AWS Security Hub.
 
-To send only failed findings to Security Hub, add the `--status FAIL` argument to the command.
+    Since Prowler perform checks to all regions by default you may need to filter by region when running Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f/--region <region>` (if no region is used it will try to push findings in all regions hubs). Prowler will send findings to the Security Hub on the region where the scanned resource is located.
 
-Instead of using `--status FAIL`, the `--send-sh-only-fails` argument to store all findings in Prowler outputs while sending only FAIL findings to AWS Security Hub.
-
-By default, Prowler performs checks across all regions, so filtering by region may be required.
-
-Ensure AWS Security Hub is enabled in the required regions:
-
-`aws securityhub enable-security-hub --region <region>`.
-
-When running Prowler, specify the region with: `-f/--region <region>`
-
-If no region is defined, Prowler will attempt to push findings to all region hubs. Prowler will send findings to the Security Hub on the region where the scanned resource is located.
-
-Run Prowler periodically to keep Security Hub findings up to date. Recommended frequency: Once a day or every few hours, based on security needs.
+    To have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
 ### Viewing Prowler Findings in AWS Security Hub
 
@@ -116,7 +105,7 @@ After enabling **AWS Security Hub**, findings from **Prowler** will be available
 
 1. Enabling AWS Security Hub via Console
 
-Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhub/.
+    Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhub/.
 
 2. Select the “**Findings**” tab from the right-side menu bar. ![](./img/findings.png)
 

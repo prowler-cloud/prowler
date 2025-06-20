@@ -1,6 +1,6 @@
 # Boto3 Retrier Configuration in Prowler
 
-Prowler's AWS Provider leverages Boto3's[Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to automatically retry client calls to AWS services when encountering errors or exceptions.
+Prowler's AWS Provider leverages Boto3's [Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to automatically retry client calls to AWS services when encountering errors or exceptions.
 
 ## Retry Behavior Overview
 
