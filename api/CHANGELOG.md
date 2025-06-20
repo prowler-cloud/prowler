@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
+- Optional `user` and `password` for M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 
 ---
 

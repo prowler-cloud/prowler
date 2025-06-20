@@ -76,6 +76,16 @@ class TestM365Provider:
                     location=LOCATION,
                 ),
             ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_powershell",
+                return_value=M365Credentials(
+                    client_id=CLIENT_ID,
+                    tenant_id=TENANT_ID,
+                    client_secret=CLIENT_SECRET,
+                    user="",
+                    passwd="",
+                ),
+            ),
         ):
             m365_provider = M365Provider(
                 sp_env_auth=True,
@@ -490,27 +500,6 @@ class TestM365Provider:
             assert result.user == credentials_dict["user"]
             assert result.passwd == credentials_dict["password"]
 
-    def test_setup_powershell_invalid_env_credentials(self):
-        credentials = None
-
-        with patch(
-            "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell"
-        ) as mock_powershell:
-            mock_session = MagicMock()
-            mock_session.test_credentials.return_value = False
-            mock_powershell.return_value = mock_session
-
-            with pytest.raises(M365MissingEnvironmentCredentialsError) as exc_info:
-                M365Provider.setup_powershell(
-                    env_auth=True, m365_credentials=credentials
-                )
-
-            assert (
-                "Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication"
-                in str(exc_info.value)
-            )
-            mock_session.test_credentials.assert_not_called()
-
     def test_test_connection_user_not_belonging_to_tenant(
         self,
     ):
@@ -571,28 +560,6 @@ class TestM365Provider:
                 password="test_password",
             )
         assert "The provided Client Secret is not valid." in str(exception.value)
-
-    def test_validate_static_credentials_missing_user(self):
-        with pytest.raises(M365NotValidUserError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="",
-                password="test_password",
-            )
-        assert "The provided User is not valid." in str(exception.value)
-
-    def test_validate_static_credentials_missing_password(self):
-        with pytest.raises(M365NotValidPasswordError) as exception:
-            M365Provider.validate_static_credentials(
-                tenant_id="12345678-1234-5678-1234-567812345678",
-                client_id="12345678-1234-5678-1234-567812345678",
-                client_secret="test_secret",
-                user="test@example.com",
-                password="",
-            )
-        assert "The provided Password is not valid." in str(exception.value)
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
