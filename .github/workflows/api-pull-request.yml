@@ -169,8 +169,9 @@ jobs:
       - name: Safety
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        # 76352 and 76353 come from SDK, but they cannot upgrade it yet. It does not affect API
         run: |
-          poetry run safety check --ignore 70612,66963,74429
+          poetry run safety check --ignore 70612,66963,74429,76352,76353
 
       - name: Vulture
         working-directory: ./api
