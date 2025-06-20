@@ -21,6 +21,8 @@ Within this folder the following files are also to be created:
 - `<new_service_name>_service.py` – Contains all the logic and API calls of the service.
 - `<new_service_name>_client_.py` – Contains the initialization of the freshly created service's class so that the checks can use it.
 
+Once the files are create, you can check that the service has been created by running the following command: `poetry run python prowler-cli.py <provider> --list-services | grep <new_service_name>`.
+
 ## Service Structure and Initialisation
 
 The Prowler's service structure is as outlined below. To initialise it, just import the service client in a check.
@@ -75,7 +77,7 @@ class <Service>(ServiceParentClass):
         # String in case the provider's API service name is different.
         super().__init__(__class__.__name__, provider)
 
-        # Create an empty dictionary of items to be gathered, using the unique ID as the dictionary’s key, e.g., instances.
+        # Create an empty dictionary of items to be gathered, using the unique ID as the dictionary's key, e.g., instances.
         self.<items> = {}
 
         # If parallelization can be carried out by regions or locations, the function __threading_call__ to be used must be implemented in the Service Parent Class.
@@ -160,11 +162,9 @@ class <Service>(ServiceParentClass):
 ???+note
     To prevent false findings, when Prowler fails to retrieve items due to Access Denied or similar errors, the affected item's value is set to `None`.
 
-#### Service Models
+#### Resource Models
 
-Service models define structured classes used within services to store and process data extracted from API calls.
-
-Using Pydantic for Data Validation
+Resource models define structured classes used within services to store and process data extracted from API calls. They are defined in the same file as the service class, but outside of the class, usually at the bottom of the file.
 
 Prowler leverages Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to enforce data validation.
 
@@ -227,7 +227,7 @@ from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>
 
 ## Provider Permissions in Prowler
 
-Before implementing a new service, verify that Prowler’s existing permissions for each provider are sufficient. If additional permissions are required, refer to the relevant documentation and update accordingly.
+Before implementing a new service, verify that Prowler's existing permissions for each provider are sufficient. If additional permissions are required, refer to the relevant documentation and update accordingly.
 
 Provider-Specific Permissions Documentation:
 
@@ -235,3 +235,16 @@ Provider-Specific Permissions Documentation:
 - [Azure](../getting-started/requirements.md#needed-permissions)
 - [GCP](../getting-started/requirements.md#needed-permissions_1)
 - [M365](../getting-started/requirements.md#needed-permissions_2)
+- [GitHub](../getting-started/requirements.md#authentication_2)
+
+## Best Practices
+
+- When available in the provider, use threading or parallelization utilities for all methods that can be parallelized by to maximize performance and reduce scan time.
+- Define a Pydantic `BaseModel` for every resource you manage, and use these models for all resource data handling.
+- Log every major step (start, success, error) in resource discovery and attribute collection for traceability and debugging; include as much context as possible.
+- Catch and log all exceptions, providing detailed context (region, subscription, resource, error type, line number) to aid troubleshooting.
+- Use consistent naming for resource containers, unique identifiers, and model attributes to improve code readability and maintainability.
+- Add docstrings to every method and comments to explain any service-specific logic, especially where provider APIs behave differently or have quirks.
+- Collect and store resource tags and additional attributes to support richer checks and reporting.
+- Leverage shared utility helpers for session setup, identifier parsing, and other cross-cutting concerns to avoid code duplication. This kind of code is typically stored in a `lib` folder in the service folder.
+- Keep code modular, maintainable, and well-documented for ease of extension and troubleshooting.
