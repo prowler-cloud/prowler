@@ -20,6 +20,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Normalize provider UID to ensure safe and unique export directory paths [(#8007)](https://github.com/prowler-cloud/prowler/pull/8007).
 - Blank resource types in `/metadata` endpoints [(#8027)](https://github.com/prowler-cloud/prowler/pull/8027)
+- Add missing mapping for ISO 27001 compliance for M365 provider [(#8069)](https://github.com/prowler-cloud/prowler/pull/8069)
 
 ---
 
