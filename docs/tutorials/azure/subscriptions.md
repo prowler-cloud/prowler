@@ -44,33 +44,33 @@ Navigate to the subscription you want to audit with Prowler.
 
 1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
 
-```console
-az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
-```
+    ```console
+    az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
+    ```
 
 2. If the command is executed successfully, the output is going to be similar to the following:
 
-```json
-{
-    "condition": null,
-    "conditionVersion": null,
-    "createdBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
-    "delegatedManagedIdentityResourceId": null,
-    "description": null,
-    "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleAssignments/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "principalId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "principalName": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "principalType": "ServicePrincipal",
-    "roleDefinitionId": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "roleDefinitionName": "Reader",
-    "scope": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "type": "Microsoft.Authorization/roleAssignments",
-    "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
-}
-```
+    ```json
+    {
+        "condition": null,
+        "conditionVersion": null,
+        "createdBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+        "delegatedManagedIdentityResourceId": null,
+        "description": null,
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleAssignments/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "principalId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "principalName": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "roleDefinitionName": "Reader",
+        "scope": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
+    }
+    ```
 
 ### Prowler Custom Role
 
@@ -96,63 +96,64 @@ The checks requiring this `ProwlerRole` can be found in the [requirements sectio
 
 1. To create a new custom role, open a terminal and execute the following command:
 
-```console
-az role definition create --role-definition '{                                                                                                                   640ms  lun 16 dic 17:04:17 2024
-                    "Name": "ProwlerRole",
-                    "IsCustom": true,
-                    "Description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
-                    "AssignableScopes": [
-                    "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" // USE YOUR SUBSCRIPTION ID
-                    ],
-                    "Actions": [
-                    "Microsoft.Web/sites/host/listkeys/action",
-                    "Microsoft.Web/sites/config/list/Action"
-                    ]
-                }'
-```
+    ```console
+    az role definition create --role-definition '{                                                                                                                   640ms  lun 16 dic 17:04:17 2024
+                        "Name": "ProwlerRole",
+                        "IsCustom": true,
+                        "Description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+                        "AssignableScopes": [
+                        "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" // USE YOUR SUBSCRIPTION ID
+                        ],
+                        "Actions": [
+                        "Microsoft.Web/sites/host/listkeys/action",
+                        "Microsoft.Web/sites/config/list/Action"
+                        ]
+                    }'
+    ```
 
 2. If the command is executed successfully, the output is going to be similar to the following:
 
-```json
-{
-    "assignableScopes": [
-        "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    ],
-    "createdBy": null,
-    "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
-    "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
-    "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "permissions": [
-        {
-            "actions": [
-                "Microsoft.Web/sites/host/listkeys/action",
-                "Microsoft.Web/sites/config/list/Action"
-            ],
-            "condition": null,
-            "conditionVersion": null,
-            "dataActions": [],
-            "notActions": [],
-            "notDataActions": []
-        }
-    ],
-    "roleName": "ProwlerRole",
-    "roleType": "CustomRole",
-    "type": "Microsoft.Authorization/roleDefinitions",
-    "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
-}
-```
+    ```json
+    {
+        "assignableScopes": [
+            "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        ],
+        "createdBy": null,
+        "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+        "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "permissions": [
+            {
+                "actions": [
+                    "Microsoft.Web/sites/host/listkeys/action",
+                    "Microsoft.Web/sites/config/list/Action"
+                ],
+                "condition": null,
+                "conditionVersion": null,
+                "dataActions": [],
+                "notActions": [],
+                "notDataActions": []
+            }
+        ],
+        "roleName": "ProwlerRole",
+        "roleType": "CustomRole",
+        "type": "Microsoft.Authorization/roleDefinitions",
+        "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
+    }
+    ```
 
 ## Recommendation for Managing Multiple Subscriptions
 
 Scanning multiple subscriptions requires creating and assigning roles for each, which can be a time-consuming process. To streamline subscription management and auditing, use management groups in Azure. This approach allows Prowler to efficiently organize and audit multiple subscriptions collectively.
 
 1. **Create a Management Group**: Follow the [official guide](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) to create a new management group.
-![Create management group](../../img/create-management-group.gif)
+
+    ![Create management group](../../img/create-management-group.gif)
 
 2. **Assign Roles**: Assign necessary roles to the management group, similar to the [role assignment process](#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler).
 
-Role assignment should be done at the management group level instead of per subscription.
+    Role assignment should be done at the management group level instead of per subscription.
 
 3. **Add Subscriptions**: Add all subscriptions you want to audit to the newly created management group. ![Add Subscription to Management Group](../../img/add-sub-to-management-group.gif)
