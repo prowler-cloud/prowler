@@ -772,10 +772,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
             GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
             GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
-            models.Index(
-                fields=["tenant_id", "scan_id", "check_id"],
-                name="find_tenant_scan_check_idx",
-            ),
+            # Indexes added through custom operation
+            # models.Index(
+            #     fields=["tenant_id", "scan_id", "check_id"],
+            #     name="find_tenant_scan_check_idx",
+            # ),
         ]
 
     class JSONAPIMeta:
