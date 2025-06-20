@@ -129,7 +129,7 @@ The following table shows the mapping between the CSV headers and the the provid
 
 ### JSON-OCSF
 
-The JSON-OCSF output format implements the [Detection Finding](https://schema.ocsf.io/1.1.0/classes/detection_finding) from the [OCSF v1.1.0](https://schema.ocsf.io/1.1.0)
+The JSON-OCSF output format implements the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) from the [OCSF](https://schema.ocsf.io)
 
 ```json
 [{

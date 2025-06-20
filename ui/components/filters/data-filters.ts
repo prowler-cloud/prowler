@@ -1,3 +1,5 @@
+import { FilterType } from "@/types/filters";
+
 export const filterProviders = [
   {
     key: "connected",
@@ -12,6 +14,7 @@ export const filterScans = [
     key: "provider_type__in",
     labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "m365", "gcp", "kubernetes"],
+    index: 0,
   },
   {
     key: "state__in",
@@ -24,52 +27,43 @@ export const filterScans = [
       "failed",
       "cancelled",
     ],
+    index: 2,
   },
   {
     key: "trigger",
     labelCheckboxGroup: "Trigger",
     values: ["scheduled", "manual"],
-  },
-  {
-    key: "provider_uid__in",
-    labelCheckboxGroup: "Provider UID",
-    values: [],
+    index: 3,
   },
   // Add more filter categories as needed
 ];
 
+//Static filters for findings
 export const filterFindings = [
   {
-    key: "severity__in",
+    key: FilterType.SEVERITY,
     labelCheckboxGroup: "Severity",
     values: ["critical", "high", "medium", "low", "informational"],
+    index: 0,
+  },
+  {
+    key: FilterType.STATUS,
+    labelCheckboxGroup: "Status",
+    values: ["PASS", "FAIL", "MANUAL"],
     index: 1,
   },
   {
-    key: "status__in",
-    labelCheckboxGroup: "Status",
-    values: ["PASS", "FAIL", "MANUAL"],
-    index: 2,
-  },
-  {
-    key: "provider_type__in",
+    key: FilterType.PROVIDER_TYPE,
     labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "m365", "gcp", "kubernetes"],
-    index: 4,
+    index: 5,
   },
   {
-    key: "provider_uid__in",
-    labelCheckboxGroup: "Provider UID",
-    values: [],
-    index: 8,
-  },
-  {
-    key: "delta__in",
+    key: FilterType.DELTA,
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
-    index: 3,
+    index: 2,
   },
-  // Add more filter categories as needed
 ];
 
 export const filterUsers = [
