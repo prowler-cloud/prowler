@@ -283,7 +283,7 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.location
 
             elif provider.type == "iac":
-                output_data["auth_method"] = "local"  # Until we support remote repos
+                output_data["auth_method"] = "None"  # Until we support remote repos
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
                 output_data["resource_name"] = check_output.resource["resource"]
