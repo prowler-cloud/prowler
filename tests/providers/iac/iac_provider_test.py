@@ -1,3 +1,5 @@
+import tempfile
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -130,3 +132,61 @@ class TestIacProvider:
         reports = provider.run_scan("/test/directory")
 
         assert len(reports) == 0
+
+    def test_provider_run_local_scan(self):
+        scan_path = "."
+        provider = IacProvider(scan_path=scan_path)
+        with mock.patch(
+            "prowler.providers.iac.iac_provider.IacProvider.run_scan",
+        ) as mock_run_scan:
+            provider.run()
+            mock_run_scan.assert_called_with(scan_path)
+
+    def test_provider_run_remote_scan(self):
+        scan_repository_url = "https://github.com/user/repo"
+        provider = IacProvider(scan_repository_url=scan_repository_url)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with (
+                mock.patch(
+                    "prowler.providers.iac.iac_provider.tempfile.mkdtemp",
+                    return_value=temp_dir,
+                ),
+                mock.patch(
+                    "prowler.providers.iac.iac_provider.IacProvider._clone_repository"
+                ) as mock_clone,
+                mock.patch(
+                    "prowler.providers.iac.iac_provider.IacProvider.run_scan"
+                ) as mock_run_scan,
+            ):
+                provider.run()
+                mock_clone.assert_called_with(scan_repository_url, temp_dir)
+                mock_run_scan.assert_called_with(temp_dir)
+
+    def test_print_credentials_local(self):
+        scan_path = "/path/to/scan"
+        provider = IacProvider(scan_path=scan_path)
+        with mock.patch("builtins.print") as mock_print:
+            provider.print_credentials()
+            assert any(
+                f"Directory: \x1b[33m{scan_path}\x1b[0m" in call.args[0]
+                for call in mock_print.call_args_list
+            )
+            assert any(
+                "Scanning local IaC directory:" in call.args[0]
+                for call in mock_print.call_args_list
+            )
+
+    def test_print_credentials_remote(self):
+        repo_url = "https://github.com/user/repo"
+        provider = IacProvider(scan_repository_url=repo_url)
+        with mock.patch("builtins.print") as mock_print:
+            provider.print_credentials()
+            assert any(
+                f"Repository: \x1b[33m{repo_url}\x1b[0m" in call.args[0]
+                for call in mock_print.call_args_list
+            )
+            assert any(
+                "Scanning remote IaC repository:" in call.args[0]
+                for call in mock_print.call_args_list
+            )
