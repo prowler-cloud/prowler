@@ -7,6 +7,7 @@ import yaml
 from boto3 import client, resource
 from mock import MagicMock, patch
 from moto import mock_aws
+import pytest
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
@@ -320,6 +321,31 @@ class TestAWSMutelist:
         assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
+
+    def test_validate_mutelist_raise_on_exception(self):
+        """Test that validate_mutelist raises an exception when raise_on_exception=True"""
+        mutelist_path = MUTELIST_FIXTURE_PATH
+        with open(mutelist_path) as f:
+            mutelist_fixture = yaml.safe_load(f)["Mutelist"]
+
+        # Create an invalid mutelist by adding an invalid key
+        invalid_mutelist = mutelist_fixture.copy()
+        invalid_mutelist["Accounts1"] = invalid_mutelist["Accounts"]
+        del invalid_mutelist["Accounts"]
+
+        mutelist = AWSMutelist(mutelist_content=mutelist_fixture)
+
+        # Test that it raises an exception when raise_on_exception=True
+        with pytest.raises(Exception):
+            mutelist.validate_mutelist(invalid_mutelist, raise_on_exception=True)
+
+        # Test that it doesn't raise an exception when raise_on_exception=False (default)
+        result = mutelist.validate_mutelist(invalid_mutelist, raise_on_exception=False)
+        assert result == {}
+
+        # Test that it doesn't raise an exception when raise_on_exception is not specified
+        result = mutelist.validate_mutelist(invalid_mutelist)
+        assert result == {}
 
     def test_mutelist_findings_only_wildcard(self):
         # Mutelist
