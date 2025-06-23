@@ -97,6 +97,7 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str) -> b
                 logger.error(
                     f"S3 output upload failed for integration {integration.id}: {e}"
                 )
+                continue
 
             try:
                 compliance_dir = os.path.join(file_path, "compliance")
@@ -114,6 +115,7 @@ def upload_s3_integration(tenant_id: str, provider_id: str, file_path: str) -> b
                 logger.error(
                     f"S3 compliance upload failed for integration {integration.id}: {e}"
                 )
+                continue
             integration_executions += 1
         else:
             logger.error(
