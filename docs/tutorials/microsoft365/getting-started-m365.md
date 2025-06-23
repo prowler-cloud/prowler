@@ -95,11 +95,17 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required Graph API permissions
 
 Assign the following Microsoft Graph permissions:
+
 - `AuditLog.Read.All`: Required for Entra service.
-- `Domain.Read.All`: Required for all services.
+- `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in only if using user authentication.
+
+???+ note
+    You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
+    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
 
 Follow these steps to assign the permissions:
 
@@ -113,8 +119,7 @@ Follow these steps to assign the permissions:
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
     - `AuditLog.Read.All`: Required for Entra service.
-    - `Domain.Read.All`
-    - `Organization.Read.All`
+    - `Directory.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
 
@@ -123,10 +128,7 @@ Follow these steps to assign the permissions:
 
     ![Application Permissions](./img/app-permissions.png)
 
-
-4. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
-
-    ![Add API Permission](./img/add-delegated-api-permission.png)
+---
 
 
 ### Grant PowerShell modules permissions
@@ -135,6 +137,7 @@ The permissions you need to grant depends on whether you are using user credenti
 
 ???+ warning "Warning"
     Make sure you add the correct set of permissions for the authentication method you are using.
+
 
 #### If using application(service principal) authentication
 
@@ -193,31 +196,6 @@ To grant the permissions for the PowerShell modules via application authenticati
 
 ---
 
-## Step 4: Add credentials to Prowler Cloud/App
-
-1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
-
-    ![App Overview](./img/app-overview.png)
-
-
-2. Go to Prowler Cloud/App and paste:
-
-    - `Client ID`
-    - `Tenant ID`
-    - `AZURE_CLIENT_SECRET` from earlier
-    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
-    - `M365_PASSWORD` the password of the user
-
-    ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
-
-3. Click `Next`
-
-    ![Next Detail](./img/click-next-m365.png)
-
-4. Click `Launch Scan`
-
-    ![Launch Scan M365](./img/launch-scan.png)
-
 #### If using user authentication (Currently Prowler Cloud only supports this method)
 
 1. Search and select:
@@ -260,3 +238,30 @@ To grant the permissions for the PowerShell modules via application authenticati
     4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
 
         ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
+
+---
+
+## Step 4: Add credentials to Prowler Cloud/App
+
+1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
+
+    ![App Overview](./img/app-overview.png)
+
+
+2. Go to Prowler Cloud/App and paste:
+
+    - `Client ID`
+    - `Tenant ID`
+    - `AZURE_CLIENT_SECRET` from earlier
+    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
+    - `M365_PASSWORD` the password of the user
+
+    ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
+
+3. Click `Next`
+
+    ![Next Detail](./img/click-next-m365.png)
+
+4. Click `Launch Scan`
+
+    ![Launch Scan M365](./img/launch-scan.png)
