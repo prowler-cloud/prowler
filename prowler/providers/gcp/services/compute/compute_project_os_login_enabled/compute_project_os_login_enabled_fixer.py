@@ -6,7 +6,7 @@ from prowler.providers.gcp.lib.fix.fixer import GCPFixer
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class ComputeProjectOSLoginEnabledFixer(GCPFixer):
+class ComputeProjectOsLoginEnabledFixer(GCPFixer):
     """
     Fixer for enabling OS Login at the project level.
     This fixer enables the OS Login feature which provides centralized and automated SSH key pair management.
