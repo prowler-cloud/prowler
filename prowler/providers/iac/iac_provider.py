@@ -151,15 +151,17 @@ class IacProvider(Provider):
             report.muted = True
         return report
 
-    def _clone_repository(self, repository_url: str, temporary_directory: str):
+    def _clone_repository(self, repository_url: str) -> str:
         """
         Clone a git repository to a temporary directory.
         """
         try:
+            temporary_directory = tempfile.mkdtemp()
             logger.info(
                 f"Cloning repository {repository_url} into {temporary_directory}..."
             )
             porcelain.clone(repository_url, temporary_directory)
+            return temporary_directory
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -167,18 +169,11 @@ class IacProvider(Provider):
             sys.exit(1)
 
     def run(self) -> List[CheckReportIAC]:
-        scan_dir = self.scan_path
         temp_dir = None
         if self.scan_repository_url:
-            try:
-                temp_dir = tempfile.mkdtemp()
-                self._clone_repository(self.scan_repository_url, temp_dir)
-                scan_dir = temp_dir
-            except Exception as error:
-                logger.critical(
-                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                )
-                sys.exit(1)
+            scan_dir = temp_dir = self._clone_repository(self.scan_repository_url)
+        else:
+            scan_dir = self.scan_path
 
         try:
             reports = self.run_scan(scan_dir)

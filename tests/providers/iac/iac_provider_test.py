@@ -149,18 +149,15 @@ class TestIacProvider:
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
                 mock.patch(
-                    "prowler.providers.iac.iac_provider.tempfile.mkdtemp",
+                    "prowler.providers.iac.iac_provider.IacProvider._clone_repository",
                     return_value=temp_dir,
-                ),
-                mock.patch(
-                    "prowler.providers.iac.iac_provider.IacProvider._clone_repository"
                 ) as mock_clone,
                 mock.patch(
                     "prowler.providers.iac.iac_provider.IacProvider.run_scan"
                 ) as mock_run_scan,
             ):
                 provider.run()
-                mock_clone.assert_called_with(scan_repository_url, temp_dir)
+                mock_clone.assert_called_with(scan_repository_url)
                 mock_run_scan.assert_called_with(temp_dir)
 
     def test_print_credentials_local(self):
