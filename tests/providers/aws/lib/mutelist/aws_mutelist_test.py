@@ -323,7 +323,6 @@ class TestAWSMutelist:
         assert mutelist.mutelist_file_path is None
 
     def test_validate_mutelist_raise_on_exception(self):
-        """Test that validate_mutelist raises an exception when raise_on_exception=True"""
         mutelist_path = MUTELIST_FIXTURE_PATH
         with open(mutelist_path) as f:
             mutelist_fixture = yaml.safe_load(f)["Mutelist"]
