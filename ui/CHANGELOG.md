@@ -21,6 +21,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
 - Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
+- Added initial Playwright configuration and sample test [(#8081)](https://github.com/prowler-cloud/prowler/pull/8081)
 
 ### 🔄 Changed
 
