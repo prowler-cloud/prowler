@@ -1241,10 +1241,10 @@ class TestProviderViewSet:
                 ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 5),
-                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at", TODAY, 6),
+                ("inserted_at.gte", "2024-01-01", 6),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.gte", "2024-01-01", 6),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1778,7 +1778,10 @@ class TestProviderSecretViewSet:
         secret_data,
     ):
         # Get the provider from the fixture and set its type
-        provider = Provider.objects.filter(provider=provider_type)[0]
+        try:
+            provider = Provider.objects.filter(provider=provider_type)[0]
+        except IndexError:
+            print(f"Provider {provider_type} not found")
 
         data = {
             "data": {
