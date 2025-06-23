@@ -7,23 +7,24 @@ class storage_ensure_file_shares_soft_delete_is_enabled(Check):
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(),
-                    resource=storage_account.file_service_properties,
-                )
-                report.subscription = subscription
-                report.resource_name = storage_account.name
+                if getattr(storage_account, "file_service_properties", None):
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(),
+                        resource=storage_account.file_service_properties,
+                    )
+                    report.subscription = subscription
+                    report.resource_name = storage_account.name
+                    report.location = storage_account.location
 
-                if (
-                    getattr(storage_account, "file_service_properties", None)
-                    and storage_account.file_service_properties.share_delete_retention_policy.enabled
-                ):
-                    report.status = "PASS"
-                    report.status_extended = f"File share soft delete is enabled for storage account {storage_account.name} with a retention period of {storage_account.file_service_properties.share_delete_retention_policy.days} days."
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = f"File share soft delete is not enabled for storage account {storage_account.name}."
+                    if (
+                        storage_account.file_service_properties.share_delete_retention_policy.enabled
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"File share soft delete is enabled for storage account {storage_account.name} with a retention period of {storage_account.file_service_properties.share_delete_retention_policy.days} days."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"File share soft delete is not enabled for storage account {storage_account.name}."
 
-                findings.append(report)
+                    findings.append(report)
 
         return findings
