@@ -246,6 +246,7 @@ class Provider(ABC):
                 elif "iac" in provider_class_name.lower():
                     provider_class(
                         scan_path=arguments.scan_path,
+                        scan_repository_url=arguments.scan_repository_url,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )

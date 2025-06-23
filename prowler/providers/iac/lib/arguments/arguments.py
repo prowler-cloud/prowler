@@ -13,3 +13,11 @@ def init_parser(self):
         default=".",
         help="Path to the folder containing your infrastructure-as-code files. Default: current directory",
     )
+
+    iac_scan_subparser.add_argument(
+        "--scan-repository-url",
+        "-R",
+        dest="scan_repository_url",
+        default=None,
+        help="URL to the repository containing your infrastructure-as-code files.",
+    )

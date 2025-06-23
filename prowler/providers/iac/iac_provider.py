@@ -1,9 +1,12 @@
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from typing import List
 
 from colorama import Fore, Style
+from dulwich import porcelain
 
 from prowler.config.config import (
     default_config_file_path,
@@ -23,6 +26,7 @@ class IacProvider(Provider):
     def __init__(
         self,
         scan_path: str = ".",
+        scan_repository_url: str = None,
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -30,6 +34,7 @@ class IacProvider(Provider):
         logger.info("Instantiating IAC Provider...")
 
         self.scan_path = scan_path
+        self.scan_repository_url = scan_repository_url
         self.region = "global"
         self.audited_account = "local-iac"
         self._session = None
@@ -146,8 +151,43 @@ class IacProvider(Provider):
             report.muted = True
         return report
 
+    def _clone_repository(self, repository_url: str, temporary_directory: str):
+        """
+        Clone a git repository to a temporary directory.
+        """
+        try:
+            logger.info(
+                f"Cloning repository {repository_url} into {temporary_directory}..."
+            )
+            porcelain.clone(repository_url, temporary_directory)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
+
     def run(self) -> List[CheckReportIAC]:
-        return self.run_scan(self.scan_path)
+        scan_dir = self.scan_path
+        temp_dir = None
+        if self.scan_repository_url:
+            try:
+                temp_dir = tempfile.mkdtemp()
+                self._clone_repository(self.scan_repository_url, temp_dir)
+                scan_dir = temp_dir
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+                sys.exit(1)
+
+        try:
+            reports = self.run_scan(scan_dir)
+        finally:
+            if temp_dir:
+                logger.info(f"Removing temporary directory {temp_dir}...")
+                shutil.rmtree(temp_dir)
+
+        return reports
 
     def run_scan(self, directory: str) -> List[CheckReportIAC]:
         try:
@@ -211,8 +251,20 @@ class IacProvider(Provider):
             sys.exit(1)
 
     def print_credentials(self):
-        report_lines = [
-            f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
-        ]
-        report_title = f"{Style.BRIGHT}Scanning local IaC directory:{Style.RESET_ALL}"
+        if self.scan_repository_url:
+            report_lines = [
+                f"Repository: {Fore.YELLOW}{self.scan_repository_url}{Style.RESET_ALL}",
+            ]
+        else:
+            report_lines = [
+                f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
+            ]
+        if self.scan_repository_url:
+            report_title = (
+                f"{Style.BRIGHT}Scanning remote IaC repository:{Style.RESET_ALL}"
+            )
+        else:
+            report_title = (
+                f"{Style.BRIGHT}Scanning local IaC directory:{Style.RESET_ALL}"
+            )
         print_boxes(report_lines, report_title)
