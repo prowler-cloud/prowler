@@ -46,7 +46,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.7.6] (Prowler UNRELEASED)
 
 ### Fixed
-- Fix Logic Error and report extended message revered in Checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
 
 ---
 
