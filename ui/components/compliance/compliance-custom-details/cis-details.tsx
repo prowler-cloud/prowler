@@ -2,13 +2,22 @@ import ReactMarkdown from "react-markdown";
 
 import { Requirement } from "@/types/compliance";
 
+import {
+  ComplianceBadge,
+  ComplianceBadgeContainer,
+  ComplianceDetailContainer,
+  ComplianceDetailSection,
+  ComplianceDetailText,
+  ComplianceLink,
+} from "./shared-components";
+
 interface CISDetailsProps {
   requirement: Requirement;
 }
 
 export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
   const processReferences = (
-    references: string | number | string[] | undefined,
+    references: string | number | string[] | object[] | undefined,
   ): string[] => {
     if (typeof references !== "string") return [];
 
@@ -20,131 +29,105 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      {requirement.profile && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Profile Level
-          </h4>
-          <p className="text-sm">{requirement.profile}</p>
-        </div>
+    <ComplianceDetailContainer>
+      {requirement.description && (
+        <ComplianceDetailSection title="Description">
+          <ComplianceDetailText>{requirement.description}</ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
+
+      <ComplianceBadgeContainer>
+        {requirement.profile && (
+          <ComplianceBadge
+            label="Profile"
+            value={requirement.profile as string}
+            color="purple"
+          />
+        )}
+
+        {requirement.assessment_status && (
+          <ComplianceBadge
+            label="Assessment"
+            value={requirement.assessment_status as string}
+            color="blue"
+          />
+        )}
+      </ComplianceBadgeContainer>
 
       {requirement.subsection && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            SubSection
-          </h4>
-          <p className="text-sm">{requirement.subsection}</p>
-        </div>
-      )}
-
-      {requirement.assessment_status && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Assessment Status
-          </h4>
-          <p className="text-sm">{requirement.assessment_status}</p>
-        </div>
-      )}
-
-      {requirement.description && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Description
-          </h4>
-          <p className="text-sm">{requirement.description}</p>
-        </div>
+        <ComplianceDetailSection title="SubSection">
+          <ComplianceDetailText>
+            {requirement.subsection as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.rationale_statement && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Rationale Statement
-          </h4>
-          <p className="text-sm">{requirement.rationale_statement}</p>
-        </div>
+        <ComplianceDetailSection title="Rationale Statement">
+          <ComplianceDetailText>
+            {requirement.rationale_statement as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.impact_statement && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Impact Statement
-          </h4>
-          <p className="text-sm">{requirement.impact_statement}</p>
-        </div>
+        <ComplianceDetailSection title="Impact Statement">
+          <ComplianceDetailText>
+            {requirement.impact_statement as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.remediation_procedure &&
         typeof requirement.remediation_procedure === "string" && (
-          <div>
-            <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-              Remediation Procedure
-            </h4>
+          <ComplianceDetailSection title="Remediation Procedure">
             {/* Prettier -> "plugins": ["prettier-plugin-tailwindcss"] is not ready yet to "prose": */}
             {/* eslint-disable-next-line */}
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{requirement.remediation_procedure}</ReactMarkdown>
             </div>
-          </div>
+          </ComplianceDetailSection>
         )}
 
       {requirement.audit_procedure &&
         typeof requirement.audit_procedure === "string" && (
-          <div>
-            <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-              Audit Procedure
-            </h4>
+          <ComplianceDetailSection title="Audit Procedure">
             {/* eslint-disable-next-line */}
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm max-w-none dark:prose-invert">
               <ReactMarkdown>{requirement.audit_procedure}</ReactMarkdown>
             </div>
-          </div>
+          </ComplianceDetailSection>
         )}
 
       {requirement.additional_information && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Additional Information
-          </h4>
-          <p className="whitespace-pre-wrap text-sm">
-            {requirement.additional_information}
-          </p>
-        </div>
+        <ComplianceDetailSection title="Additional Information">
+          <ComplianceDetailText className="whitespace-pre-wrap">
+            {requirement.additional_information as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.default_value && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            Default Value
-          </h4>
-          <p className="text-sm">{requirement.default_value}</p>
-        </div>
+        <ComplianceDetailSection title="Default Value">
+          <ComplianceDetailText>
+            {requirement.default_value as string}
+          </ComplianceDetailText>
+        </ComplianceDetailSection>
       )}
 
       {requirement.references && (
-        <div>
-          <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-            References
-          </h4>
-          <div className="text-sm">
+        <ComplianceDetailSection title="References">
+          <div className="space-y-1">
             {processReferences(requirement.references).map(
               (url: string, index: number) => (
                 <div key={index}>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all text-blue-600 underline hover:text-blue-800"
-                  >
-                    {url}
-                  </a>
+                  <ComplianceLink href={url}>{url}</ComplianceLink>
                 </div>
               ),
             )}
           </div>
-        </div>
+        </ComplianceDetailSection>
       )}
-    </div>
+    </ComplianceDetailContainer>
   );
 };

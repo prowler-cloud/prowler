@@ -16,8 +16,10 @@ export const useUrlFilters = () => {
     (key: string, value: string | string[] | null) => {
       const params = new URLSearchParams(searchParams.toString());
 
-      // Always reset page to 1 when a filter is applied
-      params.set("page", "1");
+      // Only reset page to 1 if page parameter already exists
+      if (params.has("page")) {
+        params.set("page", "1");
+      }
 
       const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
 
@@ -40,7 +42,11 @@ export const useUrlFilters = () => {
       const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
 
       params.delete(filterKey);
-      params.set("page", "1");
+
+      // Only reset page to 1 if page parameter already exists
+      if (params.has("page")) {
+        params.set("page", "1");
+      }
 
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
@@ -60,9 +66,17 @@ export const useUrlFilters = () => {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, searchParams, pathname]);
 
+  const hasFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    return Array.from(params.keys()).some(
+      (key) => key.startsWith("filter[") || key === "sort",
+    );
+  }, [searchParams]);
+
   return {
     updateFilter,
     clearFilter,
     clearAllFilters,
+    hasFilters,
   };
 };

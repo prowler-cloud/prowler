@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@langchain/langgraph-supervisor": "^0.0.12",
+    "@langchain/openai": "0.5.10",
+    "@next/third-parties": "^15.3.3",
     "@nextui-org/react": "2.4.8",
     "@nextui-org/system": "2.2.1",
     "@nextui-org/theme": "2.2.5",
@@ -17,6 +20,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-table": "^8.19.3",
     "add": "^2.0.6",
+    "ai": "^4.3.16",
     "alert": "^6.0.2",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
@@ -29,7 +33,8 @@
     "jose": "^5.9.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.471.0",
-    "next": "^14.2.26",
+    "marked": "^15.0.12",
+    "next": "14.2.29",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.2.1",
     "radix-ui": "^1.1.3",
