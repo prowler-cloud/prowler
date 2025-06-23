@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0031_lighthouseconfiguration"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
