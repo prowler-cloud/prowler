@@ -4,9 +4,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [v5.8.0] (Prowler UNRELEASED)
 
-### Fixed
-- Fix Logic Error and report extended message revered in Checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
-
 ### Added
 - Add `storage_geo_redundant_enabled` check for Azure provider. [(#7980)](https://github.com/prowler-cloud/prowler/pull/7980)
 - Add `storage_cross_tenant_replication_disabled` check for Azure provider. [(#7977)](https://github.com/prowler-cloud/prowler/pull/7977)
@@ -46,7 +43,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.7.5] (Prowler UNRELEASED)
+## [v5.7.6] (Prowler UNRELEASED)
+
+### Fixed
+- Fix Logic Error and report extended message revered in Checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+
+---
+
+## [v5.7.5] (Prowler 5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
