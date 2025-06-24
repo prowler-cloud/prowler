@@ -48,7 +48,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.7.5] (Prowler UNRELEASED)
+## [v5.7.6] (Prowler UNRELEASED)
+
+### Fixed
+- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+
+---
+
+## [v5.7.5] (Prowler 5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
