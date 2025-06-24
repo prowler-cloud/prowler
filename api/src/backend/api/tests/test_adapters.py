@@ -63,6 +63,12 @@ class TestProwlerSocialAccountAdapter:
         adapter = ProwlerSocialAccountAdapter()
         request = rf.get("/")
         saml_sociallogin.user.email = saml_setup["email"]
+        saml_sociallogin.account.extra_data = {
+            "firstName": [],
+            "lastName": [],
+            "organization": [],
+            "userType": [],
+        }
 
         tenant = Tenant.objects.using(MainRouter.admin_db).get(
             id=saml_setup["tenant_id"]
@@ -74,6 +80,8 @@ class TestProwlerSocialAccountAdapter:
 
         user = adapter.save_user(request, saml_sociallogin)
 
+        assert user.name == "NoName"
+        assert user.company_name == ""
         assert user.email == saml_setup["email"]
         assert (
             Membership.objects.using(MainRouter.admin_db)
