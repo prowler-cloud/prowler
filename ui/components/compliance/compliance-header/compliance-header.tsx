@@ -6,7 +6,7 @@ import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
 import { DataCompliance } from "./data-compliance";
-import { SelectScanComplianceDataProps } from "./select-scan-compliance-data";
+import { SelectScanComplianceDataProps } from "./scan-selector";
 
 interface ComplianceHeaderProps {
   scans: SelectScanComplianceDataProps["scans"];
@@ -14,6 +14,7 @@ interface ComplianceHeaderProps {
   showSearch?: boolean;
   showRegionFilter?: boolean;
   framework?: string; // Framework name to show specific filters
+  showProviders?: boolean;
 }
 
 export const ComplianceHeader = ({
@@ -22,6 +23,7 @@ export const ComplianceHeader = ({
   showSearch = true,
   showRegionFilter = true,
   framework,
+  showProviders = true,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
 
@@ -54,16 +56,18 @@ export const ComplianceHeader = ({
 
   return (
     <>
-      {showSearch && <FilterControls search />}
-      <Spacer y={8} />
-      <DataCompliance scans={scans} />
-      {allFilters.length > 0 && (
+      {(showProviders || showSearch) && (
         <>
-          <Spacer y={8} />
-          <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
+          <div className="flex items-start justify-start gap-4">
+            {showProviders && <DataCompliance scans={scans} />}
+            {showSearch && <FilterControls search />}
+          </div>
         </>
       )}
-      <Spacer y={12} />
+      {allFilters.length > 0 && (
+        <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
+      )}
+      <Spacer y={8} />
     </>
   );
 };

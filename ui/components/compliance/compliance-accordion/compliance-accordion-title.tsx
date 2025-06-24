@@ -24,7 +24,7 @@ export const ComplianceAccordionTitle = ({
     <div className="flex flex-col items-start justify-between gap-1 md:flex-row md:items-center md:gap-2">
       <div className="overflow-hidden md:min-w-0 md:flex-1">
         <span
-          className="block w-full overflow-hidden truncate text-ellipsis text-sm"
+          className="block max-w-[600px] overflow-hidden truncate text-ellipsis text-sm"
           title={label}
         >
           {label.charAt(0).toUpperCase() + label.slice(1)}

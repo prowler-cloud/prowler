@@ -56,7 +56,6 @@ class Test_app_function_application_insights_enabled:
 
     def test_app_function_no_app_insights(self):
         app_client = mock.MagicMock
-        app_insights = mock.MagicMock
 
         with (
             mock.patch(
@@ -67,18 +66,11 @@ class Test_app_function_application_insights_enabled:
                 "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.app_client",
                 new=app_client,
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.appinsights_client",
-                new=app_insights,
-            ),
         ):
             from prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled import (
                 app_function_application_insights_enabled,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
-            from prowler.providers.azure.services.appinsights.appinsights_service import (
-                Component,
-            )
 
             function_id = str(uuid4())
 
@@ -96,17 +88,6 @@ class Test_app_function_application_insights_enabled:
                         vnet_subnet_id=None,
                         ftps_state="AllAllowed",
                         resource_group_name="resource_group_name",
-                    )
-                }
-            }
-
-            app_insights.components = {
-                AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": Component(
-                        resource_id="component_id",
-                        resource_name="component_name",
-                        location="West Europe",
-                        instrumentation_key="1234",
                     )
                 }
             }
@@ -126,7 +107,6 @@ class Test_app_function_application_insights_enabled:
 
     def test_app_function_using_app_insights(self):
         app_client = mock.MagicMock
-        app_insights = mock.MagicMock
 
         with (
             mock.patch(
@@ -137,18 +117,11 @@ class Test_app_function_application_insights_enabled:
                 "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.app_client",
                 new=app_client,
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.appinsights_client",
-                new=app_insights,
-            ),
         ):
             from prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled import (
                 app_function_application_insights_enabled,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
-            from prowler.providers.azure.services.appinsights.appinsights_service import (
-                Component,
-            )
 
             function_id = str(uuid4())
 
@@ -166,17 +139,6 @@ class Test_app_function_application_insights_enabled:
                         vnet_subnet_id=None,
                         ftps_state="AllAllowed",
                         resource_group_name="resource_group_name",
-                    )
-                }
-            }
-
-            app_insights.components = {
-                AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": Component(
-                        resource_id="component_id",
-                        resource_name="component_name",
-                        location="West Europe",
-                        instrumentation_key="1234",
                     )
                 }
             }
@@ -196,7 +158,6 @@ class Test_app_function_application_insights_enabled:
 
     def test_app_function_using_app_insights_different_key(self):
         app_client = mock.MagicMock
-        app_insights = mock.MagicMock
 
         with (
             mock.patch(
@@ -207,18 +168,11 @@ class Test_app_function_application_insights_enabled:
                 "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.app_client",
                 new=app_client,
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.appinsights_client",
-                new=app_insights,
-            ),
         ):
             from prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled import (
                 app_function_application_insights_enabled,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
-            from prowler.providers.azure.services.appinsights.appinsights_service import (
-                Component,
-            )
 
             function_id = str(uuid4())
 
@@ -240,24 +194,13 @@ class Test_app_function_application_insights_enabled:
                 }
             }
 
-            app_insights.components = {
-                AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": Component(
-                        resource_id="component_id",
-                        resource_name="component_name",
-                        location="West Europe",
-                        instrumentation_key="5678",
-                    )
-                }
-            }
-
             check = app_function_application_insights_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 is not using Application Insights."
+                == "Function function1 is using Application Insights."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -266,7 +209,6 @@ class Test_app_function_application_insights_enabled:
 
     def test_app_function_with_app_insights_no_key(self):
         app_client = mock.MagicMock
-        app_insights = mock.MagicMock
 
         with (
             mock.patch(
@@ -277,18 +219,11 @@ class Test_app_function_application_insights_enabled:
                 "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.app_client",
                 new=app_client,
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled.appinsights_client",
-                new=app_insights,
-            ),
         ):
             from prowler.providers.azure.services.app.app_function_application_insights_enabled.app_function_application_insights_enabled import (
                 app_function_application_insights_enabled,
             )
             from prowler.providers.azure.services.app.app_service import FunctionApp
-            from prowler.providers.azure.services.appinsights.appinsights_service import (
-                Component,
-            )
 
             function_id = str(uuid4())
 
@@ -306,17 +241,6 @@ class Test_app_function_application_insights_enabled:
                         vnet_subnet_id=None,
                         ftps_state="AllAllowed",
                         resource_group_name="resource_group_name",
-                    )
-                }
-            }
-
-            app_insights.components = {
-                AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": Component(
-                        resource_id="component_id",
-                        resource_name="component_name",
-                        location="West Europe",
-                        instrumentation_key="Not Found",
                     )
                 }
             }
