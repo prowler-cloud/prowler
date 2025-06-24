@@ -431,9 +431,11 @@ class SAMLInitiateAPIView(GenericAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        saml_login_url = reverse(
+        saml_login_path = reverse(
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
+
+        saml_login_url = request.build_absolute_uri(saml_login_path)
         return redirect(f"{saml_login_url}?email={email}")
 
 
@@ -560,12 +562,15 @@ class TenantFinishACSView(FinishACSView):
 
         serializer = TokenSocialLoginSerializer(data={"email": user.email})
         serializer.is_valid(raise_exception=True)
-        return JsonResponse(
-            {
-                "type": "saml-social-tokens",
-                "attributes": serializer.validated_data,
-            }
-        )
+
+        token_data = serializer.validated_data
+        access_token = token_data.get("access")
+        refresh_token = token_data.get("refresh")
+        auth_url = os.getenv("AUTH_URL", "http://localhost:3000")
+        callback_url = f"{auth_url}/api/auth/callback/saml"
+        redirect_url = f"{callback_url}?access={access_token}&refresh={refresh_token}"
+
+        return redirect(redirect_url)
 
 
 @extend_schema_view(
