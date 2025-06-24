@@ -7,8 +7,6 @@ import { baseUrl } from "@/lib/helper";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  console.log("SAML Callback - Search params:", searchParams);
-  console.log("SAML Callback - Full URL:", req.url);
 
   const access = searchParams.get("access");
   const refresh = searchParams.get("refresh");
