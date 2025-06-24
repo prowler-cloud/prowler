@@ -12,7 +12,7 @@ async function globalSetup(config: FullConfig) {
   // Start Docker containers (for CI or non-local runs)
   console.log('Starting Docker containers...');
   execSync(
-    'docker-compose -f ../docker-compose-dev.yml up -d --build api-dev postgres valkey worker-beat worker-dev',
+    'docker compose -f ../docker-compose-dev.yml up -d --build api-dev postgres valkey worker-beat worker-dev',
     { stdio: 'inherit' }
   );
 
