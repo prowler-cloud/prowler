@@ -349,6 +349,6 @@ class Test_organizations_scp_check_deny_regions:
                 )
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has SCP policies {policy_id} but don't have any statement configured."
+                    == f"AWS Organization {org_id} has SCP policies but don't restrict AWS Regions."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
