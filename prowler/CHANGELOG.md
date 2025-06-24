@@ -40,6 +40,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `keyvault_ensure_public_network_access_disabled` check for Azure provider. [(#8072)](https://github.com/prowler-cloud/prowler/pull/8072)
 - New check `monitor_alert_service_health_exists` for Azure provider [(#8067)](https://github.com/prowler-cloud/prowler/pull/8067)
 - Replace `Domain.Read.All` with `Directory.Read.All` in Azure and M365 docs [(#8075)](https://github.com/prowler-cloud/prowler/pull/8075)
+- Refactor IaC provider to use Checkov as Python library [(#8093)](https://github.com/prowler-cloud/prowler/pull/8093)
 
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
