@@ -28,9 +28,6 @@ Mutelist:
           Tags:
             - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
             - "project=test|project=stage" # either of ('project=test' OR project=stage) in Azure subscription 1 and every location
-
-    "*":
-      Checks:
         "admincenter_*":
           Regions:
             - "*"
