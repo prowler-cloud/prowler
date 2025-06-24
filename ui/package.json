@@ -98,7 +98,7 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky",
-    "test:e2e": "playwright test"
+    "test:e2e": "npx playwright test && npx playwright show-report"
   },
   "overrides": {
     "@react-types/shared": "3.26.0"
