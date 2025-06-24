@@ -1,130 +1,56 @@
-from re import search
 from unittest import mock
 
-from prowler.providers.gcp.models import GCPProject
-from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
-
-class Test_compute_project_os_login_enabled:
-    def test_compute_no_project(self):
-        compute_client = mock.MagicMock()
-        compute_client.project_ids = [GCP_PROJECT_ID]
-        compute_client.projects = []
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-                new=compute_client,
-            ),
-        ):
-            from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
-                compute_project_os_login_enabled,
-            )
-
-            check = compute_project_os_login_enabled()
-            result = check.execute()
-            assert len(result) == 0
-
-    def test_one_compliant_project(self):
-        from prowler.providers.gcp.services.compute.compute_service import Project
-
-        project = Project(
-            id=GCP_PROJECT_ID,
-            enable_oslogin=True,
+class TestComputeProjectOsLoginEnabledFixer:
+    def test_fix_success(self):
+        compute_client_mock = mock.MagicMock()
+        set_metadata_mock = (
+            compute_client_mock.client.projects().setCommonInstanceMetadata
         )
+        set_metadata_mock.return_value.execute.return_value = None
 
-        compute_client = mock.MagicMock()
-        compute_client.project_ids = [GCP_PROJECT_ID]
-        compute_client.compute_projects = [project]
-        compute_client.projects = {
-            GCP_PROJECT_ID: GCPProject(
-                id=GCP_PROJECT_ID,
-                number="123456789012",
-                name="test",
-                labels={},
-                lifecycle_state="ACTIVE",
-            )
-        }
-        compute_client.region = "global"
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-                new=compute_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock.MagicMock(),
         ):
-            from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
-                compute_project_os_login_enabled,
-            )
+            with mock.patch(
+                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled_fixer.compute_client",
+                new=compute_client_mock,
+            ):
+                from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled_fixer import (
+                    ComputeProjectOsLoginEnabledFixer,
+                )
 
-            check = compute_project_os_login_enabled()
-            result = check.execute()
+                fixer = ComputeProjectOsLoginEnabledFixer()
+                assert fixer.fix(project_id="test-project")
+                set_metadata_mock.assert_called_once_with(
+                    project="test-project",
+                    body={"items": [{"key": "enable-oslogin", "value": "TRUE"}]},
+                )
+                set_metadata_mock.return_value.execute.assert_called_once()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert search(
-                f"Project {project.id} has OS Login enabled",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == project.id
-            assert result[0].resource_name == "test"
-            assert result[0].location == "global"
-            assert result[0].project_id == GCP_PROJECT_ID
-
-    def test_one_non_compliant_project(self):
-        from prowler.providers.gcp.services.compute.compute_service import Project
-
-        project = Project(
-            id=GCP_PROJECT_ID,
-            enable_oslogin=False,
+    def test_fix_exception(self):
+        compute_client_mock = mock.MagicMock()
+        set_metadata_mock = (
+            compute_client_mock.client.projects().setCommonInstanceMetadata
         )
+        set_metadata_mock.side_effect = Exception("fail")
 
-        compute_client = mock.MagicMock()
-        compute_client.project_ids = [GCP_PROJECT_ID]
-        compute_client.compute_projects = [project]
-        compute_client.projects = {
-            GCP_PROJECT_ID: GCPProject(
-                id=GCP_PROJECT_ID,
-                number="123456789012",
-                name="test",
-                labels={},
-                lifecycle_state="ACTIVE",
-            )
-        }
-        compute_client.region = "global"
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
-                new=compute_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock.MagicMock(),
         ):
-            from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
-                compute_project_os_login_enabled,
-            )
+            with mock.patch(
+                "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled_fixer.compute_client",
+                new=compute_client_mock,
+            ):
+                from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled_fixer import (
+                    ComputeProjectOsLoginEnabledFixer,
+                )
 
-            check = compute_project_os_login_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert search(
-                f"Project {project.id} does not have OS Login enabled",
-                result[0].status_extended,
-            )
-            assert result[0].resource_id == project.id
-            assert result[0].resource_name == "test"
-            assert result[0].location == "global"
-            assert result[0].project_id == GCP_PROJECT_ID
+                fixer = ComputeProjectOsLoginEnabledFixer()
+                assert not fixer.fix(project_id="test-project")
+                set_metadata_mock.assert_called_once_with(
+                    project="test-project",
+                    body={"items": [{"key": "enable-oslogin", "value": "TRUE"}]},
+                )
