@@ -13,8 +13,7 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from prowler.lib.mutelist.mutelist import mutelist_schema
-from jsonschema import validate as validate_jsonschema
+from prowler.lib.mutelist.mutelist import Mutelist
 
 from api.models import (
     Finding,
@@ -2140,7 +2139,7 @@ class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
             )
 
         try:
-            validate_jsonschema(mutelist_configuration, mutelist_schema)
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
             return
         except Exception as error:
             raise serializers.ValidationError(
@@ -2186,7 +2185,7 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
             )
 
         try:
-            validate_jsonschema(mutelist_configuration, mutelist_schema)
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
             return
         except Exception as error:
             raise serializers.ValidationError(
