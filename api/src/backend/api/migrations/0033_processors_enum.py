@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0031_lighthouseconfiguration"),
+        ("api", "0032_scan_disable_on_cascade_periodic_tasks"),
     ]
 
     operations = [
