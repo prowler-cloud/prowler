@@ -80,7 +80,7 @@ class TestProwlerSocialAccountAdapter:
 
         user = adapter.save_user(request, saml_sociallogin)
 
-        assert user.name == "NoName"
+        assert user.name == "N/A"
         assert user.company_name == ""
         assert user.email == saml_setup["email"]
         assert (

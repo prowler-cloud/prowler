@@ -56,7 +56,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                 )
                 user.name = f"{user.first_name} {user.last_name}".strip()
                 if user.name == "":
-                    user.name = "NoName"
+                    user.name = "N/A"
                 user.save(using=MainRouter.admin_db)
 
                 email_domain = user.email.split("@")[-1]

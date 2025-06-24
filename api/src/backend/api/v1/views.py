@@ -518,7 +518,7 @@ class TenantFinishACSView(FinishACSView):
         )
         user.name = f"{user.first_name} {user.last_name}".strip()
         if user.name == "":
-            user.name = "NoName"
+            user.name = "N/A"
         user.save()
 
         email_domain = user.email.split("@")[-1]
