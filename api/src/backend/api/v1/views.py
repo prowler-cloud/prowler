@@ -3038,9 +3038,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Overview"])
 @extend_schema_view(
     list=extend_schema(
-        tags=["Overview"],
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -3287,6 +3287,7 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
