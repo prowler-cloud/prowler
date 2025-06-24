@@ -75,6 +75,7 @@ from api.filters import (
     IntegrationFilter,
     InvitationFilter,
     LatestFindingFilter,
+    LatestResourceFilter,
     MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -1847,12 +1848,54 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             )
             queryset = queryset.filter(text_search=search_query)
 
+        # Don't add failed findings annotation here - it will be added after pagination for better performance
         return queryset
+
+    def _add_failed_findings_annotation(self, queryset):
+        """Add failed findings count annotation to queryset"""
+        return queryset.annotate(
+            failed_findings_count=Count(
+                "resourcefindingmapping__finding",
+                filter=Q(resourcefindingmapping__finding__status="FAIL"),
+            )
+        )
+
+    def _get_queryset_modifier(self):
+        """Returns a queryset modifier function for paginate_by_pk"""
+
+        def modifier(queryset):
+            # Only apply tenant filter here, add failed findings annotation after pagination
+            return queryset.filter(tenant_id=self.request.tenant_id)
+
+        return modifier
+
+    def _optimize_tags_loading(self, queryset):
+        """Optimize tags loading with prefetch_related to avoid N+1 queries"""
+        from django.db.models import Prefetch
+
+        from api.models import ResourceTag
+
+        # Use prefetch_related to load all tags in a single query
+        return queryset.prefetch_related(
+            Prefetch(
+                "tags",
+                queryset=ResourceTag.objects.filter(
+                    tenant_id=self.request.tenant_id
+                ).select_related(),
+                to_attr="prefetched_tags",
+            )
+        )
 
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
         return super().get_serializer_class()
+
+    def get_filterset_class(self):
+        # Use LatestResourceFilter for latest and metadata_latest endpoints
+        if self.action in ["latest", "metadata_latest"]:
+            return LatestResourceFilter
+        return ResourceFilter
 
     def list(self, request, *args, **kwargs):
         filtered_queryset = self.filter_queryset(self.get_queryset())
@@ -1862,6 +1905,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             manager=Resource.all_objects,
             select_related=["provider"],
             prefetch_related=["findings"],
+            queryset_modifier=self._get_queryset_modifier(),
         )
 
     @action(detail=False, methods=["get"], url_name="latest")
@@ -1885,6 +1929,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             manager=Resource.all_objects,
             select_related=["provider"],
             prefetch_related=["findings"],
+            queryset_modifier=self._get_queryset_modifier(),
         )
 
     @action(detail=False, methods=["get"], url_name="metadata")

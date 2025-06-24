@@ -413,6 +413,36 @@ class ResourceFilter(ProviderRelationshipFilterSet):
         return queryset.filter(tags__text_search=value)
 
 
+class LatestResourceFilter(ProviderRelationshipFilterSet):
+    tag_key = CharFilter(method="filter_tag_key")
+    tag_value = CharFilter(method="filter_tag_value")
+    tag = CharFilter(method="filter_tag")
+    tags = CharFilter(method="filter_tag")
+
+    class Meta:
+        model = Resource
+        fields = {
+            "provider": ["exact", "in"],
+            "uid": ["exact", "icontains"],
+            "name": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
+            "service": ["exact", "icontains", "in"],
+            "type": ["exact", "icontains", "in"],
+        }
+
+    def filter_tag_key(self, queryset, name, value):
+        return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
+
+    def filter_tag_value(self, queryset, name, value):
+        return queryset.filter(Q(tags__value=value) | Q(tags__value__icontains=value))
+
+    def filter_tag(self, queryset, name, value):
+        # We won't know what the user wants to filter on just based on the value,
+        # and we don't want to build special filtering logic for every possible
+        # provider tag spec, so we'll just do a full text search
+        return queryset.filter(tags__text_search=value)
+
+
 class FindingFilter(CommonFindingFilters):
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")

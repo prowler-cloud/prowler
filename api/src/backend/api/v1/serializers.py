@@ -988,6 +988,7 @@ class ResourceSerializer(RLSSerializer):
 
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
+    failed_findings_count = serializers.IntegerField(read_only=True)
 
     findings = serializers.ResourceRelatedField(many=True, read_only=True)
 
@@ -1005,6 +1006,7 @@ class ResourceSerializer(RLSSerializer):
             "tags",
             "provider",
             "findings",
+            "failed_findings_count",
             "url",
         ]
         extra_kwargs = {
@@ -1026,6 +1028,10 @@ class ResourceSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
@@ -1043,6 +1049,7 @@ class ResourceIncludeSerializer(RLSSerializer):
 
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
+    failed_findings_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Resource
@@ -1056,6 +1063,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "failed_findings_count",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1071,6 +1079,10 @@ class ResourceIncludeSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
