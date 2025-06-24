@@ -43,10 +43,20 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
 
             if provider == "saml":
                 # Handle SAML-specific logic
-                user.first_name = extra.get("firstName", [""])[0]
-                user.last_name = extra.get("lastName", [""])[0]
-                user.company_name = extra.get("organization", [""])[0]
+                user.first_name = (
+                    extra.get("firstName", [""])[0] if extra.get("firstName") else ""
+                )
+                user.last_name = (
+                    extra.get("lastName", [""])[0] if extra.get("lastName") else ""
+                )
+                user.company_name = (
+                    extra.get("organization", [""])[0]
+                    if extra.get("organization")
+                    else ""
+                )
                 user.name = f"{user.first_name} {user.last_name}".strip()
+                if user.name == "":
+                    user.name = "N/A"
                 user.save(using=MainRouter.admin_db)
 
                 email_domain = user.email.split("@")[-1]
@@ -57,7 +67,11 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                 )
 
                 with rls_transaction(str(tenant.id)):
-                    role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+                    role_name = (
+                        extra.get("userType", ["saml_default_role"])[0].strip()
+                        if extra.get("userType")
+                        else "saml_default_role"
+                    )
 
                     try:
                         role = Role.objects.using(MainRouter.admin_db).get(
