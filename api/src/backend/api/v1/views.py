@@ -509,10 +509,16 @@ class TenantFinishACSView(FinishACSView):
             return response
 
         extra = social_account.extra_data
-        user.first_name = extra.get("firstName", [""])[0]
-        user.last_name = extra.get("lastName", [""])[0]
-        user.company_name = extra.get("organization", [""])[0]
+        user.first_name = (
+            extra.get("firstName", [""])[0] if extra.get("firstName") else ""
+        )
+        user.last_name = extra.get("lastName", [""])[0] if extra.get("lastName") else ""
+        user.company_name = (
+            extra.get("organization", [""])[0] if extra.get("organization") else ""
+        )
         user.name = f"{user.first_name} {user.last_name}".strip()
+        if user.name == "":
+            user.name = "NoName"
         user.save()
 
         email_domain = user.email.split("@")[-1]
