@@ -17,7 +17,7 @@ export interface DataTableFilterCustomProps {
 
 export const DataTableFilterCustom = ({
   filters,
-  defaultOpen = false,
+  defaultOpen = true,
   showClearButton = false,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
