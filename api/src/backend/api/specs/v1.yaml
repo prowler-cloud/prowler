@@ -3213,7 +3213,7 @@ paths:
             - -pass
         explode: false
       tags:
-      - findings-overview
+      - Overview
       security:
       - jwtAuth: []
       responses:
@@ -3358,7 +3358,7 @@ paths:
             - -informational
         explode: false
       tags:
-      - findings-severity-overview
+      - Overview
       security:
       - jwtAuth: []
       responses:
@@ -3406,7 +3406,7 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       tags:
-      - providers-overview
+      - Overview
       security:
       - jwtAuth: []
       responses:
@@ -3547,7 +3547,7 @@ paths:
             - -pass
         explode: false
       tags:
-      - services-overview
+      - Overview
       security:
       - jwtAuth: []
       responses:
@@ -6073,7 +6073,7 @@ paths:
         creates a periodic task that will execute a scan every 24 hours.
       summary: Create a daily schedule scan for a given provider
       tags:
-      - daily-schedules
+      - Schedule
       requestBody:
         content:
           application/vnd.api+json:
