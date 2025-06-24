@@ -67,7 +67,11 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                 )
 
                 with rls_transaction(str(tenant.id)):
-                    role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+                    role_name = (
+                        extra.get("userType", ["saml_default_role"])[0].strip()
+                        if extra.get("userType")
+                        else "saml_default_role"
+                    )
 
                     try:
                         role = Role.objects.using(MainRouter.admin_db).get(

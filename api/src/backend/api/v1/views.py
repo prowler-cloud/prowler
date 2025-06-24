@@ -527,7 +527,11 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+        role_name = (
+            extra.get("userType", ["saml_default_role"])[0].strip()
+            if extra.get("userType")
+            else "saml_default_role"
+        )
         try:
             role = Role.objects.using(MainRouter.admin_db).get(
                 name=role_name, tenant=tenant
