@@ -30,7 +30,19 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
 
 ---
+<<<<<<< HEAD
 ## [v5.7.5] (Prowler UNRELEASED)
+=======
+
+## [v5.7.6] (Prowler UNRELEASED)
+
+### Fixed
+- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+
+---
+
+## [v5.7.5] (Prowler 5.7.5)
+>>>>>>> e108b2cae (fix(aws): fix logic in VPC and ELBv2 checks (#8077))
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
