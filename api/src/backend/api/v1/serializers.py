@@ -1081,6 +1081,17 @@ class ResourceIncludeSerializer(RLSSerializer):
         return fields
 
 
+class ResourceMetadataSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    # Temporarily disabled until we implement tag filtering in the UI
+    # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+
+    class Meta:
+        resource_name = "resources-metadata"
+
+
 class FindingSerializer(RLSSerializer):
     """
     Serializer for the Finding model.

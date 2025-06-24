@@ -838,6 +838,12 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - tenant_id
         #   - id
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "finding_id"],
+                name="rfm_tenant_finding_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "finding_id"),

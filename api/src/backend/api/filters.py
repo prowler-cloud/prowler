@@ -338,6 +338,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     tags = CharFilter(method="filter_tag")
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
+    scan__in = UUIDInFilter(method="provider__scan", lookup_expr="in")
 
     class Meta:
         model = Resource
@@ -351,6 +353,52 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
+
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("updated_at")
+            or self.data.get("updated_at__date")
+            or self.data.get("updated_at__gte")
+            or self.data.get("updated_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[updated_at], filter[updated_at.gte], "
+                        "or filter[updated_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            datetime.strptime(self.data.get("updated_at__gte"), "%Y-%m-%d").date()
+            if self.data.get("updated_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            datetime.strptime(self.data.get("updated_at__lte"), "%Y-%m-%d").date()
+            if self.data.get("updated_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
 
     def filter_tag_key(self, queryset, name, value):
         return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))

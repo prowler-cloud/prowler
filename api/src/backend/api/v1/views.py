@@ -158,6 +158,7 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceMetadataSerializer,
     ResourceSerializer,
     RoleCreateSerializer,
     RoleProviderGroupRelationshipSerializer,
@@ -1763,11 +1764,39 @@ class TaskViewSet(BaseRLSViewSet):
         description="Fetch detailed information about a specific resource by their ID. A Resource is an object that "
         "is discovered by Prowler. It can be anything from a single host to a whole VPC.",
     ),
+    metadata=extend_schema(
+        tags=["Resource"],
+        summary="Retrieve metadata values from resources",
+        description="Fetch unique metadata values from a set of resources. This is useful for dynamic filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[updated_at]",
+                description="At least one of the variations of the `filter[updated_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
+        filters=True,
+    ),
+    latest=extend_schema(
+        tags=["Resource"],
+        summary="List the latest resources",
+        description="Retrieve a list of the latest resources from the latest scans for each provider with options for "
+        "filtering by various criteria.",
+        filters=True,
+    ),
+    metadata_latest=extend_schema(
+        tags=["Resource"],
+        summary="Retrieve metadata values from the latest resources",
+        description="Fetch unique metadata values from a set of resources from the latest scans for each provider. "
+        "This is useful for dynamic filtering.",
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ResourceViewSet(BaseRLSViewSet):
-    queryset = Resource.objects.all()
+class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
+    queryset = Resource.all_objects.all()
     serializer_class = ResourceSerializer
     http_method_names = ["get"]
     filterset_class = ResourceFilter
@@ -1782,6 +1811,20 @@ class ResourceViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "findings": [
+            Prefetch(
+                "findings",
+                queryset=Finding.all_objects.prefetch_related("resources"),
+            )
+        ],
+        "provider": [
+            Prefetch(
+                "provider", queryset=Provider.all_objects.select_related("resources")
+            )
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1790,40 +1833,213 @@ class ResourceViewSet(BaseRLSViewSet):
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            queryset = Resource.objects.filter(tenant_id=self.request.tenant_id)
+            queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Resource.objects.filter(
+            queryset = Resource.all_objects.filter(
                 tenant_id=self.request.tenant_id, provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on the "through" table, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
-            queryset = queryset.filter(
-                Q(tags__key=search_value)
-                | Q(tags__value=search_value)
-                | Q(tags__text_search=search_query)
-                | Q(tags__key__contains=search_value)
-                | Q(tags__value__contains=search_value)
-                | Q(uid=search_value)
-                | Q(name=search_value)
-                | Q(region=search_value)
-                | Q(service=search_value)
-                | Q(type=search_value)
-                | Q(text_search=search_query)
-                | Q(uid__contains=search_value)
-                | Q(name__contains=search_value)
-                | Q(region__contains=search_value)
-                | Q(service__contains=search_value)
-                | Q(type__contains=search_value)
-            ).distinct()
+            queryset = queryset.filter(text_search=search_query)
 
         return queryset
+
+    def get_serializer_class(self):
+        if self.action in ["metadata", "metadata_latest"]:
+            return ResourceMetadataSerializer
+        return super().get_serializer_class()
+
+    def list(self, request, *args, **kwargs):
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Resource.all_objects,
+            select_related=["provider"],
+            prefetch_related=["findings"],
+        )
+
+    @action(detail=False, methods=["get"], url_name="latest")
+    def latest(self, request):
+        tenant_id = request.tenant_id
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+        filtered_queryset = filtered_queryset.filter(
+            tenant_id=tenant_id, provider__scan__in=latest_scan_ids
+        )
+
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Resource.all_objects,
+            select_related=["provider"],
+            prefetch_related=["findings"],
+        )
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        # Force filter validation
+        self.filter_queryset(self.get_queryset())
+
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+
+        if scans := query_params.get("filter[scan__in]") or query_params.get(
+            "filter[scan]"
+        ):
+            queryset = queryset.filter(scan_id__in=scans.split(","))
+        else:
+            exact = query_params.get("filter[inserted_at]")
+            gte = query_params.get("filter[inserted_at__gte]")
+            lte = query_params.get("filter[inserted_at__lte]")
+
+            date_filters = {}
+            if exact:
+                date = parse_date(exact)
+                datetime_start = datetime.combine(
+                    date, datetime.min.time(), tzinfo=timezone.utc
+                )
+                datetime_end = datetime_start + timedelta(days=1)
+                date_filters["scan_id__gte"] = uuid7_start(
+                    datetime_to_uuid7(datetime_start)
+                )
+                date_filters["scan_id__lt"] = uuid7_start(
+                    datetime_to_uuid7(datetime_end)
+                )
+            else:
+                if gte:
+                    date_start = parse_date(gte)
+                    datetime_start = datetime.combine(
+                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                    )
+                    date_filters["scan_id__gte"] = uuid7_start(
+                        datetime_to_uuid7(datetime_start)
+                    )
+                if lte:
+                    date_end = parse_date(lte)
+                    datetime_end = datetime.combine(
+                        date_end + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
+                    )
+                    date_filters["scan_id__lt"] = uuid7_start(
+                        datetime_to_uuid7(datetime_end)
+                    )
+
+            if date_filters:
+                queryset = queryset.filter(**date_filters)
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get("filter[type]") or query_params.get(
+            "filter[type__in]"
+        ):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="metadata_latest",
+        url_path="metadata/latest",
+    )
+    def metadata_latest(self, request):
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        latest_scans_queryset = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+        )
+
+        queryset = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id,
+            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+        )
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get("filter[type]") or query_params.get(
+            "filter[type__in]"
+        ):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
 
 
 @extend_schema_view(
