@@ -3,6 +3,12 @@ from unittest.mock import patch
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
+<<<<<<< HEAD
+=======
+    DeleteRetentionPolicy,
+    FileServiceProperties,
+    ReplicationSettings,
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -19,6 +25,16 @@ def mock_storage_get_storage_accounts(_):
         default_service_version=None,
         container_delete_retention_policy=None,
     )
+<<<<<<< HEAD
+=======
+    retention_policy = DeleteRetentionPolicy(enabled=True, days=7)
+    file_service_properties = FileServiceProperties(
+        id="id",
+        name="name",
+        type="type",
+        share_delete_retention_policy=retention_policy,
+    )
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
     return {
         AZURE_SUBSCRIPTION_ID: [
             Account(
@@ -35,6 +51,14 @@ def mock_storage_get_storage_accounts(_):
                 private_endpoint_connections=None,
                 location="westeurope",
                 blob_properties=blob_properties,
+<<<<<<< HEAD
+=======
+                default_to_entra_authorization=True,
+                replication_settings=ReplicationSettings.STANDARD_LRS,
+                allow_cross_tenant_replication=True,
+                allow_shared_key_access=True,
+                file_service_properties=file_service_properties,
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
             )
         ]
     }
@@ -143,3 +167,16 @@ class Test_Storage_Service:
             ].blob_properties.container_delete_retention_policy
             is None
         )
+<<<<<<< HEAD
+=======
+
+    def test_get_file_service_properties(self):
+        storage = Storage(set_mocked_azure_provider())
+        account = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0]
+        assert hasattr(account, "file_service_properties")
+        assert (
+            account.file_service_properties.share_delete_retention_policy.enabled
+            is True
+        )
+        assert account.file_service_properties.share_delete_retention_policy.days == 7
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))

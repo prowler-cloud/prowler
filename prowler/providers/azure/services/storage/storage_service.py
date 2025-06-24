@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from azure.mgmt.storage import StorageManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -122,6 +123,47 @@ class Storage(AzureService):
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+<<<<<<< HEAD
+=======
+    def _get_file_share_properties(self):
+        logger.info("Storage - Getting file share properties...")
+        for subscription, accounts in self.storage_accounts.items():
+            client = self.clients[subscription]
+            for account in accounts:
+                try:
+                    file_service_properties = (
+                        client.file_services.get_service_properties(
+                            account.resouce_group_name, account.name
+                        )
+                    )
+                    share_delete_retention_policy = getattr(
+                        file_service_properties,
+                        "share_delete_retention_policy",
+                        None,
+                    )
+                    account.file_service_properties = FileServiceProperties(
+                        id=file_service_properties.id,
+                        name=file_service_properties.name,
+                        type=file_service_properties.type,
+                        share_delete_retention_policy=DeleteRetentionPolicy(
+                            enabled=getattr(
+                                share_delete_retention_policy,
+                                "enabled",
+                                False,
+                            ),
+                            days=getattr(
+                                share_delete_retention_policy,
+                                "days",
+                                0,
+                            ),
+                        ),
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
 
 @dataclass
 class DeleteRetentionPolicy:
@@ -151,6 +193,27 @@ class PrivateEndpointConnection:
     type: str
 
 
+<<<<<<< HEAD
+=======
+class ReplicationSettings(Enum):
+    STANDARD_LRS = "Standard_LRS"
+    STANDARD_GRS = "Standard_GRS"
+    STANDARD_RAGRS = "Standard_RAGRS"
+    STANDARD_ZRS = "Standard_ZRS"
+    PREMIUM_LRS = "Premium_LRS"
+    PREMIUM_ZRS = "Premium_ZRS"
+    STANDARD_GZRS = "Standard_GZRS"
+    STANDARD_RAGZRS = "Standard_RAGZRS"
+
+
+class FileServiceProperties(BaseModel):
+    id: str
+    name: str
+    type: str
+    share_delete_retention_policy: DeleteRetentionPolicy
+
+
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
 @dataclass
 class Account:
     id: str
@@ -166,3 +229,8 @@ class Account:
     key_expiration_period_in_days: str
     location: str
     blob_properties: Optional[BlobProperties] = None
+<<<<<<< HEAD
+=======
+    default_to_entra_authorization: bool = False
+    file_service_properties: Optional[FileServiceProperties] = None
+>>>>>>> e0465f2aa (fix(azure): consolidate file share properties to the storage account level (#8087))
