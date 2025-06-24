@@ -8,7 +8,7 @@ import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
 import { SamlConfigForm } from "./forms";
 
-export const SamlIntegrationCard = ({ isEnabled }: { isEnabled: boolean }) => {
+export const SamlIntegrationCard = ({ id }: { id: string }) => {
   const [isSamlModalOpen, setIsSamlModalOpen] = useState(false);
 
   return (
@@ -18,7 +18,7 @@ export const SamlIntegrationCard = ({ isEnabled }: { isEnabled: boolean }) => {
         onOpenChange={setIsSamlModalOpen}
         title="Configure SAML SSO"
       >
-        <SamlConfigForm setIsOpen={setIsSamlModalOpen} />
+        <SamlConfigForm setIsOpen={setIsSamlModalOpen} id={id} />
       </CustomAlertModal>
 
       <Card className="dark:bg-prowler-blue-400">
@@ -26,12 +26,10 @@ export const SamlIntegrationCard = ({ isEnabled }: { isEnabled: boolean }) => {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h4 className="text-lg font-bold">SAML SSO Integration</h4>
-              {isEnabled && (
-                <CheckIcon className="text-prowler-green" size={20} />
-              )}
+              {id && <CheckIcon className="text-prowler-green" size={20} />}
             </div>
             <p className="text-xs text-gray-500">
-              {isEnabled
+              {id
                 ? "SAML Single Sign-On is enabled for this organization"
                 : "Configure SAML Single Sign-On for secure authentication"}
             </p>
@@ -41,10 +39,8 @@ export const SamlIntegrationCard = ({ isEnabled }: { isEnabled: boolean }) => {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <span className="font-medium">Status: </span>
-              <span
-                className={isEnabled ? "text-prowler-green" : "text-gray-500"}
-              >
-                {isEnabled ? "Enabled" : "Disabled"}
+              <span className={id ? "text-prowler-green" : "text-gray-500"}>
+                {id ? "Enabled" : "Disabled"}
               </span>
             </div>
             <CustomButton
@@ -53,7 +49,7 @@ export const SamlIntegrationCard = ({ isEnabled }: { isEnabled: boolean }) => {
               color="action"
               onPress={() => setIsSamlModalOpen(true)}
             >
-              {isEnabled ? "Update" : "Enable"}
+              {id ? "Update" : "Enable"}
             </CustomButton>
           </div>
         </CardBody>

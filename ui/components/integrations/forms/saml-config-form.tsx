@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 
-import { createSamlConfig } from "@/actions/integrations";
+import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomServerInput } from "@/components/ui/custom";
@@ -12,10 +12,15 @@ import { FormButtons } from "@/components/ui/form";
 
 export const SamlConfigForm = ({
   setIsOpen,
+  id,
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  id: string;
 }) => {
-  const [state, formAction, isPending] = useFormState(createSamlConfig, null);
+  const [state, formAction, isPending] = useFormState(
+    id ? updateSamlConfig : createSamlConfig,
+    null,
+  );
   const [emailDomain, setEmailDomain] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{
     name: string;
@@ -120,6 +125,7 @@ export const SamlConfigForm = ({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-6">
+      <input type="hidden" name="id" value={id} />
       <div className="space-y-4">
         <CustomServerInput
           name="email_domain"
@@ -238,6 +244,7 @@ export const SamlConfigForm = ({
               <li>• firstName</li>
               <li>• lastName</li>
               <li>• userType</li>
+              <li>• organization</li>
             </ul>
             <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
               <strong>Note:</strong> The userType attribute will be used to
@@ -249,7 +256,7 @@ export const SamlConfigForm = ({
         </div>
       </div>
 
-      <FormButtons setIsOpen={setIsOpen} />
+      <FormButtons setIsOpen={setIsOpen} submitText={id ? "Update" : "Save"} />
     </form>
   );
 };

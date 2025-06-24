@@ -34,26 +34,28 @@ export async function createSamlConfig(prevState: any, formData: FormData) {
 
   const { email_domain, metadata_xml } = validatedData.data;
 
-  const payload = {
-    data: {
-      type: "saml-configurations",
-      attributes: {
-        email_domain: email_domain.trim(),
-        metadata_xml: metadata_xml.trim(),
-      },
-    },
-  };
-
   try {
     const url = new URL(`${apiBaseUrl}/saml-config`);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        data: {
+          type: "saml-configurations",
+          attributes: {
+            email_domain: email_domain.trim(),
+            metadata_xml: metadata_xml.trim(),
+          },
+        },
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create SAML config: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.errors?.[0]?.detail ||
+          `Failed to create SAML config: ${response.statusText}`,
+      );
     }
 
     await response.json();
@@ -63,7 +65,69 @@ export async function createSamlConfig(prevState: any, formData: FormData) {
     console.error("Error creating SAML config:", error);
     return {
       errors: {
-        general: "Error creating SAML configuration. Please try again.",
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error creating SAML configuration. Please try again.",
+      },
+    };
+  }
+}
+
+export async function updateSamlConfig(prevState: any, formData: FormData) {
+  const headers = await getAuthHeaders({ contentType: true });
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = samlConfigFormSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    const formFieldErrors = validatedData.error.flatten().fieldErrors;
+
+    return {
+      errors: {
+        email_domain: formFieldErrors?.email_domain?.[0],
+        metadata_xml: formFieldErrors?.metadata_xml?.[0],
+      },
+    };
+  }
+
+  const { email_domain, metadata_xml } = validatedData.data;
+
+  try {
+    const url = new URL(`${apiBaseUrl}/saml-config/${formDataObject.id}`);
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "saml-configurations",
+          id: formDataObject.id,
+          attributes: {
+            email_domain: email_domain.trim(),
+            metadata_xml: metadata_xml.trim(),
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.errors?.[0]?.detail ||
+          `Failed to update SAML config: ${response.statusText}`,
+      );
+    }
+
+    await response.json();
+    revalidatePath("/integrations");
+    return { success: "SAML configuration updated successfully!" };
+  } catch (error) {
+    console.error("Error updating SAML config:", error);
+    return {
+      errors: {
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error creating SAML configuration. Please try again.",
       },
     };
   }
@@ -89,5 +153,58 @@ export async function getSamlConfig() {
   } catch (error) {
     console.error("Error fetching SAML config:", error);
     return undefined;
+  }
+}
+
+export async function initiateSamlAuth(email: string) {
+  try {
+    const response = await fetch(`${apiBaseUrl}/auth/saml/initiate/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+      },
+      body: JSON.stringify({
+        data: {
+          type: "saml-initiate",
+          attributes: {
+            email_domain: email,
+          },
+        },
+      }),
+      redirect: "manual",
+    });
+
+    if (response.status === 302) {
+      const location = response.headers.get("Location");
+
+      if (location) {
+        return {
+          success: true,
+          redirectUrl: location,
+        };
+      }
+    }
+
+    if (response.status === 403) {
+      return {
+        success: false,
+        error:
+          "Domain is not authorized for SAML authentication or SAML certificates are missing.",
+      };
+    }
+
+    // Add error other error case:
+    const errorData = await response.json().catch(() => ({}));
+    return {
+      success: false,
+      error:
+        errorData.errors?.[0]?.detail ||
+        "An error occurred during SAML authentication.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to connect to authentication service.",
+    };
   }
 }
