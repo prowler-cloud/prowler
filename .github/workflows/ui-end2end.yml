@@ -11,6 +11,7 @@ on:
 env:
 # Temporary secret for CI test runs only – replace with GitHub Secret later
   AUTH_SECRET: "N/c6mnaS5+SWq81+819OrzQZlmx1Vxtp/orjttJSmw8="
+  API_BASE_URL: "http://localhost:8080/api/v1"
   SERVICES_TO_START: "api-dev postgres valkey worker-beat worker-dev"
   DOCKER_COMPOSE_FILE: "docker-compose-dev.yml"
 

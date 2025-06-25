@@ -7,7 +7,7 @@ const testPassword = 'Testt@123456';
 test.beforeAll(async () => {
     const apiContext = await request.newContext();
 
-    await apiContext.post(`${process.env.API_BASE_URL}users`, {
+    await apiContext.post(`${process.env.API_BASE_URL}/users`, {
         headers: {
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/vnd.api+json',
