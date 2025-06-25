@@ -553,6 +553,8 @@ class Resource(RowLevelSecurityProtectedModel):
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
 
+    failed_findings_count = models.IntegerField(default=0)
+
     # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
@@ -598,6 +600,10 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_id"],
                 name="resources_tenant_provider_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "-failed_findings_count", "id"],
+                name="resources_failed_findings_idx",
             ),
         ]
 

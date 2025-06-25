@@ -19,7 +19,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
+from django.db.models import Exists, F, OuterRef, Prefetch, Q, Sum, Count
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
@@ -104,6 +104,7 @@ from api.models import (
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -1801,7 +1802,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     serializer_class = ResourceSerializer
     http_method_names = ["get"]
     filterset_class = ResourceFilter
-    ordering = ["-inserted_at"]
+    ordering = ["-failed_findings_count", "-updated_at"]
     ordering_fields = [
         "provider_uid",
         "uid",
@@ -1860,21 +1861,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             )
         )
 
-    def _get_queryset_modifier(self):
-        """Returns a queryset modifier function for paginate_by_pk"""
-
-        def modifier(queryset):
-            # Only apply tenant filter here, add failed findings annotation after pagination
-            return queryset.filter(tenant_id=self.request.tenant_id)
-
-        return modifier
-
     def _optimize_tags_loading(self, queryset):
         """Optimize tags loading with prefetch_related to avoid N+1 queries"""
-        from django.db.models import Prefetch
-
-        from api.models import ResourceTag
-
         # Use prefetch_related to load all tags in a single query
         return queryset.prefetch_related(
             Prefetch(
@@ -1905,7 +1893,6 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             manager=Resource.all_objects,
             select_related=["provider"],
             prefetch_related=["findings"],
-            queryset_modifier=self._get_queryset_modifier(),
         )
 
     @action(detail=False, methods=["get"], url_name="latest")
@@ -1929,7 +1916,6 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             manager=Resource.all_objects,
             select_related=["provider"],
             prefetch_related=["findings"],
-            queryset_modifier=self._get_queryset_modifier(),
         )
 
     @action(detail=False, methods=["get"], url_name="metadata")

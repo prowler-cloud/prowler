@@ -26,7 +26,6 @@ class PaginateByPkMixin:
         manager,
         select_related: list[str] | None = None,
         prefetch_related: list[str] | None = None,
-        queryset_modifier=None,
     ) -> Response:
         """
         Paginate a queryset by primary key.
@@ -34,11 +33,6 @@ class PaginateByPkMixin:
         This method is useful when you want to paginate a queryset that has been
         filtered or annotated in a way that would be lost if you used the default
         pagination method.
-
-        Args:
-            queryset_modifier: Optional callable that takes a queryset and returns
-                              a modified queryset (e.g., to apply annotations).
-                              Signature: queryset_modifier(queryset) -> queryset
         """
         pk_list = base_queryset.values_list("id", flat=True)
         page = self.paginate_queryset(pk_list)
@@ -47,17 +41,10 @@ class PaginateByPkMixin:
 
         queryset = manager.filter(id__in=page)
 
-        # Apply custom queryset modifications
-        if queryset_modifier and callable(queryset_modifier):
-            queryset = queryset_modifier(queryset)
-
         if select_related:
             queryset = queryset.select_related(*select_related)
         if prefetch_related:
             queryset = queryset.prefetch_related(*prefetch_related)
-
-        if hasattr(self, "_add_failed_findings_annotation"):
-            queryset = self._add_failed_findings_annotation(queryset)
 
         # Optimize tags loading, if applicable
         if hasattr(self, "_optimize_tags_loading"):
