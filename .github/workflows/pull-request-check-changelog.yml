@@ -47,6 +47,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Find existing changelog comment
+        if: github.event.pull_request.head.repo.full_name == github.repository
         id: find_comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e #v3.1.0
         with:
