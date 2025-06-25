@@ -171,7 +171,14 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 }'
 ```
 
-## 7. Start SAML Login Flow
+## 7. UI Environment Variables
+
+This is the URL of the web-ui that will be used to redirect the user when the SAML login flow is completed.
+```env
+AUTH_URL="<WEB_UI_URL>"
+```
+
+## 8. Start SAML Login Flow
 
 Once everything is configured, start the SAML login process by visiting the following URL:
 
@@ -181,6 +188,6 @@ https://<PROXY_IP>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/login/?email=<USER_E
 
 At the end you will get a valid access and refresh token
 
-## 8. Notes on the initiate Endpoint
+## 9. Notes on the initiate Endpoint
 
 The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it’s optional.
