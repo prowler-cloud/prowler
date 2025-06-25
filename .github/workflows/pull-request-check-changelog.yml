@@ -2,17 +2,15 @@ name: Check Changelog
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'api/**'
-      - 'ui/**'
-      - 'prowler/**'
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 jobs:
   check-changelog:
     if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
+      contents: read
       pull-requests: write
     env:
       MONITORED_FOLDERS: "api ui prowler"
