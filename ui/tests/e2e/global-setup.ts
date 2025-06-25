@@ -2,13 +2,6 @@ import { FullConfig } from '@playwright/test';
 import { execSync } from 'child_process';
 
 async function globalSetup(config: FullConfig) {
-  const isLocal = process.env.LOCAL === 'true';
-
-  if (isLocal) {
-    console.log('LOCAL=true detected — skipping Docker startup.');
-    return;
-  }
-
   // Start Docker containers (for CI or non-local runs)
   console.log('Starting Docker containers...');
   execSync(
@@ -23,7 +16,7 @@ async function globalSetup(config: FullConfig) {
   // Register cleanup function
   process.on('exit', () => {
     console.log('Cleaning up containers...');
-    execSync('docker-compose -f ../docker-compose-dev.yml down', { stdio: 'inherit' });
+    execSync('docker compose -f ../docker-compose-dev.yml down', { stdio: 'inherit' });
   });
 }
 

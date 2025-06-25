@@ -1,4 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const isLocal = process.env.LOCAL === "true";
 
@@ -10,7 +12,9 @@ export default defineConfig({
   retries: isLocal ? 0 : 2,
   workers: isLocal ? undefined : 1,
   reporter: "html",
-  globalSetup: require.resolve("./tests/e2e/global-setup"),
+  globalSetup: isLocal
+    ? undefined
+    : require.resolve("./tests/e2e/global-setup"),
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
@@ -57,10 +61,12 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !isLocal,
-    timeout: 300 * 1000, // 5 minute
-  },
+  webServer: isLocal
+    ? undefined // Skip web server in local runs
+    : {
+        command: "npm run dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: true,
+        timeout: 300 * 1000, // 5 minute
+      },
 });

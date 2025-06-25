@@ -63,6 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",
     "autoprefixer": "10.4.19",
+    "dotenv": "^16.5.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.23",
     "eslint-config-prettier": "^10.0.1",
