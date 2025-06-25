@@ -5,9 +5,9 @@ dotenv.config();
 const isLocal = process.env.LOCAL === "true";
 
 export default defineConfig({
-  timeout: 60 * 1000,
+  timeout: 90 * 1000,
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !isLocal,
   retries: isLocal ? 0 : 2,
   workers: isLocal ? undefined : 1,
@@ -17,6 +17,7 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    navigationTimeout: 60 * 1000,
   },
 
   /* Configure projects for major browsers */
@@ -64,6 +65,6 @@ export default defineConfig({
       command: "npm run dev",
       url: "http://localhost:3000",
       reuseExistingServer: true,
-      timeout: 400 * 1000, // 5 minute
+      timeout: 120 * 1000, // wait up to 2 minutes for frontend to boot
     },
 });

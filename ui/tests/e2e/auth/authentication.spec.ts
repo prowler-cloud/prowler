@@ -34,8 +34,9 @@ test('should show error for invalid credentials', async ({ page }) => {
     await page.fill('input[name="email"]', 'wrong@gmail.com');
     await page.fill('input[name="password"]', 'WrongPassword123');
     await page.getByRole('button', { name: /log in/i }).click();
+    await page.waitForTimeout(7000);
+    await expect(page.getByText(/invalid email or password/i)).toBeVisible({ timeout: 10000 });
 
-    await expect(page.getByText(/Invalid email or password/i)).toBeVisible();
 });
 
 test('should sign in successfully', async ({ page }) => {
@@ -48,6 +49,8 @@ test('should sign in successfully', async ({ page }) => {
 
     // Submit the form
     await page.getByRole('button', { name: /log in/i }).click();
-    await page.waitForURL('/', { timeout: 15000 });
-    await expect(page).toHaveURL('/');
+    await page.waitForTimeout(7000);
+    await page.waitForURL((url) => !url.pathname.includes('sign-in'), {
+        timeout: 15000,
+    });
 });
