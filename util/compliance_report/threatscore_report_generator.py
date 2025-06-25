@@ -18,7 +18,7 @@ from reportlab.platypus import (
 )
 
 
-def generate_compliance_report(
+def generate_threatscore_report(
     scan_id: str,
     compliance_id: str,
     output_path: str,
@@ -873,7 +873,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    generate_compliance_report(
+    generate_threatscore_report(
         args.scan_id,
         args.compliance_id,
         args.output,
