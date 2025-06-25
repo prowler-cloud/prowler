@@ -36,10 +36,11 @@ class Test_s3_bucket_policy_public_write_access_fixer:
         ):
             # Test Fixer
             from prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access_fixer import (
-                fixer,
+                S3BucketPolicyPublicWriteAccessFixer,
             )
 
-            assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+            fixer = S3BucketPolicyPublicWriteAccessFixer()
+            assert fixer.fix(resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1)
 
     @mock_aws
     def test_bucket_public_write_policy_error(self):
@@ -70,7 +71,10 @@ class Test_s3_bucket_policy_public_write_access_fixer:
         ):
             # Test Fixer
             from prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access_fixer import (
-                fixer,
+                S3BucketPolicyPublicWriteAccessFixer,
             )
 
-            assert not fixer("bucket_name_non_existing", AWS_REGION_US_EAST_1)
+            fixer = S3BucketPolicyPublicWriteAccessFixer()
+            assert not fixer.fix(
+                resource_id="bucket_name_non_existing", region=AWS_REGION_US_EAST_1
+            )

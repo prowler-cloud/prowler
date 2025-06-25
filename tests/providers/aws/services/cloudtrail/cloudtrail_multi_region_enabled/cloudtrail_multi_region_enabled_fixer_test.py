@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_cloudtrail_multi_region_enabled_fixer:
+class TestCloudtrailMultiRegionEnabledFixer:
     @mock_aws
     def test_cloudtrail_multi_region_enabled_fixer(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -36,9 +36,9 @@ class Test_cloudtrail_multi_region_enabled_fixer:
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled_fixer.cloudtrail_client",
                 new=Cloudtrail(aws_provider),
             ):
-                # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled_fixer import (
-                    fixer,
+                    CloudtrailMultiRegionEnabledFixer,
                 )
 
-                assert fixer(AWS_REGION_US_EAST_1)
+                fixer = CloudtrailMultiRegionEnabledFixer()
+                assert fixer.fix(region=AWS_REGION_US_EAST_1)

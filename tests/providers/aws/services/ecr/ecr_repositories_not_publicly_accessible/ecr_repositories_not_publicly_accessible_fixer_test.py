@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
-class Test_ecr_repositories_not_publicly_accessible_fixer:
+class TestEcrRepositoriesNotPubliclyAccessibleFixer:
     @mock_aws
     def test_ecr_repository_public(self):
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
@@ -46,12 +46,13 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
                 new=ECR(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (
-                fixer,
+                EcrRepositoriesNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(repository_name, AWS_REGION_EU_WEST_1)
+            assert EcrRepositoriesNotPubliclyAccessibleFixer().fix(
+                resource_id=repository_name, region=AWS_REGION_EU_WEST_1
+            )
 
     @mock_aws
     def test_ecr_repository_not_public(self):
@@ -91,12 +92,13 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
                 new=ECR(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (
-                fixer,
+                EcrRepositoriesNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(repository_name, AWS_REGION_EU_WEST_1)
+            assert EcrRepositoriesNotPubliclyAccessibleFixer().fix(
+                resource_id=repository_name, region=AWS_REGION_EU_WEST_1
+            )
 
     @mock_aws
     def test_ecr_repository_public_error(self):
@@ -136,9 +138,10 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
                 new=ECR(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (
-                fixer,
+                EcrRepositoriesNotPubliclyAccessibleFixer,
             )
 
-            assert not fixer("repository_name_non_existing", AWS_REGION_EU_WEST_1)
+            assert not EcrRepositoriesNotPubliclyAccessibleFixer().fix(
+                resource_id="repository_name_non_existing", region=AWS_REGION_EU_WEST_1
+            )

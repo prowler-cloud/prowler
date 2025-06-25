@@ -27,10 +27,13 @@ class Test_s3_bucket_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access_fixer import (
-                    fixer,
+                    S3BucketPublicAccessFixer,
                 )
 
-                assert not fixer("bucket_test_us", AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicAccessFixer()
+                assert not fixer.fix(
+                    resource_id="bucket_test_us", region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_ACL(self):
@@ -76,10 +79,13 @@ class Test_s3_bucket_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access_fixer import (
-                    fixer,
+                    S3BucketPublicAccessFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicAccessFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_policy(self):
@@ -125,10 +131,13 @@ class Test_s3_bucket_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access_fixer import (
-                    fixer,
+                    S3BucketPublicAccessFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicAccessFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_due_to_policy_conditions_from_public_ip(self):
@@ -163,7 +172,10 @@ class Test_s3_bucket_public_access_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access_fixer import (
-                    fixer,
+                    S3BucketPublicAccessFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicAccessFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )

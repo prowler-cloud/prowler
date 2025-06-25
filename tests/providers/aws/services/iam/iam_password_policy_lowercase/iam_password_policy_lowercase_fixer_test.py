@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_iam_password_policy_lowercase_fixer:
+class TestIamPasswordPolicyLowercaseFixer:
     @mock_aws
     def test_iam_password_policy_lowercase_fixer(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -40,7 +40,7 @@ class Test_iam_password_policy_lowercase_fixer:
                 hard_expiry=True,
             )
             from prowler.providers.aws.services.iam.iam_password_policy_lowercase.iam_password_policy_lowercase_fixer import (
-                fixer,
+                IamPasswordPolicyLowercaseFixer,
             )
 
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            assert IamPasswordPolicyLowercaseFixer().fix(resource_id=AWS_ACCOUNT_NUMBER)

@@ -38,14 +38,13 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_ebs_public_snapshot_fixer_test:
+class TestEc2EbsPublicSnapshotFixer:
     @mock_aws
     def test_ebs_public_snapshot(self):
         with mock.patch(
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_public_snapshot,
         ):
-
             from prowler.providers.aws.services.ec2.ec2_service import EC2
 
             aws_provider = set_mocked_aws_provider(
@@ -62,19 +61,18 @@ class Test_ec2_ebs_public_snapshot_fixer_test:
                     new=EC2(aws_provider),
                 ),
             ):
-                # Test Check
                 from prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot_fixer import (
-                    fixer,
+                    Ec2EbsPublicSnapshotFixer,
                 )
 
-                assert fixer("testsnap", AWS_REGION_US_EAST_1)
+                fixer = Ec2EbsPublicSnapshotFixer()
+                assert fixer.fix(region=AWS_REGION_US_EAST_1, resource_id="testsnap")
 
     @mock_aws
     def test_ebs_public_snapshot_error(self):
         with mock.patch(
             "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_error
         ):
-
             from prowler.providers.aws.services.ec2.ec2_service import EC2
 
             aws_provider = set_mocked_aws_provider(
@@ -91,9 +89,11 @@ class Test_ec2_ebs_public_snapshot_fixer_test:
                     new=EC2(aws_provider),
                 ),
             ):
-                # Test Check
                 from prowler.providers.aws.services.ec2.ec2_ebs_public_snapshot.ec2_ebs_public_snapshot_fixer import (
-                    fixer,
+                    Ec2EbsPublicSnapshotFixer,
                 )
 
-                assert not fixer("testsnap", AWS_REGION_US_EAST_1)
+                fixer = Ec2EbsPublicSnapshotFixer()
+                assert not fixer.fix(
+                    region=AWS_REGION_US_EAST_1, resource_id="testsnap"
+                )
