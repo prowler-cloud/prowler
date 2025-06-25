@@ -18,8 +18,6 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
                     metadata=self.metadata(),
                     resource=metric,
                     location=logging_client.region,
-                    resource_name=metric.name if metric.name else "GCP Metric",
-                    resource_id=metric.name if metric.name else "GCPMetric",
                 )
                 projects_with_metric.add(metric.project_id)
                 report.status = "FAIL"
@@ -39,11 +37,6 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
                     resource=logging_client.projects[project],
                     project_id=project,
                     location=logging_client.region,
-                    resource_name=(
-                        logging_client.projects[project].name
-                        if logging_client.projects[project].name
-                        else "GCP Project"
-                    ),
                 )
                 report.status = "FAIL"
                 report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
