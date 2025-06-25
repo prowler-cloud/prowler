@@ -207,3 +207,67 @@ class Test_logging_log_metric_filter_and_alert_for_audit_configuration_changes_e
             assert result[0].resource_name == "metric_name"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
+
+    def test_log_metric_filters_with_alerts_empty_name(self):
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled.logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled,
+            )
+            from prowler.providers.gcp.services.logging.logging_service import Metric
+            from prowler.providers.gcp.services.monitoring.monitoring_service import (
+                AlertPolicy,
+            )
+
+            logging_client.metrics = [
+                Metric(
+                    name="",
+                    type="metric_type",
+                    filter='protoPayload.methodName="SetIamPolicy" AND protoPayload.serviceData.policyDelta.auditConfigDeltas:*',
+                    project_id=GCP_PROJECT_ID,
+                )
+            ]
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+
+            monitoring_client.alert_policies = [
+                AlertPolicy(
+                    name=f"projects/{GCP_PROJECT_ID}/alertPolicies/alert_policy",
+                    display_name="alert_policy",
+                    enabled=True,
+                    filters=[
+                        'metric.type = "logging.googleapis.com/user/metric_name"',
+                    ],
+                    project_id=GCP_PROJECT_ID,
+                )
+            ]
+
+            check = (
+                logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Log metric filter  found with alert policy alert_policy associated in project {GCP_PROJECT_ID}."
+            )
+            assert result[0].resource_id == "GCPMetric"
+            assert result[0].resource_name == "GCP Metric"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
