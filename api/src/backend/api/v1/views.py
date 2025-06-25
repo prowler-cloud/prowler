@@ -21,7 +21,7 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
