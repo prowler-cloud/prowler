@@ -566,8 +566,7 @@ class TenantFinishACSView(FinishACSView):
         token_data = serializer.validated_data
         access_token = token_data.get("access")
         refresh_token = token_data.get("refresh")
-        auth_url = os.getenv("AUTH_URL", "http://localhost:3000")
-        callback_url = f"{auth_url}/api/auth/callback/saml"
+        callback_url = env("SAML_SSO_CALLBACK_URL", "")
         redirect_url = f"{callback_url}?access={access_token}&refresh={refresh_token}"
 
         return redirect(redirect_url)
