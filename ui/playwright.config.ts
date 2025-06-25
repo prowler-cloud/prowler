@@ -12,9 +12,6 @@ export default defineConfig({
   retries: isLocal ? 0 : 2,
   workers: isLocal ? undefined : 1,
   reporter: "html",
-  globalSetup: isLocal
-    ? undefined
-    : require.resolve("./tests/e2e/global-setup"),
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
