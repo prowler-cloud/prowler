@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@iconify/react": "^5.2.0",
+    "@playwright/test": "^1.53.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "20.5.7",
     "@types/react": "18.3.3",
@@ -96,7 +97,13 @@
     "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.cjs --fix",
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:install": "playwright install"
   },
   "overrides": {
     "@react-types/shared": "3.26.0"
