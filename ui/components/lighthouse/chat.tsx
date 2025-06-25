@@ -135,8 +135,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             </h3>
             <p className="text-muted-foreground mb-4">
               {!hasConfig
-                ? "Please configure your OpenAI API key to use the Lighthouse Cloud Security Analyst."
-                : "OpenAI API key is invalid. Please update your key to use Lighthouse Cloud Security Analyst."}
+                ? "Please configure your OpenAI API key to use Lighthouse."
+                : "OpenAI API key is invalid. Please update your key to use Lighthouse."}
             </p>
             <Link
               href="/lighthouse/config"
