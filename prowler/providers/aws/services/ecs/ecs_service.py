@@ -175,6 +175,7 @@ class ECS(AWSService):
                 clusters=[cluster.arn],
                 include=[
                     "TAGS",
+                    "SETTINGS",
                 ],
             )
             cluster.settings = response["clusters"][0].get("settings", [])
