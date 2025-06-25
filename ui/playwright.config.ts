@@ -61,9 +61,9 @@ export default defineConfig({
   webServer: isLocal
     ? undefined // Skip web server in local runs
     : {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: true,
-        timeout: 300 * 1000, // 5 minute
-      },
+      command: "npm run dev",
+      url: "http://localhost:3000",
+      reuseExistingServer: true,
+      timeout: 400 * 1000, // 5 minute
+    },
 });
