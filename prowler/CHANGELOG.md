@@ -53,6 +53,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+- Retrieve correctly ECS Container insights settings [(#8097)](https://github.com/prowler-cloud/prowler/pull/8097)
 
 ---
 
