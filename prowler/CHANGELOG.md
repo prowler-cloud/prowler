@@ -30,7 +30,16 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
 
 ---
-## [v5.7.5] (Prowler UNRELEASED)
+
+## [v5.7.6] (Prowler UNRELEASED)
+
+### Fixed
+- `organizations_scp_check_deny_regions` check to pass when SCP policies have no statements [(#8091)](https://github.com/prowler-cloud/prowler/pull/8091)
+- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+
+---
+
+## [v5.7.5] (Prowler 5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
