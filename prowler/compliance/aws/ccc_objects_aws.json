@@ -2,7 +2,7 @@
   "Framework": "CCC-Objects",
   "Version": "",
   "Provider": "AWS",
-  "Description": "Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.",
+  "Description": "The best practices for Common Cloud Controls Catalog (CCC) for AWS Object Storage controls.",
   "Requirements": [
     {
       "Id": "CCC.ObjStor.C01.TR01",
