@@ -17,6 +17,6 @@ class ecs_cluster_container_insights_enabled(Check):
                         setting["value"] == "enabled" or setting["value"] == "enhanced"
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"ECS cluster {cluster.name} has container insights {setting["value"]}."
+                        report.status_extended = f"ECS cluster {cluster.name} has container insights {setting['value']}."
             findings.append(report)
         return findings
