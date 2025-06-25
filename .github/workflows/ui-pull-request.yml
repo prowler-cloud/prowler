@@ -34,15 +34,60 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: './ui/package-lock.json'
       - name: Install dependencies
         working-directory: ./ui
-        run: npm install
+        run: npm ci
       - name: Run Healthcheck
         working-directory: ./ui
         run: npm run healthcheck
       - name: Build the application
         working-directory: ./ui
         run: npm run build
+
+  playwright-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: './ui/package-lock.json'
+      - name: Install dependencies
+        working-directory: ./ui
+        run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+      - name: Install Playwright browsers
+        working-directory: ./ui
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npm run test:e2e:install
+      - name: Build the application
+        working-directory: ./ui
+        run: npm run build
+      - name: Run Playwright tests
+        working-directory: ./ui
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        if: failure()
+        with:
+          name: playwright-report
+          path: ui/playwright-report/
+          retention-days: 30
+
   test-container-build:
     runs-on: ubuntu-latest
     steps:
