@@ -30,9 +30,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add new method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
 
 ---
-<<<<<<< HEAD
-## [v5.7.5] (Prowler UNRELEASED)
-=======
 
 ## [v5.7.6] (Prowler UNRELEASED)
 
@@ -44,7 +41,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ---
 
 ## [v5.7.5] (Prowler 5.7.5)
->>>>>>> 85242c790 (fix(aws): retrieve correctly ECS Container insights settings (#8097))
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
