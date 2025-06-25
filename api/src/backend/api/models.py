@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
+from datetime import timedelta
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -18,6 +19,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -1368,6 +1370,26 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class SAMLToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    token = models.JSONField(unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "saml_tokens"
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(seconds=15)
+        super().save(*args, **kwargs)
+
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

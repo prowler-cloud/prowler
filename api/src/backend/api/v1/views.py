@@ -107,6 +107,7 @@ from api.models import (
     RoleProviderGroupRelationship,
     SAMLConfiguration,
     SAMLDomainIndex,
+    SAMLToken,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -402,6 +403,28 @@ class GithubSocialLoginView(SocialLoginView):
 
 
 @extend_schema(exclude=True)
+class SAMLTokenValidateView(GenericAPIView):
+    resource_name = "tokens"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        token_id = request.query_params.get("id", "invalid")
+        try:
+            saml_token = SAMLToken.objects.using(MainRouter.admin_db).get(id=token_id)
+        except SAMLToken.DoesNotExist:
+            return Response({"detail": "Invalid token ID."}, status=404)
+
+        if saml_token.is_expired():
+            return Response({"detail": "Token expired."}, status=400)
+
+        token_data = saml_token.token
+        # Currently we don't store the tokens in the database, so we delete the token after use
+        saml_token.delete()
+
+        return Response(token_data, status=200)
+
+
+@extend_schema(exclude=True)
 class SAMLInitiateAPIView(GenericAPIView):
     serializer_class = SamlInitiateSerializer
     permission_classes = []
@@ -564,10 +587,11 @@ class TenantFinishACSView(FinishACSView):
         serializer.is_valid(raise_exception=True)
 
         token_data = serializer.validated_data
-        access_token = token_data.get("access")
-        refresh_token = token_data.get("refresh")
-        callback_url = env("SAML_SSO_CALLBACK_URL", "")
-        redirect_url = f"{callback_url}?access={access_token}&refresh={refresh_token}"
+        saml_token = SAMLToken.objects.using(MainRouter.admin_db).create(
+            token=token_data, user=user
+        )
+        callback_url = env.str("SAML_SSO_CALLBACK_URL")
+        redirect_url = f"{callback_url}?id={saml_token.id}"
 
         return redirect(redirect_url)
 
