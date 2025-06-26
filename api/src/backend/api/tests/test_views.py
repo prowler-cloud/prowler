@@ -3007,6 +3007,100 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_resources_metadata_retrieve(
+        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+    ):
+        resource_1, *_ = resources_fixture
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": resource_1.updated_at.strftime("%Y-%m-%d")},
+        )
+        data = response.json()
+
+        expected_services = {"ec2", "s3"}
+        expected_regions = {"us-east-1", "eu-west-1"}
+        expected_resource_types = {"prowler-test"}
+
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+
+    def test_resources_metadata_resource_filter_retrieve(
+        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+    ):
+        resource_1, *_ = resources_fixture
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {
+                "filter[region]": "eu-west-1",
+                "filter[updated_at]": resource_1.updated_at.strftime("%Y-%m-%d"),
+            },
+        )
+        data = response.json()
+
+        expected_services = {"s3"}
+        expected_regions = {"eu-west-1"}
+        expected_resource_types = {"prowler-test"}
+
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+
+    def test_resources_metadata_future_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": "2048-01-01"},
+        )
+        data = response.json()
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert data["data"]["attributes"]["services"] == []
+        assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["types"] == []
+
+    def test_resources_metadata_invalid_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": "2048-01-011"},
+        )
+        assert response.json() == {
+            "errors": [
+                {
+                    "detail": "Enter a valid date.",
+                    "status": "400",
+                    "source": {"pointer": "/data/attributes/updated_at"},
+                    "code": "invalid",
+                }
+            ]
+        }
+
+    def test_resources_latest(self, authenticated_client, latest_scan_resource):
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_metadata_latest(
+        self, authenticated_client, latest_scan_resource
+    ):
+        response = authenticated_client.get(
+            reverse("resource-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+
+        assert attributes["services"] == [latest_scan_resource.service]
+        assert attributes["regions"] == [latest_scan_resource.region]
+        assert attributes["types"] == [latest_scan_resource.type]
+
 
 @pytest.mark.django_db
 class TestFindingViewSet:
