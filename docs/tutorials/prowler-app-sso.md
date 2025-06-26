@@ -24,7 +24,7 @@ DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api,mycompany.prowler
 
 To enable SAML support, you must provide a public certificate and private key to allow Prowler to sign SAML requests and validate responses.
 
-### Why is this necessary?
+### Why is this necessary?
 
 SAML relies on digital signatures to verify trust between the Identity Provider (IdP) and the Service Provider (SP). Prowler acts as the SP and must use a certificate to sign outbound authentication requests.
 
@@ -121,7 +121,7 @@ Start ngrok on port 8080:
 ngrok http 8080
 ```
 
-Then, copy the generated ngrok URL and include it in the ALLOWED_HOSTS setting. If you’re using the development environment, it usually defaults to *, but in some cases this may not work properly, like in my tests (investigate):
+Then, copy the generated ngrok URL and include it in the ALLOWED_HOSTS setting. If you're using the development environment, it usually defaults to *, but in some cases this may not work properly, like in my tests (investigate):
 
 ```
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
@@ -129,7 +129,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 ## 4. Configure the Identity Provider (IdP)
 
-Start your environment and configure your IdP. You will need to download the IdP’s metadata XML file.
+Start your environment and configure your IdP. You will need to download the IdP's metadata XML file.
 
 Your Assertion Consumer Service (ACS) URL must follow this format:
 
@@ -147,7 +147,7 @@ The following fields are expected from the IdP:
 
 - userType (this is the name of the role the user should be assigned)
 
-- companyName (this is filled automatically if the IdP includes an “organization” field)
+- companyName (this is filled automatically if the IdP includes an "organization" field)
 
 These values are dynamic. If the values change in the IdP, they will be updated on the next login.
 
@@ -171,12 +171,35 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 }'
 ```
 
-## 7. UI Environment Variables
+## 7. SAML SSO Callback Configuration
 
-This is the URL of the web-ui that will be used to redirect the user when the SAML login flow is completed.
+### Environment Variable Configuration
+
+The SAML authentication flow requires proper callback URL configuration to handle post-authentication redirects. Configure the following environment variables:
+
+#### `SAML_SSO_CALLBACK_URL`
+
+Specifies the callback endpoint that will be invoked upon successful SAML authentication completion. This URL directs users back to the web application interface.
+
+```env
+SAML_SSO_CALLBACK_URL="${AUTH_URL}/api/auth/callback/saml"
+```
+
+#### `AUTH_URL`
+
+Defines the base URL of the web user interface application that serves as the authentication callback destination.
+
 ```env
 AUTH_URL="<WEB_UI_URL>"
 ```
+
+### Configuration Notes
+
+- The `SAML_SSO_CALLBACK_URL` dynamically references the `AUTH_URL` variable to construct the complete callback endpoint
+- Ensure the `AUTH_URL` points to the correct web UI deployment (development, staging, or production)
+- The callback endpoint `/api/auth/callback/saml` must be accessible and properly configured to handle SAML authentication responses
+- Both environment variables are required for proper SAML SSO functionality
+- Verify that the `API_BASE_URL` environment variable is properly configured to reference the correct API server base URL corresponding to your target deployment environment. This ensures proper routing of SAML callback requests to the appropriate backend services.
 
 ## 8. Start SAML Login Flow
 
@@ -190,4 +213,4 @@ At the end you will get a valid access and refresh token
 
 ## 9. Notes on the initiate Endpoint
 
-The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it’s optional.
+The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it's optional.
