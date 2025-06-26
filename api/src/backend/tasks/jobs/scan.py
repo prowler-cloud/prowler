@@ -549,7 +549,7 @@ def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
                 tenant_id=tenant_id,
                 resources=resource,
                 id__in=Subquery(latest_findings_subquery),
-                status="FAIL",
+                status=FindingStatus.FAIL,
                 muted=False,
             ).count()
 
