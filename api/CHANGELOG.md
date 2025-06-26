@@ -14,6 +14,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Optional `user` and `password` for M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 
+### Fixed
+- Scheduled scans are no longer deleted when their daily schedule run is disabled [(#8082)](https://github.com/prowler-cloud/prowler/pull/8082)
+
 ---
 
 ## [v1.8.5] (Prowler v5.7.5)
