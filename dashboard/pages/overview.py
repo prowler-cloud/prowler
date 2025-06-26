@@ -491,6 +491,7 @@ else:
         table_row_dropdown,
         status_dropdown,
         table_div_header,
+        len(data["PROVIDER"].unique()),
     )
 
 
@@ -1126,25 +1127,17 @@ def filter_data(
 
         table_row_options = []
 
-        # Take the values from the table_row_values
+        # Calculate table row options as percentages
+        percentages = [0.05, 0.10, 0.25, 0.50, 0.75, 1.0]
+        total_rows = len(filtered_data)
+        for pct in percentages:
+            value = max(1, int(total_rows * pct))
+            label = f"{int(pct * 100)}%"
+            table_row_options.append({"label": label, "value": value})
+
+        # Default to 25% if not set
         if table_row_values is None or table_row_values == -1:
-            if len(filtered_data) < 25:
-                table_row_values = len(filtered_data)
-            else:
-                table_row_values = 25
-
-        if len(filtered_data) < 25:
-            table_row_values = len(filtered_data)
-
-        if len(filtered_data) >= 25:
-            table_row_options.append(25)
-        if len(filtered_data) >= 50:
-            table_row_options.append(50)
-        if len(filtered_data) >= 75:
-            table_row_options.append(75)
-        if len(filtered_data) >= 100:
-            table_row_options.append(100)
-        table_row_options.append(len(filtered_data))
+            table_row_values = table_row_options[0]["value"]
 
         # For the values that are nan or none, replace them with ""
         filtered_data = filtered_data.replace({np.nan: ""})
@@ -1379,21 +1372,36 @@ def filter_data(
     ]
 
     # Create Provider Cards
-    aws_card = create_provider_card(
-        "aws", aws_provider_logo, "Accounts", full_filtered_data
-    )
-    azure_card = create_provider_card(
-        "azure", azure_provider_logo, "Subscriptions", full_filtered_data
-    )
-    gcp_card = create_provider_card(
-        "gcp", gcp_provider_logo, "Projects", full_filtered_data
-    )
-    k8s_card = create_provider_card(
-        "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
-    )
-    m365_card = create_provider_card(
-        "m365", m365_provider_logo, "Accounts", full_filtered_data
-    )
+    if "aws" in list(data["PROVIDER"].unique()):
+        aws_card = create_provider_card(
+            "aws", aws_provider_logo, "Accounts", full_filtered_data
+        )
+    else:
+        aws_card = None
+    if "azure" in list(data["PROVIDER"].unique()):
+        azure_card = create_provider_card(
+            "azure", azure_provider_logo, "Subscriptions", full_filtered_data
+        )
+    else:
+        azure_card = None
+    if "gcp" in list(data["PROVIDER"].unique()):
+        gcp_card = create_provider_card(
+            "gcp", gcp_provider_logo, "Projects", full_filtered_data
+        )
+    else:
+        gcp_card = None
+    if "kubernetes" in list(data["PROVIDER"].unique()):
+        k8s_card = create_provider_card(
+            "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
+        )
+    else:
+        k8s_card = None
+    if "m365" in list(data["PROVIDER"].unique()):
+        m365_card = create_provider_card(
+            "m365", m365_provider_logo, "Accounts", full_filtered_data
+        )
+    else:
+        m365_card = None
 
     # Subscribe to Prowler Cloud card
     subscribe_card = [

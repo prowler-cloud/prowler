@@ -13,6 +13,7 @@ def create_layout_overview(
     table_row_dropdown: html.Div,
     status_dropdown: html.Div,
     table_div_header: html.Div,
+    amount_providers: int,
 ) -> html.Div:
     """
     Create the layout of the dashboard.
@@ -61,7 +62,7 @@ def create_layout_overview(
                     html.Div(className="flex", id="k8s_card", n_clicks=0),
                     html.Div(className="flex", id="m365_card", n_clicks=0),
                 ],
-                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-5",
+                className=f"grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-{amount_providers}",
             ),
             html.H4(
                 "Count of Findings by severity",
