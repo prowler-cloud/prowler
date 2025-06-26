@@ -340,7 +340,7 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
-    scan__in = UUIDInFilter(method="provider__scan", lookup_expr="in")
+    scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
 
     class Meta:
         model = Resource

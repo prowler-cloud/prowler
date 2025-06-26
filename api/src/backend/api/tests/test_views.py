@@ -2921,6 +2921,31 @@ class TestResourceViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
 
+    def test_resource_filter_by_scan_id(
+        self, authenticated_client, resources_fixture, scans_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {"filter[scan]": scans_fixture[0].id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_resource_filter_by_scan_id_in(
+        self, authenticated_client, resources_fixture, scans_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {
+                "filter[scan.in]": [
+                    scans_fixture[0].id,
+                    scans_fixture[1].id,
+                ]
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
     def test_resource_filter_by_provider_id_in(
         self, authenticated_client, resources_fixture
     ):
