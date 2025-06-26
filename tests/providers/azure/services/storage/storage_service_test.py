@@ -3,7 +3,8 @@ from unittest.mock import patch
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
-    FileShare,
+    DeleteRetentionPolicy,
+    FileServiceProperties,
     ReplicationSettings,
     Storage,
 )
@@ -21,10 +22,13 @@ def mock_storage_get_storage_accounts(_):
         default_service_version=None,
         container_delete_retention_policy=None,
     )
-    file_shares = [
-        FileShare(id="fs1", name="share1", soft_delete_enabled=True, retention_days=7),
-        FileShare(id="fs2", name="share2", soft_delete_enabled=False, retention_days=0),
-    ]
+    retention_policy = DeleteRetentionPolicy(enabled=True, days=7)
+    file_service_properties = FileServiceProperties(
+        id="id",
+        name="name",
+        type="type",
+        share_delete_retention_policy=retention_policy,
+    )
     return {
         AZURE_SUBSCRIPTION_ID: [
             Account(
@@ -45,7 +49,7 @@ def mock_storage_get_storage_accounts(_):
                 replication_settings=ReplicationSettings.STANDARD_LRS,
                 allow_cross_tenant_replication=True,
                 allow_shared_key_access=True,
-                file_shares=file_shares,
+                file_service_properties=file_service_properties,
             )
         ]
     }
@@ -172,14 +176,12 @@ class Test_Storage_Service:
             is None
         )
 
-    def test_get_file_shares_properties(self):
+    def test_get_file_service_properties(self):
         storage = Storage(set_mocked_azure_provider())
         account = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0]
-        assert hasattr(account, "file_shares")
-        assert len(account.file_shares) == 2
-        assert account.file_shares[0].name == "share1"
-        assert account.file_shares[0].soft_delete_enabled is True
-        assert account.file_shares[0].retention_days == 7
-        assert account.file_shares[1].name == "share2"
-        assert account.file_shares[1].soft_delete_enabled is False
-        assert account.file_shares[1].retention_days == 0
+        assert hasattr(account, "file_service_properties")
+        assert (
+            account.file_service_properties.share_delete_retention_policy.enabled
+            is True
+        )
+        assert account.file_service_properties.share_delete_retention_policy.days == 7
