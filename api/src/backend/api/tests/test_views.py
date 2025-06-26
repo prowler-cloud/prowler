@@ -5649,11 +5649,11 @@ class TestSAMLInitiateAPIView:
         response = authenticated_client.post(url, data=payload, format="json")
 
         assert response.status_code == status.HTTP_302_FOUND
-        assert f"email={saml_setup['email']}" in response.url
         assert (
             reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
             in response.url
         )
+        assert "SAMLRequest" not in response.url
 
     def test_invalid_email_domain(self, authenticated_client):
         url = reverse("api_saml_initiate")
@@ -5831,10 +5831,10 @@ class TestTenantFinishACSView:
     ):
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
-        user.email = f"doe@{saml_setup['email']}"
         original_email = user.email
         original_name = user.name
         original_company = user.company_name
+        user.email = f"doe@{saml_setup['email']}"
 
         social_account = SocialAccount(
             user=user,
