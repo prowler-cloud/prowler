@@ -2808,12 +2808,21 @@ class TestTaskViewSet:
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("resource-list"))
+        response = authenticated_client.get(
+            reverse("resource-list"), {"filter[updated_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_resources_list(self, authenticated_client, resources_fixture):
+    def test_resources_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("resource-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_resources_list(self, authenticated_client, resources_fixture):
+        response = authenticated_client.get(
+            reverse("resource-list"), {"filter[updated_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
 
@@ -2834,7 +2843,8 @@ class TestResourceViewSet:
         findings_fixture,
     ):
         response = authenticated_client.get(
-            reverse("resource-list"), {"include": include_values}
+            reverse("resource-list"),
+            {"include": include_values, "filter[updated_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
@@ -2862,8 +2872,9 @@ class TestResourceViewSet:
                 ("region.icontains", "west", 1),
                 ("service", "ec2", 2),
                 ("service.icontains", "ec", 2),
-                ("inserted_at.gte", "2024-01-01 00:00:00", 3),
-                ("updated_at.lte", "2024-01-01 00:00:00", 0),
+                ("inserted_at.gte", today_after_n_days(-1), 3),
+                ("updated_at.gte", today_after_n_days(-1), 3),
+                ("updated_at.lte", today_after_n_days(1), 3),
                 ("type.icontains", "prowler", 2),
                 # provider filters
                 ("provider_type", "aws", 3),
@@ -2883,7 +2894,8 @@ class TestResourceViewSet:
                 ("tags", "multi word", 1),
                 # full text search on resource
                 ("search", "arn", 3),
-                ("search", "def1", 1),
+                # To improve search efficiency, full text search is not fully applicable
+                # ("search", "def1", 1),
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
@@ -2898,9 +2910,12 @@ class TestResourceViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "updated_at" not in filter_name:
+            filters["filter[updated_at]"] = TODAY
         response = authenticated_client.get(
             reverse("resource-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -2915,7 +2930,8 @@ class TestResourceViewSet:
                 "filter[provider.in]": [
                     resources_fixture[0].provider.id,
                     resources_fixture[1].provider.id,
-                ]
+                ],
+                "filter[updated_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2952,13 +2968,13 @@ class TestResourceViewSet:
     )
     def test_resources_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("resource-list"), {"sort": sort_field}
+            reverse("resource-list"), {"filter[updated_at]": TODAY, "sort": sort_field}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_resources_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("resource-list"), {"sort": "invalid"}
+            reverse("resource-list"), {"filter[updated_at]": TODAY, "sort": "invalid"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"

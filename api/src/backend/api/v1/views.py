@@ -19,7 +19,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Exists, F, OuterRef, Prefetch, Q, Sum, Count
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
@@ -1847,12 +1847,14 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
-            queryset = queryset.filter(text_search=search_query)
+            queryset = queryset.filter(
+                Q(text_search=search_query) | Q(tags__text_search=search_query)
+            )
 
-        # Don't add failed findings annotation here - it will be added after pagination for better performance
         return queryset
 
-    def _add_failed_findings_annotation(self, queryset):
+    @staticmethod
+    def _add_failed_findings_annotation(queryset):
         """Add failed findings count annotation to queryset"""
         return queryset.annotate(
             failed_findings_count=Count(
@@ -1880,10 +1882,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_filterset_class(self):
-        # Use LatestResourceFilter for latest and metadata_latest endpoints
         if self.action in ["latest", "metadata_latest"]:
             return LatestResourceFilter
         return ResourceFilter
+
+    def filter_queryset(self, queryset):
+        # Do not apply filters when retrieving specific resource
+        if self.action == "retrieve":
+            return queryset
+        return super().filter_queryset(queryset)
 
     def list(self, request, *args, **kwargs):
         filtered_queryset = self.filter_queryset(self.get_queryset())

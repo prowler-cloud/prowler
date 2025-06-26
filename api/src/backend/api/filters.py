@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
+from dateutil.parser import parse
 from django.conf import settings
 from django.db.models import Q
 from django_filters.rest_framework import (
@@ -374,12 +375,12 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             )
 
         gte_date = (
-            datetime.strptime(self.data.get("updated_at__gte"), "%Y-%m-%d").date()
+            parse(self.data.get("updated_at__gte")).date()
             if self.data.get("updated_at__gte")
             else datetime.now(timezone.utc).date()
         )
         lte_date = (
-            datetime.strptime(self.data.get("updated_at__lte"), "%Y-%m-%d").date()
+            parse(self.data.get("updated_at__lte")).date()
             if self.data.get("updated_at__lte")
             else datetime.now(timezone.utc).date()
         )
