@@ -19,7 +19,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
-- Add Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
+- Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
+- Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
 
 ### 🔄 Changed
 
@@ -28,12 +29,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Refactor credentials forms with reusable components and error handling [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
 - Updated the provider details section in Scan and Findings detail pages [(#7968)](https://github.com/prowler-cloud/prowler/pull/7968)
 - Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
+- Set filters panel to be always open by default [(#8085)](https://github.com/prowler-cloud/prowler/pull/8085)
 
 ### 🐞 Fixed
 
 - Sync between filter buttons and URL when filters change [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
 - Improve heatmap perfomance [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
 - SelectScanProvider warning fixed with empty alias [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
+- Prevent console warnings for accessibility and SVG[(#8019)](https://github.com/prowler-cloud/prowler/pull/8019)
 
 ---
 
