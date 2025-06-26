@@ -164,3 +164,13 @@ If you enjoy swag, we’d love to thank you for your contribution with laptop st
 To request swag: Share your pull request details in our [Slack workspace](https://goto.prowler.com/slack).
 
 You can also reach out to Toni de la Fuente on [Twitter](https://twitter.com/ToniBlyx)—his DMs are open!
+
+# Testing a Pull Request from a Specific Branch
+
+To test Prowler from a specific branch (for example, to try out changes from a pull request before it is merged), you can use `pipx` to install directly from GitHub:
+
+```sh
+pipx install "git+https://github.com/prowler-cloud/prowler.git@branch-name"
+```
+
+Replace `branch-name` with the name of the branch you want to test. This will install Prowler in an isolated environment, allowing you to try out the changes safely.
