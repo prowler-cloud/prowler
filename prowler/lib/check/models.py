@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
+from checkov.common.output.record import Record
 from pydantic.v1 import BaseModel, ValidationError, validator
 
 from prowler.config.config import Provider
@@ -441,6 +442,8 @@ class Check_Report:
             self.resource = resource.to_dict()
         elif is_dataclass(resource):
             self.resource = asdict(resource)
+        elif hasattr(resource, "__dict__"):
+            self.resource = resource.__dict__
         else:
             logger.error(
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
@@ -626,7 +629,7 @@ class CheckReportIAC(Check_Report):
     resource_path: str
     resource_line_range: str
 
-    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+    def __init__(self, metadata: dict = {}, resource: Record = None) -> None:
         """
         Initialize the IAC Check's finding information from a Checkov failed_check dict.
 
@@ -634,11 +637,10 @@ class CheckReportIAC(Check_Report):
             metadata (Dict): Optional check metadata (can be None).
             failed_check (dict): A single failed_check result from Checkov's JSON output.
         """
-        super().__init__(metadata, finding)
-
-        self.resource_name = getattr(finding, "resource", "")
-        self.resource_path = getattr(finding, "file_path", "")
-        self.resource_line_range = getattr(finding, "file_line_range", "")
+        super().__init__(metadata, resource)
+        self.resource_name = resource.resource
+        self.resource_path = resource.file_path
+        self.resource_line_range = resource.file_line_range
 
 
 @dataclass
