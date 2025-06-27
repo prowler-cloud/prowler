@@ -4,6 +4,7 @@ from rest_framework_nested import routers
 
 from api.v1.views import (
     ComplianceOverviewViewSet,
+    CustomSAMLLoginView,
     CustomTokenObtainView,
     CustomTokenRefreshView,
     CustomTokenSwitchTenantView,
@@ -25,6 +26,7 @@ from api.v1.views import (
     RoleViewSet,
     SAMLConfigurationViewSet,
     SAMLInitiateAPIView,
+    SAMLTokenValidateView,
     ScanViewSet,
     ScheduleViewSet,
     SchemaView,
@@ -129,10 +131,16 @@ urlpatterns = [
     # Allauth SAML endpoints for tenants
     path("accounts/", include("allauth.urls")),
     path(
-        "api/v1/accounts/saml/<organization_slug>/acs/finish/",
+        "accounts/saml/<organization_slug>/login/",
+        CustomSAMLLoginView.as_view(),
+        name="saml_login",
+    ),
+    path(
+        "accounts/saml/<organization_slug>/acs/finish/",
         TenantFinishACSView.as_view(),
         name="saml_finish_acs",
     ),
+    path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
     path("", include(router.urls)),
