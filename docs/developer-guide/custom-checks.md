@@ -27,8 +27,6 @@ Always provide a default value in `.get()` to ensure the check works even if the
   ```
 - **tests/config/fixtures/config.yaml**
   Add the variable if tests depend on this configuration.
-- **tests/config/config_test.py**
-  Update the test configuration to include the new variable.
 - **docs/tutorials/configuration_file.md**
   Document the new variable in the list of configurable checks.
 
