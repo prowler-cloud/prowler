@@ -16,7 +16,7 @@ const samlConfigFormSchema = z.object({
     .min(1, { message: "Metadata XML is required" }),
 });
 
-export async function createSamlConfig(prevState: any, formData: FormData) {
+export const createSamlConfig = async (_prevState: any, formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = Object.fromEntries(formData);
   const validatedData = samlConfigFormSchema.safeParse(formDataObject);
@@ -72,9 +72,9 @@ export async function createSamlConfig(prevState: any, formData: FormData) {
       },
     };
   }
-}
+};
 
-export async function updateSamlConfig(prevState: any, formData: FormData) {
+export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = Object.fromEntries(formData);
   const validatedData = samlConfigFormSchema.safeParse(formDataObject);
@@ -131,9 +131,9 @@ export async function updateSamlConfig(prevState: any, formData: FormData) {
       },
     };
   }
-}
+};
 
-export async function getSamlConfig() {
+export const getSamlConfig = async () => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/saml-config`);
 
@@ -154,9 +154,9 @@ export async function getSamlConfig() {
     console.error("Error fetching SAML config:", error);
     return undefined;
   }
-}
+};
 
-export async function initiateSamlAuth(email: string) {
+export const initiateSamlAuth = async (email: string) => {
   try {
     const response = await fetch(`${apiBaseUrl}/auth/saml/initiate/`, {
       method: "POST",
@@ -207,4 +207,4 @@ export async function initiateSamlAuth(email: string) {
       error: "Failed to connect to authentication service.",
     };
   }
-}
+};
