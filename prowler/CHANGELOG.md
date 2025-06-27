@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure Databricks check `databricks_workspace_cmk_encryption_enabled` to ensure workspaces use customer-managed keys (CMK) for encryption at rest [(#8017)](https://github.com/prowler-cloud/prowler/pull/8017)
 - Add `storage_account_default_to_entra_authorization_enabled` check for Azure provider. [(#7981)](https://github.com/prowler-cloud/prowler/pull/7981)
 - Replace `Domain.Read.All` with `Directory.Read.All` in Azure and M365 docs [(#8075)](https://github.com/prowler-cloud/prowler/pull/8075)
+- New check `storage_smb_channel_encryption_using_recommended_algorithm` configurable for Azure provider
 
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
