@@ -158,6 +158,21 @@ class Storage(AzureService):
                         "share_delete_retention_policy",
                         None,
                     )
+
+                    smb_channel_encryption_raw = getattr(
+                        getattr(
+                            getattr(
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "channel_encryption",
+                        None,
+                    )
+
                     account.file_service_properties = FileServiceProperties(
                         id=file_service_properties.id,
                         name=file_service_properties.name,
@@ -173,6 +188,13 @@ class Storage(AzureService):
                                 "days",
                                 0,
                             ),
+                        ),
+                        smb_protocol_settings=SMBProtocolSettings(
+                            channel_encryption=(
+                                smb_channel_encryption_raw.rstrip(";").split(";")
+                                if smb_channel_encryption_raw
+                                else []
+                            )
                         ),
                     )
                 except Exception as error:
@@ -221,11 +243,16 @@ class ReplicationSettings(Enum):
     STANDARD_RAGZRS = "Standard_RAGZRS"
 
 
+class SMBProtocolSettings(BaseModel):
+    channel_encryption: list[str]
+
+
 class FileServiceProperties(BaseModel):
     id: str
     name: str
     type: str
     share_delete_retention_policy: DeleteRetentionPolicy
+    smb_protocol_settings: SMBProtocolSettings
 
 
 @dataclass
