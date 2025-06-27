@@ -137,7 +137,7 @@ def perform_prowler_scan(
     with rls_transaction(tenant_id):
         try:
             mutelist_processor = Processor.objects.get(
-                tenant_id=tenant_id, processor_type="mutelist"
+                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
             )
         except Processor.DoesNotExist:
             mutelist_processor = None
