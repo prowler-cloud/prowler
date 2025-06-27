@@ -76,6 +76,7 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     MembershipFilter,
+    ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
     ProviderSecretFilter,
@@ -87,7 +88,6 @@ from api.filters import (
     TaskFilter,
     TenantFilter,
     UserFilter,
-    ProcessorFilter,
 )
 from api.models import (
     ComplianceOverview,
@@ -3060,7 +3060,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
 @extend_schema(tags=["Overview"])
 @extend_schema_view(
-    list=extend_schema(
+    providers=extend_schema(
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "

@@ -3371,26 +3371,12 @@ paths:
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
-      description: |-
-        This mixin provides a helper attributes to select or prefetch related models
-        based on the include specified in the URL.
-
-        __all__ can be used to specify a prefetch which should be done regardless of the include
-
-
-        .. code:: python
-
-            # When MyViewSet is called with ?include=author it will prefetch author and authorbio
-            class MyViewSet(viewsets.ModelViewSet):
-                queryset = Book.objects.all()
-                prefetch_for_includes = {
-                    '__all__': [],
-                    'category.section': ['category']
-                }
-                select_for_includes = {
-                    '__all__': [],
-                    'author': ['author', 'author__authorbio'],
-                }
+      description: Retrieve an aggregated overview of findings and resources grouped
+        by providers. The response includes the count of passed, failed, and manual
+        findings, along with the total number of resources managed by each provider.
+        Only the latest findings for each provider are considered in the aggregation
+        to ensure accurate and up-to-date insights.
+      summary: Get aggregated provider data
       parameters:
       - in: query
         name: fields[providers-overview]
