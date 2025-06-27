@@ -1,4 +1,5 @@
 import io
+import os
 
 import matplotlib.pyplot as plt
 import requests
@@ -7,6 +8,9 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     Image,
     PageBreak,
@@ -15,6 +19,22 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
+)
+
+pdfmetrics.registerFont(
+    TTFont(
+        "PlusJakartaSans",
+        os.path.join(
+            os.path.dirname(__file__), "assets/fonts/PlusJakartaSans-Regular.ttf"
+        ),
+    )
+)
+
+pdfmetrics.registerFont(
+    TTFont(
+        "FiraCode",
+        os.path.join(os.path.dirname(__file__), "assets/fonts/FiraCode-Regular.ttf"),
+    )
 )
 
 
@@ -51,7 +71,7 @@ def generate_threatscore_report(
         fontSize=24,
         textColor=prowler_dark_green,
         spaceAfter=20,
-        fontName="Helvetica-Bold",
+        fontName="PlusJakartaSans",
         alignment=TA_CENTER,
     )
 
@@ -62,7 +82,7 @@ def generate_threatscore_report(
         textColor=colors.Color(0.2, 0.4, 0.6),
         spaceBefore=20,
         spaceAfter=12,
-        fontName="Helvetica-Bold",
+        fontName="PlusJakartaSans",
         leftIndent=0,
         borderWidth=2,
         borderColor=colors.Color(0.2, 0.4, 0.6),
@@ -77,7 +97,7 @@ def generate_threatscore_report(
         textColor=colors.Color(0.3, 0.5, 0.7),
         spaceBefore=15,
         spaceAfter=8,
-        fontName="Helvetica-Bold",
+        fontName="PlusJakartaSans",
         leftIndent=10,
         borderWidth=1,
         borderColor=colors.Color(0.7, 0.8, 0.9),
@@ -92,7 +112,7 @@ def generate_threatscore_report(
         textColor=colors.Color(0.4, 0.6, 0.8),
         spaceBefore=10,
         spaceAfter=6,
-        fontName="Helvetica-Bold",
+        fontName="PlusJakartaSans",
         leftIndent=20,
     )
 
@@ -104,7 +124,7 @@ def generate_threatscore_report(
         spaceBefore=4,
         spaceAfter=4,
         leftIndent=30,
-        fontName="Helvetica",
+        fontName="PlusJakartaSans",
     )
 
     normal_center = ParagraphStyle(
@@ -112,7 +132,7 @@ def generate_threatscore_report(
         parent=styles["Normal"],
         fontSize=10,
         textColor=colors.Color(0.2, 0.2, 0.2),
-        fontName="Helvetica",
+        fontName="PlusJakartaSans",
     )
 
     url_credentials = f"{base_url}/api/v1/tokens"
@@ -204,15 +224,15 @@ def generate_threatscore_report(
                     ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
                     ("BACKGROUND", (1, 0), (1, 0), risk_color),
                     ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
-                    ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
                     ("BACKGROUND", (2, 0), (2, 0), colors.Color(0.9, 0.9, 0.9)),
                     ("BACKGROUND", (3, 0), (3, 0), weight_color),
                     ("TEXTCOLOR", (3, 0), (3, 0), colors.white),
-                    ("FONTNAME", (3, 0), (3, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (3, 0), (3, 0), "FiraCode"),
                     ("BACKGROUND", (4, 0), (4, 0), colors.Color(0.9, 0.9, 0.9)),
                     ("BACKGROUND", (5, 0), (5, 0), score_color),
                     ("TEXTCOLOR", (5, 0), (5, 0), colors.white),
-                    ("FONTNAME", (5, 0), (5, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (5, 0), (5, 0), "FiraCode"),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
@@ -246,10 +266,10 @@ def generate_threatscore_report(
             TableStyle(
                 [
                     ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
-                    ("FONTNAME", (0, 0), (0, 0), "Helvetica"),
+                    ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
                     ("BACKGROUND", (1, 0), (1, 0), status_color),
                     ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
-                    ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("FONTSIZE", (0, 0), (-1, -1), 12),
@@ -330,7 +350,6 @@ def generate_threatscore_report(
 
         ax.set_ylabel("Compliance Score (%)", fontsize=12)
         ax.set_xlabel("Section", fontsize=12)
-        ax.set_title("COMPLIANCE SCORE BY SECTIONS", fontsize=14, fontweight="bold")
         ax.set_ylim(0, 100)
 
         for bar, percentage in zip(bars, compliance_percentages):
@@ -369,7 +388,7 @@ def generate_threatscore_report(
     doc = SimpleDocTemplate(
         output_path,
         pagesize=letter,
-        title=f"Compliance Report - {compliance_name}",
+        title=f"Prowler ThreatScore Report - {compliance_name}",
         author="Prowler",
         subject=f"Compliance Report for {compliance_name}",
         creator="Prowler Compliance Generator",
@@ -387,28 +406,15 @@ def generate_threatscore_report(
     except Exception:
         pass
     elements.append(Spacer(1, 0.5 * inch))
-    elements.append(Paragraph("Compliance Report - Prowler", title_style))
+    elements.append(Paragraph("Prowler ThreatScore Report", title_style))
     elements.append(Spacer(1, 0.5 * inch))
-
-    pretty_description = (
-        (
-            "Prowler ThreatScore Compliance Framework for Azure ensures that the Azure subscription is compliant, "
-            "taking into account four main pillars:<br/>"
-            "- Identity and Access Management<br/>"
-            "- Attack Surface<br/>"
-            "- Forensic Readiness<br/>"
-            "- Encryption"
-        )
-        if compliance_id == "prowler_threatscore_azure"
-        else compliance_description
-    )
 
     info_data = [
         ["Compliance Framework:", compliance_name],
         ["Compliance ID:", compliance_id],
         ["Version:", compliance_version],
         ["Scan ID:", scan_id],
-        ["Description:", Paragraph(pretty_description, normal_center)],
+        ["Description:", Paragraph(compliance_description, normal_center)],
     ]
     info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
     info_table.setStyle(
@@ -416,10 +422,10 @@ def generate_threatscore_report(
             [
                 ("BACKGROUND", (0, 0), (0, 4), colors.Color(0.2, 0.4, 0.6)),
                 ("TEXTCOLOR", (0, 0), (0, 4), colors.white),
-                ("FONTNAME", (0, 0), (0, 4), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (0, 4), "FiraCode"),
                 ("BACKGROUND", (1, 0), (1, 4), colors.Color(0.95, 0.97, 1.0)),
                 ("TEXTCOLOR", (1, 0), (1, 4), colors.Color(0.2, 0.2, 0.2)),
-                ("FONTNAME", (1, 0), (1, 4), "Helvetica"),
+                ("FONTNAME", (1, 0), (1, 4), "PlusJakartaSans"),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -433,43 +439,6 @@ def generate_threatscore_report(
     )
 
     elements.append(info_table)
-    elements.append(Spacer(1, 0.2 * inch))
-    elements.append(PageBreak())
-
-    elements.append(Paragraph("Requirements Index", h1))
-
-    sections = {}
-    for req in resp_attrs:
-        meta = req["attributes"]["attributes"]["metadata"][0]
-        section = meta["Section"]
-        subsection = meta["SubSection"]
-        req_id = req["id"]
-        title = meta["Title"]
-
-        if section not in sections:
-            sections[section] = {}
-        if subsection not in sections[section]:
-            sections[section][subsection] = []
-
-        sections[section][subsection].append({"id": req_id, "title": title})
-
-    section_num = 1
-    for section_name, subsections in sections.items():
-        elements.append(Paragraph(f"{section_num}. {section_name}", h2))
-
-        subsection_num = 1
-        for subsection_name, requirements in subsections.items():
-            elements.append(Paragraph(f"{subsection_name}", h3))
-
-            req_num = 1
-            for req in requirements:
-                elements.append(Paragraph(f"{req['id']} - {req['title']}", normal))
-                req_num += 1
-
-            subsection_num += 1
-
-        section_num += 1
-        elements.append(Spacer(1, 0.1 * inch))
 
     elements.append(PageBreak())
 
@@ -524,17 +493,17 @@ def generate_threatscore_report(
             [
                 ("BACKGROUND", (0, 0), (0, 1), colors.Color(0.3, 0.5, 0.7)),
                 ("TEXTCOLOR", (0, 0), (0, 1), colors.white),
-                ("FONTNAME", (0, 0), (0, 1), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (0, 1), "FiraCode"),
                 ("BACKGROUND", (0, 2), (0, 2), colors.Color(0.1, 0.3, 0.5)),
                 ("TEXTCOLOR", (0, 2), (0, 2), colors.white),
-                ("FONTNAME", (0, 2), (0, 2), "Helvetica-Bold"),
+                ("FONTNAME", (0, 2), (0, 2), "FiraCode"),
                 ("FONTSIZE", (0, 2), (0, 2), 12),
                 ("BACKGROUND", (1, 0), (1, 1), colors.Color(0.95, 0.97, 1.0)),
                 ("TEXTCOLOR", (1, 0), (1, 1), colors.Color(0.2, 0.2, 0.2)),
-                ("FONTNAME", (1, 0), (1, 1), "Helvetica"),
+                ("FONTNAME", (1, 0), (1, 1), "PlusJakartaSans"),
                 ("BACKGROUND", (1, 2), (1, 2), compliance_color),
                 ("TEXTCOLOR", (1, 2), (1, 2), colors.white),
-                ("FONTNAME", (1, 2), (1, 2), "Helvetica-Bold"),
+                ("FONTNAME", (1, 2), (1, 2), "FiraCode"),
                 ("FONTSIZE", (1, 2), (1, 2), 14),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -549,6 +518,43 @@ def generate_threatscore_report(
     )
 
     elements.append(summary_table)
+
+    elements.append(PageBreak())
+
+    elements.append(Paragraph("Requirements Index", h1))
+
+    sections = {}
+    for req in resp_attrs:
+        meta = req["attributes"]["attributes"]["metadata"][0]
+        section = meta["Section"]
+        subsection = meta["SubSection"]
+        req_id = req["id"]
+        title = meta["Title"]
+
+        if section not in sections:
+            sections[section] = {}
+        if subsection not in sections[section]:
+            sections[section][subsection] = []
+
+        sections[section][subsection].append({"id": req_id, "title": title})
+
+    section_num = 1
+    for section_name, subsections in sections.items():
+        elements.append(Paragraph(f"{section_num}. {section_name}", h2))
+
+        subsection_num = 1
+        for subsection_name, requirements in subsections.items():
+            elements.append(Paragraph(f"{subsection_name}", h3))
+
+            req_num = 1
+            for req in requirements:
+                elements.append(Paragraph(f"{req['id']} - {req['title']}", normal))
+                req_num += 1
+
+            subsection_num += 1
+
+        section_num += 1
+        elements.append(Spacer(1, 0.1 * inch))
 
     elements.append(PageBreak())
 
@@ -622,18 +628,18 @@ def generate_threatscore_report(
                 [
                     ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.8, 0.2, 0.2)),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
                     ("FONTSIZE", (0, 0), (-1, 0), 10),
                     ("BACKGROUND", (0, 1), (0, -1), colors.Color(0.8, 0.2, 0.2)),
                     ("TEXTCOLOR", (0, 1), (0, -1), colors.white),
-                    ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 1), (0, -1), "FiraCode"),
                     ("ALIGN", (0, 1), (0, -1), "CENTER"),
                     ("FONTSIZE", (0, 1), (0, -1), 12),
                     ("ALIGN", (1, 1), (1, -1), "CENTER"),
-                    ("FONTNAME", (1, 1), (1, -1), "Helvetica-Bold"),
-                    ("FONTNAME", (2, 1), (2, -1), "Helvetica-Bold"),
+                    ("FONTNAME", (1, 1), (1, -1), "FiraCode"),
+                    ("FONTNAME", (2, 1), (2, -1), "FiraCode"),
                     ("FONTSIZE", (2, 1), (2, -1), 9),
-                    ("FONTNAME", (3, 1), (-1, -1), "Helvetica"),
+                    ("FONTNAME", (3, 1), (-1, -1), "PlusJakartaSans"),
                     ("FONTSIZE", (3, 1), (-1, -1), 8),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
@@ -684,7 +690,7 @@ def generate_threatscore_report(
             spaceAfter=10,
             leftIndent=20,
             rightIndent=20,
-            fontName="Helvetica",
+            fontName="PlusJakartaSans",
             backColor=colors.Color(1.0, 0.95, 0.95),
             borderWidth=2,
             borderColor=colors.Color(0.8, 0.2, 0.2),
@@ -816,7 +822,7 @@ def generate_threatscore_report(
                                 colors.Color(0.2, 0.4, 0.6),
                             ),
                             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
                             ("ALIGN", (0, 0), (0, 0), "CENTER"),
                             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                             ("FONTSIZE", (0, 0), (-1, -1), 9),
@@ -839,7 +845,17 @@ def generate_threatscore_report(
 
         elements.append(PageBreak())
 
-    doc.build(elements)
+    def add_footer(canvas: canvas.Canvas, doc):
+        width, height = doc.pagesize
+        page_num_text = f"Page {doc.page}"
+        canvas.setFont("PlusJakartaSans", 9)
+        canvas.setFillColorRGB(0.4, 0.4, 0.4)
+        canvas.drawString(30, 20, page_num_text)
+        powered_text = "Powered by Prowler"
+        text_width = canvas.stringWidth(powered_text, "PlusJakartaSans", 9)
+        canvas.drawString(width - text_width - 30, 20, powered_text)
+
+    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
 
 
 if __name__ == "__main__":
