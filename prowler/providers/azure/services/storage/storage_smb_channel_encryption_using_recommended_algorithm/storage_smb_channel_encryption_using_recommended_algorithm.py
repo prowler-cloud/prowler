@@ -3,9 +3,16 @@ from prowler.providers.azure.services.storage.storage_client import storage_clie
 
 
 class storage_smb_channel_encryption_using_recommended_algorithm(Check):
+    """
+    Ensure SMB channel encryption for file shares is set to the recommended algorithm (AES-256-GCM or higher).
+
+    This check evaluates whether SMB file shares are configured to use only the recommended SMB channel encryption algorithms.
+    - PASS: Storage account has the recommended SMB channel encryption (AES-256-GCM or higher) enabled for file shares.
+    - FAIL: Storage account does not have the recommended SMB channel encryption enabled for file shares or uses an unsupported algorithm.
+    """
+
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        # Use audit_config for configurable algorithms
         recommended_encryption_algorithms = storage_client.audit_config.get(
             "recommended_smb_channel_encryption_algorithms", ["AES-256-GCM"]
         )
