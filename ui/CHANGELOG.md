@@ -29,6 +29,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
 - Refactor credentials forms with reusable components and error handling [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
 - Updated the provider details section in Scan and Findings detail pages [(#7968)](https://github.com/prowler-cloud/prowler/pull/7968)
+- Make user and password fields optional but mutually required for M365 cloud provider [(#8044)](https://github.com/prowler-cloud/prowler/pull/8044)
 - Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Set filters panel to be always open by default [(#8085)](https://github.com/prowler-cloud/prowler/pull/8085)
 
