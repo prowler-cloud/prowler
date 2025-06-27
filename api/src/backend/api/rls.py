@@ -145,7 +145,7 @@ class BaseSecurityConstraint(models.BaseConstraint):
     """
 
     drop_sql_query = """
-        REVOKE ALL ON TABLE %(table_name) TO %(db_user)s;
+        REVOKE ALL ON TABLE %(table_name)s FROM %(db_user)s;
     """
 
     def __init__(self, name: str, statements: list | None = None) -> None:

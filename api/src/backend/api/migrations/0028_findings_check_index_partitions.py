@@ -1,8 +1,6 @@
-from functools import partial
-
 from django.db import migrations
 
-from api.db_utils import create_index_on_partitions, drop_index_on_partitions
+from api.operations import CreatePartitionedIndex
 
 
 class Migration(migrations.Migration):
@@ -13,17 +11,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            partial(
-                create_index_on_partitions,
-                parent_table="findings",
-                index_name="find_tenant_scan_check_idx",
-                columns="tenant_id, scan_id, check_id",
-            ),
-            reverse_code=partial(
-                drop_index_on_partitions,
-                parent_table="findings",
-                index_name="find_tenant_scan_check_idx",
-            ),
+        CreatePartitionedIndex(
+            parent_table="findings",
+            index_name="find_tenant_scan_check_idx",
+            columns="tenant_id, scan_id, check_id",
+            method="BTREE",
+            all_partitions=False,
+            create_parent_index=True,
         )
     ]
