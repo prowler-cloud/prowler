@@ -49,7 +49,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     env:
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET_CI || 'fallback-ci-secret-for-testing' }}
+      AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: http://localhost:3000
     steps:
