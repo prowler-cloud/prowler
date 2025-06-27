@@ -1244,10 +1244,10 @@ class TestProviderViewSet:
                 ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 5),
-                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at", TODAY, 6),
+                ("inserted_at.gte", "2024-01-01", 6),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.gte", "2024-01-01", 6),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1726,6 +1726,50 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
+            # M365 with STATIC secret - no user or password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                },
+            ),
+            # M365 with user only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                },
+            ),
+            # M365 with password only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "password": "supersecret",
+                },
+            ),
+            # M365 with user and password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                    "password": "supersecret",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -1737,7 +1781,10 @@ class TestProviderSecretViewSet:
         secret_data,
     ):
         # Get the provider from the fixture and set its type
-        provider = Provider.objects.filter(provider=provider_type)[0]
+        try:
+            provider = Provider.objects.filter(provider=provider_type)[0]
+        except IndexError:
+            print(f"Provider {provider_type} not found")
 
         data = {
             "data": {

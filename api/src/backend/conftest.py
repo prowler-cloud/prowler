@@ -381,8 +381,14 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
         scanner_args={"key1": "value1", "key2": {"key21": "value21"}},
     )
+    provider6 = Provider.objects.create(
+        provider="m365",
+        uid="m365.test.com",
+        alias="m365_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5
+    return provider1, provider2, provider3, provider4, provider5, provider6
 
 
 @pytest.fixture
