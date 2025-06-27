@@ -23,7 +23,7 @@ pip install matplotlib requests reportlab
 ## Usage
 
 ```bash
-python3 util/compliance_report/threatscore_report_generator.py \
+python3 util/compliance_report/generate_threatscore_report.py \
     --scan-id <scan_id> \
     --compliance-id <compliance_id> \
     --email <email> \
@@ -46,7 +46,7 @@ python3 util/compliance_report/threatscore_report_generator.py \
 
 ### Example
 ```bash
-python3 util/compliance_report/threatscore_report_generator.py \
+python3 util/compliance_report/generate_threatscore_report.py \
     --scan-id 12345678-1234-5678-1234-567812345678 \
     --compliance-id prowler_threatscore_azure \
     --email user@example.com \
@@ -67,4 +67,4 @@ python3 util/compliance_report/threatscore_report_generator.py \
 ## Notes
 - The script authenticates with the API and retrieves all necessary data automatically.
 - If you encounter authentication errors, check your email, password, and API URL.
-- For more details, see the script source: `util/compliance_report/threatscore_report_generator.py`
+- For more details, see the script source: `util/compliance_report/generate_threatscore_report.py`
