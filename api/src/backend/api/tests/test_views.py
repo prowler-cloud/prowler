@@ -18,7 +18,6 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.urls import reverse
-from django.utils import timezone as django_timezone
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.response import Response
@@ -5576,7 +5575,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expires_at=django_timezone.now() + timedelta(seconds=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -5602,7 +5601,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expires_at=django_timezone.now() - timedelta(seconds=1),
+            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -5621,7 +5620,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expires_at=django_timezone.now() + timedelta(seconds=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")

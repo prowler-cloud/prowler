@@ -1388,7 +1388,7 @@ class SAMLToken(models.Model):
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:
-        return timezone.now() >= self.expires_at
+        return datetime.now(timezone.utc) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):
