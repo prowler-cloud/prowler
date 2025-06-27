@@ -6,6 +6,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     DeleteRetentionPolicy,
     FileServiceProperties,
     ReplicationSettings,
+    SMBProtocolSettings,
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -28,6 +29,7 @@ def mock_storage_get_storage_accounts(_):
         name="name",
         type="type",
         share_delete_retention_policy=retention_policy,
+        smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
     )
     return {
         AZURE_SUBSCRIPTION_ID: [
