@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -19,7 +19,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -1385,7 +1384,7 @@ class SAMLToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
-            self.expires_at = timezone.now() + timedelta(seconds=15)
+            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:

@@ -131,12 +131,12 @@ urlpatterns = [
     # Allauth SAML endpoints for tenants
     path("accounts/", include("allauth.urls")),
     path(
-        "api/v1/accounts/saml/<organization_slug>/login/",
+        "accounts/saml/<organization_slug>/login/",
         CustomSAMLLoginView.as_view(),
         name="saml_login",
     ),
     path(
-        "api/v1/accounts/saml/<organization_slug>/acs/finish/",
+        "accounts/saml/<organization_slug>/acs/finish/",
         TenantFinishACSView.as_view(),
         name="saml_finish_acs",
     ),
