@@ -131,6 +131,21 @@ class TestInitializeProwlerProvider:
         initialize_prowler_provider(provider)
         mock_return_prowler_provider.return_value.assert_called_once_with(key="value")
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_prowler_provider_with_mutelist(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.secret.secret = {"key": "value"}
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider, mutelist_processor)
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            key="value", mutelist_content={"key": "value"}
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -198,6 +213,25 @@ class TestGetProwlerProviderKwargs:
         result = get_prowler_provider_kwargs(provider)
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_with_mutelist(self):
+        provider_uid = "provider_uid"
+        secret_dict = {"key": "value"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.AWS.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        expected_result = {**secret_dict, "mutelist_content": {"key": "value"}}
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_unsupported_provider(self):

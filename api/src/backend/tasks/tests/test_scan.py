@@ -158,6 +158,7 @@ class TestPerformScan:
         assert scan_finding.raw_result == finding.raw
         assert scan_finding.muted
         assert scan_finding.compliance == finding.compliance
+        assert scan_finding.muted_reason == "Muted by mutelist"
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
