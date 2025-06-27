@@ -3,6 +3,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@langchain/langgraph-supervisor": "^0.0.12",
     "@langchain/openai": "0.5.10",
+    "@next/third-parties": "^15.3.3",
     "@nextui-org/react": "2.4.8",
     "@nextui-org/system": "2.2.1",
     "@nextui-org/theme": "2.2.5",
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@iconify/react": "^5.2.0",
+    "@playwright/test": "^1.53.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "20.5.7",
     "@types/react": "18.3.3",
@@ -89,13 +91,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:standalone": "node .next/standalone/server.js",
     "typecheck": "tsc",
     "healthcheck": "npm run typecheck && npm run lint:check",
     "lint:check": "./node_modules/.bin/eslint ./app",
     "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.cjs --fix",
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:install": "playwright install"
   },
   "overrides": {
     "@react-types/shared": "3.26.0"

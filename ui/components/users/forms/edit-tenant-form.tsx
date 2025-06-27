@@ -1,31 +1,12 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormState } from "react-dom";
 
 import { updateTenantName } from "@/actions/users/tenants";
-import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomServerInput } from "@/components/ui/custom";
-
-const SubmitButton = () => {
-  const { pending } = useFormStatus();
-
-  return (
-    <CustomButton
-      type="submit"
-      ariaLabel="Save"
-      className="w-full"
-      variant="solid"
-      color="action"
-      size="lg"
-      isLoading={pending}
-      startContent={!pending && <SaveIcon size={24} />}
-    >
-      {pending ? <>Loading</> : <span>Save</span>}
-    </CustomButton>
-  );
-};
+import { CustomServerInput } from "@/components/ui/custom";
+import { FormButtons } from "@/components/ui/form";
 
 export const EditTenantForm = ({
   tenantId,
@@ -76,20 +57,7 @@ export const EditTenantForm = ({
       <input type="hidden" name="tenantId" value={tenantId} />
       <input type="hidden" name="currentName" value={tenantName || ""} />
 
-      <div className="flex w-full justify-center space-x-6">
-        <CustomButton
-          type="button"
-          ariaLabel="Cancel"
-          className="w-full bg-transparent"
-          variant="faded"
-          size="lg"
-          onPress={() => setIsOpen(false)}
-        >
-          <span>Cancel</span>
-        </CustomButton>
-
-        <SubmitButton />
-      </div>
+      <FormButtons setIsOpen={setIsOpen} />
     </form>
   );
 };

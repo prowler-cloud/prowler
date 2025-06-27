@@ -16,14 +16,15 @@ interface SuggestedAction {
 }
 
 interface ChatProps {
-  hasApiKey: boolean;
+  hasConfig: boolean;
+  isActive: boolean;
 }
 
 interface ChatFormData {
   message: string;
 }
 
-export const Chat = ({ hasApiKey }: ChatProps) => {
+export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const { messages, handleSubmit, handleInputChange, append, status } = useChat(
     {
       api: "/api/lighthouse/analyst",
@@ -119,17 +120,23 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
     },
   ];
 
+  // Determine if chat should be disabled
+  const shouldDisableChat = !hasConfig || !isActive;
+
   return (
     <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
-      {!hasApiKey && (
+      {shouldDisableChat && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
-              OpenAI API Key Required
+              {!hasConfig
+                ? "OpenAI API Key Required"
+                : "OpenAI API Key Invalid"}
             </h3>
             <p className="text-muted-foreground mb-4">
-              Please configure your OpenAI API key to use the Lighthouse Cloud
-              Security Analyst.
+              {!hasConfig
+                ? "Please configure your OpenAI API key to use Lighthouse."
+                : "OpenAI API key is invalid. Please update your key to use Lighthouse."}
             </p>
             <Link
               href="/lighthouse/config"

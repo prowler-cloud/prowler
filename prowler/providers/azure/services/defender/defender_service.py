@@ -7,7 +7,7 @@ from azure.core.exceptions import (
     ResourceNotFoundError,
 )
 from azure.mgmt.security import SecurityCenter
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -161,7 +161,8 @@ class Defender(AzureService):
                     {
                         security_contact_default.name: SecurityContacts(
                             resource_id=security_contact_default.id,
-                            name=getattr(security_contact_default, "name", "default"),
+                            name=getattr(security_contact_default, "name", "default")
+                            or "default",
                             emails=security_contact_default.emails,
                             phone=security_contact_default.phone,
                             alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,

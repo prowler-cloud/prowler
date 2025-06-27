@@ -11,13 +11,12 @@ interface HeatmapChartProps {
 }
 
 const getHeatmapColor = (percentage: number): string => {
-  if (percentage === 0) return "#10b981"; // Green for 0% failures
-  if (percentage <= 25) return "#eab308"; // Yellow
-  if (percentage <= 50) return "#f97316"; // Orange
-  if (percentage <= 100) return "#ef4444"; // Red
-  return "#ef4444";
+  if (percentage === 0) return "#3CEC6D";
+  if (percentage <= 25) return "#fcd34d";
+  if (percentage <= 50) return "#FA7315";
+  if (percentage <= 100) return "#F31260";
+  return "#F31260";
 };
-
 const capitalizeFirstLetter = (text: string): string => {
   const lowerText = text.toLowerCase();
   const firstLetterIndex = lowerText.search(/[a-zA-Z]/);
@@ -101,7 +100,7 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="w-full px-1 text-center">
+              <div className="w-full px-1 text-center antialiased">
                 <div
                   className="truncate text-xs font-semibold"
                   style={{

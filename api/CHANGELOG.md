@@ -8,9 +8,13 @@ All notable changes to the **Prowler API** are documented in this file.
 - SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822)
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
+- Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)
 
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
+
+### Fixed
+- Scheduled scans are no longer deleted when their daily schedule run is disabled [(#8082)](https://github.com/prowler-cloud/prowler/pull/8082)
 
 ---
 
@@ -18,6 +22,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Normalize provider UID to ensure safe and unique export directory paths [(#8007)](https://github.com/prowler-cloud/prowler/pull/8007).
+- Blank resource types in `/metadata` endpoints [(#8027)](https://github.com/prowler-cloud/prowler/pull/8027)
 
 ---
 
