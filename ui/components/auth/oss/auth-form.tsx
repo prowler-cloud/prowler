@@ -174,7 +174,11 @@ export const AuthForm = ({
           </div>
           <div className="flex items-center justify-between">
             <p className="pb-2 text-xl font-medium">
-              {type === "sign-in" ? "Sign In" : "Sign Up"}
+              {type === "sign-in"
+                ? isSamlMode
+                  ? "Sign In with SAML SSO"
+                  : "Sign In"
+                : "Sign Up"}
             </p>
             <ThemeSwitch aria-label="Toggle theme" />
           </div>
@@ -413,9 +417,7 @@ export const AuthForm = ({
                     form.setValue("isSamlMode", !isSamlMode);
                   }}
                 >
-                  {isSamlMode
-                    ? "Back to regular login"
-                    : "Continue with SAML SSO"}
+                  {isSamlMode ? "Back" : "Continue with SAML SSO"}
                 </Button>
               </div>
             </>
