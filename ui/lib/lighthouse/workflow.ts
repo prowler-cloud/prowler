@@ -24,6 +24,7 @@ import {
 } from "@/lib/lighthouse/tools/compliances";
 import {
   getFindingsTool,
+  getLatestFindingsTool,
   getMetadataInfoTool,
 } from "@/lib/lighthouse/tools/findings";
 import {
@@ -101,6 +102,7 @@ export async function initLighthouseWorkflow() {
     llm: llm,
     tools: [
       getFindingsTool,
+      getLatestFindingsTool,
       getMetadataInfoTool,
       getProviderChecksTool,
       getProviderCheckDetailsTool,
