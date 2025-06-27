@@ -28,6 +28,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceTag,
+    ResourceTagMapping,
     Role,
     SAMLConfiguration,
     SAMLDomainIndex,
@@ -1113,6 +1114,69 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
     return finding
+
+
+@pytest.fixture(scope="function")
+def latest_scan_resource(authenticated_client, providers_fixture):
+    provider = providers_fixture[0]
+    tenant_id = str(providers_fixture[0].tenant_id)
+    scan = Scan.objects.create(
+        name="latest completed scan for resource",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    resource = Resource.objects.create(
+        tenant_id=tenant_id,
+        provider=provider,
+        uid="latest_resource_uid",
+        name="Latest Resource",
+        region="us-east-1",
+        service="ec2",
+        type="instance",
+        metadata='{"test": "metadata"}',
+        details='{"test": "details"}',
+    )
+
+    resource_tag = ResourceTag.objects.create(
+        tenant_id=tenant_id,
+        key="environment",
+        value="test",
+    )
+    ResourceTagMapping.objects.create(
+        tenant_id=tenant_id,
+        resource=resource,
+        tag=resource_tag,
+    )
+
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid="test_finding_uid_latest",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status extended ",
+        impact=Severity.critical,
+        impact_extended="test impact extended",
+        severity=Severity.critical,
+        raw_result={
+            "status": Status.FAIL,
+            "impact": Severity.critical,
+            "severity": Severity.critical,
+        },
+        tags={"test": "latest"},
+        check_id="test_check_id_latest",
+        check_metadata={
+            "CheckId": "test_check_id_latest",
+            "Description": "test description latest",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    return resource
 
 
 @pytest.fixture
