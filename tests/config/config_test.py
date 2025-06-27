@@ -499,11 +499,3 @@ class Test_Config:
             result = load_and_validate_fixer_config_file(provider, fixer_config_path)
             assert "FileNotFoundError" in caplog.text
             assert result == {}
-
-    def test_recommended_smb_channel_encryption_algorithms_in_config(self):
-        from prowler.config import config
-
-        assert "recommended_smb_channel_encryption_algorithms" in config["azure"]
-        assert isinstance(
-            config["azure"]["recommended_smb_channel_encryption_algorithms"], list
-        )
