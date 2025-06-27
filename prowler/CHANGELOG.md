@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure Databricks check `databricks_workspace_cmk_encryption_enabled` to ensure workspaces use customer-managed keys (CMK) for encryption at rest [(#8017)](https://github.com/prowler-cloud/prowler/pull/8017)
 - Appication auth for PowerShell in M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 - Add `storage_account_default_to_entra_authorization_enabled` check for Azure provider. [(#7981)](https://github.com/prowler-cloud/prowler/pull/7981)
+- Improve overview page from Prowler Dashboard [(#8118)](https://github.com/prowler-cloud/prowler/pull/8118)
 - `keyvault_ensure_public_network_access_disabled` check for Azure provider. [(#8072)](https://github.com/prowler-cloud/prowler/pull/8072)
 - New check `monitor_alert_service_health_exists` for Azure provider [(#8067)](https://github.com/prowler-cloud/prowler/pull/8067)
 - Replace `Domain.Read.All` with `Directory.Read.All` in Azure and M365 docs [(#8075)](https://github.com/prowler-cloud/prowler/pull/8075)
@@ -45,6 +46,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
+
+### Changed
+- Reworked `S3.test_connection` to match the AwsProvider logic [(#8088)](https://github.com/prowler-cloud/prowler/pull/8088)
 
 ### Removed
 - OCSF version number references to point always to the latest [(#8064)](https://github.com/prowler-cloud/prowler/pull/8064)
@@ -58,6 +62,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
 - Retrieve correctly ECS Container insights settings [(#8097)](https://github.com/prowler-cloud/prowler/pull/8097)
 - Fix correct handling for different accounts-dates in prowler dashboard compliance page [(#8108)](https://github.com/prowler-cloud/prowler/pull/8108)
+- Handling of `block-project-ssh-keys` in GCP check `compute_instance_block_project_wide_ssh_keys_disabled` [(#8115)](https://github.com/prowler-cloud/prowler/pull/8115)
+- Handle empty name in Azure Defender and GCP checks [(#8120)](https://github.com/prowler-cloud/prowler/pull/8120)
 
 ---
 
