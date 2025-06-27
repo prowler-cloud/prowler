@@ -173,6 +173,20 @@ class Storage(AzureService):
                         None,
                     )
 
+                    smb_supported_versions_raw = getattr(
+                        getattr(
+                            getattr(
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "versions",
+                        None,
+                    )
+
                     account.file_service_properties = FileServiceProperties(
                         id=file_service_properties.id,
                         name=file_service_properties.name,
@@ -194,7 +208,12 @@ class Storage(AzureService):
                                 smb_channel_encryption_raw.rstrip(";").split(";")
                                 if smb_channel_encryption_raw
                                 else []
-                            )
+                            ),
+                            supported_versions=(
+                                smb_supported_versions_raw.rstrip(";").split(";")
+                                if smb_supported_versions_raw
+                                else []
+                            ),
                         ),
                     )
                 except Exception as error:
@@ -245,6 +264,7 @@ class ReplicationSettings(Enum):
 
 class SMBProtocolSettings(BaseModel):
     channel_encryption: list[str]
+    supported_versions: list[str] = []
 
 
 class FileServiceProperties(BaseModel):

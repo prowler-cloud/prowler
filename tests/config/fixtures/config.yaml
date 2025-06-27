@@ -399,6 +399,9 @@ azure:
       "AES-256-GCM",
     ]
 
+  # azure.storage_smb_protocol_version_is_latest
+  latest_smb_protocol_version: "SMB3.1.1"
+
 # GCP Configuration
 gcp:
   # GCP Compute Configuration

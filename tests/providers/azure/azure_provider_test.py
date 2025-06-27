@@ -86,6 +86,7 @@ class TestAzureProvider:
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
                 "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"],
+                "latest_smb_protocol_version": "SMB3.1.1",
             }
 
     def test_azure_provider_not_auth_methods(self):
