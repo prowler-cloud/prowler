@@ -393,7 +393,7 @@ def processor_fixture(tenants_fixture):
         tenant_id=tenant.id,
         processor_type="mutelist",
         configuration="Mutelist:\n  Accounts:\n    *:\n      Checks:\n        iam_user_hardware_mfa_enabled:\n         "
-                      " Regions:\n            - *\n          Resources:\n            - *",
+        " Regions:\n            - *\n          Resources:\n            - *",
     )
 
     return processor

@@ -5730,8 +5730,8 @@ class TestProcessorViewSet:
                 "attributes": {
                     "processor_type": "mutelist",
                     "configuration": "Mutelist:\n  Accounts:\n    '*':\n      Checks:\n        "
-                                     "iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          "
-                                     "Resources:\n            - '*'",
+                    "iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          "
+                    "Resources:\n            - '*'",
                 },
             },
         }
