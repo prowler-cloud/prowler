@@ -227,7 +227,7 @@ class Test_defender_ensure_notify_emails_to_owners:
             }
         }
         contact = defender_client.security_contacts[AZURE_SUBSCRIPTION_ID][resource_id]
-        contact.name = contact.name or "default"
+        contact.name = getattr(contact, "name", "default") or "default"
 
         with (
             mock.patch(

@@ -315,7 +315,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             }
         }
         contact = defender_client.security_contacts[AZURE_SUBSCRIPTION_ID][resource_id]
-        contact.name = contact.name or "default"
+        contact.name = getattr(contact, "name", "default") or "default"
 
         with (
             mock.patch(
