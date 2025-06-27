@@ -1,5 +1,6 @@
 {
   "Framework": "NIST-CSF",
+  "Name": "National Institute of Standards and Technology (NIST) Cybersecurity Framework (CSF) v1.1",
   "Version": "1.1",
   "Provider": "AWS",
   "Description": "The NIST Cybersecurity Framework (CSF) is supported by governments and industries worldwide as a recommended baseline for use by any organization, regardless of sector or size. The NIST Cybersecurity Framework consists of three primary components: the framework core, the profiles, and the implementation tiers. The framework core contains desired cybersecurity activities and outcomes organized into 23 categories that cover the breadth of cybersecurity objectives for an organization. The profiles contain an organization's unique alignment of their organizational requirements and objectives, risk appetite, and resources using the desired outcomes of the framework core. The implementation tiers describe the degree to which an organization’s cybersecurity risk management practices exhibit the characteristics defined in the framework core.",
