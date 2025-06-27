@@ -95,11 +95,17 @@ With this done you will have all the needed keys, summarized in the following ta
 ### Grant required API permissions
 
 Assign the following Microsoft Graph permissions:
+
 - `AuditLog.Read.All`: Required for Entra service.
-- `Domain.Read.All`: Required for all services.
+- `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 - `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+
+???+ note
+    You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
+    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
 
 Follow these steps to assign the permissions:
 
@@ -113,30 +119,33 @@ Follow these steps to assign the permissions:
 
 3. Search and select every permission below and once all are selected click on `Add permissions`:
     - `AuditLog.Read.All`: Required for Entra service.
-    - `Domain.Read.All`
+    - `Directory.Read.All`
     - `Policy.Read.All`
     - `SharePointTenantSettings.Read.All`
 
 
     ![Permission Screenshots](./img/directory-permission.png)
 
-4. Click `Add permissions`, then grant admin consent
+    ![Application Permissions](./img/app-permissions.png)
 
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
 
-5. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
+4. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
 
     ![Add API Permission](./img/add-delegated-api-permission.png)
 
-6. Search and select:
+5. Search and select:
 
     - `User.Read`
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-7. Click `Add permissions`, then grant admin consent
+6. After adding all the permissions, click on `Grant admin consent`
 
-    ![Grant Admin Consent](./img/grant-admin-consent-delegated.png)
+    ![Grant Admin Consent](./img/grant-admin-consent.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions-m365.png)
 
 ---
 
@@ -166,6 +175,9 @@ Follow these steps to assign the role:
 4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
 
     ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
+
+???+ warning
+    Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
 
 ---
 

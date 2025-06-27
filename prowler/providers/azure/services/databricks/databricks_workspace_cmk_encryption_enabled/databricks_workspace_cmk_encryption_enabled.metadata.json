@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_cmk_encryption_enabled",
+  "CheckTitle": "Ensure Azure Databricks workspaces use customer-managed keys (CMK) for encryption at rest",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "workspace",
+  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Databricks/workspaces/{workspaceName}",
+  "Severity": "high",
+  "ResourceType": "AzureDatabricksWorkspace",
+  "Description": "Checks whether Azure Databricks workspaces are configured to use customer-managed keys (CMK) for encryption at rest, providing greater control over data encryption and compliance.",
+  "Risk": "Without CMK, organizations have less control over encryption keys, which may impact regulatory compliance and increase risk of unauthorized data access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/databricks/security/keys/customer-managed-keys",
+  "Remediation": {
+    "Code": {
+      "CLI": "az databricks workspace update --name <databricks-workspace-name> --resource-group <resource-group-name> --prepare-encryption && databricks workspace update --name <databricks-workspace-name> --resource-group <resource-group-name> --key-source 'Microsoft.KeyVault' --key-name <key-name> --key-vault <key-vault-uri> --key-version <key-version>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable customer-managed keys (CMK) for Databricks workspaces using Azure Key Vault to enhance control over data encryption, auditing, and compliance.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Databricks/enable-encryption-with-cmk.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Customer-managed key (CMK) encryption is only available for Databricks workspaces on the Premium tier."
+}

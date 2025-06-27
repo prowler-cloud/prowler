@@ -1,3 +1,4 @@
+from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.iso27001.models import KubernetesISO27001Model
@@ -44,7 +45,7 @@ class KubernetesISO27001(ComplianceOutput):
                             Description=compliance.Description,
                             Context=finding.account_name,
                             Namespace=finding.region,
-                            AssessmentDate=str(finding.timestamp),
+                            AssessmentDate=str(timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Name=requirement.Name,
@@ -71,7 +72,7 @@ class KubernetesISO27001(ComplianceOutput):
                         Description=compliance.Description,
                         Context="",
                         Namespace="",
-                        AssessmentDate=str(finding.timestamp),
+                        AssessmentDate=str(timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Name=requirement.Name,

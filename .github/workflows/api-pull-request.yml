@@ -28,6 +28,10 @@ env:
   VALKEY_DB: 0
   API_WORKING_DIR: ./api
   IMAGE_NAME: prowler-api
+  IGNORE_FILES: |
+    api/docs/**
+    api/README.md
+    api/CHANGELOG.md
 
 jobs:
   test:
@@ -78,12 +82,7 @@ jobs:
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: api/**
-          files_ignore: |
-            api/.github/**
-            api/docs/**
-            api/permissions/**
-            api/README.md
-            api/mkdocs.yml
+          files_ignore: ${{ env.IGNORE_FILES }}
 
       - name: Replace @master with current branch in pyproject.toml
         working-directory: ./api
@@ -113,6 +112,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
+      - name: Install system dependencies for xmlsec
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
+
       - name: Install dependencies
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -130,6 +135,12 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry check --lock
+
+      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions - https://github.com/xmlsec/python-xmlsec/issues/320
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pip install --force-reinstall --no-binary lxml lxml
 
       - name: Lint with ruff
         working-directory: ./api
@@ -158,8 +169,9 @@ jobs:
       - name: Safety
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
         run: |
-          poetry run safety check --ignore 70612,66963,74429
+          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323
 
       - name: Vulture
         working-directory: ./api
@@ -181,7 +193,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -190,10 +202,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: api/**
+          files_ignore: ${{ env.IGNORE_FILES }}
       - name: Set up Docker Buildx
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       - name: Build Container
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false

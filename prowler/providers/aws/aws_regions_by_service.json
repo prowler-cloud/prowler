@@ -17,6 +17,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -101,6 +102,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -147,6 +149,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -193,6 +196,7 @@
         "aws": [
           "ap-south-1",
           "ap-southeast-2",
+          "eu-west-1",
           "eu-west-2",
           "us-east-1",
           "us-east-2",
@@ -343,6 +347,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -445,6 +450,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -466,6 +472,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -512,6 +519,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -777,7 +785,10 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -817,17 +828,24 @@
     "aps": {
       "regions": {
         "aws": [
+          "af-south-1",
+          "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
+          "eu-south-1",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -842,6 +860,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -888,6 +907,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1017,6 +1037,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1063,6 +1084,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1120,6 +1142,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1161,6 +1184,16 @@
         ]
       }
     },
+    "awstransform": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "b2bi": {
       "regions": {
         "aws": [
@@ -1177,6 +1210,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1255,6 +1289,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1713,6 +1748,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1842,6 +1878,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -1888,6 +1925,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -2025,6 +2063,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -2094,6 +2133,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -2661,6 +2701,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -2994,6 +3035,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3188,6 +3230,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3249,6 +3292,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3295,6 +3339,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3355,6 +3400,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "sa-east-1",
           "us-east-1",
@@ -3459,6 +3505,11 @@
     "dsql": {
       "regions": {
         "aws": [
+          "ap-northeast-1",
+          "ap-northeast-3",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
           "us-east-1",
           "us-east-2",
           "us-west-2"
@@ -3472,6 +3523,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3518,6 +3570,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3564,6 +3617,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3610,6 +3664,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3656,6 +3711,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3712,6 +3768,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3758,6 +3815,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3804,6 +3862,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3850,6 +3909,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3893,6 +3953,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -3992,6 +4053,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4038,6 +4100,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4084,6 +4147,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4230,6 +4294,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4276,6 +4341,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4322,6 +4388,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4385,6 +4452,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -4480,6 +4548,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5017,6 +5086,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5178,6 +5248,7 @@
           "cn-northwest-1"
         ],
         "aws-us-gov": [
+          "us-gov-east-1",
           "us-gov-west-1"
         ]
       }
@@ -5187,6 +5258,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5301,6 +5373,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -5322,6 +5395,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5992,6 +6066,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -6113,6 +6188,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -6159,6 +6235,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -6205,6 +6282,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -6553,6 +6631,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -6827,6 +6906,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -7437,6 +7517,7 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
@@ -7475,8 +7556,10 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ap-southeast-5",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-north-1",
           "eu-south-2",
@@ -7701,6 +7784,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -7746,13 +7830,21 @@
       "regions": {
         "aws": [
           "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
           "us-east-1",
           "us-east-2",
+          "us-west-1",
           "us-west-2"
         ],
         "aws-cn": [],
@@ -7779,6 +7871,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -7828,6 +7921,7 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
@@ -7849,19 +7943,6 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
-      }
-    },
-    "opsworks": {
-      "regions": {
-        "aws": [
-          "ap-southeast-1",
-          "eu-central-1",
-          "eu-west-1",
-          "us-east-1",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
       }
     },
     "opsworkschefautomate": {
@@ -7903,6 +7984,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8031,6 +8113,8 @@
       "regions": {
         "aws": [
           "ap-northeast-1",
+          "ap-northeast-3",
+          "ap-south-1",
           "ap-southeast-1",
           "eu-central-1",
           "eu-west-1",
@@ -8070,6 +8154,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -8132,7 +8217,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "personalize": {
@@ -8161,6 +8249,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8381,6 +8470,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8549,6 +8639,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8595,6 +8686,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8641,6 +8733,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8718,6 +8811,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8764,6 +8858,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -8960,6 +9055,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9006,6 +9102,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9069,6 +9166,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9153,6 +9251,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9199,6 +9298,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9245,6 +9345,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9305,6 +9406,8 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
@@ -9318,6 +9421,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -9339,6 +9443,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9421,6 +9526,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9773,6 +9879,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9790,7 +9897,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-us-gov": []
       }
     },
@@ -9854,6 +9964,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10029,6 +10140,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10157,6 +10269,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10471,6 +10584,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10541,6 +10655,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10587,6 +10702,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10785,6 +10901,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10831,6 +10948,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10877,6 +10995,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10923,6 +11042,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -10980,6 +11100,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11026,6 +11147,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11299,6 +11421,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11371,6 +11494,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11537,6 +11661,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11619,6 +11744,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -11973,6 +12099,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
