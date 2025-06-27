@@ -91,6 +91,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:standalone": "node .next/standalone/server.js",
     "typecheck": "tsc",
     "healthcheck": "npm run typecheck && npm run lint:check",
     "lint:check": "./node_modules/.bin/eslint ./app",
