@@ -3541,7 +3541,7 @@ class ProcessorViewSet(BaseRLSViewSet):
     filterset_class = ProcessorFilter
     ordering = ["processor_type", "-inserted_at"]
     # RBAC required permissions
-    required_permissions = []
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         queryset = Processor.objects.filter(tenant_id=self.request.tenant_id)
