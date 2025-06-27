@@ -85,6 +85,7 @@ class TestAzureProvider:
                 "python_latest_version": "3.12",
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
+                "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"],
             }
 
     def test_azure_provider_not_auth_methods(self):
@@ -110,7 +111,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureNoAuthenticationMethodError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -151,7 +151,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureBrowserAuthNoTenantIDError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -193,7 +192,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureTenantIDNoBrowserAuthError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -224,7 +222,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.SubscriptionClient"
             ) as mock_resource_client,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
@@ -266,7 +263,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
@@ -317,7 +313,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
                 "client_id": str(uuid4()),
@@ -368,7 +363,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
                 "client_id": str(uuid4()),
@@ -442,7 +436,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
             ) as mock_setup_session,
         ):
-
             mock_setup_session.side_effect = AzureHTTPResponseError(
                 file="test_file", original_exception="Simulated HttpResponseError"
             )
@@ -463,7 +456,6 @@ class TestAzureProvider:
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
         ) as mock_setup_session:
-
             mock_setup_session.side_effect = Exception("Simulated Exception")
 
             with pytest.raises(Exception) as exception:
