@@ -64,9 +64,7 @@ export const ComplianceHeader = ({
           </div>
         </>
       )}
-      {allFilters.length > 0 && (
-        <DataTableFilterCustom filters={allFilters} defaultOpen={true} />
-      )}
+      {allFilters.length > 0 && <DataTableFilterCustom filters={allFilters} />}
       <Spacer y={8} />
     </>
   );

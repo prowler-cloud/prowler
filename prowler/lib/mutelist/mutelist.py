@@ -439,12 +439,13 @@ class Mutelist(ABC):
             return False
 
     @staticmethod
-    def validate_mutelist(mutelist: dict) -> dict:
+    def validate_mutelist(mutelist: dict, raise_on_exception: bool = False) -> dict:
         """
         Validate the mutelist against the schema.
 
         Args:
             mutelist (dict): The mutelist to be validated.
+            raise_on_exception (bool): Whether to raise an exception if the mutelist is invalid.
 
         Returns:
             dict: The mutelist itself.
@@ -453,7 +454,10 @@ class Mutelist(ABC):
             validate(mutelist, schema=mutelist_schema)
             return mutelist
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-            )
+            if raise_on_exception:
+                raise error
+            else:
+                logger.error(
+                    f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+                )
             return {}

@@ -509,10 +509,16 @@ class TenantFinishACSView(FinishACSView):
             return response
 
         extra = social_account.extra_data
-        user.first_name = extra.get("firstName", [""])[0]
-        user.last_name = extra.get("lastName", [""])[0]
-        user.company_name = extra.get("organization", [""])[0]
+        user.first_name = (
+            extra.get("firstName", [""])[0] if extra.get("firstName") else ""
+        )
+        user.last_name = extra.get("lastName", [""])[0] if extra.get("lastName") else ""
+        user.company_name = (
+            extra.get("organization", [""])[0] if extra.get("organization") else ""
+        )
         user.name = f"{user.first_name} {user.last_name}".strip()
+        if user.name == "":
+            user.name = "N/A"
         user.save()
 
         email_domain = user.email.split("@")[-1]
@@ -521,7 +527,11 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = extra.get("userType", ["saml_default_role"])[0].strip()
+        role_name = (
+            extra.get("userType", ["saml_default_role"])[0].strip()
+            if extra.get("userType")
+            else "saml_default_role"
+        )
         try:
             role = Role.objects.using(MainRouter.admin_db).get(
                 name=role_name, tenant=tenant
@@ -3038,9 +3048,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Overview"])
 @extend_schema_view(
-    list=extend_schema(
-        tags=["Overview"],
+    providers=extend_schema(
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
@@ -3287,6 +3297,7 @@ class OverviewViewSet(BaseRLSViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Schedule"])
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
