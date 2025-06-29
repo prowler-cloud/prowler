@@ -13,7 +13,8 @@ class Purview(M365Service):
         if self.powershell:
             self.powershell.connect_exchange_online()
             self.audit_log_config = self._get_audit_log_config()
-            self.powershell.close()
+            if not provider.output_options.fixer:
+                self.powershell.close()
 
     def _get_audit_log_config(self):
         logger.info("M365 - Getting Admin Audit Log settings...")
