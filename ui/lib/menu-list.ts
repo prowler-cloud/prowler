@@ -9,6 +9,7 @@ import {
   Group,
   LayoutGrid,
   Mail,
+  Package,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -18,6 +19,7 @@ import {
   User,
   UserCog,
   Users,
+  Warehouse,
 } from "lucide-react";
 
 import {
@@ -122,7 +124,24 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         },
       ],
     },
-
+    {
+      groupLabel: "Inventory",
+      menus: [
+        {
+          href: "",
+          label: "Resources",
+          icon: Warehouse,
+          submenus: [
+            {
+              href: "/resources",
+              label: "Browse all resources",
+              icon: Package,
+            },
+          ],
+          defaultOpen: true,
+        },
+      ],
+    },
     {
       groupLabel: "Settings",
       menus: [
