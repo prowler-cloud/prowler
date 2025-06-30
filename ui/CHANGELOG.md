@@ -32,6 +32,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Make user and password fields optional but mutually required for M365 cloud provider [(#8044)](https://github.com/prowler-cloud/prowler/pull/8044)
 - Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Set filters panel to be always open by default [(#8085)](https://github.com/prowler-cloud/prowler/pull/8085)
+- Updated "Sign in"/"Sign up" capitalization for consistency [(#8136)](https://github.com/prowler-cloud/prowler/pull/8136)
 
 ### 🐞 Fixed
 
