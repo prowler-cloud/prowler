@@ -43,9 +43,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NotTenantIdButClientIdAndClientSecretError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
-    M365NotValidPasswordError,
     M365NotValidTenantIdError,
-    M365NotValidUserError,
     M365SetUpRegionConfigError,
     M365SetUpSessionError,
     M365TenantIdAndClientIdNotBelongingToClientSecretError,
@@ -172,7 +170,7 @@ class M365Provider(Provider):
 
         # Get the dict from the static credentials
         m365_credentials = None
-        if tenant_id and client_id and client_secret and user and password:
+        if tenant_id and client_id and client_secret:
             m365_credentials = self.validate_static_credentials(
                 tenant_id=tenant_id,
                 client_id=client_id,
@@ -204,6 +202,7 @@ class M365Provider(Provider):
         # Set up PowerShell session credentials
         self._credentials = self.setup_powershell(
             env_auth=env_auth,
+            sp_env_auth=sp_env_auth,
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
@@ -378,6 +377,7 @@ class M365Provider(Provider):
     @staticmethod
     def setup_powershell(
         env_auth: bool = False,
+        sp_env_auth: bool = False,
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
@@ -392,12 +392,13 @@ class M365Provider(Provider):
                 If env_auth is True, retrieves from environment variables.
                 If False, returns empty credentials.
         """
+        logger.info("M365 provider: Setting up PowerShell session...")
         credentials = None
 
         if m365_credentials:
             credentials = M365Credentials(
-                user=m365_credentials.get("user", ""),
-                passwd=m365_credentials.get("password", ""),
+                user=m365_credentials.get("user", None),
+                passwd=m365_credentials.get("password", None),
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
@@ -418,6 +419,7 @@ class M365Provider(Provider):
                     file=os.path.basename(__file__),
                     message="Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication.",
                 )
+
             credentials = M365Credentials(
                 client_id=client_id,
                 client_secret=client_secret,
@@ -427,14 +429,25 @@ class M365Provider(Provider):
                 passwd=m365_password,
             )
 
+        elif sp_env_auth:
+            client_id = getenv("AZURE_CLIENT_ID")
+            client_secret = getenv("AZURE_CLIENT_SECRET")
+            tenant_id = getenv("AZURE_TENANT_ID")
+            credentials = M365Credentials(
+                client_id=client_id,
+                client_secret=client_secret,
+                tenant_id=tenant_id,
+                tenant_domains=identity.tenant_domains,
+            )
+
         if credentials:
-            if identity:
+            if identity and credentials.user:
                 identity.user = credentials.user
             test_session = M365PowerShell(credentials, identity)
             try:
+                if init_modules:
+                    initialize_m365_powershell_modules()
                 if test_session.test_credentials(credentials):
-                    if init_modules:
-                        initialize_m365_powershell_modules()
                     return credentials
                 raise M365UserCredentialsError(
                     file=os.path.basename(__file__),
@@ -523,6 +536,8 @@ class M365Provider(Provider):
                             tenant_id=m365_credentials["tenant_id"],
                             client_id=m365_credentials["client_id"],
                             client_secret=m365_credentials["client_secret"],
+                            user=m365_credentials["user"],
+                            password=m365_credentials["password"],
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -688,8 +703,8 @@ class M365Provider(Provider):
                         tenant_id=tenant_id,
                         client_id=client_id,
                         client_secret=client_secret,
-                        user="user",
-                        password="password",
+                        user=None,
+                        password=None,
                     )
                 else:
                     m365_credentials = M365Provider.validate_static_credentials(
@@ -739,17 +754,13 @@ class M365Provider(Provider):
             logger.info("M365 provider: Identity retrieved successfully")
 
             # Set up PowerShell credentials
-            if user and password:
-                M365Provider.setup_powershell(
-                    env_auth,
-                    m365_credentials,
-                    identity,
-                )
-                logger.info("M365 provider: Connection to PowerShell successful")
-            else:
-                logger.info(
-                    "M365 provider: Connection to PowerShell has not been requested"
-                )
+            M365Provider.setup_powershell(
+                env_auth,
+                sp_env_auth,
+                m365_credentials,
+                identity,
+            )
+            logger.info("M365 provider: Connection to PowerShell successful")
 
             return Connection(is_connected=True)
 
@@ -1028,20 +1039,6 @@ class M365Provider(Provider):
             raise M365NotValidClientSecretError(
                 file=os.path.basename(__file__),
                 message="The provided Client Secret is not valid.",
-            )
-
-        # Validate the User
-        if not user:
-            raise M365NotValidUserError(
-                file=os.path.basename(__file__),
-                message="The provided User is not valid.",
-            )
-
-        # Validate the Password
-        if not password:
-            raise M365NotValidPasswordError(
-                file=os.path.basename(__file__),
-                message="The provided Password is not valid.",
             )
 
         try:
