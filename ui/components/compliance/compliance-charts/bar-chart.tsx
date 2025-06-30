@@ -44,7 +44,7 @@ interface FailedSectionsListProps {
 
 const title = (
   <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-    Failed Sections (Top 5)
+    Top Failed Sections
   </h3>
 );
 
