@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { CheckIcon } from "lucide-react";
 import { useState } from "react";
+import { Link } from "@nextui-org/react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
@@ -29,9 +30,21 @@ export const SamlIntegrationCard = ({ id }: { id: string }) => {
               {id && <CheckIcon className="text-prowler-green" size={20} />}
             </div>
             <p className="text-xs text-gray-500">
-              {id
-                ? "SAML Single Sign-On is enabled for this organization"
-                : "Configure SAML Single Sign-On for secure authentication"}
+              {id ? (
+                "SAML Single Sign-On is enabled for this organization"
+              ) : (
+                <>
+                  Configure SAML Single Sign-On for secure authentication.{" "}
+                  <Link
+                    target="_blank"
+                    href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-primary"
+                  >
+                    Read the docs
+                  </Link>
+                </>
+              )}
             </p>
           </div>
         </CardHeader>
