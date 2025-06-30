@@ -128,8 +128,7 @@ urlpatterns = [
     path(
         "auth/saml/initiate/", SAMLInitiateAPIView.as_view(), name="api_saml_initiate"
     ),
-    # Allauth SAML endpoints for tenants
-    path("accounts/", include("allauth.urls")),
+    # Custom SAML endpoints (must come before allauth.urls)
     path(
         "accounts/saml/<organization_slug>/login/",
         CustomSAMLLoginView.as_view(),
@@ -140,6 +139,8 @@ urlpatterns = [
         TenantFinishACSView.as_view(),
         name="saml_finish_acs",
     ),
+    # Allauth SAML endpoints for tenants
+    path("accounts/", include("allauth.urls")),
     path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
