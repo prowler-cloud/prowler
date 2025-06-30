@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui";
 import { CustomButton, CustomServerInput } from "@/components/ui/custom";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
+import { apiBaseUrl } from "@/lib";
 
 export const SamlConfigForm = ({
   setIsOpen,
@@ -120,8 +121,8 @@ export const SamlConfigForm = ({
   };
 
   const acsUrl = emailDomain
-    ? `https://app.prowler.pro/saml/sp/consume/${emailDomain}`
-    : "https://app.prowler.pro/saml/sp/consume/your-domain.com";
+    ? `${apiBaseUrl}/saml/sp/consume/${emailDomain}`
+    : `${apiBaseUrl}/saml/sp/consume/your-domain.com`;
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-6">

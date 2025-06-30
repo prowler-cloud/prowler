@@ -218,7 +218,7 @@ export const AuthForm = ({
                 isInvalid={!!form.formState.errors.email}
                 showFormMessage={type !== "sign-in"}
               />
-              {!isSamlMode && type === "sign-in" && (
+              {!isSamlMode && (
                 <CustomInput
                   control={form.control}
                   name="password"
