@@ -67,6 +67,56 @@ This endpoint receives an email and checks if there is an active SAML configurat
 	•	Retrieves the related SAMLConfiguration object via tenant_id.
 
 
+# SAML Integration: UI Guide
+
+This guide outlines the process for configuring SAML Single Sign-On (SSO) within the Prowler web application.
+
+---
+
+## 1. Accessing the Profile Settings
+
+Open the Prowler web application and navigate to the account settings by selecting the **"Account"** button located in the top-right corner of the interface.
+
+![Step 1](../img/saml-step-1.png)
+
+---
+
+## 2. Enabling SAML Integration
+
+In the configuration panel, locate the **"SAML Integration"** card and click the **"Enable"** button to initiate the setup process.
+
+![Step 2](../img/saml-step-2.png)
+
+---
+
+## 3. Configuring Domain and Metadata
+
+Enter the email domain associated with the organization to be configured for SAML.
+Ensure that the **Assertion Consumer Service (ACS) URL** displayed matches the one configured in the identity provider (e.g., Okta), using the `NEXT_PUBLIC_API_BASE_URL` environment variable as the reference.
+
+The SAML metadata XML file must meet the following requirements:
+
+- Must be formatted as a single line.
+- Must not contain double quotes (`"`).
+
+**Example:**
+
+```xml
+<?xml version='1.0' encoding='UTF-8'?><md:EntityDescriptor entityID='http://www.okta.com/exkotjzsj3Ms39EjW5d7' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'><md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'><md:KeyDescriptor use='signing'><ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'><ds:X509Data><ds:X509Certificate>MIIDqDCCApCgAwIBAgIGAZbspLXlMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/></md:IDPSSODescriptor></md:EntityDescriptor>
+```
+
+![SAML Integration: UI Guide](../img/saml-step-3.png)
+
+---
+
+## 4. Verifying Integration Status
+
+After clicking the **"Save"** button, the SAML Integration card will update to reflect the configured and active status.
+
+![Step 4](../img/saml-step-4.png)
+
+---
+
 # SAML Integration: Testing Guide
 
 This document outlines the process for testing the SAML integration functionality.
