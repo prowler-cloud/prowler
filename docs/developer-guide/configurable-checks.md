@@ -1,14 +1,14 @@
 # Configurable Checks in Prowler
 
-Prowler empowers users to extend and adapt cloud security coverage by making checks configurable through the use of the `audit_config` object. This allows checks to be tailored to specific requirements via a configuration file.
+Prowler empowers users to extend and adapt cloud security coverage by making checks configurable through the use of the `audit_config` object. This approach enables customization of checks to meet specific requirements through a configuration file.
 
-## What Is `audit_config`?
+## Understanding the `audit_config` Object
 
-The `audit_config` object is a dictionary attached to each provider's service client (e.g., `<service_name>_client.audit_config`). This object loads configuration values from the main configuration file (`prowler/config/config.yaml`). Use `audit_config` to make checks flexible and user-configurable.
+The `audit_config` object is a dictionary attached to each provider's service client (for example, `<service_name>_client.audit_config`). This object loads configuration values from the main configuration file (`prowler/config/config.yaml`). Use `audit_config` to make checks flexible and user-configurable.
 
-## How to Use `audit_config` in a Check
+## Using `audit_config` to Configure Checks
 
-To retrieve configuration values in your check code, use the `.get()` method on the `audit_config` object. For example, to get the minimum number of Availability Zones for Lambda from the configuration file, use the following code. If the value is not set in the configuration, the check will default to 2:
+Retrieve configuration values in a check by using the `.get()` method on the `audit_config` object. For example, to get the minimum number of Availability Zones for Lambda from the configuration file, use the following code. If the value is not set in the configuration, the check defaults to 2:
 
 ```python
 LAMBDA_MIN_AZS = awslambda_client.audit_config.get("lambda_min_azs", 2)
@@ -29,22 +29,18 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
             # ... check logic ...
 ```
 
-## Files to Update When Adding a Configurable Variable
+## Required File Updates for Configurable Variables
 
-If you want to add a new check to Prowler ensure to add the configurable variable to the following files:
+When adding a new configurable check to Prowler, update the following files:
 
-- **prowler/config/config.yaml**
-  Add the new configuration variable under the relevant provider or service section.
-  Example:
+- **Configuration File:** Add the new variable under the relevant provider or service section in `prowler/config/config.yaml`.
   ```yaml
   # aws.awslambda_function_vpc_multi_az
   lambda_min_azs: 2
   ```
-- **tests/config/fixtures/config.yaml**
-  Add the variable if tests depend on this configuration.
-- **docs/tutorials/configuration_file.md**
-  Document the new variable in the list of configurable checks.
+- **Test Fixtures:** If tests depend on this configuration, add the variable to `tests/config/fixtures/config.yaml`.
+- **Documentation:** Document the new variable in the list of configurable checks in `docs/tutorials/configuration_file.md`.
 
-For a complete list of checks that already support configuration, see the [Configuration File tutorial](../tutorials/configuration_file.md).
+For a complete list of checks that already support configuration, see the [Configuration File Tutorial](../tutorials/configuration_file.md).
 
-This approach ensures that both checks can be easily configured by users, making Prowler highly adaptable to different environments and requirements.
+This approach ensures that checks are easily configurable, making Prowler highly adaptable to different environments and requirements.
