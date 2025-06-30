@@ -37,7 +37,7 @@ Available Cloud Providers:
     github              GitHub Provider
     m365                Microsoft 365 Provider
     nhn                 NHN Provider (Unofficial)
-    ionos               IONOS Provider
+    ionos               IONOS Provider (Unofficial)
 
 Available components:
     dashboard           Local dashboard
