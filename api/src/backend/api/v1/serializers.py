@@ -14,6 +14,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
+    ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -36,6 +38,7 @@ from api.models import (
     Task,
     User,
     UserRoleRelationship,
+    APIKey,
 )
 from api.rls import Tenant
 from api.v1.serializer_utils.integrations import (
@@ -318,6 +321,107 @@ class UserUpdateSerializer(BaseWriteSerializer):
             validate_password(password, user=instance)
             instance.set_password(password)
         return super().update(instance, validated_data)
+
+
+# API Keys
+
+
+class APIKeySerializer(BaseSerializerV1):
+    """
+    Serializer for listing API Keys.
+    """
+    user = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
+    
+    class Meta:
+        model = APIKey
+        fields = [
+            "id",
+            "name",
+            "prefix",
+            "expires_at",
+            "last_used_at",
+            "created_at",
+            "revoked_at",
+            "user",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "last_used_at": {"read_only": True},
+            "created_at": {"read_only": True},
+            "revoked_at": {"read_only": True},
+        }
+
+
+class APIKeyCreateSerializer(BaseWriteSerializer):
+    """
+    Serializer for creating API Keys.
+    """
+    expires_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text="Expiration time. If not provided, the key never expires."
+    )
+    
+    # This field will only be included in the response
+    key = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = APIKey
+        fields = ["id", "name", "expires_at", "key", "prefix", "created_at"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "created_at": {"read_only": True},
+        }
+    
+    def validate_expires_at(self, value):
+        if value and value <= timezone.now():
+            raise serializers.ValidationError("Expiration date must be in the future.")
+        return value
+    
+    def create(self, validated_data):
+        # Generate the actual API key
+        raw_key = APIKey.generate_key()
+        key_hash = APIKey.hash_key(raw_key)
+        
+        # Extract prefix from the raw key (pk_XXXXXX....)
+        prefix = raw_key.split('.')[0]
+        
+        # Get the requesting user from context
+        user = self.context['request'].user
+        
+        # Get client IP
+        ip_address = self.context['request'].META.get('REMOTE_ADDR')
+        
+        # Create the API key instance
+        api_key = APIKey.objects.create(
+            user=user,
+            key_hash=key_hash,
+            prefix=prefix,
+            created_ip=ip_address,
+            **validated_data
+        )
+        
+        # Store the raw key temporarily for the response
+        api_key._raw_key = raw_key
+        
+        return api_key
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Include the raw key only if it was just created
+        if hasattr(instance, '_raw_key'):
+            data['key'] = instance._raw_key
+        return data
+
+
+class APIKeyRevokeSerializer(serializers.Serializer):
+    """
+    Serializer for revoking an API Key.
+    """
+    class Meta:
+        fields = []
 
 
 class RoleResourceIdentifierSerializer(serializers.Serializer):

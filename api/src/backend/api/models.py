@@ -155,6 +155,111 @@ class User(AbstractBaseUser):
         resource_name = "users"
 
 
+class APIKey(models.Model):
+    """
+    Model for API Keys that can be used for programmatic access to the API.
+    Keys are hashed and never stored in plaintext.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(
+        max_length=255,
+        validators=[MinLengthValidator(3)],
+        help_text="Human-readable name to identify the API key"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="api_keys",
+        related_query_name="api_key"
+    )
+    key_hash = models.CharField(
+        max_length=128,
+        unique=True,
+        help_text="SHA-256 hash of the API key"
+    )
+    prefix = models.CharField(
+        max_length=10,
+        help_text="Prefix of the API key for identification"
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Expiration time. Null means no expiration."
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this API key was used"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Time when the key was revoked. Null means active."
+    )
+    # For audit logging
+    created_ip = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP address from which the key was created"
+    )
+    last_used_ip = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP address from which the key was last used"
+    )
+
+    class Meta:
+        db_table = "api_keys"
+        indexes = [
+            models.Index(fields=["prefix"], name="api_keys_prefix_idx"),
+            models.Index(fields=["user", "revoked_at"], name="api_keys_user_active_idx"),
+        ]
+        constraints = [
+            BaseSecurityConstraint(
+                name="statements_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            )
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
+
+    def is_valid(self):
+        """Check if the API key is still valid (not expired or revoked)."""
+        if self.revoked_at:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True
+
+    def revoke(self):
+        """Revoke the API key."""
+        self.revoked_at = timezone.now()
+        self.save()
+
+    @classmethod
+    def generate_key(cls):
+        """Generate a new API key."""
+        # Generate a secure random key: prefix.random_string
+        prefix = generate_random_token(6)
+        random_part = generate_random_token(32)
+        return f"pk_{prefix}.{random_part}"
+
+    @classmethod
+    def hash_key(cls, key):
+        """Hash an API key using SHA-256."""
+        import hashlib
+        return hashlib.sha256(key.encode()).hexdigest()
+
+    def save(self, *args, **kwargs):
+        # Ensure prefix is set from key_hash if not already set
+        if not self.prefix and self.key_hash:
+            # Extract first 8 chars of hash as prefix for quick lookups
+            self.prefix = self.key_hash[:8]
+        super().save(*args, **kwargs)
+
+
 class Membership(models.Model):
     class RoleChoices(models.TextChoices):
         OWNER = "owner", _("Owner")

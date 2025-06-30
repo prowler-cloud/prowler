@@ -41,6 +41,7 @@ from api.models import (
     StatusChoices,
     Task,
     User,
+    APIKey,
 )
 from api.rls import Tenant
 from api.uuid_utils import (
@@ -612,6 +613,28 @@ class UserFilter(FilterSet):
             "company_name": ["exact", "icontains"],
             "date_joined": ["date", "gte", "lte"],
             "is_active": ["exact"],
+        }
+
+
+class APIKeyFilter(FilterSet):
+    created_at = DateFilter(field_name="created_at", lookup_expr="date")
+    expires_at = DateFilter(field_name="expires_at", lookup_expr="date")
+    is_active = BooleanFilter(method="filter_active")
+    
+    def filter_active(self, queryset, name, value):
+        if value is True:
+            return queryset.filter(revoked_at__isnull=True)
+        elif value is False:
+            return queryset.filter(revoked_at__isnull=False)
+        return queryset
+    
+    class Meta:
+        model = APIKey
+        fields = {
+            "name": ["exact", "icontains"],
+            "created_at": ["date", "gte", "lte"],
+            "expires_at": ["date", "gte", "lte", "isnull"],
+            "revoked_at": ["isnull"],
         }
 
 

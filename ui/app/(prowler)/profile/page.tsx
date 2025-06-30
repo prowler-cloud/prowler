@@ -4,9 +4,11 @@ import { getSamlConfig } from "@/actions/integrations/saml";
 import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
+import { getAPIKeys } from "@/actions/users/api-keys";
 import { SamlIntegrationCard } from "@/components/integrations/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
+import { APIKeysCard } from "@/components/users/profile/api-keys-card";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
@@ -43,6 +45,7 @@ const SSRDataUser = async () => {
 
   const memberships = await getUserMemberships(userProfile.data.id);
   const tenants = await getAllTenants();
+  const apiKeys = await getAPIKeys();
 
   const tenantsMap = tenants?.data?.reduce(
     (acc: Record<string, TenantDetailData>, tenant: TenantDetailData) => {
@@ -86,6 +89,9 @@ const SSRDataUser = async () => {
       </div>
       <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
         <SamlIntegrationCard id={samlConfig.data[0]?.id} />
+      </div>
+      <div className="w-full">
+        <APIKeysCard apiKeys={apiKeys?.data || []} />
       </div>
     </div>
   );

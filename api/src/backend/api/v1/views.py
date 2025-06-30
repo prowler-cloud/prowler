@@ -71,6 +71,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    APIKeyFilter,
     ComplianceOverviewFilter,
     FindingFilter,
     IntegrationFilter,
@@ -90,6 +91,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    APIKey,
     ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
@@ -183,6 +185,8 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+    APIKeySerializer,
+    APIKeyCreateSerializer,
 )
 
 CACHE_DECORATOR = cache_control(
@@ -3554,3 +3558,59 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["User"],
+        summary="List all API keys",
+        description="Retrieve a list of all API keys for the authenticated user.",
+    ),
+    retrieve=extend_schema(
+        tags=["User"],
+        summary="Retrieve API key details",
+        description="Fetch detailed information about a specific API key.",
+    ),
+    create=extend_schema(
+        tags=["User"],
+        summary="Create a new API key",
+        description="Generate a new API key. The key will only be shown once upon creation.",
+    ),
+    destroy=extend_schema(
+        tags=["User"],
+        summary="Revoke an API key",
+        description="Revoke an API key. This action cannot be undone.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+class APIKeyViewSet(BaseViewSet):
+    serializer_class = APIKeySerializer
+    http_method_names = ["get", "post", "delete"]
+    filterset_class = APIKeyFilter
+    ordering = ["-created_at"]
+    ordering_fields = ["name", "created_at", "expires_at", "last_used_at"]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Users can only see their own API keys
+        return APIKey.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return APIKeyCreateSerializer
+        return APIKeySerializer
+
+    def destroy(self, request, *args, **kwargs):
+        api_key = self.get_object()
+        
+        # Check if the key is already revoked
+        if api_key.revoked_at:
+            return Response(
+                {"detail": "API key is already revoked."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Revoke the key
+        api_key.revoke()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)

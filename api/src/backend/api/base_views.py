@@ -7,6 +7,7 @@ from rest_framework_json_api import filters
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from api.authentication import APIKeyAuthentication
 from api.db_router import MainRouter
 from api.db_utils import POSTGRES_USER_VAR, rls_transaction
 from api.filters import CustomDjangoFilterBackend
@@ -15,7 +16,7 @@ from api.rbac.permissions import HasPermissions
 
 
 class BaseViewSet(ModelViewSet):
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, APIKeyAuthentication]
     required_permissions = []
     permission_classes = [permissions.IsAuthenticated, HasPermissions]
     filter_backends = [
