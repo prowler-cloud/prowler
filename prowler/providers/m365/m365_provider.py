@@ -445,9 +445,9 @@ class M365Provider(Provider):
                 identity.user = credentials.user
             test_session = M365PowerShell(credentials, identity)
             try:
+                if init_modules:
+                    initialize_m365_powershell_modules()
                 if test_session.test_credentials(credentials):
-                    if init_modules:
-                        initialize_m365_powershell_modules()
                     return credentials
                 raise M365UserCredentialsError(
                     file=os.path.basename(__file__),
