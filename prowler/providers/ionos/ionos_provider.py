@@ -17,6 +17,12 @@ from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.ionos.lib.mutelist.mutelist import IonosMutelist
 from prowler.providers.ionos.models import IonosIdentityInfo
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
+from prowler.providers.ionos.exceptions.exceptions import (
+    IonosNoAuthMethodProvidedError,
+    IonosIncompleteCredentialsError,
+    IonosEnvironmentCredentialsError,
+    IonosTokenLoadError,
+)
 from colorama import Fore, Style
 
 from prowler.providers.common.provider import Provider
@@ -42,17 +48,65 @@ class IonosProvider(Provider):
         config_path: Optional[str] = None,
         mutelist_path: Optional[str] = None,
         mutelist_content: dict = None,
+        use_ionosctl: bool = False,
+        use_env_vars: bool = False,
     ):
         """
         Initializes the IonosProvider class and sets up the session.
-        If no credentials are provided, it will attempt to load them from environment variables or ionosctl configuration.
+
+        Args:
+            ionos_username (Optional[str]): Static username for IONOS authentication
+            ionos_password (Optional[str]): Static password for IONOS authentication
+            ionos_datacenter_name (Optional[str]): Name of the datacenter to use
+            config_path (Optional[str]): Path to the configuration file
+            mutelist_path (Optional[str]): Path to the mutelist file
+            mutelist_content (dict): Mutelist content as dictionary
+            use_ionosctl (bool): Whether to use ionosctl token authentication
+            use_env_vars (bool): Whether to use environment variables for authentication
+
+        Raises:
+            IonosNoAuthMethodProvidedError: When no authentication method is provided
+            IonosIncompleteCredentialsError: When username/password credentials are incomplete
+            IonosEnvironmentCredentialsError: When environment credentials are incomplete
+            IonosTokenLoadError: When ionosctl token cannot be loaded
         """
         logger.info("Initializing IONOS Provider...")
-        self._token = self.load_ionosctl_token()
-                
+
+        # Initialize credentials as None
+        self._token = None
+        self._username = None
+        self._password = None
+
+        # Check that at least one authentication method is selected
+        if not any([use_ionosctl, use_env_vars, all([ionos_username, ionos_password])]):
+            raise IonosNoAuthMethodProvidedError()
+
+        # Handle ionosctl token authentication
+        if use_ionosctl:
+            self._token = self.load_ionosctl_token()
+            if not self._token:
+                raise IonosTokenLoadError()
+            logger.info("Using ionosctl token authentication")
+
+        # Handle environment variables authentication
+        elif use_env_vars:
+            self._username = os.getenv("IONOS_USERNAME")
+            self._password = os.getenv("IONOS_PASSWORD")
+            if not all([self._username, self._password]):
+                raise IonosEnvironmentCredentialsError()
+            logger.info("Using environment variables authentication")
+
+        # Handle static credentials authentication
+        elif ionos_username or ionos_password:
+            if not all([ionos_username, ionos_password]):
+                raise IonosIncompleteCredentialsError()
+            self._username = ionos_username
+            self._password = ionos_password
+            logger.info("Using static credentials authentication")
+
         self._identity = self.set_identity(
-            username=ionos_username,
-            password=ionos_password,
+            username=self._username,
+            password=self._password,
             datacenter_id="",
         )
 
@@ -64,7 +118,7 @@ class IonosProvider(Provider):
             logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
             sys.exit(1)
 
-        if not self._identity.username or not self._identity.password:
+        if not self._identity.username:
             self._identity.username = self.get_ionos_username()
 
         self._identity.datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
@@ -109,6 +163,12 @@ class IonosProvider(Provider):
     def load_ionosctl_token() -> Optional[str]:
         """
         Reads the IONOS token from the ionosctl configuration file across different platforms.
+
+        Returns:
+            Optional[str]: The IONOS token if found, None otherwise
+
+        Raises:
+            IonosTokenLoadError: If the token cannot be loaded from the configuration
         """
         platform = sys.platform
         
@@ -149,11 +209,14 @@ class IonosProvider(Provider):
         try:
             with open(config_path, "r") as config_file:
                 config = json.load(config_file)
-                logger.info("Loaded IONOS token from ionosctl config file.")
-                return config.get("userdata.token")
+                token = config.get("userdata.token")
+                if token:
+                    logger.info("Loaded IONOS token from ionosctl config file.")
+                    return token
+                raise IonosTokenLoadError()
         except (FileNotFoundError, json.JSONDecodeError) as error:
             logger.warning(f"Failed to load IONOS token from ionosctl: {error}")
-            return None
+            raise IonosTokenLoadError()
 
     def get_ionos_username(self) -> Optional[str]:
         """

@@ -10,15 +10,29 @@ def init_parser(self):
     )
 
     ionos_parser.add_argument(
+        "--ionosctl",
+        action="store_true",
+        required=False,
+        help="Use ionosctl token authentication for IONOS Cloud."
+    )
+
+    ionos_parser.add_argument(
+        "--ionos-user-env-vars",
+        action="store_true",
+        required=False,
+        help="Use IONOS_USERNAME and IONOS_PASSWORD environment variables for authentication."
+    )
+
+    ionos_parser.add_argument(
         "--ionos-username",
         required=False,
-        help="The username for IONOS Cloud authentication."
+        help="The username for IONOS Cloud authentication (requires --ionos-password)."
     )
     
     ionos_parser.add_argument(
         "--ionos-password",
         required=False,
-        help="The password for IONOS Cloud authentication."
+        help="The password for IONOS Cloud authentication (requires --ionos-username)."
     )
 
     ionos_parser.add_argument(
