@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -159,7 +160,10 @@ class TestM365CIS:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.cis.cis_m365.timestamp", "2025-01-01 00:00:00"
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [

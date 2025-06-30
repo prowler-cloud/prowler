@@ -10,7 +10,7 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
         for subscription, roles in iam_client.custom_roles.items():
             exits_role_with_permission_over_locks = False
 
-            for custom_role in roles:
+            for custom_role in roles.values():
                 if exits_role_with_permission_over_locks:
                     break
                 report = Check_Report_Azure(

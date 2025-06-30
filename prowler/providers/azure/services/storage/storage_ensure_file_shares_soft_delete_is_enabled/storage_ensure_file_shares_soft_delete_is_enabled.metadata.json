@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_ensure_file_shares_soft_delete_is_enabled",
+  "CheckTitle": "Ensure soft delete for Azure File Shares is enabled",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that soft delete is enabled for Azure File Shares to protect against accidental or malicious deletion of important data. This feature allows deleted file shares to be retained for a specified period, during which they can be recovered before permanent deletion occurs.",
+  "Risk": "Without soft delete enabled, accidental or malicious deletions of file shares result in permanent data loss, making recovery impossible unless a separate backup mechanism is in place.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-prevent-file-share-deletion?tabs=azure-portal",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage account file-service-properties update --account-name <storage-account-name> --enable-delete-retention true --delete-retention-days <number-of-days>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-soft-delete-for-file-shares.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable soft delete for file shares on your Azure Storage Account to allow recovery of deleted shares within a configured retention period.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-prevent-file-share-deletion?tabs=azure-portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

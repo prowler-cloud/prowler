@@ -36,7 +36,7 @@ class TestAzureMutelist:
 
         mutelist = AzureMutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist()
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
@@ -63,7 +63,7 @@ class TestAzureMutelist:
         finding.location = "West Europe"
         finding.status = "FAIL"
         finding.resource_name = "test_resource"
-        finding.resource_tags = []
+        finding.resource_tags = {}
         finding.subscription = "subscription_1"
 
         assert mutelist.is_finding_muted(finding)
@@ -91,7 +91,7 @@ class TestAzureMutelist:
             account_uid="subscription_1",
             region="subscription_1",
             resource_uid="test_resource",
-            resource_tags=[],
+            resource_tags={},
             muted=False,
         )
 
