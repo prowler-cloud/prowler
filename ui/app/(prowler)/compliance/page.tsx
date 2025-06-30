@@ -146,7 +146,7 @@ const SSRComplianceGrid = async ({
     query,
   });
 
-  const type = compliancesData?.data?.[0]?.type;
+  const type = compliancesData?.data?.type;
 
   // Check if the response contains no data
   if (
