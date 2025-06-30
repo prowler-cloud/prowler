@@ -17,6 +17,7 @@ export const SamlConfigForm = ({
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   id: string;
 }) => {
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [state, formAction, isPending] = useFormState(
     id ? updateSamlConfig : createSamlConfig,
     null,
@@ -120,8 +121,8 @@ export const SamlConfigForm = ({
   };
 
   const acsUrl = emailDomain
-    ? `https://app.prowler.pro/saml/sp/consume/${emailDomain}`
-    : "https://app.prowler.pro/saml/sp/consume/your-domain.com";
+    ? `${backendURL}/saml/sp/consume/${emailDomain}`
+    : `${backendURL}/saml/sp/consume/your-domain.com`;
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-6">
