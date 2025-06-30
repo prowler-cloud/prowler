@@ -176,9 +176,9 @@ export const AuthForm = ({
             <p className="pb-2 text-xl font-medium">
               {type === "sign-in"
                 ? isSamlMode
-                  ? "Sign In with SAML SSO"
-                  : "Sign In"
-                : "Sign Up"}
+                  ? "Sign in with SAML SSO"
+                  : "Sign in"
+                : "Sign up"}
             </p>
             <ThemeSwitch aria-label="Toggle theme" />
           </div>
@@ -300,7 +300,7 @@ export const AuthForm = ({
               )}
               <CustomButton
                 type="submit"
-                ariaLabel={type === "sign-in" ? "Log In" : "Sign Up"}
+                ariaLabel={type === "sign-in" ? "Log in" : "Sign up"}
                 ariaDisabled={isLoading}
                 className="w-full"
                 variant="solid"
@@ -313,7 +313,7 @@ export const AuthForm = ({
                 {isLoading ? (
                   <span>Loading</span>
                 ) : (
-                  <span>{type === "sign-in" ? "Log In" : "Sign Up"}</span>
+                  <span>{type === "sign-in" ? "Log in" : "Sign up"}</span>
                 )}
               </CustomButton>
             </form>
@@ -425,12 +425,12 @@ export const AuthForm = ({
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;
-              <Link href="/sign-up">Sign Up</Link>
+              <Link href="/sign-up">Sign up</Link>
             </p>
           ) : (
             <p className="text-center text-small">
               Already have an account?&nbsp;
-              <Link href="/sign-in">Log In</Link>
+              <Link href="/sign-in">Log in</Link>
             </p>
           )}
         </div>
