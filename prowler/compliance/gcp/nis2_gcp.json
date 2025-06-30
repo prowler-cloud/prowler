@@ -1,7 +1,7 @@
 {
   "Framework": "NIS2",
-  "Version": "",
   "Name": "Network and Information Security Directive (Directive (EU) 2022/2555)",
+  "Version": "",
   "Provider": "GCP",
   "Description": "ANNEX to the Commission Implementing Regulation laying down rules for the application of Directive (EU) 2022/2555 as regards technical and methodological requirements of cybersecurity risk-management measures and further specification of the cases in which an incident is considered to be significant with regard to DNS service providers, TLD name registries, cloud computing service providers, data centre service providers, content delivery network providers, managed service providers, managed security service providers, providers of online market places, of online search engines and of social networking services platforms, and trust service providers",
   "Requirements": [
