@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Link } from "@nextui-org/react";
 import { CheckIcon } from "lucide-react";
 import { useState } from "react";
-import { Link } from "@nextui-org/react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
