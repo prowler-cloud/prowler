@@ -25,9 +25,9 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_ADAPTER = "api.adapters.ProwlerSocialAccountAdapter"
 
-# SAML keys
-SAML_PUBLIC_CERT = env("SAML_PUBLIC_CERT", default="")
-SAML_PRIVATE_KEY = env("SAML_PRIVATE_KEY", default="")
+# SAML keys (TODO: Validate certificates)
+# SAML_PUBLIC_CERT = env("SAML_PUBLIC_CERT", default="")
+# SAML_PRIVATE_KEY = env("SAML_PRIVATE_KEY", default="")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -60,12 +60,17 @@ SOCIALACCOUNT_PROVIDERS = {
             "entity_id": "urn:prowler.com:sp",
         },
         "advanced": {
-            "x509cert": SAML_PUBLIC_CERT,
-            "private_key": SAML_PRIVATE_KEY,
+            # "x509cert": SAML_PUBLIC_CERT,
+            # "private_key": SAML_PRIVATE_KEY,
+            # "authn_request_signed": True,
+            # "want_assertion_signed": True,
+            # "want_message_signed": True,
             "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-            "authn_request_signed": True,
-            "want_assertion_signed": True,
-            "want_message_signed": True,
+            "authn_request_signed": False,
+            "logout_request_signed": False,
+            "logout_response_signed": False,
+            "want_assertion_encrypted": False,
+            "want_name_id_encrypted": False,
         },
     },
 }

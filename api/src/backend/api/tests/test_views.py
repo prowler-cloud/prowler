@@ -5710,21 +5710,6 @@ class TestSAMLInitiateAPIView:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()["errors"]["detail"] == "Unauthorized domain."
 
-    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
-
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
-
-        response = authenticated_client.post(url, data=payload, format="json")
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert (
-            response.json()["errors"]["detail"]
-            == "SAML configuration is invalid: missing certificates."
-        )
-
 
 @pytest.mark.django_db
 class TestSAMLConfigurationViewSet:
