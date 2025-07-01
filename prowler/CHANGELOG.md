@@ -7,6 +7,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Migrate Azure VM service and managed disk logic to Pydantic models for better serialization and type safety, and update all related tests to use the new models and fix UUID handling.
 
+---
+
 ## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
