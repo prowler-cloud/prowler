@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { Control } from "react-hook-form";
 
+import { InfoIcon } from "@/components/icons";
 import { CustomInput } from "@/components/ui/custom";
 import { M365Credentials } from "@/types";
-import { InfoIcon } from "@/components/icons";
-import Link from "next/link";
 
 export const M365CredentialsForm = ({
   control,
@@ -55,8 +55,8 @@ export const M365CredentialsForm = ({
       />
       <p className="text-sm text-default-500">
         {" "}
-        User and password authentication is being deprecated due to Microsoft's
-        on-going MFA enforcement across all tenants. (see{" "}
+        User and password authentication is being deprecated due to
+        Microsoft&apos;s on-going MFA enforcement across all tenants. (see{" "}
         <Link
           href="https://azure.microsoft.com/en-us/blog/announcing-mandatory-multi-factor-authentication-for-azure-sign-in/"
           target="_blank"
