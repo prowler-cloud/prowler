@@ -121,8 +121,8 @@ export const SamlConfigForm = ({
   };
 
   const acsUrl = emailDomain
-    ? `${apiBaseUrl}/accounts/saml/${emailDomain}/acs`
-    : `${apiBaseUrl}/accounts/saml/your-domain.com/acs`;
+    ? `${apiBaseUrl}/accounts/saml/${emailDomain}/acs/`
+    : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
