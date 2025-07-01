@@ -27,16 +27,28 @@ class PaginateByPkMixin:
         select_related: list[str] | None = None,
         prefetch_related: list[str] | None = None,
     ) -> Response:
+        """
+        Paginate a queryset by primary key.
+
+        This method is useful when you want to paginate a queryset that has been
+        filtered or annotated in a way that would be lost if you used the default
+        pagination method.
+        """
         pk_list = base_queryset.values_list("id", flat=True)
         page = self.paginate_queryset(pk_list)
         if page is None:
             return Response(self.get_serializer(base_queryset, many=True).data)
 
         queryset = manager.filter(id__in=page)
+
         if select_related:
             queryset = queryset.select_related(*select_related)
         if prefetch_related:
             queryset = queryset.prefetch_related(*prefetch_related)
+
+        # Optimize tags loading, if applicable
+        if hasattr(self, "_optimize_tags_loading"):
+            queryset = self._optimize_tags_loading(queryset)
 
         queryset = sorted(queryset, key=lambda obj: page.index(obj.id))
 
