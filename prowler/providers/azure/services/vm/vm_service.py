@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
 from azure.mgmt.compute import ComputeManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -40,13 +40,15 @@ class VirtualMachines(AzureService):
                                 lun=data_disk.lun,
                                 name=data_disk.name,
                                 managed_disk=ManagedDiskParameters(
-                                    id=getattr(
-                                        getattr(data_disk, "managed_disk", None),
-                                        "id",
-                                        None,
+                                    id=(
+                                        getattr(
+                                            getattr(data_disk, "managed_disk", None),
+                                            "id",
+                                            None,
+                                        )
+                                        if data_disk.managed_disk
+                                        else None
                                     )
-                                    if data_disk.managed_disk
-                                    else None
                                 ),
                             )
                             for data_disk in getattr(storage_profile, "data_disks", [])
