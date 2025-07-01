@@ -5926,6 +5926,15 @@ class TestTenantFinishACSView:
             .exists()
         )
 
+        # Membership should have been created with default role
+        membership = Membership.objects.using(MainRouter.admin_db).get(
+            user=user, tenant=tenants_fixture[0]
+        )
+        assert membership.role == Membership.RoleChoices.MEMBER
+        assert membership.user == user
+        assert membership.tenant == tenants_fixture[0]
+
+        # Restore original user state
         user.email = original_email
         user.name = original_name
         user.company_name = original_company
