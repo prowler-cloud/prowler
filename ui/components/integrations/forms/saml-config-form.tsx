@@ -121,82 +121,26 @@ export const SamlConfigForm = ({
   };
 
   const acsUrl = emailDomain
-    ? `${apiBaseUrl}/saml/sp/consume/${emailDomain}`
-    : `${apiBaseUrl}/saml/sp/consume/your-domain.com`;
+    ? `${apiBaseUrl}/accounts/saml/${emailDomain}/acs`
+    : `${apiBaseUrl}/accounts/saml/your-domain.com/acs`;
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col space-y-6">
+    <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
       <input type="hidden" name="id" value={id} />
-      <div className="space-y-4">
-        <CustomServerInput
-          name="email_domain"
-          label="Email Domain"
-          placeholder="Enter your email domain (e.g., company.com)"
-          labelPlacement="outside"
-          variant="bordered"
-          isRequired={true}
-          isInvalid={!!state?.errors?.email_domain}
-          errorMessage={state?.errors?.email_domain}
-          value={emailDomain}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setEmailDomain(e.target.value);
-          }}
-        />
-
-        <div className="flex flex-col items-start space-y-2">
-          <span className="text-xs text-default-500">
-            Metadata XML File <span className="text-red-500">*</span>
-          </span>
-          <CustomButton
-            type="button"
-            ariaLabel="Select Metadata XML File"
-            isDisabled={isPending}
-            onPress={() => {
-              const fileInput = document.getElementById(
-                "metadata_xml_file",
-              ) as HTMLInputElement;
-              if (fileInput) {
-                fileInput.click();
-              }
-            }}
-            startContent={<AddIcon size={20} />}
-            className={`h-10 justify-start rounded-medium border-2 text-default-500 ${
-              state?.errors?.metadata_xml
-                ? "border-red-500"
-                : uploadedFile.uploaded
-                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                  : "border-default-200"
-            }`}
-          >
-            <span className="text-small">
-              {uploadedFile.uploaded ? (
-                <span className="flex items-center space-x-2">
-                  <span className="max-w-36 truncate">{uploadedFile.name}</span>
-                </span>
-              ) : (
-                "Choose File"
-              )}
-            </span>
-          </CustomButton>
-
-          <input
-            type="file"
-            id="metadata_xml_file"
-            name="metadata_xml_file"
-            accept=".xml,application/xml,text/xml"
-            className="hidden"
-            disabled={isPending}
-            onChange={handleFileUpload}
-          />
-          <input type="hidden" id="metadata_xml" name="metadata_xml" />
-          <p className="text-xs text-gray-500">
-            Upload your Identity Provider&apos;s SAML metadata XML file
-          </p>
-          <span className="text-xs text-red-500">
-            {state?.errors?.metadata_xml}
-          </span>
-        </div>
-      </div>
+      <CustomServerInput
+        name="email_domain"
+        label="Email Domain"
+        placeholder="Enter your email domain (e.g., company.com)"
+        labelPlacement="outside"
+        variant="bordered"
+        isRequired={true}
+        isInvalid={!!state?.errors?.email_domain}
+        errorMessage={state?.errors?.email_domain}
+        value={emailDomain}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          setEmailDomain(e.target.value);
+        }}
+      />
 
       <div className="space-y-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
         <h3 className="text-lg font-semibold">
@@ -256,7 +200,59 @@ export const SamlConfigForm = ({
           </div>
         </div>
       </div>
+      <div className="flex flex-col items-start space-y-2">
+        <span className="text-xs text-default-500">
+          Metadata XML File <span className="text-red-500">*</span>
+        </span>
+        <CustomButton
+          type="button"
+          ariaLabel="Select Metadata XML File"
+          isDisabled={isPending}
+          onPress={() => {
+            const fileInput = document.getElementById(
+              "metadata_xml_file",
+            ) as HTMLInputElement;
+            if (fileInput) {
+              fileInput.click();
+            }
+          }}
+          startContent={<AddIcon size={20} />}
+          className={`h-10 justify-start rounded-medium border-2 text-default-500 ${
+            state?.errors?.metadata_xml
+              ? "border-red-500"
+              : uploadedFile.uploaded
+                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                : "border-default-200"
+          }`}
+        >
+          <span className="text-small">
+            {uploadedFile.uploaded ? (
+              <span className="flex items-center space-x-2">
+                <span className="max-w-36 truncate">{uploadedFile.name}</span>
+              </span>
+            ) : (
+              "Choose File"
+            )}
+          </span>
+        </CustomButton>
 
+        <input
+          type="file"
+          id="metadata_xml_file"
+          name="metadata_xml_file"
+          accept=".xml,application/xml,text/xml"
+          className="hidden"
+          disabled={isPending}
+          onChange={handleFileUpload}
+        />
+        <input type="hidden" id="metadata_xml" name="metadata_xml" />
+        <p className="text-xs text-gray-500">
+          Upload your Identity Provider&apos;s SAML metadata XML file
+        </p>
+        <span className="text-xs text-red-500">
+          {state?.errors?.metadata_xml}
+        </span>
+      </div>
       <FormButtons setIsOpen={setIsOpen} submitText={id ? "Update" : "Save"} />
     </form>
   );
