@@ -20,7 +20,7 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 - Kustomize
 - OpenAPI
 - SAST, SCA (Software Composition Analysis)
-- And more (see [Checkov documentation](https://www.checkov.io/1.Welcome/Supported%20Infrastructure%20as%20Code%20(IaC)%20frameworks.html))
+- And more (see [Checkov documentation](http://checkov.io/1.Welcome/What%20is%20Checkov.html#supported-iac-types))
 
 ## How It Works
 
@@ -65,8 +65,8 @@ prowler --provider iac --scan-path ./iac --output-formats csv json html
 
 - The IaC provider does not require cloud authentication.
 - It is ideal for CI/CD pipelines and local development environments.
-- For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/).
+- For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html).
 
 ---
 
-For advanced configuration, refer to the [Prowler documentation](../configuration_file.md) and [Checkov documentation](https://www.checkov.io/).
+For advanced configuration, refer to the [Prowler documentation](../configuration_file.md) and [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html).
