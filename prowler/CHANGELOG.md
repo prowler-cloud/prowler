@@ -2,6 +2,16 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+---
+
+## [v5.9.0] (Prowler UNRELEASED)
+
+### Added
+
+- `vm_enforce_ssh_authentication` check for Azure provider [(#8149)](https://github.com/prowler-cloud/prowler/pull/8149)
+
+---
+
 ## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
