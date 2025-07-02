@@ -5,7 +5,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
 
 ### 🚀 Added
+
 ### 🔄 Changed
+
 ### 🐞 Fixed
 
 ---

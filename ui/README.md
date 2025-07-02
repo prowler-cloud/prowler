@@ -2,10 +2,12 @@
 
 This repository hosts the UI component for Prowler, providing a user-friendly web interface to interact seamlessly with Prowler's features.
 
-
 ## 🚀 Production deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -14,16 +16,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target prod
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console
@@ -48,8 +55,11 @@ npm start
 ```
 
 ## 🧪 Development deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -58,16 +68,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target dev
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console

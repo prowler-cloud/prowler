@@ -115,7 +115,7 @@ export const AuthForm = ({
           email: data.email,
           name: data.name,
           company: data.company,
-        });        
+        });
         toast({
           title: "Success!",
           description: "The user was registered successfully.",

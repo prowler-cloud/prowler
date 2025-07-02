@@ -32,7 +32,6 @@
 }
 
 @layer utilities {
-
   /* Hide scrollbar */
   .no-scrollbar {
     scrollbar-width: none;
@@ -44,7 +43,6 @@
 }
 
 @layer components {
-
   .animate-download-icon polyline,
   .animate-download-icon line {
     @apply animate-drop-arrow;
