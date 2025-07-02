@@ -40,7 +40,7 @@ You can manage SAML settings via the API. Prowler provides full CRUD support for
 
 ### Description
 
-This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
+This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists, it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
 
 - POST /api/v1/accounts/saml/initiate/
 
@@ -102,7 +102,7 @@ The SAML metadata XML file must meet the following requirements:
 **Example:**
 
 ```xml
-<?xml version='1.0' encoding='UTF-8'?><md:EntityDescriptor entityID='http://www.okta.com/exkotjzsj3Ms39EjW5d7' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'><md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'><md:KeyDescriptor use='signing'><ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'><ds:X509Data><ds:X509Certificate>MIIDqDCCApCgAwIBAgIGAZbspLXlMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/></md:IDPSSODescriptor></md:EntityDescriptor>
+<?xml version='1.0' encoding='UTF-8'?><md:EntityDescriptor entityID='http://www.okta.com/exkotjzsj3Ms39EjW5d7' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'><md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'><md:KeyDescriptor use='signing'><ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'><ds:X509Data><ds:X509Certificate>MIIDqDCCAp...</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/></md:IDPSSODescriptor></md:EntityDescriptor>
 ```
 
 ![SAML Integration: UI Guide](../img/saml-step-3.png)
