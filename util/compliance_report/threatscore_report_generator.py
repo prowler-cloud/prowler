@@ -44,6 +44,7 @@ def generate_threatscore_report(
     output_path: str,
     email: str,
     password: str,
+    token: str,
     base_url: str,
     only_failed: bool = True,
     min_risk_level: int = 4,
@@ -57,6 +58,7 @@ def generate_threatscore_report(
     - output_path: Output PDF file path (e.g., "threatscore_report.pdf").
     - email: Email for the API authentication.
     - password: Password for the API.
+    - token: Token for the API.
     - base_url: Base URL for the API.
     - only_failed: If True, only requirements with status "FAIL" will be included in the list of requirements.
     - min_risk_level: Minimum risk level for critical failed requirements.
@@ -134,40 +136,46 @@ def generate_threatscore_report(
         textColor=colors.Color(0.2, 0.2, 0.2),
         fontName="PlusJakartaSans",
     )
-
-    url_credentials = f"{base_url}/api/v1/tokens"
-    payload = {
-        "data": {
-            "type": "tokens",
-            "attributes": {
-                "email": email,
-                "password": password,
-            },
+    if not token:
+        if not email or not password:
+            raise Exception("Email and password are required to generate a token")
+        url_credentials = f"{base_url}/api/v1/tokens"
+        payload = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": email,
+                    "password": password,
+                },
+            }
         }
-    }
-    resp_credentials = requests.post(
-        url_credentials,
-        json=payload,
-        headers={"Content-Type": "application/vnd.api+json"},
-    ).json()
-    if resp_credentials.get("errors"):
-        print(resp_credentials.get("errors"))
-        raise Exception(resp_credentials.get("errors"))
-    token = resp_credentials.get("data", {}).get("attributes", {}).get("access")
+        resp_credentials = requests.post(
+            url_credentials,
+            json=payload,
+            headers={"Content-Type": "application/vnd.api+json"},
+        ).json()
+        if resp_credentials.get("errors"):
+            print(resp_credentials.get("errors"))
+            raise Exception(resp_credentials.get("errors"))
+        token = resp_credentials.get("data", {}).get("attributes", {}).get("access")
 
-    url_reqs = f"{base_url}/api/v1/compliance-overviews/requirements?filter[compliance_id]={compliance_id}&filter[scan_id]={scan_id}"
-    resp_reqs = (
-        requests.get(url_reqs, headers={"Authorization": f"Bearer {token}"})
-        .json()
-        .get("data", [])
-    )
+    try:
+        url_reqs = f"{base_url}/api/v1/compliance-overviews/requirements?filter[compliance_id]={compliance_id}&filter[scan_id]={scan_id}"
+        resp_reqs = (
+            requests.get(url_reqs, headers={"Authorization": f"Bearer {token}"})
+            .json()
+            .get("data", [])
+        )
 
-    url_attrs = f"{base_url}/api/v1/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
-    resp_attrs = (
-        requests.get(url_attrs, headers={"Authorization": f"Bearer {token}"})
-        .json()
-        .get("data", [])
-    )
+        url_attrs = f"{base_url}/api/v1/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
+        resp_attrs = (
+            requests.get(url_attrs, headers={"Authorization": f"Bearer {token}"})
+            .json()
+            .get("data", [])
+        )
+    except Exception as e:
+        print(e)
+        raise Exception(e)
 
     compliance_name = resp_reqs[0]["attributes"]["framework"]
     compliance_version = resp_reqs[0]["attributes"]["version"]
@@ -877,6 +885,11 @@ if __name__ == "__main__":
         help="Only include failed requirements in the list of requirements",
     )
     parser.add_argument(
+        "--token",
+        default="",
+        help="Token for the API",
+    )
+    parser.add_argument(
         "--base-url",
         default="http://localhost:8080",
         help="Base URL for the API",
@@ -895,6 +908,7 @@ if __name__ == "__main__":
         args.output,
         args.email,
         args.password,
+        args.token,
         args.base_url,
         args.only_failed,
         args.min_risk_level,
