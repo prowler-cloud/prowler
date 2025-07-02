@@ -1,20 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
-
-const samlConfigFormSchema = z.object({
-  email_domain: z
-    .string()
-    .trim()
-    .min(1, { message: "Email domain is required" }),
-  metadata_xml: z
-    .string()
-    .trim()
-    .min(1, { message: "Metadata XML is required" }),
-});
+import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const createSamlConfig = async (_prevState: any, formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
@@ -153,6 +142,39 @@ export const getSamlConfig = async () => {
   } catch (error) {
     console.error("Error fetching SAML config:", error);
     return undefined;
+  }
+};
+
+export const deleteSamlConfig = async (id: string) => {
+  const headers = await getAuthHeaders({ contentType: true });
+
+  try {
+    const url = new URL(`${apiBaseUrl}/saml-config/${id}`);
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.errors?.[0]?.detail ||
+          `Failed to delete SAML config: ${response.statusText}`,
+      );
+    }
+
+    revalidatePath("/integrations");
+    return { success: "SAML configuration deleted successfully!" };
+  } catch (error) {
+    console.error("Error deleting SAML config:", error);
+    return {
+      errors: {
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error deleting SAML configuration. Please try again.",
+      },
+    };
   }
 };
 
