@@ -11,7 +11,7 @@ from api.rls import BaseSecurityConstraint
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0001_initial'),
+        ("api", "0033_samltoken"),
     ]
 
     operations = [
