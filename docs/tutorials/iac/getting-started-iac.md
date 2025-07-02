@@ -30,7 +30,7 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 
 ## Usage
 
-To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
+To run Prowler with the IaC provider, use the `iac` argument. You can specify the directory to scan, frameworks to include, and paths to exclude.
 
 ### Basic Example
 
