@@ -41,9 +41,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                             for action in actions:
                                 if action in ["sts:AssumeRole", "sts:*", "*"]:
                                     report.status = "FAIL"
-                                    report.status_extended = (
-                                        f"Custom Policy {policy.name} allows permissive STS Role assumption."
-                                    )
+                                    report.status_extended = f"Custom Policy {policy.name} allows permissive STS Role assumption."
                                     break
                             if report.status == "FAIL":
                                 break

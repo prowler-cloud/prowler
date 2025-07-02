@@ -252,6 +252,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         )["Policy"]["Arn"]
 
         from prowler.providers.aws.services.iam.iam_service import IAM
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -265,11 +266,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                     iam_no_custom_policy_permissive_role_assumption,
                 )
+
                 check = iam_no_custom_policy_permissive_role_assumption()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert result[0].resource_arn == arn
-                assert search("allows permissive STS Role assumption", result[0].status_extended)
+                assert search(
+                    "allows permissive STS Role assumption", result[0].status_extended
+                )
                 assert result[0].resource_id == policy_name
 
     @mock_aws
@@ -282,10 +286,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 {
                     "Effect": "Allow",
                     "Action": "sts:AssumeRole",
-                    "Resource": [
-                        "arn:aws:iam::123456789012:role/SomeRole",
-                        "*"
-                    ],
+                    "Resource": ["arn:aws:iam::123456789012:role/SomeRole", "*"],
                 }
             ],
         }
@@ -294,6 +295,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         )["Policy"]["Arn"]
 
         from prowler.providers.aws.services.iam.iam_service import IAM
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -307,11 +309,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                     iam_no_custom_policy_permissive_role_assumption,
                 )
+
                 check = iam_no_custom_policy_permissive_role_assumption()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert result[0].resource_arn == arn
-                assert search("allows permissive STS Role assumption", result[0].status_extended)
+                assert search(
+                    "allows permissive STS Role assumption", result[0].status_extended
+                )
                 assert result[0].resource_id == policy_name
 
     @mock_aws
@@ -326,8 +331,8 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                     "Action": "sts:AssumeRole",
                     "Resource": [
                         "arn:aws:iam::123456789012:role/eks-admin",
-                        "arn:aws:iam::*:role/eks-*"
-                    ]
+                        "arn:aws:iam::*:role/eks-*",
+                    ],
                 }
             ],
         }
@@ -336,6 +341,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         )["Policy"]["Arn"]
 
         from prowler.providers.aws.services.iam.iam_service import IAM
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -349,11 +355,14 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                     iam_no_custom_policy_permissive_role_assumption,
                 )
+
                 check = iam_no_custom_policy_permissive_role_assumption()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert result[0].resource_arn == arn
-                assert search("allows permissive STS Role assumption", result[0].status_extended)
+                assert search(
+                    "allows permissive STS Role assumption", result[0].status_extended
+                )
 
     @mock_aws
     def test_policy_resource_list_with_only_wildcarded_arns_should_fail(self):
@@ -367,8 +376,8 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                     "Action": "sts:AssumeRole",
                     "Resource": [
                         "arn:aws:iam::*:role/team-*",
-                        "arn:aws:iam::*:role/dev-*"
-                    ]
+                        "arn:aws:iam::*:role/dev-*",
+                    ],
                 }
             ],
         }
@@ -377,6 +386,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
         )["Policy"]["Arn"]
 
         from prowler.providers.aws.services.iam.iam_service import IAM
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -390,8 +400,11 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 from prowler.providers.aws.services.iam.iam_no_custom_policy_permissive_role_assumption.iam_no_custom_policy_permissive_role_assumption import (
                     iam_no_custom_policy_permissive_role_assumption,
                 )
+
                 check = iam_no_custom_policy_permissive_role_assumption()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert result[0].resource_arn == arn
-                assert search("allows permissive STS Role assumption", result[0].status_extended)
+                assert search(
+                    "allows permissive STS Role assumption", result[0].status_extended
+                )
