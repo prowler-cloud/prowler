@@ -1,10 +1,13 @@
-from unittest import mock
 from unittest.mock import patch
-
-from azure.mgmt.compute.models import ManagedDiskParameters, OSDisk, StorageProfile
 
 from prowler.providers.azure.services.vm.vm_service import (
     Disk,
+    ManagedDiskParameters,
+    OperatingSystemType,
+    OSDisk,
+    SecurityProfile,
+    StorageProfile,
+    UefiSettings,
     VirtualMachine,
     VirtualMachines,
 )
@@ -21,9 +24,9 @@ def mock_vm_get_virtual_machines(_):
                 resource_id="/subscriptions/resource_id",
                 resource_name="VMTest",
                 location="location",
-                security_profile=mock.MagicMock(
+                security_profile=SecurityProfile(
                     security_type="TrustedLaunch",
-                    uefi_settings=mock.MagicMock(
+                    uefi_settings=UefiSettings(
                         secure_boot_enabled=True,
                         v_tpm_enabled=True,
                     ),
@@ -31,7 +34,8 @@ def mock_vm_get_virtual_machines(_):
                 extensions=[],
                 storage_profile=StorageProfile(
                     os_disk=OSDisk(
-                        create_option="FromImage",
+                        name="os_disk_name",
+                        operating_system_type=OperatingSystemType.LINUX,
                         managed_disk=ManagedDiskParameters(id="managed_disk_id"),
                     ),
                     data_disks=[],
@@ -49,7 +53,7 @@ def mock_vm_get_virtual_machines_with_none(_):
                 resource_name="VMWithNoneValues",
                 location="location",
                 security_profile=None,
-                extensions=None,
+                extensions=[],
                 storage_profile=None,
             ),
             "vm_id-2": VirtualMachine(
@@ -57,10 +61,10 @@ def mock_vm_get_virtual_machines_with_none(_):
                 resource_name="VMWithPartialNone",
                 location="location",
                 security_profile=None,
-                extensions=None,
+                extensions=[],
                 storage_profile=StorageProfile(
                     os_disk=None,
-                    data_disks=None,
+                    data_disks=[],
                 ),
             ),
         }
@@ -180,5 +184,5 @@ class Test_VirtualMachines_NoneCases:
         virtual_machines = VirtualMachines(set_mocked_azure_provider())
         vm_2 = virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-2"]
         assert vm_2.storage_profile.os_disk is None
-        assert vm_2.storage_profile.data_disks is None
+        assert vm_2.storage_profile.data_disks == []
         assert vm_2.resource_name == "VMWithPartialNone"
