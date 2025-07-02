@@ -3,17 +3,21 @@ import { Suspense } from "react";
 
 import { getProvider, getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
-import { FilterControls, filterScans } from "@/components/filters";
 import {
   AutoRefresh,
   NoProvidersAdded,
   NoProvidersConnected,
+  ScansFilters,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
 import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Scans({
@@ -29,6 +33,7 @@ export default async function Scans({
     filters: {
       "filter[connected]": true,
     },
+    pageSize: 50,
   });
 
   const providerInfo =
@@ -42,9 +47,9 @@ export default async function Scans({
 
   const providersCountConnected = await getProviders({
     filters: { "filter[connected]": true },
+    pageSize: 50,
   });
-  const thereIsNoProviders =
-    !providersCountConnected?.data || providersCountConnected.data.length === 0;
+  const thereIsNoProviders = !providersCountConnected?.data;
 
   const thereIsNoProvidersConnected = providersCountConnected?.data?.every(
     (provider: ProviderProps) => !provider.attributes.connection.connected,
@@ -59,47 +64,43 @@ export default async function Scans({
       scan.attributes.state === "available",
   );
 
+  // Extract provider UIDs and create provider details mapping for filtering
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMapping(providerUIDs, providersData)
+    : [];
+
+  if (thereIsNoProviders) {
+    return (
+      <ContentLayout title="Scans" icon="lucide:scan-search">
+        <NoProvidersAdded />
+      </ContentLayout>
+    );
+  }
+
   return (
-    <>
-      {thereIsNoProviders && (
-        <>
-          <Spacer y={4} />
-          <NoProvidersAdded />
-        </>
-      )}
-
-      {!thereIsNoProviders && (
-        <>
-          {thereIsNoProvidersConnected ? (
-            <ContentLayout title="Scans" icon="lucide:scan-search">
-              <Spacer y={8} />
-              <NoProvidersConnected />
-              <Spacer y={8} />
-            </ContentLayout>
-          ) : (
-            <ContentLayout title="Scans" icon="lucide:scan-search">
-              <AutoRefresh hasExecutingScan={hasExecutingScan} />
-              <LaunchScanWorkflow providers={providerInfo} />
-              <Spacer y={8} />
-            </ContentLayout>
-          )}
-
-          <div className="grid grid-cols-12 items-start gap-4 px-6 py-4 sm:px-8 xl:px-10">
-            <div className="col-span-12">
-              <div className="flex flex-row items-center justify-between">
-                <DataTableFilterCustom filters={filterScans || []} />
-                <Spacer x={4} />
-                <FilterControls />
-              </div>
-              <Spacer y={8} />
-              <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-                <SSRDataTableScans searchParams={searchParams} />
-              </Suspense>
-            </div>
-          </div>
-        </>
-      )}
-    </>
+    <ContentLayout title="Scans" icon="lucide:scan-search">
+      <AutoRefresh hasExecutingScan={hasExecutingScan} />
+      <>
+        {thereIsNoProvidersConnected ? (
+          <>
+            <Spacer y={8} />
+            <NoProvidersConnected />
+            <Spacer y={8} />
+          </>
+        ) : (
+          <LaunchScanWorkflow providers={providerInfo} />
+        )}
+        <ScansFilters
+          providerUIDs={providerUIDs}
+          providerDetails={providerDetails}
+        />
+        <Spacer y={8} />
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+          <SSRDataTableScans searchParams={searchParams} />
+        </Suspense>
+      </>
+    </ContentLayout>
   );
 }
 

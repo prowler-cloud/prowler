@@ -9,22 +9,26 @@ import {
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { filterFindings } from "@/components/filters/data-filters";
-import { FilterControls } from "@/components/filters/filter-controls";
+import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   ColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import {
   createDict,
+  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { ProviderAccountProps, ProviderProps } from "@/types";
-import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
+import { FilterEntity, ScanEntity, ScanProps } from "@/types";
+import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -43,8 +47,8 @@ export default async function Findings({
       sort: encodedSort,
       filters,
     }),
-    getProviders({}),
-    getScans({}),
+    getProviders({ pageSize: 50 }),
+    getScans({ pageSize: 50 }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -52,82 +56,41 @@ export default async function Findings({
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
-  // Get findings data
 
-  // Extract provider UIDs
-  const providerUIDs: string[] = Array.from(
-    new Set(
-      providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes?.uid)
-        .filter(Boolean),
-    ),
-  );
-
-  const providerDetails: Array<{ [uid: string]: ProviderAccountProps }> =
-    providerUIDs.map((uid) => {
-      const provider = providersData.data.find(
-        (p: { attributes: { uid: string } }) => p.attributes?.uid === uid,
-      );
-
-      return {
-        [uid]: {
-          provider: provider?.attributes?.provider || "",
-          uid: uid,
-          alias: provider?.attributes?.alias ?? null,
-        },
-      };
-    });
+  // Extract provider UIDs and details using helper functions
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
+        [uid: string]: FilterEntity;
+      }[])
+    : [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
-  const completedScans = scansData?.data
-    ?.filter(
-      (scan: ScanProps) =>
-        scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1,
-    )
-    .map((scan: ScanProps) => ({
-      id: scan.id,
-      name: scan.attributes.name,
-    }));
+  const completedScans = scansData?.data?.filter(
+    (scan: ScanProps) =>
+      scan.attributes.state === "completed" &&
+      scan.attributes.unique_resource_count > 1,
+  );
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
+  const scanDetails = createScanDetailsMapping(
+    completedScans,
+    providersData,
+  ) as { [uid: string]: ScanEntity }[];
+
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
-      <FilterControls search date />
-      <Spacer y={8} />
-      <DataTableFilterCustom
-        filters={[
-          ...filterFindings,
-          {
-            key: "region__in",
-            labelCheckboxGroup: "Regions",
-            values: uniqueRegions,
-          },
-          {
-            key: "service__in",
-            labelCheckboxGroup: "Services",
-            values: uniqueServices,
-          },
-          {
-            key: "resource_type__in",
-            labelCheckboxGroup: "Resource Type",
-            values: uniqueResourceTypes,
-          },
-          {
-            key: "provider_uid__in",
-            labelCheckboxGroup: "Provider UID",
-            values: providerUIDs,
-            valueLabelMapping: providerDetails,
-          },
-          {
-            key: "scan__in",
-            labelCheckboxGroup: "Scan ID",
-            values: completedScanIds,
-          },
-        ]}
-        defaultOpen={true}
+      <FindingsFilters
+        providerUIDs={providerUIDs}
+        providerDetails={providerDetails}
+        completedScans={completedScans || []}
+        completedScanIds={completedScanIds}
+        scanDetails={scanDetails}
+        uniqueRegions={uniqueRegions}
+        uniqueServices={uniqueServices}
+        uniqueResourceTypes={uniqueResourceTypes}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>

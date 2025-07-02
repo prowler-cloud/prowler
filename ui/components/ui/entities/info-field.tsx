@@ -5,9 +5,10 @@ import { InfoIcon } from "lucide-react";
 interface InfoFieldProps {
   label: string;
   children: React.ReactNode;
-  variant?: "default" | "simple";
+  variant?: "default" | "simple" | "transparent";
   className?: string;
   tooltipContent?: string;
+  inline?: boolean;
 }
 
 <Tooltip
@@ -25,7 +26,28 @@ export const InfoField = ({
   variant = "default",
   tooltipContent,
   className,
+  inline = false,
 }: InfoFieldProps) => {
+  if (inline) {
+    return (
+      <div className={clsx("flex items-center gap-2", className)}>
+        <span className="text-xs font-bold text-gray-500 dark:text-prowler-theme-pale/70">
+          <span className="flex items-center gap-1">
+            {label}:
+            {tooltipContent && (
+              <Tooltip className="text-xs" content={tooltipContent}>
+                <div className="flex cursor-pointer items-center gap-2">
+                  <InfoIcon className="mb-1 text-primary" size={12} />
+                </div>
+              </Tooltip>
+            )}
+          </span>
+        </span>
+        <div className="text-sm">{children}</div>
+      </div>
+    );
+  }
+
   return (
     <div className={clsx("flex flex-col gap-1", className)}>
       <span className="text-xs font-bold text-gray-500 dark:text-prowler-theme-pale/70">
@@ -45,8 +67,10 @@ export const InfoField = ({
         <div className="text-small text-gray-900 dark:text-prowler-theme-pale">
           {children}
         </div>
+      ) : variant === "transparent" ? (
+        <div className="text-sm">{children}</div>
       ) : (
-        <div className="rounded-lg bg-gray-50 px-3 py-2 text-small text-gray-900 dark:bg-slate-800 dark:text-prowler-theme-pale">
+        <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:bg-slate-800 dark:text-prowler-theme-pale">
           {children}
         </div>
       )}

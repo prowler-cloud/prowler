@@ -4,6 +4,9 @@ import pytest
 
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
+    M365ExchangeConnectionError,
+    M365GraphConnectionError,
+    M365TeamsConnectionError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
@@ -75,6 +78,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@example.com",
             passwd="test_password",
+            encrypted_passwd="test_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -89,13 +93,19 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
+        # Mock encrypt_password to return a known value
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
         session.execute = MagicMock()
 
         session.init_credential(credentials)
 
+        # Verify encrypt_password was called
+        session.encrypt_password.assert_any_call(credentials.passwd)
+
+        # Verify execute was called with the correct commands
         session.execute.assert_any_call(f'$user = "{credentials.user}"')
         session.execute.assert_any_call(
-            f'$secureString = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$secureString = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
             "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
@@ -116,6 +126,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
             passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -130,11 +141,9 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock read_output to return the decrypted password
-        session.read_output = MagicMock(return_value="decrypted_password")
-
-        # Mock execute to return the result of read_output
-        session.execute = MagicMock(side_effect=lambda _: session.read_output())
+        # Mock encrypt_password to return a known value
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
+        session.execute = MagicMock()
 
         # Execute the test
         result = session.test_credentials(credentials)
@@ -142,13 +151,10 @@ class Testm365PowerShell:
 
         # Verify execute was called with the correct commands
         session.execute.assert_any_call(
-            f'$securePassword = "{credentials.passwd}" | ConvertTo-SecureString'
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
         session.execute.assert_any_call(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{credentials.user}", $securePassword)\n'
-        )
-        session.execute.assert_any_call(
-            'Write-Output "$($credential.GetNetworkCredential().Password)"'
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
 
         # Verify MSAL was called with the correct parameters
@@ -159,10 +165,41 @@ class Testm365PowerShell:
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
             username="test@contoso.onmicrosoft.com",
-            password="decrypted_password",
+            password="test_password",  # Original password, not encrypted
             scopes=["https://graph.microsoft.com/.default"],
         )
         session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_credentials_application_auth(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        with patch(
+            "prowler.providers.m365.lib.powershell.m365_powershell.M365Credentials",
+            autospec=True,
+        ) as mock_creds:
+            credentials = mock_creds.return_value
+            credentials.user = ""
+            credentials.passwd = ""
+            credentials.encrypted_passwd = ""
+            credentials.client_id = "test_client_id"
+            credentials.client_secret = "test_client_secret"
+            credentials.tenant_id = "test_tenant_id"
+            identity = M365IdentityInfo(
+                identity_id="test_id",
+                identity_type="Application",
+                tenant_id="test_tenant",
+                tenant_domain="contoso.onmicrosoft.com",
+                tenant_domains=["contoso.onmicrosoft.com"],
+                location="test_location",
+            )
+            session = M365PowerShell(credentials, identity)
+            session.execute = MagicMock(return_value="sometoken")
+
+            result = session.test_credentials(credentials)
+            assert result is True
+            session.execute.assert_any_call("Write-Output $graphToken")
+            session.close()
 
     @patch("subprocess.Popen")
     @patch("msal.ConfidentialClientApplication")
@@ -229,6 +266,7 @@ class Testm365PowerShell:
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
             passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
             client_id="test_client_id",
             client_secret="test_client_secret",
             tenant_id="test_tenant_id",
@@ -253,7 +291,12 @@ class Testm365PowerShell:
         session.process.stdin.write = MagicMock()
         session.read_output = MagicMock(return_value="decrypted_password")
 
-        assert session.test_credentials(credentials) is False
+        with pytest.raises(Exception) as exc_info:
+            session.test_credentials(credentials)
+        assert (
+            "Unexpected error: Acquiring token in behalf of user did not return a result."
+            in str(exc_info.value)
+        )
 
         mock_msal.assert_called_once_with(
             client_id="test_client_id",
@@ -262,7 +305,65 @@ class Testm365PowerShell:
         )
         mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
             username="test@contoso.onmicrosoft.com",
-            password="decrypted_password",
+            password="test_password",
+            scopes=["https://graph.microsoft.com/.default"],
+        )
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    @patch("msal.ConfidentialClientApplication")
+    def test_test_credentials_auth_failure_no_access_token(self, mock_msal, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_msal_instance = MagicMock()
+        mock_msal.return_value = mock_msal_instance
+        mock_msal_instance.acquire_token_by_username_password.return_value = {
+            "error_description": "invalid_grant: authentication failed"
+        }
+
+        credentials = M365Credentials(
+            user="test@contoso.onmicrosoft.com",
+            passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="contoso.onmicrosoft.com",
+            tenant_domains=["contoso.onmicrosoft.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock the execute method to return the decrypted password
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output" in command:
+                return "decrypted_password"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+        session.process.stdin.write = MagicMock()
+        session.read_output = MagicMock(return_value="decrypted_password")
+
+        with pytest.raises(Exception) as exc_info:
+            session.test_credentials(credentials)
+        assert "MsGraph Error invalid_grant: authentication failed" in str(
+            exc_info.value
+        )
+
+        mock_msal.assert_called_once_with(
+            client_id="test_client_id",
+            client_credential="test_client_secret",
+            authority="https://login.microsoftonline.com/test_tenant_id",
+        )
+        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
+            username="test@contoso.onmicrosoft.com",
+            password="test_password",
             scopes=["https://graph.microsoft.com/.default"],
         )
 
@@ -447,12 +548,13 @@ class Testm365PowerShell:
             # Verify successful initialization
             assert result is True
             # Verify that execute was called for each module
-            assert mock_execute_obj.call_count == 6  # 2 modules * 3 commands each
+            assert mock_execute_obj.call_count == 9  # 3 modules * 3 commands each
             # Verify success messages were logged
             mock_info.assert_any_call(
                 "Successfully installed module ExchangeOnlineManagement"
             )
             mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
+            mock_info.assert_any_call("Successfully installed module MSAL.PS")
 
     @patch("subprocess.Popen")
     def test_initialize_m365_powershell_modules_failure(self, mock_popen):
@@ -515,11 +617,12 @@ class Testm365PowerShell:
             main()
 
             # Verify all info messages were logged in the correct order
-            assert mock_info.call_count == 3
+            assert mock_info.call_count == 4
             mock_info.assert_has_calls(
                 [
                     call("Successfully installed module ExchangeOnlineManagement"),
                     call("Successfully installed module MicrosoftTeams"),
+                    call("Successfully installed module MSAL.PS"),
                     call("M365 PowerShell modules initialized successfully"),
                 ]
             )
@@ -561,3 +664,309 @@ class Testm365PowerShell:
             )
             # Verify no info messages were logged
             mock_info.assert_not_called()
+
+    @patch("subprocess.Popen")
+    def test_test_graph_connection_success(self, mock_popen):
+        """Test test_graph_connection when token is valid"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return a valid token
+        session.execute = MagicMock(return_value="valid_token")
+
+        result = session.test_graph_connection()
+
+        assert result is True
+        session.execute.assert_called_once_with("Write-Output $graphToken")
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_graph_connection_empty_token(self, mock_popen):
+        """Test test_graph_connection when token is empty"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return empty token
+        session.execute = MagicMock(return_value="")
+
+        with pytest.raises(M365GraphConnectionError) as exc_info:
+            session.test_graph_connection()
+
+        assert "Microsoft Graph token is empty or invalid" in str(exc_info.value)
+        session.execute.assert_called_once_with("Write-Output $graphToken")
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_graph_connection_exception(self, mock_popen):
+        """Test test_graph_connection when an exception occurs"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to raise an exception
+        session.execute = MagicMock(side_effect=Exception("PowerShell error"))
+
+        with pytest.raises(M365GraphConnectionError) as exc_info:
+            session.test_graph_connection()
+
+        assert "Failed to connect to Microsoft Graph API: PowerShell error" in str(
+            exc_info.value
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_teams_connection_success(self, mock_popen):
+        """Test test_teams_connection when token is valid"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return valid responses
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output $teamsToken" in command:
+                return "valid_teams_token"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        result = session.test_teams_connection()
+
+        assert result is True
+        # Verify all expected PowerShell commands were called
+        assert session.execute.call_count == 3
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_teams_connection_empty_token(self, mock_popen):
+        """Test test_teams_connection when token is empty"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return empty token when checking
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output $teamsToken" in command:
+                return ""
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        with pytest.raises(M365TeamsConnectionError) as exc_info:
+            session.test_teams_connection()
+
+        assert "Microsoft Teams token is empty or invalid" in str(exc_info.value)
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_teams_connection_exception(self, mock_popen):
+        """Test test_teams_connection when an exception occurs"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to raise an exception
+        session.execute = MagicMock(side_effect=Exception("Teams API error"))
+
+        with pytest.raises(M365TeamsConnectionError) as exc_info:
+            session.test_teams_connection()
+
+        assert "Failed to connect to Microsoft Teams API: Teams API error" in str(
+            exc_info.value
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_exchange_connection_success(self, mock_popen):
+        """Test test_exchange_connection when token is valid"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return valid responses
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output $exchangeToken" in command:
+                return "valid_exchange_token"
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        result = session.test_exchange_connection()
+
+        assert result is True
+        # Verify all expected PowerShell commands were called
+        assert session.execute.call_count == 3
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_exchange_connection_empty_token(self, mock_popen):
+        """Test test_exchange_connection when token is empty"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to return empty token when checking
+        def mock_execute(command, *args, **kwargs):
+            if "Write-Output $exchangeToken" in command:
+                return ""
+            return None
+
+        session.execute = MagicMock(side_effect=mock_execute)
+
+        with pytest.raises(M365ExchangeConnectionError) as exc_info:
+            session.test_exchange_connection()
+
+        assert "Exchange Online token is empty or invalid" in str(exc_info.value)
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_exchange_connection_exception(self, mock_popen):
+        """Test test_exchange_connection when an exception occurs"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock execute to raise an exception
+        session.execute = MagicMock(side_effect=Exception("Exchange API error"))
+
+        with pytest.raises(M365ExchangeConnectionError) as exc_info:
+            session.test_exchange_connection()
+
+        assert "Failed to connect to Exchange Online API: Exchange API error" in str(
+            exc_info.value
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_encrypt_password(self, mock_popen):
+        credentials = M365Credentials(user="test@example.com", passwd="test_password")
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Test non-Windows system (should use utf-16le hex encoding)
+        from unittest import mock
+
+        with mock.patch("platform.system", return_value="Linux"):
+            result = session.encrypt_password("password123")
+            expected = "password123".encode("utf-16le").hex()
+            assert result == expected
+
+        # Test Windows system with tuple return
+        with mock.patch("platform.system", return_value="Windows"):
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.return_value = (None, b"encrypted_bytes")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            result = session.encrypt_password("password123")
+            assert result == b"encrypted_bytes".hex()
+
+            # Clean up mock
+            del sys.modules["win32crypt"]
+
+        # Test error handling
+        with mock.patch("platform.system", return_value="Windows"):
+            import sys
+
+            win32crypt_mock = mock.MagicMock()
+            win32crypt_mock.CryptProtectData.side_effect = Exception("Test error")
+            sys.modules["win32crypt"] = win32crypt_mock
+
+            with pytest.raises(Exception) as exc_info:
+                session.encrypt_password("password123")
+            assert "Error encrypting password: Test error" in str(exc_info.value)
+
+            # Clean up mock
+            del sys.modules["win32crypt"]
+
+        session.close()

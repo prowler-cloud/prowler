@@ -55,3 +55,22 @@ class TestScheduleProviderScan:
         assert "There is already a scheduled scan for this provider." in str(
             exc_info.value
         )
+
+    def test_remove_periodic_task(self, providers_fixture):
+        provider_instance = providers_fixture[0]
+
+        assert Scan.objects.count() == 0
+        with patch("tasks.tasks.perform_scheduled_scan_task.apply_async"):
+            schedule_provider_scan(provider_instance)
+
+        assert Scan.objects.count() == 1
+        scan = Scan.objects.first()
+        periodic_task = scan.scheduler_task
+        assert periodic_task is not None
+
+        periodic_task.delete()
+
+        scan.refresh_from_db()
+        # Assert the scan still exists but its scheduler_task is set to None
+        # Otherwise, Scan.DoesNotExist would be raised
+        assert Scan.objects.get(id=scan.id).scheduler_task is None

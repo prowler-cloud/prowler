@@ -243,6 +243,14 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                     )
+                elif "iac" in provider_class_name.lower():
+                    provider_class(
+                        scan_path=arguments.scan_path,
+                        frameworks=arguments.frameworks,
+                        exclude_path=arguments.exclude_path,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

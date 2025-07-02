@@ -1,13 +1,21 @@
 import json
+import logging
 import re
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from cryptography.fernet import Fernet
+from allauth.socialaccount.models import SocialApp
+from config.custom_logging import BackendLogger
+from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -19,6 +27,7 @@ from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
+from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
     FindingDeltaEnumField,
@@ -48,6 +57,8 @@ fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
 # Convert Prowler Severity enum to Django TextChoices
 SeverityChoices = enum_to_choices(Severity)
+
+logger = logging.getLogger(BackendLogger.API)
 
 
 class StatusChoices(models.TextChoices):
@@ -218,7 +229,11 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_m365_uid(value):
-        if not re.match(r"^[a-zA-Z0-9-]+\.com$", value):
+        if not re.match(
+            r"""^(?!-)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.(?!-)[A-Za-z0-9]"""
+            r"""(?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$""",
+            value,
+        ):
             raise ModelValidationError(
                 detail="M365 domain ID must be a valid domain.",
                 code="m365-uid",
@@ -238,7 +253,7 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
+            r"^[a-zA-Z0-9][a-zA-Z0-9._@:\/-]{1,250}$",
             value,
         ):
             raise ModelValidationError(
@@ -423,9 +438,10 @@ class Scan(RowLevelSecurityProtectedModel):
     completed_at = models.DateTimeField(null=True, blank=True)
     next_scan_at = models.DateTimeField(null=True, blank=True)
     scheduler_task = models.ForeignKey(
-        PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
+        PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
+
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -750,9 +766,17 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 condition=Q(delta="new"),
                 name="find_delta_new_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "uid", "-inserted_at"],
+                name="find_tenant_uid_inserted_idx",
+            ),
             GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
             GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
             GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
+            models.Index(
+                fields=["tenant_id", "scan_id", "check_id"],
+                name="find_tenant_scan_check_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -841,6 +865,7 @@ class ProviderSecret(RowLevelSecurityProtectedModel):
     class TypeChoices(models.TextChoices):
         STATIC = "static", _("Key-value pairs")
         ROLE = "role", _("Role assumption")
+        SERVICE_ACCOUNT = "service_account", _("GCP Service Account Key")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -1133,6 +1158,78 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
         resource_name = "compliance-overviews"
 
 
+class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    compliance_id = models.TextField(blank=False)
+    framework = models.TextField(blank=False)
+    version = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    region = models.TextField(blank=False)
+
+    requirement_id = models.TextField(blank=False)
+    requirement_status = StatusEnumField(choices=StatusChoices)
+    passed_checks = models.IntegerField(default=0)
+    failed_checks = models.IntegerField(default=0)
+    total_checks = models.IntegerField(default=0)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_requirements_overviews",
+        related_query_name="compliance_requirements_overview",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_requirements_overviews"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "tenant_id",
+                    "scan_id",
+                    "compliance_id",
+                    "requirement_id",
+                    "region",
+                ),
+                name="unique_tenant_compliance_requirement_overview",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["tenant_id", "scan_id"], name="cro_tenant_scan_idx"),
+            models.Index(
+                fields=["tenant_id", "scan_id", "compliance_id"],
+                name="cro_scan_comp_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "compliance_id", "region"],
+                name="cro_scan_comp_reg_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
+                name="cro_scan_comp_req_idx",
+            ),
+            models.Index(
+                fields=[
+                    "tenant_id",
+                    "scan_id",
+                    "compliance_id",
+                    "requirement_id",
+                    "region",
+                ],
+                name="cro_scan_comp_req_reg_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-requirements-overviews"
+
+
 class ScanSummary(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
@@ -1201,7 +1298,6 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         S3 = "amazon_s3", _("Amazon S3")
-        SAML = "saml", _("SAML")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")
@@ -1275,6 +1371,244 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
         ]
 
 
+class SAMLToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    token = models.JSONField(unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "saml_tokens"
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+        super().save(*args, **kwargs)
+
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expires_at
+
+
+class SAMLDomainIndex(models.Model):
+    """
+    Public index of SAML domains. No RLS. Used for fast lookup in SAML login flow.
+    """
+
+    email_domain = models.CharField(max_length=254, unique=True)
+    tenant = models.ForeignKey("Tenant", on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "saml_domain_index"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("email_domain", "tenant"),
+                name="unique_resources_by_email_domain",
+            ),
+            BaseSecurityConstraint(
+                name="statements_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class SAMLConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Stores per-tenant SAML settings, including email domain and IdP metadata.
+    Automatically syncs to a SocialApp instance on save.
+
+    Note:
+    This model exists to provide a tenant-aware abstraction over SAML configuration.
+    It supports row-level security, custom validation, and metadata parsing, enabling
+    Prowler to expose a clean API and admin interface for managing SAML integrations.
+
+    Although Django Allauth uses the SocialApp model to store provider configuration,
+    it is not designed for multi-tenant use. SocialApp lacks support for tenant scoping,
+    email domain mapping, and structured metadata handling.
+
+    By managing SAMLConfiguration separately, we ensure:
+        - Strong isolation between tenants via RLS.
+        - Ownership of raw IdP metadata and its validation.
+        - An explicit link between SAML config and business-level identifiers (e.g. email domain).
+        - Programmatic transformation into the SocialApp format used by Allauth.
+
+    In short, this model acts as a secure and user-friendly layer over Allauth's lower-level primitives.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    email_domain = models.CharField(
+        max_length=254,
+        unique=True,
+        help_text="Email domain used to identify the tenant, e.g. prowlerdemo.com",
+    )
+    metadata_xml = models.TextField(
+        help_text="Raw IdP metadata XML to configure SingleSignOnService, certificates, etc."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class JSONAPIMeta:
+        resource_name = "saml-configurations"
+
+    class Meta:
+        db_table = "saml_configurations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            # 1 config per tenant
+            models.UniqueConstraint(
+                fields=["tenant"],
+                name="unique_samlconfig_per_tenant",
+            ),
+        ]
+
+    def clean(self, old_email_domain=None):
+        # Domain must not contain @
+        if "@" in self.email_domain:
+            raise ValidationError({"email_domain": "Domain must not contain @"})
+
+        # Enforce at most one config per tenant
+        qs = SAMLConfiguration.objects.filter(tenant=self.tenant)
+        # Exclude ourselves in case of update
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                {"tenant": "A SAML configuration already exists for this tenant."}
+            )
+
+        # The email domain must be unique in the entire system
+        qs = SAMLConfiguration.objects.using(MainRouter.admin_db).filter(
+            email_domain__iexact=self.email_domain
+        )
+        if qs.exists() and old_email_domain != self.email_domain:
+            raise ValidationError(
+                {"tenant": "There is a problem with your email domain."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.email_domain = self.email_domain.strip().lower()
+        is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
+
+        if not is_create:
+            old = SAMLConfiguration.objects.get(pk=self.pk)
+            old_email_domain = old.email_domain
+            old_metadata_xml = old.metadata_xml
+        else:
+            old_email_domain = None
+            old_metadata_xml = None
+
+        self.clean(old_email_domain)
+        super().save(*args, **kwargs)
+
+        if is_create or (
+            old_email_domain != self.email_domain
+            or old_metadata_xml != self.metadata_xml
+        ):
+            self._sync_social_app(old_email_domain)
+
+        # Sync the public index
+        if not is_create and old_email_domain and old_email_domain != self.email_domain:
+            SAMLDomainIndex.objects.filter(email_domain=old_email_domain).delete()
+
+        # Create/update the new domain index
+        SAMLDomainIndex.objects.update_or_create(
+            email_domain=self.email_domain, defaults={"tenant": self.tenant}
+        )
+
+    def _parse_metadata(self):
+        """
+        Parse the raw IdP metadata XML and extract:
+            - entity_id
+            - sso_url
+            - slo_url (may be None)
+            - x509cert (required)
+        """
+        ns = {
+            "md": "urn:oasis:names:tc:SAML:2.0:metadata",
+            "ds": "http://www.w3.org/2000/09/xmldsig#",
+        }
+        try:
+            root = ET.fromstring(self.metadata_xml)
+        except ET.ParseError as e:
+            raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+
+        # Entity ID
+        entity_id = root.attrib.get("entityID")
+
+        # SSO endpoint (must exist)
+        sso = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService", ns)
+        if sso is None or "Location" not in sso.attrib:
+            raise ValidationError(
+                {"metadata_xml": "Missing SingleSignOnService in metadata."}
+            )
+        sso_url = sso.attrib["Location"]
+
+        # SLO endpoint (optional)
+        slo = root.find(".//md:IDPSSODescriptor/md:SingleLogoutService", ns)
+        slo_url = slo.attrib.get("Location") if slo is not None else None
+
+        # X.509 certificate (required)
+        cert = root.find(
+            './/md:KeyDescriptor[@use="signing"]/ds:KeyInfo/ds:X509Data/ds:X509Certificate',
+            ns,
+        )
+        if cert is None or not cert.text or not cert.text.strip():
+            raise ValidationError(
+                {
+                    "metadata_xml": 'Metadata must include a <ds:X509Certificate> under <KeyDescriptor use="signing">.'
+                }
+            )
+        x509cert = cert.text.strip()
+
+        return {
+            "entity_id": entity_id,
+            "sso_url": sso_url,
+            "slo_url": slo_url,
+            "x509cert": x509cert,
+        }
+
+    def _sync_social_app(self, previous_email_domain=None):
+        """
+        Create or update the corresponding SocialApp based on email_domain.
+        If the domain changed, update the matching SocialApp.
+        """
+        idp_settings = self._parse_metadata()
+        settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
+        settings_dict["idp"] = idp_settings
+
+        current_site = Site.objects.get(id=settings.SITE_ID)
+
+        social_app_qs = SocialApp.objects.filter(
+            provider="saml", client_id=previous_email_domain or self.email_domain
+        )
+
+        client_id = self.email_domain[:191]
+        name = f"SAML-{self.email_domain}"[:40]
+
+        if social_app_qs.exists():
+            social_app = social_app_qs.first()
+            social_app.client_id = client_id
+            social_app.name = name
+            social_app.settings = settings_dict
+            social_app.save()
+            social_app.sites.set([current_site])
+        else:
+            social_app = SocialApp.objects.create(
+                provider="saml",
+                client_id=client_id,
+                name=name,
+                settings=settings_dict,
+            )
+            social_app.sites.set([current_site])
+
+
 class ResourceScanSummary(RowLevelSecurityProtectedModel):
     scan_id = models.UUIDField(default=uuid7, db_index=True)
     resource_id = models.UUIDField(default=uuid4, db_index=True)
@@ -1322,3 +1656,130 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class LighthouseConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Stores configuration and API keys for LLM services.
+    """
+
+    class ModelChoices(models.TextChoices):
+        GPT_4O_2024_11_20 = "gpt-4o-2024-11-20", _("GPT-4o v2024-11-20")
+        GPT_4O_2024_08_06 = "gpt-4o-2024-08-06", _("GPT-4o v2024-08-06")
+        GPT_4O_2024_05_13 = "gpt-4o-2024-05-13", _("GPT-4o v2024-05-13")
+        GPT_4O = "gpt-4o", _("GPT-4o Default")
+        GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
+        GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        blank=False,
+        null=False,
+        help_text="Name of the configuration",
+    )
+    api_key = models.BinaryField(
+        blank=False, null=False, help_text="Encrypted API key for the LLM service"
+    )
+    model = models.CharField(
+        max_length=50,
+        choices=ModelChoices.choices,
+        blank=False,
+        null=False,
+        default=ModelChoices.GPT_4O_2024_08_06,
+        help_text="Must be one of the supported model names",
+    )
+    temperature = models.FloatField(default=0, help_text="Must be between 0 and 1")
+    max_tokens = models.IntegerField(
+        default=4000, help_text="Must be between 500 and 5000"
+    )
+    business_context = models.TextField(
+        blank=True,
+        null=False,
+        default="",
+        help_text="Additional business context for this AI model configuration",
+    )
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+
+        # Validate temperature
+        if not 0 <= self.temperature <= 1:
+            raise ModelValidationError(
+                detail="Temperature must be between 0 and 1",
+                code="invalid_temperature",
+                pointer="/data/attributes/temperature",
+            )
+
+        # Validate max_tokens
+        if not 500 <= self.max_tokens <= 5000:
+            raise ModelValidationError(
+                detail="Max tokens must be between 500 and 5000",
+                code="invalid_max_tokens",
+                pointer="/data/attributes/max_tokens",
+            )
+
+    @property
+    def api_key_decoded(self):
+        """Return the decrypted API key, or None if unavailable or invalid."""
+        if not self.api_key:
+            return None
+
+        try:
+            decrypted_key = fernet.decrypt(bytes(self.api_key))
+            return decrypted_key.decode()
+
+        except InvalidToken:
+            logger.warning("Invalid token while decrypting API key.")
+        except Exception as e:
+            logger.exception("Unexpected error while decrypting API key: %s", e)
+
+    @api_key_decoded.setter
+    def api_key_decoded(self, value):
+        """Store the encrypted API key."""
+        if not value:
+            raise ModelValidationError(
+                detail="API key is required",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
+
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, value):
+            raise ModelValidationError(
+                detail="Invalid OpenAI API key format.",
+                code="invalid_api_key",
+                pointer="/data/attributes/api_key",
+            )
+        self.api_key = fernet.encrypt(value.encode())
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_configurations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            # Add unique constraint for name within a tenant
+            models.UniqueConstraint(
+                fields=["tenant_id"], name="unique_lighthouse_config_per_tenant"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-configurations"

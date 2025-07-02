@@ -346,34 +346,27 @@ def display_data(
         if item == "nan" or item.__class__.__name__ != "str":
             region_filter_options.remove(item)
 
+    # Convert ASSESSMENTDATE to datetime
     data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], errors="coerce")
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    data["ASSESSMENTDAY"] = data["ASSESSMENTDATE"].dt.date
 
-    # Choosing the date that is the most recent
-    data_values = data["ASSESSMENTDATE"].unique()
-    data_values.sort()
-    data_values = data_values[::-1]
-    aux = []
+    # Find the latest timestamp per account per day
+    latest_per_account_day = data.groupby(["ACCOUNTID", "ASSESSMENTDAY"])[
+        "ASSESSMENTDATE"
+    ].transform("max")
 
-    data_values = [str(i) for i in data_values]
-    for value in data_values:
-        if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
-            aux.append(value)
-    data_values = [str(i) for i in aux]
+    # Keep only rows with the latest timestamp for each account and day
+    data = data[data["ASSESSMENTDATE"] == latest_per_account_day]
 
-    data = data[data["ASSESSMENTDATE"].isin(data_values)]
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].apply(lambda x: x.split(" ")[0])
+    # Prepare the date filter options (unique days, as strings)
+    options_date = sorted(data["ASSESSMENTDAY"].astype(str).unique(), reverse=True)
 
-    options_date = data["ASSESSMENTDATE"].unique()
-    options_date.sort()
-    options_date = options_date[::-1]
-
-    # Filter DATE
+    # Filter by selected date (as string)
     if date_filter_analytics in options_date:
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
     else:
         date_filter_analytics = options_date[0]
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
 
     if data.empty:
         fig = px.pie()
@@ -651,58 +644,114 @@ def get_table(current_compliance, table):
 
 
 def get_threatscore_mean_by_pillar(df):
-    modified_df = df[df["STATUS"] == "FAIL"]
+    score_per_pillar = {}
+    max_score_per_pillar = {}
 
-    modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
-        modified_df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
-    )
+    for _, row in df.iterrows():
+        pillar = (
+            row["REQUIREMENTS_ATTRIBUTES_SECTION"].split(" - ")[0]
+            if isinstance(row["REQUIREMENTS_ATTRIBUTES_SECTION"], str)
+            else "Unknown"
+        )
 
-    pillar_means = (
-        modified_df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
-            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
-        ]
-        .mean()
-        .round(2)
-    )
+        if pillar not in score_per_pillar:
+            score_per_pillar[pillar] = 0
+            max_score_per_pillar[pillar] = 0
+
+        level_of_risk = pd.to_numeric(
+            row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+        )
+        level_of_risk = 1 if pd.isna(level_of_risk) else level_of_risk
+
+        weight = 1
+        if "REQUIREMENTS_ATTRIBUTES_WEIGHT" in row and not pd.isna(
+            row["REQUIREMENTS_ATTRIBUTES_WEIGHT"]
+        ):
+            weight = pd.to_numeric(
+                row["REQUIREMENTS_ATTRIBUTES_WEIGHT"], errors="coerce"
+            )
+            weight = 1 if pd.isna(weight) else weight
+
+        max_score_per_pillar[pillar] += level_of_risk * weight
+
+        if row["STATUS"] == "PASS":
+            score_per_pillar[pillar] += level_of_risk * weight
 
     output = []
-    for pillar, mean in pillar_means.items():
-        output.append(f"{pillar} - [{mean}]")
+    for pillar in max_score_per_pillar:
+        risk_score = 0
+        if max_score_per_pillar[pillar] > 0:
+            risk_score = (score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100
+
+        output.append(f"{pillar} - [{risk_score:.1f}%]")
 
     for value in output:
-        if value.split(" - ")[0] in df["REQUIREMENTS_ATTRIBUTES_SECTION"].values:
+        base_pillar = value.split(" - ")[0]
+        if base_pillar in df["REQUIREMENTS_ATTRIBUTES_SECTION"].values:
             df.loc[
-                df["REQUIREMENTS_ATTRIBUTES_SECTION"] == value.split(" - ")[0],
+                df["REQUIREMENTS_ATTRIBUTES_SECTION"] == base_pillar,
                 "REQUIREMENTS_ATTRIBUTES_SECTION",
             ] = value
+
     return df
 
 
 def get_table_prowler_threatscore(df):
-    df = df[df["STATUS"] == "FAIL"]
+    score_per_pillar = {}
+    max_score_per_pillar = {}
+    pillars = {}
 
-    # Delete " - " from the column REQUIREMENTS_ATTRIBUTES_SECTION
-    df["REQUIREMENTS_ATTRIBUTES_SECTION"] = (
-        df["REQUIREMENTS_ATTRIBUTES_SECTION"].str.split(" - ").str[0]
-    )
+    df_copy = df.copy()
 
-    df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"] = pd.to_numeric(
-        df["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
-    )
-
-    score_df = (
-        df.groupby("REQUIREMENTS_ATTRIBUTES_SECTION")[
-            "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"
-        ]
-        .mean()
-        .reset_index()
-        .rename(
-            columns={
-                "REQUIREMENTS_ATTRIBUTES_SECTION": "Pillar",
-                "REQUIREMENTS_ATTRIBUTES_LEVELOFRISK": "Score",
-            }
+    for _, row in df_copy.iterrows():
+        pillar = (
+            row["REQUIREMENTS_ATTRIBUTES_SECTION"].split(" - ")[0]
+            if isinstance(row["REQUIREMENTS_ATTRIBUTES_SECTION"], str)
+            else "Unknown"
         )
-    )
+
+        if pillar not in pillars:
+            pillars[pillar] = {"FAIL": 0, "PASS": 0, "MUTED": 0}
+            score_per_pillar[pillar] = 0
+            max_score_per_pillar[pillar] = 0
+
+        level_of_risk = pd.to_numeric(
+            row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+        )
+        level_of_risk = 1 if pd.isna(level_of_risk) else level_of_risk
+
+        weight = 1
+        if "REQUIREMENTS_ATTRIBUTES_WEIGHT" in row and not pd.isna(
+            row["REQUIREMENTS_ATTRIBUTES_WEIGHT"]
+        ):
+            weight = pd.to_numeric(
+                row["REQUIREMENTS_ATTRIBUTES_WEIGHT"], errors="coerce"
+            )
+            weight = 1 if pd.isna(weight) else weight
+
+        max_score_per_pillar[pillar] += level_of_risk * weight
+
+        if row["STATUS"] == "PASS":
+            pillars[pillar]["PASS"] += 1
+            score_per_pillar[pillar] += level_of_risk * weight
+        elif row["STATUS"] == "FAIL":
+            pillars[pillar]["FAIL"] += 1
+
+        if "MUTED" in row and row["MUTED"] == "True":
+            pillars[pillar]["MUTED"] += 1
+
+    result_df = []
+
+    for pillar in pillars.keys():
+        risk_score = 0
+        if max_score_per_pillar[pillar] > 0:
+            risk_score = (score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100
+
+        result_df.append({"Pillar": pillar, "Score": risk_score})
+
+    score_df = pd.DataFrame(result_df)
+
+    score_df = score_df.sort_values("Score", ascending=True)
 
     fig = px.bar(
         score_df,
@@ -710,22 +759,25 @@ def get_table_prowler_threatscore(df):
         y="Score",
         color="Score",
         color_continuous_scale=[
-            "#45cc6e",
-            "#f4d44d",
             "#e77676",
-        ],  # verde → amarillo → rojo
-        hover_data={"Score": True, "Pillar": True},
-        labels={"Score": "Average Risk Score", "Pillar": "Section"},
+            "#f4d44d",
+            "#45cc6e",
+        ],
+        labels={"Score": "Risk Score (%)", "Pillar": "Section"},
         height=400,
+        text="Score",
     )
+
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
 
     fig.update_layout(
         xaxis_title="Pillar",
-        yaxis_title="Level of Risk",
+        yaxis_title="Risk Score (%)",
         margin=dict(l=20, r=20, t=30, b=20),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        coloraxis_colorbar=dict(title="Risk"),
+        coloraxis_colorbar=dict(title="Risk %"),
+        yaxis=dict(range=[0, 110]),
     )
 
     return dcc.Graph(

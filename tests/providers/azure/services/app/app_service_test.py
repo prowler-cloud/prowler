@@ -200,3 +200,47 @@ class Test_App_Service:
             .name
             == "name_diagnostic_setting2"
         )
+
+    def test_app_service_get_functions(self):
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import FunctionApp
+
+            mock_function = FunctionApp(
+                id="/subscriptions/resource_id",
+                name="functionapp-1",
+                location="West Europe",
+                kind="functionapp",
+                function_keys=None,
+                enviroment_variables=None,
+                identity=ManagedServiceIdentity(type="SystemAssigned"),
+                public_access=True,
+                vnet_subnet_id="",
+                ftps_state="FtpsOnly",
+            )
+
+            app_service = MagicMock()
+            app_service.functions = {
+                "mock-subscription": {"/subscriptions/resource_id": mock_function}
+            }
+
+            assert (
+                app_service.functions["mock-subscription"][
+                    "/subscriptions/resource_id"
+                ].ftps_state
+                == "FtpsOnly"
+            )
+            assert (
+                app_service.functions["mock-subscription"][
+                    "/subscriptions/resource_id"
+                ].name
+                == "functionapp-1"
+            )

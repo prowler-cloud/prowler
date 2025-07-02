@@ -13,11 +13,12 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
 from django.urls import reverse
+from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
 from api.models import (
-    ComplianceOverview,
     Integration,
     Invitation,
     Membership,
@@ -34,6 +35,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.views import ComplianceOverviewViewSet
 
 TODAY = str(datetime.today().date())
 
@@ -914,8 +916,38 @@ class TestProviderViewSet:
                     "alias": "GKE",
                 },
                 {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
                     "provider": "azure",
                     "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onmicrosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
                     "alias": "test",
                 },
             ]
@@ -985,6 +1017,51 @@ class TestProviderViewSet:
                     },
                     "invalid_choice",
                     "provider",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "https://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "thisisnotadomain",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": "http://test.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"{'a' * 64}.domain.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "m365",
+                        "uid": f"subdomain.{'a' * 64}.com",
+                        "alias": "test",
+                    },
+                    "m365-uid",
+                    "uid",
                 ),
             ]
         ),
@@ -1159,10 +1236,10 @@ class TestProviderViewSet:
                 ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 5),
-                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at", TODAY, 6),
+                ("inserted_at.gte", "2024-01-01", 6),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.gte", "2024-01-01", 6),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1613,12 +1690,76 @@ class TestProviderSecretViewSet:
                     "refresh_token": "refresh-token",
                 },
             ),
+            # GCP with Service Account Key secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                {
+                    "service_account_key": {
+                        "type": "service_account",
+                        "project_id": "project-id",
+                        "private_key_id": "private-key-id",
+                        "private_key": "private-key",
+                        "client_email": "client-email",
+                        "client_id": "client-id",
+                        "auth_uri": "auth-uri",
+                        "token_uri": "token-uri",
+                        "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
+                        "client_x509_cert_url": "client-x509-cert-url",
+                        "universe_domain": "universe-domain",
+                    },
+                },
+            ),
             # Kubernetes with STATIC secret
             (
                 Provider.ProviderChoices.KUBERNETES.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "kubeconfig_content": "kubeconfig-content",
+                },
+            ),
+            # M365 with STATIC secret - no user or password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                },
+            ),
+            # M365 with user only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                },
+            ),
+            # M365 with password only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "password": "supersecret",
+                },
+            ),
+            # M365 with user and password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                    "password": "supersecret",
                 },
             ),
         ],
@@ -1632,7 +1773,10 @@ class TestProviderSecretViewSet:
         secret_data,
     ):
         # Get the provider from the fixture and set its type
-        provider = Provider.objects.filter(provider=provider_type)[0]
+        try:
+            provider = Provider.objects.filter(provider=provider_type)[0]
+        except IndexError:
+            print(f"Provider {provider_type} not found")
 
         data = {
             "data": {
@@ -2238,7 +2382,10 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2306,7 +2453,7 @@ class TestScanViewSet:
     ):
         """
         When output_location is a local path and glob.glob returns an empty list,
-        the view should return HTTP 404 with detail "The scan has no reports."
+        the view should return HTTP 404 with detail "The scan has no reports, or the report generation task has not started yet."
         """
         scan = scans_fixture[0]
         scan.output_location = "/tmp/nonexistent_report_pattern.zip"
@@ -2318,7 +2465,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == 404
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_report_local_file(self, authenticated_client, scans_fixture, monkeypatch):
         scan = scans_fixture[0]
@@ -2393,7 +2543,10 @@ class TestScanViewSet:
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert resp.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     def test_compliance_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -2535,6 +2688,36 @@ class TestScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_finds_task_using_kwargs(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        task_result = TaskResult.objects.create(
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+
+        mock_task_serializer.return_value.data = {
+            "id": str(task.id),
+            "state": StateChoices.EXECUTING,
+        }
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.data["id"] == str(task.id)
+
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.sentry_sdk.capture_exception")
     def test_compliance_list_objects_client_error(
@@ -2585,7 +2768,10 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "The scan has no reports."
+        assert (
+            response.json()["errors"]["detail"]
+            == "The scan has no reports, or the report generation task has not started yet."
+        )
 
     @patch("api.v1.views.get_s3_client")
     def test_report_s3_client_error_other(
@@ -4623,210 +4809,295 @@ class TestComplianceOverviewViewSet:
         assert len(response.json()["data"]) == 0
 
     def test_compliance_overview_list(
-        self, authenticated_client, compliance_overviews_fixture
+        self, authenticated_client, compliance_requirements_overviews_fixture
     ):
         # List compliance overviews with existing data
-        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
-        scan_id = str(compliance_overview1.scan.id)
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
 
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
             {"filter[scan_id]": scan_id},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert (
-            len(response.json()["data"]) == 1
-        )  # Due to the custom get_queryset method, only one compliance_id
+        data = response.json()["data"]
+        assert len(data) == 3  # Three compliance frameworks
 
-    def test_compliance_overview_list_missing_scan_id(self, authenticated_client):
-        # Attempt to list compliance overviews without providing filter[scan_id]
-        response = authenticated_client.get(reverse("complianceoverview-list"))
+        # Check that we get aggregated data for each compliance framework
+        framework_ids = [item["id"] for item in data]
+        assert "aws_account_security_onboarding_aws" in framework_ids
+        assert "cis_1.4_aws" in framework_ids
+        assert "mitre_attack_aws" in framework_ids
+        # Check structure of response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "requirements_passed" in attributes
+            assert "requirements_failed" in attributes
+            assert "requirements_manual" in attributes
+            assert "total_requirements" in attributes
+
+    def test_compliance_overview_metadata(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-metadata"),
+            {"filter[scan_id]": scan_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert "attributes" in data
+        assert "regions" in data["attributes"]
+        assert isinstance(data["attributes"]["regions"], list)
+
+    def test_compliance_overview_requirements(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+        compliance_id = requirement_overview1.compliance_id
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of requirements response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "status" in attributes
+
+    def test_compliance_overview_requirements_manual(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        scan_id = str(compliance_requirements_overviews_fixture[0].scan.id)
+        # Compliance with a manual requirement
+        compliance_id = "aws_account_security_onboarding_aws"
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[compliance_id]": compliance_id,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data[-1]["attributes"]["status"] == "MANUAL"
+
+    def test_compliance_overview_requirements_missing_scan_id(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
-        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_compliance_overview_requirements_missing_compliance_id(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {"filter[scan_id]": scan_id},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_attributes(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of attributes response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "attributes" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+            assert "technique_details" not in attributes["attributes"]
+
+    def test_compliance_overview_attributes_technique_details(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "mitre_attack_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        # Check structure of attributes response
+        for item in data:
+            assert "id" in item
+            assert "attributes" in item
+            attributes = item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "description" in attributes
+            assert "attributes" in attributes
+            assert "metadata" in attributes["attributes"]
+            assert "check_ids" in attributes["attributes"]
+            assert "technique_details" in attributes["attributes"]
+            assert "tactics" in attributes["attributes"]["technique_details"]
+            assert "subtechniques" in attributes["attributes"]["technique_details"]
+            assert "platforms" in attributes["attributes"]["technique_details"]
+            assert "technique_url" in attributes["attributes"]["technique_details"]
+
+    def test_compliance_overview_attributes_missing_compliance_id(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_task_management_integration(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        """Test that task management mixin is properly integrated"""
+        from unittest.mock import patch
+
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        # Mock a running task
+        with patch.object(
+            ComplianceOverviewViewSet, "get_task_response_if_running"
+        ) as mock_task_response:
+            mock_response = Response(
+                {"detail": "Task is running"}, status=status.HTTP_202_ACCEPTED
+            )
+            mock_task_response.return_value = mock_response
+
+            response = authenticated_client.get(
+                reverse("complianceoverview-list"),
+                {"filter[scan_id]": scan_id},
+            )
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mock_task_response.assert_called_once()
+
+    def test_compliance_overview_task_failed_exception(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        """Test handling of TaskFailedException"""
+        from unittest.mock import patch
+
+        from api.exceptions import TaskFailedException
+
+        requirement_overview1 = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview1.scan.id)
+
+        # Mock a failed task
+        with patch.object(
+            ComplianceOverviewViewSet, "get_task_response_if_running"
+        ) as mock_task_response:
+            mock_task_response.side_effect = TaskFailedException("Task failed")
+
+            response = authenticated_client.get(
+                reverse("complianceoverview-list"),
+                {"filter[scan_id]": scan_id},
+            )
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert "Task failed to generate compliance overview data" in str(
+                response.data
+            )
 
     @pytest.mark.parametrize(
-        "filter_name, filter_value, expected_count",
+        "filter_name, filter_value_attr, expected_count_min",
         [
-            ("compliance_id", "aws_account_security_onboarding_aws", 1),
-            ("compliance_id.icontains", "security_onboarding", 1),
-            ("framework", "AWS-Account-Security-Onboarding", 1),
-            ("framework.icontains", "security-onboarding", 1),
-            ("version", "1.0", 1),
-            ("version", "2.0", 0),
-            ("version.icontains", "0", 1),
-            ("region", "eu-west-1", 1),
-            ("region.icontains", "west-1", 1),
-            ("region.in", "eu-west-1,eu-west-2", 1),
-            ("inserted_at.date", "2024-01-01", 0),
-            ("inserted_at.date", TODAY, 1),
-            ("inserted_at.gte", "2024-01-01", 1),
+            ("scan_id", "scan.id", 1),
+            ("compliance_id", "compliance_id", 1),
+            ("framework", "framework", 1),
+            ("version", "version", 1),
+            ("region", "region", 1),
         ],
     )
     def test_compliance_overview_filters(
         self,
         authenticated_client,
-        compliance_overviews_fixture,
+        compliance_requirements_overviews_fixture,
         filter_name,
-        filter_value,
-        expected_count,
+        filter_value_attr,
+        expected_count_min,
     ):
-        # Test filtering compliance overviews
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
+        requirement_overview = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview.scan.id)
+
+        filter_value = requirement_overview
+        for attr in filter_value_attr.split("."):
+            filter_value = getattr(filter_value, attr)
+
+        filter_value = str(filter_value)
+
+        query_params = {
+            "filter[scan_id]": scan_id,
+            f"filter[{filter_name}]": filter_value,
+        }
+
+        if filter_name == "scan_id":
+            query_params = {"filter[scan_id]": filter_value}
 
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                f"filter[{filter_name}]": filter_value,
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == expected_count
-
-    @pytest.mark.parametrize(
-        "filter_name",
-        ["invalid_filter", "unknown_field"],
-    )
-    def test_compliance_overview_filters_invalid(
-        self, authenticated_client, compliance_overviews_fixture, filter_name
-    ):
-        # Test handling of invalid filters
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                f"filter[{filter_name}]": "some_value",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.parametrize(
-        "sort_field",
-        ["inserted_at", "-inserted_at", "compliance_id", "-compliance_id"],
-    )
-    def test_compliance_overview_sort(
-        self, authenticated_client, compliance_overviews_fixture, sort_field
-    ):
-        # Test sorting compliance overviews
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                "sort": sort_field,
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_compliance_overview_sort_invalid(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        # Test handling of invalid sort parameters
-        compliance_overview1 = compliance_overviews_fixture[0]
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {
-                "filter[scan_id]": scan_id,
-                "sort": "invalid_field",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["code"] == "invalid"
-        assert "invalid sort parameter" in response.json()["errors"][0]["detail"]
-
-    def test_compliance_overview_retrieve(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        # Retrieve a specific compliance overview
-        compliance_overview1 = compliance_overviews_fixture[0]
-
-        response = authenticated_client.get(
-            reverse(
-                "complianceoverview-detail",
-                kwargs={"pk": compliance_overview1.id},
-            ),
-        )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert data["id"] == str(compliance_overview1.id)
-        attributes = data["attributes"]
-        assert attributes["compliance_id"] == compliance_overview1.compliance_id
-        assert attributes["framework"] == compliance_overview1.framework
-        assert attributes["version"] == compliance_overview1.version
-        assert attributes["region"] == compliance_overview1.region
-        assert attributes["description"] == compliance_overview1.description
-        assert "requirements" in attributes
-
-    def test_compliance_overview_invalid_retrieve(self, authenticated_client):
-        # Attempt to retrieve a compliance overview with an invalid ID
-        response = authenticated_client.get(
-            reverse(
-                "complianceoverview-detail",
-                kwargs={"pk": "invalid-id"},
-            ),
-        )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_compliance_overview_list_queryset(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
-        scan_id = str(compliance_overview1.scan.id)
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {"filter[scan_id]": scan_id},
-        )
-        # No filters, most fails should be returned
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["id"] == str(compliance_overview2.id)
-
-        compliance_overview1.requirements_failed = 5
-        compliance_overview1.save()
-
-        response = authenticated_client.get(
-            reverse("complianceoverview-list"),
-            {"filter[scan_id]": scan_id},
-        )
-        # No filters, now compliance_overview1 has more fails
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["id"] == str(compliance_overview1.id)
-
-    def test_compliance_overview_metadata(
-        self, authenticated_client, compliance_overviews_fixture
-    ):
-        response = authenticated_client.get(
-            reverse("complianceoverview-metadata"),
-            {"filter[scan_id]": str(compliance_overviews_fixture[0].scan_id)},
-        )
-        data = response.json()
-
-        expected_regions = set(
-            ComplianceOverview.objects.all()
-            .values_list("region", flat=True)
-            .distinct("region")
+            query_params,
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert data["data"]["type"] == "compliance-overviews-metadata"
-        assert data["data"]["id"] is None
-        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        response_data = response.json()
 
-    def test_compliance_overview_metadata_missing_scan_id(self, authenticated_client):
-        # Attempt to list compliance overviews without providing filter[scan_id]
-        response = authenticated_client.get(reverse("complianceoverview-metadata"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
-        assert response.json()["errors"][0]["code"] == "required"
+        assert len(response_data["data"]) >= expected_count_min
+
+        if response_data["data"]:
+            first_item = response_data["data"][0]
+            assert "id" in first_item
+            assert "type" in first_item
+            assert first_item["type"] == "compliance-overviews"
+            assert "attributes" in first_item
+
+            attributes = first_item["attributes"]
+            assert "framework" in attributes
+            assert "version" in attributes
+            assert "requirements_passed" in attributes
+            assert "requirements_failed" in attributes
+            assert "requirements_manual" in attributes
+            assert "total_requirements" in attributes
+
+            if filter_name == "compliance_id":
+                assert first_item["id"] == filter_value
+            elif filter_name == "framework":
+                assert attributes["framework"] == filter_value
+            elif filter_name == "version":
+                assert attributes["version"] == filter_value
 
 
 @pytest.mark.django_db
@@ -5330,3 +5601,665 @@ class TestIntegrationViewSet:
             {f"filter[{filter_name}]": "whatever"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# @pytest.mark.django_db
+# class TestSAMLTokenValidation:
+#     def test_valid_token_returns_tokens(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         valid_token_data = {
+#             "access": "mock_access_token",
+#             "refresh": "mock_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=valid_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
+
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
+
+#         assert response.status_code == status.HTTP_200_OK
+#         assert response.json() == {"data": valid_token_data}
+#         assert not SAMLToken.objects.filter(id=saml_token.id).exists()
+
+#     def test_invalid_token_id_returns_404(self, authenticated_client):
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={str(uuid4())}")
+
+#         assert response.status_code == status.HTTP_404_NOT_FOUND
+#         assert response.json()["errors"]["detail"] == "Invalid token ID."
+
+#     def test_expired_token_returns_400(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         expired_token_data = {
+#             "access": "expired_access_token",
+#             "refresh": "expired_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=expired_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+#         )
+
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
+
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert response.json()["errors"]["detail"] == "Token expired."
+#         assert SAMLToken.objects.filter(id=saml_token.id).exists()
+
+#     def test_token_can_be_used_only_once(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         token_data = {
+#             "access": "single_use_token",
+#             "refresh": "single_use_refresh",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
+
+#         url = reverse("token-saml")
+
+#         # First use: should succeed
+#         response1 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response1.status_code == status.HTTP_200_OK
+
+#         # Second use: should fail (already deleted)
+#         response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response2.status_code == status.HTTP_404_NOT_FOUND
+
+
+# @pytest.mark.django_db
+# class TestSAMLInitiateAPIView:
+#     def test_valid_email_domain_and_certificates(
+#         self, authenticated_client, saml_setup, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
+#         monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
+
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": saml_setup["email"]}
+
+#         response = authenticated_client.post(url, data=payload, format="json")
+
+#         assert response.status_code == status.HTTP_302_FOUND
+#         assert (
+#             reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
+#             in response.url
+#         )
+#         assert "SAMLRequest" not in response.url
+
+#     def test_invalid_email_domain(self, authenticated_client):
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": "user@unauthorized.com"}
+
+#         response = authenticated_client.post(url, data=payload, format="json")
+
+#         assert response.status_code == status.HTTP_403_FORBIDDEN
+#         assert response.json()["errors"]["detail"] == "Unauthorized domain."
+
+
+# @pytest.mark.django_db
+# class TestSAMLConfigurationViewSet:
+#     def test_list_saml_configurations(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(reverse("saml-config-list"))
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"][0]["attributes"]["email_domain"]
+#             == config.email_domain
+#         )
+
+#     def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
+#         )
+
+#     def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
+#         payload = {
+#             "email_domain": "newdomain.com",
+#             "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#                 <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#                 <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#                     <md:KeyDescriptor use='signing'>
+#                     <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                         <ds:X509Data>
+#                         <ds:X509Certificate>TEST</ds:X509Certificate>
+#                         </ds:X509Data>
+#                     </ds:KeyInfo>
+#                     </md:KeyDescriptor>
+#                     <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#                 </md:IDPSSODescriptor>
+#                 </md:EntityDescriptor>
+#             """,
+#         }
+#         response = authenticated_client.post(
+#             reverse("saml-config-list"), data=payload, format="json"
+#         )
+#         assert response.status_code == status.HTTP_201_CREATED
+#         assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
+
+#     def test_update_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         payload = {
+#             "data": {
+#                 "type": "saml-configurations",
+#                 "id": str(config.id),
+#                 "attributes": {
+#                     "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#             <md:KeyDescriptor use='signing'>
+#             <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                 <ds:X509Data>
+#                 <ds:X509Certificate>TEST2</ds:X509Certificate>
+#                 </ds:X509Data>
+#             </ds:KeyInfo>
+#             </md:KeyDescriptor>
+#             <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#         </md:IDPSSODescriptor>
+#         </md:EntityDescriptor>
+#         """
+#                 },
+#             }
+#         }
+#         response = authenticated_client.patch(
+#             reverse("saml-config-detail", kwargs={"pk": config.id}),
+#             data=payload,
+#             content_type="application/vnd.api+json",
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         config.refresh_from_db()
+#         assert (
+#             config.metadata_xml.strip()
+#             == payload["data"]["attributes"]["metadata_xml"].strip()
+#         )
+
+#     def test_delete_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.delete(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_204_NO_CONTENT
+#         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+
+
+# @pytest.mark.django_db
+# class TestTenantFinishACSView:
+#     def test_dispatch_skips_if_user_not_authenticated(self):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = type("Anonymous", (), {"is_authenticated": False})()
+
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
+
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
+
+#         assert response.status_code in [200, 302]
+
+#     def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = users_fixture[0]
+
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
+
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
+
+#         assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
+
+#     def test_dispatch_sets_user_profile_and_assigns_role_and_creates_token(
+#         self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+#         user = create_test_user
+#         original_email = user.email
+#         original_name = user.name
+#         original_company = user.company_name
+#         user.email = f"doe@{saml_setup['email']}"
+
+#         social_account = SocialAccount(
+#             user=user,
+#             provider="saml",
+#             extra_data={
+#                 "firstName": ["John"],
+#                 "lastName": ["Doe"],
+#                 "organization": ["TestOrg"],
+#                 "userType": ["saml_default_role"],
+#             },
+#         )
+
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = user
+
+#         with (
+#             patch(
+#                 "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#             ) as mock_get_app_or_404,
+#             patch("allauth.socialaccount.models.SocialApp.objects.get"),
+#             patch(
+#                 "allauth.socialaccount.models.SocialAccount.objects.get"
+#             ) as mock_sa_get,
+#         ):
+#             mock_get_app_or_404.return_value = MagicMock(
+#                 provider="saml", client_id="testtenant", name="Test App", settings={}
+#             )
+#             mock_sa_get.return_value = social_account
+
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
+
+#         assert response.status_code == 302
+
+#         expected_callback_host = "localhost"
+#         parsed_url = urlparse(response.url)
+#         assert parsed_url.netloc == expected_callback_host
+#         query_params = parse_qs(parsed_url.query)
+#         assert "id" in query_params
+
+#         token_id = query_params["id"][0]
+#         token_obj = SAMLToken.objects.get(id=token_id)
+#         assert token_obj.user == user
+#         assert not token_obj.is_expired()
+
+#         user.refresh_from_db()
+#         assert user.name == "John Doe"
+#         assert user.company_name == "TestOrg"
+
+#         role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+#         assert role.tenant == tenants_fixture[0]
+
+#         assert (
+#             UserRoleRelationship.objects.using(MainRouter.admin_db)
+#             .filter(user=user, tenant_id=tenants_fixture[0].id)
+#             .exists()
+#         )
+
+#         # Membership should have been created with default role
+#         membership = Membership.objects.using(MainRouter.admin_db).get(
+#             user=user, tenant=tenants_fixture[0]
+#         )
+#         assert membership.role == Membership.RoleChoices.MEMBER
+#         assert membership.user == user
+#         assert membership.tenant == tenants_fixture[0]
+
+#         # Restore original user state
+#         user.email = original_email
+#         user.name = original_name
+#         user.company_name = original_company
+#         user.save()
+
+
+@pytest.mark.django_db
+class TestLighthouseConfigViewSet:
+    @pytest.fixture
+    def valid_config_payload(self):
+        return {
+            "data": {
+                "type": "lighthouse-configurations",
+                "attributes": {
+                    "name": "OpenAI",
+                    "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
+                    "model": "gpt-4o",
+                    "temperature": 0.7,
+                    "max_tokens": 4000,
+                    "business_context": "Test business context",
+                    "is_active": True,
+                },
+            }
+        }
+
+    @pytest.fixture
+    def invalid_config_payload(self):
+        return {
+            "data": {
+                "type": "lighthouse-configurations",
+                "attributes": {
+                    "name": "T",  # Too short
+                    "api_key": "invalid-key",  # Invalid format
+                    "model": "invalid-model",
+                    "temperature": 2.0,  # Invalid range
+                    "max_tokens": -1,  # Invalid value
+                },
+            }
+        }
+
+    def test_lighthouse_config_list(self, authenticated_client):
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_lighthouse_config_create(self, authenticated_client, valid_config_payload):
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()["data"]
+        assert (
+            data["attributes"]["name"]
+            == valid_config_payload["data"]["attributes"]["name"]
+        )
+        assert (
+            data["attributes"]["model"]
+            == valid_config_payload["data"]["attributes"]["model"]
+        )
+        assert (
+            data["attributes"]["temperature"]
+            == valid_config_payload["data"]["attributes"]["temperature"]
+        )
+        assert (
+            data["attributes"]["max_tokens"]
+            == valid_config_payload["data"]["attributes"]["max_tokens"]
+        )
+        assert (
+            data["attributes"]["business_context"]
+            == valid_config_payload["data"]["attributes"]["business_context"]
+        )
+        assert (
+            data["attributes"]["is_active"]
+            == valid_config_payload["data"]["attributes"]["is_active"]
+        )
+        # Check that API key is masked with asterisks only
+        masked_api_key = data["attributes"]["api_key"]
+        assert all(
+            c == "*" for c in masked_api_key
+        ), "API key should contain only asterisks"
+
+    @pytest.mark.parametrize(
+        "field_name, invalid_value",
+        [
+            ("name", "T"),  # Too short
+            ("api_key", "invalid-key"),  # Invalid format
+            ("model", "invalid-model"),  # Invalid model
+            ("temperature", 2.0),  # Out of range
+            ("max_tokens", -1),  # Invalid value
+        ],
+    )
+    def test_lighthouse_config_create_invalid_fields(
+        self, authenticated_client, valid_config_payload, field_name, invalid_value
+    ):
+        """Test that validation fails for various invalid field values"""
+        payload = valid_config_payload.copy()
+        payload["data"]["attributes"][field_name] = invalid_value
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+
+        # All field validation errors now follow the same pattern
+        assert any(field_name in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_create_missing_required_fields(
+        self, authenticated_client
+    ):
+        """Test that validation fails when required fields are missing"""
+        payload = {"data": {"type": "lighthouse-configurations", "attributes": {}}}
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        # Check for required fields
+        required_fields = ["name", "api_key"]
+        for field in required_fields:
+            assert any(field in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_create_duplicate(
+        self, authenticated_client, valid_config_payload
+    ):
+        # Create first config
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Try to create second config for same tenant
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-list"),
+            data=valid_config_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            "Lighthouse configuration already exists for this tenant"
+            in response.json()["errors"][0]["detail"]
+        )
+
+    def test_lighthouse_config_update(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        update_payload = {
+            "data": {
+                "type": "lighthouse-configurations",
+                "id": str(lighthouse_config_fixture.id),
+                "attributes": {
+                    "name": "Updated Config",
+                    "model": "gpt-4o-mini",
+                    "temperature": 0.5,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
+            ),
+            data=update_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["attributes"]["name"] == "Updated Config"
+        assert data["attributes"]["model"] == "gpt-4o-mini"
+        assert data["attributes"]["temperature"] == 0.5
+
+    @pytest.mark.parametrize(
+        "field_name, invalid_value",
+        [
+            ("model", "invalid-model"),  # Invalid model name
+            ("temperature", 2.5),  # Temperature too high
+            ("temperature", -0.5),  # Temperature too low
+            ("max_tokens", -1),  # Negative max tokens
+            ("max_tokens", 100000),  # Max tokens too high
+            ("name", "T"),  # Name too short
+            ("api_key", "invalid-key"),  # Invalid API key format
+        ],
+    )
+    def test_lighthouse_config_update_invalid(
+        self, authenticated_client, lighthouse_config_fixture, field_name, invalid_value
+    ):
+        update_payload = {
+            "data": {
+                "type": "lighthouse-configurations",
+                "id": str(lighthouse_config_fixture.id),
+                "attributes": {
+                    field_name: invalid_value,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "lighthouseconfiguration-detail",
+                kwargs={"pk": lighthouse_config_fixture.id},
+            ),
+            data=update_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert any(field_name in error["source"]["pointer"] for error in errors)
+
+    def test_lighthouse_config_delete(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        config_id = lighthouse_config_fixture.id
+        response = authenticated_client.delete(
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": config_id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify deletion by checking list endpoint returns no items
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_lighthouse_config_list_masked_api_key_default(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        """Test that list view returns all fields with masked API key by default"""
+        response = authenticated_client.get(reverse("lighthouseconfiguration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
+
+        # All fields should be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
+
+        # API key should be masked (asterisks)
+        api_key = config["api_key"]
+        assert api_key.startswith("*")
+        assert all(c == "*" for c in api_key)
+
+    def test_lighthouse_config_unmasked_api_key_single_field(
+        self, authenticated_client, lighthouse_config_fixture, valid_config_payload
+    ):
+        """Test that specifying api_key in fields param returns all fields with unmasked API key"""
+        expected_api_key = valid_config_payload["data"]["attributes"]["api_key"]
+        response = authenticated_client.get(
+            reverse("lighthouseconfiguration-list")
+            + "?fields[lighthouse-config]=api_key"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        config = data[0]["attributes"]
+
+        # All fields should still be present
+        assert "name" in config
+        assert "model" in config
+        assert "temperature" in config
+        assert "max_tokens" in config
+        assert "business_context" in config
+        assert "api_key" in config
+
+        # API key should be unmasked
+        assert config["api_key"] == expected_api_key
+
+    @pytest.mark.parametrize(
+        "sort_field, expected_count",
+        [
+            ("name", 1),  # Test sorting by name
+            ("-inserted_at", 1),  # Test sorting by inserted_at
+        ],
+    )
+    def test_lighthouse_config_sorting(
+        self,
+        authenticated_client,
+        lighthouse_config_fixture,
+        sort_field,
+        expected_count,
+    ):
+        """Test sorting lighthouse configurations by various fields"""
+        response = authenticated_client.get(
+            reverse("lighthouseconfiguration-list") + f"?sort={sort_field}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_lighthouse_connection_task.delay")
+    def test_lighthouse_config_connection(
+        self,
+        mock_lighthouse_connection,
+        mock_task_get,
+        authenticated_client,
+        lighthouse_config_fixture,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        task_mock.status = "PENDING"
+        mock_lighthouse_connection.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        config_id = lighthouse_config_fixture.id
+        assert lighthouse_config_fixture.is_active is True
+
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": config_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_lighthouse_connection.assert_called_once_with(
+            lighthouse_config_id=str(config_id), tenant_id=ANY
+        )
+        assert "Content-Location" in response.headers
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
+
+    def test_lighthouse_config_connection_invalid_config(
+        self, authenticated_client, lighthouse_config_fixture
+    ):
+        response = authenticated_client.post(
+            reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

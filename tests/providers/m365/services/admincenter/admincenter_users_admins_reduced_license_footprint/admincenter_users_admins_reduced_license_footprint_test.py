@@ -16,6 +16,9 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
                 new=admincenter_client,
             ),
@@ -39,6 +42,9 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
@@ -76,6 +82,9 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
@@ -124,6 +133,9 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
                 new=admincenter_client,
             ),
@@ -170,6 +182,9 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
                 "prowler.providers.m365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
                 new=admincenter_client,
             ),
@@ -195,7 +210,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             check = admincenter_users_admins_reduced_license_footprint()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
                 == "User User1 has administrative roles Global Administrator and does not have a license."

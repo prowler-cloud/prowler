@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -260,7 +260,7 @@ class ExternalMailConfig(BaseModel):
 class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
-    sender_domain_is: list[str]
+    sender_domain_is: Optional[list[str]]
     redirect_message_to: Optional[list[str]]
 
 

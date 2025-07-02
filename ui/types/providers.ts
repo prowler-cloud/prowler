@@ -45,10 +45,10 @@ export interface ProviderProps {
   groupNames?: string[];
 }
 
-export interface ProviderAccountProps {
+export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
-  alias: string;
+  alias: string | null;
 }
 
 export interface ProviderOverviewProps {
@@ -68,6 +68,30 @@ export interface ProviderOverviewProps {
     };
   }[];
   meta: {
+    version: string;
+  };
+}
+
+export interface ProvidersApiResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ProviderProps[];
+  included?: Array<{
+    type: string;
+    id: string;
+    attributes: any;
+    relationships?: any;
+  }>;
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
     version: string;
   };
 }

@@ -14,12 +14,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
-    ComplianceOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    LighthouseConfiguration,
     Membership,
     Provider,
     ProviderGroup,
@@ -29,8 +29,10 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     StateChoices,
+    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -1159,6 +1161,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 )
         elif secret_type == ProviderSecret.TypeChoices.ROLE:
             serializer = AWSRoleAssumptionProviderSecret(data=secret)
+        elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
+            serializer = GCPServiceAccountProviderSecret(data=secret)
         else:
             raise serializers.ValidationError(
                 {"secret_type": f"Secret type not supported: {secret_type}"}
@@ -1196,8 +1200,8 @@ class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     tenant_id = serializers.CharField()
-    user = serializers.EmailField()
-    encrypted_password = serializers.CharField()
+    user = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1207,6 +1211,13 @@ class GCPProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     refresh_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GCPServiceAccountProviderSecret(serializers.Serializer):
+    service_account_key = serializers.JSONField()
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1670,130 +1681,63 @@ class RoleProviderGroupRelationshipSerializer(RLSSerializer, BaseWriteSerializer
 # Compliance overview
 
 
-class ComplianceOverviewSerializer(RLSSerializer):
+class ComplianceOverviewSerializer(serializers.Serializer):
     """
-    Serializer for the ComplianceOverview model.
+    Serializer for compliance requirement status aggregated by compliance framework.
+
+    This serializer is used to format aggregated compliance framework data,
+    providing counts of passed, failed, and manual requirements along with
+    an overall global status for each framework.
     """
 
-    requirements_status = serializers.SerializerMethodField(
-        read_only=True, method_name="get_requirements_status"
-    )
-    provider_type = serializers.SerializerMethodField(read_only=True)
+    # Add ID field which will be used for resource identification
+    id = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
 
-    class Meta:
-        model = ComplianceOverview
-        fields = [
-            "id",
-            "inserted_at",
-            "compliance_id",
-            "framework",
-            "version",
-            "requirements_status",
-            "region",
-            "provider_type",
-            "scan",
-            "url",
-        ]
-
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "passed": {"type": "integer"},
-                "failed": {"type": "integer"},
-                "manual": {"type": "integer"},
-                "total": {"type": "integer"},
-            },
-        }
-    )
-    def get_requirements_status(self, obj):
-        return {
-            "passed": obj.requirements_passed,
-            "failed": obj.requirements_failed,
-            "manual": obj.requirements_manual,
-            "total": obj.total_requirements,
-        }
-
-    @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_provider_type(self, obj):
-        """
-        Retrieves the provider_type from scan.provider.provider_type.
-        """
-        try:
-            return obj.scan.provider.provider
-        except AttributeError:
-            return None
+    class JSONAPIMeta:
+        resource_name = "compliance-overviews"
 
 
-class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
-    requirements = serializers.SerializerMethodField(read_only=True)
+class ComplianceOverviewDetailSerializer(serializers.Serializer):
+    """
+    Serializer for detailed compliance requirement information.
 
-    class Meta(ComplianceOverviewSerializer.Meta):
-        fields = ComplianceOverviewSerializer.Meta.fields + [
-            "description",
-            "requirements",
-        ]
+    This serializer formats the aggregated requirement data, showing detailed status
+    and counts for each requirement across all regions.
+    """
 
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "requirement_id": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "checks": {
-                            "type": "object",
-                            "properties": {
-                                "check_name": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "enum": ["PASS", "FAIL", None],
-                                        },
-                                    },
-                                }
-                            },
-                            "description": "Each key in the 'checks' object is a check name, with values as "
-                            "'PASS', 'FAIL', or null.",
-                        },
-                        "status": {
-                            "type": "string",
-                            "enum": ["PASS", "FAIL", "MANUAL"],
-                        },
-                        "attributes": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                            },
-                        },
-                        "description": {"type": "string"},
-                        "checks_status": {
-                            "type": "object",
-                            "properties": {
-                                "total": {"type": "integer"},
-                                "pass": {"type": "integer"},
-                                "fail": {"type": "integer"},
-                                "manual": {"type": "integer"},
-                            },
-                        },
-                    },
-                }
-            },
-        }
-    )
-    def get_requirements(self, obj):
-        """
-        Returns the detailed structure of requirements.
-        """
-        return obj.requirements
+    id = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    description = serializers.CharField()
+    status = serializers.ChoiceField(choices=StatusChoices.choices)
+
+    class JSONAPIMeta:
+        resource_name = "compliance-requirements-details"
+
+
+class ComplianceOverviewAttributesSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    framework_description = serializers.CharField()
+    name = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    description = serializers.CharField()
+    attributes = serializers.JSONField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-requirements-attributes"
 
 
 class ComplianceOverviewMetadataSerializer(serializers.Serializer):
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
-    class Meta:
+    class JSONAPIMeta:
         resource_name = "compliance-overviews-metadata"
 
 
@@ -2119,3 +2063,156 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
         return super().update(instance, validated_data)
+
+
+# SSO
+
+
+class SamlInitiateSerializer(serializers.Serializer):
+    email_domain = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "saml-initiate"
+
+
+class SamlMetadataSerializer(serializers.Serializer):
+    class JSONAPIMeta:
+        resource_name = "saml-meta"
+
+
+class SAMLConfigurationSerializer(RLSSerializer):
+    class Meta:
+        model = SAMLConfiguration
+        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class LighthouseConfigSerializer(RLSSerializer):
+    """
+    Serializer for the LighthouseConfig model.
+    """
+
+    api_key = serializers.CharField(required=False)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Check if api_key is specifically requested in fields param
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-config]", "")
+        if fields_param == "api_key":
+            # Return decrypted key if specifically requested
+            data["api_key"] = instance.api_key_decoded if instance.api_key else None
+        else:
+            # Return masked key for general requests
+            data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
+
+
+class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for creating new Lighthouse configurations."""
+
+    api_key = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        tenant_id = self.context.get("request").tenant_id
+        if LighthouseConfiguration.objects.filter(tenant_id=tenant_id).exists():
+            raise serializers.ValidationError(
+                {
+                    "tenant_id": "Lighthouse configuration already exists for this tenant."
+                }
+            )
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        api_key = validated_data.pop("api_key")
+        instance = super().create(validated_data)
+        instance.api_key_decoded = api_key
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Always mask the API key in the response
+        data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
+
+
+class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating LighthouseConfig instances.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "name": {"required": False},
+            "model": {"required": False},
+            "temperature": {"required": False},
+            "max_tokens": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop("api_key", None)
+        instance = super().update(instance, validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save()
+        return instance

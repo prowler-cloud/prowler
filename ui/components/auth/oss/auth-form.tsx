@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { authenticate, createNewUser } from "@/actions/auth";
+import { initiateSamlAuth } from "@/actions/integrations/saml";
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
@@ -45,6 +46,7 @@ export const AuthForm = ({
     defaultValues: {
       email: "",
       password: "",
+      isSamlMode: false,
       ...(type === "sign-up" && {
         name: "",
         company: "",
@@ -56,9 +58,31 @@ export const AuthForm = ({
 
   const isLoading = form.formState.isSubmitting;
   const { toast } = useToast();
+  const isSamlMode = form.watch("isSamlMode");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (type === "sign-in") {
+      if (data.isSamlMode) {
+        const email = data.email.toLowerCase();
+        if (isSamlMode) {
+          form.setValue("password", "");
+        }
+
+        const result = await initiateSamlAuth(email);
+
+        if (result.success && result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+        } else {
+          toast({
+            variant: "destructive",
+            title: "SAML Authentication Error",
+            description:
+              result.error || "An error occurred during SAML authentication.",
+          });
+        }
+        return;
+      }
+
       const result = await authenticate(null, {
         email: data.email.toLowerCase(),
         password: data.password,
@@ -150,7 +174,11 @@ export const AuthForm = ({
           </div>
           <div className="flex items-center justify-between">
             <p className="pb-2 text-xl font-medium">
-              {type === "sign-in" ? "Sign In" : "Sign Up"}
+              {type === "sign-in"
+                ? isSamlMode
+                  ? "Sign In with SAML SSO"
+                  : "Sign In"
+                : "Sign Up"}
             </p>
             <ThemeSwitch aria-label="Toggle theme" />
           </div>
@@ -181,7 +209,6 @@ export const AuthForm = ({
                   />
                 </>
               )}
-
               <CustomInput
                 control={form.control}
                 name="email"
@@ -191,17 +218,17 @@ export const AuthForm = ({
                 isInvalid={!!form.formState.errors.email}
                 showFormMessage={type !== "sign-in"}
               />
-
-              <CustomInput
-                control={form.control}
-                name="password"
-                password
-                isInvalid={
-                  !!form.formState.errors.password ||
-                  !!form.formState.errors.email
-                }
-              />
-
+              {!isSamlMode && (
+                <CustomInput
+                  control={form.control}
+                  name="password"
+                  password
+                  isInvalid={
+                    !!form.formState.errors.password ||
+                    !!form.formState.errors.email
+                  }
+                />
+              )}
               {/* {type === "sign-in" && (
                 <div className="flex items-center justify-between px-1 py-2">
                   <Checkbox name="remember" size="sm">
@@ -265,14 +292,12 @@ export const AuthForm = ({
                   )}
                 </>
               )}
-
               {type === "sign-in" && form.formState.errors?.email && (
                 <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
                   <p className="text-small">Invalid email or password</p>
                 </div>
               )}
-
               <CustomButton
                 type="submit"
                 ariaLabel={type === "sign-in" ? "Log In" : "Sign Up"}
@@ -294,7 +319,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {!invitationToken && (
+          {!invitationToken && type === "sign-in" && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -302,76 +327,99 @@ export const AuthForm = ({
                 <Divider className="flex-1" />
               </div>
               <div className="flex flex-col gap-2">
-                <Tooltip
-                  content={
-                    <div className="flex-inline text-small">
-                      Social Login with Google is not enabled.{" "}
-                      <Link
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary"
-                      >
-                        Read the docs
-                      </Link>
-                    </div>
-                  }
-                  placement="right-start"
-                  shadow="sm"
-                  isDisabled={isGoogleOAuthEnabled}
-                  className="w-96"
-                >
-                  <span>
-                    <Button
-                      startContent={
-                        <Icon icon="flat-color-icons:google" width={24} />
+                {!isSamlMode && (
+                  <>
+                    <Tooltip
+                      content={
+                        <div className="flex-inline text-small">
+                          Social Login with Google is not enabled.{" "}
+                          <Link
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-primary"
+                          >
+                            Read the docs
+                          </Link>
+                        </div>
                       }
-                      variant="bordered"
-                      className="w-full"
-                      as="a"
-                      href={googleAuthUrl}
-                      isDisabled={!isGoogleOAuthEnabled}
+                      placement="right-start"
+                      shadow="sm"
+                      isDisabled={isGoogleOAuthEnabled}
+                      className="w-96"
                     >
-                      Continue with Google
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip
-                  content={
-                    <div className="flex-inline text-small">
-                      Social Login with Github is not enabled.{" "}
-                      <Link
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary"
-                      >
-                        Read the docs
-                      </Link>
-                    </div>
-                  }
-                  placement="right-start"
-                  shadow="sm"
-                  isDisabled={isGithubOAuthEnabled}
-                  className="w-96"
-                >
-                  <span>
-                    <Button
-                      startContent={
-                        <Icon
-                          className="text-default-500"
-                          icon="fe:github"
-                          width={24}
-                        />
+                      <span>
+                        <Button
+                          startContent={
+                            <Icon icon="flat-color-icons:google" width={24} />
+                          }
+                          variant="bordered"
+                          className="w-full"
+                          as="a"
+                          href={googleAuthUrl}
+                          isDisabled={!isGoogleOAuthEnabled}
+                        >
+                          Continue with Google
+                        </Button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip
+                      content={
+                        <div className="flex-inline text-small">
+                          Social Login with Github is not enabled.{" "}
+                          <Link
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-primary"
+                          >
+                            Read the docs
+                          </Link>
+                        </div>
                       }
-                      variant="bordered"
-                      className="w-full"
-                      as="a"
-                      href={githubAuthUrl}
-                      isDisabled={!isGithubOAuthEnabled}
+                      placement="right-start"
+                      shadow="sm"
+                      isDisabled={isGithubOAuthEnabled}
+                      className="w-96"
                     >
-                      Continue with Github
-                    </Button>
-                  </span>
-                </Tooltip>
+                      <span>
+                        <Button
+                          startContent={
+                            <Icon
+                              className="text-default-500"
+                              icon="fe:github"
+                              width={24}
+                            />
+                          }
+                          variant="bordered"
+                          className="w-full"
+                          as="a"
+                          href={githubAuthUrl}
+                          isDisabled={!isGithubOAuthEnabled}
+                        >
+                          Continue with Github
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  </>
+                )}
+                {/* TODO after v5.8: Add SAML SSO back in */}
+                {/* <Button
+                  startContent={
+                    !isSamlMode && (
+                      <Icon
+                        className="text-default-500"
+                        icon="mdi:shield-key"
+                        width={24}
+                      />
+                    )
+                  }
+                  variant="bordered"
+                  className="w-full"
+                  onClick={() => {
+                    form.setValue("isSamlMode", !isSamlMode);
+                  }}
+                >
+                  {isSamlMode ? "Back" : "Continue with SAML SSO"}
+                </Button> */}
               </div>
             </>
           )}

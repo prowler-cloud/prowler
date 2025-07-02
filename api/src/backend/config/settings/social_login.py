@@ -11,8 +11,7 @@ GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 
 # Allauth settings
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Do not require email confirmation
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 REST_AUTH = {
@@ -25,6 +24,11 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 # Connect local account and social account if local account with that email address already exists
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_ADAPTER = "api.adapters.ProwlerSocialAccountAdapter"
+
+# SAML keys (TODO: Validate certificates)
+# SAML_PUBLIC_CERT = env("SAML_PUBLIC_CERT", default="")
+# SAML_PRIVATE_KEY = env("SAML_PRIVATE_KEY", default="")
+
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
@@ -49,5 +53,24 @@ SOCIALACCOUNT_PROVIDERS = {
             "user",
             "read:org",
         ],
+    },
+    "saml": {
+        "use_nameid_for_email": True,
+        "sp": {
+            "entity_id": "urn:prowler.com:sp",
+        },
+        "advanced": {
+            # "x509cert": SAML_PUBLIC_CERT,
+            # "private_key": SAML_PRIVATE_KEY,
+            # "authn_request_signed": True,
+            # "want_assertion_signed": True,
+            # "want_message_signed": True,
+            "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+            "authn_request_signed": False,
+            "logout_request_signed": False,
+            "logout_response_signed": False,
+            "want_assertion_encrypted": False,
+            "want_name_id_encrypted": False,
+        },
     },
 }

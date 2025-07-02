@@ -7,9 +7,18 @@ import {
   apiBaseUrl,
   getAuthHeaders,
   getErrorMessage,
+  getFormValue,
   parseStringify,
   wait,
 } from "@/lib";
+import {
+  buildSecretConfig,
+  buildUpdateSecretConfig,
+  handleApiError,
+  handleApiResponse,
+} from "@/lib/provider-credentials/build-crendentials";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
   page = 1,
@@ -17,7 +26,7 @@ export const getProviders = async ({
   sort = "",
   filters = {},
   pageSize = 10,
-}) => {
+}): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
@@ -73,10 +82,8 @@ export const getProvider = async (formData: FormData) => {
 
 export const updateProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
-
-  const providerId = formData.get("providerId");
-  const providerAlias = formData.get("alias");
-
+  const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
+  const providerAlias = formData.get(ProviderCredentialFields.PROVIDER_ALIAS);
   const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
@@ -87,29 +94,21 @@ export const updateProvider = async (formData: FormData) => {
         data: {
           type: "providers",
           id: providerId,
-          attributes: {
-            alias: providerAlias,
-          },
+          attributes: { alias: providerAlias },
         },
       }),
     });
 
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
 export const addProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
-  const providerType = formData.get("providerType") as string;
+  const providerType = formData.get("providerType") as ProviderType;
   const providerUid = formData.get("providerUid") as string;
   const providerAlias = formData.get("providerAlias") as string;
 
@@ -149,102 +148,37 @@ export const addCredentialsProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/providers/secrets`);
 
-  const secretName = formData.get("secretName");
-  const providerId = formData.get("providerId");
-  const providerType = formData.get("providerType");
-
-  const isRole = formData.get("role_arn") !== null;
-
-  let secret = {};
-  let secretType = "static"; // Default to static credentials
-
-  if (providerType === "aws") {
-    if (isRole) {
-      // Role-based configuration for AWS
-      secretType = "role";
-      secret = {
-        role_arn: formData.get("role_arn"),
-        external_id: formData.get("external_id"),
-        aws_access_key_id: formData.get("aws_access_key_id") || undefined,
-        aws_secret_access_key:
-          formData.get("aws_secret_access_key") || undefined,
-        aws_session_token: formData.get("aws_session_token") || undefined,
-        session_duration:
-          parseInt(formData.get("session_duration") as string, 10) || 3600,
-        role_session_name: formData.get("role_session_name") || undefined,
-      };
-    } else {
-      // Static credentials configuration for AWS
-      secret = {
-        aws_access_key_id: formData.get("aws_access_key_id"),
-        aws_secret_access_key: formData.get("aws_secret_access_key"),
-        aws_session_token: formData.get("aws_session_token") || undefined,
-      };
-    }
-  } else if (providerType === "azure") {
-    // Static credentials configuration for Azure
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      tenant_id: formData.get("tenant_id"),
-    };
-  } else if (providerType === "m365") {
-    // Static credentials configuration for M365
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      tenant_id: formData.get("tenant_id"),
-      user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
-    };
-  } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
-  } else if (providerType === "kubernetes") {
-    // Static credentials configuration for Kubernetes
-    secret = {
-      kubeconfig_content: formData.get("kubeconfig_content"),
-    };
-  }
-
-  const bodyData = {
-    data: {
-      type: "provider-secrets",
-      attributes: {
-        secret_type: secretType,
-        secret,
-        name: secretName,
-      },
-      relationships: {
-        provider: {
-          data: {
-            id: providerId,
-            type: "providers",
-          },
-        },
-      },
-    },
-  };
+  const providerId = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_ID,
+  );
+  const providerType = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_TYPE,
+  ) as ProviderType;
 
   try {
+    const { secretType, secret } = buildSecretConfig(formData, providerType);
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify(bodyData),
+      body: JSON.stringify({
+        data: {
+          type: "provider-secrets",
+          attributes: { secret_type: secretType, secret },
+          relationships: {
+            provider: {
+              data: { id: providerId, type: "providers" },
+            },
+          },
+        },
+      }),
     });
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
+
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -254,120 +188,48 @@ export const updateCredentialsProvider = async (
 ) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/providers/secrets/${credentialsId}`);
-
-  const secretName = formData.get("secretName");
-  const providerType = formData.get("providerType");
-
-  const isRole = formData.get("role_arn") !== null;
-
-  let secret = {};
-
-  if (providerType === "aws") {
-    if (isRole) {
-      // Role-based configuration for AWS
-      secret = {
-        role_arn: formData.get("role_arn"),
-        aws_access_key_id: formData.get("aws_access_key_id") || undefined,
-        aws_secret_access_key:
-          formData.get("aws_secret_access_key") || undefined,
-        aws_session_token: formData.get("aws_session_token") || undefined,
-        session_duration:
-          parseInt(formData.get("session_duration") as string, 10) || 3600,
-        external_id: formData.get("external_id") || undefined,
-        role_session_name: formData.get("role_session_name") || undefined,
-      };
-    } else {
-      // Static credentials configuration for AWS
-      secret = {
-        aws_access_key_id: formData.get("aws_access_key_id"),
-        aws_secret_access_key: formData.get("aws_secret_access_key"),
-        aws_session_token: formData.get("aws_session_token") || undefined,
-      };
-    }
-  } else if (providerType === "azure") {
-    // Static credentials configuration for Azure
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      tenant_id: formData.get("tenant_id"),
-    };
-  } else if (providerType === "m365") {
-    // Static credentials configuration for M365
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      tenant_id: formData.get("tenant_id"),
-      user: formData.get("user"),
-      encrypted_password: formData.get("encrypted_password"),
-    };
-  } else if (providerType === "gcp") {
-    // Static credentials configuration for GCP
-    secret = {
-      client_id: formData.get("client_id"),
-      client_secret: formData.get("client_secret"),
-      refresh_token: formData.get("refresh_token"),
-    };
-  } else if (providerType === "kubernetes") {
-    // Static credentials configuration for Kubernetes
-    secret = {
-      kubeconfig_content: formData.get("kubeconfig_content"),
-    };
-  }
-
-  const bodyData = {
-    data: {
-      type: "provider-secrets",
-      id: credentialsId,
-      attributes: {
-        name: secretName,
-        secret,
-      },
-    },
-  };
+  const providerType = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_TYPE,
+  ) as ProviderType;
 
   try {
+    const secret = buildUpdateSecretConfig(formData, providerType);
+
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers,
-      body: JSON.stringify(bodyData),
+      body: JSON.stringify({
+        data: {
+          type: "provider-secrets",
+          id: credentialsId,
+          attributes: { secret },
+        },
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to update credentials: ${response.statusText}`);
+      const data = await response.json();
+      return parseStringify(data); // Return API errors for UI handling
     }
 
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
 export const checkConnectionProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: false });
-
-  const providerId = formData.get("providerId");
-
+  const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
   const url = new URL(`${apiBaseUrl}/providers/${providerId}/connection`);
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-    });
-    const data = await response.json();
+    const response = await fetch(url.toString(), { method: "POST", headers });
     await wait(2000);
-    revalidatePath("/providers");
-    return parseStringify(data);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -413,7 +275,7 @@ export const deleteCredentials = async (secretId: string) => {
 
 export const deleteProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: false });
-  const providerId = formData.get("id");
+  const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
 
   if (!providerId) {
     return { error: "Provider ID is required" };

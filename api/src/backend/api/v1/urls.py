@@ -13,6 +13,7 @@ from api.v1.views import (
     IntegrationViewSet,
     InvitationAcceptViewSet,
     InvitationViewSet,
+    LighthouseConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
     ProviderGroupProvidersRelationshipView,
@@ -49,6 +50,12 @@ router.register(
 router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
 router.register(r"integrations", IntegrationViewSet, basename="integration")
+# router.register(r"saml-config", SAMLConfigurationViewSet, basename="saml-config")
+router.register(
+    r"lighthouse-configurations",
+    LighthouseConfigViewSet,
+    basename="lighthouseconfiguration",
+)
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(
@@ -112,6 +119,24 @@ urlpatterns = [
         ),
         name="provider_group-providers-relationship",
     ),
+    # API endpoint to start SAML SSO flow (WIP)
+    # path(
+    #     "auth/saml/initiate/", SAMLInitiateAPIView.as_view(), name="api_saml_initiate"
+    # ),
+    # # Custom SAML endpoints (must come before allauth.urls) (WIP)
+    # path(
+    #     "accounts/saml/<organization_slug>/login/",
+    #     CustomSAMLLoginView.as_view(),
+    #     name="saml_login",
+    # ),
+    # path(
+    #     "accounts/saml/<organization_slug>/acs/finish/",
+    #     TenantFinishACSView.as_view(),
+    #     name="saml_finish_acs",
+    # ),
+    # Allauth SAML endpoints for tenants (WIP)
+    # path("accounts/", include("allauth.urls")),
+    # path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
     path("", include(router.urls)),

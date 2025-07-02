@@ -417,6 +417,11 @@ aws:
     {"name": "TwilioKeyDetector"},
   ]
 
+  # AWS CodeBuild Configuration
+  # aws.codebuild_project_uses_allowed_github_organizations
+  codebuild_github_allowed_organizations:
+    [
+    ]
 
 # Azure Configuration
 azure:
@@ -515,3 +520,8 @@ m365:
   # m365.exchange_mailbox_properties_auditing_enabled
   # Maximum number of days to keep audit logs
   audit_log_age: 90
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived --> CIS recommends 180 days (6 months)
+  inactive_not_archived_days_threshold: 180
