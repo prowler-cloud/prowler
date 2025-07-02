@@ -1,6 +1,7 @@
 import glob
 import os
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urljoin
 
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
@@ -475,20 +476,22 @@ class SAMLInitiateAPIView(GenericAPIView):
                 {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        # Check certificates are not empty
-        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
-        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+        # Check certificates are not empty (TODO: Validate certificates)
+        # saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        # saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
 
-        if not saml_public_cert or not saml_private_key:
-            return Response(
-                {"detail": "SAML configuration is invalid: missing certificates."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # if not saml_public_cert or not saml_private_key:
+        #     return Response(
+        #         {"detail": "SAML configuration is invalid: missing certificates."},
+        #         status=status.HTTP_403_FORBIDDEN,
+        #     )
 
-        relative = reverse(
+        # Build the SAML login URL using the configured API host
+        api_host = os.getenv("API_BASE_URL")
+        login_path = reverse(
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
-        login_url = request.build_absolute_uri(relative)
+        login_url = urljoin(api_host, login_path)
 
         return redirect(login_url)
 
@@ -612,6 +615,15 @@ class TenantFinishACSView(FinishACSView):
             user=user,
             role=role,
             tenant_id=tenant.id,
+        )
+        membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
+            user=user,
+            tenant=tenant,
+            defaults={
+                "user": user,
+                "tenant": tenant,
+                "role": Membership.RoleChoices.MEMBER,
+            },
         )
 
         serializer = TokenSocialLoginSerializer(data={"email": user.email})

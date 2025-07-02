@@ -1589,18 +1589,21 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             provider="saml", client_id=previous_email_domain or self.email_domain
         )
 
+        client_id = self.email_domain[:191]
+        name = f"SAML-{self.email_domain}"[:40]
+
         if social_app_qs.exists():
             social_app = social_app_qs.first()
-            social_app.client_id = self.email_domain
-            social_app.name = f"{self.tenant.name} SAML ({self.email_domain})"
+            social_app.client_id = client_id
+            social_app.name = name
             social_app.settings = settings_dict
             social_app.save()
             social_app.sites.set([current_site])
         else:
             social_app = SocialApp.objects.create(
                 provider="saml",
-                client_id=self.email_domain,
-                name=f"{self.tenant.name} SAML ({self.email_domain})",
+                client_id=client_id,
+                name=name,
                 settings=settings_dict,
             )
             social_app.sites.set([current_site])

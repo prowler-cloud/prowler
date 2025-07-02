@@ -44,9 +44,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `monitor_alert_service_health_exists` check for Azure provider [(#8067)](https://github.com/prowler-cloud/prowler/pull/8067)
 - Replace `Domain.Read.All` with `Directory.Read.All` in Azure and M365 docs [(#8075)](https://github.com/prowler-cloud/prowler/pull/8075)
 - Refactor IaC provider to use Checkov as Python library [(#8093)](https://github.com/prowler-cloud/prowler/pull/8093)
+- New check `codebuild_project_not_publicly_accessible` for AWS provider [(#8127)](https://github.com/prowler-cloud/prowler/pull/8127)
 
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
+- Migrate Azure VM service and managed disk logic to Pydantic models for better serialization and type safety, and update all related tests to use the new models and fix UUID handling [(#https://github.com/prowler-cloud/prowler/pull/8151)](https://github.com/prowler-cloud/prowler/pull/https://github.com/prowler-cloud/prowler/pull/8151)
 
 ### Changed
 - Reworked `S3.test_connection` to match the AwsProvider logic [(#8088)](https://github.com/prowler-cloud/prowler/pull/8088)

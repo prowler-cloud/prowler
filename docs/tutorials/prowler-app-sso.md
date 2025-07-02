@@ -199,7 +199,7 @@ AUTH_URL="<WEB_UI_URL>"
 - Ensure the `AUTH_URL` points to the correct web UI deployment (development, staging, or production)
 - The callback endpoint `/api/auth/callback/saml` must be accessible and properly configured to handle SAML authentication responses
 - Both environment variables are required for proper SAML SSO functionality
-- Verify that the `API_BASE_URL` environment variable is properly configured to reference the correct API server base URL corresponding to your target deployment environment. This ensures proper routing of SAML callback requests to the appropriate backend services.
+- Verify that the `NEXT_PUBLIC_API_BASE_URL` environment variable is properly configured to reference the correct API server base URL corresponding to your target deployment environment. This ensures proper routing of SAML callback requests to the appropriate backend services.
 
 ## 8. Start SAML Login Flow
 
