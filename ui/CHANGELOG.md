@@ -21,7 +21,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
 - Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
-- SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094)
+<!-- - SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094) -->
 
 ### 🔄 Changed
 
