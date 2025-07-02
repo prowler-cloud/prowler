@@ -1,10 +1,9 @@
 "use client";
 
-/* eslint-disable no-console */
-
 import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
+import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
@@ -13,7 +12,6 @@ import { CustomButton, CustomServerInput } from "@/components/ui/custom";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
-import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const SamlConfigForm = ({
   setIsOpen,
@@ -39,26 +37,28 @@ export const SamlConfigForm = ({
 
   // Client-side validation function
   const validateFields = (email: string, hasFile: boolean) => {
-    const result = samlConfigFormSchema.safeParse({
-      email_domain: email,
-      metadata_xml: hasFile ? "dummy_xml_content" : "", // Simulate content when there is a file for client validation
-    });
+    // Validar cada campo por separado para poder limpiarlos individualmente
+    const emailValidation = z
+      .string()
+      .trim()
+      .min(1, { message: "Email domain is required" })
+      .safeParse(email);
+    const metadataValidation = z
+      .string()
+      .trim()
+      .min(1, { message: "Metadata XML is required" })
+      .safeParse(hasFile ? "dummy_xml_content" : "");
 
-    if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
-      const newErrors = {
-        email_domain: fieldErrors.email_domain?.[0],
-        metadata_xml: fieldErrors.metadata_xml?.[0],
-      };
-      setClientErrors(newErrors);
-    } else {
-      // If the client validation passes, clear all errors
-      const newErrors = {
-        email_domain: null,
-        metadata_xml: null,
-      };
-      setClientErrors(newErrors);
-    }
+    const newErrors = {
+      email_domain: emailValidation.success
+        ? null
+        : emailValidation.error.issues[0]?.message,
+      metadata_xml: metadataValidation.success
+        ? null
+        : metadataValidation.error.issues[0]?.message,
+    };
+
+    setClientErrors(newErrors);
   };
 
   useEffect(() => {
