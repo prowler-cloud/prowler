@@ -2,12 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.8.1] (Prowler 5.8.1 UNRELEASED)
-
-### Added
-
-- Update M365 docs with new authentication method on cloud [(#8147)](https://github.com/prowler-cloud/prowler/pull/8147)
-
 ## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
