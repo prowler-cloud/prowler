@@ -15,6 +15,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Scheduled scans are no longer deleted when their daily schedule run is disabled [(#8082)](https://github.com/prowler-cloud/prowler/pull/8082)
+- fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
 
 ---
 
