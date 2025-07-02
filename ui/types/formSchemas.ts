@@ -320,3 +320,25 @@ export const samlConfigFormSchema = z.object({
     .trim()
     .min(1, { message: "Metadata XML is required" }),
 });
+
+export const mutedFindingsConfigFormSchema = z.object({
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { message: "Configuration is required" })
+    .refine(
+      (val) => {
+        // Basic YAML validation - must contain required structure
+        const hasMutelist = val.includes("Mutelist:");
+        const hasAccounts = val.includes("Accounts:");
+        const hasChecks = val.includes("Checks:");
+
+        return hasMutelist && hasAccounts && hasChecks;
+      },
+      {
+        message:
+          "Invalid YAML format. Configuration must contain 'Mutelist:', 'Accounts:', and 'Checks:' sections.",
+      },
+    ),
+  id: z.string().optional(),
+});

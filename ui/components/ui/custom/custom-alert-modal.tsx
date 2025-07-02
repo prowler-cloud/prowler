@@ -7,6 +7,7 @@ interface CustomAlertModalProps {
   title?: string;
   description?: string;
   children: ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
 export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
@@ -15,12 +16,13 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
   title,
   description,
   children,
+  size = "xl",
 }) => {
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      size="xl"
+      size={size}
       classNames={{
         base: "dark:bg-prowler-blue-800",
         closeButton: "rounded-md",
