@@ -492,12 +492,12 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 
 ### Usage
 
-To run Prowler with the IaC provider, use the `--provider iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
+To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
 
 #### Basic Example
 
 ```console
-prowler --provider iac --scan-path ./my-iac-directory
+prowler iac --scan-path ./my-iac-directory
 ```
 
 #### Specify Frameworks
@@ -505,11 +505,11 @@ prowler --provider iac --scan-path ./my-iac-directory
 Scan only Terraform and Kubernetes files:
 
 ```console
-prowler --provider iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
 ```
 
 #### Exclude Paths
 
 ```console
-prowler --provider iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
+prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
 ```

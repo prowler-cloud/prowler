@@ -31,12 +31,12 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 
 ## Usage
 
-To run Prowler with the IaC provider, use the `--provider iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
+To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
 
 ### Basic Example
 
 ```sh
-prowler --provider iac --scan-path ./my-iac-directory
+prowler iac --scan-path ./my-iac-directory
 ```
 
 ### Specify Frameworks
@@ -44,13 +44,13 @@ prowler --provider iac --scan-path ./my-iac-directory
 Scan only Terraform and Kubernetes files:
 
 ```sh
-prowler --provider iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
 ```
 
 ### Exclude Paths
 
 ```sh
-prowler --provider iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
+prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
 ```
 
 ## Output
@@ -58,7 +58,7 @@ prowler --provider iac --scan-path ./my-iac-directory --exclude-path ./my-iac-di
 You can use the standard Prowler output options, for example:
 
 ```sh
-prowler --provider iac --scan-path ./iac --output-formats csv json html
+prowler iac --scan-path ./iac --output-formats csv json html
 ```
 
 ## Notes
@@ -66,7 +66,3 @@ prowler --provider iac --scan-path ./iac --output-formats csv json html
 - The IaC provider does not require cloud authentication.
 - It is ideal for CI/CD pipelines and local development environments.
 - For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html).
-
----
-
-For advanced configuration, refer to the [Prowler documentation](../configuration_file.md) and [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html).
