@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable no-console */
+
 import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
@@ -11,6 +13,7 @@ import { CustomButton, CustomServerInput } from "@/components/ui/custom";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
+import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const SamlConfigForm = ({
   setIsOpen,
@@ -26,12 +29,37 @@ export const SamlConfigForm = ({
   const [emailDomain, setEmailDomain] = useState(
     samlConfig?.attributes?.email_domain || "",
   );
-  const [uploadedFile, setUploadedFile] = useState<{
-    name: string;
-    uploaded: boolean;
-  }>({ name: "", uploaded: false });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [clientErrors, setClientErrors] = useState<{
+    email_domain?: string | null;
+    metadata_xml?: string | null;
+  }>({});
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+
+  // Client-side validation function
+  const validateFields = (email: string, hasFile: boolean) => {
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: email,
+      metadata_xml: hasFile ? "dummy_xml_content" : "", // Simulate content when there is a file for client validation
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      const newErrors = {
+        email_domain: fieldErrors.email_domain?.[0],
+        metadata_xml: fieldErrors.metadata_xml?.[0],
+      };
+      setClientErrors(newErrors);
+    } else {
+      // If the client validation passes, clear all errors
+      const newErrors = {
+        email_domain: null,
+        metadata_xml: null,
+      };
+      setClientErrors(newErrors);
+    }
+  };
 
   useEffect(() => {
     if (state?.success) {
@@ -52,7 +80,8 @@ export const SamlConfigForm = ({
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      setUploadedFile({ name: "", uploaded: false });
+      setUploadedFile(null);
+      validateFields(emailDomain, false);
       return;
     }
 
@@ -70,7 +99,8 @@ export const SamlConfigForm = ({
       });
       // Clear the file input
       event.target.value = "";
-      setUploadedFile({ name: "", uploaded: false });
+      setUploadedFile(null);
+      validateFields(emailDomain, false);
 
       return;
     }
@@ -88,7 +118,8 @@ export const SamlConfigForm = ({
         });
         // Clear the file input
         event.target.value = "";
-        setUploadedFile({ name: "", uploaded: false });
+        setUploadedFile(null);
+        validateFields(emailDomain, false);
         return;
       }
 
@@ -100,8 +131,8 @@ export const SamlConfigForm = ({
         xmlInput.value = content;
       }
 
-      // Update file state
-      setUploadedFile({ name: file.name, uploaded: true });
+      setUploadedFile(file);
+      validateFields(emailDomain, true);
 
       toast({
         title: "File uploaded successfully",
@@ -117,7 +148,8 @@ export const SamlConfigForm = ({
       });
       // Clear the file input
       event.target.value = "";
-      setUploadedFile({ name: "", uploaded: false });
+      setUploadedFile(null);
+      validateFields(emailDomain, false);
     };
 
     reader.readAsText(file);
@@ -137,11 +169,21 @@ export const SamlConfigForm = ({
         labelPlacement="outside"
         variant="bordered"
         isRequired={true}
-        isInvalid={!!state?.errors?.email_domain}
-        errorMessage={state?.errors?.email_domain}
+        isInvalid={
+          !!(clientErrors.email_domain === null
+            ? undefined
+            : clientErrors.email_domain || state?.errors?.email_domain)
+        }
+        errorMessage={
+          clientErrors.email_domain === null
+            ? undefined
+            : clientErrors.email_domain || state?.errors?.email_domain
+        }
         value={emailDomain}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setEmailDomain(e.target.value);
+          const newValue = e.target.value;
+          setEmailDomain(newValue);
+          validateFields(newValue, !!uploadedFile);
         }}
       />
 
@@ -171,6 +213,15 @@ export const SamlConfigForm = ({
               ariaLabel="Copy Audience to clipboard"
               className="w-full"
             />
+          </div>
+
+          <div>
+            <span className="mb-2 block text-sm font-medium text-default-500">
+              Name ID Format:
+            </span>
+            <span className="w-full text-sm text-default-600">
+              urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+            </span>
           </div>
 
           <div>
@@ -214,15 +265,19 @@ export const SamlConfigForm = ({
           }}
           startContent={<AddIcon size={20} />}
           className={`h-10 justify-start rounded-medium border-2 text-default-500 ${
-            state?.errors?.metadata_xml
+            (
+              clientErrors.metadata_xml === null
+                ? undefined
+                : clientErrors.metadata_xml || state?.errors?.metadata_xml
+            )
               ? "border-red-500"
-              : uploadedFile.uploaded
+              : uploadedFile
                 ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                 : "border-default-200"
           }`}
         >
           <span className="text-small">
-            {uploadedFile.uploaded ? (
+            {uploadedFile ? (
               <span className="flex items-center space-x-2">
                 <span className="max-w-36 truncate">{uploadedFile.name}</span>
               </span>
@@ -246,7 +301,13 @@ export const SamlConfigForm = ({
           Upload your Identity Provider&apos;s SAML metadata XML file
         </p>
         <span className="text-xs text-red-500">
-          {state?.errors?.metadata_xml}
+          {(() => {
+            const finalError =
+              clientErrors.metadata_xml === null
+                ? undefined
+                : clientErrors.metadata_xml || state?.errors?.metadata_xml;
+            return finalError;
+          })()}
         </span>
       </div>
       <FormButtons
