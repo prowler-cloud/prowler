@@ -26,6 +26,7 @@ import {
   getFindingsTool,
   getLatestFindingsTool,
   getMetadataInfoTool,
+  getNewFailedFindingsSummaryTool,
 } from "@/lib/lighthouse/tools/findings";
 import {
   getFindingsBySeverityTool,
@@ -104,6 +105,7 @@ export async function initLighthouseWorkflow() {
       getFindingsTool,
       getLatestFindingsTool,
       getMetadataInfoTool,
+      getNewFailedFindingsSummaryTool,
       getProviderChecksTool,
       getProviderCheckDetailsTool,
     ],
