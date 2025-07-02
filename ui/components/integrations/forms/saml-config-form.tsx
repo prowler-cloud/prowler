@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 
@@ -13,16 +14,18 @@ import { apiBaseUrl } from "@/lib";
 
 export const SamlConfigForm = ({
   setIsOpen,
-  id,
+  samlConfig,
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
-  id: string;
+  samlConfig?: any;
 }) => {
   const [state, formAction, isPending] = useFormState(
-    id ? updateSamlConfig : createSamlConfig,
+    samlConfig?.id ? updateSamlConfig : createSamlConfig,
     null,
   );
-  const [emailDomain, setEmailDomain] = useState("");
+  const [emailDomain, setEmailDomain] = useState(
+    samlConfig?.attributes?.email_domain || "",
+  );
   const [uploadedFile, setUploadedFile] = useState<{
     name: string;
     uploaded: boolean;
@@ -126,7 +129,7 @@ export const SamlConfigForm = ({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
-      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="id" value={samlConfig?.id || ""} />
       <CustomServerInput
         name="email_domain"
         label="Email Domain"
@@ -172,17 +175,6 @@ export const SamlConfigForm = ({
 
           <div>
             <span className="mb-2 block text-sm font-medium text-default-500">
-              Name ID Format:
-            </span>
-            <SnippetChip
-              value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-              ariaLabel="Copy Name ID Format to clipboard"
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
               Supported Assertion Attributes:
             </span>
             <ul className="ml-4 space-y-1 text-sm text-default-600">
@@ -195,7 +187,11 @@ export const SamlConfigForm = ({
               <strong>Note:</strong> The userType attribute will be used to
               assign the user&apos;s role. If the role does not exist, one will
               be created with minimal permissions. You can assign permissions to
-              roles on the Roles page.
+              roles on the{" "}
+              <Link href="/roles">
+                <span className="underline">Roles</span>
+              </Link>{" "}
+              page.
             </p>
           </div>
         </div>
@@ -253,7 +249,10 @@ export const SamlConfigForm = ({
           {state?.errors?.metadata_xml}
         </span>
       </div>
-      <FormButtons setIsOpen={setIsOpen} submitText={id ? "Update" : "Save"} />
+      <FormButtons
+        setIsOpen={setIsOpen}
+        submitText={samlConfig?.id ? "Update" : "Save"}
+      />
     </form>
   );
 };
