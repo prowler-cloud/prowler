@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.9.0] (Prowler UNRELEASED)
+
+### Added
+
+- `vm_image_approved_in_use` check for Azure provider
+
+---
+
 ## [v5.8.0] (Prowler UNRELEASED)
 
 ### Added
