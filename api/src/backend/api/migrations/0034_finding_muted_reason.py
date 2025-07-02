@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0034_processors"),
+        ("api", "0033_processors"),
     ]
 
     operations = [

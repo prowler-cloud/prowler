@@ -2,10 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.9.0] (Prowler UNRELEASED)
+## [v1.10.0] (Prowler UNRELEASED)
+
+---
+
+## [v1.9.0] (Prowler v5.8.0)
 
 ### Added
-- SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822)
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)
@@ -13,6 +16,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
+- Optional `user` and `password` for M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 
 ### Fixed
 - Scheduled scans are no longer deleted when their daily schedule run is disabled [(#8082)](https://github.com/prowler-cloud/prowler/pull/8082)

@@ -9,19 +9,15 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 
 import jwt
 import pytest
-from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
-from django.http import JsonResponse
-from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
-from api.db_router import MainRouter
 from api.models import (
     Integration,
     Invitation,
@@ -33,7 +29,6 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfiguration,
     Scan,
     StateChoices,
     Task,
@@ -41,7 +36,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
-from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from api.v1.views import ComplianceOverviewViewSet
 
 TODAY = str(datetime.today().date())
 
@@ -1242,10 +1237,10 @@ class TestProviderViewSet:
                 ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 5),
-                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at", TODAY, 6),
+                ("inserted_at.gte", "2024-01-01", 6),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.gte", "2024-01-01", 6),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1724,6 +1719,50 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
+            # M365 with STATIC secret - no user or password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                },
+            ),
+            # M365 with user only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                },
+            ),
+            # M365 with password only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "password": "supersecret",
+                },
+            ),
+            # M365 with user and password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                    "password": "supersecret",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -1735,7 +1774,10 @@ class TestProviderSecretViewSet:
         secret_data,
     ):
         # Get the provider from the fixture and set its type
-        provider = Provider.objects.filter(provider=provider_type)[0]
+        try:
+            provider = Provider.objects.filter(provider=provider_type)[0]
+        except IndexError:
+            print(f"Provider {provider_type} not found")
 
         data = {
             "data": {
@@ -5562,418 +5604,334 @@ class TestIntegrationViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
-@pytest.mark.django_db
-class TestSAMLInitiateAPIView:
-    def test_valid_email_domain_and_certificates(
-        self, authenticated_client, saml_setup, monkeypatch
-    ):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
+# @pytest.mark.django_db
+# class TestSAMLTokenValidation:
+#     def test_valid_token_returns_tokens(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         valid_token_data = {
+#             "access": "mock_access_token",
+#             "refresh": "mock_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=valid_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
 
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
 
-        response = authenticated_client.post(url, data=payload, format="json")
+#         assert response.status_code == status.HTTP_200_OK
+#         assert response.json() == {"data": valid_token_data}
+#         assert not SAMLToken.objects.filter(id=saml_token.id).exists()
 
-        assert response.status_code == status.HTTP_302_FOUND
-        assert f"email={saml_setup['email']}" in response.url
-        assert (
-            reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
-            in response.url
-        )
+#     def test_invalid_token_id_returns_404(self, authenticated_client):
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={str(uuid4())}")
 
-    def test_invalid_email_domain(self, authenticated_client):
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": "user@unauthorized.com"}
+#         assert response.status_code == status.HTTP_404_NOT_FOUND
+#         assert response.json()["errors"]["detail"] == "Invalid token ID."
 
-        response = authenticated_client.post(url, data=payload, format="json")
+#     def test_expired_token_returns_400(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         expired_token_data = {
+#             "access": "expired_access_token",
+#             "refresh": "expired_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=expired_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+#         )
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json()["errors"]["detail"] == "Unauthorized domain."
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
 
-    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert response.json()["errors"]["detail"] == "Token expired."
+#         assert SAMLToken.objects.filter(id=saml_token.id).exists()
 
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
+#     def test_token_can_be_used_only_once(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         token_data = {
+#             "access": "single_use_token",
+#             "refresh": "single_use_refresh",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
 
-        response = authenticated_client.post(url, data=payload, format="json")
+#         url = reverse("token-saml")
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert (
-            response.json()["errors"]["detail"]
-            == "SAML configuration is invalid: missing certificates."
-        )
+#         # First use: should succeed
+#         response1 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response1.status_code == status.HTTP_200_OK
 
-
-@pytest.mark.django_db
-class TestSAMLConfigurationViewSet:
-    def test_list_saml_configurations(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.get(reverse("saml-config-list"))
-        assert response.status_code == status.HTTP_200_OK
-        assert (
-            response.json()["data"][0]["attributes"]["email_domain"]
-            == config.email_domain
-        )
-
-    def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.get(
-            reverse("saml-config-detail", kwargs={"pk": config.id})
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert (
-            response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
-        )
-
-    def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
-        payload = {
-            "email_domain": "newdomain.com",
-            "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
-                <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-                    <md:KeyDescriptor use='signing'>
-                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-                        <ds:X509Data>
-                        <ds:X509Certificate>TEST</ds:X509Certificate>
-                        </ds:X509Data>
-                    </ds:KeyInfo>
-                    </md:KeyDescriptor>
-                    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-                </md:IDPSSODescriptor>
-                </md:EntityDescriptor>
-            """,
-        }
-        response = authenticated_client.post(
-            reverse("saml-config-list"), data=payload, format="json"
-        )
-        assert response.status_code == status.HTTP_201_CREATED
-        assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
-
-    def test_update_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        payload = {
-            "data": {
-                "type": "saml-configurations",
-                "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
-        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-            <md:KeyDescriptor use='signing'>
-            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-                <ds:X509Data>
-                <ds:X509Certificate>TEST2</ds:X509Certificate>
-                </ds:X509Data>
-            </ds:KeyInfo>
-            </md:KeyDescriptor>
-            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-        </md:IDPSSODescriptor>
-        </md:EntityDescriptor>
-        """
-                },
-            }
-        }
-        response = authenticated_client.patch(
-            reverse("saml-config-detail", kwargs={"pk": config.id}),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_200_OK
-        config.refresh_from_db()
-        assert (
-            config.metadata_xml.strip()
-            == payload["data"]["attributes"]["metadata_xml"].strip()
-        )
-
-    def test_delete_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.delete(
-            reverse("saml-config-detail", kwargs={"pk": config.id})
-        )
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+#         # Second use: should fail (already deleted)
+#         response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response2.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.django_db
-class TestProcessorViewSet:
-    def test_list_processors(self, authenticated_client, processor_fixture):
-        response = authenticated_client.get(reverse("processor-list"))
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 1
+# @pytest.mark.django_db
+# class TestSAMLInitiateAPIView:
+#     def test_valid_email_domain_and_certificates(
+#         self, authenticated_client, saml_setup, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
+#         monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
 
-    def test_retrieve_processor(self, authenticated_client, processor_fixture):
-        processor = processor_fixture
-        response = authenticated_client.get(
-            reverse("processor-detail", kwargs={"pk": processor.id})
-        )
-        assert response.status_code == status.HTTP_200_OK
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": saml_setup["email"]}
 
-    def test_create_processor_valid(self, authenticated_client):
-        payload = {
-            "data": {
-                "type": "processors",
-                "attributes": {
-                    "processor_type": "mutelist",
-                    "configuration": "Mutelist:\n  Accounts:\n    '*':\n      Checks:\n        "
-                    "iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          "
-                    "Resources:\n            - '*'",
-                },
-            },
-        }
-        response = authenticated_client.post(
-            reverse("processor-list"),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_201_CREATED
+#         response = authenticated_client.post(url, data=payload, format="json")
 
-    @pytest.mark.parametrize(
-        "invalid_configuration",
-        [
-            None,
-            "",
-            "invalid configuration",
-            {"invalid": "configuration"},
-        ],
-    )
-    def test_create_processor_invalid(
-        self, authenticated_client, invalid_configuration
-    ):
-        payload = {
-            "data": {
-                "type": "processors",
-                "attributes": {
-                    "processor_type": "mutelist",
-                    "configuration": invalid_configuration,
-                },
-            },
-        }
-        response = authenticated_client.post(
-            reverse("processor-list"),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert response.status_code == status.HTTP_302_FOUND
+#         assert (
+#             reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
+#             in response.url
+#         )
+#         assert "SAMLRequest" not in response.url
 
-    def test_update_processor_valid(self, authenticated_client, processor_fixture):
-        processor = processor_fixture
-        payload = {
-            "data": {
-                "type": "processors",
-                "id": str(processor.id),
-                "attributes": {
-                    "configuration": {
-                        "Mutelist": {
-                            "Accounts": {
-                                "1234567890": {
-                                    "Checks": {
-                                        "iam_user_hardware_mfa_enabled": {
-                                            "Regions": ["*"],
-                                            "Resources": ["*"],
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                },
-            },
-        }
-        response = authenticated_client.patch(
-            reverse("processor-detail", kwargs={"pk": processor.id}),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_200_OK
-        processor.refresh_from_db()
-        assert (
-            processor.configuration["Mutelist"]["Accounts"]["1234567890"]
-            == payload["data"]["attributes"]["configuration"]["Mutelist"]["Accounts"][
-                "1234567890"
-            ]
-        )
+#     def test_invalid_email_domain(self, authenticated_client):
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": "user@unauthorized.com"}
 
-    @pytest.mark.parametrize(
-        "invalid_configuration",
-        [
-            None,
-            "",
-            "invalid configuration",
-            {"invalid": "configuration"},
-        ],
-    )
-    def test_update_processor_invalid(
-        self, authenticated_client, processor_fixture, invalid_configuration
-    ):
-        processor = processor_fixture
-        payload = {
-            "data": {
-                "type": "processors",
-                "id": str(processor.id),
-                "attributes": {
-                    "configuration": invalid_configuration,
-                },
-            },
-        }
-        response = authenticated_client.patch(
-            reverse("processor-detail", kwargs={"pk": processor.id}),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         response = authenticated_client.post(url, data=payload, format="json")
 
-    def test_delete_processor(self, authenticated_client, processor_fixture):
-        processor = processor_fixture
-        response = authenticated_client.delete(
-            reverse("processor-detail", kwargs={"pk": processor.id})
-        )
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not Processor.objects.filter(id=processor.id).exists()
-
-    def test_processors_filters(self, authenticated_client, processor_fixture):
-        response = authenticated_client.get(
-            reverse("processor-list"),
-            {"filter[processor_type]": "mutelist"},
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["processor_type"] == "mutelist"
-
-    def test_processors_filters_invalid(self, authenticated_client):
-        response = authenticated_client.get(
-            reverse("processor-list"),
-            {"filter[processor_type]": "invalid"},
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert response.status_code == status.HTTP_403_FORBIDDEN
+#         assert response.json()["errors"]["detail"] == "Unauthorized domain."
 
 
-@pytest.mark.django_db
-class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = type("Anonymous", (), {"is_authenticated": False})()
+# @pytest.mark.django_db
+# class TestSAMLConfigurationViewSet:
+#     def test_list_saml_configurations(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(reverse("saml-config-list"))
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"][0]["attributes"]["email_domain"]
+#             == config.email_domain
+#         )
 
-        with patch(
-            "allauth.socialaccount.providers.saml.views.get_app_or_404"
-        ) as mock_get_app:
-            mock_get_app.return_value = SocialApp(
-                provider="saml",
-                client_id="testtenant",
-                name="Test App",
-                settings={},
-            )
+#     def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
+#         )
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+#     def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
+#         payload = {
+#             "email_domain": "newdomain.com",
+#             "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#                 <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#                 <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#                     <md:KeyDescriptor use='signing'>
+#                     <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                         <ds:X509Data>
+#                         <ds:X509Certificate>TEST</ds:X509Certificate>
+#                         </ds:X509Data>
+#                     </ds:KeyInfo>
+#                     </md:KeyDescriptor>
+#                     <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#                 </md:IDPSSODescriptor>
+#                 </md:EntityDescriptor>
+#             """,
+#         }
+#         response = authenticated_client.post(
+#             reverse("saml-config-list"), data=payload, format="json"
+#         )
+#         assert response.status_code == status.HTTP_201_CREATED
+#         assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
 
-        assert response.status_code in [200, 302]
+#     def test_update_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         payload = {
+#             "data": {
+#                 "type": "saml-configurations",
+#                 "id": str(config.id),
+#                 "attributes": {
+#                     "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#             <md:KeyDescriptor use='signing'>
+#             <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                 <ds:X509Data>
+#                 <ds:X509Certificate>TEST2</ds:X509Certificate>
+#                 </ds:X509Data>
+#             </ds:KeyInfo>
+#             </md:KeyDescriptor>
+#             <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#         </md:IDPSSODescriptor>
+#         </md:EntityDescriptor>
+#         """
+#                 },
+#             }
+#         }
+#         response = authenticated_client.patch(
+#             reverse("saml-config-detail", kwargs={"pk": config.id}),
+#             data=payload,
+#             content_type="application/vnd.api+json",
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         config.refresh_from_db()
+#         assert (
+#             config.metadata_xml.strip()
+#             == payload["data"]["attributes"]["metadata_xml"].strip()
+#         )
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = users_fixture[0]
+#     def test_delete_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.delete(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_204_NO_CONTENT
+#         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
 
-        with patch(
-            "allauth.socialaccount.providers.saml.views.get_app_or_404"
-        ) as mock_get_app:
-            mock_get_app.return_value = SocialApp(
-                provider="saml",
-                client_id="testtenant",
-                name="Test App",
-                settings={},
-            )
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+# @pytest.mark.django_db
+# class TestTenantFinishACSView:
+#     def test_dispatch_skips_if_user_not_authenticated(self):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = type("Anonymous", (), {"is_authenticated": False})()
 
-        assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
 
-    def test_dispatch_sets_user_profile_and_assigns_role(
-        self, create_test_user, tenants_fixture, saml_setup
-    ):
-        user = create_test_user
-        original_email = user.email
-        original_name = user.name
-        original_company = user.company_name
-        user.email = f"doe@{saml_setup['email']}"
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
 
-        social_account = SocialAccount(
-            user=user,
-            provider="saml",
-            extra_data={
-                "firstName": ["John"],
-                "lastName": ["Doe"],
-                "organization": ["TestOrg"],
-                "userType": ["saml_default_role"],
-            },
-        )
+#         assert response.status_code in [200, 302]
 
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = user
+#     def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = users_fixture[0]
 
-        with (
-            patch(
-                "allauth.socialaccount.providers.saml.views.get_app_or_404"
-            ) as mock_get_app_or_404,
-            patch("allauth.socialaccount.models.SocialApp.objects.get"),
-            patch(
-                "allauth.socialaccount.models.SocialAccount.objects.get"
-            ) as mock_socialaccount_get,
-            patch("api.v1.serializers.TokenSocialLoginSerializer") as mock_serializer,
-        ):
-            mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
-            )
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
 
-            mock_socialaccount_get.return_value = social_account
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
 
-            mock_instance = mock_serializer.return_value
-            mock_instance.is_valid.return_value = True
-            mock_instance.validated_data = {
-                "token": "mocktoken",
-                "refresh_token": "mockrefresh",
-            }
+#         assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+#     def test_dispatch_sets_user_profile_and_assigns_role_and_creates_token(
+#         self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+#         user = create_test_user
+#         original_email = user.email
+#         original_name = user.name
+#         original_company = user.company_name
+#         user.email = f"doe@{saml_setup['email']}"
 
-        assert response.status_code == 200
-        user.refresh_from_db()
-        assert user.name == "John Doe"
-        assert user.company_name == "TestOrg"
+#         social_account = SocialAccount(
+#             user=user,
+#             provider="saml",
+#             extra_data={
+#                 "firstName": ["John"],
+#                 "lastName": ["Doe"],
+#                 "organization": ["TestOrg"],
+#                 "userType": ["saml_default_role"],
+#             },
+#         )
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
-        assert role.tenant == tenants_fixture[0]
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = user
 
-        assert (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(user=user, tenant_id=tenants_fixture[0].id)
-            .exists()
-        )
-        user.email = original_email
-        user.name = original_name
-        user.company_name = original_company
-        user.save()
+#         with (
+#             patch(
+#                 "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#             ) as mock_get_app_or_404,
+#             patch("allauth.socialaccount.models.SocialApp.objects.get"),
+#             patch(
+#                 "allauth.socialaccount.models.SocialAccount.objects.get"
+#             ) as mock_sa_get,
+#         ):
+#             mock_get_app_or_404.return_value = MagicMock(
+#                 provider="saml", client_id="testtenant", name="Test App", settings={}
+#             )
+#             mock_sa_get.return_value = social_account
+
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
+
+#         assert response.status_code == 302
+
+#         expected_callback_host = "localhost"
+#         parsed_url = urlparse(response.url)
+#         assert parsed_url.netloc == expected_callback_host
+#         query_params = parse_qs(parsed_url.query)
+#         assert "id" in query_params
+
+#         token_id = query_params["id"][0]
+#         token_obj = SAMLToken.objects.get(id=token_id)
+#         assert token_obj.user == user
+#         assert not token_obj.is_expired()
+
+#         user.refresh_from_db()
+#         assert user.name == "John Doe"
+#         assert user.company_name == "TestOrg"
+
+#         role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+#         assert role.tenant == tenants_fixture[0]
+
+#         assert (
+#             UserRoleRelationship.objects.using(MainRouter.admin_db)
+#             .filter(user=user, tenant_id=tenants_fixture[0].id)
+#             .exists()
+#         )
+
+#         # Membership should have been created with default role
+#         membership = Membership.objects.using(MainRouter.admin_db).get(
+#             user=user, tenant=tenants_fixture[0]
+#         )
+#         assert membership.role == Membership.RoleChoices.MEMBER
+#         assert membership.user == user
+#         assert membership.tenant == tenants_fixture[0]
+
+#         # Restore original user state
+#         user.email = original_email
+#         user.name = original_name
+#         user.company_name = original_company
+#         user.save()
 
 
 @pytest.mark.django_db
@@ -6306,3 +6264,156 @@ class TestLighthouseConfigViewSet:
             reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestProcessorViewSet:
+    def test_list_processors(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(reverse("processor-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_retrieve_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.get(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_create_processor_valid(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": "Mutelist:\n  Accounts:\n    '*':\n      Checks:\n        "
+                    "iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          "
+                    "Resources:\n            - '*'",
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_create_processor_invalid(
+        self, authenticated_client, invalid_configuration
+    ):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_processor_valid(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": {
+                        "Mutelist": {
+                            "Accounts": {
+                                "1234567890": {
+                                    "Checks": {
+                                        "iam_user_hardware_mfa_enabled": {
+                                            "Regions": ["*"],
+                                            "Resources": ["*"],
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        processor.refresh_from_db()
+        assert (
+            processor.configuration["Mutelist"]["Accounts"]["1234567890"]
+            == payload["data"]["attributes"]["configuration"]["Mutelist"]["Accounts"][
+                "1234567890"
+            ]
+        )
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_update_processor_invalid(
+        self, authenticated_client, processor_fixture, invalid_configuration
+    ):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_delete_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.delete(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Processor.objects.filter(id=processor.id).exists()
+
+    def test_processors_filters(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "mutelist"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["processor_type"] == "mutelist"
+
+    def test_processors_filters_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

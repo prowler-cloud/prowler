@@ -13,7 +13,6 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from prowler.lib.mutelist.mutelist import Mutelist
 
 from api.models import (
     Finding,
@@ -32,7 +31,6 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfiguration,
     Scan,
     StateChoices,
     StatusChoices,
@@ -47,8 +45,9 @@ from api.v1.serializer_utils.integrations import (
     IntegrationCredentialField,
     S3ConfigSerializer,
 )
-from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializer_utils.processors import ProcessorConfigField
+from api.v1.serializer_utils.providers import ProviderSecretField
+from prowler.lib.mutelist.mutelist import Mutelist
 
 # Tokens
 
@@ -1206,8 +1205,8 @@ class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     tenant_id = serializers.CharField()
-    user = serializers.EmailField()
-    password = serializers.CharField()
+    user = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2196,23 +2195,23 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 # SSO
 
 
-class SamlInitiateSerializer(serializers.Serializer):
-    email_domain = serializers.CharField()
+# class SamlInitiateSerializer(serializers.Serializer):
+#     email_domain = serializers.CharField()
 
-    class JSONAPIMeta:
-        resource_name = "saml-initiate"
-
-
-class SamlMetadataSerializer(serializers.Serializer):
-    class JSONAPIMeta:
-        resource_name = "saml-meta"
+#     class JSONAPIMeta:
+#         resource_name = "saml-initiate"
 
 
-class SAMLConfigurationSerializer(RLSSerializer):
-    class Meta:
-        model = SAMLConfiguration
-        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+# class SamlMetadataSerializer(serializers.Serializer):
+#     class JSONAPIMeta:
+#         resource_name = "saml-meta"
+
+
+# class SAMLConfigurationSerializer(RLSSerializer):
+#     class Meta:
+#         model = SAMLConfiguration
+#         fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+#         read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class LighthouseConfigSerializer(RLSSerializer):

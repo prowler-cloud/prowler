@@ -139,7 +139,7 @@ Prowler for M365 currently supports the following authentication types:
 ???+ warning
     For Prowler App only the Service Principal with User Credentials authentication method is supported.
 
-### Service Principal authentication
+### Service Principal authentication (recommended)
 
 Authentication flag: `--sp-env-auth`
 
@@ -154,9 +154,11 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/getting-started-m365.md#create-the-service-principal-app) section to create a service principal.
 
-With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
+If you don't add the external API permissions described in the mentioned section above you will only be able to run the checks that work through MS Graph. This means that you won't run all the provider.
 
-### Service Principal and User Credentials authentication (recommended)
+If you want to scan all the checks from M365 you will need to use the recommended authentication method or add the external API permissions.
+
+### Service Principal and User Credentials authentication
 
 Authentication flag: `--env-auth`
 
@@ -213,6 +215,8 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
     - `Policy.Read.All`: Required for all services.
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
     - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+    - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Exchange Administrator` role to the app.
+    - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
     ???+ note
         You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
@@ -221,7 +225,8 @@ Prowler for M365 requires two types of permission scopes to be set (if you want 
 
 
 
-- **Powershell Modules Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
+
+- **Powershell Modules Permissions** (if using user credentials): These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
     - `Global Reader` (recommended): this allows you to read all roles needed.
     - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
 
@@ -439,6 +444,7 @@ The required modules are:
 
 - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): Minimum version 3.6.0. Required for several checks across Exchange, Defender, and Purview.
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
+- [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 
 ## GitHub
 ### Authentication
@@ -455,3 +461,54 @@ The provided credentials must have the appropriate permissions to perform all th
 
 ???+ note
     GitHub App Credentials support less checks than other authentication methods.
+
+## Infrastructure as Code (IaC)
+
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication.
+
+### Authentication
+
+The IaC provider does not require any authentication or credentials since it scans local files directly. This makes it ideal for CI/CD pipelines and local development environments.
+
+### Supported Frameworks
+
+The IaC provider leverages Checkov to support multiple frameworks, including:
+
+- Terraform
+- CloudFormation
+- Kubernetes
+- ARM (Azure Resource Manager)
+- Serverless
+- Dockerfile
+- YAML/JSON (generic IaC)
+- Bicep
+- Helm
+- GitHub Actions, GitLab CI, Bitbucket Pipelines, Azure Pipelines, CircleCI, Argo Workflows
+- Ansible
+- Kustomize
+- OpenAPI
+- SAST, SCA (Software Composition Analysis)
+
+### Usage
+
+To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
+
+#### Basic Example
+
+```console
+prowler iac --scan-path ./my-iac-directory
+```
+
+#### Specify Frameworks
+
+Scan only Terraform and Kubernetes files:
+
+```console
+prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+```
+
+#### Exclude Paths
+
+```console
+prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
+```
