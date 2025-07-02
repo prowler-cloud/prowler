@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "codebuild_project_is_not_public",
-  "CheckTitle": "Ensure AWS CodeBuild projects are not PUBLIC",
+  "CheckID": "codebuild_project_not_publicly_accessible",
+  "CheckTitle": "Ensure AWS CodeBuild projects are not public",
   "CheckType": [],
   "ServiceName": "codebuild",
   "SubServiceName": "",
@@ -15,11 +15,11 @@
     "Code": {
       "NativeIaC": "",
       "Terraform": "",
-      "CLI": "",
+      "CLI": "aws codebuild update-project --name <project-name> --project-visibility PRIVATE",
       "Other": ""
     },
     "Recommendation": {
-      "Text": "Ensure that all CodeBuild projects are PRIVATE to avoid fact gathering about builds from an Attacker.",
+      "Text": "Ensure that all CodeBuild projects are private to avoid fact gathering about builds from an Attacker.",
       "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/public-builds.html"
     }
   },
