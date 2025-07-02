@@ -1,6 +1,6 @@
 # Configuring SAML Single Sign-On (SSO) in Prowler
 
-This guide explains how to enable and test SAML SSO integration in Prowler. It includes environment setup, certificate configuration, API endpoints, and how to configure Okta as your Identity Provider (IdP).
+This guide explains how to enable and test SAML SSO integration in Prowler. It includes environment setup, API endpoints, and how to configure Okta as your Identity Provider (IdP).
 
 ---
 
@@ -18,26 +18,6 @@ Update this variable to specify which domains Django should accept incoming requ
 
 ```env
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api,mycompany.prowler
-```
-
-# SAML Certificates
-
-To enable SAML support, you must provide a public certificate and private key to allow Prowler to sign SAML requests and validate responses.
-
-### Why is this necessary?
-
-SAML relies on digital signatures to verify trust between the Identity Provider (IdP) and the Service Provider (SP). Prowler acts as the SP and must use a certificate to sign outbound authentication requests.
-
-### Add to your .env file:
-
-```env
-SAML_PUBLIC_CERT="-----BEGIN CERTIFICATE-----
-...your certificate here...
------END CERTIFICATE-----"
-
-SAML_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-...your private key here...
------END PRIVATE KEY-----"
 ```
 
 # SAML Configuration API
@@ -60,7 +40,7 @@ You can manage SAML settings via the API. Prowler provides full CRUD support for
 
 ### Description
 
-This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists and the required certificates are present, it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
+This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists, it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
 
 - POST /api/v1/accounts/saml/initiate/
 
@@ -78,7 +58,7 @@ This endpoint receives an email and checks if there is an active SAML configurat
 
 	•	302 FOUND: Redirects to the SAML login URL associated with the organization.
 
-	•	403 FORBIDDEN: The domain is not authorized or SAML certificates are missing from the configuration.
+	•	403 FORBIDDEN: The domain is not authorized.
 
 ### Validation logic
 
@@ -124,7 +104,7 @@ The SAML metadata XML file must meet the following requirements:
 **Example:**
 
 ```xml
-<?xml version='1.0' encoding='UTF-8'?><md:EntityDescriptor entityID='http://www.okta.com/exkotjzsj3Ms39EjW5d7' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'><md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'><md:KeyDescriptor use='signing'><ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'><ds:X509Data><ds:X509Certificate>MIIDqDCCApCgAwIBAgIGAZbspLXlMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/></md:IDPSSODescriptor></md:EntityDescriptor>
+<?xml version='1.0' encoding='UTF-8'?><md:EntityDescriptor entityID='http://www.okta.com/exkotjzsj3Ms39EjW5d7' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'><md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'><md:KeyDescriptor use='signing'><ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'><ds:X509Data><ds:X509Certificate>MIIDqDCCAp...</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/><md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://example-url/app/dev-48961430_testssoapi_1/exkotjzsj3Ms39EjW5d7/sso/saml'/></md:IDPSSODescriptor></md:EntityDescriptor>
 ```
 
 ![SAML Integration: UI Guide](../img/saml-step-3.png)
@@ -145,26 +125,7 @@ This document outlines the process for testing the SAML integration functionalit
 
 ---
 
-## 1. Generate Self-Signed Certificate and Private Key
-
-First, generate a self-signed certificate and corresponding private key using OpenSSL:
-
-```bash
-openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-  -keyout saml_private_key.pem \
-  -out saml_public_cert.pem \
-  -subj "/C=US/ST=Test/L=Test/O=Test/OU=Test/CN=localhost"
-```
-
-## 2. Add Certificate Values to .env
-
-Paste the generated values into your .env file:
-```
-SAML_PUBLIC_CERT=<paste certificate content here>
-SAML_PRIVATE_KEY=<paste private key content here>
-```
-
-## 3. Start Ngrok and Update ALLOWED_HOSTS
+## 1. Start Ngrok and Update ALLOWED_HOSTS
 
 Start ngrok on port 8080:
 ```
@@ -177,7 +138,7 @@ Then, copy the generated ngrok URL and include it in the ALLOWED_HOSTS setting. 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 ```
 
-## 4. Configure the Identity Provider (IdP)
+## 2. Configure the Identity Provider (IdP)
 
 Start your environment and configure your IdP. You will need to download the IdP's metadata XML file.
 
@@ -187,7 +148,7 @@ Your Assertion Consumer Service (ACS) URL must follow this format:
 https://<PROXY_URL>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/acs/
 ```
 
-## 5. IdP Attribute Mapping
+## 3. IdP Attribute Mapping
 
 The following fields are expected from the IdP:
 
@@ -201,7 +162,7 @@ The following fields are expected from the IdP:
 
 These values are dynamic. If the values change in the IdP, they will be updated on the next login.
 
-## 6. SAML Configuration API (POST)
+## 4. SAML Configuration API (POST)
 
 SAML configuration is managed via a CRUD API. Use the following POST request to create a new configuration:
 
@@ -221,7 +182,7 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 }'
 ```
 
-## 7. SAML SSO Callback Configuration
+## 5. SAML SSO Callback Configuration
 
 ### Environment Variable Configuration
 
@@ -251,7 +212,7 @@ AUTH_URL="<WEB_UI_URL>"
 - Both environment variables are required for proper SAML SSO functionality
 - Verify that the `API_BASE_URL` environment variable is properly configured to reference the correct API server base URL corresponding to your target deployment environment. This ensures proper routing of SAML callback requests to the appropriate backend services.
 
-## 8. Start SAML Login Flow
+## 6. Start SAML Login Flow
 
 Once everything is configured, start the SAML login process by visiting the following URL:
 
@@ -261,6 +222,6 @@ https://<PROXY_IP>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/login/?email=<USER_E
 
 At the end you will get a valid access and refresh token
 
-## 9. Notes on the initiate Endpoint
+## 7. Notes on the initiate Endpoint
 
 The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it's optional.
