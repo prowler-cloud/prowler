@@ -49,6 +49,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
 - Migrate Azure VM service and managed disk logic to Pydantic models for better serialization and type safety, and update all related tests to use the new models and fix UUID handling [(#https://github.com/prowler-cloud/prowler/pull/8151)](https://github.com/prowler-cloud/prowler/pull/https://github.com/prowler-cloud/prowler/pull/8151)
+- fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
 
 ### Changed
 - Reworked `S3.test_connection` to match the AwsProvider logic [(#8088)](https://github.com/prowler-cloud/prowler/pull/8088)
