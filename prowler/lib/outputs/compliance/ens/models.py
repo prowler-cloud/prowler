@@ -28,6 +28,8 @@ class AWSENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class AzureENSModel(BaseModel):
@@ -57,6 +59,8 @@ class AzureENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class GCPENSModel(BaseModel):
@@ -86,3 +90,5 @@ class GCPENSModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
