@@ -84,9 +84,10 @@ const SSRDataUser = async () => {
           />
         </div>
       </div>
-      <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
+      {/* TODO after v5.8: Add SAML SSO back in */}
+      {/* <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
-      </div>
+      </div> */}
     </div>
   );
 };
