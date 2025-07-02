@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -88,6 +89,7 @@ export const AuthForm = ({
         password: data.password,
       });
       if (result?.message === "Success") {
+        posthog.identify(data.email.toLowerCase());
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
         form.setError("email", {
@@ -109,6 +111,11 @@ export const AuthForm = ({
       const newUser = await createNewUser(data);
 
       if (!newUser.errors) {
+        posthog.capture("user_registered", {
+          email: data.email,
+          name: data.name,
+          company: data.company,
+        });        
         toast({
           title: "Success!",
           description: "The user was registered successfully.",
