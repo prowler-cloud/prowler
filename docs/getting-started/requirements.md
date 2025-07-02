@@ -488,7 +488,6 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 - Kustomize
 - OpenAPI
 - SAST, SCA (Software Composition Analysis)
-- And more (see [Checkov documentation](http://checkov.io/1.Welcome/What%20is%20Checkov.html#supported-iac-types))
 
 ### Usage
 
