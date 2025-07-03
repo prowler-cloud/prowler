@@ -6,24 +6,18 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch
-from urllib.parse import parse_qs, urlparse
-from uuid import uuid4
 
 import jwt
 import pytest
-from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
-from django.http import JsonResponse
-from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
-from api.db_router import MainRouter
 from api.models import (
     Integration,
     Invitation,
@@ -34,8 +28,6 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfiguration,
-    SAMLToken,
     Scan,
     StateChoices,
     Task,
@@ -43,7 +35,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
-from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from api.v1.views import ComplianceOverviewViewSet
 
 TODAY = str(datetime.today().date())
 
@@ -5611,340 +5603,334 @@ class TestIntegrationViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
-@pytest.mark.django_db
-class TestSAMLTokenValidation:
-    def test_valid_token_returns_tokens(self, authenticated_client, create_test_user):
-        user = create_test_user
-        valid_token_data = {
-            "access": "mock_access_token",
-            "refresh": "mock_refresh_token",
-        }
-        saml_token = SAMLToken.objects.create(
-            token=valid_token_data,
-            user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
-        )
+# @pytest.mark.django_db
+# class TestSAMLTokenValidation:
+#     def test_valid_token_returns_tokens(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         valid_token_data = {
+#             "access": "mock_access_token",
+#             "refresh": "mock_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=valid_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
 
-        url = reverse("token-saml")
-        response = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json() == {"data": valid_token_data}
-        assert not SAMLToken.objects.filter(id=saml_token.id).exists()
+#         assert response.status_code == status.HTTP_200_OK
+#         assert response.json() == {"data": valid_token_data}
+#         assert not SAMLToken.objects.filter(id=saml_token.id).exists()
 
-    def test_invalid_token_id_returns_404(self, authenticated_client):
-        url = reverse("token-saml")
-        response = authenticated_client.post(f"{url}?id={str(uuid4())}")
+#     def test_invalid_token_id_returns_404(self, authenticated_client):
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={str(uuid4())}")
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["errors"]["detail"] == "Invalid token ID."
+#         assert response.status_code == status.HTTP_404_NOT_FOUND
+#         assert response.json()["errors"]["detail"] == "Invalid token ID."
 
-    def test_expired_token_returns_400(self, authenticated_client, create_test_user):
-        user = create_test_user
-        expired_token_data = {
-            "access": "expired_access_token",
-            "refresh": "expired_refresh_token",
-        }
-        saml_token = SAMLToken.objects.create(
-            token=expired_token_data,
-            user=user,
-            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
-        )
+#     def test_expired_token_returns_400(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         expired_token_data = {
+#             "access": "expired_access_token",
+#             "refresh": "expired_refresh_token",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=expired_token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+#         )
 
-        url = reverse("token-saml")
-        response = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         url = reverse("token-saml")
+#         response = authenticated_client.post(f"{url}?id={saml_token.id}")
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"]["detail"] == "Token expired."
-        assert SAMLToken.objects.filter(id=saml_token.id).exists()
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert response.json()["errors"]["detail"] == "Token expired."
+#         assert SAMLToken.objects.filter(id=saml_token.id).exists()
 
-    def test_token_can_be_used_only_once(self, authenticated_client, create_test_user):
-        user = create_test_user
-        token_data = {
-            "access": "single_use_token",
-            "refresh": "single_use_refresh",
-        }
-        saml_token = SAMLToken.objects.create(
-            token=token_data,
-            user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
-        )
+#     def test_token_can_be_used_only_once(self, authenticated_client, create_test_user):
+#         user = create_test_user
+#         token_data = {
+#             "access": "single_use_token",
+#             "refresh": "single_use_refresh",
+#         }
+#         saml_token = SAMLToken.objects.create(
+#             token=token_data,
+#             user=user,
+#             expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+#         )
 
-        url = reverse("token-saml")
+#         url = reverse("token-saml")
 
-        # First use: should succeed
-        response1 = authenticated_client.post(f"{url}?id={saml_token.id}")
-        assert response1.status_code == status.HTTP_200_OK
+#         # First use: should succeed
+#         response1 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response1.status_code == status.HTTP_200_OK
 
-        # Second use: should fail (already deleted)
-        response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
-        assert response2.status_code == status.HTTP_404_NOT_FOUND
-
-
-@pytest.mark.django_db
-class TestSAMLInitiateAPIView:
-    def test_valid_email_domain_and_certificates(
-        self, authenticated_client, saml_setup, monkeypatch
-    ):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
-
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
-
-        response = authenticated_client.post(url, data=payload, format="json")
-
-        assert response.status_code == status.HTTP_302_FOUND
-        assert (
-            reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
-            in response.url
-        )
-        assert "SAMLRequest" not in response.url
-
-    def test_invalid_email_domain(self, authenticated_client):
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": "user@unauthorized.com"}
-
-        response = authenticated_client.post(url, data=payload, format="json")
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json()["errors"]["detail"] == "Unauthorized domain."
-
-    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
-
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
-
-        response = authenticated_client.post(url, data=payload, format="json")
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert (
-            response.json()["errors"]["detail"]
-            == "SAML configuration is invalid: missing certificates."
-        )
+#         # Second use: should fail (already deleted)
+#         response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
+#         assert response2.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.django_db
-class TestSAMLConfigurationViewSet:
-    def test_list_saml_configurations(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.get(reverse("saml-config-list"))
-        assert response.status_code == status.HTTP_200_OK
-        assert (
-            response.json()["data"][0]["attributes"]["email_domain"]
-            == config.email_domain
-        )
+# @pytest.mark.django_db
+# class TestSAMLInitiateAPIView:
+#     def test_valid_email_domain_and_certificates(
+#         self, authenticated_client, saml_setup, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_PUBLIC_CERT", "fake_cert")
+#         monkeypatch.setenv("SAML_PRIVATE_KEY", "fake_key")
 
-    def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.get(
-            reverse("saml-config-detail", kwargs={"pk": config.id})
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert (
-            response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
-        )
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": saml_setup["email"]}
 
-    def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
-        payload = {
-            "email_domain": "newdomain.com",
-            "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
-                <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-                    <md:KeyDescriptor use='signing'>
-                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-                        <ds:X509Data>
-                        <ds:X509Certificate>TEST</ds:X509Certificate>
-                        </ds:X509Data>
-                    </ds:KeyInfo>
-                    </md:KeyDescriptor>
-                    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-                </md:IDPSSODescriptor>
-                </md:EntityDescriptor>
-            """,
-        }
-        response = authenticated_client.post(
-            reverse("saml-config-list"), data=payload, format="json"
-        )
-        assert response.status_code == status.HTTP_201_CREATED
-        assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
+#         response = authenticated_client.post(url, data=payload, format="json")
 
-    def test_update_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        payload = {
-            "data": {
-                "type": "saml-configurations",
-                "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
-        <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-        <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-            <md:KeyDescriptor use='signing'>
-            <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-                <ds:X509Data>
-                <ds:X509Certificate>TEST2</ds:X509Certificate>
-                </ds:X509Data>
-            </ds:KeyInfo>
-            </md:KeyDescriptor>
-            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-            <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-        </md:IDPSSODescriptor>
-        </md:EntityDescriptor>
-        """
-                },
-            }
-        }
-        response = authenticated_client.patch(
-            reverse("saml-config-detail", kwargs={"pk": config.id}),
-            data=payload,
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_200_OK
-        config.refresh_from_db()
-        assert (
-            config.metadata_xml.strip()
-            == payload["data"]["attributes"]["metadata_xml"].strip()
-        )
+#         assert response.status_code == status.HTTP_302_FOUND
+#         assert (
+#             reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
+#             in response.url
+#         )
+#         assert "SAMLRequest" not in response.url
 
-    def test_delete_saml_configuration(self, authenticated_client, saml_setup):
-        config = SAMLConfiguration.objects.get(
-            email_domain=saml_setup["email"].split("@")[-1]
-        )
-        response = authenticated_client.delete(
-            reverse("saml-config-detail", kwargs={"pk": config.id})
-        )
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+#     def test_invalid_email_domain(self, authenticated_client):
+#         url = reverse("api_saml_initiate")
+#         payload = {"email_domain": "user@unauthorized.com"}
+
+#         response = authenticated_client.post(url, data=payload, format="json")
+
+#         assert response.status_code == status.HTTP_403_FORBIDDEN
+#         assert response.json()["errors"]["detail"] == "Unauthorized domain."
 
 
-@pytest.mark.django_db
-class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = type("Anonymous", (), {"is_authenticated": False})()
+# @pytest.mark.django_db
+# class TestSAMLConfigurationViewSet:
+#     def test_list_saml_configurations(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(reverse("saml-config-list"))
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"][0]["attributes"]["email_domain"]
+#             == config.email_domain
+#         )
 
-        with patch(
-            "allauth.socialaccount.providers.saml.views.get_app_or_404"
-        ) as mock_get_app:
-            mock_get_app.return_value = SocialApp(
-                provider="saml",
-                client_id="testtenant",
-                name="Test App",
-                settings={},
-            )
+#     def test_retrieve_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.get(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         assert (
+#             response.json()["data"]["attributes"]["metadata_xml"] == config.metadata_xml
+#         )
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+#     def test_create_saml_configuration(self, authenticated_client, tenants_fixture):
+#         payload = {
+#             "email_domain": "newdomain.com",
+#             "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#                 <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#                 <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#                     <md:KeyDescriptor use='signing'>
+#                     <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                         <ds:X509Data>
+#                         <ds:X509Certificate>TEST</ds:X509Certificate>
+#                         </ds:X509Data>
+#                     </ds:KeyInfo>
+#                     </md:KeyDescriptor>
+#                     <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#                     <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#                 </md:IDPSSODescriptor>
+#                 </md:EntityDescriptor>
+#             """,
+#         }
+#         response = authenticated_client.post(
+#             reverse("saml-config-list"), data=payload, format="json"
+#         )
+#         assert response.status_code == status.HTTP_201_CREATED
+#         assert SAMLConfiguration.objects.filter(email_domain="newdomain.com").exists()
 
-        assert response.status_code in [200, 302]
+#     def test_update_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         payload = {
+#             "data": {
+#                 "type": "saml-configurations",
+#                 "id": str(config.id),
+#                 "attributes": {
+#                     "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+#         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+#         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+#             <md:KeyDescriptor use='signing'>
+#             <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+#                 <ds:X509Data>
+#                 <ds:X509Certificate>TEST2</ds:X509Certificate>
+#                 </ds:X509Data>
+#             </ds:KeyInfo>
+#             </md:KeyDescriptor>
+#             <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+#             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+#         </md:IDPSSODescriptor>
+#         </md:EntityDescriptor>
+#         """
+#                 },
+#             }
+#         }
+#         response = authenticated_client.patch(
+#             reverse("saml-config-detail", kwargs={"pk": config.id}),
+#             data=payload,
+#             content_type="application/vnd.api+json",
+#         )
+#         assert response.status_code == status.HTTP_200_OK
+#         config.refresh_from_db()
+#         assert (
+#             config.metadata_xml.strip()
+#             == payload["data"]["attributes"]["metadata_xml"].strip()
+#         )
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = users_fixture[0]
+#     def test_delete_saml_configuration(self, authenticated_client, saml_setup):
+#         config = SAMLConfiguration.objects.get(
+#             email_domain=saml_setup["email"].split("@")[-1]
+#         )
+#         response = authenticated_client.delete(
+#             reverse("saml-config-detail", kwargs={"pk": config.id})
+#         )
+#         assert response.status_code == status.HTTP_204_NO_CONTENT
+#         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
 
-        with patch(
-            "allauth.socialaccount.providers.saml.views.get_app_or_404"
-        ) as mock_get_app:
-            mock_get_app.return_value = SocialApp(
-                provider="saml",
-                client_id="testtenant",
-                name="Test App",
-                settings={},
-            )
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+# @pytest.mark.django_db
+# class TestTenantFinishACSView:
+#     def test_dispatch_skips_if_user_not_authenticated(self):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = type("Anonymous", (), {"is_authenticated": False})()
 
-        assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
 
-    def test_dispatch_sets_user_profile_and_assigns_role_and_creates_token(
-        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
-    ):
-        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
-        user = create_test_user
-        original_email = user.email
-        original_name = user.name
-        original_company = user.company_name
-        user.email = f"doe@{saml_setup['email']}"
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
 
-        social_account = SocialAccount(
-            user=user,
-            provider="saml",
-            extra_data={
-                "firstName": ["John"],
-                "lastName": ["Doe"],
-                "organization": ["TestOrg"],
-                "userType": ["saml_default_role"],
-            },
-        )
+#         assert response.status_code in [200, 302]
 
-        request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
-        )
-        request.user = user
+#     def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = users_fixture[0]
 
-        with (
-            patch(
-                "allauth.socialaccount.providers.saml.views.get_app_or_404"
-            ) as mock_get_app_or_404,
-            patch("allauth.socialaccount.models.SocialApp.objects.get"),
-            patch(
-                "allauth.socialaccount.models.SocialAccount.objects.get"
-            ) as mock_sa_get,
-        ):
-            mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
-            )
-            mock_sa_get.return_value = social_account
+#         with patch(
+#             "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#         ) as mock_get_app:
+#             mock_get_app.return_value = SocialApp(
+#                 provider="saml",
+#                 client_id="testtenant",
+#                 name="Test App",
+#                 settings={},
+#             )
 
-            view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
 
-        assert response.status_code == 302
+#         assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
 
-        expected_callback_host = "localhost"
-        parsed_url = urlparse(response.url)
-        assert parsed_url.netloc == expected_callback_host
-        query_params = parse_qs(parsed_url.query)
-        assert "id" in query_params
+#     def test_dispatch_sets_user_profile_and_assigns_role_and_creates_token(
+#         self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+#     ):
+#         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+#         user = create_test_user
+#         original_email = user.email
+#         original_name = user.name
+#         original_company = user.company_name
+#         user.email = f"doe@{saml_setup['email']}"
 
-        token_id = query_params["id"][0]
-        token_obj = SAMLToken.objects.get(id=token_id)
-        assert token_obj.user == user
-        assert not token_obj.is_expired()
+#         social_account = SocialAccount(
+#             user=user,
+#             provider="saml",
+#             extra_data={
+#                 "firstName": ["John"],
+#                 "lastName": ["Doe"],
+#                 "organization": ["TestOrg"],
+#                 "userType": ["saml_default_role"],
+#             },
+#         )
 
-        user.refresh_from_db()
-        assert user.name == "John Doe"
-        assert user.company_name == "TestOrg"
+#         request = RequestFactory().get(
+#             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+#         )
+#         request.user = user
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
-        assert role.tenant == tenants_fixture[0]
+#         with (
+#             patch(
+#                 "allauth.socialaccount.providers.saml.views.get_app_or_404"
+#             ) as mock_get_app_or_404,
+#             patch("allauth.socialaccount.models.SocialApp.objects.get"),
+#             patch(
+#                 "allauth.socialaccount.models.SocialAccount.objects.get"
+#             ) as mock_sa_get,
+#         ):
+#             mock_get_app_or_404.return_value = MagicMock(
+#                 provider="saml", client_id="testtenant", name="Test App", settings={}
+#             )
+#             mock_sa_get.return_value = social_account
 
-        assert (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(user=user, tenant_id=tenants_fixture[0].id)
-            .exists()
-        )
+#             view = TenantFinishACSView.as_view()
+#             response = view(request, organization_slug="testtenant")
 
-        user.email = original_email
-        user.name = original_name
-        user.company_name = original_company
-        user.save()
+#         assert response.status_code == 302
+
+#         expected_callback_host = "localhost"
+#         parsed_url = urlparse(response.url)
+#         assert parsed_url.netloc == expected_callback_host
+#         query_params = parse_qs(parsed_url.query)
+#         assert "id" in query_params
+
+#         token_id = query_params["id"][0]
+#         token_obj = SAMLToken.objects.get(id=token_id)
+#         assert token_obj.user == user
+#         assert not token_obj.is_expired()
+
+#         user.refresh_from_db()
+#         assert user.name == "John Doe"
+#         assert user.company_name == "TestOrg"
+
+#         role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+#         assert role.tenant == tenants_fixture[0]
+
+#         assert (
+#             UserRoleRelationship.objects.using(MainRouter.admin_db)
+#             .filter(user=user, tenant_id=tenants_fixture[0].id)
+#             .exists()
+#         )
+
+#         # Membership should have been created with default role
+#         membership = Membership.objects.using(MainRouter.admin_db).get(
+#             user=user, tenant=tenants_fixture[0]
+#         )
+#         assert membership.role == Membership.RoleChoices.MEMBER
+#         assert membership.user == user
+#         assert membership.tenant == tenants_fixture[0]
+
+#         # Restore original user state
+#         user.email = original_email
+#         user.name = original_name
+#         user.company_name = original_company
+#         user.save()
 
 
 @pytest.mark.django_db

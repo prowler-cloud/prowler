@@ -2,18 +2,31 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.8.0] (Prowler UNRELEASED)
+## [v5.9.0] (Prowler UNRELEASED)
 
 ### Added
-- Add `storage_geo_redundant_enabled` check for Azure provider. [(#7980)](https://github.com/prowler-cloud/prowler/pull/7980)
-- Add `storage_cross_tenant_replication_disabled` check for Azure provider. [(#7977)](https://github.com/prowler-cloud/prowler/pull/7977)
+- `vm_backup_enabled` check for Azure provider [(#8182)](https://github.com/prowler-cloud/prowler/pull/8182)
+
+### Changed
+
+### Fixed
+- fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
+
+---
+
+## [v5.8.0] (Prowler v5.8.0)
+
+### Added
+
+- `storage_geo_redundant_enabled` check for Azure provider [(#7980)](https://github.com/prowler-cloud/prowler/pull/7980)
+- `storage_cross_tenant_replication_disabled` check for Azure provider [(#7977)](https://github.com/prowler-cloud/prowler/pull/7977)
 - CIS 1.11 compliance framework for Kubernetes [(#7790)](https://github.com/prowler-cloud/prowler/pull/7790)
 - Support `HTTPS_PROXY` and `K8S_SKIP_TLS_VERIFY` in Kubernetes [(#7720)](https://github.com/prowler-cloud/prowler/pull/7720)
 - Weight for Prowler ThreatScore scoring [(#7795)](https://github.com/prowler-cloud/prowler/pull/7795)
-- New check `entra_users_mfa_capable` for M365 provider [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
-- New check `admincenter_organization_customer_lockbox_enabled` for M365 provider [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
-- New check `admincenter_external_calendar_sharing_disabled` for M365 provider [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
-- a level for Prowler ThreatScore in the accordion in Dashboard [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
+- `entra_users_mfa_capable` check for M365 provider [(#7734)](https://github.com/prowler-cloud/prowler/pull/7734)
+- `admincenter_organization_customer_lockbox_enabled` check for M365 provider [(#7732)](https://github.com/prowler-cloud/prowler/pull/7732)
+- `admincenter_external_calendar_sharing_disabled` check for M365 provider [(#7733)](https://github.com/prowler-cloud/prowler/pull/7733)
+- Level for Prowler ThreatScore in the accordion in Dashboard [(#7739)](https://github.com/prowler-cloud/prowler/pull/7739)
 - CIS 4.0 compliance framework for GCP [(7785)](https://github.com/prowler-cloud/prowler/pull/7785)
 - `repository_has_codeowners_file` check for GitHub provider [(#7752)](https://github.com/prowler-cloud/prowler/pull/7752)
 - `repository_default_branch_requires_signed_commits` check for GitHub provider [(#7777)](https://github.com/prowler-cloud/prowler/pull/7777)
@@ -31,22 +44,29 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Avoid bypassing IAM check using wildcards [(#7708)](https://github.com/prowler-cloud/prowler/pull/7708)
 - `storage_blob_versioning_is_enabled` new check for Azure provider [(#7927)](https://github.com/prowler-cloud/prowler/pull/7927)
 - New method to authenticate in AppInsights in check `app_function_application_insights_enabled` [(#7763)](https://github.com/prowler-cloud/prowler/pull/7763)
-- ISO 27001 2022 for M365 provider. [(#7985)](https://github.com/prowler-cloud/prowler/pull/7985)
+- ISO 27001 2022 for M365 provider [(#7985)](https://github.com/prowler-cloud/prowler/pull/7985)
 - `codebuild_project_uses_allowed_github_organizations` check for AWS provider [(#7595)](https://github.com/prowler-cloud/prowler/pull/7595)
 - IaC provider [(#7852)](https://github.com/prowler-cloud/prowler/pull/7852)
 - Azure Databricks service integration for Azure provider, including the `databricks_workspace_vnet_injection_enabled` check [(#8008)](https://github.com/prowler-cloud/prowler/pull/8008)
-- Azure Databricks check `databricks_workspace_cmk_encryption_enabled` to ensure workspaces use customer-managed keys (CMK) for encryption at rest [(#8017)](https://github.com/prowler-cloud/prowler/pull/8017)
+- `databricks_workspace_cmk_encryption_enabled` check for Azure provider [(#8017)](https://github.com/prowler-cloud/prowler/pull/8017)
 - Appication auth for PowerShell in M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
-- Add `storage_account_default_to_entra_authorization_enabled` check for Azure provider. [(#7981)](https://github.com/prowler-cloud/prowler/pull/7981)
+- `storage_account_default_to_entra_authorization_enabled` check for Azure provider [(#7981)](https://github.com/prowler-cloud/prowler/pull/7981)
 - Improve overview page from Prowler Dashboard [(#8118)](https://github.com/prowler-cloud/prowler/pull/8118)
-- `keyvault_ensure_public_network_access_disabled` check for Azure provider. [(#8072)](https://github.com/prowler-cloud/prowler/pull/8072)
-- New check `monitor_alert_service_health_exists` for Azure provider [(#8067)](https://github.com/prowler-cloud/prowler/pull/8067)
+- `keyvault_ensure_public_network_access_disabled` check for Azure provider [(#8072)](https://github.com/prowler-cloud/prowler/pull/8072)
+- `monitor_alert_service_health_exists` check for Azure provider [(#8067)](https://github.com/prowler-cloud/prowler/pull/8067)
 - Replace `Domain.Read.All` with `Directory.Read.All` in Azure and M365 docs [(#8075)](https://github.com/prowler-cloud/prowler/pull/8075)
 - Refactor IaC provider to use Checkov as Python library [(#8093)](https://github.com/prowler-cloud/prowler/pull/8093)
+- New check `codebuild_project_not_publicly_accessible` for AWS provider [(#8127)](https://github.com/prowler-cloud/prowler/pull/8127)
 
 ### Fixed
 - Consolidate Azure Storage file service properties to the account level, improving the accuracy of the `storage_ensure_file_shares_soft_delete_is_enabled` check [(#8087)](https://github.com/prowler-cloud/prowler/pull/8087)
 - Migrate Azure VM service and managed disk logic to Pydantic models for better serialization and type safety, and update all related tests to use the new models and fix UUID handling [(#https://github.com/prowler-cloud/prowler/pull/8151)](https://github.com/prowler-cloud/prowler/pull/https://github.com/prowler-cloud/prowler/pull/8151)
+- `organizations_scp_check_deny_regions` check to pass when SCP policies have no statements [(#8091)](https://github.com/prowler-cloud/prowler/pull/8091)
+- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
+- Retrieve correctly ECS Container insights settings [(#8097)](https://github.com/prowler-cloud/prowler/pull/8097)
+- Fix correct handling for different accounts-dates in prowler dashboard compliance page [(#8108)](https://github.com/prowler-cloud/prowler/pull/8108)
+- Handling of `block-project-ssh-keys` in GCP check `compute_instance_block_project_wide_ssh_keys_disabled` [(#8115)](https://github.com/prowler-cloud/prowler/pull/8115)
+- Handle empty name in Azure Defender and GCP checks [(#8120)](https://github.com/prowler-cloud/prowler/pull/8120)
 
 ### Changed
 - Reworked `S3.test_connection` to match the AwsProvider logic [(#8088)](https://github.com/prowler-cloud/prowler/pull/8088)
@@ -56,23 +76,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.7.6] (Prowler UNRELEASED)
-
-### Fixed
-- `organizations_scp_check_deny_regions` check to pass when SCP policies have no statements [(#8091)](https://github.com/prowler-cloud/prowler/pull/8091)
-- Fix logic in VPC and ELBv2 checks [(#8077)](https://github.com/prowler-cloud/prowler/pull/8077)
-- Retrieve correctly ECS Container insights settings [(#8097)](https://github.com/prowler-cloud/prowler/pull/8097)
-- Fix correct handling for different accounts-dates in prowler dashboard compliance page [(#8108)](https://github.com/prowler-cloud/prowler/pull/8108)
-- Handling of `block-project-ssh-keys` in GCP check `compute_instance_block_project_wide_ssh_keys_disabled` [(#8115)](https://github.com/prowler-cloud/prowler/pull/8115)
-- Handle empty name in Azure Defender and GCP checks [(#8120)](https://github.com/prowler-cloud/prowler/pull/8120)
-
----
-
 ## [v5.7.5] (Prowler 5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)
-- Add EKS to service without subservices. [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
+- Add EKS to service without subservices [(#7959)](https://github.com/prowler-cloud/prowler/pull/7959)
 - `apiserver_strong_ciphers_only` check for K8S provider [(#7952)](https://github.com/prowler-cloud/prowler/pull/7952)
 - Handle `0` at the start and end of account uids in Prowler Dashboard [(#7955)](https://github.com/prowler-cloud/prowler/pull/7955)
 - Typo in PCI 4.0 for K8S provider [(#7971)](https://github.com/prowler-cloud/prowler/pull/7971)

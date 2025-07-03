@@ -175,6 +175,7 @@ export M365_PASSWORD="examplepassword"
 These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
 - `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
+
     ???+ warning
         If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
 
@@ -461,3 +462,54 @@ The provided credentials must have the appropriate permissions to perform all th
 
 ???+ note
     GitHub App Credentials support less checks than other authentication methods.
+
+## Infrastructure as Code (IaC)
+
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication.
+
+### Authentication
+
+The IaC provider does not require any authentication or credentials since it scans local files directly. This makes it ideal for CI/CD pipelines and local development environments.
+
+### Supported Frameworks
+
+The IaC provider leverages Checkov to support multiple frameworks, including:
+
+- Terraform
+- CloudFormation
+- Kubernetes
+- ARM (Azure Resource Manager)
+- Serverless
+- Dockerfile
+- YAML/JSON (generic IaC)
+- Bicep
+- Helm
+- GitHub Actions, GitLab CI, Bitbucket Pipelines, Azure Pipelines, CircleCI, Argo Workflows
+- Ansible
+- Kustomize
+- OpenAPI
+- SAST, SCA (Software Composition Analysis)
+
+### Usage
+
+To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
+
+#### Basic Example
+
+```console
+prowler iac --scan-path ./my-iac-directory
+```
+
+#### Specify Frameworks
+
+Scan only Terraform and Kubernetes files:
+
+```console
+prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+```
+
+#### Exclude Paths
+
+```console
+prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
+```
