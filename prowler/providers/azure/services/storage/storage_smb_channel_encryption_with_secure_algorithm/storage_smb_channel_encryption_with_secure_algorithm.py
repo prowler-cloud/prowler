@@ -13,25 +13,38 @@ class storage_smb_channel_encryption_with_secure_algorithm(Check):
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        recommended_encryption_algorithms = ["AES-256-GCM"]
+        SECURE_ENCRYPTION_ALGORITHMS = ["AES-256-GCM"]
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for account in storage_accounts:
                 if account.file_service_properties:
+                    pretty_current_algorithms = (
+                        ", ".join(
+                            account.file_service_properties.smb_protocol_settings.channel_encryption
+                        )
+                        if account.file_service_properties.smb_protocol_settings.channel_encryption
+                        else "none"
+                    )
                     report = Check_Report_Azure(
                         metadata=self.metadata(),
                         resource=account.file_service_properties,
                     )
                     report.subscription = subscription
                     report.resource_name = account.name
-                    report.status = "FAIL"
-                    report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have the recommended SMB channel encryption enabled for file shares."
 
-                    if any(
-                        algorithm in recommended_encryption_algorithms
+                    if (
+                        not account.file_service_properties.smb_protocol_settings.channel_encryption
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption enabled for file shares."
+                    elif any(
+                        algorithm in SECURE_ENCRYPTION_ALGORITHMS
                         for algorithm in account.file_service_properties.smb_protocol_settings.channel_encryption
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} has the recommended SMB channel encryption (AES-256-GCM) enabled for file shares."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} has the recommended SMB channel encryption ({', '.join(SECURE_ENCRYPTION_ALGORITHMS)}) enabled for file shares. The current supported algorithms are: {pretty_current_algorithms}."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption with a secure algorithm for file shares. The current supported algorithms are: {pretty_current_algorithms}."
 
                     findings.append(report)
         return findings
