@@ -446,12 +446,6 @@ azure:
       "1.3",
     ]
 
-  # azure.storage_smb_channel_encryption_using_recommended_algorithm
-  recommended_smb_channel_encryption_algorithms:
-    [
-      "AES-256-GCM",
-    ]
-
 # GCP Configuration
 gcp:
   # GCP Compute Configuration

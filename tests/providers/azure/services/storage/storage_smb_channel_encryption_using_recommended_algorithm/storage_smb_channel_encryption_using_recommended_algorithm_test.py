@@ -17,9 +17,6 @@ class Test_storage_smb_channel_encryption_using_recommended_algorithm:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
         storage_client.storage_accounts = {}
-        storage_client.audit_config = {
-            "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"]
-        }
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -42,9 +39,6 @@ class Test_storage_smb_channel_encryption_using_recommended_algorithm:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock()
-        storage_client.audit_config = {
-            "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"]
-        }
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -93,9 +87,6 @@ class Test_storage_smb_channel_encryption_using_recommended_algorithm:
             smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
         )
         storage_client = mock.MagicMock()
-        storage_client.audit_config = {
-            "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"]
-        }
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -151,9 +142,6 @@ class Test_storage_smb_channel_encryption_using_recommended_algorithm:
             ),
         )
         storage_client = mock.MagicMock()
-        storage_client.audit_config = {
-            "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"]
-        }
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -209,9 +197,6 @@ class Test_storage_smb_channel_encryption_using_recommended_algorithm:
             ),
         )
         storage_client = mock.MagicMock()
-        storage_client.audit_config = {
-            "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"]
-        }
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(

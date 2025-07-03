@@ -13,9 +13,7 @@ class storage_smb_channel_encryption_using_recommended_algorithm(Check):
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        recommended_encryption_algorithms = storage_client.audit_config.get(
-            "recommended_smb_channel_encryption_algorithms", ["AES-256-GCM"]
-        )
+        recommended_encryption_algorithms = ["AES-256-GCM"]
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for account in storage_accounts:
                 if account.file_service_properties:
