@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getProvider, getProviders } from "@/actions/providers";
+import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
 import {
   AutoRefresh,
@@ -123,25 +123,32 @@ const SSRDataTableScans = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  // Fetch scans data
-  const scansData = await getScans({ query, page, sort, filters, pageSize });
+  // Fetch scans data with provider information included
+  const scansData = await getScans({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize,
+    include: "provider",
+  });
 
-  // Handle expanded scans data
-  const expandedScansData = await Promise.all(
-    scansData?.data?.map(async (scan: any) => {
+  // Handle expanded scans data using included provider information
+  const expandedScansData =
+    scansData?.data?.map((scan: any) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
         return { ...scan, providerInfo: null };
       }
 
-      const formData = new FormData();
-      formData.append("id", providerId);
+      // Find the provider data in the included array
+      const providerData = scansData.included?.find(
+        (item: any) => item.type === "providers" && item.id === providerId,
+      );
 
-      const providerData = await getProvider(formData);
-
-      if (providerData?.data) {
-        const { provider, uid, alias } = providerData.data.attributes;
+      if (providerData) {
+        const { provider, uid, alias } = providerData.attributes;
         return {
           ...scan,
           providerInfo: { provider, uid, alias },
@@ -149,8 +156,7 @@ const SSRDataTableScans = async ({
       }
 
       return { ...scan, providerInfo: null };
-    }) || [],
-  );
+    }) || [];
 
   return (
     <DataTable
