@@ -13,10 +13,7 @@
 
 See section [Logging](./tutorials/logging.md) for further information or [contact us](./contact.md).
 
-## Common Issues with Docker Pull Installation
-
-???+ warning
-    Docker pull is not officially supported.
+## Common Issues with Docker Compose Installation
 
 - **Problem adding AWS Provider using "Connect assuming IAM Role" in Docker (see [GitHub Issue #7745](https://github.com/prowler-cloud/prowler/issues/7745))**:
 
