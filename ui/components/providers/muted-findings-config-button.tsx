@@ -1,11 +1,11 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
-import { SSRMutedFindingsConfigFormWrapper } from "./forms";
+import { MutedFindingsConfigForm } from "./forms";
 
 interface MutedFindingsConfigButtonProps {
   isDisabled?: boolean;
@@ -30,21 +30,7 @@ export const MutedFindingsConfigButton = ({
         title="Configure Muted Findings"
         size="3xl"
       >
-        <Suspense
-          fallback={
-            <div className="flex flex-col items-center justify-center space-y-4 py-8">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              <p className="text-sm text-default-600">
-                Loading configuration...
-              </p>
-            </div>
-          }
-        >
-          <SSRMutedFindingsConfigFormWrapper
-            setIsOpen={setIsOpen}
-            onConfigDeleted={() => {}}
-          />
-        </Suspense>
+        <MutedFindingsConfigForm setIsOpen={setIsOpen} />
       </CustomAlertModal>
 
       <CustomButton

@@ -1,14 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { mutedFindingsConfigFormSchema } from "@/types/formSchemas";
 import {
   DeleteMutedFindingsConfigActionState,
   MutedFindingsConfigActionState,
-  ProcessorResponse,
-  ProcessorsListResponse,
+  ProcessorData,
 } from "@/types/processors";
 
 export const createMutedFindingsConfig = async (
@@ -65,7 +62,6 @@ export const createMutedFindingsConfig = async (
     }
 
     await response.json();
-    revalidatePath("/providers");
     return { success: "Muted findings configuration created successfully!" };
   } catch (error) {
     console.error("Error creating muted findings config:", error);
@@ -142,10 +138,8 @@ export const updateMutedFindingsConfig = async (
     }
 
     await response.json();
-    revalidatePath("/providers");
     return { success: "Muted findings configuration updated successfully!" };
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error updating muted findings config:", error);
     return {
       errors: {
@@ -159,7 +153,7 @@ export const updateMutedFindingsConfig = async (
 };
 
 export const getMutedFindingsConfig = async (): Promise<
-  ProcessorResponse | undefined
+  ProcessorData | undefined
 > => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/processors`);
@@ -177,15 +171,8 @@ export const getMutedFindingsConfig = async (): Promise<
       );
     }
 
-    const data: ProcessorsListResponse = await response.json();
-    const parsedData = parseStringify(data);
-
-    // Return the first mutelist processor found, or undefined if none exists
-    if (parsedData.data && parsedData.data.length > 0) {
-      return { data: parsedData.data[0] };
-    }
-
-    return undefined;
+    const data = await response.json();
+    return data.data[0];
   } catch (error) {
     console.error("Error fetching muted findings config:", error);
     return undefined;
@@ -223,7 +210,6 @@ export const deleteMutedFindingsConfig = async (
       );
     }
 
-    revalidatePath("/providers");
     return { success: "Muted findings configuration deleted successfully!" };
   } catch (error) {
     console.error("Error deleting muted findings config:", error);

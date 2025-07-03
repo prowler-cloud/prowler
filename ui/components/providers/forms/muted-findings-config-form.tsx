@@ -1,12 +1,14 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import yaml from "js-yaml";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
 import {
   createMutedFindingsConfig,
   deleteMutedFindingsConfig,
+  getMutedFindingsConfig,
   updateMutedFindingsConfig,
 } from "@/actions/processors";
 import { DeleteIcon } from "@/components/icons";
@@ -20,29 +22,52 @@ import {
 
 interface MutedFindingsConfigFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
-  existingConfig?: ProcessorData;
-  onConfigDeleted?: () => void | Promise<void>;
 }
+
+const convertToYaml = (config: string | object): string => {
+  if (!config) return "";
+
+  try {
+    // If it's already an object, convert directly to YAML
+    if (typeof config === "object") {
+      return yaml.dump(config, { indent: 2 });
+    }
+
+    // If it's a string, try to parse as JSON first
+    try {
+      const jsonConfig = JSON.parse(config);
+      return yaml.dump(jsonConfig, { indent: 2 });
+    } catch {
+      // If it's not JSON, assume it's already YAML
+      return config;
+    }
+  } catch (error) {
+    console.error("Error converting config to YAML:", error);
+    return config.toString();
+  }
+};
 
 export const MutedFindingsConfigForm = ({
   setIsOpen,
-  existingConfig,
-  onConfigDeleted,
 }: MutedFindingsConfigFormProps) => {
+  const [config, setConfig] = useState<ProcessorData | null>(null);
+  const [configText, setConfigText] = useState("");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [state, formAction, isPending] = useFormState<
     MutedFindingsConfigActionState,
     FormData
-  >(
-    existingConfig ? updateMutedFindingsConfig : createMutedFindingsConfig,
-    null,
-  );
-  const [configuration, setConfiguration] = useState(
-    existingConfig?.attributes.configuration || "",
-  );
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  >(config ? updateMutedFindingsConfig : createMutedFindingsConfig, null);
+
   const { toast } = useToast();
+
+  useEffect(() => {
+    getMutedFindingsConfig().then((result) => {
+      setConfig(result || null);
+      setConfigText(convertToYaml(result?.attributes.configuration || ""));
+    });
+  }, []);
 
   useEffect(() => {
     if (state?.success) {
@@ -60,22 +85,20 @@ export const MutedFindingsConfigForm = ({
     }
   }, [state, toast, setIsOpen]);
 
-  const handleDeleteConfirm = async () => {
-    if (!existingConfig) return;
+  const handleDelete = async () => {
+    if (!config) return;
 
     setIsDeleting(true);
     const formData = new FormData();
-    formData.append("id", existingConfig.id);
+    formData.append("id", config.id);
 
     try {
       const result = await deleteMutedFindingsConfig(null, formData);
-
       if (result?.success) {
         toast({
           title: "Configuration deleted successfully",
           description: result.success,
         });
-        onConfigDeleted?.();
         setIsOpen(false);
       } else if (result?.errors?.general) {
         toast({
@@ -106,7 +129,6 @@ export const MutedFindingsConfigForm = ({
           Are you sure you want to delete this configuration? This action cannot
           be undone.
         </p>
-
         <div className="flex w-full justify-center space-x-6">
           <CustomButton
             type="button"
@@ -117,9 +139,8 @@ export const MutedFindingsConfigForm = ({
             onPress={() => setShowDeleteConfirmation(false)}
             isDisabled={isDeleting}
           >
-            <span>Cancel</span>
+            Cancel
           </CustomButton>
-
           <CustomButton
             type="button"
             ariaLabel="Delete"
@@ -129,9 +150,9 @@ export const MutedFindingsConfigForm = ({
             size="lg"
             isLoading={isDeleting}
             startContent={!isDeleting && <DeleteIcon size={24} />}
-            onPress={handleDeleteConfirm}
+            onPress={handleDelete}
           >
-            {isDeleting ? <>Deleting</> : <span>Delete</span>}
+            {isDeleting ? "Deleting" : "Delete"}
           </CustomButton>
         </div>
       </div>
@@ -139,10 +160,8 @@ export const MutedFindingsConfigForm = ({
   }
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col space-y-4">
-      {existingConfig && (
-        <input type="hidden" name="id" value={existingConfig.id} />
-      )}
+    <form action={formAction} className="flex flex-col space-y-4">
+      {config && <input type="hidden" name="id" value={config.id} />}
 
       <div className="space-y-4">
         <div>
@@ -190,10 +209,10 @@ export const MutedFindingsConfigForm = ({
             name="configuration"
             placeholder="Enter your YAML configuration..."
             variant="bordered"
+            value={configText}
+            onChange={(e) => setConfigText(e.target.value)}
             minRows={15}
             maxRows={20}
-            value={configuration}
-            onChange={(e) => setConfiguration(e.target.value)}
             isInvalid={!!state?.errors?.configuration}
             errorMessage={state?.errors?.configuration}
             classNames={{
@@ -206,10 +225,10 @@ export const MutedFindingsConfigForm = ({
       <div className="flex flex-col space-y-4">
         <FormButtons
           setIsOpen={setIsOpen}
-          submitText={existingConfig ? "Update" : "Save"}
+          submitText={config ? "Update" : "Save"}
         />
 
-        {existingConfig && (
+        {config && (
           <CustomButton
             type="button"
             ariaLabel="Delete Configuration"
