@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Control } from "react-hook-form";
 
+import { InfoIcon } from "@/components/icons";
 import { CustomInput } from "@/components/ui/custom";
 import { M365Credentials } from "@/types";
 
@@ -51,6 +53,39 @@ export const M365CredentialsForm = ({
         isRequired
         isInvalid={!!control._formState.errors.tenant_id}
       />
+      <p className="text-sm text-default-500">
+        {" "}
+        User and password authentication is being deprecated due to
+        Microsoft&apos;s on-going MFA enforcement across all tenants (see{" "}
+        <Link
+          href="https://azure.microsoft.com/en-us/blog/announcing-mandatory-multi-factor-authentication-for-azure-sign-in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          Microsoft docs
+        </Link>
+        ).
+      </p>
+
+      <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-2 text-sm dark:text-default-300">
+        <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
+        <p className="text-xs font-extrabold">
+          By September 2025, MFA will be mandatory.
+        </p>
+      </div>
+      <p className="text-sm text-default-500">
+        Due to that change, you must only{" "}
+        <Link
+          href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365/#step-3-configure-your-m365-account"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          use application authentication
+        </Link>{" "}
+        to maintain all Prowler M365 scan capabilities.
+      </p>
       <CustomInput
         control={control}
         name="user"

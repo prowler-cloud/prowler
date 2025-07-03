@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import List, Optional
 
 from azure.mgmt.compute import ComputeManagementClient
@@ -31,24 +32,33 @@ class VirtualMachines(AzureService):
                         if storage_profile
                         else None
                     )
-
                     data_disks = []
+
                     if storage_profile and getattr(storage_profile, "data_disks", []):
                         data_disks = [
                             DataDisk(
                                 lun=data_disk.lun,
                                 name=data_disk.name,
-                                managed_disk=data_disk.managed_disk,
+                                managed_disk=ManagedDiskParameters(
+                                    id=(
+                                        getattr(
+                                            getattr(data_disk, "managed_disk", None),
+                                            "id",
+                                            None,
+                                        )
+                                        if data_disk.managed_disk
+                                        else None
+                                    )
+                                ),
                             )
                             for data_disk in getattr(storage_profile, "data_disks", [])
-                            if data_disk
                         ]
 
                     extensions = []
                     if getattr(vm, "resources", []):
                         extensions = [
                             VirtualMachineExtension(id=extension.id)
-                            for extension in getattr(vm, "resources", [])
+                            for extension in vm.resources
                             if extension
                         ]
 
@@ -73,8 +83,17 @@ class VirtualMachines(AzureService):
                                     StorageProfile(
                                         os_disk=OSDisk(
                                             name=getattr(os_disk, "name", None),
-                                            managed_disk=getattr(
-                                                os_disk, "managed_disk", None
+                                            operating_system_type=getattr(
+                                                os_disk, "os_type", None
+                                            ),
+                                            managed_disk=ManagedDiskParameters(
+                                                id=getattr(
+                                                    getattr(
+                                                        os_disk, "managed_disk", None
+                                                    ),
+                                                    "id",
+                                                    None,
+                                                )
                                             ),
                                         ),
                                         data_disks=data_disks,
@@ -144,27 +163,33 @@ class SecurityProfile:
     uefi_settings: Optional[UefiSettings]
 
 
-@dataclass
-class OSDisk:
-    name: Optional[str]
-    managed_disk: Optional[bool]
+class OperatingSystemType(Enum):
+    WINDOWS = "Windows"
+    LINUX = "Linux"
 
 
-@dataclass
-class DataDisk:
+class ManagedDiskParameters(BaseModel):
+    id: str
+
+
+class OSDisk(BaseModel):
+    name: str
+    operating_system_type: OperatingSystemType
+    managed_disk: Optional[ManagedDiskParameters]
+
+
+class DataDisk(BaseModel):
     lun: int
     name: str
-    managed_disk: bool
+    managed_disk: Optional[ManagedDiskParameters]
 
 
-@dataclass
-class StorageProfile:
+class StorageProfile(BaseModel):
     os_disk: Optional[OSDisk]
     data_disks: List[DataDisk]
 
 
-@dataclass
-class VirtualMachineExtension:
+class VirtualMachineExtension(BaseModel):
     id: str
 
 
@@ -172,8 +197,7 @@ class LinuxConfiguration(BaseModel):
     disable_password_authentication: bool
 
 
-@dataclass
-class VirtualMachine:
+class VirtualMachine(BaseModel):
     resource_id: str
     resource_name: str
     location: str
@@ -183,8 +207,7 @@ class VirtualMachine:
     linux_configuration: Optional[LinuxConfiguration] = None
 
 
-@dataclass
-class Disk:
+class Disk(BaseModel):
     resource_id: str
     resource_name: str
     vms_attached: list[str]
