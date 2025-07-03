@@ -332,12 +332,13 @@ export const mutedFindingsConfigFormSchema = z.object({
         const hasMutelist = val.includes("Mutelist:");
         const hasAccounts = val.includes("Accounts:");
         const hasChecks = val.includes("Checks:");
+        const hasResources = val.includes("Resources:");
 
-        return hasMutelist && hasAccounts && hasChecks;
+        return hasMutelist && hasAccounts && hasChecks && hasResources;
       },
       {
         message:
-          "Invalid YAML format. Configuration must contain 'Mutelist:', 'Accounts:', and 'Checks:' sections.",
+          "Invalid YAML format. Configuration must contain 'Mutelist:', 'Accounts:', 'Checks:', and 'Resources:' sections.",
       },
     ),
   id: z.string().optional(),
