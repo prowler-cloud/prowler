@@ -11,7 +11,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0031_scan_disable_on_cascade_periodic_tasks"),
     ]
