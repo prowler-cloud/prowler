@@ -1,15 +1,56 @@
-import { ChatOpenAI } from "@langchain/openai";
-
 import { getLighthouseCheckDetails } from "@/actions/lighthouse/checks";
 import { getLighthouseFindings } from "@/actions/lighthouse/findings";
-import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { getScans } from "@/actions/scans/scans";
 import { CheckDetails, FindingSummary } from "@/types/lighthouse/summary";
 
 import { getNewFailedFindingsSummary } from "./tools/findings";
 
+const getCompletedScansLast24h = async (): Promise<string[]> => {
+  const twentyFourHoursAgo = new Date();
+  twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+  const scansResponse = await getScans({
+    page: 1,
+    pageSize: 50,
+    filters: {
+      "fields[scans]": "completed_at",
+      "filter[state]": "completed",
+      "filter[started_at__gte]": twentyFourHoursAgo.toISOString(),
+    },
+    sort: "-updated_at",
+  });
+
+  if (!scansResponse?.data || scansResponse.data.length === 0) {
+    return [];
+  }
+
+  return scansResponse.data.map((scan: any) => scan.id);
+};
+
+const compareProcessedScanIds = (
+  currentScanIds: string[],
+  processedScanIds: string[],
+): boolean => {
+  const sortedCurrent = [...currentScanIds].sort();
+  const sortedProcessed = [...processedScanIds].sort();
+
+  // Compare lengths first
+  if (sortedCurrent.length !== sortedProcessed.length) {
+    return false;
+  }
+
+  // Compare each element
+  for (let i = 0; i < sortedCurrent.length; i++) {
+    if (sortedCurrent[i] !== sortedProcessed[i]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const getTopFailedFindingsSummary = async (
-  scanId: string,
+  scanIds: string[],
   limit: number = 10,
 ): Promise<FindingSummary[]> => {
   const response = await getLighthouseFindings({
@@ -18,7 +59,7 @@ const getTopFailedFindingsSummary = async (
     sort: "severity",
     filters: {
       "fields[findings]": "check_id,severity",
-      "filter[scan]": scanId,
+      "filter[scan__in]": scanIds.join(","),
       "filter[status]": "FAIL",
       "filter[muted]": "false",
     },
@@ -36,255 +77,238 @@ const getTopFailedFindingsSummary = async (
   }));
 };
 
+// Helper function to collect new failed findings across multiple scans
+const collectNewFailedFindings = async (
+  scanIds: string[],
+): Promise<Record<string, FindingSummary[]>> => {
+  const findingsByScan: Record<string, FindingSummary[]> = {};
+
+  for (const scanId of scanIds) {
+    try {
+      const newFailedFindingsSummary =
+        await getNewFailedFindingsSummary(scanId);
+
+      if (Object.keys(newFailedFindingsSummary).length > 0) {
+        const scanFindings: FindingSummary[] = [];
+
+        // Convert to FindingSummary format
+        Object.entries(newFailedFindingsSummary).forEach(
+          ([severity, checks]) => {
+            Object.entries(checks).forEach(([checkId, summary]) => {
+              scanFindings.push({
+                checkId,
+                severity,
+                count: summary.count,
+                findingIds: summary.finding_ids,
+              });
+            });
+          },
+        );
+
+        if (scanFindings.length > 0) {
+          findingsByScan[scanId] = scanFindings;
+        }
+      }
+    } catch (error) {
+      console.error(
+        `Error fetching new failed findings for scan ${scanId}:`,
+        error,
+      );
+    }
+  }
+
+  return findingsByScan;
+};
+
+// Helper function to enrich findings with check details
+const enrichFindingsWithCheckDetails = async (
+  findings: FindingSummary[],
+): Promise<Map<string, CheckDetails>> => {
+  const uniqueCheckIds = Array.from(new Set(findings.map((f) => f.checkId)));
+  const checkDetailsMap = new Map<string, CheckDetails>();
+
+  for (const checkId of uniqueCheckIds) {
+    try {
+      const checkDetails = await getLighthouseCheckDetails({ checkId });
+      if (checkDetails) {
+        checkDetailsMap.set(checkId, checkDetails);
+      }
+    } catch (error) {
+      console.error(`Error fetching check details for ${checkId}:`, error);
+      // Add a fallback check details object
+      checkDetailsMap.set(checkId, {
+        id: checkId,
+        title: checkId,
+        description: "",
+        risk: "",
+        remediation: {},
+      });
+    }
+  }
+
+  return checkDetailsMap;
+};
+
+// Helper function to sort findings by severity
+const sortFindingsBySeverity = (
+  findings: FindingSummary[],
+): FindingSummary[] => {
+  const severityOrder = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    informational: 4,
+  };
+
+  return findings.sort(
+    (a, b) =>
+      severityOrder[a.severity as keyof typeof severityOrder] -
+      severityOrder[b.severity as keyof typeof severityOrder],
+  );
+};
+
+// Helper function to build details for a single finding
+const buildSingleFindingDetails = (
+  finding: FindingSummary,
+  checkDetailsMap: Map<string, CheckDetails>,
+): string => {
+  const checkDetails = checkDetailsMap.get(finding.checkId);
+  let detailsText = "";
+
+  detailsText += `**Title:** ${checkDetails?.title || finding.checkId}\n`;
+  detailsText += `**Severity:** ${finding.severity.toUpperCase()}\n`;
+  detailsText += `**Check Summary:** ${checkDetails?.description || "Description not available"}\n`;
+  detailsText += `**Number of failed findings:** ${finding.count}\n`;
+  detailsText += `**Finding IDs:** ${finding.findingIds.join(", ")}\n`;
+  detailsText += "**Remediation:**\n";
+
+  const remediation = checkDetails?.remediation;
+  if (remediation?.terraform) {
+    detailsText += `- Terraform: ${remediation.terraform.description}\n`;
+    if (remediation.terraform.reference) {
+      detailsText += `  Reference: ${remediation.terraform.reference}\n`;
+    }
+  }
+  if (remediation?.cli) {
+    detailsText += `- AWS CLI: ${remediation.cli.description}\n`;
+    if (remediation.cli.reference) {
+      detailsText += `  Reference: ${remediation.cli.reference}\n`;
+    }
+  }
+  if (remediation?.nativeiac) {
+    detailsText += `- Native IAC: ${remediation.nativeiac.description}\n`;
+    if (remediation.nativeiac.reference) {
+      detailsText += `  Reference: ${remediation.nativeiac.reference}\n`;
+    }
+  }
+  if (remediation?.other) {
+    detailsText += `- Other: ${remediation.other.description}\n`;
+    if (remediation.other.reference) {
+      detailsText += `  Reference: ${remediation.other.reference}\n`;
+    }
+  }
+  if (remediation?.wui) {
+    detailsText += `- WUI: ${remediation.wui.description}\n`;
+    if (remediation.wui.reference) {
+      detailsText += `  Reference: ${remediation.wui.reference}\n`;
+    }
+  }
+
+  if (
+    !remediation?.terraform &&
+    !remediation?.cli &&
+    !remediation?.nativeiac &&
+    !remediation?.other &&
+    !remediation?.wui
+  ) {
+    detailsText += "- No specific remediation commands available\n";
+  }
+
+  detailsText += "\n";
+  return detailsText;
+};
+
+// Generates a summary of failed findings from security scans in last 24 hours
+// Returns an empty string if - no scans in 24 hours, no failed findings in any scan, or unexpected error
+// Else it returns a string with the summary of the failed findings
 export const generateSecurityScanSummary = async (): Promise<string> => {
   try {
-    // Get the most recently completed scan
-    const scansResponse = await getScans({
-      page: 1,
-      pageSize: 1,
-      filters: {
-        "filter[state]": "completed",
-      },
-      sort: "-updated_at",
-    });
+    const currentScanIds = await getCompletedScansLast24h();
 
-    console.log(scansResponse);
-
-    if (!scansResponse?.data || scansResponse.data.length === 0) {
-      return "No completed scans found";
+    if (currentScanIds.length === 0) {
+      return "";
     }
 
-    const latestScan = scansResponse.data[0];
-    const scanId = latestScan.id;
+    // TODO: Check if these scan IDs were already processed
+    // This will be implemented in later steps when we update the cache service
 
-    // TODO: Check if the scan summary was already cached for the scan ID
+    const scanIds = currentScanIds;
 
-    // Try to get new failed findings from this scan using the existing function
-    let newFailedFindingsSummary: Record<
-      string,
-      Record<string, { count: number; finding_ids: string[] }>
-    > = {};
-    let hasNewFailedFindings = false;
+    // Collect new failed findings by scan
+    const newFindingsByScan = await collectNewFailedFindings(scanIds);
 
+    // Get top failed findings across all scans
+    let topFailedFindings: FindingSummary[] = [];
     try {
-      newFailedFindingsSummary = await getNewFailedFindingsSummary(scanId);
-      hasNewFailedFindings = Object.keys(newFailedFindingsSummary).length > 0;
+      topFailedFindings = await getTopFailedFindingsSummary(scanIds, 10);
     } catch (error) {
-      console.error("Error fetching new failed findings:", error);
+      console.error("Error fetching top failed findings:", error);
     }
 
-    // If no new failed findings, get top 10 failed findings by severity
-    let findingsToProcess: FindingSummary[] = [];
+    // Combine all findings for check details enrichment
+    const newFindings = Object.values(newFindingsByScan).flat();
+    const allFindings = [...newFindings, ...topFailedFindings];
 
-    if (!hasNewFailedFindings) {
-      try {
-        findingsToProcess = await getTopFailedFindingsSummary(scanId, 10);
-      } catch (error) {
-        console.error("Error fetching top failed findings:", error);
-      }
+    // If no findings at all, return empty string
+    if (allFindings.length === 0) {
+      return "";
+    }
+
+    // Enrich all findings with check details
+    const checkDetailsMap = await enrichFindingsWithCheckDetails(allFindings);
+
+    // Build the summary
+    let summaryText = "";
+
+    // Header
+    if (scanIds.length === 1) {
+      summaryText += `# Scan ID: ${scanIds[0]}\n\n`;
     } else {
-      Object.entries(newFailedFindingsSummary).forEach(([severity, checks]) => {
-        Object.entries(checks).forEach(([checkId, summary]) => {
-          findingsToProcess.push({
-            checkId,
-            severity,
-            count: summary.count,
-            findingIds: summary.finding_ids,
-          });
-        });
+      summaryText += `# Scans processed (${scanIds.length} scans from last 24h)\n`;
+      summaryText += `**Scan IDs:** ${scanIds.join(", ")}\n\n`;
+    }
+
+    // New findings section (if any)
+    if (newFindings.length > 0) {
+      summaryText += "## New Failed Findings by Scan\n";
+      summaryText += `${newFindings.length} new findings detected.\n\n`;
+
+      Object.entries(newFindingsByScan).forEach(([scanId, scanFindings]) => {
+        summaryText += `### Scan ID: ${scanId}\n`;
+        const sortedScanFindings = sortFindingsBySeverity(scanFindings);
+
+        for (const finding of sortedScanFindings) {
+          summaryText += buildSingleFindingDetails(finding, checkDetailsMap);
+        }
+        summaryText += "\n";
       });
     }
 
-    // If no failed findings at all, return positive message
-    if (findingsToProcess.length === 0) {
-      return `Scan ID: ${scanId}\nSummary: There are no failed findings detected in the latest scan. Well done!`;
-    }
+    // Top findings section
+    if (topFailedFindings.length > 0) {
+      summaryText += "## Top Failed Findings Across All Scans\n";
+      summaryText += `Showing top ${topFailedFindings.length} critical findings.\n\n`;
 
-    // Get check details and remediation for each unique check
-    const uniqueCheckIds = Array.from(
-      new Set(findingsToProcess.map((f) => f.checkId)),
-    );
-    const checkDetailsMap = new Map<string, CheckDetails>();
-
-    for (const checkId of uniqueCheckIds) {
-      try {
-        const checkDetails = await getLighthouseCheckDetails({ checkId });
-        if (checkDetails) {
-          checkDetailsMap.set(checkId, checkDetails);
-        }
-      } catch (error) {
-        console.error(`Error fetching check details for ${checkId}:`, error);
-        // Add a fallback check details object
-        checkDetailsMap.set(checkId, {
-          id: checkId,
-          title: checkId,
-          description: "",
-          risk: "",
-          remediation: {},
-        });
+      const sortedTopFindings = sortFindingsBySeverity(topFailedFindings);
+      for (const finding of sortedTopFindings) {
+        summaryText += buildSingleFindingDetails(finding, checkDetailsMap);
       }
-    }
-
-    // Build the summary text
-    let summaryText = `Scan ID: ${scanId}\n`;
-
-    if (hasNewFailedFindings) {
-      const totalNewFindings = findingsToProcess.reduce(
-        (sum, f) => sum + f.count,
-        0,
-      );
-      summaryText += `Summary: There were ${totalNewFindings} new findings detected in the previous scan.\nThey are as follows:\n\n`;
-    } else {
-      summaryText += `Summary: There were no new findings detected in the previous scan. These are the following top ${findingsToProcess.length} findings in the account:\n\n`;
-    }
-
-    // Sort findings by severity
-    const severityOrder = {
-      critical: 0,
-      high: 1,
-      medium: 2,
-      low: 3,
-      informational: 4,
-    };
-    findingsToProcess.sort(
-      (a, b) =>
-        severityOrder[a.severity as keyof typeof severityOrder] -
-        severityOrder[b.severity as keyof typeof severityOrder],
-    );
-
-    for (const finding of findingsToProcess) {
-      const checkDetails = checkDetailsMap.get(finding.checkId);
-
-      summaryText += `- Title: ${checkDetails?.title || finding.checkId}\n`;
-      summaryText += `   Severity: ${finding.severity.toUpperCase()}\n`;
-      summaryText += `   Check Summary: ${checkDetails?.description || "Description not available"}\n`;
-      summaryText += `   Number of failed findings associated with check ID: ${finding.count}\n`;
-      summaryText += `   Finding IDs: ${finding.findingIds.join(", ")}\n`;
-      summaryText += "   Remediation:\n";
-
-      const remediation = checkDetails?.remediation;
-      if (remediation?.terraform) {
-        summaryText += `   - Terraform: ${remediation.terraform.description}\n`;
-        if (remediation.terraform.reference) {
-          summaryText += `     Reference: ${remediation.terraform.reference}\n`;
-        }
-      }
-      if (remediation?.cli) {
-        summaryText += `   - AWS CLI: ${remediation.cli.description}\n`;
-        if (remediation.cli.reference) {
-          summaryText += `     Reference: ${remediation.cli.reference}\n`;
-        }
-      }
-      if (remediation?.nativeiac) {
-        summaryText += `   - Native IAC: ${remediation.nativeiac.description}\n`;
-        if (remediation.nativeiac.reference) {
-          summaryText += `     Reference: ${remediation.nativeiac.reference}\n`;
-        }
-      }
-      if (remediation?.other) {
-        summaryText += `   - Other: ${remediation.other.description}\n`;
-        if (remediation.other.reference) {
-          summaryText += `     Reference: ${remediation.other.reference}\n`;
-        }
-      }
-      if (remediation?.wui) {
-        summaryText += `   - WUI: ${remediation.wui.description}\n`;
-        if (remediation.wui.reference) {
-          summaryText += `     Reference: ${remediation.wui.reference}\n`;
-        }
-      }
-
-      if (
-        !remediation?.terraform &&
-        !remediation?.cli &&
-        !remediation?.nativeiac &&
-        !remediation?.other &&
-        !remediation?.wui
-      ) {
-        summaryText += "   - No specific remediation commands available\n";
-      }
-
-      summaryText += "\n";
     }
 
     return summaryText;
   } catch (error) {
     console.error("Error generating security scan summary:", error);
-    return "Error generating security scan summary. Please try again later.";
-  }
-};
-
-export const generateBusinessRecommendations = async (
-  securitySummary: string,
-): Promise<string> => {
-  try {
-    const apiKey = await getAIKey();
-    if (!apiKey) {
-      return "Unable to generate recommendations: API key not configured";
-    }
-
-    // Get lighthouse configuration including business context
-    const lighthouseConfig = await getLighthouseConfig();
-
-    if (!lighthouseConfig?.attributes) {
-      return "Unable to generate recommendations: Lighthouse configuration not found";
-    }
-
-    const config = lighthouseConfig.attributes;
-    const businessContext = config.business_context || "";
-
-    const llm = new ChatOpenAI({
-      model: config.model || "gpt-4o",
-      temperature: config.temperature || 0,
-      maxTokens: 200,
-      apiKey: apiKey,
-    });
-
-    // Create the prompt based on whether business context is provided
-    let systemPrompt = `You are a cloud security analyst creating concise business recommendations for a banner notification.
-
-IMPORTANT: Your response must be a single, short sentence (max 80 characters) that would make a user want to click on a banner to learn more.
-
-GUIDELINES:
-- Frame recommendations in business terms, not technical jargon
-- Focus on actionable insights
-- Make it clickable and engaging
-- Don't use phrases like "Lighthouse says" or "Lighthouse recommends"
-- Be specific about the type of improvement when possible
-- Use only information from the security scan summary to generate the recommendation
-- Add words like "Lighthouse" to the recommendation
-- Don't end with a question mark or full stop
-- Don't use words like "urges" or "requires"
-- Use words like "detected" or "found" to describe the issue
-
-EXAMPLES OF GOOD RESPONSES:
-- "Lighthouse detected critical issues in authentication services"
-- "Lighthouse found a new exposed S3 bucket in recent scan"
-- "Lighthouse identified that fixing one check could resolve 30 open findings"
-
-Based on the below security scan summary, generate ONE short business recommendation:`;
-
-    if (businessContext.trim()) {
-      systemPrompt += `\n\nBUSINESS CONTEXT: ${businessContext}`;
-    }
-
-    const userPrompt = `Security Summary:\n${securitySummary}`;
-
-    try {
-      const response = await llm.invoke([
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ]);
-
-      const recommendation = response.content.toString().trim();
-
-      return recommendation;
-    } catch (llmError) {
-      console.error("Error calling LLM:", llmError);
-      return "";
-    }
-  } catch (error) {
-    console.error("Error generating business recommendations:", error);
     return "";
   }
 };
