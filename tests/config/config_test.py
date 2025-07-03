@@ -321,7 +321,6 @@ config_azure = {
     "python_latest_version": "3.12",
     "java_latest_version": "17",
     "recommended_minimal_tls_versions": ["1.2", "1.3"],
-    "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"],
 }
 
 config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}

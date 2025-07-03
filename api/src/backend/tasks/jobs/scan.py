@@ -26,7 +26,7 @@ from api.models import (
     StateChoices,
 )
 from api.models import StatusChoices as FindingStatus
-from api.utils import initialize_prowler_provider
+from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
@@ -149,7 +149,8 @@ def perform_prowler_scan(
                 provider_instance.save()
 
         # If the provider is not connected, raise an exception outside the transaction.
-        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked as not connected.
+        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked
+        # as not connected.
         if exc:
             raise exc
 
@@ -526,7 +527,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         with rls_transaction(tenant_id):
             scan_instance = Scan.objects.get(pk=scan_id)
             provider_instance = scan_instance.provider
-            prowler_provider = initialize_prowler_provider(provider_instance)
+            prowler_provider = return_prowler_provider(provider_instance)
 
         # Get check status data by region from findings
         check_status_by_region = {}

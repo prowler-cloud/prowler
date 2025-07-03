@@ -78,7 +78,6 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
-| `storage_smb_channel_encryption_using_recommended_algorithm`    | `recommended_smb_channel_encryption_algorithms`    | List of Strings  |
 
 
 ## GCP
