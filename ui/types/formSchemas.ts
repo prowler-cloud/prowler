@@ -309,3 +309,14 @@ export const editUserFormSchema = () =>
     userId: z.string(),
     role: z.string().optional(),
   });
+
+export const samlConfigFormSchema = z.object({
+  email_domain: z
+    .string()
+    .trim()
+    .min(1, { message: "Email domain is required" }),
+  metadata_xml: z
+    .string()
+    .trim()
+    .min(1, { message: "Metadata XML is required" }),
+});
