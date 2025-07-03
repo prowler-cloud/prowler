@@ -13,9 +13,7 @@ class storage_smb_protocol_version_is_latest(Check):
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        LATEST_SMB_PROTOCOL_VERSION = storage_client.audit_config.get(
-            "latest_smb_protocol_version", "SMB3.1.1"
-        )
+        LATEST_SMB_VERSION = "SMB3.1.1"
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for account in storage_accounts:
                 if getattr(account, "file_service_properties", None) and getattr(
@@ -38,12 +36,12 @@ class storage_smb_protocol_version_is_latest(Check):
                         and account.file_service_properties.smb_protocol_settings.supported_versions[
                             0
                         ]
-                        == LATEST_SMB_PROTOCOL_VERSION
+                        == LATEST_SMB_VERSION
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} allows only the latest SMB protocol version ({LATEST_SMB_PROTOCOL_VERSION}) for file shares."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} allows only the latest SMB protocol version ({LATEST_SMB_VERSION}) for file shares."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} allows SMB protocol versions: {', '.join(account.file_service_properties.smb_protocol_settings.supported_versions) if account.file_service_properties.smb_protocol_settings.supported_versions else 'None'}. Only the latest SMB protocol version ({LATEST_SMB_PROTOCOL_VERSION}) should be allowed."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} allows SMB protocol versions: {', '.join(account.file_service_properties.smb_protocol_settings.supported_versions) if account.file_service_properties.smb_protocol_settings.supported_versions else 'None'}. Only the latest SMB protocol version ({LATEST_SMB_VERSION}) should be allowed."
                     findings.append(report)
         return findings

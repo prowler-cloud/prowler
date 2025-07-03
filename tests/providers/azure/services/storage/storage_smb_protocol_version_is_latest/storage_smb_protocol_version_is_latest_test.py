@@ -17,7 +17,6 @@ class Test_storage_smb_protocol_version_is_latest:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
         storage_client.storage_accounts = {}
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -59,7 +58,6 @@ class Test_storage_smb_protocol_version_is_latest:
                 )
             ]
         }
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -110,7 +108,6 @@ class Test_storage_smb_protocol_version_is_latest:
                 )
             ]
         }
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -166,7 +163,6 @@ class Test_storage_smb_protocol_version_is_latest:
                 )
             ]
         }
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -222,7 +218,6 @@ class Test_storage_smb_protocol_version_is_latest:
                 )
             ]
         }
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -273,7 +268,6 @@ class Test_storage_smb_protocol_version_is_latest:
                 )
             ]
         }
-        storage_client.audit_config = {"latest_smb_protocol_version": "SMB3.1.1"}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
