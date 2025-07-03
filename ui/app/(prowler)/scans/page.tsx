@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getProvider, getProviders } from "@/actions/providers";
+import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
 import {
   AutoRefresh,
@@ -45,13 +45,9 @@ export default async function Scans({
       connected: provider.attributes.connection.connected,
     })) || [];
 
-  const providersCountConnected = await getProviders({
-    filters: { "filter[connected]": true },
-    pageSize: 50,
-  });
-  const thereIsNoProviders = !providersCountConnected?.data;
+  const thereIsNoProviders = !providersData?.data;
 
-  const thereIsNoProvidersConnected = providersCountConnected?.data?.every(
+  const thereIsNoProvidersConnected = providersData?.data?.every(
     (provider: ProviderProps) => !provider.attributes.connection.connected,
   );
 
@@ -123,34 +119,43 @@ const SSRDataTableScans = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  // Fetch scans data
-  const scansData = await getScans({ query, page, sort, filters, pageSize });
+  // Fetch scans data with provider information included
+  const scansData = await getScans({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize,
+    include: "provider",
+  });
 
-  // Handle expanded scans data
-  const expandedScansData = await Promise.all(
-    scansData?.data?.map(async (scan: any) => {
+  // Process scans with provider information from included data
+  const expandedScansData =
+    scansData?.data?.map((scan: any) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
         return { ...scan, providerInfo: null };
       }
 
-      const formData = new FormData();
-      formData.append("id", providerId);
+      // Find the provider data in the included array
+      const providerData = scansData.included?.find(
+        (item: any) => item.type === "providers" && item.id === providerId,
+      );
 
-      const providerData = await getProvider(formData);
-
-      if (providerData?.data) {
-        const { provider, uid, alias } = providerData.data.attributes;
-        return {
-          ...scan,
-          providerInfo: { provider, uid, alias },
-        };
+      if (!providerData) {
+        return { ...scan, providerInfo: null };
       }
 
-      return { ...scan, providerInfo: null };
-    }) || [],
-  );
+      return {
+        ...scan,
+        providerInfo: {
+          provider: providerData.attributes.provider,
+          uid: providerData.attributes.uid,
+          alias: providerData.attributes.alias,
+        },
+      };
+    }) || [];
 
   return (
     <DataTable
