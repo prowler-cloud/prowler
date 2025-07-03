@@ -475,14 +475,14 @@ class SAMLInitiateAPIView(GenericAPIView):
             )
 
         # Check certificates are not empty (TODO: Validate certificates)
-        saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
-        saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
+        # saml_public_cert = os.getenv("SAML_PUBLIC_CERT", "").strip()
+        # saml_private_key = os.getenv("SAML_PRIVATE_KEY", "").strip()
 
-        if not saml_public_cert or not saml_private_key:
-            return Response(
-                {"detail": "SAML configuration is invalid: missing certificates."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # if not saml_public_cert or not saml_private_key:
+        #     return Response(
+        #         {"detail": "SAML configuration is invalid: missing certificates."},
+        #         status=status.HTTP_403_FORBIDDEN,
+        #     )
 
         # Build the SAML login URL using the configured API host
         api_host = os.getenv("API_BASE_URL")

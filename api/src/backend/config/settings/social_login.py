@@ -26,17 +26,17 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_ADAPTER = "api.adapters.ProwlerSocialAccountAdapter"
 
 
-def inline(pem: str) -> str:
-    return "".join(
-        line.strip()
-        for line in pem.splitlines()
-        if "CERTIFICATE" not in line and "KEY" not in line
-    )
+# def inline(pem: str) -> str:
+#     return "".join(
+#         line.strip()
+#         for line in pem.splitlines()
+#         if "CERTIFICATE" not in line and "KEY" not in line
+#     )
 
 
-# SAML keys
-SAML_PUBLIC_CERT = inline(env("SAML_PUBLIC_CERT", default=""))
-SAML_PRIVATE_KEY = inline(env("SAML_PRIVATE_KEY", default=""))
+# # SAML keys (TODO: Validate certificates)
+# SAML_PUBLIC_CERT = inline(env("SAML_PUBLIC_CERT", default=""))
+# SAML_PRIVATE_KEY = inline(env("SAML_PRIVATE_KEY", default=""))
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -71,11 +71,12 @@ SOCIALACCOUNT_PROVIDERS = {
                 "entity_id": "urn:prowler.com:sp",
             },
             "advanced": {
-                "x509cert": SAML_PUBLIC_CERT,
-                "private_key": SAML_PRIVATE_KEY,
-                "authn_request_signed": True,
-                "want_message_signed": True,
-                "want_assertion_signed": True,
+                # TODO: Validate certificates
+                # "x509cert": SAML_PUBLIC_CERT,
+                # "private_key": SAML_PRIVATE_KEY,
+                # "authn_request_signed": True,
+                # "want_message_signed": True,
+                # "want_assertion_signed": True,
                 "reject_idp_initiated_sso": False,
                 "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
             },
