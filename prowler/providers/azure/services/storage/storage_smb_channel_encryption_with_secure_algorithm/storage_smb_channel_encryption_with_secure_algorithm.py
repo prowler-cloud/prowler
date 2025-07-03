@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
-class storage_smb_channel_encryption_using_recommended_algorithm(Check):
+class storage_smb_channel_encryption_with_secure_algorithm(Check):
     """
     Ensure SMB channel encryption for file shares is set to the recommended algorithm (AES-256-GCM or higher).
 

@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "storage_smb_channel_encryption_using_recommended_algorithm",
+  "CheckID": "storage_smb_channel_encryption_with_secure_algorithm",
   "CheckTitle": "Ensure 'SMB channel encryption' is set to one of the recommended algorithm for SMB file shares",
   "CheckType": [],
   "ServiceName": "storage",
