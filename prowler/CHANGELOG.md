@@ -6,6 +6,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 
+- `vm_scaleset_associated_load_balancer` check for Azure provider
+
 ### Changed
 
 ### Fixed
