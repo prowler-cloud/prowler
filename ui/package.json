@@ -30,6 +30,7 @@
     "framer-motion": "^11.16.0",
     "immer": "^10.1.1",
     "intl-messageformat": "^10.5.0",
+    "iovalkey": "^0.3.3",
     "jose": "^5.9.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.471.0",
