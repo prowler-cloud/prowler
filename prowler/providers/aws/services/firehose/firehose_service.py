@@ -25,18 +25,47 @@ class Firehose(AWSService):
     def _list_delivery_streams(self, regional_client):
         logger.info("Firehose - Listing delivery streams...")
         try:
-            for stream_name in regional_client.list_delivery_streams()[
-                "DeliveryStreamNames"
-            ]:
-                stream_arn = f"arn:{self.audited_partition}:firehose:{regional_client.region}:{self.audited_account}:deliverystream/{stream_name}"
-                if not self.audit_resources or (
-                    is_resource_filtered(stream_arn, self.audit_resources)
-                ):
-                    self.delivery_streams[stream_arn] = DeliveryStream(
-                        arn=stream_arn,
-                        name=stream_name,
-                        region=regional_client.region,
+            # Manual pagination using ExclusiveStartDeliveryStreamName
+            # This ensures we get all streams alphabetically without duplicates
+            exclusive_start_delivery_stream_name = None
+            processed_streams = set()
+
+            while True:
+                kwargs = {}
+                if exclusive_start_delivery_stream_name:
+                    kwargs["ExclusiveStartDeliveryStreamName"] = (
+                        exclusive_start_delivery_stream_name
                     )
+
+                response = regional_client.list_delivery_streams(**kwargs)
+                stream_names = response.get("DeliveryStreamNames", [])
+
+                for stream_name in stream_names:
+                    if stream_name in processed_streams:
+                        continue
+
+                    processed_streams.add(stream_name)
+                    stream_arn = f"arn:{self.audited_partition}:firehose:{regional_client.region}:{self.audited_account}:deliverystream/{stream_name}"
+
+                    if not self.audit_resources or (
+                        is_resource_filtered(stream_arn, self.audit_resources)
+                    ):
+                        self.delivery_streams[stream_arn] = DeliveryStream(
+                            arn=stream_arn,
+                            name=stream_name,
+                            region=regional_client.region,
+                        )
+
+                if not response.get("HasMoreDeliveryStreams", False):
+                    break
+
+                # Set the starting point for the next page (last stream name from current batch)
+                # ExclusiveStartDeliveryStreamName will start after this stream alphabetically
+                if stream_names:
+                    exclusive_start_delivery_stream_name = stream_names[-1]
+                else:
+                    break
+
         except ClientError as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -27,9 +27,23 @@ class firehose_stream_encrypted_at_rest(Check):
                 f"Firehose Stream {stream.name} does have at rest encryption enabled."
             )
 
-            if stream.kms_encryption != EncryptionStatus.ENABLED:
+            # Check if the stream has encryption enabled directly
+            has_direct_encryption = stream.kms_encryption == EncryptionStatus.ENABLED
+
+            # Check if the stream has a Kinesis source with encryption enabled
+            has_encrypted_kinesis_source = (
+                stream.delivery_stream_type == "KinesisStreamAsSource"
+                and stream.source_has_encryption
+            )
+
+            # Stream is considered encrypted if it has direct encryption OR encrypted source
+            is_encrypted = has_direct_encryption or has_encrypted_kinesis_source
+
+            if not is_encrypted:
                 report.status = "FAIL"
                 report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled."
+            elif has_encrypted_kinesis_source and not has_direct_encryption:
+                report.status_extended = f"Firehose Stream {stream.name} is encrypted through its Kinesis source stream."
 
             findings.append(report)
 
