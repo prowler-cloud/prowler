@@ -1,7 +1,7 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import yaml from "js-yaml";
+import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
@@ -15,6 +15,8 @@ import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
+import { fontMono } from "@/config/fonts";
+import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
 import {
   MutedFindingsConfigActionState,
   ProcessorData,
@@ -24,29 +26,6 @@ interface MutedFindingsConfigFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-const convertToYaml = (config: string | object): string => {
-  if (!config) return "";
-
-  try {
-    // If it's already an object, convert directly to YAML
-    if (typeof config === "object") {
-      return yaml.dump(config, { indent: 2 });
-    }
-
-    // If it's a string, try to parse as JSON first
-    try {
-      const jsonConfig = JSON.parse(config);
-      return yaml.dump(jsonConfig, { indent: 2 });
-    } catch {
-      // If it's not JSON, assume it's already YAML
-      return config;
-    }
-  } catch (error) {
-    console.error("Error converting config to YAML:", error);
-    return config.toString();
-  }
-};
-
 export const MutedFindingsConfigForm = ({
   setIsOpen,
 }: MutedFindingsConfigFormProps) => {
@@ -54,6 +33,11 @@ export const MutedFindingsConfigForm = ({
   const [configText, setConfigText] = useState("");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [yamlValidation, setYamlValidation] = useState<{
+    isValid: boolean;
+    error?: string;
+  }>({ isValid: true });
+  const [hasUserStartedTyping, setHasUserStartedTyping] = useState(false);
 
   const [state, formAction, isPending] = useFormState<
     MutedFindingsConfigActionState,
@@ -65,7 +49,12 @@ export const MutedFindingsConfigForm = ({
   useEffect(() => {
     getMutedFindingsConfig().then((result) => {
       setConfig(result || null);
-      setConfigText(convertToYaml(result?.attributes.configuration || ""));
+      const yamlConfig = convertToYaml(result?.attributes.configuration || "");
+      setConfigText(yamlConfig);
+      setHasUserStartedTyping(false); // Reset when loading initial config
+      if (yamlConfig) {
+        setYamlValidation(parseYamlValidation(yamlConfig));
+      }
     });
   }, []);
 
@@ -82,8 +71,20 @@ export const MutedFindingsConfigForm = ({
         title: "Oops! Something went wrong",
         description: state.errors.general,
       });
+    } else if (state?.errors?.configuration) {
+      // Reset typing state when there are new server errors
+      setHasUserStartedTyping(false);
     }
   }, [state, toast, setIsOpen]);
+
+  const handleConfigChange = (value: string) => {
+    setConfigText(value);
+    // Clear server errors when user starts typing
+    setHasUserStartedTyping(true);
+    // Validate YAML in real-time
+    const validation = parseYamlValidation(value);
+    setYamlValidation(validation);
+  };
 
   const handleDelete = async () => {
     if (!config) return;
@@ -123,7 +124,7 @@ export const MutedFindingsConfigForm = ({
     return (
       <div className="flex flex-col space-y-4">
         <h3 className="text-lg font-semibold text-default-700">
-          Delete Muted Findings Configuration
+          Delete Mutelist Configuration
         </h3>
         <p className="text-sm text-default-600">
           Are you sure you want to delete this configuration? This action cannot
@@ -165,34 +166,25 @@ export const MutedFindingsConfigForm = ({
 
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm text-default-600">
-            Configuring Muted Findings creates an Allowlist for future Findings.
-          </p>
           <ul className="mb-4 list-disc pl-5 text-sm text-default-600">
             <li>
-              These Findings will no longer appear in your dashboards and
-              reports unless you select
-              <strong> &quot;Show Muted Findings&quot;</strong> in the filters
-              menu.
+              <strong>
+                This Mutelist configuration will take effect on the next scan.
+              </strong>
             </li>
             <li>
-              <strong>Muted Findings will take effect on the next scan.</strong>
+              You may modify your Mutelist configuration at anytime on the
+              Providers page.
             </li>
             <li>
-              You may modify your Muted Findings configuration at anytime on the
-              Findings page.
-            </li>
-            <li>
-              Learn more about configuring your Muted Findings here:{" "}
-              <button
-                type="button"
-                className="text-primary underline hover:text-primary-600"
-                onClick={() =>
-                  window.open("https://docs.prowler.com/", "_blank")
-                }
+              Learn more about configuring the Mutelist{" "}
+              <Link
+                href="https://docs.prowler.com/"
+                target="_blank"
+                className="underline hover:text-primary-600"
               >
-                Allowlist Documentation
-              </button>
+                here
+              </Link>
             </li>
           </ul>
         </div>
@@ -204,21 +196,34 @@ export const MutedFindingsConfigForm = ({
           >
             Allowlist Configuration
           </label>
-          <Textarea
-            id="configuration"
-            name="configuration"
-            placeholder="Enter your YAML configuration..."
-            variant="bordered"
-            value={configText}
-            onChange={(e) => setConfigText(e.target.value)}
-            minRows={15}
-            maxRows={20}
-            isInvalid={!!state?.errors?.configuration}
-            errorMessage={state?.errors?.configuration}
-            classNames={{
-              input: "font-mono text-sm",
-            }}
-          />
+          <div>
+            <Textarea
+              id="configuration"
+              name="configuration"
+              placeholder="Enter your YAML configuration..."
+              variant="bordered"
+              value={configText}
+              onChange={(e) => handleConfigChange(e.target.value)}
+              minRows={15}
+              maxRows={20}
+              isInvalid={
+                (!hasUserStartedTyping && !!state?.errors?.configuration) ||
+                !yamlValidation.isValid
+              }
+              errorMessage={
+                (!hasUserStartedTyping && state?.errors?.configuration) ||
+                (!yamlValidation.isValid ? yamlValidation.error : "")
+              }
+              classNames={{
+                input: fontMono.className + " text-sm",
+              }}
+            />
+            {yamlValidation.isValid && configText && (
+              <div className="my-1 flex items-center px-1 text-tiny text-success">
+                <span>Valid YAML format</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -226,6 +231,7 @@ export const MutedFindingsConfigForm = ({
         <FormButtons
           setIsOpen={setIsOpen}
           submitText={config ? "Update" : "Save"}
+          isDisabled={!yamlValidation.isValid || !configText.trim()}
         />
 
         {config && (

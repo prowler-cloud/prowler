@@ -27,14 +27,14 @@ export const MutedFindingsConfigButton = ({
       <CustomAlertModal
         isOpen={isOpen}
         onOpenChange={setIsOpen}
-        title="Configure Muted Findings"
+        title="Configure Mutelist"
         size="3xl"
       >
         <MutedFindingsConfigForm setIsOpen={setIsOpen} />
       </CustomAlertModal>
 
       <CustomButton
-        ariaLabel="Configure Muted Findings"
+        ariaLabel="Configure Mutelist"
         variant="dashed"
         color="warning"
         size="md"
@@ -42,7 +42,7 @@ export const MutedFindingsConfigButton = ({
         onPress={handleOpenModal}
         isDisabled={isDisabled}
       >
-        Configure Muted Findings
+        Configure Mutelist
       </CustomButton>
     </>
   );

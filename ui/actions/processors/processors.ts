@@ -52,25 +52,25 @@ export const createMutedFindingsConfig = async (
         throw new Error(
           errorData?.errors?.[0]?.detail ||
             errorData?.message ||
-            `Failed to create muted findings configuration: ${response.statusText}`,
+            `Failed to create Mutelist configuration: ${response.statusText}`,
         );
       } catch {
         throw new Error(
-          `Failed to create muted findings configuration: ${response.statusText}`,
+          `Failed to create Mutelist configuration: ${response.statusText}`,
         );
       }
     }
 
     await response.json();
-    return { success: "Muted findings configuration created successfully!" };
+    return { success: "Mutelist configuration created successfully!" };
   } catch (error) {
-    console.error("Error creating muted findings config:", error);
+    console.error("Error creating Mutelist config:", error);
     return {
       errors: {
         configuration:
           error instanceof Error
             ? error.message
-            : "Error creating muted findings configuration. Please try again.",
+            : "Error creating Mutelist configuration. Please try again.",
       },
     };
   }
@@ -128,25 +128,25 @@ export const updateMutedFindingsConfig = async (
         throw new Error(
           errorData?.errors?.[0]?.detail ||
             errorData?.message ||
-            `Failed to update muted findings configuration: ${response.statusText}`,
+            `Failed to update Mutelist configuration: ${response.statusText}`,
         );
       } catch {
         throw new Error(
-          `Failed to update muted findings configuration: ${response.statusText}`,
+          `Failed to update Mutelist configuration: ${response.statusText}`,
         );
       }
     }
 
     await response.json();
-    return { success: "Muted findings configuration updated successfully!" };
+    return { success: "Mutelist configuration updated successfully!" };
   } catch (error) {
-    console.error("Error updating muted findings config:", error);
+    console.error("Error updating Mutelist config:", error);
     return {
       errors: {
         configuration:
           error instanceof Error
             ? error.message
-            : "Error updating muted findings configuration. Please try again.",
+            : "Error updating Mutelist configuration. Please try again.",
       },
     };
   }
@@ -167,14 +167,14 @@ export const getMutedFindingsConfig = async (): Promise<
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch muted findings config: ${response.statusText}`,
+        `Failed to fetch Mutelist config: ${response.statusText}`,
       );
     }
 
     const data = await response.json();
     return data.data[0];
   } catch (error) {
-    console.error("Error fetching muted findings config:", error);
+    console.error("Error fetching Mutelist config:", error);
     return undefined;
   }
 };
@@ -206,19 +206,19 @@ export const deleteMutedFindingsConfig = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.errors?.[0]?.detail ||
-          `Failed to delete muted findings configuration: ${response.statusText}`,
+          `Failed to delete Mutelist configuration: ${response.statusText}`,
       );
     }
 
-    return { success: "Muted findings configuration deleted successfully!" };
+    return { success: "Mutelist configuration deleted successfully!" };
   } catch (error) {
-    console.error("Error deleting muted findings config:", error);
+    console.error("Error deleting Mutelist config:", error);
     return {
       errors: {
         general:
           error instanceof Error
             ? error.message
-            : "Error deleting muted findings configuration. Please try again.",
+            : "Error deleting Mutelist configuration. Please try again.",
       },
     };
   }
