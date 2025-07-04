@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_desired_sku_size",
+  "CheckTitle": "Check for Organization's Desired VM SKU Size(s)",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Description": "Ensure that your virtual machine instances are using SKU sizes that are approved by your organization. This check requires configuration of the desired VM SKU sizes in the Prowler configuration file.",
+  "Risk": "Setting limits for the SKU size(s) of the virtual machine instances provisioned in your Microsoft Azure account can help you to manage better your cloud compute power, address internal compliance requirements and prevent unexpected charges on your Azure monthly bill. Without proper SKU size controls, organizations may face cost overruns and compliance violations.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "az policy assignment create --display-name 'Allowed VM SKU Sizes' --policy cccc23c7-8427-4f53-ad12-b6a63eb452b3 -p '{\"listOfAllowedSKUs\": {\"value\": [\"<desired-sku-1>\", \"<desired-sku-2>\"]}}' --scope /subscriptions/<subscription-id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Define and document your organization's approved VM SKU sizes based on workload requirements, cost constraints, and compliance needs. 2. Implement Azure Policy to enforce VM size restrictions across your subscriptions. 3. Use the 'Allowed virtual machine size SKUs' built-in policy to restrict VM creation to approved sizes. 4. Regularly review and update your approved SKU list based on changing business requirements and cost optimization goals. 5. Monitor VM usage and costs to ensure compliance with your SKU size policies.",
+      "Url": "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/resize-vm"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires configuration of the desired VM SKU sizes in the Prowler configuration file. Configure the azure.desired_vm_sku_sizes list in your Prowler configuration file (see https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/configuration_file/) with the SKU sizes approved by your organization."
+}
