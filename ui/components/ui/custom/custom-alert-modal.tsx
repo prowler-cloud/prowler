@@ -35,9 +35,11 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
           <>
             <ModalHeader className="flex flex-col py-0">{title}</ModalHeader>
             <ModalBody>
-              <p className="text-small text-gray-600 dark:text-gray-300">
-                {description}
-              </p>
+              {description && (
+                <p className="text-small text-gray-600 dark:text-gray-300">
+                  {description}
+                </p>
+              )}
               {children}
             </ModalBody>
           </>

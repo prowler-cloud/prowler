@@ -179,9 +179,9 @@ export const MutedFindingsConfigForm = ({
             <li>
               Learn more about configuring the Mutelist{" "}
               <Link
-                href="https://docs.prowler.com/"
+                href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/"
                 target="_blank"
-                className="underline hover:text-primary-600"
+                className="text-primary-600 hover:underline"
               >
                 here
               </Link>
@@ -194,7 +194,7 @@ export const MutedFindingsConfigForm = ({
             htmlFor="configuration"
             className="text-sm font-medium text-default-700"
           >
-            Allowlist Configuration
+            Mutelist Configuration
           </label>
           <div>
             <Textarea
@@ -204,7 +204,7 @@ export const MutedFindingsConfigForm = ({
               variant="bordered"
               value={configText}
               onChange={(e) => handleConfigChange(e.target.value)}
-              minRows={15}
+              minRows={20}
               maxRows={20}
               isInvalid={
                 (!hasUserStartedTyping && !!state?.errors?.configuration) ||
@@ -216,9 +216,10 @@ export const MutedFindingsConfigForm = ({
               }
               classNames={{
                 input: fontMono.className + " text-sm",
+                base: "min-h-[400px]",
               }}
             />
-            {yamlValidation.isValid && configText && (
+            {yamlValidation.isValid && configText && hasUserStartedTyping && (
               <div className="my-1 flex items-center px-1 text-tiny text-success">
                 <span>Valid YAML format</span>
               </div>
