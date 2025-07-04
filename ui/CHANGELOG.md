@@ -5,7 +5,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
 
 ### 🚀 Added
+
+- Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
+
 ### 🔄 Changed
+
 ### 🐞 Fixed
 
 ---
