@@ -6,7 +6,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 
-- `vm_scaleset_associated_load_balancer` check for Azure provider
+- `vm_scaleset_associated_load_balancer` check for Azure provider [(#8181)](https://github.com/prowler-cloud/prowler/pull/8181)
+- `vm_scaleset_not_empty` check for Azure provider [(#8192)](https://github.com/prowler-cloud/prowler/pull/8192)
 
 ### Changed
 
