@@ -741,7 +741,7 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
-    
+
     # Custom status filters - these don't actually filter the queryset since ScanSummary
     # doesn't have a status field, but they allow the parameters to pass validation
     # The actual filtering logic is handled in the endpoint views

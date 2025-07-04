@@ -3692,26 +3692,42 @@ class OverviewViewSet(BaseRLSViewSet):
         # Handle status filtering by determining which fields to sum
         status_filter = request.query_params.get("filter[status]")
         status_in_filter = request.query_params.get("filter[status__in]")
-        
+
         # Parse status filters to determine what to include
         requested_statuses = set()
         if status_filter:
             requested_statuses.add(status_filter)
         if status_in_filter:
             requested_statuses.update(status_in_filter.split(","))
-        
+
         # Determine which fields to sum based on requested statuses
         sum_expression = None
-        if not requested_statuses or ("FAIL" in requested_statuses and "PASS" in requested_statuses and "MUTED" in requested_statuses):
+        if not requested_statuses or (
+            "FAIL" in requested_statuses
+            and "PASS" in requested_statuses
+            and "MUTED" in requested_statuses
+        ):
             # No status filter or all statuses requested - use total
             sum_expression = Sum("total")
-        elif "FAIL" in requested_statuses and "PASS" in requested_statuses and "MUTED" not in requested_statuses:
+        elif (
+            "FAIL" in requested_statuses
+            and "PASS" in requested_statuses
+            and "MUTED" not in requested_statuses
+        ):
             # Both FAIL and PASS but not MUTED
             sum_expression = Sum("fail") + Sum("_pass")
-        elif "FAIL" in requested_statuses and "MUTED" in requested_statuses and "PASS" not in requested_statuses:
+        elif (
+            "FAIL" in requested_statuses
+            and "MUTED" in requested_statuses
+            and "PASS" not in requested_statuses
+        ):
             # FAIL and MUTED but not PASS
             sum_expression = Sum("fail") + Sum("muted")
-        elif "PASS" in requested_statuses and "MUTED" in requested_statuses and "FAIL" not in requested_statuses:
+        elif (
+            "PASS" in requested_statuses
+            and "MUTED" in requested_statuses
+            and "FAIL" not in requested_statuses
+        ):
             # PASS and MUTED but not FAIL
             sum_expression = Sum("_pass") + Sum("muted")
         elif "FAIL" in requested_statuses and len(requested_statuses) == 1:
