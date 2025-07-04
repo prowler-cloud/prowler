@@ -555,7 +555,12 @@ class TenantFinishACSView(FinishACSView):
         if not user or not user.is_authenticated:
             return response
 
+        # Defensive check to avoid edge case failures due to inconsistent or incomplete data in the database
+        # This handles scenarios like partially deleted or missing related objects
         try:
+            check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
+            with rls_transaction(str(check.tenant_id)):
+                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )
@@ -563,7 +568,13 @@ class TenantFinishACSView(FinishACSView):
             social_account = SocialAccount.objects.get(
                 user=str(user_id), provider=social_app.provider_id
             )
-        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist, User.DoesNotExist):
+        except (
+            SAMLDomainIndex.DoesNotExist,
+            SAMLConfiguration.DoesNotExist,
+            SocialApp.DoesNotExist,
+            SocialAccount.DoesNotExist,
+            User.DoesNotExist,
+        ):
             return response
 
         extra = social_account.extra_data

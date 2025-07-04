@@ -11,6 +11,7 @@ SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
@@ -252,10 +253,3 @@ DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
 # SAML requirement
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-
-# Enable these options when running behind a reverse proxy that handles HTTPS termination.
-# USE_X_FORWARDED_HOST ensures Django uses the original host sent by the proxy (via X-Forwarded-Host).
-# SECURE_SSL_REDIRECT forces all HTTP requests to be redirected to HTTPS.
-# Make sure your proxy sets the X-Forwarded-Proto header to 'https' for this to work correctly.
-# USE_X_FORWARDED_HOST = True
-# SECURE_SSL_REDIRECT = True
