@@ -105,7 +105,6 @@ class IacProvider(Provider):
                 self.github_username = None
                 self.personal_access_token = None
                 self.oauth_app_token = None
-                self.auth_method = "No auth"
                 logger.debug(
                     "No GitHub authentication method provided; proceeding without authentication."
                 )
@@ -255,7 +254,6 @@ class IacProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
-            sys.exit(1)
 
     def run(self) -> List[CheckReportIAC]:
         temp_dir = None
