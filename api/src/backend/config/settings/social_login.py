@@ -64,22 +64,19 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
     },
     "saml": {
-        "name": "Prowler",
-        "settings": {
-            "use_nameid_for_email": True,
-            "sp": {
-                "entity_id": "urn:prowler.com:sp",
-            },
-            "advanced": {
-                # TODO: Validate certificates
-                # "x509cert": SAML_PUBLIC_CERT,
-                # "private_key": SAML_PRIVATE_KEY,
-                # "authn_request_signed": True,
-                # "want_message_signed": True,
-                # "want_assertion_signed": True,
-                "reject_idp_initiated_sso": False,
-                "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-            },
+        "use_nameid_for_email": True,
+        "sp": {
+            "entity_id": "urn:prowler.com:sp",
+        },
+        "advanced": {
+            # TODO: Validate certificates
+            # "x509cert": SAML_PUBLIC_CERT,
+            # "private_key": SAML_PRIVATE_KEY,
+            # "authn_request_signed": True,
+            # "want_message_signed": True,
+            # "want_assertion_signed": True,
+            "reject_idp_initiated_sso": False,
+            "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
         },
     },
 }

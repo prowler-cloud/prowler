@@ -1580,7 +1580,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         If the domain changed, update the matching SocialApp.
         """
         idp_settings = self._parse_metadata()
-        settings_dict = SOCIALACCOUNT_PROVIDERS["saml"]["settings"].copy()
+        settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
         settings_dict["idp"] = idp_settings
 
         current_site = Site.objects.get(id=settings.SITE_ID)
