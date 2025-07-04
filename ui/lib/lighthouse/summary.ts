@@ -5,7 +5,7 @@ import { CheckDetails, FindingSummary } from "@/types/lighthouse/summary";
 
 import { getNewFailedFindingsSummary } from "./tools/findings";
 
-const getCompletedScansLast24h = async (): Promise<string[]> => {
+export const getCompletedScansLast24h = async (): Promise<string[]> => {
   const twentyFourHoursAgo = new Date();
   twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
@@ -27,7 +27,7 @@ const getCompletedScansLast24h = async (): Promise<string[]> => {
   return scansResponse.data.map((scan: any) => scan.id);
 };
 
-const compareProcessedScanIds = (
+export const compareProcessedScanIds = (
   currentScanIds: string[],
   processedScanIds: string[],
 ): boolean => {
@@ -229,22 +229,13 @@ const buildSingleFindingDetails = (
   return detailsText;
 };
 
-// Generates a summary of failed findings from security scans in last 24 hours
-// Returns an empty string if - no scans in 24 hours, no failed findings in any scan, or unexpected error
+// Generates a summary of failed findings for the provided scan IDs
+// Returns an empty string if no failed findings in any scan or unexpected error
 // Else it returns a string with the summary of the failed findings
-export const generateSecurityScanSummary = async (): Promise<string> => {
+export const generateSecurityScanSummary = async (
+  scanIds: string[],
+): Promise<string> => {
   try {
-    const currentScanIds = await getCompletedScansLast24h();
-
-    if (currentScanIds.length === 0) {
-      return "";
-    }
-
-    // TODO: Check if these scan IDs were already processed
-    // This will be implemented in later steps when we update the cache service
-
-    const scanIds = currentScanIds;
-
     // Collect new failed findings by scan
     const newFindingsByScan = await collectNewFailedFindings(scanIds);
 
