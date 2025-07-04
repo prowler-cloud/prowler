@@ -511,6 +511,7 @@ class TestFinding:
         provider = MagicMock()
         provider.type = "iac"
         provider.scan_repository_url = "https://github.com/user/repo"
+        provider.auth_method = "No auth"
 
         # Mock check result
         check_output = MagicMock()
@@ -538,7 +539,7 @@ class TestFinding:
 
         # Finding
         assert isinstance(finding_output, Finding)
-        assert finding_output.auth_method == "None"
+        assert finding_output.auth_method == "No auth"
         assert finding_output.resource_name == "aws_s3_bucket.example"
         assert finding_output.resource_uid == "aws_s3_bucket.example"
         assert finding_output.region == "/path/to/iac/file.tf"

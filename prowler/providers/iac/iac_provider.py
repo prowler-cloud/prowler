@@ -78,7 +78,7 @@ class IacProvider(Provider):
         self.audited_account = "local-iac"
         self._session = None
         self._identity = "prowler"
-        self.auth_method = "No auth"
+        self._auth_method = "No auth"
 
         if scan_repository_url:
             oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
@@ -91,7 +91,7 @@ class IacProvider(Provider):
                 self.oauth_app_token = oauth_app_token
                 self.github_username = None
                 self.personal_access_token = None
-                self.auth_method = "OAuth App Token"
+                self._auth_method = "OAuth App Token"
                 logger.info("Using OAuth App Token for GitHub authentication")
             elif github_username and personal_access_token:
                 self.github_username = github_username
@@ -135,6 +135,10 @@ class IacProvider(Provider):
         )
 
         Provider.set_global_provider(self)
+
+    @property
+    def auth_method(self):
+        return self._auth_method
 
     @property
     def type(self):

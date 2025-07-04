@@ -606,7 +606,7 @@ class TestIacProvider:
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
-    def test_clone_repository_no_auth(self, mock_mkdtemp, mock_clone):
+    def test_clone_repository_no_auth(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
         provider._clone_repository(url)
@@ -614,7 +614,7 @@ class TestIacProvider:
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
-    def test_clone_repository_with_pat(self, mock_mkdtemp, mock_clone):
+    def test_clone_repository_with_pat(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
         provider._clone_repository(
@@ -625,7 +625,7 @@ class TestIacProvider:
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
-    def test_clone_repository_with_oauth(self, mock_mkdtemp, mock_clone):
+    def test_clone_repository_with_oauth(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
         provider._clone_repository(url, oauth_app_token="oauth456")
