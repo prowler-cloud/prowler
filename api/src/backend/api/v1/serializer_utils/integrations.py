@@ -1,19 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
-from rest_framework_json_api.serializers import ValidationError
 
-
-class BaseValidateSerializer(serializers.Serializer):
-    def validate(self, data):
-        if hasattr(self, "initial_data"):
-            initial_data = set(self.initial_data.keys()) - {"id", "type"}
-            unknown_keys = initial_data - set(self.fields.keys())
-            if unknown_keys:
-                raise ValidationError(f"Invalid fields: {unknown_keys}")
-        return data
-
-
-# Integrations
+from api.v1.serializer_utils.base import BaseValidateSerializer
 
 
 class S3ConfigSerializer(BaseValidateSerializer):
