@@ -197,7 +197,7 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {repository_url} into {temporary_directory}..."
             )
-            porcelain.clone(repository_url, temporary_directory)
+            porcelain.clone(repository_url, temporary_directory, depth=1)
             return temporary_directory
         except Exception as error:
             logger.critical(
