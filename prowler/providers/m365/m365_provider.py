@@ -219,6 +219,9 @@ class M365Provider(Provider):
         # Fixer Config
         self._fixer_config = fixer_config
 
+        # Output Options
+        self._output_options = None
+
         # Mutelist
         if mutelist_content:
             self._mutelist = M365Mutelist(
@@ -1136,3 +1139,10 @@ class M365Provider(Provider):
         except Exception as error:
             # Generic exception handling for unexpected errors
             raise RuntimeError(f"An unexpected error occurred: {str(error)}")
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    def set_output_options(self, output_options):
+        self._output_options = output_options
