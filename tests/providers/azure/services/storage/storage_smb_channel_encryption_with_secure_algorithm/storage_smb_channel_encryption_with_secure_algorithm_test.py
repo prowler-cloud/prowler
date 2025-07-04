@@ -84,7 +84,9 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             name="fs1",
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
-            smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
+            smb_protocol_settings=SMBProtocolSettings(
+                channel_encryption=[], supported_versions=[]
+            ),
         )
         storage_client = mock.MagicMock()
         storage_client.storage_accounts = {
@@ -124,9 +126,8 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "does not have the recommended SMB channel encryption enabled"
-                in result[0].status_extended
+            assert result[0].status_extended == (
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have SMB channel encryption enabled for file shares."
             )
 
     def test_not_recommended_encryption(self):
@@ -138,7 +139,7 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
             smb_protocol_settings=SMBProtocolSettings(
-                channel_encryption=["AES-128-GCM"]
+                channel_encryption=["AES-128-GCM"], supported_versions=[]
             ),
         )
         storage_client = mock.MagicMock()
@@ -179,9 +180,8 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "does not have the recommended SMB channel encryption enabled"
-                in result[0].status_extended
+            assert result[0].status_extended == (
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have SMB channel encryption with a secure algorithm for file shares since it supports AES-128-GCM."
             )
 
     def test_recommended_encryption(self):
@@ -193,7 +193,7 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
             smb_protocol_settings=SMBProtocolSettings(
-                channel_encryption=["AES-256-GCM"]
+                channel_encryption=["AES-256-GCM"], supported_versions=[]
             ),
         )
         storage_client = mock.MagicMock()
@@ -234,7 +234,6 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert (
-                "has the recommended SMB channel encryption (AES-256-GCM) enabled"
-                in result[0].status_extended
+            assert result[0].status_extended == (
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has a secure algorithm for SMB channel encryption (AES-256-GCM) enabled for file shares since it supports AES-256-GCM."
             )

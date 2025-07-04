@@ -264,7 +264,7 @@ class ReplicationSettings(Enum):
 
 class SMBProtocolSettings(BaseModel):
     channel_encryption: list[str]
-    supported_versions: list[str] = []
+    supported_versions: list[str]
 
 
 class FileServiceProperties(BaseModel):

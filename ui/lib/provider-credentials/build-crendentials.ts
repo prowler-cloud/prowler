@@ -192,17 +192,8 @@ export const buildUpdateSecretConfig = (
   formData: FormData,
   providerType: ProviderType,
 ) => {
-  // Reuse the same secret building logic as add, but only return the secret
+  // Reuse the same secret building logic as add
   const { secret } = buildSecretConfig(formData, providerType);
-
-  // Handle special case for M365 password field inconsistency
-  if (providerType === "m365") {
-    return {
-      ...secret,
-      password: formData.get(ProviderCredentialFields.PASSWORD),
-    };
-  }
-
   return secret;
 };
 

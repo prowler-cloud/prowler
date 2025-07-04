@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 ### Fixed
+- fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
 
 ---
 
