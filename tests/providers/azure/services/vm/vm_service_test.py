@@ -40,6 +40,7 @@ def mock_vm_get_virtual_machines(_):
                     ),
                     data_disks=[],
                 ),
+                vm_size="Standard_A8_v2",
             )
         }
     }
@@ -55,6 +56,7 @@ def mock_vm_get_virtual_machines_with_none(_):
                 security_profile=None,
                 extensions=[],
                 storage_profile=None,
+                vm_size=None,
             ),
             "vm_id-2": VirtualMachine(
                 resource_id="/subscriptions/resource_id2",
@@ -66,6 +68,7 @@ def mock_vm_get_virtual_machines_with_none(_):
                     os_disk=None,
                     data_disks=[],
                 ),
+                vm_size="Standard_B1s",
             ),
         }
     }
@@ -154,6 +157,10 @@ class Test_VirtualMachines_Service:
                 ].storage_profile.data_disks
             )
             == 0
+        )
+        assert (
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-1"].vm_size
+            == "Standard_A8_v2"
         )
 
     def test__get_disks(self):
