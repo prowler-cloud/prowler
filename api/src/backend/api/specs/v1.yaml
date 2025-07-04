@@ -2877,6 +2877,180 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/lighthouse-configurations:
+    get:
+      operationId: lighthouse_configurations_list
+      description: Retrieve a list of all Lighthouse configurations.
+      summary: List all Lighthouse configurations
+      parameters:
+      - in: query
+        name: fields[lighthouse-configurations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - api_key
+            - model
+            - temperature
+            - max_tokens
+            - business_context
+            - is_active
+            - inserted_at
+            - updated_at
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - is_active
+            - -is_active
+        explode: false
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseConfigList'
+          description: ''
+    post:
+      operationId: lighthouse_configurations_create
+      description: Create a new Lighthouse configuration with the specified details.
+      summary: Create a new Lighthouse configuration
+      tags:
+      - Lighthouse
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseConfigCreateResponse'
+          description: ''
+  /api/v1/lighthouse-configurations/{id}:
+    patch:
+      operationId: lighthouse_configurations_partial_update
+      description: Update certain fields of an existing Lighthouse configuration.
+      summary: Partially update a Lighthouse configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseConfigUpdateResponse'
+          description: ''
+    delete:
+      operationId: lighthouse_configurations_destroy
+      description: Remove a Lighthouse configuration by its ID.
+      summary: Delete a Lighthouse configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/lighthouse-configurations/{id}/connection:
+    post:
+      operationId: lighthouse_configurations_connection_create
+      description: Verify the connection to the OpenAI API for a specific Lighthouse
+        configuration.
+      summary: Check the connection to the OpenAI API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -4978,199 +5152,6 @@ paths:
       responses:
         '204':
           description: Relationship deleted successfully
-  /api/v1/saml-config:
-    get:
-      operationId: saml_config_list
-      description: Returns all the SAML-based SSO configurations associated with the
-        current tenant.
-      summary: List all SSO configurations
-      parameters:
-      - in: query
-        name: fields[saml-configurations]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - email_domain
-            - metadata_xml
-            - created_at
-            - updated_at
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - email_domain
-            - -email_domain
-            - metadata_xml
-            - -metadata_xml
-            - created_at
-            - -created_at
-            - updated_at
-            - -updated_at
-        explode: false
-      tags:
-      - SAML
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedSAMLConfigurationList'
-          description: ''
-    post:
-      operationId: saml_config_create
-      description: Creates a new SAML SSO configuration for the current tenant, including
-        email domain and metadata XML.
-      summary: Create the SSO configuration
-      tags:
-      - SAML
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/SAMLConfigurationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SAMLConfigurationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SAMLConfigurationRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/SAMLConfigurationResponse'
-          description: ''
-  /api/v1/saml-config/{id}:
-    get:
-      operationId: saml_config_retrieve
-      description: Returns the details of a specific SAML configuration belonging
-        to the current tenant.
-      summary: Retrieve SSO configuration details
-      parameters:
-      - in: query
-        name: fields[saml-configurations]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - email_domain
-            - metadata_xml
-            - created_at
-            - updated_at
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this saml configuration.
-        required: true
-      tags:
-      - SAML
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/SAMLConfigurationResponse'
-          description: ''
-    patch:
-      operationId: saml_config_partial_update
-      description: Partially updates an existing SAML SSO configuration. Supports
-        changes to email domain and metadata XML.
-      summary: Update the SSO configuration
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this saml configuration.
-        required: true
-      tags:
-      - SAML
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/SAMLConfigurationResponse'
-          description: ''
-    delete:
-      operationId: saml_config_destroy
-      description: Deletes an existing SAML SSO configuration associated with the
-        current tenant.
-      summary: Delete the SSO configuration
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this saml configuration.
-        required: true
-      tags:
-      - SAML
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
   /api/v1/scans:
     get:
       operationId: scans_list
@@ -8464,6 +8445,290 @@ components:
           $ref: '#/components/schemas/InvitationUpdate'
       required:
       - data
+    LighthouseConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+    LighthouseConfigCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+              writeOnly: true
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+          - api_key
+    LighthouseConfigCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-configurations
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Name of the configuration
+                  maxLength: 100
+                api_key:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                model:
+                  enum:
+                  - gpt-4o-2024-11-20
+                  - gpt-4o-2024-08-06
+                  - gpt-4o-2024-05-13
+                  - gpt-4o
+                  - gpt-4o-mini-2024-07-18
+                  - gpt-4o-mini
+                  type: string
+                  description: |-
+                    Must be one of the supported model names
+
+                    * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                    * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                    * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                    * `gpt-4o` - GPT-4o Default
+                    * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                    * `gpt-4o-mini` - GPT-4o Mini Default
+                temperature:
+                  type: number
+                  format: double
+                  description: Must be between 0 and 1
+                max_tokens:
+                  type: integer
+                  maximum: 2147483647
+                  minimum: -2147483648
+                  description: Must be between 500 and 5000
+                business_context:
+                  type: string
+                  description: Additional business context for this AI model configuration
+                is_active:
+                  type: boolean
+                  readOnly: true
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - name
+              - api_key
+      required:
+      - data
+    LighthouseConfigCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseConfigCreate'
+      required:
+      - data
+    LighthouseConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+              writeOnly: true
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+    LighthouseConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseConfigUpdate'
+      required:
+      - data
     Membership:
       type: object
       required:
@@ -8830,6 +9095,15 @@ components:
             $ref: '#/components/schemas/Invitation'
       required:
       - data
+    PaginatedLighthouseConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseConfig'
+      required:
+      - data
     PaginatedMembershipList:
       type: object
       properties:
@@ -8882,15 +9156,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
-      required:
-      - data
-    PaginatedSAMLConfigurationList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/SAMLConfiguration'
       required:
       - data
     PaginatedScanList:
@@ -9151,6 +9416,73 @@ components:
                   - data
                   description: A related resource object from type roles
                   title: roles
+      required:
+      - data
+    PatchedLighthouseConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-configurations
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Name of the configuration
+                  maxLength: 100
+                api_key:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                model:
+                  enum:
+                  - gpt-4o-2024-11-20
+                  - gpt-4o-2024-08-06
+                  - gpt-4o-2024-05-13
+                  - gpt-4o
+                  - gpt-4o-mini-2024-07-18
+                  - gpt-4o-mini
+                  type: string
+                  description: |-
+                    Must be one of the supported model names
+
+                    * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                    * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                    * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                    * `gpt-4o` - GPT-4o Default
+                    * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                    * `gpt-4o-mini` - GPT-4o Mini Default
+                temperature:
+                  type: number
+                  format: double
+                  description: Must be between 0 and 1
+                max_tokens:
+                  type: integer
+                  maximum: 2147483647
+                  minimum: -2147483648
+                  description: Must be between 500 and 5000
+                business_context:
+                  type: string
+                  description: Additional business context for this AI model configuration
+                is_active:
+                  type: boolean
+                  readOnly: true
       required:
       - data
     PatchedProviderGroupMembershipRequest:
@@ -9708,52 +10040,6 @@ components:
                   description: A related resource object from type invitations
                   title: invitations
                   readOnly: true
-      required:
-      - data
-    PatchedSAMLConfigurationRequest:
-      type: object
-      properties:
-        data:
-          type: object
-          required:
-          - type
-          - id
-          additionalProperties: false
-          properties:
-            type:
-              type: string
-              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                member is used to describe resource objects that share common attributes
-                and relationships.
-              enum:
-              - saml-configurations
-            id:
-              type: string
-              format: uuid
-            attributes:
-              type: object
-              properties:
-                email_domain:
-                  type: string
-                  minLength: 1
-                  description: Email domain used to identify the tenant, e.g. prowlerdemo.com
-                  maxLength: 254
-                metadata_xml:
-                  type: string
-                  minLength: 1
-                  description: Raw IdP metadata XML to configure SingleSignOnService,
-                    certificates, etc.
-                created_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-              required:
-              - email_domain
-              - metadata_xml
       required:
       - data
     PatchedScanUpdateRequest:
@@ -11869,97 +12155,6 @@ components:
           $ref: '#/components/schemas/Role'
       required:
       - data
-    SAMLConfiguration:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          allOf:
-          - $ref: '#/components/schemas/SAMLConfigurationTypeEnum'
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-        id:
-          type: string
-          format: uuid
-        attributes:
-          type: object
-          properties:
-            email_domain:
-              type: string
-              description: Email domain used to identify the tenant, e.g. prowlerdemo.com
-              maxLength: 254
-            metadata_xml:
-              type: string
-              description: Raw IdP metadata XML to configure SingleSignOnService,
-                certificates, etc.
-            created_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-          required:
-          - email_domain
-          - metadata_xml
-    SAMLConfigurationRequest:
-      type: object
-      properties:
-        data:
-          type: object
-          required:
-          - type
-          additionalProperties: false
-          properties:
-            type:
-              type: string
-              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                member is used to describe resource objects that share common attributes
-                and relationships.
-              enum:
-              - saml-configurations
-            attributes:
-              type: object
-              properties:
-                email_domain:
-                  type: string
-                  minLength: 1
-                  description: Email domain used to identify the tenant, e.g. prowlerdemo.com
-                  maxLength: 254
-                metadata_xml:
-                  type: string
-                  minLength: 1
-                  description: Raw IdP metadata XML to configure SingleSignOnService,
-                    certificates, etc.
-                created_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-                updated_at:
-                  type: string
-                  format: date-time
-                  readOnly: true
-              required:
-              - email_domain
-              - metadata_xml
-      required:
-      - data
-    SAMLConfigurationResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/SAMLConfiguration'
-      required:
-      - data
-    SAMLConfigurationTypeEnum:
-      type: string
-      enum:
-      - saml-configurations
     Scan:
       type: object
       required:
@@ -12649,6 +12844,10 @@ components:
       type: string
       enum:
       - provider-groups
+    Type4bfEnum:
+      type: string
+      enum:
+      - lighthouse-configurations
     Type6bbEnum:
       type: string
       enum:
@@ -12970,3 +13169,7 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
+- name: Lighthouse
+  description: Endpoints for managing Lighthouse configurations, including creation,
+    retrieval, updating, and deletion of configurations such as OpenAI keys, models,
+    and business context.
