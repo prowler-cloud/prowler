@@ -741,6 +741,27 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
+    
+    # Custom status filters - these don't actually filter the queryset since ScanSummary
+    # doesn't have a status field, but they allow the parameters to pass validation
+    # The actual filtering logic is handled in the endpoint views
+    status = ChoiceFilter(method="filter_status", choices=StatusChoices.choices)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+
+    def filter_status(self, queryset, name, value):
+        # Don't filter the queryset here - let the endpoint handle the status logic
+        # This method just validates the status value and passes it through
+        if value not in [choice[0] for choice in StatusChoices.choices]:
+            raise ValidationError(f"Invalid status value: {value}")
+        return queryset
+
+    def filter_status_in(self, queryset, name, value):
+        # Don't filter the queryset here - let the endpoint handle the status logic
+        # This method just validates the status values and passes them through
+        for status_val in value:
+            if status_val not in [choice[0] for choice in StatusChoices.choices]:
+                raise ValidationError(f"Invalid status value: {status_val}")
+        return queryset
 
     class Meta:
         model = ScanSummary
