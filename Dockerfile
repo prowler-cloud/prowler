@@ -1,4 +1,4 @@
-FROM python:3.12.10-slim-bookworm AS build
+FROM python:3.12.11-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
