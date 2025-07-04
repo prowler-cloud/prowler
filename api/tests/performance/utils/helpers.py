@@ -166,3 +166,42 @@ def get_sort_value(sort_values: list) -> str:
         str: A formatted sort query string (e.g., "sort=created_at,-severity").
     """
     return f"sort={','.join(sort_values)}"
+
+
+def get_available_resource_filters(host: str, token: str) -> dict:
+    """
+    Fetches and returns available resource filter values from the API.
+
+    Args:
+        host (str): The host URL of the API.
+        token (str): Bearer token for authentication.
+
+    Returns:
+        dict: A dictionary containing lists of unique values for each resource filter type.
+              Example:
+              {
+                  "service": ["ec2", "s3", "rds"],
+                  "type": ["instance", "bucket"],
+                  "region": ["us-east-1", "us-west-2"]
+              }
+
+    Raises:
+        AssertionError: If the API request fails or does not return a 200 status code.
+    """
+
+    url = f"{host}/resources"
+    params = {"fields[resources]": "type,region,service"}
+
+    response = requests.get(url, headers=get_auth_headers(token), params=params)
+    assert response.status_code == 200, f"Failed to fetch filters: {response.text}"
+
+    resources = response.json()["data"]
+    filters = {"service": set(), "type": set(), "region": set()}
+
+    for res in resources:
+        attr = res["attributes"]
+        filters["service"].add(attr["service"])
+        filters["type"].add(attr["type"])
+        filters["region"].add(attr["region"])
+
+    return {k: list(v) for k, v in filters.items()}
