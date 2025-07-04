@@ -1,10 +1,41 @@
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 from typing import List
 
+from checkov.ansible.runner import Runner as AnsibleRunner
+from checkov.argo_workflows.runner import Runner as ArgoWorkflowsRunner
+from checkov.arm.runner import Runner as ArmRunner
+from checkov.azure_pipelines.runner import Runner as AzurePipelinesRunner
+from checkov.bicep.runner import Runner as BicepRunner
+from checkov.bitbucket.runner import Runner as BitbucketRunner
+from checkov.bitbucket_pipelines.runner import Runner as BitbucketPipelinesRunner
+from checkov.cdk.runner import CdkRunner
+from checkov.circleci_pipelines.runner import Runner as CircleciPipelinesRunner
+from checkov.cloudformation.runner import Runner as CfnRunner
+from checkov.common.output.record import Record
+from checkov.common.output.report import Report
+from checkov.common.runners.runner_registry import RunnerRegistry
+from checkov.dockerfile.runner import Runner as DockerfileRunner
+from checkov.github.runner import Runner as GithubRunner
+from checkov.github_actions.runner import Runner as GithubActionsRunner
+from checkov.gitlab.runner import Runner as GitlabRunner
+from checkov.gitlab_ci.runner import Runner as GitlabCiRunner
+from checkov.helm.runner import Runner as HelmRunner
+from checkov.json_doc.runner import Runner as JsonDocRunner
+from checkov.kubernetes.runner import Runner as K8sRunner
+from checkov.kustomize.runner import Runner as KustomizeRunner
+from checkov.openapi.runner import Runner as OpenapiRunner
+from checkov.runner_filter import RunnerFilter
+from checkov.sast.runner import Runner as SastRunner
+from checkov.sca_image.runner import Runner as ScaImageRunner
+from checkov.sca_package_2.runner import Runner as ScaPackage2Runner
+from checkov.secrets.runner import Runner as SecretsRunner
+from checkov.serverless.runner import Runner as ServerlessRunner
+from checkov.terraform.runner import Runner as TerraformRunner
+from checkov.terraform_json.runner import TerraformJsonRunner
+from checkov.yaml_doc.runner import Runner as YamlDocRunner
 from colorama import Fore, Style
 from dulwich import porcelain
 
@@ -27,6 +58,8 @@ class IacProvider(Provider):
         self,
         scan_path: str = ".",
         scan_repository_url: str = None,
+        frameworks: list[str] = ["all"],
+        exclude_path: list[str] = [],
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -35,6 +68,8 @@ class IacProvider(Provider):
 
         self.scan_path = scan_path
         self.scan_repository_url = scan_repository_url
+        self.frameworks = frameworks
+        self.exclude_path = exclude_path
         self.region = "global"
         self.audited_account = "local-iac"
         self._session = None
@@ -91,7 +126,9 @@ class IacProvider(Provider):
         """IAC provider doesn't need a session since it uses Checkov directly"""
         return None
 
-    def _process_check(self, finding: dict, check: dict, status: str) -> CheckReportIAC:
+    def _process_check(
+        self, finding: Report, check: Record, status: str
+    ) -> CheckReportIAC:
         """
         Process a single check (failed or passed) and create a CheckReportIAC object.
 
@@ -103,53 +140,53 @@ class IacProvider(Provider):
         Returns:
             CheckReportIAC: The processed check report
         """
-        metadata_dict = {
-            "Provider": "iac",
-            "CheckID": check.get("check_id", ""),
-            "CheckTitle": check.get("check_name", ""),
-            "CheckType": ["Infrastructure as Code"],
-            "ServiceName": finding["check_type"],
-            "SubServiceName": "",
-            "ResourceIdTemplate": "",
-            "Severity": (
-                check.get("severity", "low").lower() if check.get("severity") else "low"
-            ),
-            "ResourceType": "iac",
-            "Description": check.get("check_name", ""),
-            "Risk": "",
-            "RelatedUrl": (
-                check.get("guideline", "") if check.get("guideline") else ""
-            ),
-            "Remediation": {
-                "Code": {
-                    "NativeIaC": "",
-                    "Terraform": "",
-                    "CLI": "",
-                    "Other": "",
+        try:
+            metadata_dict = {
+                "Provider": "iac",
+                "CheckID": check.check_id,
+                "CheckTitle": check.check_name,
+                "CheckType": ["Infrastructure as Code"],
+                "ServiceName": finding.check_type,
+                "SubServiceName": "",
+                "ResourceIdTemplate": "",
+                "Severity": (check.severity.lower() if check.severity else "low"),
+                "ResourceType": finding.check_type,
+                "Description": check.check_name,
+                "Risk": "",
+                "RelatedUrl": (check.guideline if check.guideline else ""),
+                "Remediation": {
+                    "Code": {
+                        "NativeIaC": "",
+                        "Terraform": "",
+                        "CLI": "",
+                        "Other": "",
+                    },
+                    "Recommendation": {
+                        "Text": "",
+                        "Url": (check.guideline if check.guideline else ""),
+                    },
                 },
-                "Recommendation": {
-                    "Text": "",
-                    "Url": (
-                        check.get("guideline", "") if check.get("guideline") else ""
-                    ),
-                },
-            },
-            "Categories": [],
-            "DependsOn": [],
-            "RelatedTo": [],
-            "Notes": "",
-        }
+                "Categories": [],
+                "DependsOn": [],
+                "RelatedTo": [],
+                "Notes": "",
+            }
 
-        # Convert metadata dict to JSON string
-        metadata = json.dumps(metadata_dict)
+            # Convert metadata dict to JSON string
+            metadata = json.dumps(metadata_dict)
 
-        report = CheckReportIAC(metadata=metadata, finding=check)
-        report.status = status
-        report.resource_tags = check.get("entity_tags", {})
-        report.status_extended = check.get("check_name", "")
-        if status == "MUTED":
-            report.muted = True
-        return report
+            report = CheckReportIAC(metadata=metadata, resource=check)
+            report.status = status
+            report.resource_tags = check.entity_tags
+            report.status_extended = check.check_name
+            if status == "MUTED":
+                report.muted = True
+            return report
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
 
     def _clone_repository(self, repository_url: str) -> str:
         """
@@ -176,7 +213,7 @@ class IacProvider(Provider):
             scan_dir = self.scan_path
 
         try:
-            reports = self.run_scan(scan_dir)
+            reports = self.run_scan(scan_dir, self.frameworks, self.exclude_path)
         finally:
             if temp_dir:
                 logger.info(f"Removing temporary directory {temp_dir}...")
@@ -184,58 +221,59 @@ class IacProvider(Provider):
 
         return reports
 
-    def run_scan(self, directory: str) -> List[CheckReportIAC]:
+    def run_scan(
+        self, directory: str, frameworks: list[str], exclude_path: list[str]
+    ) -> List[CheckReportIAC]:
         try:
             logger.info(f"Running IaC scan on {directory}...")
-
-            # Run Checkov with JSON output
-            process = subprocess.run(
-                ["checkov", "-d", directory, "-o", "json"],
-                capture_output=True,
-                text=True,
+            runners = [
+                TerraformRunner(),
+                CfnRunner(),
+                K8sRunner(),
+                ArmRunner(),
+                ServerlessRunner(),
+                DockerfileRunner(),
+                YamlDocRunner(),
+                OpenapiRunner(),
+                SastRunner(),
+                ScaImageRunner(),
+                ScaPackage2Runner(),
+                SecretsRunner(),
+                AnsibleRunner(),
+                ArgoWorkflowsRunner(),
+                BitbucketRunner(),
+                BitbucketPipelinesRunner(),
+                CdkRunner(),
+                CircleciPipelinesRunner(),
+                GithubRunner(),
+                GithubActionsRunner(),
+                GitlabRunner(),
+                GitlabCiRunner(),
+                HelmRunner(),
+                JsonDocRunner(),
+                TerraformJsonRunner(),
+                KustomizeRunner(),
+                AzurePipelinesRunner(),
+                BicepRunner(),
+            ]
+            runner_filter = RunnerFilter(
+                framework=frameworks, excluded_paths=exclude_path
             )
-            # Log Checkov's error output if any
-            if process.stderr:
-                logger.error(process.stderr)
 
-            try:
-                output = json.loads(process.stdout)
-                if not output:
-                    logger.warning("No findings returned from Checkov scan")
-                    return []
-            except Exception as error:
-                logger.critical(
-                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                )
-                sys.exit(1)
+            registry = RunnerRegistry("", runner_filter, *runners)
+            checkov_reports = registry.run(root_folder=directory)
 
-            reports = []
+            reports: List[CheckReportIAC] = []
+            for report in checkov_reports:
 
-            # If only one framework has findings, the output is a dict, otherwise it's a list of dicts
-            if isinstance(output, dict):
-                output = [output]
+                for failed in report.failed_checks:
+                    reports.append(self._process_check(report, failed, "FAIL"))
 
-            # Process all frameworks findings
-            for finding in output:
-                results = finding.get("results", {})
+                for passed in report.passed_checks:
+                    reports.append(self._process_check(report, passed, "PASS"))
 
-                # Process failed checks
-                failed_checks = results.get("failed_checks", [])
-                for failed_check in failed_checks:
-                    report = self._process_check(finding, failed_check, "FAIL")
-                    reports.append(report)
-
-                # Process passed checks
-                passed_checks = results.get("passed_checks", [])
-                for passed_check in passed_checks:
-                    report = self._process_check(finding, passed_check, "PASS")
-                    reports.append(report)
-
-                # Process skipped checks (muted)
-                skipped_checks = results.get("skipped_checks", [])
-                for skipped_check in skipped_checks:
-                    report = self._process_check(finding, skipped_check, "MUTED")
-                    reports.append(report)
+                for skipped in report.skipped_checks:
+                    reports.append(self._process_check(report, skipped, "MUTED"))
 
             return reports
 
@@ -247,19 +285,27 @@ class IacProvider(Provider):
 
     def print_credentials(self):
         if self.scan_repository_url:
+            report_title = (
+                f"{Style.BRIGHT}Scanning remote IaC repository:{Style.RESET_ALL}"
+            )
             report_lines = [
                 f"Repository: {Fore.YELLOW}{self.scan_repository_url}{Style.RESET_ALL}",
             ]
         else:
-            report_lines = [
-                f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
-            ]
-        if self.scan_repository_url:
-            report_title = (
-                f"{Style.BRIGHT}Scanning remote IaC repository:{Style.RESET_ALL}"
-            )
-        else:
             report_title = (
                 f"{Style.BRIGHT}Scanning local IaC directory:{Style.RESET_ALL}"
             )
+            report_lines = [
+                f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
+            ]
+
+        if self.exclude_path:
+            report_lines.append(
+                f"Excluded paths: {Fore.YELLOW}{', '.join(self.exclude_path)}{Style.RESET_ALL}"
+            )
+
+        report_lines.append(
+            f"Frameworks: {Fore.YELLOW}{', '.join(self.frameworks)}{Style.RESET_ALL}"
+        )
+
         print_boxes(report_lines, report_title)

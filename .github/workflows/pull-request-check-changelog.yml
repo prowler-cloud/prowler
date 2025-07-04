@@ -9,6 +9,8 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
+      contents: read
       pull-requests: write
     env:
       MONITORED_FOLDERS: "api ui prowler"
@@ -45,6 +47,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Find existing changelog comment
+        if: github.event.pull_request.head.repo.full_name == github.repository
         id: find_comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e #v3.1.0
         with:
@@ -53,7 +56,7 @@ jobs:
           body-includes: '<!-- changelog-check -->'
 
       - name: Comment on PR if changelog is missing
-        if: steps.check_folders.outputs.missing_changelogs != ''
+        if: github.event.pull_request.head.repo.full_name == github.repository && steps.check_folders.outputs.missing_changelogs != ''
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -67,7 +70,7 @@ jobs:
             Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.
 
       - name: Comment on PR if all changelogs are present
-        if: steps.check_folders.outputs.missing_changelogs == ''
+        if: github.event.pull_request.head.repo.full_name == github.repository && steps.check_folders.outputs.missing_changelogs == ''
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
