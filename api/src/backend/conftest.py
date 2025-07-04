@@ -1124,7 +1124,7 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
 @pytest.fixture
 def saml_setup(tenants_fixture):
     tenant_id = tenants_fixture[0].id
-    domain = "example.com"
+    domain = "prowler.com"
 
     SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
 
