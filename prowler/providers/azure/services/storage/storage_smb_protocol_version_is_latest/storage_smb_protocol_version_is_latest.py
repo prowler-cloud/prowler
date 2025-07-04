@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
+from prowler.providers.azure.services.storage.lib.constants import LATEST_SMB_VERSION
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
@@ -13,7 +14,7 @@ class storage_smb_protocol_version_is_latest(Check):
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        LATEST_SMB_VERSION = "SMB3.1.1"
+
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for account in storage_accounts:
                 if getattr(account, "file_service_properties", None) and getattr(
