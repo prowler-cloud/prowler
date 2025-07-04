@@ -6,6 +6,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.9.1] (Prowler v5.8.1)
+
+### Fixed
+- Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)
+
+---
+
 ## [v1.9.0] (Prowler v5.8.0)
 
 ### Added
