@@ -140,7 +140,7 @@ class TestIacProvider:
             "prowler.providers.iac.iac_provider.IacProvider.run_scan",
         ) as mock_run_scan:
             provider.run()
-            mock_run_scan.assert_called_with(scan_path)
+            mock_run_scan.assert_called_with(scan_path, ["all"], [])
 
     def test_provider_run_remote_scan(self):
         scan_repository_url = "https://github.com/user/repo"
@@ -158,7 +158,7 @@ class TestIacProvider:
             ):
                 provider.run()
                 mock_clone.assert_called_with(scan_repository_url)
-                mock_run_scan.assert_called_with(temp_dir)
+                mock_run_scan.assert_called_with(temp_dir, ["all"], [])
 
     def test_print_credentials_local(self):
         scan_path = "/path/to/scan"
