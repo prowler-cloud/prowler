@@ -1,3 +1,4 @@
+import os
 import tempfile
 from unittest import mock
 from unittest.mock import Mock, patch
@@ -142,10 +143,10 @@ class TestIacProvider:
             provider.run()
             mock_run_scan.assert_called_with(scan_path, ["all"], [])
 
+    @mock.patch.dict(os.environ, {}, clear=True)
     def test_provider_run_remote_scan(self):
         scan_repository_url = "https://github.com/user/repo"
         provider = IacProvider(scan_repository_url=scan_repository_url)
-
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
                 mock.patch(
@@ -157,9 +158,10 @@ class TestIacProvider:
                 ) as mock_run_scan,
             ):
                 provider.run()
-                mock_clone.assert_called_with(scan_repository_url)
+                mock_clone.assert_called_with(scan_repository_url, None, None, None)
                 mock_run_scan.assert_called_with(temp_dir, ["all"], [])
 
+    @mock.patch.dict(os.environ, {}, clear=True)
     def test_print_credentials_local(self):
         scan_path = "/path/to/scan"
         provider = IacProvider(scan_path=scan_path)
@@ -174,6 +176,7 @@ class TestIacProvider:
                 for call in mock_print.call_args_list
             )
 
+    @mock.patch.dict(os.environ, {}, clear=True)
     def test_print_credentials_remote(self):
         repo_url = "https://github.com/user/repo"
         provider = IacProvider(scan_repository_url=repo_url)
@@ -600,3 +603,31 @@ class TestIacProvider:
             mock_run_scan.assert_called_once_with(
                 "/custom/path", ["terraform"], ["exclude"]
             )
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_no_auth(self, mock_mkdtemp, mock_clone):
+        provider = IacProvider()
+        url = "https://github.com/user/repo.git"
+        provider._clone_repository(url)
+        mock_clone.assert_called_with(url, "/tmp/fake-dir", depth=1)
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_with_pat(self, mock_mkdtemp, mock_clone):
+        provider = IacProvider()
+        url = "https://github.com/user/repo.git"
+        provider._clone_repository(
+            url, github_username="user", personal_access_token="token123"
+        )
+        expected_url = "https://user:token123@github.com/user/repo.git"
+        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_with_oauth(self, mock_mkdtemp, mock_clone):
+        provider = IacProvider()
+        url = "https://github.com/user/repo.git"
+        provider._clone_repository(url, oauth_app_token="oauth456")
+        expected_url = "https://oauth2:oauth456@github.com/user/repo.git"
+        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)

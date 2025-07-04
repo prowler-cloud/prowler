@@ -251,6 +251,9 @@ class Provider(ABC):
                         exclude_path=arguments.exclude_path,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                        github_username=arguments.github_username,
+                        personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
                     )
 
         except TypeError as error:

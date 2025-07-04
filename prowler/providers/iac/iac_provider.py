@@ -2,6 +2,7 @@ import json
 import shutil
 import sys
 import tempfile
+from os import environ
 from typing import List
 
 from checkov.ansible.runner import Runner as AnsibleRunner
@@ -63,6 +64,9 @@ class IacProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
+        github_username: str = None,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
@@ -74,6 +78,37 @@ class IacProvider(Provider):
         self.audited_account = "local-iac"
         self._session = None
         self._identity = "prowler"
+        self.auth_method = "No auth"
+
+        if scan_repository_url:
+            oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
+            github_username = github_username or environ.get("GITHUB_USERNAME")
+            personal_access_token = personal_access_token or environ.get(
+                "GITHUB_PERSONAL_ACCESS_TOKEN"
+            )
+
+            if oauth_app_token:
+                self.oauth_app_token = oauth_app_token
+                self.github_username = None
+                self.personal_access_token = None
+                self.auth_method = "OAuth App Token"
+                logger.info("Using OAuth App Token for GitHub authentication")
+            elif github_username and personal_access_token:
+                self.github_username = github_username
+                self.personal_access_token = personal_access_token
+                self.oauth_app_token = None
+                self.auth_method = "Personal Access Token"
+                logger.info(
+                    "Using GitHub username and personal access token for authentication"
+                )
+            else:
+                self.github_username = None
+                self.personal_access_token = None
+                self.oauth_app_token = None
+                self.auth_method = "No auth"
+                logger.debug(
+                    "No GitHub authentication method provided; proceeding without authentication."
+                )
 
         # Audit Config
         if config_content:
@@ -188,11 +223,28 @@ class IacProvider(Provider):
             )
             sys.exit(1)
 
-    def _clone_repository(self, repository_url: str) -> str:
+    def _clone_repository(
+        self,
+        repository_url: str,
+        github_username: str = None,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
+    ) -> str:
         """
-        Clone a git repository to a temporary directory.
+        Clone a git repository to a temporary directory, supporting GitHub authentication.
         """
         try:
+            if github_username and personal_access_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://{github_username}:{personal_access_token}@github.com/",
+                )
+            elif oauth_app_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://oauth2:{oauth_app_token}@github.com/",
+                )
+
             temporary_directory = tempfile.mkdtemp()
             logger.info(
                 f"Cloning repository {repository_url} into {temporary_directory}..."
@@ -208,7 +260,12 @@ class IacProvider(Provider):
     def run(self) -> List[CheckReportIAC]:
         temp_dir = None
         if self.scan_repository_url:
-            scan_dir = temp_dir = self._clone_repository(self.scan_repository_url)
+            scan_dir = temp_dir = self._clone_repository(
+                self.scan_repository_url,
+                getattr(self, "github_username", None),
+                getattr(self, "personal_access_token", None),
+                getattr(self, "oauth_app_token", None),
+            )
         else:
             scan_dir = self.scan_path
 
@@ -306,6 +363,10 @@ class IacProvider(Provider):
 
         report_lines.append(
             f"Frameworks: {Fore.YELLOW}{', '.join(self.frameworks)}{Style.RESET_ALL}"
+        )
+
+        report_lines.append(
+            f"Authentication method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
         )
 
         print_boxes(report_lines, report_title)

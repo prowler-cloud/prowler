@@ -73,6 +73,28 @@ def init_parser(self):
         help="Comma-separated list of paths to exclude from the scan. Default: none",
     )
 
+    iac_scan_subparser.add_argument(
+        "--github-username",
+        dest="github_username",
+        nargs="?",
+        default=None,
+        help="GitHub username for authenticated repository cloning (used with --personal-access-token). If not provided, will use GITHUB_USERNAME env var.",
+    )
+    iac_scan_subparser.add_argument(
+        "--personal-access-token",
+        dest="personal_access_token",
+        nargs="?",
+        default=None,
+        help="GitHub personal access token for authenticated repository cloning (used with --github-username). If not provided, will use GITHUB_PERSONAL_ACCESS_TOKEN env var.",
+    )
+    iac_scan_subparser.add_argument(
+        "--oauth-app-token",
+        dest="oauth_app_token",
+        nargs="?",
+        default=None,
+        help="GitHub OAuth app token for authenticated repository cloning. If not provided, will use GITHUB_OAUTH_APP_TOKEN env var.",
+    )
+
 
 def validate_arguments(arguments):
     scan_path = getattr(arguments, "scan_path", None)

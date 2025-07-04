@@ -723,7 +723,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>IAC authentication method:</b> None
+                                <b>IAC authentication method:</b> {provider.auth_method}
                             </li>
                         </ul>
                     </div>
