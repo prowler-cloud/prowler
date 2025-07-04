@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 
-- `vm_image_approved_in_use` check for Azure provider
+- `vm_image_approved_in_use` check for Azure provider [(#8168)](https://github.com/prowler-cloud/prowler/pull/8168)
 
 ---
 
