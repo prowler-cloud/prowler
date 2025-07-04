@@ -97,7 +97,7 @@ class IacProvider(Provider):
                 self.github_username = github_username
                 self.personal_access_token = personal_access_token
                 self.oauth_app_token = None
-                self.auth_method = "Personal Access Token"
+                self._auth_method = "Personal Access Token"
                 logger.info(
                     "Using GitHub username and personal access token for authentication"
                 )
