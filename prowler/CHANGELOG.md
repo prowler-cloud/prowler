@@ -10,6 +10,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 ### Fixed
+
+---
+
+## [v5.8.1] (Prowler 5.8.1)
+
+### Fixed
 - fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
 - fix(ec2): allow empty values for http_endpoint in templates [(#8184)](https://github.com/prowler-cloud/prowler/pull/8184)
 
