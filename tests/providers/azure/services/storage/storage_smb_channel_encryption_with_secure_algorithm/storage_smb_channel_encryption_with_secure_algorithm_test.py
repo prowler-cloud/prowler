@@ -179,7 +179,7 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have SMB channel encryption with a secure algorithm for file shares. The current supported algorithms are: AES-128-GCM."
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have SMB channel encryption with a secure algorithm for file shares since it supports AES-128-GCM."
             )
 
     def test_recommended_encryption(self):
@@ -233,5 +233,5 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has the recommended SMB channel encryption (AES-256-GCM) enabled for file shares. The current supported algorithms are: AES-256-GCM."
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has a secure algorithm for SMB channel encryption (AES-256-GCM) enabled for file shares since it supports AES-256-GCM."
             )

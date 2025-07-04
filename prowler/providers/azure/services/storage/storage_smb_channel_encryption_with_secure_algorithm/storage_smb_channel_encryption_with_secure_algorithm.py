@@ -1,6 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
+SECURE_ENCRYPTION_ALGORITHMS = ["AES-256-GCM"]
+
 
 class storage_smb_channel_encryption_with_secure_algorithm(Check):
     """
@@ -13,7 +15,6 @@ class storage_smb_channel_encryption_with_secure_algorithm(Check):
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        SECURE_ENCRYPTION_ALGORITHMS = ["AES-256-GCM"]
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for account in storage_accounts:
                 if account.file_service_properties:
@@ -41,10 +42,10 @@ class storage_smb_channel_encryption_with_secure_algorithm(Check):
                         for algorithm in account.file_service_properties.smb_protocol_settings.channel_encryption
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} has the recommended SMB channel encryption ({', '.join(SECURE_ENCRYPTION_ALGORITHMS)}) enabled for file shares. The current supported algorithms are: {pretty_current_algorithms}."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} has a secure algorithm for SMB channel encryption ({', '.join(SECURE_ENCRYPTION_ALGORITHMS)}) enabled for file shares since it supports {pretty_current_algorithms}."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption with a secure algorithm for file shares. The current supported algorithms are: {pretty_current_algorithms}."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption with a secure algorithm for file shares since it supports {pretty_current_algorithms}."
 
                     findings.append(report)
         return findings
