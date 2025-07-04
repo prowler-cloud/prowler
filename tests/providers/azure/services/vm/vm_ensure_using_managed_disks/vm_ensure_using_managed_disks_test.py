@@ -86,6 +86,7 @@ class Test_vm_ensure_using_managed_disks:
                         ),
                         data_disks=[],
                     ),
+                    linux_configuration=None,
                 ),
             }
         }
@@ -142,6 +143,7 @@ class Test_vm_ensure_using_managed_disks:
                         ),
                         data_disks=[],
                     ),
+                    linux_configuration=None,
                 )
             }
         }
@@ -200,6 +202,7 @@ class Test_vm_ensure_using_managed_disks:
                             DataDisk(lun=0, name="data_disk_1", managed_disk=None)
                         ],
                     ),
+                    linux_configuration=None,
                 )
             }
         }
