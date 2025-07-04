@@ -10,9 +10,9 @@ export const CustomCheckboxMutedFindings = () => {
       }}
       size="md"
       color="danger"
-      aria-label="Include Muted Findings"
+      aria-label="Include Mutelist"
     >
-      Include Muted Findings
+      Include Mutelist
     </Checkbox>
   );
 };

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { isValidMutelistYaml, isValidYaml } from "@/lib/yaml";
 
 import { ProviderType } from "./providers";
 
@@ -319,4 +320,20 @@ export const samlConfigFormSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Metadata XML is required" }),
+});
+
+export const mutedFindingsConfigFormSchema = z.object({
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { message: "Configuration is required" })
+    .refine((val) => isValidYaml(val), {
+      message:
+        "Invalid YAML format. Please provide a valid YAML configuration.",
+    })
+    .refine((val) => isValidMutelistYaml(val), {
+      message:
+        "Configuration must contain the complete structure: Mutelist -> Accounts -> [account_id] -> Checks -> [check_id] -> Regions (array) and Resources (array).",
+    }),
+  id: z.string().optional(),
 });

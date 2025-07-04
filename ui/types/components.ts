@@ -450,6 +450,7 @@ export interface FindingProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     muted: boolean;
+    muted_reason?: string;
     check_metadata: {
       risk: string;
       notes: string;

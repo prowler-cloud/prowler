@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
+import { MutedFindingsConfigButton } from "@/components/providers";
 import {
   AutoRefresh,
   NoProvidersAdded,
@@ -91,6 +92,10 @@ export default async function Scans({
           providerUIDs={providerUIDs}
           providerDetails={providerDetails}
         />
+        <Spacer y={8} />
+        <div className="flex items-center justify-end gap-4">
+          <MutedFindingsConfigButton isDisabled={thereIsNoProvidersConnected} />
+        </div>
         <Spacer y={8} />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
           <SSRDataTableScans searchParams={searchParams} />

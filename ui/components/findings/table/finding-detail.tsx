@@ -67,7 +67,10 @@ export const FindingDetail = ({
           </h2>
         </div>
         <div className="flex items-center gap-x-4">
-          <Muted isMuted={attributes.muted} />
+          <Muted
+            isMuted={attributes.muted}
+            mutedReason={attributes.muted_reason || ""}
+          />
 
           <div
             className={`rounded-lg px-3 py-1 text-sm font-semibold ${

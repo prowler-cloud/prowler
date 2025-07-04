@@ -103,7 +103,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
       const {
-        attributes: { muted },
+        attributes: { muted, muted_reason },
       } = getFindingsData(row);
       const { delta } = row.original.attributes;
 
@@ -120,7 +120,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
             </p>
           </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
-            <Muted isMuted={muted} />
+            <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
       );

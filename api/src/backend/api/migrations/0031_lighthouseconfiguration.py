@@ -11,7 +11,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0029_findings_check_index_parent"),
+        ("api", "0030_samlconfigurations"),
     ]
 
     operations = [

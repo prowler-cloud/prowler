@@ -4,7 +4,10 @@ import { Suspense } from "react";
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
 import { ManageGroupsButton } from "@/components/manage-groups";
-import { AddProviderButton } from "@/components/providers";
+import {
+  AddProviderButton,
+  MutedFindingsConfigButton,
+} from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,
@@ -24,24 +27,31 @@ export default async function Providers({
     <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
       <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
-      <div className="flex items-center gap-4 md:justify-end">
-        <ManageGroupsButton />
-        <AddProviderButton />
-      </div>
-      <Spacer y={8} />
-
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12">
-          <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
-            <SSRDataTable searchParams={searchParams} />
-          </Suspense>
-        </div>
-      </div>
+      <Suspense
+        key={searchParamsKey}
+        fallback={
+          <>
+            <div className="flex items-center gap-4 md:justify-end">
+              <ManageGroupsButton />
+              <MutedFindingsConfigButton isDisabled={true} />
+              <AddProviderButton />
+            </div>
+            <Spacer y={8} />
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12">
+                <SkeletonTableProviders />
+              </div>
+            </div>
+          </>
+        }
+      >
+        <ProvidersContent searchParams={searchParams} />
+      </Suspense>
     </ContentLayout>
   );
 }
 
-const SSRDataTable = async ({
+const ProvidersContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -66,6 +76,8 @@ const SSRDataTable = async ({
     pageSize,
   });
 
+  const hasProviders = providersData?.data && providersData.data.length > 0;
+
   const providerGroupDict =
     providersData?.included
       ?.filter((item: any) => item.type === "provider-groups")
@@ -85,10 +97,23 @@ const SSRDataTable = async ({
     }) || [];
 
   return (
-    <DataTable
-      columns={ColumnProviders}
-      data={enrichedProviders || []}
-      metadata={providersData?.meta}
-    />
+    <>
+      <div className="flex items-center gap-4 md:justify-end">
+        <ManageGroupsButton />
+        <MutedFindingsConfigButton isDisabled={!hasProviders} />
+        <AddProviderButton />
+      </div>
+      <Spacer y={8} />
+
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12">
+          <DataTable
+            columns={ColumnProviders}
+            data={enrichedProviders || []}
+            metadata={providersData?.meta}
+          />
+        </div>
+      </div>
+    </>
   );
 };
