@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_scaleset_associated_with_load_balancer",
+  "CheckTitle": "VM Scale Set Is Associated With Load Balancer",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "scaleset",
+  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
+  "Description": "Ensure that your Azure virtual machine scale sets are using load balancers for traffic distribution.",
+  "Risk": "Without load balancer integration, Azure virtual machine scale sets may experience reduced availability and potential service disruptions during traffic spikes or instance failures, leading to degraded user experience and potential business impact.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-network/network-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/associated-load-balancers.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach a load balancer to your Azure virtual machine scale set to ensure high availability and optimal traffic distribution.",
+      "Url": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

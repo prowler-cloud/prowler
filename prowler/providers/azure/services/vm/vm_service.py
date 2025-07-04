@@ -15,6 +15,7 @@ class VirtualMachines(AzureService):
         super().__init__(ComputeManagementClient, provider)
         self.virtual_machines = self._get_virtual_machines()
         self.disks = self._get_disks()
+        self.vm_scale_sets = self._get_vm_scale_sets()
 
     def _get_virtual_machines(self):
         logger.info("VirtualMachines - Getting virtual machines...")
@@ -137,6 +138,69 @@ class VirtualMachines(AzureService):
 
         return disks
 
+    def _get_vm_scale_sets(self) -> dict[str, dict]:
+        """
+        Get all needed information about VM scale sets.
+
+        Returns:
+            A nested dictionary with the following structure:
+            {
+                "subscription_name": {
+                    "vm_scale_set_id": VirtualMachineScaleSet()
+                }
+            }
+        """
+        logger.info(
+            "VirtualMachines - Getting VM scale sets and their load balancer associations..."
+        )
+        vm_scale_sets = {}
+        for subscription_name, client in self.clients.items():
+            try:
+                scale_sets = client.virtual_machine_scale_sets.list_all()
+                vm_scale_sets[subscription_name] = {}
+                for scale_set in scale_sets:
+                    backend_pools = []
+                    nic_configs = []
+                    virtual_machine_profile = getattr(
+                        scale_set, "virtual_machine_profile", None
+                    )
+                    if virtual_machine_profile:
+                        network_profile = getattr(
+                            virtual_machine_profile, "network_profile", None
+                        )
+                        if network_profile:
+                            nic_configs = (
+                                getattr(
+                                    network_profile,
+                                    "network_interface_configurations",
+                                    [],
+                                )
+                                or []
+                            )
+                    for nic in nic_configs:
+                        ip_confs = getattr(nic, "ip_configurations", [])
+                        for ipconf in ip_confs:
+                            pools = getattr(
+                                ipconf, "load_balancer_backend_address_pools", []
+                            )
+                            if pools:
+                                for pool in pools:
+                                    if getattr(pool, "id", None):
+                                        backend_pools.append(pool.id)
+                    vm_scale_sets[subscription_name][scale_set.id] = (
+                        VirtualMachineScaleSet(
+                            resource_id=scale_set.id,
+                            resource_name=scale_set.name,
+                            location=scale_set.location,
+                            load_balancer_backend_pools=backend_pools,
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return vm_scale_sets
+
 
 @dataclass
 class UefiSettings:
@@ -195,3 +259,10 @@ class Disk(BaseModel):
     vms_attached: list[str]
     encryption_type: str
     location: str
+
+
+class VirtualMachineScaleSet(BaseModel):
+    resource_id: str
+    resource_name: str
+    location: str
+    load_balancer_backend_pools: list[str]
