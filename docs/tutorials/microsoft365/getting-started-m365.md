@@ -30,7 +30,7 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Custom Domain Names](./img/custom-domain-names.png)
 
-Once you are there just select the domain you want to use.
+Once you are there just select the domain you want to use as unique identifier for your M365 account in Prowler Cloud/App.
 
 ---
 
@@ -139,10 +139,7 @@ The permissions you need to grant depends on whether you are using user credenti
     Make sure you add the correct set of permissions for the authentication method you are using.
 
 
-#### If using application(service principal) authentication
-
-???+ warning "Warning"
-    Currently Prowler Cloud only supports user authentication.
+#### If using application(service principal) authentication (Recommended)
 
 To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
 
@@ -191,12 +188,15 @@ To grant the permissions for the PowerShell modules via application authenticati
 
     ![Final Permission Assignment](./img/final-permissions.png)
 
+---
+
+#### If using user authentication
+
+This method is not recommended because it requires a user with MFA enabled and Microsoft will not allow MFA capable users to authenticate programmatically after 1st September 2025. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mandatory-multifactor-authentication?tabs=dotnet) for more information.
+
 ???+ warning
     Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
 
----
-
-#### If using user authentication (Currently Prowler Cloud only supports this method)
 
 1. Search and select:
 

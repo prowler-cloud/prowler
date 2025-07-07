@@ -29,7 +29,6 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
-    SAMLConfiguration,
     Scan,
     StateChoices,
     StatusChoices,
@@ -2068,23 +2067,23 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
 # SSO
 
 
-class SamlInitiateSerializer(serializers.Serializer):
-    email_domain = serializers.CharField()
+# class SamlInitiateSerializer(serializers.Serializer):
+#     email_domain = serializers.CharField()
 
-    class JSONAPIMeta:
-        resource_name = "saml-initiate"
-
-
-class SamlMetadataSerializer(serializers.Serializer):
-    class JSONAPIMeta:
-        resource_name = "saml-meta"
+#     class JSONAPIMeta:
+#         resource_name = "saml-initiate"
 
 
-class SAMLConfigurationSerializer(RLSSerializer):
-    class Meta:
-        model = SAMLConfiguration
-        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+# class SamlMetadataSerializer(serializers.Serializer):
+#     class JSONAPIMeta:
+#         resource_name = "saml-meta"
+
+
+# class SAMLConfigurationSerializer(RLSSerializer):
+#     class Meta:
+#         model = SAMLConfiguration
+#         fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+#         read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class LighthouseConfigSerializer(RLSSerializer):

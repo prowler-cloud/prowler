@@ -701,6 +701,28 @@ Prowler enables security scanning of your **GitHub account**, including **Reposi
         2. `OAUTH_APP_TOKEN`
         3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
+#### Infrastructure as Code (IaC)
+
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
+
+```console
+# Scan a directory for IaC files
+prowler iac --scan-path ./my-iac-directory
+
+# Specify frameworks to scan (default: all)
+prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+
+# Exclude specific paths
+prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
+```
+
+???+ note
+    - The IaC provider does not require cloud authentication
+    - It is ideal for CI/CD pipelines and local development environments
+    - For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html)
+
+See more details about IaC scanning in the [IaC Tutorial](tutorials/iac/getting-started-iac.md) section.
+
 ## Prowler v2 Documentation
 
 For **Prowler v2 Documentation**, refer to the [official repository](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

@@ -248,6 +248,3 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
-
-# This is needed to forward the host header when defined
-USE_X_FORWARDED_HOST = True
