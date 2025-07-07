@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider [(#8123)](https://github.com/prowler-cloud/prowler/pull/8123)
 - `vm_backup_enabled` check for Azure provider [(#8182)](https://github.com/prowler-cloud/prowler/pull/8182)
+- `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
 
 ### Changed
 
