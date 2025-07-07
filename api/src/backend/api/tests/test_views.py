@@ -5,6 +5,7 @@ import os
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
@@ -5865,6 +5866,7 @@ class TestTenantFinishACSView:
         original_name = user.name
         original_company = user.company_name
         user.company_name = "testing_company"
+        user.is_authenticate = True
 
         social_account = SocialAccount(
             user=user,
@@ -5886,15 +5888,26 @@ class TestTenantFinishACSView:
             patch(
                 "allauth.socialaccount.providers.saml.views.get_app_or_404"
             ) as mock_get_app_or_404,
-            patch("allauth.socialaccount.models.SocialApp.objects.get"),
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
             patch(
                 "allauth.socialaccount.models.SocialAccount.objects.get"
             ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
                 provider="saml", client_id="testtenant", name="Test App", settings={}
             )
             mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(
+                tenant_id=tenants_fixture[0].id
+            )
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
             response = view(request, organization_slug="testtenant")
@@ -5925,7 +5938,6 @@ class TestTenantFinishACSView:
             .exists()
         )
 
-        # Membership should have been created with default role
         membership = Membership.objects.using(MainRouter.admin_db).get(
             user=user, tenant=tenants_fixture[0]
         )
@@ -5933,7 +5945,6 @@ class TestTenantFinishACSView:
         assert membership.user == user
         assert membership.tenant == tenants_fixture[0]
 
-        # Restore original user state
         user.name = original_name
         user.company_name = original_company
         user.save()

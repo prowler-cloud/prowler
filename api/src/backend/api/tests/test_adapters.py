@@ -27,7 +27,8 @@ class TestProwlerSocialAccountAdapter:
 
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.account = MagicMock()
-        sociallogin.account.provider = "saml"
+        sociallogin.provider = MagicMock()
+        sociallogin.provider.id = "saml"
         sociallogin.account.extra_data = {}
         sociallogin.user = create_test_user
         sociallogin.connect = MagicMock()
@@ -46,7 +47,9 @@ class TestProwlerSocialAccountAdapter:
 
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.account = MagicMock()
-        sociallogin.account.provider = "github"
+        sociallogin.provider = MagicMock()
+        sociallogin.user = MagicMock()
+        sociallogin.provider.id = "saml"
         sociallogin.account.extra_data = {}
         sociallogin.connect = MagicMock()
 

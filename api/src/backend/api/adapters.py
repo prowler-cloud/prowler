@@ -24,7 +24,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         # Link existing accounts with the same email address
         email = sociallogin.account.extra_data.get("email")
-        if sociallogin.account.provider == "saml":
+        if sociallogin.provider.id == "saml":
             email = sociallogin.user.email
         if email:
             existing_user = self.get_user_by_email(email)
