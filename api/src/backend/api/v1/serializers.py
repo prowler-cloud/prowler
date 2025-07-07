@@ -1308,7 +1308,6 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            # "secret_type": {"read_only": True},
         }
 
     def validate(self, attrs):
