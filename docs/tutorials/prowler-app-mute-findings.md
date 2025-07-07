@@ -1,5 +1,3 @@
-<!-- Crea 8 steps -->
-
 # Mute Findings (Mutelist)
 
 Prowler App allows users to mute specific findings to focus on the most critical security issues. This comprehensive guide demonstrates how to effectively use the mutelist feature to manage and prioritize security findings.
@@ -45,7 +43,7 @@ If the YAML configuration is invalid, an error message will be displayed
 
 ## Step 3: Review the muted findings
 
-1. Once added, the cofiguration can be removed or updated
+1. Once added, the configuration can be removed or updated
 ![Remove or update configuration](../img/mutelist-ui-6.png)
 
 ## Step 4: Check muted findings in the scan results
