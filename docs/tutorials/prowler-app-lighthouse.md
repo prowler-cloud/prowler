@@ -11,7 +11,7 @@ Prowler Lighthouse uses OpenAI's language models and integrates with your Prowle
 Here's what's happening behind the scenes:
 
 - The system uses a multi-agent architecture built with LanggraphJS for LLM logic and Vercel AI SDK UI for frontend chatbot.
-- It uses a "supervisor" architecture that interacts with different agents for specialized tasks. For example, findings_agent can analyze detected security findings, while overview_agent provides a summary of connected cloud accounts.
+- It uses a "supervisor" architecture that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
 - The system connects to OpenAI models to understand, fetch the right data, and respond to the user's query. (Tested with gpt-4o and gpt-4o-mini)
 - The supervisor agent is the main contact point. It is what users interact with directly from the chat interface. It coordinates with other agents to answer users' questions comprehensively.
 
@@ -19,13 +19,13 @@ Here's what's happening behind the scenes:
 
 **Note**: All agents can only read relevant security data. They cannot modify your data or access sensitive information like configured secrets or tenant details.
 
-## Setting Up Prowler Lighthouse
+## Set up
 
 Getting started with Prowler Lighthouse is easy:
 
 1. Go to the configuration page in your Prowler dashboard.
 2. Enter your OpenAI API key.
-3. Select your preferred model. The recommended one for best results is gpt-4o.
+3. Select your preferred model. The recommended one for best results is `gpt-4o`.
 4. (Optional) Add business context to improve response quality and prioritization.
 
 <img src="../img/lighthouse-config.png" alt="Lighthouse Configuration">

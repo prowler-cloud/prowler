@@ -13,7 +13,7 @@ AI agents fall into two main categories:
 - **Autonomous Agents**: Freely choose from available tools to complete tasks, adapting their approach based on context. They decide which tools to use and when.
 - **Workflow Agents**: Follow structured paths with predefined logic. They execute specific tool sequences, though modern workflows can include conditional logic.
 
-**Note**: To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
+> Note: To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
 
 ### LLM Dependency
 
@@ -23,13 +23,13 @@ After evaluating multiple LLM providers (OpenAI, Gemini, Claude, LLama) based on
 
 ## Prowler Lighthouse Architecture
 
-The Prowler Lighthouse uses a multi-agent architecture orchestrated by the [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library.
+Prowler Lighthouse uses a multi-agent architecture orchestrated by the [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library.
 
 ### Architecture Components
 
 <img src="../../tutorials/img/lighthouse-architecture.png" alt="Prowler Lighthouse architecture">
 
-The Prowler Lighthouse integrates with the NextJS application:
+Prowler Lighthouse integrates with the NextJS application:
 
 - The [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library integrates directly with NextJS
 - The system uses the authenticated user session to interact with the Prowler API server
@@ -64,7 +64,7 @@ Modifying the supervisor prompt allows you to:
 - Modify task delegation to specialized agents
 - Set up guardrails (query types to answer or decline)
 
-**Note**: The supervisor agent should not have its own tools. This design keeps the system modular and maintainable.
+> Note: The supervisor agent should not have its own tools. This design keeps the system modular and maintainable.
 
 ### How to Create New Specialized Agents
 
@@ -76,7 +76,7 @@ To add new capabilities or all Lighthouse to interact with other APIs, create ad
 **Note:** Ensure that the new agent's capabilities don't collide with existing agents. For example, if there's already a *findings_agent* that talks to findings APIs don't create a new agent to do the same.
 
 2. Create necessary tools for the agents to access specific data or perform actions. A tool is a specialized function that extends the capabilities of LLM by allowing it to access external data or APIs. A tool is triggered by LLM based on the description of the tool and the user's query.
-For example, the description of getScanTool is "Fetches detailed information about a specific scan by its ID." If the description doesn't convey what the tool is capable of doing, LLM will not invoke the function. If the description of getScanTool was set to something random or not set at all, LLM will not answer queries like "Give me the critical issues from the scan ID xxxxxxxxxxxxxxx"
+For example, the description of `getScanTool` is "Fetches detailed information about a specific scan by its ID." If the description doesn't convey what the tool is capable of doing, LLM will not invoke the function. If the description of `getScanTool` was set to something random or not set at all, LLM will not answer queries like "Give me the critical issues from the scan ID xxxxxxxxxxxxxxx"
 **Note:** Ensure that one tool is added to one agent only. Adding tools is optional. There can be agents with no tools at all.
 
 3. Use the `createReactAgent` function to define a new agent. For example, the rolesAgent name is "roles_agent" and has access to call tools "*getRolesTool*" and "*getRoleTool*"
