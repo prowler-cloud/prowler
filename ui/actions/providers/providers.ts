@@ -195,7 +195,6 @@ export const updateCredentialsProvider = async (
 
   try {
     const { secretType, secret } = buildSecretConfig(formData, providerType);
-    console.log(secretType)
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers,
@@ -210,7 +209,6 @@ export const updateCredentialsProvider = async (
 
     if (!response.ok) {
       const data = await response.json();
-      console.log("data", data);
       return parseStringify(data); // Return API errors for UI handling
     }
 

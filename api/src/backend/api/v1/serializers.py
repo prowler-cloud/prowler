@@ -1312,7 +1312,6 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         }
 
     def validate(self, attrs):
-        print(attrs)
         provider = self.instance.provider
         secret_type = attrs.get("secret_type")
         secret = attrs.get("secret")
