@@ -224,7 +224,18 @@ class Defender(AzureService):
                 )
         return iot_security_solutions
 
-    def _get_jit_policies(self):
+    def _get_jit_policies(self) -> dict[str, dict]:
+        """
+        Get all JIT policies for all subscriptions.
+
+        Returns:
+            A dictionary of JIT policies for each subscription. The format will be:
+            {
+                "subscription_name": {
+                    "jit_policy_id": JITPolicy
+                }
+            }
+        """
         logger.info("Defender - Getting JIT policies...")
         jit_policies = {}
         for subscription_name, client in self.clients.items():
