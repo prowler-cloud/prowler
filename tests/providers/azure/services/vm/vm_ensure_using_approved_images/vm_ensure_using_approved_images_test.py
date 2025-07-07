@@ -86,7 +86,8 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestApproved"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert approved_image_id in result[0].status_extended
+            expected_status_extended = f"VM VMTestApproved in subscription {AZURE_SUBSCRIPTION_ID} is using an approved machine image: custom-image."
+            assert result[0].status_extended == expected_status_extended
 
     def test_vm_with_not_approved_image(self):
         vm_id = str(uuid4())
@@ -123,7 +124,8 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestNotApproved"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert "not using an approved machine image" in result[0].status_extended
+            expected_status_extended = f"VM VMTestNotApproved in subscription {AZURE_SUBSCRIPTION_ID} is not using an approved machine image."
+            assert result[0].status_extended == expected_status_extended
 
     def test_vm_with_missing_image_reference(self):
         vm_id = str(uuid4())
@@ -159,4 +161,5 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestNoImageRef"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert "not using an approved machine image" in result[0].status_extended
+            expected_status_extended = f"VM VMTestNoImageRef in subscription {AZURE_SUBSCRIPTION_ID} is not using an approved machine image."
+            assert result[0].status_extended == expected_status_extended
