@@ -178,18 +178,18 @@ By default, Prowler scans **all accessible GCP projects**. To limit the scan to 
 
 Prowler for Microsoft 365 (M365) supports the following authentication methods:
 
-- [**Service Principal Application**](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object)
-- **Service Principal Application with Microsoft User Credentials** (**Recommended**)
+- [**Service Principal Application**](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (**Recommended**)
+- **Service Principal Application with Microsoft User Credentials**
 - **Stored AZ CLI credentials**
 - **Interactive browser authentication**
 
-> ⚠️ **Important:** Prowler App **only** supports the **Service Principal with User Credentials** authentication method.
+> ⚠️ **Important:** Prowler App supports the **Service Principal Application** and **Service Principal with User Credentials** authentication methods.
 
-### Service Principal Authentication
+### Service Principal Authentication (Recommended)
 
 **Authentication flag:** `--sp-env-auth`
 
-To enable Prowler to authenticate as a **Service Principal**, configure the following environment variables:
+To enable Prowler to authenticate as the **Service Principal Application**, configure the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -201,12 +201,13 @@ If these variables are not set or exported, execution using `--sp-env-auth` will
 
 Refer to the [Create Prowler Service Principal](../tutorials/microsoft365/getting-started-m365.md#create-the-service-principal-app) guide for setup instructions.
 
-???+ note
-    Using this authentication method allows you to perform only MS Graph-based checks. To scan all M365 security checks, use the recommended authentication method.
 
-### Service Principal and User Credentials Authentication (Recommended)
+### Service Principal and User Credentials Authentication
 
 Authentication flag: `--env-auth`
+
+???+ warning
+    This method is not recommended anymore, we recommend just use the **Service Principal Application** authentication method instead.
 
 This method builds upon the Service Principal authentication by adding User Credentials. Configure the following environment variables: `M365_USER` and `M365_PASSWORD`.
 
@@ -507,9 +508,9 @@ If the modules are already installed, running this command will not cause issues
 
 #### Modules Version
 
-[ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (Minimum version: 3.6.0) Required for checks across Exchange, Defender, and Purview.
-
-[MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (Minimum version: 6.6.0) Required for all Teams checks.
+- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (Minimum version: 3.6.0) Required for checks across Exchange, Defender, and Purview.
+- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (Minimum version: 6.6.0) Required for all Teams checks.
+- [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 
 ## GitHub
 

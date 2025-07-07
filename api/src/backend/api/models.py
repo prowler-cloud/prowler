@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -437,7 +438,7 @@ class Scan(RowLevelSecurityProtectedModel):
     completed_at = models.DateTimeField(null=True, blank=True)
     next_scan_at = models.DateTimeField(null=True, blank=True)
     scheduler_task = models.ForeignKey(
-        PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
+        PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
 
@@ -1368,6 +1369,26 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class SAMLToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    token = models.JSONField(unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "saml_tokens"
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+        super().save(*args, **kwargs)
+
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

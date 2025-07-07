@@ -41,9 +41,13 @@ export const authFormSchema = (type: string) =>
           : z.string().min(12, {
               message: "It must contain at least 12 characters.",
             }),
+      isSamlMode: z.boolean().optional(),
     })
     .refine(
-      (data) => type === "sign-in" || data.password === data.confirmPassword,
+      (data) => {
+        if (data.isSamlMode) return true;
+        return type === "sign-in" || data.password === data.confirmPassword;
+      },
       {
         message: "The password must match",
         path: ["confirmPassword"],

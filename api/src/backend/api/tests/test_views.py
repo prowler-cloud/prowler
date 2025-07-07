@@ -6,6 +6,8 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, patch
+from urllib.parse import parse_qs, urlparse
+from uuid import uuid4
 
 import jwt
 import pytest
@@ -33,6 +35,7 @@ from api.models import (
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
+    SAMLToken,
     Scan,
     StateChoices,
     Task,
@@ -1241,10 +1244,10 @@ class TestProviderViewSet:
                 ("uid.icontains", "1", 5),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 5),
-                ("inserted_at.gte", "2024-01-01", 5),
+                ("inserted_at", TODAY, 6),
+                ("inserted_at.gte", "2024-01-01", 6),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 5),
+                ("updated_at.gte", "2024-01-01", 6),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1723,6 +1726,50 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
+            # M365 with STATIC secret - no user or password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                },
+            ),
+            # M365 with user only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                },
+            ),
+            # M365 with password only
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "password": "supersecret",
+                },
+            ),
+            # M365 with user and password
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                    "user": "test@domain.com",
+                    "password": "supersecret",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -1734,7 +1781,10 @@ class TestProviderSecretViewSet:
         secret_data,
     ):
         # Get the provider from the fixture and set its type
-        provider = Provider.objects.filter(provider=provider_type)[0]
+        try:
+            provider = Provider.objects.filter(provider=provider_type)[0]
+        except IndexError:
+            print(f"Provider {provider_type} not found")
 
         data = {
             "data": {
@@ -5562,6 +5612,76 @@ class TestIntegrationViewSet:
 
 
 @pytest.mark.django_db
+class TestSAMLTokenValidation:
+    def test_valid_token_returns_tokens(self, authenticated_client, create_test_user):
+        user = create_test_user
+        valid_token_data = {
+            "access": "mock_access_token",
+            "refresh": "mock_refresh_token",
+        }
+        saml_token = SAMLToken.objects.create(
+            token=valid_token_data,
+            user=user,
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+        )
+
+        url = reverse("token-saml")
+        response = authenticated_client.post(f"{url}?id={saml_token.id}")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"data": valid_token_data}
+        assert not SAMLToken.objects.filter(id=saml_token.id).exists()
+
+    def test_invalid_token_id_returns_404(self, authenticated_client):
+        url = reverse("token-saml")
+        response = authenticated_client.post(f"{url}?id={str(uuid4())}")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["errors"]["detail"] == "Invalid token ID."
+
+    def test_expired_token_returns_400(self, authenticated_client, create_test_user):
+        user = create_test_user
+        expired_token_data = {
+            "access": "expired_access_token",
+            "refresh": "expired_refresh_token",
+        }
+        saml_token = SAMLToken.objects.create(
+            token=expired_token_data,
+            user=user,
+            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+        )
+
+        url = reverse("token-saml")
+        response = authenticated_client.post(f"{url}?id={saml_token.id}")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"]["detail"] == "Token expired."
+        assert SAMLToken.objects.filter(id=saml_token.id).exists()
+
+    def test_token_can_be_used_only_once(self, authenticated_client, create_test_user):
+        user = create_test_user
+        token_data = {
+            "access": "single_use_token",
+            "refresh": "single_use_refresh",
+        }
+        saml_token = SAMLToken.objects.create(
+            token=token_data,
+            user=user,
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+        )
+
+        url = reverse("token-saml")
+
+        # First use: should succeed
+        response1 = authenticated_client.post(f"{url}?id={saml_token.id}")
+        assert response1.status_code == status.HTTP_200_OK
+
+        # Second use: should fail (already deleted)
+        response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
+        assert response2.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
 class TestSAMLInitiateAPIView:
     def test_valid_email_domain_and_certificates(
         self, authenticated_client, saml_setup, monkeypatch
@@ -5575,11 +5695,11 @@ class TestSAMLInitiateAPIView:
         response = authenticated_client.post(url, data=payload, format="json")
 
         assert response.status_code == status.HTTP_302_FOUND
-        assert f"email={saml_setup['email']}" in response.url
         assert (
             reverse("saml_login", kwargs={"organization_slug": saml_setup["domain"]})
             in response.url
         )
+        assert "SAMLRequest" not in response.url
 
     def test_invalid_email_domain(self, authenticated_client):
         url = reverse("api_saml_initiate")
@@ -5752,9 +5872,10 @@ class TestTenantFinishACSView:
 
         assert isinstance(response, JsonResponse) or response.status_code in [200, 302]
 
-    def test_dispatch_sets_user_profile_and_assigns_role(
-        self, create_test_user, tenants_fixture, saml_setup
+    def test_dispatch_sets_user_profile_and_assigns_role_and_creates_token(
+        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
     ):
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         original_email = user.email
         original_name = user.name
@@ -5784,26 +5905,29 @@ class TestTenantFinishACSView:
             patch("allauth.socialaccount.models.SocialApp.objects.get"),
             patch(
                 "allauth.socialaccount.models.SocialAccount.objects.get"
-            ) as mock_socialaccount_get,
-            patch("api.v1.serializers.TokenSocialLoginSerializer") as mock_serializer,
+            ) as mock_sa_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
                 provider="saml", client_id="testtenant", name="Test App", settings={}
             )
-
-            mock_socialaccount_get.return_value = social_account
-
-            mock_instance = mock_serializer.return_value
-            mock_instance.is_valid.return_value = True
-            mock_instance.validated_data = {
-                "token": "mocktoken",
-                "refresh_token": "mockrefresh",
-            }
+            mock_sa_get.return_value = social_account
 
             view = TenantFinishACSView.as_view()
             response = view(request, organization_slug="testtenant")
 
-        assert response.status_code == 200
+        assert response.status_code == 302
+
+        expected_callback_host = "localhost"
+        parsed_url = urlparse(response.url)
+        assert parsed_url.netloc == expected_callback_host
+        query_params = parse_qs(parsed_url.query)
+        assert "id" in query_params
+
+        token_id = query_params["id"][0]
+        token_obj = SAMLToken.objects.get(id=token_id)
+        assert token_obj.user == user
+        assert not token_obj.is_expired()
+
         user.refresh_from_db()
         assert user.name == "John Doe"
         assert user.company_name == "TestOrg"
@@ -5816,6 +5940,7 @@ class TestTenantFinishACSView:
             .filter(user=user, tenant_id=tenants_fixture[0].id)
             .exists()
         )
+
         user.email = original_email
         user.name = original_name
         user.company_name = original_company
