@@ -92,6 +92,11 @@ class VirtualMachines(AzureService):
                                 location=vm.location,
                                 security_profile=getattr(vm, "security_profile", None),
                                 extensions=extensions,
+                                vm_size=getattr(
+                                    getattr(vm, "hardware_profile", None),
+                                    "vm_size",
+                                    None,
+                                ),
                             )
                         }
                     )
@@ -187,6 +192,7 @@ class VirtualMachine(BaseModel):
     security_profile: Optional[SecurityProfile]
     extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
+    vm_size: Optional[str] = None
 
 
 class Disk(BaseModel):
