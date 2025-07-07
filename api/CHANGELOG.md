@@ -6,6 +6,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.9.1] (Prowler UNRELEASED)
+
+### Removed
+- Provider's secret type validation when updating it [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
+
+---
+
 ## [v1.9.0] (Prowler v5.8.0)
 
 ### Added

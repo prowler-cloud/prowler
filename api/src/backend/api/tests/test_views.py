@@ -2063,8 +2063,6 @@ class TestProviderSecretViewSet:
         provider_secret.refresh_from_db()
         assert provider_secret.name == "new_name"
         assert provider_secret.secret == {"service_account_key": {}}
-        for value in provider_secret.secret.values():
-            assert value == "new_value"
 
 
 @pytest.mark.django_db

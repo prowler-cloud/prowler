@@ -7,6 +7,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 ### 🔄 Changed
 ### 🐞 Fixed
+### Removed
+
+---
+
+## [v1.8.1] (Prowler UNRELEASED)
+
+### Removed
+- Provider's secret type validation when updating it [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
 ---
 
