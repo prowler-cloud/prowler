@@ -25,7 +25,7 @@ class vm_ensure_using_approved_images(Check):
                     and "/providers/Microsoft.Compute/images/" in image_id
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is using an approved machine image: {image_id}."
+                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is using an approved machine image: {image_id.split('/')[-1]}."
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is not using an approved machine image."
