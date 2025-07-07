@@ -2137,9 +2137,12 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         # ToRemove: Temporary fallback mechanism
         if not queryset.exists():
-            scan_ids = Scan.objects.filter(
+            raw_scans_ids = Scan.objects.filter(
                 tenant_id=tenant_id, **scan_based_filters
-            ).values_list("id", flat=True)
+            ).values_list("id", "unique_resource_count")
+            scan_ids = [
+                scan_id for scan_id, count in raw_scans_ids if count and count > 0
+            ]
             for scan_id in scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
@@ -2225,7 +2228,12 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
         )
-        latest_scans_ids = list(latest_scans_queryset.values_list("id", flat=True))
+        raw_latest_scans_ids = list(
+            latest_scans_queryset.values_list("id", "unique_resource_count")
+        )
+        latest_scans_ids = [
+            scan_id for scan_id, count in raw_latest_scans_ids if count and count > 0
+        ]
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
