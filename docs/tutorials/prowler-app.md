@@ -176,7 +176,7 @@ For M365, you must enter your Domain ID and choose the authentication method you
 - User Authentication (only works if the user does not have MFA enabled)
 
 ???+ note
-    User authentication with M365_USER and M365_PASSWORD is now optional and will only work if the account does not enforce MFA.
+    User authentication with M365_USER and M365_PASSWORD is optional and will only work if the account does not enforce MFA.
 
 For full setup instructions and requirements, check the [Microsoft 365 provider requirements](./microsoft365/getting-started-m365.md).
 
