@@ -169,7 +169,6 @@ export const convertToYaml = (config: string | object): string => {
       return config;
     }
   } catch (error) {
-    console.error("Error converting config to YAML:", error);
     return config.toString();
   }
 };
