@@ -5,6 +5,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
 
 ### 🚀 Added
+
+- SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
+
 ### 🔄 Changed
 
 - Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
@@ -32,7 +35,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
 - Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
-<!-- - SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094) -->
 
 ### 🔄 Changed
 
