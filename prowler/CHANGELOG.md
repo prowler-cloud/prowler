@@ -7,6 +7,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider [(#8123)](https://github.com/prowler-cloud/prowler/pull/8123)
 
+- `vm_linux_enforce_ssh_authentication` check for Azure provider [(#8149)](https://github.com/prowler-cloud/prowler/pull/8149)
+
 ### Changed
 
 ### Fixed
