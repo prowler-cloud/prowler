@@ -3,7 +3,9 @@
 This guide provides comprehensive instructions to configure SAML-based Single Sign-On (SSO) in a Prowler environment. This configuration allows users to authenticate using the organization's Identity Provider (IdP).
 
 This document is divided into two main sections:
+
 - **User Guide**: For organization administrators to configure SAML SSO through Prowler App.
+
 - **Developer and Administrator Guide**: For developers and system administrators running self-hosted Prowler instances, providing technical details on environment configuration, API usage, and testing.
 
 ---
