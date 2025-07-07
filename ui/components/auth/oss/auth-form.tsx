@@ -111,11 +111,13 @@ export const AuthForm = ({
       const newUser = await createNewUser(data);
 
       if (!newUser.errors) {
+        posthog.reset(true);
         posthog.capture("user_registered", {
           email: data.email,
           name: data.name,
           company: data.company,
         });
+        posthog.identify(data.email.toLowerCase());
         toast({
           title: "Success!",
           description: "The user was registered successfully.",
