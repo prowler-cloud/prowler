@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.0] (Prowler UNRELEASED)
 
+### Added
+
+- `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
+
 ---
 
 ## [v1.9.1] (Prowler v5.8.1)
