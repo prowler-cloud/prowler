@@ -1312,7 +1312,9 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = attrs.get("secret_type")
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        # TODO: review API spec
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
