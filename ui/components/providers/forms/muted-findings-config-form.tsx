@@ -173,8 +173,8 @@ export const MutedFindingsConfigForm = ({
               </strong>
             </li>
             <li>
-              You may modify your Mutelist configuration at anytime on the
-              Providers page.
+              Mutelist configuration can be modified at anytime on the Providers
+              and Scans pages.
             </li>
             <li>
               Learn more about configuring the Mutelist{" "}
