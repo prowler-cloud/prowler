@@ -1,228 +1,184 @@
 # Configuring SAML Single Sign-On (SSO) in Prowler
 
-This guide explains how to enable and test SAML SSO integration in Prowler. It includes environment setup, API endpoints, and how to configure Okta as your Identity Provider (IdP).
+This guide provides comprehensive instructions to configure SAML-based Single Sign-On (SSO) in a Prowler environment. This configuration allows users to authenticate using the organization's Identity Provider (IdP).
+
+This document is divided into two main sections:
+- **User Guide**: For organization administrators to configure SAML SSO through Prowler App.
+- **Developer and Administrator Guide**: For developers and system administrators running self-hosted Prowler instances, providing technical details on environment configuration, API usage, and testing.
 
 ---
 
-## Environment Configuration
+## User Guide: Configuring SAML SSO in Prowler App
 
-### `DJANGO_ALLOWED_HOSTS`
+Follow these steps to enable and configure SAML SSO for an organization.
 
-Update this variable to specify which domains Django should accept incoming requests from. This typically includes:
+### Key Features
 
-- `localhost` for local development
-- container hostnames (e.g. `prowler-api`)
-- public-facing domains or tunnels (e.g. ngrok)
+Prowler can be integrated with SAML SSO identity providers such as Okta to enable single sign-on for the organization's users. The Prowler SAML integration currently supports the following features:
 
-**Example**:
+-   **IdP-Initiated SSO**: Users can initiate login from their Identity Provider's dashboard.
+-   **SP-Initiated SSO**: Users can initiate login directly from the Prowler login page.
+-   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created. They can also be manually invited as usual from the User Management tab.
 
-```env
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api,mycompany.prowler
-```
+### Prerequisites
 
-# SAML Configuration API
+-   Administrator access to the Prowler organization is required.
+-   Administrative access to the SAML 2.0 compliant Identity Provider (e.g., Okta, Azure AD, Google Workspace) is necessary.
 
-You can manage SAML settings via the API. Prowler provides full CRUD support for tenant-specific SAML configuration.
+### Configuration Steps
 
-- GET /api/v1/saml-config: Retrieve the current configuration
+#### Step 1: Access Profile Settings
 
-- POST /api/v1/saml-config: Create a new configuration
+To access the account settings, click the "Account" button in the top-right corner of Prowler App, or navigate directly to `https://cloud.prowler.com/profile` (or `http://localhost:3000/profile` for local setups).
 
-- PATCH /api/v1/saml-config: Update the existing configuration
+![Access Profile Settings](../img/saml-step-1.png)
 
-- DELETE /api/v1/saml-config: Remove the current configuration
+#### Step 2: Enable SAML Integration
 
+On the profile page, find the "SAML SSO Integration" card and click "Enable" to begin the configuration process.
 
-???+ note "API Note"
-    SSO with SAML API documentation.[Prowler API Reference - Upload SAML configuration](https://api.prowler.com/api/v1/docs#tag/SAML/operation/saml_config_create)
+![Enable SAML Integration](../img/saml-step-2.png)
 
-# SAML Initiate
+#### Step 3: Configure the Identity Provider (IdP)
 
-### Description
+The Prowler SAML configuration panel displays the information needed to configure the IdP. This information must be used to create a new SAML application in the IdP.
 
-This endpoint receives an email and checks if there is an active SAML configuration for the associated domain (i.e., the part after the @). If a configuration exists, it responds with an HTTP 302 redirect to the appropriate saml_login endpoint for the organization.
+1.  **Assertion Consumer Service (ACS) URL**: The endpoint in Prowler that will receive the SAML assertion from the IdP.
+2.  **Audience URI (Entity ID)**: A unique identifier for the Prowler application (Service Provider).
 
-- POST /api/v1/accounts/saml/initiate/
+To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler and use them to set up a new SAML application.
 
-???+ note
-    Important: This endpoint is intended to be used from a browser, as it returns a 302 redirect that needs to be followed to continue the SAML authentication flow. For testing purposes, it is better to use a browser or a tool that follows redirects (such as Postman) rather than relying on unit tests that cannot capture the redirect behavior.
+![IdP configuration](../img/idp_config.png)
 
-### Expected payload
-```
-{
-  "email_domain": "user@domain.com"
-}
-```
+???+ info "IdP Configuration"
+    The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
 
-### Possible responses
+#### Step 4: Configure Attribute Mapping in the IdP
 
-	•	302 FOUND: Redirects to the SAML login URL associated with the organization.
+For Prowler to correctly identify and provision users, the IdP must be configured to send the following attributes in the SAML assertion:
 
-	•	403 FORBIDDEN: The domain is not authorized.
+| Attribute Name | Description                                                                                             | Required |
+|----------------|---------------------------------------------------------------------------------------------------------|----------|
+| `firstName`    | The user's first name.                                                                                  | Yes      |
+| `lastName`     | The user's last name.                                                                                   | Yes      |
+| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). This must match a role name in Prowler. | Yes      |
+| `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
-### Validation logic
+???+ warning "Dynamic Updates"
+    These attributes are updated in Prowler each time a user logs in. Changes made in the IdP will be reflected in Prowler upon the user's next session.
 
-    •	Looks up the domain in SAMLDomainIndex.
+#### Step 5: Upload IdP Metadata to Prowler
 
-	•	Retrieves the related SAMLConfiguration object via tenant_id.
+Once the IdP is configured, it provides a **metadata XML file**. This file contains the IdP's configuration information, such as its public key and login URL.
 
+To complete the Prowler-side configuration:
+1.  Return to the Prowler SAML configuration page.
+2.  Enter the **email domain** for the organization (e.g., `mycompany.com`). Prowler uses this to identify users who should authenticate via SAML.
+3.  Upload the **metadata XML file** downloaded from the IdP.
 
-# SAML Integration: UI Guide
+![Configure Prowler with IdP Metadata](../img/saml-step-3.png)
 
-This guide outlines the process for configuring SAML Single Sign-On (SSO) within the Prowler App.
+#### Step 6: Save and Verify Configuration
 
----
+Click the "Save" button to complete the setup. The "SAML Integration" card will now show an "Active" status, indicating that the configuration is complete and enabled.
 
-## 1. Accessing the Profile Settings
+![Verify Integration Status](../img/saml-step-4.png)
 
-Open the Prowler App and navigate to the account settings by selecting the **"Account"** button located in the top-right corner of the interface, or navigating to https://cloud.prowler.com/profile or http://localhost:3000/profile.
+### Signing in with SAML SSO
 
-
-
-![Step 1](../img/saml-step-1.png)
-
----
-
-## 2. Enabling SAML Integration
-
-In the configuration panel, locate the **"SAML SSO Integration"** card and click the **"Enable"** button to initiate the setup process.
-
-![Step 2](../img/saml-step-2.png)
-
----
-
-## 3. Configuring Domain and Metadata
-
-Enter the email domain associated with the organization to be configured for SAML.
-Ensure that the **Assertion Consumer Service (ACS) URL** displayed matches the one configured in the identity provider (e.g., Okta).
-
-**Example:**
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor entityID="http://www.okta.com/test" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"><md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"><md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIDqDCCApCgAwIBAgIGAZbspLXlMA0GCSqGSIb3DQEBCwUAMIGUMQswCQYDVQQGEwJVUzETMBEG
-A1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzENMAsGA1UECgwET2t0YTEU
-xcDDx9gcsrSSMAOK1gG/MVGRMeHfamgeF/jXVA==</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://dev-test.okta.com/app/dev-48961430_test/exkotjzsj3Ms39EjW5d7/sso/saml"/><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://dev-test.okta.com/app/dev-test/exkotjzsj3Ms39EjW5d7/sso/saml"/></md:IDPSSODescriptor></md:EntityDescriptor>
-```
-
-![SAML Integration: UI Guide](../img/saml-step-3.png)
-
----
-
-## 4. Verifying Integration Status
-
-After clicking the **"Save"** button, the SAML Integration card will update to reflect the configured and active status.
-
-![Step 4](../img/saml-step-4.png)
-
-For sign-in, use the user email and click the **"Continue with SAML SSO"** button at login the page.
+Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". They will be redirected to the IdP to authenticate and then returned to Prowler.
 
 ![Sign in with SAML SSO](../img/saml-step-5.png)
 
 ---
 
-# SAML Integration: Testing Guide
+## Developer and Administrator Guide
 
-This document outlines the process for testing the SAML integration functionality.
+This section provides technical details for developers and administrators of self-hosted Prowler instances.
 
----
+### Environment Configuration
 
-## 1. Start Ngrok and Update ALLOWED_HOSTS
+For self-hosted deployments, several environment variables must be configured to ensure SAML SSO functions correctly. These variables are typically set in an `.env` file.
 
-Start ngrok on port 8080:
-```
+| Variable                  | Description                                                                                                                                                             | Example                                                   |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| `API_BASE_URL`            | The base URL of the Prowler API instance.                                                                                                                              | `http://mycompany.prowler/api/v1`                         |
+| `DJANGO_ALLOWED_HOSTS`    | A comma-separated list of hostnames that the Django backend will accept requests from. Include any domains used to access the Prowler API.                               | `localhost,127.0.0.1,prowler-api,mycompany.prowler`       |
+| `AUTH_URL`                | The base URL of the Prowler web UI. This is used to construct the callback URL after authentication.                                                                     | `http://mycompany.prowler`                                |
+| `SAML_SSO_CALLBACK_URL`   | The full callback URL where users are redirected after authenticating with the IdP. It is typically constructed using the `AUTH_URL`.                                       | `${AUTH_URL}/api/auth/callback/saml`                      |
+
+After modifying these variables, the Prowler API must be restarted for the changes to take effect.
+
+### SAML API Reference
+
+Prowler provides a REST API to manage SAML configurations programmatically.
+
+-   **Endpoint**: `/api/v1/saml-config`
+-   **Methods**:
+    -   `GET`: Retrieve the current SAML configuration for the tenant.
+    -   `POST`: Create a new SAML configuration.
+    -   `PATCH`: Update an existing SAML configuration.
+    -   `DELETE`: Remove the SAML configuration.
+
+???+ note "API Documentation"
+    For detailed information on using the API, refer to the [Prowler API Reference](https://api.prowler.com/api/v1/docs#tag/SAML/operation/saml_config_create).
+
+#### SAML Initiate Endpoint
+
+-   **Endpoint**: `POST /api/v1/accounts/saml/initiate/`
+-   **Description**: This endpoint initiates the SAML login flow. It takes an email address, determines if the domain has a SAML configuration, and redirects the user to the appropriate IdP login page. It is primarily designed for browser-based flows.
+
+### Testing SAML Integration
+
+Follow these steps to test a SAML integration in a development environment.
+
+#### 1. Expose the Local Environment
+
+Since the IdP needs to send requests to the local Prowler instance, it must be exposed to the internet. A tool like `ngrok` can be used for this purpose.
+
+To start ngrok, run the following command:
+```bash
 ngrok http 8080
 ```
+This command provides a public URL (e.g., `https://<random-string>.ngrok.io`) that forwards to the local server on port 8080.
 
-Then, copy the generated ngrok URL and include it in the ALLOWED_HOSTS setting. If you're using the development environment, it usually defaults to *, but in some cases this may not work properly, like in my tests (investigate):
+#### 2. Update `DJANGO_ALLOWED_HOSTS`
 
-```
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
-```
+To allow requests from ngrok, add its URL to the `DJANGO_ALLOWED_HOSTS` environment variable.
 
-## 2. Configure the Identity Provider (IdP)
-
-Start your environment and configure your IdP. You will need to download the IdP's metadata XML file.
-
-Your Assertion Consumer Service (ACS) URL must follow this format:
-
-```
-https://<PROXY_URL>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/acs/
+```env
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api,*.ngrok.io
 ```
 
-## 3. IdP Attribute Mapping
+#### 3. Configure the IdP
 
-The following fields are expected from the IdP:
+When configuring the IdP for testing, use the ngrok URL for the ACS URL:
+`https://<your-ngrok-url>/api/v1/accounts/saml/<YOUR_DOMAIN>/acs/`
 
-- firstName
+#### 4. Configure Prowler via API
 
-- lastName
-
-- userType (this is the name of the role the user should be assigned)
-
-- companyName (this is filled automatically if the IdP includes an "organization" field)
-
-These values are dynamic. If the values change in the IdP, they will be updated on the next login.
-
-## 4. SAML Configuration API (POST)
-
-SAML configuration is managed via a CRUD API. Use the following POST request to create a new configuration:
+To create a SAML configuration for testing, use `curl`. Make sure to replace placeholders with actual data.
 
 ```bash
 curl --location 'http://localhost:8080/api/v1/saml-config' \
 --header 'Content-Type: application/vnd.api+json' \
 --header 'Accept: application/vnd.api+json' \
---header 'Authorization: Bearer <TOKEN>' \
+--header 'Authorization: Bearer <YOUR_API_TOKEN>' \
 --data '{
   "data": {
     "type": "saml-configurations",
     "attributes": {
-      "email_domain": "prowler.com",
-      "metadata_xml": "<XML>"
+      "email_domain": "yourdomain.com",
+      "metadata_xml": "<PASTE_YOUR_IDP_METADATA_XML_HERE>"
     }
   }
 }'
 ```
 
-## 5. SAML SSO Callback Configuration
+#### 5. Initiate Login Flow
 
-### Environment Variable Configuration
+To test the end-to-end flow, construct the login URL and open it in a browser. This will start the IdP-initiated login flow.
 
-The SAML authentication flow requires proper callback URL configuration to handle post-authentication redirects. Configure the following environment variables:
+`https://<your-ngrok-url>/api/v1/accounts/saml/<YOUR_DOMAIN>/login/?email=<USER_EMAIL>`
 
-#### `SAML_SSO_CALLBACK_URL`
-
-Specifies the callback endpoint that will be invoked upon successful SAML authentication completion. This URL directs users back to the web application interface.
-
-```env
-SAML_SSO_CALLBACK_URL="${AUTH_URL}/api/auth/callback/saml"
-```
-
-#### `AUTH_URL`
-
-Defines the base URL of the web user interface application that serves as the authentication callback destination.
-
-```env
-AUTH_URL="<WEB_UI_URL>"
-```
-
-### Configuration Notes
-
-- The `SAML_SSO_CALLBACK_URL` dynamically references the `AUTH_URL` variable to construct the complete callback endpoint
-- Ensure the `AUTH_URL` points to the correct web UI deployment (development, staging, or production)
-- The callback endpoint `/api/auth/callback/saml` must be accessible and properly configured to handle SAML authentication responses
-- Both environment variables are required for proper SAML SSO functionality
-- Verify that the `NEXT_PUBLIC_API_BASE_URL` environment variable is properly configured to reference the correct API server base URL corresponding to your target deployment environment. This ensures proper routing of SAML callback requests to the appropriate backend services.
-
-## 6. Start SAML Login Flow
-
-Once everything is configured, start the SAML login process by visiting the following URL:
-
-```
-https://<PROXY_IP>/api/v1/accounts/saml/<CONFIGURED_DOMAIN>/login/?email=<USER_EMAIL>
-```
-
-At the end you will get a valid access and refresh token
-
-## 7. Notes on the initiate Endpoint
-
-The initiate endpoint is not strictly required. It was created to allow extra checks or behavior modifications (like enumeration mitigation). It also simplifies UI integration with SAML, but again, it's optional.
+If successful, the user will be redirected back to the Prowler application with a valid session.
