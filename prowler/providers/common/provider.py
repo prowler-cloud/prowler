@@ -250,6 +250,8 @@ class Provider(ABC):
                         ionos_datacenter_name=arguments.ionos_datacenter_name,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
+                        use_ionosctl=arguments.ionosctl,
+                        use_env_vars=arguments.ionos_user_env_vars,
                     )
 
         except TypeError as error:
