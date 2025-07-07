@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "vm_enforce_ssh_authentication",
+  "CheckID": "vm_linux_enforce_ssh_authentication",
   "CheckTitle": "Ensure SSH key authentication is enforced on Linux-based Virtual Machines",
   "CheckType": [],
   "ServiceName": "vm",

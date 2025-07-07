@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.vm.vm_client import vm_client
 
 
-class vm_enforce_ssh_authentication(Check):
+class vm_linux_enforce_ssh_authentication(Check):
     """
     Ensure that Azure Linux-based virtual machines are configured to use SSH keys (password authentication is disabled).
 

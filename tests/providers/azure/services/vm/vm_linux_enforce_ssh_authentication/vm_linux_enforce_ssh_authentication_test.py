@@ -11,7 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_vm_enforce_ssh_authentication:
+class Test_vm_linux_enforce_ssh_authentication:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock
         vm_client.virtual_machines = {}
@@ -22,15 +22,15 @@ class Test_vm_enforce_ssh_authentication:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication.vm_client",
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication import (
-                vm_enforce_ssh_authentication,
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
             )
 
-            check = vm_enforce_ssh_authentication()
+            check = vm_linux_enforce_ssh_authentication()
             result = check.execute()
             assert len(result) == 0
 
@@ -44,15 +44,15 @@ class Test_vm_enforce_ssh_authentication:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication.vm_client",
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication import (
-                vm_enforce_ssh_authentication,
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
             )
 
-            check = vm_enforce_ssh_authentication()
+            check = vm_linux_enforce_ssh_authentication()
             result = check.execute()
             assert len(result) == 0
 
@@ -80,15 +80,15 @@ class Test_vm_enforce_ssh_authentication:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication.vm_client",
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication import (
-                vm_enforce_ssh_authentication,
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
             )
 
-            check = vm_enforce_ssh_authentication()
+            check = vm_linux_enforce_ssh_authentication()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -121,15 +121,15 @@ class Test_vm_enforce_ssh_authentication:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication.vm_client",
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication import (
-                vm_enforce_ssh_authentication,
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
             )
 
-            check = vm_enforce_ssh_authentication()
+            check = vm_linux_enforce_ssh_authentication()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -160,14 +160,14 @@ class Test_vm_enforce_ssh_authentication:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication.vm_client",
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_enforce_ssh_authentication.vm_enforce_ssh_authentication import (
-                vm_enforce_ssh_authentication,
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
             )
 
-            check = vm_enforce_ssh_authentication()
+            check = vm_linux_enforce_ssh_authentication()
             result = check.execute()
             assert len(result) == 0
