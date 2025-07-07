@@ -85,7 +85,7 @@ class Test_vm_scaleset_associated_with_load_balancer:
             assert result[0].location == "eastus"
             expected_status_extended = (
                 f"Scale set 'compliant-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' "
-                f"is associated with load balancer backend pool(s): {backend_pool_id}."
+                f"is associated with load balancer backend pool(s): bepool."
             )
             assert result[0].status_extended == expected_status_extended
 
@@ -169,7 +169,7 @@ class Test_vm_scaleset_associated_with_load_balancer:
                 if r.resource_name == "compliant-vmss":
                     expected_status_extended = (
                         f"Scale set 'compliant-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' "
-                        f"is associated with load balancer backend pool(s): {backend_pool_id}."
+                        f"is associated with load balancer backend pool(s): bepool."
                     )
                     assert r.status == "PASS"
                     assert r.status_extended == expected_status_extended
