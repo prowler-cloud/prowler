@@ -24,6 +24,7 @@ class Defender(AzureService):
         self.settings = self._get_settings()
         self.security_contacts = self._get_security_contacts()
         self.iot_security_solutions = self._get_iot_security_solutions()
+        self.jit_policies = self._get_jit_policies()
 
     def _get_pricings(self):
         logger.info("Defender - Getting pricings...")
@@ -223,6 +224,33 @@ class Defender(AzureService):
                 )
         return iot_security_solutions
 
+    def _get_jit_policies(self):
+        logger.info("Defender - Getting JIT policies...")
+        jit_policies = {}
+        for subscription_name, client in self.clients.items():
+            try:
+                jit_policies[subscription_name] = {}
+                policies = client.jit_network_access_policies.list()
+                for policy in policies:
+                    vm_ids = set()
+                    for vm in getattr(policy, "virtual_machines", []):
+                        vm_ids.add(vm.id)
+                    jit_policies[subscription_name].update(
+                        {
+                            policy.id: JITPolicy(
+                                id=policy.id,
+                                name=policy.name,
+                                location=getattr(policy, "location", "Global"),
+                                vm_ids=vm_ids,
+                            ),
+                        }
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return jit_policies
+
 
 class Pricing(BaseModel):
     resource_id: str
@@ -267,3 +295,10 @@ class IoTSecuritySolution(BaseModel):
     resource_id: str
     name: str
     status: str
+
+
+class JITPolicy(BaseModel):
+    id: str
+    name: str
+    location: str = ""
+    vm_ids: list[str] = []
