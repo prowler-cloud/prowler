@@ -187,7 +187,6 @@ export const buildSecretConfig = (
   return builder();
 };
 
-
 // Helper function to handle API responses consistently
 export const handleApiResponse = async (
   response: Response,

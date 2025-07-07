@@ -1,6 +1,5 @@
 "use client";
 
-import { InfoIcon } from "@/components/icons";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { ProviderType } from "@/types/providers";
@@ -24,9 +23,5 @@ export const CredentialsUpdateInfo = ({
     return null;
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      {renderSelectComponent()}
-    </div>
-  );
+  return <div className="flex flex-col gap-4">{renderSelectComponent()}</div>;
 };
