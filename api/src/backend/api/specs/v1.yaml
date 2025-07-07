@@ -9863,7 +9863,6 @@ components:
                     * `static` - Key-value pairs
                     * `role` - Role assumption
                     * `service_account` - GCP Service Account Key
-                  readOnly: true
                 secret:
                   oneOf:
                   - type: object
@@ -10010,6 +10009,7 @@ components:
                     - kubeconfig_content
                   writeOnly: true
               required:
+              - secret_type
               - secret
             relationships:
               type: object
@@ -11621,7 +11621,6 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
-              readOnly: true
             secret:
               oneOf:
               - type: object
@@ -11767,6 +11766,7 @@ components:
                 - kubeconfig_content
               writeOnly: true
           required:
+          - secret_type
           - secret
         relationships:
           type: object
