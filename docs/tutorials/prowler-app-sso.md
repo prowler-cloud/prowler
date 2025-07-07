@@ -20,7 +20,7 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 
 -   **IdP-Initiated SSO**: Users can initiate login from their Identity Provider's dashboard.
 -   **SP-Initiated SSO**: Users can initiate login directly from the Prowler login page.
--   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created. They can also be manually invited as usual from the User Management tab.
+-   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created.
 
 ### Prerequisites
 
@@ -181,6 +181,6 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 
 To test the end-to-end flow, construct the login URL and open it in a browser. This will start the IdP-initiated login flow.
 
-`https://<your-ngrok-url>/api/v1/accounts/saml/<YOUR_DOMAIN>/login/?email=<USER_EMAIL>`
+`https://<your-ngrok-url>/api/v1/accounts/saml/<YOUR_DOMAIN>/login/`
 
 If successful, the user will be redirected back to the Prowler application with a valid session.
