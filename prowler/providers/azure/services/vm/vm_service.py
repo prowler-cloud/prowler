@@ -61,6 +61,19 @@ class VirtualMachines(AzureService):
                             for extension in vm.resources
                             if extension
                         ]
+
+                    # Collect LinuxConfiguration.disablePasswordAuthentication if available
+                    linux_configuration = None
+                    os_profile = getattr(vm, "os_profile", None)
+                    if os_profile:
+                        linux_conf = getattr(os_profile, "linux_configuration", None)
+                        if linux_conf:
+                            linux_configuration = LinuxConfiguration(
+                                disable_password_authentication=getattr(
+                                    linux_conf, "disable_password_authentication", False
+                                )
+                            )
+
                     virtual_machines[subscription_name].update(
                         {
                             vm.id: VirtualMachine(
@@ -96,6 +109,7 @@ class VirtualMachines(AzureService):
                                     "id",
                                     None,
                                 ),
+                                linux_configuration=linux_configuration,
                             )
                         }
                     )
@@ -184,6 +198,10 @@ class VirtualMachineExtension(BaseModel):
     id: str
 
 
+class LinuxConfiguration(BaseModel):
+    disable_password_authentication: bool
+
+
 class VirtualMachine(BaseModel):
     resource_id: str
     resource_name: str
@@ -192,6 +210,7 @@ class VirtualMachine(BaseModel):
     extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
     image_reference: Optional[str] = None
+    linux_configuration: Optional[LinuxConfiguration] = None
 
 
 class Disk(BaseModel):

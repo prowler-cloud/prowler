@@ -2,10 +2,20 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.9.0] (Prowler UNRELEASED)
+## [v1.10.0] (Prowler UNRELEASED)
+
+---
+
+## [v1.9.1] (Prowler v5.8.1)
+
+### Fixed
+- Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)
+
+---
+
+## [v1.9.0] (Prowler v5.8.0)
 
 ### Added
-- SSO with SAML support [(#7822)](https://github.com/prowler-cloud/prowler/pull/7822)
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)

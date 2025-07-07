@@ -2,7 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [v1.8.0] (Prowler v5.8.0) – Not released
+## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
+
+### 🚀 Added
+### 🔄 Changed
+
+- Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
+
+### 🐞 Fixed
+
+---
+
+## [v1.8.0] (Prowler v5.8.0)
 
 ### 🚀 Added
 
@@ -21,7 +32,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
 - Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
-- SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094)
+<!-- - SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094) -->
 
 ### 🔄 Changed
 
@@ -32,6 +43,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Make user and password fields optional but mutually required for M365 cloud provider [(#8044)](https://github.com/prowler-cloud/prowler/pull/8044)
 - Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Set filters panel to be always open by default [(#8085)](https://github.com/prowler-cloud/prowler/pull/8085)
+- Updated "Sign in"/"Sign up" capitalization for consistency [(#8136)](https://github.com/prowler-cloud/prowler/pull/8136)
 - Duplicate API base URL as an env var to make it accessible in client components [(#8131)](https://github.com/prowler-cloud/prowler/pull/8131)
 
 ### 🐞 Fixed
