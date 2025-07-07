@@ -10009,7 +10009,6 @@ components:
                     - kubeconfig_content
                   writeOnly: true
               required:
-              - secret_type
               - secret
             relationships:
               type: object
@@ -11766,7 +11765,6 @@ components:
                 - kubeconfig_content
               writeOnly: true
           required:
-          - secret_type
           - secret
         relationships:
           type: object
