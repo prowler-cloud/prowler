@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
-  "CheckID": "vm_image_approved_in_use",
-  "CheckTitle": "Only approved machine images are in use",
+  "CheckID": "vm_ensure_using_approved_images",
+  "CheckTitle": "Ensure that Azure VMs are using an approved machine image.",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "image",

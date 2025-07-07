@@ -8,7 +8,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_vm_image_approved_in_use:
+class Test_vm_ensure_using_approved_images:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock()
         vm_client.virtual_machines = {}
@@ -18,15 +18,15 @@ class Test_vm_image_approved_in_use:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use.vm_client",
+                "prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use import (
-                vm_image_approved_in_use,
+            from prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images import (
+                vm_ensure_using_approved_images,
             )
 
-            check = vm_image_approved_in_use()
+            check = vm_ensure_using_approved_images()
             result = check.execute()
             assert len(result) == 0
 
@@ -39,15 +39,15 @@ class Test_vm_image_approved_in_use:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use.vm_client",
+                "prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use import (
-                vm_image_approved_in_use,
+            from prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images import (
+                vm_ensure_using_approved_images,
             )
 
-            check = vm_image_approved_in_use()
+            check = vm_ensure_using_approved_images()
             result = check.execute()
             assert len(result) == 0
 
@@ -71,15 +71,15 @@ class Test_vm_image_approved_in_use:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use.vm_client",
+                "prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use import (
-                vm_image_approved_in_use,
+            from prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images import (
+                vm_ensure_using_approved_images,
             )
 
-            check = vm_image_approved_in_use()
+            check = vm_ensure_using_approved_images()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -108,15 +108,15 @@ class Test_vm_image_approved_in_use:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use.vm_client",
+                "prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use import (
-                vm_image_approved_in_use,
+            from prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images import (
+                vm_ensure_using_approved_images,
             )
 
-            check = vm_image_approved_in_use()
+            check = vm_ensure_using_approved_images()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -144,15 +144,15 @@ class Test_vm_image_approved_in_use:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use.vm_client",
+                "prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images.vm_client",
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_image_approved_in_use.vm_image_approved_in_use import (
-                vm_image_approved_in_use,
+            from prowler.providers.azure.services.vm.vm_ensure_using_approved_images.vm_ensure_using_approved_images import (
+                vm_ensure_using_approved_images,
             )
 
-            check = vm_image_approved_in_use()
+            check = vm_ensure_using_approved_images()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

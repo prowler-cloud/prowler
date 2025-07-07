@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.vm.vm_client import vm_client
 
 
-class vm_image_approved_in_use(Check):
+class vm_ensure_using_approved_images(Check):
     """
     Ensure that Azure VMs are using an approved (custom) machine image.
 
