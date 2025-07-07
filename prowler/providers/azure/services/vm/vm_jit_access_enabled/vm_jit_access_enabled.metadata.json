@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_jit_access_enabled",
+  "CheckTitle": "Enable Just-In-Time Access for Virtual Machines",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Description": "Ensure that Microsoft Azure virtual machines are configured to use Just-in-Time (JIT) access.",
+  "Risk": "Without JIT access, management ports such as 22 (SSH) and 3389 (RDP) may be exposed, increasing the risk of brute-force and DDoS attacks.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc",
+  "Remediation": {
+    "Code": {
+      "CLI": "az security jit-policy list --query '[*].virtualMachines[*].id | []'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Just-in-Time (JIT) network access for your Microsoft Azure virtual machines using the Azure Portal under Security Center > Just-in-time VM access.",
+      "Url": "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "JIT access can only be enabled via the Azure Portal. Ensure Security Center standard pricing tier for servers is enabled."
+}
