@@ -3406,6 +3406,61 @@ class TestFindingViewSet:
             ]
         }
 
+    def test_findings_metadata_backfill(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.unique_resource_count = 1
+        scan.save()
+
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": str(scan.id)},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_called()
+
+    def test_findings_metadata_backfill_no_resources(
+        self, authenticated_client, scans_fixture
+    ):
+        scan_id = str(scans_fixture[0].id)
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": scan_id},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_not_called()
+
+    def test_findings_metadata_latest_backfill(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.unique_resource_count = 1
+        scan.save()
+
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_called()
+
+    def test_findings_metadata_latest_backfill_no_resources(
+        self, authenticated_client, scans_fixture
+    ):
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_not_called()
+
     def test_findings_latest(self, authenticated_client, latest_scan_finding):
         response = authenticated_client.get(
             reverse("finding-latest"),

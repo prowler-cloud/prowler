@@ -6,6 +6,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 ### 🔄 Changed
+
+- Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
+
 ### 🐞 Fixed
 ### Removed
 
