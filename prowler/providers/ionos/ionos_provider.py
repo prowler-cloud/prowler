@@ -72,23 +72,20 @@ class IonosProvider(Provider):
         """
         logger.info("Initializing IONOS Provider...")
 
-        # Initialize credentials as None
         self._token = None
         self._username = None
         self._password = None
+        self._datacenter_name = ionos_datacenter_name
 
-        # Check that at least one authentication method is selected
         if not any([use_ionosctl, use_env_vars, all([ionos_username, ionos_password])]):
             raise IonosNoAuthMethodProvidedError()
 
-        # Handle ionosctl token authentication
         if use_ionosctl:
             self._token = self.load_ionosctl_token()
             if not self._token:
                 raise IonosTokenLoadError()
             logger.info("Using ionosctl token authentication")
 
-        # Handle environment variables authentication
         elif use_env_vars:
             self._username = os.getenv("IONOS_USERNAME")
             self._password = os.getenv("IONOS_PASSWORD")
@@ -96,7 +93,6 @@ class IonosProvider(Provider):
                 raise IonosEnvironmentCredentialsError()
             logger.info("Using environment variables authentication")
 
-        # Handle static credentials authentication
         elif ionos_username or ionos_password:
             if not all([ionos_username, ionos_password]):
                 raise IonosIncompleteCredentialsError()
@@ -104,31 +100,32 @@ class IonosProvider(Provider):
             self._password = ionos_password
             logger.info("Using static credentials authentication")
 
-        self._identity = self.set_identity(
+        temp_identity = IonosIdentityInfo(
             username=self._username,
             password=self._password,
             datacenter_id="",
+            token=self._token,
         )
 
         self._session = self.setup_session(
-            identity=self._identity,
+            identity=temp_identity,
         )
 
         if not self.test_connection():
             logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
             sys.exit(1)
 
-        if not self._identity.username:
-            self._identity.username = self.get_ionos_username()
-
-        self._identity.datacenter_id = self.get_datacenter_id(ionos_datacenter_name)
+        self._identity = self.setup_identity(
+            username=self._username,
+            password=self._password,
+            datacenter_id="",
+        )
 
         if config_path is None:
             self._audit_config = {}
         else:
             self._audit_config = load_and_validate_config_file("ionos", config_path)
         
-        # Mutelist
         if mutelist_content:
             self._mutelist = IonosMutelist(
                 mutelist_content=mutelist_content,
@@ -354,21 +351,40 @@ class IonosProvider(Provider):
             logger.error(f"Failed to retrieve datacenters from IONOS Cloud API: {error}")
             return []
 
-    def set_identity(
+    def setup_identity(
         self,
         username: str,
         password: str,
         datacenter_id: str,
     ) -> IonosIdentityInfo:
         """
-        set_identity sets the IONOS provider identity information.
+        Sets up the IONOS provider identity information.
+
+        First tries to create identity with provided credentials.
+        If username is not available, attempts to fetch it from the API.
+        Finally sets up the datacenter ID.
+
+        Args:
+            username (str): The username for authentication
+            password (str): The password for authentication
+            datacenter_id (str): The datacenter ID
+
+        Returns:
+            IonosIdentityInfo: The configured identity information
         """
-        return IonosIdentityInfo(
+        identity = IonosIdentityInfo(
             username=username,
             password=password,
             datacenter_id=datacenter_id,
             token=self._token,
         )
+
+        if not identity.username:
+            identity.username = self.get_ionos_username()
+
+        identity.datacenter_id = self.get_datacenter_id(self._datacenter_name)
+
+        return identity
 
     def validate_mutelist_content(self, content: dict) -> bool:
         """Validates the format of the mutelist content"""
