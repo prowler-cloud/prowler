@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
-import { isValidMutelistYaml, isValidYaml } from "@/lib/yaml";
+import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { ProviderType } from "./providers";
 
@@ -327,13 +327,23 @@ export const mutedFindingsConfigFormSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Configuration is required" })
-    .refine((val) => isValidYaml(val), {
-      message:
-        "Invalid YAML format. Please provide a valid YAML configuration.",
-    })
-    .refine((val) => isValidMutelistYaml(val), {
-      message:
-        "Configuration must contain the complete structure: Mutelist -> Accounts -> [account_id] -> Checks -> [check_id] -> Regions (array) and Resources (array).",
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+        return;
+      }
+
+      const mutelistValidation = validateMutelistYaml(val);
+      if (!mutelistValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid mutelist structure: ${mutelistValidation.error}`,
+        });
+      }
     }),
   id: z.string().optional(),
 });

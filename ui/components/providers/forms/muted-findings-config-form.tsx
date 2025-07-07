@@ -185,6 +185,7 @@ export const MutedFindingsConfigForm = ({
               >
                 here
               </Link>
+              .
             </li>
           </ul>
         </div>
@@ -217,6 +218,7 @@ export const MutedFindingsConfigForm = ({
               classNames={{
                 input: fontMono.className + " text-sm",
                 base: "min-h-[400px]",
+                errorMessage: "whitespace-pre-wrap",
               }}
             />
             {yamlValidation.isValid && configText && hasUserStartedTyping && (
