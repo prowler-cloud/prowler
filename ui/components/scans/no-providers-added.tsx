@@ -3,8 +3,9 @@
 import { Card, CardBody } from "@nextui-org/react";
 import React from "react";
 
+import { CustomLink } from "@/components/ui/custom";
+
 import { InfoIcon } from "../icons/Icons";
-import { CustomButton } from "../ui/custom";
 
 export const NoProvidersAdded = () => {
   return (
@@ -25,16 +26,15 @@ export const NoProvidersAdded = () => {
               </p>
             </div>
 
-            <CustomButton
-              asLink="/providers/connect-account"
+            <CustomLink
+              path="/providers/connect-account"
               ariaLabel="Go to Add Cloud Provider page"
               className="w-full max-w-xs justify-center"
               variant="solid"
               color="action"
-              size="lg"
             >
               Get Started
-            </CustomButton>
+            </CustomLink>
           </CardBody>
         </Card>
       </div>

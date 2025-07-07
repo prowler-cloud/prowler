@@ -10,7 +10,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "@/components/icons/providers-badge";
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { CustomLink } from "@/components/ui/custom";
 import { ProviderOverviewProps } from "@/types";
 
 export const ProvidersOverview = ({
@@ -178,16 +178,15 @@ export const ProvidersOverview = ({
           </div>
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
-          <CustomButton
-            asLink="/providers"
+          <CustomLink
+            path="/providers"
             ariaLabel="Go to Providers page"
             variant="solid"
             color="action"
-            size="sm"
             endContent={<AddIcon size={20} />}
           >
             Add Provider
-          </CustomButton>
+          </CustomLink>
         </div>
       </CardBody>
     </Card>

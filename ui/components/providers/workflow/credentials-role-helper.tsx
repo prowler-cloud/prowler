@@ -3,7 +3,7 @@
 import { Snippet } from "@nextui-org/react";
 import { useSession } from "next-auth/react";
 
-import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 
 export const CredentialsRoleHelper = () => {
@@ -16,15 +16,15 @@ export const CredentialsRoleHelper = () => {
           A <strong>new read-only IAM role</strong> must be manually created.
         </p>
 
-        <CustomButton
+        <CustomLink
           ariaLabel="Use the following AWS CloudFormation Quick Link to deploy the IAM Role"
           color="transparent"
           className="h-auto w-fit min-w-0 p-0 text-blue-500"
-          asLink={`${getAWSCredentialsTemplateLinks().cloudformationQuickLink}${session?.tenantId}`}
+          path={`${getAWSCredentialsTemplateLinks().cloudformationQuickLink}${session?.tenantId}`}
           target="_blank"
         >
           Use the following AWS CloudFormation Quick Link to deploy the IAM Role
-        </CustomButton>
+        </CustomLink>
 
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
@@ -38,24 +38,24 @@ export const CredentialsRoleHelper = () => {
         </p>
 
         <div className="flex w-fit flex-col gap-2">
-          <CustomButton
+          <CustomLink
             ariaLabel="CloudFormation Template"
             color="transparent"
             className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            asLink={getAWSCredentialsTemplateLinks().cloudformation}
+            path={getAWSCredentialsTemplateLinks().cloudformation}
             target="_blank"
           >
             CloudFormation Template
-          </CustomButton>
-          <CustomButton
+          </CustomLink>
+          <CustomLink
             ariaLabel="Terraform Code"
             color="transparent"
             className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            asLink={getAWSCredentialsTemplateLinks().terraform}
+            path={getAWSCredentialsTemplateLinks().terraform}
             target="_blank"
           >
             Terraform Code
-          </CustomButton>
+          </CustomLink>
         </div>
 
         <p className="text-xs font-bold text-gray-600 dark:text-gray-400">

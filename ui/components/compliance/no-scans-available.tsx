@@ -2,8 +2,9 @@
 
 import React from "react";
 
+import { CustomLink } from "@/components/ui/custom";
+
 import { InfoIcon } from "../icons/Icons";
-import { CustomButton } from "../ui/custom";
 
 export const NoScansAvailable = () => {
   return (
@@ -23,16 +24,15 @@ export const NoScansAvailable = () => {
                 </p>
               </div>
             </div>
-            <CustomButton
-              asLink="/scans"
+            <CustomLink
+              path="/scans"
               className="flex-shrink-0"
               ariaLabel="Go to Scans page"
               variant="solid"
               color="action"
-              size="sm"
             >
               Go to Scans
-            </CustomButton>
+            </CustomLink>
           </div>
         </div>
       </div>

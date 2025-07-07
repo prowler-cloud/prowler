@@ -1,21 +1,21 @@
 "use client";
 
+import { CustomLink } from "@/components/ui/custom";
+
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
 
 export const SendInvitationButton = () => {
   return (
     <div className="flex w-full items-center justify-end">
-      <CustomButton
-        asLink="/invitations/new"
+      <CustomLink
+        path={"/invitations/new"}
         ariaLabel="Send Invitation"
         variant="solid"
         color="action"
-        size="md"
         endContent={<AddIcon size={20} />}
       >
         Send Invitation
-      </CustomButton>
+      </CustomLink>
     </div>
   );
 };

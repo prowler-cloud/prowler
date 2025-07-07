@@ -1,6 +1,6 @@
 import { Tooltip } from "@nextui-org/react";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { CustomLink } from "@/components/ui/custom";
 import { cn } from "@/lib/utils";
 
 interface DeltaIndicatorProps {
@@ -18,16 +18,15 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
               ? "New finding."
               : "Status changed since the previous scan."}
           </span>
-          <CustomButton
+          <CustomLink
             ariaLabel="Learn more about findings"
             color="transparent"
-            size="sm"
-            className="h-auto min-w-0 p-0 text-primary"
-            asLink="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
+            className="h-auto min-w-0 p-0 text-xs text-primary"
+            path="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
             target="_blank"
           >
             Learn more
-          </CustomButton>
+          </CustomLink>
         </div>
       }
     >

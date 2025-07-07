@@ -1,6 +1,6 @@
 "use client";
 
-import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom";
 
 interface LinkToFindingsProps {
   scanId?: string;
@@ -12,15 +12,14 @@ export const LinkToFindingsFromScan = ({
   isDisabled,
 }: LinkToFindingsProps) => {
   return (
-    <CustomButton
-      asLink={`/findings?filter[scan__in]=${scanId}&filter[status__in]=FAIL`}
+    <CustomLink
+      path={`/findings?filter[scan__in]=${scanId}&filter[status__in]=FAIL`}
       ariaLabel="Go to Findings page"
-      variant="ghost"
-      className="text-xs font-medium text-default-500 hover:text-primary disabled:opacity-30"
-      size="sm"
+      color="muted"
+      className="w-[7rem] rounded-md border border-prowler-theme-green px-4 py-2 text-xs !font-bold text-default-500 hover:bg-prowler-theme-green hover:!text-black disabled:opacity-30"
       isDisabled={isDisabled}
     >
       See Findings
-    </CustomButton>
+    </CustomLink>
   );
 };

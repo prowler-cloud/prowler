@@ -2,8 +2,9 @@
 
 import React from "react";
 
+import { CustomLink } from "@/components/ui/custom";
+
 import { InfoIcon } from "../icons/Icons";
-import { CustomButton } from "../ui/custom";
 
 export const NoProvidersConnected = () => {
   return (
@@ -26,16 +27,15 @@ export const NoProvidersConnected = () => {
           </p>
         </div>
         <div className="w-full md:w-auto md:flex-shrink-0">
-          <CustomButton
-            asLink="/providers"
+          <CustomLink
+            path="/providers"
             className="w-full justify-center md:w-fit"
             ariaLabel="Go to Cloud providers page"
             variant="solid"
             color="action"
-            size="md"
           >
             Review Cloud Providers
-          </CustomButton>
+          </CustomLink>
         </div>
       </div>
     </div>

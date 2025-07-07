@@ -1,7 +1,6 @@
 import { Button, CircularProgress } from "@nextui-org/react";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
-import Link from "next/link";
 import React from "react";
 
 import { NextUIColors, NextUIVariants } from "@/types";
@@ -53,7 +52,6 @@ interface CustomButtonProps {
   isLoading?: boolean;
   isIconOnly?: boolean;
   ref?: React.RefObject<HTMLButtonElement>;
-  asLink?: string;
 }
 
 export const CustomButton = React.forwardRef<
@@ -78,14 +76,11 @@ export const CustomButton = React.forwardRef<
       isDisabled = false,
       isLoading = false,
       isIconOnly,
-      asLink,
       ...props
     },
     ref,
   ) => (
     <Button
-      as={asLink ? Link : undefined}
-      href={asLink}
       target={target}
       type={type}
       aria-label={ariaLabel}

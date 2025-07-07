@@ -2,19 +2,19 @@
 
 import { SettingsIcon } from "lucide-react";
 
-import { CustomButton } from "../ui/custom";
+import { CustomLink } from "@/components/ui/custom";
 
 export const ManageGroupsButton = () => {
   return (
-    <CustomButton
-      asLink="/manage-groups"
+    <CustomLink
+      path={"/manage-groups"}
       ariaLabel="Manage Groups"
       variant="dashed"
-      color="warning"
-      size="md"
+      color="secondary"
+      className="rounded-md px-4 py-2 !font-bold hover:border-solid hover:bg-default-100"
       startContent={<SettingsIcon size={20} />}
     >
       Manage Groups
-    </CustomButton>
+    </CustomLink>
   );
 };

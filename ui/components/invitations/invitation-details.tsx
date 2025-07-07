@@ -2,8 +2,9 @@
 
 import { Card, CardBody, Divider, Snippet } from "@nextui-org/react";
 
+import { CustomLink } from "@/components/ui/custom";
+
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
 import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
@@ -108,16 +109,15 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
         </CardBody>
       </Card>
       <div className="flex w-full items-center justify-end">
-        <CustomButton
-          asLink="/invitations/"
+        <CustomLink
+          path={"/invitations/"}
           ariaLabel="Send Invitation"
           variant="solid"
           color="action"
-          size="md"
           endContent={<AddIcon size={20} />}
         >
           Back to Invitations
-        </CustomButton>
+        </CustomLink>
       </div>
     </div>
   );

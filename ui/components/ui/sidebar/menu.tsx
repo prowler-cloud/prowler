@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { logOut } from "@/actions/auth";
 import { AddIcon, InfoIcon } from "@/components/icons";
+import { CustomLink } from "@/components/ui/custom";
 import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
 import {
   Tooltip,
@@ -18,7 +19,6 @@ import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
-import { CustomButton } from "../custom/custom-button";
 import { ScrollArea } from "../scroll-area/scroll-area";
 
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
@@ -28,17 +28,18 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <>
       <div className="px-2">
-        <CustomButton
-          asLink="/scans"
-          className={cn(isOpen ? "w-full" : "w-fit")}
+        <CustomLink
+          path="/scans"
+          className={cn(
+            isOpen ? "w-full" : "w-fit",
+            "px justify-center rounded-md px-8 py-3 !font-bold",
+          )}
           ariaLabel="Launch Scan"
-          variant="solid"
           color="action"
-          size="md"
           endContent={isOpen ? <AddIcon size={20} /> : null}
         >
           {isOpen ? "Launch Scan" : <AddIcon size={20} />}
-        </CustomButton>
+        </CustomLink>
       </div>
       <ScrollArea className="[&>div>div[style]]:!block">
         <nav className="mt-2 h-full w-full lg:mt-6">
