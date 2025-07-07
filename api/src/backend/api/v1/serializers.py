@@ -1308,12 +1308,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            # "secret_type": {"read_only": True},
         }
 
     def validate(self, attrs):
+        print(attrs)
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        secret_type = attrs.get("secret_type")
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
