@@ -32,7 +32,7 @@ Getting started with Prowler Lighthouse is easy:
 
 ### Adding Business Context
 
-The optional business context field lets you provide additional information to help the analyst understand your environment and priorities, including:
+The optional business context field lets you provide additional information to help Lighthouse understand your environment and priorities, including:
 
 - Your organization's cloud security goals
 - Information about account owners or responsible teams
@@ -67,7 +67,7 @@ Get tailored step-by-step instructions for fixing security issues:
 
 ### Enhanced Context and Analysis
 
-The analyst can provide additional context to help you understand the findings:
+Lighthouse can provide additional context to help you understand the findings:
 
 - Explain security concepts related to findings in simple terms
 - Provide risk assessments based on your environment and context
@@ -82,8 +82,8 @@ The analyst can provide additional context to help you understand the findings:
 Prowler Lighthouse is powerful, but there are limitations:
 
 - **Continuous improvement**: Please report any issues, as the feature may make mistakes or encounter errors, despite extensive testing.
-- **Access limitations**: The analyst can only access data the logged-in user can view. If you can't see certain information, the analyst can't see it either.
-- **NextJS session dependence**: If your Prowler application session expires or logs out, the analyst will error out. Refresh and log back in to continue.
+- **Access limitations**: Lighthouse can only access data the logged-in user can view. If you can't see certain information, Lighthouse can't see it either.
+- **NextJS session dependence**: If your Prowler application session expires or logs out, Lighthouse will error out. Refresh and log back in to continue.
 - **Response quality**: The response quality depends on the selected OpenAI model. For best results, use gpt-4o.
 
 ### Getting Help
@@ -183,7 +183,7 @@ Not all Prowler API endpoints are integrated with Lighthouse. They are intention
 
 During feature development, we evaluated other LLM models.
 
-- **Claude AI** - Claude models have [tier-based ratelimits](https://docs.anthropic.com/en/api/rate-limits#requirements-to-advance-tier). For the Analyst to answer slightly complex questions, there are a handful of API calls to the LLM provider within few seconds. With Claude's tiering system, users must purchase $400 credits or convert their subscription to monthly invoicing after talking to their sales team. This pricing may not suit all Prowler users.
+- **Claude AI** - Claude models have [tier-based ratelimits](https://docs.anthropic.com/en/api/rate-limits#requirements-to-advance-tier). For Lighthouse to answer slightly complex questions, there are a handful of API calls to the LLM provider within few seconds. With Claude's tiering system, users must purchase $400 credits or convert their subscription to monthly invoicing after talking to their sales team. This pricing may not suit all Prowler users.
 - **Gemini Models** - Gemini lacks a solid tool calling feature like OpenAI. It calls functions recursively until exceeding limits. Gemini-2.5-Pro-Experimental is better than previous models regarding tool calling and responding, but it's still experimental.
 - **Deepseek V3** - Doesn't support system prompt messages.
 
@@ -195,6 +195,6 @@ Context windows are limited. While demo data fits inside the context window, que
 
 We send the minimum data needed to generate useful responses. If required for the user's query, agents can fetch security findings and remediation information. However, LLMs don't have access to sensitive configuration like provider secrets and tenant details.
 
-**4. Can the Analyst change my cloud environment?**
+**4. Can the Lighthouse change my cloud environment?**
 
 No. The agent doesn't have the tools to make the changes, even if the configured cloud provider API keys contain permissions to modify resources.
