@@ -14,10 +14,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [v1.8.1] (Prowler UNRELEASED)
+## [v1.8.1] (Prowler 5.8.1)
 
 ### Removed
-- Provider's secret type validation when updating it [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
+- Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
 ---
 
