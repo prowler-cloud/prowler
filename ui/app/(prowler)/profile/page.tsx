@@ -1,10 +1,10 @@
 import React, { Suspense } from "react";
 
-// import { getSamlConfig } from "@/actions/integrations/saml";
+import { getSamlConfig } from "@/actions/integrations/saml";
 import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
-// import { SamlIntegrationCard } from "@/components/integrations/saml-integration-card";
+import { SamlIntegrationCard } from "@/components/integrations/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
@@ -24,7 +24,7 @@ export default async function Profile() {
 }
 
 const SSRDataUser = async () => {
-  // const samlConfig = await getSamlConfig();
+  const samlConfig = await getSamlConfig();
   const userProfile = await getUserInfo();
   if (!userProfile?.data) {
     return null;
@@ -84,10 +84,9 @@ const SSRDataUser = async () => {
           />
         </div>
       </div>
-      {/* TODO after v5.8: Add SAML SSO back in */}
-      {/* <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
+      <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
-      </div> */}
+      </div>
     </div>
   );
 };

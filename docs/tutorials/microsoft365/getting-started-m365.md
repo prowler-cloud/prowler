@@ -253,6 +253,8 @@ This method is not recommended because it requires a user with MFA enabled and M
     - `Client ID`
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
+
+    If you are using user authentication, also add:
     - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
     - `M365_PASSWORD` the password of the user
 
