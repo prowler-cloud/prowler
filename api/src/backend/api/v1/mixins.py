@@ -24,8 +24,8 @@ class PaginateByPkMixin:
         request,  # noqa: F841
         base_queryset,
         manager,
-        select_related: list[str] | None = None,
-        prefetch_related: list[str] | None = None,
+        select_related: list | None = None,
+        prefetch_related: list | None = None,
     ) -> Response:
         """
         Paginate a queryset by primary key.

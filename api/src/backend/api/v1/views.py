@@ -1908,12 +1908,6 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     ]
     prefetch_for_includes = {
         "__all__": [],
-        "findings": [
-            Prefetch(
-                "findings",
-                queryset=Finding.all_objects.prefetch_related("resources"),
-            )
-        ],
         "provider": [
             Prefetch(
                 "provider", queryset=Provider.all_objects.select_related("resources")
@@ -1994,6 +1988,17 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             select_related=["provider"],
             prefetch_related=["findings"],
         )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        latest_findings = (
+            instance.findings.filter(tenant_id=self.request.tenant_id)
+            .order_by("uid", "-inserted_at")
+            .distinct("uid")
+        )
+        setattr(instance, "latest_findings", latest_findings)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="latest")
     def latest(self, request):

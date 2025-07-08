@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -996,7 +997,10 @@ class ResourceSerializer(RLSSerializer):
     type_ = serializers.CharField(read_only=True)
     failed_findings_count = serializers.IntegerField(read_only=True)
 
-    findings = serializers.ResourceRelatedField(many=True, read_only=True)
+    findings = SerializerMethodResourceRelatedField(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = Resource
@@ -1046,6 +1050,13 @@ class ResourceSerializer(RLSSerializer):
         type_ = fields.pop("type_")
         fields["type"] = type_
         return fields
+
+    def get_findings(self, obj):
+        return (
+            obj.latest_findings
+            if hasattr(obj, "latest_findings")
+            else obj.findings.all()
+        )
 
 
 class ResourceIncludeSerializer(RLSSerializer):
