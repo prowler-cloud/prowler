@@ -2117,7 +2117,7 @@ class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
         validators = [
             UniqueTogetherValidator(
                 queryset=Processor.objects.all(),
-                fields=["processor_type", "configuration"],
+                fields=["processor_type"],
                 message="A processor with the same type already exists.",
             )
         ]

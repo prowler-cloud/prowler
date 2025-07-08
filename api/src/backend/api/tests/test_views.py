@@ -6340,6 +6340,17 @@ class TestLighthouseConfigViewSet:
 
 @pytest.mark.django_db
 class TestProcessorViewSet:
+    valid_mutelist_configuration = """Mutelist:
+    Accounts:
+      '*':
+        Checks:
+            iam_user_hardware_mfa_enabled:
+            Regions:
+                - '*'
+            Resources:
+                - '*'
+    """
+
     def test_list_processors(self, authenticated_client, processor_fixture):
         response = authenticated_client.get(reverse("processor-list"))
         assert response.status_code == status.HTTP_200_OK
@@ -6358,9 +6369,7 @@ class TestProcessorViewSet:
                 "type": "processors",
                 "attributes": {
                     "processor_type": "mutelist",
-                    "configuration": "Mutelist:\n  Accounts:\n    '*':\n      Checks:\n        "
-                    "iam_user_hardware_mfa_enabled:\n          Regions:\n            - '*'\n          "
-                    "Resources:\n            - '*'",
+                    "configuration": self.valid_mutelist_configuration,
                 },
             },
         }
@@ -6487,5 +6496,26 @@ class TestProcessorViewSet:
         response = authenticated_client.get(
             reverse("processor-list"),
             {"filter[processor_type]": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_processors_create_another_with_same_type(
+        self, authenticated_client, processor_fixture
+    ):
+        pass
+
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": self.valid_mutelist_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
