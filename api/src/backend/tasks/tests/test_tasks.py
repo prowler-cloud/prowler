@@ -3,9 +3,10 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tasks.tasks import generate_outputs_task
+from tasks.tasks import _perform_scan_complete_tasks, generate_outputs_task
 
 
+# TODO Move this to outputs/reports jobs
 @pytest.mark.django_db
 class TestGenerateOutputs:
     def setup_method(self):
@@ -413,3 +414,25 @@ class TestGenerateOutputs:
                         tenant_id=self.tenant_id,
                     )
                     assert "Error deleting output files" in caplog.text
+
+
+class TestScanCompleteTasks:
+    @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
+    @patch("tasks.tasks.perform_scan_summary_task.si")
+    @patch("tasks.tasks.generate_outputs_task.si")
+    def test_scan_complete_tasks(
+        self, mock_outputs_task, mock_scan_summary_task, mock_compliance_tasks
+    ):
+        _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
+        mock_compliance_tasks.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+        )
+        mock_scan_summary_task.assert_called_once_with(
+            scan_id="scan-id",
+            tenant_id="tenant-id",
+        )
+        mock_outputs_task.assert_called_once_with(
+            scan_id="scan-id",
+            provider_id="provider-id",
+            tenant_id="tenant-id",
+        )
