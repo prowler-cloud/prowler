@@ -29,6 +29,7 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     StateChoices,
     StatusChoices,
@@ -129,6 +130,12 @@ class TokenSerializer(BaseTokenSerializer):
 
 class TokenSocialLoginSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
+    tenant_id = serializers.UUIDField(
+        write_only=True,
+        required=False,
+        help_text="If not provided, the tenant ID of the first membership that was added"
+        " to the user will be used.",
+    )
 
     # Output tokens
     refresh = serializers.CharField(read_only=True)
@@ -1308,12 +1315,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            "secret_type": {"required": False},
         }
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
@@ -2067,23 +2075,23 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
 # SSO
 
 
-# class SamlInitiateSerializer(serializers.Serializer):
-#     email_domain = serializers.CharField()
+class SamlInitiateSerializer(serializers.Serializer):
+    email_domain = serializers.CharField()
 
-#     class JSONAPIMeta:
-#         resource_name = "saml-initiate"
-
-
-# class SamlMetadataSerializer(serializers.Serializer):
-#     class JSONAPIMeta:
-#         resource_name = "saml-meta"
+    class JSONAPIMeta:
+        resource_name = "saml-initiate"
 
 
-# class SAMLConfigurationSerializer(RLSSerializer):
-#     class Meta:
-#         model = SAMLConfiguration
-#         fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
-#         read_only_fields = ["id", "created_at", "updated_at"]
+class SamlMetadataSerializer(serializers.Serializer):
+    class JSONAPIMeta:
+        resource_name = "saml-meta"
+
+
+class SAMLConfigurationSerializer(RLSSerializer):
+    class Meta:
+        model = SAMLConfiguration
+        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class LighthouseConfigSerializer(RLSSerializer):

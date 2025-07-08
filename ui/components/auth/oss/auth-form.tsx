@@ -401,8 +401,7 @@ export const AuthForm = ({
                     </Tooltip>
                   </>
                 )}
-                {/* TODO after v5.8: Add SAML SSO back in */}
-                {/* <Button
+                <Button
                   startContent={
                     !isSamlMode && (
                       <Icon
@@ -419,7 +418,7 @@ export const AuthForm = ({
                   }}
                 >
                   {isSamlMode ? "Back" : "Continue with SAML SSO"}
-                </Button> */}
+                </Button>
               </div>
             </>
           )}

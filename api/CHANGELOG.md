@@ -4,6 +4,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.0] (Prowler UNRELEASED)
 
+### Added
+- SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
+
+---
+
+## [v1.9.1] (Prowler v5.8.1)
+
+### Fixed
+- Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)
+- Invitation email comparison case-insensitive [(#8206)](https://github.com/prowler-cloud/prowler/pull/8206)
+
+### Removed
+- Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
+
 ---
 
 ## [v1.9.0] (Prowler v5.8.0)
