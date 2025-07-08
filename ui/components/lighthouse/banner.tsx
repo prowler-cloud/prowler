@@ -62,7 +62,7 @@ export const LighthouseBanner = async () => {
     ) {
       return renderBanner({
         message: cachedRecommendations.data,
-        href: "/lighthouse",
+        href: "/lighthouse?cachedMessage=recommendation",
         gradient:
           "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:ring-blue-500/50 dark:from-blue-600 dark:to-purple-700 dark:hover:from-blue-700 dark:hover:to-purple-800 dark:focus:ring-blue-400/50",
       });
@@ -74,7 +74,7 @@ export const LighthouseBanner = async () => {
     if (isProcessing) {
       return renderBanner({
         message: "Lighthouse Is Reviewing Your Findings for Insights",
-        href: "/lighthouse",
+        href: "",
         gradient:
           "bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:ring-orange-500/50 dark:from-orange-600 dark:to-yellow-600 dark:hover:from-orange-700 dark:hover:to-yellow-700 dark:focus:ring-orange-400/50",
         animate: true,

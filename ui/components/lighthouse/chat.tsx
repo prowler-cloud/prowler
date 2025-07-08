@@ -2,43 +2,64 @@
 
 import { useChat } from "@ai-sdk/react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-
-interface SuggestedAction {
-  title: string;
-  label: string;
-  action: string;
-}
+import {
+  SuggestedAction,
+  suggestedActions,
+} from "@/lib/lighthouse/suggested-actions";
 
 interface ChatProps {
   hasConfig: boolean;
   isActive: boolean;
+  cachedContent?: string | null;
+  messageType?: string;
+  isProcessing: boolean;
+  questionAnswers: Record<string, string>;
 }
 
 interface ChatFormData {
   message: string;
 }
 
-export const Chat = ({ hasConfig, isActive }: ChatProps) => {
-  const { messages, handleSubmit, handleInputChange, append, status } = useChat(
-    {
-      api: "/api/lighthouse/analyst",
-      credentials: "same-origin",
-      experimental_throttle: 100,
-      sendExtraMessageFields: true,
-      onFinish: () => {
-        // Handle chat completion
-      },
-      onError: (error) => {
-        console.error("Chat error:", error);
-      },
+export const Chat = ({
+  hasConfig,
+  isActive,
+  cachedContent,
+  messageType,
+  isProcessing,
+  questionAnswers,
+}: ChatProps) => {
+  const {
+    messages,
+    handleSubmit,
+    handleInputChange,
+    append,
+    status,
+    setMessages,
+  } = useChat({
+    api: "/api/lighthouse/analyst",
+    credentials: "same-origin",
+    experimental_throttle: 100,
+    sendExtraMessageFields: true,
+    onFinish: () => {
+      // Handle chat completion
     },
+    onError: (error) => {
+      console.error("Chat error:", error);
+    },
+  });
+
+  // State for cached response streaming simulation
+  const [isStreamingCached, setIsStreamingCached] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null,
   );
+  const [currentStreamText, setCurrentStreamText] = useState("");
 
   const form = useForm<ChatFormData>({
     defaultValues: {
@@ -49,6 +70,149 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+
+  // Function to simulate streaming text
+  const simulateStreaming = useCallback(
+    async (text: string, messageId: string) => {
+      setIsStreamingCached(true);
+      setStreamingMessageId(messageId);
+      setCurrentStreamText("");
+
+      // Stream word by word with realistic delays
+      const words = text.split(" ");
+      let currentText = "";
+
+      for (let i = 0; i < words.length; i++) {
+        currentText += (i > 0 ? " " : "") + words[i];
+        setCurrentStreamText(currentText);
+
+        // Shorter delay between words for faster streaming
+        const delay = Math.random() * 80 + 40; // 40-120ms delay per word
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      setIsStreamingCached(false);
+      setStreamingMessageId(null);
+      setCurrentStreamText("");
+    },
+    [],
+  );
+
+  // Function to handle cached response for suggested actions
+  const handleCachedResponse = useCallback(
+    async (action: SuggestedAction) => {
+      if (!action.questionRef) {
+        // No question ref, use normal flow
+        append({
+          role: "user",
+          content: action.action,
+        });
+        return;
+      }
+
+      try {
+        if (isProcessing) {
+          // Processing in progress, fallback to real-time LLM
+          append({
+            role: "user",
+            content: action.action,
+          });
+          return;
+        }
+
+        // Check if we have cached answer
+        const cachedAnswer = questionAnswers[action.questionRef];
+
+        if (cachedAnswer) {
+          // Cache hit - use cached content with streaming simulation
+          const userMessageId = `user-cached-${Date.now()}`;
+          const assistantMessageId = `assistant-cached-${Date.now()}`;
+
+          const userMessage = {
+            id: userMessageId,
+            role: "user" as const,
+            content: action.action,
+          };
+
+          const assistantMessage = {
+            id: assistantMessageId,
+            role: "assistant" as const,
+            content: "",
+          };
+
+          const updatedMessages = [...messages, userMessage, assistantMessage];
+          setMessages(updatedMessages);
+
+          // Start streaming simulation
+          setTimeout(() => {
+            simulateStreaming(cachedAnswer, assistantMessageId);
+          }, 300);
+        } else {
+          // Cache miss/expired/error - fallback to real-time LLM
+          append({
+            role: "user",
+            content: action.action,
+          });
+        }
+      } catch (error) {
+        console.error("Error handling cached response:", error);
+        // Fall back to normal API flow
+        append({
+          role: "user",
+          content: action.action,
+        });
+      }
+    },
+    [
+      messages,
+      setMessages,
+      append,
+      simulateStreaming,
+      isProcessing,
+      questionAnswers,
+    ],
+  );
+
+  // Load cached message on mount if cachedContent is provided
+  useEffect(() => {
+    const loadCachedMessage = () => {
+      if (cachedContent && messages.length === 0) {
+        // Create different user questions based on message type
+        let userQuestion = "Tell me more about this";
+
+        if (messageType === "recommendation") {
+          userQuestion =
+            "Tell me more about the security issues Lighthouse found";
+        }
+        // Future: handle other message types
+        // else if (messageType === "question_1") {
+        //   userQuestion = "Previously cached question here";
+        // }
+
+        // Create message IDs
+        const userMessageId = `user-cached-${messageType}-${Date.now()}`;
+        const assistantMessageId = `assistant-cached-${messageType}-${Date.now()}`;
+
+        // Add user message
+        const userMessage = {
+          id: userMessageId,
+          role: "user" as const,
+          content: userQuestion,
+        };
+
+        // Add assistant message with the cached content
+        const assistantMessage = {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: cachedContent,
+        };
+
+        setMessages([userMessage, assistantMessage]);
+      }
+    };
+
+    loadCachedMessage();
+  }, [cachedContent, messageType, messages.length, setMessages]);
 
   // Sync form value with chat input
   useEffect(() => {
@@ -86,6 +250,19 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [messageValue, onFormSubmit]);
 
+  // Update assistant message content during streaming simulation
+  useEffect(() => {
+    if (isStreamingCached && streamingMessageId && currentStreamText) {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === streamingMessageId
+            ? { ...msg, content: currentStreamText }
+            : msg,
+        ),
+      );
+    }
+  }, [currentStreamText, isStreamingCached, streamingMessageId, setMessages]);
+
   useEffect(() => {
     if (messagesContainerRef.current && latestUserMsgRef.current) {
       const container = messagesContainerRef.current;
@@ -95,30 +272,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         userMsg.offsetTop - container.offsetTop - containerPadding;
     }
   }, [messages]);
-
-  const suggestedActions: SuggestedAction[] = [
-    {
-      title: "Are there any exposed S3",
-      label: "buckets in my AWS accounts?",
-      action: "List exposed S3 buckets in my AWS accounts",
-    },
-    {
-      title: "What is the risk of having",
-      label: "RDS databases unencrypted?",
-      action: "What is the risk of having RDS databases unencrypted?",
-    },
-    {
-      title: "What is the CIS 1.10 compliance status",
-      label: "of my Kubernetes cluster?",
-      action:
-        "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
-    },
-    {
-      title: "List my highest privileged",
-      label: "AWS IAM users with full admin access?",
-      action: "List my highest privileged AWS IAM users with full admin access",
-    },
-  ];
 
   // Determine if chat should be disabled
   const shouldDisableChat = !hasConfig || !isActive;
@@ -158,10 +311,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                   key={`suggested-action-${index}`}
                   ariaLabel={`Send message: ${action.action}`}
                   onPress={() => {
-                    append({
-                      role: "user",
-                      content: action.action,
-                    });
+                    handleCachedResponse(action); // Use cached response handler
                   }}
                   className="hover:bg-muted flex h-auto w-full flex-col items-start justify-start rounded-xl border bg-gray-50 px-4 py-3.5 text-left font-sans text-sm dark:bg-gray-900"
                 >
@@ -211,10 +361,12 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               </div>
             );
           })}
-          {status === "submitted" && (
+          {(status === "submitted" || isStreamingCached) && (
             <div className="flex justify-start">
               <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                <div className="animate-pulse">Thinking...</div>
+                <div className="animate-pulse">
+                  {isStreamingCached ? "" : "Thinking..."}
+                </div>
               </div>
             </div>
           )}
@@ -245,10 +397,18 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               ariaLabel={
                 status === "submitted" ? "Stop generation" : "Send message"
               }
-              isDisabled={status === "submitted" || !messageValue?.trim()}
+              isDisabled={
+                status === "submitted" ||
+                isStreamingCached ||
+                !messageValue?.trim()
+              }
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
             >
-              {status === "submitted" ? <span>■</span> : <span>➤</span>}
+              {status === "submitted" || isStreamingCached ? (
+                <span>■</span>
+              ) : (
+                <span>➤</span>
+              )}
             </CustomButton>
           </div>
         </form>

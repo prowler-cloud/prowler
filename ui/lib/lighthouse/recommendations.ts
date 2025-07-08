@@ -2,7 +2,10 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 
-export const generateRecommendation = async (
+import { type SuggestedAction } from "./suggested-actions";
+import { initLighthouseWorkflow } from "./workflow";
+
+export const generateDetailedRecommendation = async (
   scanSummary: string,
 ): Promise<string> => {
   try {
@@ -11,52 +14,56 @@ export const generateRecommendation = async (
       return "";
     }
 
-    // Get lighthouse configuration
     const lighthouseConfig = await getLighthouseConfig();
     if (!lighthouseConfig?.attributes) {
       return "";
     }
 
     const config = lighthouseConfig.attributes;
-    const finalBusinessContext = config.business_context || "";
+    const businessContext = config.business_context || "";
 
     const llm = new ChatOpenAI({
       model: config.model || "gpt-4o",
       temperature: config.temperature || 0,
-      maxTokens: 150,
+      maxTokens: 1500,
       apiKey: apiKey,
     });
 
-    // Build the prompt with business context awareness
-    let systemPrompt = `You are a cloud security analyst creating concise business recommendations for a banner notification.
+    let systemPrompt = `You are a cloud security analyst providing focused, actionable recommendations.
 
-IMPORTANT: Your response must be a single, short sentence (max 80 characters) that would make a user want to click on a banner to learn more.
+IMPORTANT: Focus on ONE of these high-impact opportunities:
+1. The most CRITICAL finding that needs immediate attention
+2. A pattern where fixing one check ID resolves many findings (e.g., "Fix aws_s3_bucket_public_access_block to resolve 15 findings")
+3. The issue with highest business impact
 
-GUIDELINES:
-- Frame recommendations in business terms, not technical jargon
-- Focus on actionable insights
-- Make it clickable and engaging
-- Don't use phrases like "Lighthouse says" or "Lighthouse recommends"
-- Be specific about the type of improvement when possible
-- Use only information from the security scan summary to generate the recommendation
-- Add words like "Lighthouse" to the recommendation
-- Don't end with a question mark or full stop
-- Don't use words like "urges" or "requires"
-- Don't wrap the message in double quotes or single quotes
-- Use words like "detected" or "found" to describe the issue
+Your response should be a comprehensive analysis of this ONE focus area including:
 
-EXAMPLES OF GOOD RESPONSES:
-- Lighthouse detected critical issues in authentication services
-- Lighthouse found a new exposed S3 bucket in recent scan
-- Lighthouse identified fixing one check could resolve 30 open findings
+**Issue Description:**
+- What exactly is the problem
+- Why it's critical or high-impact
+- How many findings it affects
 
-Based on the below security scan summary, generate ONE short business recommendation:`;
+**Affected Resources:**
+- Specific resources, services, or configurations involved
+- Number of affected resources
 
-    if (finalBusinessContext) {
-      systemPrompt += `\n\nBUSINESS CONTEXT: ${finalBusinessContext}`;
+**Business Impact:**
+- Security risks and potential consequences
+- Compliance violations (mention specific frameworks if applicable)
+- Operational impact
+
+**Remediation Steps:**
+- Clear, step-by-step instructions
+- Specific commands or configuration changes where applicable
+- Expected outcome after fix
+
+Be specific with numbers (e.g., "affects 12 S3 buckets", "resolves 15 findings"). Focus on actionable guidance that will have the biggest security improvement.`;
+
+    if (businessContext) {
+      systemPrompt += `\n\nBUSINESS CONTEXT: ${businessContext}`;
     }
 
-    systemPrompt += `\n\nBased on this security scan summary, generate 1 engaging banner message:\n\n${scanSummary}`;
+    systemPrompt += `\n\nSecurity Scan Summary:\n${scanSummary}`;
 
     const response = await llm.invoke([
       {
@@ -65,11 +72,128 @@ Based on the below security scan summary, generate ONE short business recommenda
       },
     ]);
 
-    const recommendation = response.content.toString().trim();
-
-    return recommendation.length > 0 ? recommendation : "";
+    return response.content.toString().trim();
   } catch (error) {
-    console.error("Error generating recommendation:", error);
+    console.error("Error generating detailed recommendation:", error);
     return "";
   }
+};
+
+export const generateBannerFromDetailed = async (
+  detailedRecommendation: string,
+): Promise<string> => {
+  try {
+    const apiKey = await getAIKey();
+    if (!apiKey) {
+      return "";
+    }
+
+    const lighthouseConfig = await getLighthouseConfig();
+    if (!lighthouseConfig?.attributes) {
+      return "";
+    }
+
+    const config = lighthouseConfig.attributes;
+
+    const llm = new ChatOpenAI({
+      model: config.model || "gpt-4o",
+      temperature: config.temperature || 0,
+      maxTokens: 100,
+      apiKey: apiKey,
+    });
+
+    const systemPrompt = `Create a short, engaging banner message from this detailed security analysis.
+
+REQUIREMENTS:
+- Maximum 80 characters
+- Include "Lighthouse" in the message
+- Focus on the key insight or opportunity
+- Make it clickable and business-focused
+- Use action words like "detected", "found", "identified"
+- Don't end with punctuation
+
+EXAMPLES:
+- Lighthouse found fixing 1 S3 check resolves 15 findings
+- Lighthouse detected critical RDS encryption gaps
+- Lighthouse identified 3 exposed databases needing attention
+
+Based on this detailed analysis, create one engaging banner message:
+
+${detailedRecommendation}`;
+
+    const response = await llm.invoke([
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+    ]);
+
+    return response.content.toString().trim();
+  } catch (error) {
+    console.error(
+      "Error generating banner from detailed recommendation:",
+      error,
+    );
+    return "";
+  }
+};
+
+// Legacy function for backward compatibility
+export const generateRecommendation = async (
+  scanSummary: string,
+): Promise<string> => {
+  const detailed = await generateDetailedRecommendation(scanSummary);
+  if (!detailed) return "";
+
+  return await generateBannerFromDetailed(detailed);
+};
+
+export const generateQuestionAnswers = async (
+  questions: SuggestedAction[],
+): Promise<Record<string, string>> => {
+  const answers: Record<string, string> = {};
+
+  try {
+    const apiKey = await getAIKey();
+    if (!apiKey) {
+      return answers;
+    }
+
+    // Initialize the workflow system
+    const workflow = await initLighthouseWorkflow();
+
+    for (const question of questions) {
+      if (!question.questionRef) continue;
+
+      try {
+        // Use the existing workflow to answer the question
+        const result = await workflow.invoke({
+          messages: [
+            {
+              role: "user",
+              content: question.action,
+            },
+          ],
+        });
+
+        // Extract the final message content
+        const finalMessage = result.messages[result.messages.length - 1];
+        if (finalMessage?.content) {
+          answers[question.questionRef] = finalMessage.content
+            .toString()
+            .trim();
+        }
+      } catch (error) {
+        console.error(
+          `Error generating answer for question ${question.questionRef}:`,
+          error,
+        );
+        continue;
+      }
+    }
+  } catch (error) {
+    console.error("Error generating question answers:", error);
+  }
+
+  return answers;
 };

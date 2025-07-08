@@ -2,11 +2,16 @@ import Valkey from "iovalkey";
 
 import { auth } from "@/auth.config";
 
-import { generateRecommendation } from "./recommendations";
 import {
+  generateBannerFromDetailed,
+  generateDetailedRecommendation,
+  generateQuestionAnswers,
+} from "./recommendations";
+import { suggestedActions } from "./suggested-actions";
+import {
+  compareProcessedScanIds,
   generateSecurityScanSummary,
   getCompletedScansLast24h,
-  compareProcessedScanIds,
 } from "./summary";
 
 let valkeyClient: Valkey | null = null;
@@ -136,18 +141,12 @@ export class CacheService {
           await this.setProcessedScanIds(scanIds);
 
           // Generate and cache recommendations asynchronously
-          this.generateAndCacheRecommendations(scanSummary)
-            .then((result) => {
-              if (result.success && result.data) {
-                console.log("Background recommendation generated successfully");
-              }
-            })
-            .catch((error) => {
-              console.error(
-                "Background recommendation generation failed:",
-                error,
-              );
-            });
+          this.generateAndCacheRecommendations(scanSummary).catch((error) => {
+            console.error(
+              "Background recommendation generation failed:",
+              error,
+            );
+          });
 
           return {
             success: true,
@@ -207,10 +206,6 @@ export class CacheService {
     }
   }
 
-  static async getCachedMessage(): Promise<string | null> {
-    return await this.get("scan-summary");
-  }
-
   static async getRecommendations(): Promise<{
     success: boolean;
     data?: string;
@@ -245,6 +240,7 @@ export class CacheService {
 
     const lockKey = "recommendations-processing";
     const dataKey = `_lighthouse:${tenantId}:recommendations`;
+    const detailedDataKey = `_lighthouse:${tenantId}:cached-messages:recommendation`;
 
     try {
       const client = await getValkeyClient();
@@ -280,17 +276,40 @@ export class CacheService {
           };
         }
 
-        // Generate recommendation using LLM
-        const recommendation = await generateRecommendation(scanSummary);
+        // Generate detailed recommendation first
+        const detailedRecommendation =
+          await generateDetailedRecommendation(scanSummary);
 
-        // Only cache non-empty recommendations
-        if (recommendation.trim()) {
-          await client.set(dataKey, recommendation);
+        if (!detailedRecommendation.trim()) {
+          return { success: true, data: "" };
+        }
+
+        // Generate banner from detailed content
+        const bannerRecommendation = await generateBannerFromDetailed(
+          detailedRecommendation,
+        );
+
+        // Both must succeed - no point in detailed without banner
+        if (!bannerRecommendation.trim()) {
+          return { success: true, data: "" };
+        }
+
+        // Generate question answers
+        const questionAnswers = await generateQuestionAnswers(suggestedActions);
+
+        // Cache both versions
+        await client.set(dataKey, bannerRecommendation);
+        await client.set(detailedDataKey, detailedRecommendation);
+
+        // Cache question answers with 24h TTL
+        for (const [questionRef, answer] of Object.entries(questionAnswers)) {
+          const questionKey = `_lighthouse:${tenantId}:cached-messages:question_${questionRef}`;
+          await client.set(questionKey, answer, "EX", 86400); // 24 hours
         }
 
         return {
           success: true,
-          data: recommendation,
+          data: bannerRecommendation,
         };
       } finally {
         await this.releaseProcessingLock(tenantId, lockKey);
@@ -312,6 +331,52 @@ export class CacheService {
       const result = await client.get(lockKey);
       return result !== null;
     } catch (error) {
+      return false;
+    }
+  }
+
+  // New method to get cached message by type
+  static async getCachedMessage(messageType: string): Promise<{
+    success: boolean;
+    data?: string;
+  }> {
+    const tenantId = await this.getTenantId();
+    if (!tenantId) return { success: false };
+
+    try {
+      const client = await getValkeyClient();
+      const dataKey = `_lighthouse:${tenantId}:cached-messages:${messageType}`;
+
+      const cachedData = await client.get(dataKey);
+      if (cachedData) {
+        return {
+          success: true,
+          data: cachedData.toString(),
+        };
+      }
+
+      return { success: true, data: undefined };
+    } catch (error) {
+      console.error(`Error getting cached message ${messageType}:`, error);
+      return { success: false };
+    }
+  }
+
+  // New method to set cached message by type
+  static async setCachedMessage(
+    messageType: string,
+    content: string,
+  ): Promise<boolean> {
+    const tenantId = await this.getTenantId();
+    if (!tenantId) return false;
+
+    try {
+      const client = await getValkeyClient();
+      const dataKey = `_lighthouse:${tenantId}:cached-messages:${messageType}`;
+      await client.set(dataKey, content);
+      return true;
+    } catch (error) {
+      console.error(`Error caching message type ${messageType}:`, error);
       return false;
     }
   }
