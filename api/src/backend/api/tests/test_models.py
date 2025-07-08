@@ -3,7 +3,7 @@ from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 
 from api.db_router import MainRouter
-from api.models import Resource, ResourceTag, SAMLConfiguration, Tenant
+from api.models import Resource, ResourceTag, SAMLConfiguration, SAMLDomainIndex, Tenant
 
 
 @pytest.mark.django_db
@@ -269,3 +269,40 @@ class TestSAMLConfigurationModel:
         errors = exc_info.value.message_dict
         assert "metadata_xml" in errors
         assert "X509Certificate" in errors["metadata_xml"][0]
+
+    def test_deletes_saml_configuration_and_related_objects(self):
+        tenant = Tenant.objects.using(MainRouter.admin_db).create(
+            name="Tenant for Deletion"
+        )
+        email_domain = "deleteme.com"
+
+        # Create the configuration
+        config = SAMLConfiguration.objects.using(MainRouter.admin_db).create(
+            email_domain=email_domain,
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
+            tenant=tenant,
+        )
+
+        # Verify that the SocialApp and SAMLDomainIndex exist
+        assert SocialApp.objects.filter(client_id=email_domain).exists()
+        assert (
+            SAMLDomainIndex.objects.using(MainRouter.admin_db)
+            .filter(email_domain=email_domain)
+            .exists()
+        )
+
+        # Delete the configuration
+        config.delete()
+
+        # Verify that the configuration and its related objects are deleted
+        assert (
+            not SAMLConfiguration.objects.using(MainRouter.admin_db)
+            .filter(pk=config.pk)
+            .exists()
+        )
+        assert not SocialApp.objects.filter(client_id=email_domain).exists()
+        assert (
+            not SAMLDomainIndex.objects.using(MainRouter.admin_db)
+            .filter(email_domain=email_domain)
+            .exists()
+        )
