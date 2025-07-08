@@ -1,8 +1,7 @@
 import { Spacer } from "@nextui-org/react";
-import { format, subDays } from "date-fns";
 import { Suspense } from "react";
 
-import { getFindings } from "@/actions/findings/findings";
+import { getLatestFindings } from "@/actions/findings/findings";
 import {
   getFindingsBySeverity,
   getFindingsByStatus,
@@ -129,15 +128,12 @@ const SSRDataNewFindingsTable = async () => {
   const page = 1;
   const sort = "severity,-inserted_at";
 
-  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
-
   const defaultFilters = {
-    "filter[status__in]": "FAIL",
-    "filter[delta__in]": "new",
-    "filter[inserted_at__gte]": twoDaysAgo,
+    "filter[status]": "FAIL",
+    "filter[delta]": "new",
   };
 
-  const findingsData = await getFindings({
+  const findingsData = await getLatestFindings({
     query: undefined,
     page,
     sort,
@@ -178,8 +174,7 @@ const SSRDataNewFindingsTable = async () => {
             Latest new failing findings
           </h3>
           <p className="text-xs text-gray-500">
-            Showing the latest 10 new failing findings by severity from the last
-            2 days.
+            Showing the latest 10 new failing findings by severity.
           </p>
         </div>
         <div className="absolute -top-6 right-0">
