@@ -255,3 +255,72 @@ class Test_firehose_stream_encrypted_at_rest:
                     result[0].status_extended
                     == f"Firehose Stream {stream_name} does not have at rest encryption enabled."
                 )
+
+    @mock_aws
+    def test_stream_kinesis_source_encrypted(self):
+        # Generate Kinesis client
+        kinesis_client = client("kinesis", region_name=AWS_REGION_EU_WEST_1)
+        kinesis_client.create_stream(
+            StreamName="test-kinesis-stream",
+            ShardCount=1,
+        )
+        kinesis_stream_arn = f"arn:aws:kinesis:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:stream/test-kinesis-stream"
+
+        # Enable encryption on the Kinesis stream
+        kinesis_client.start_stream_encryption(
+            StreamName="test-kinesis-stream",
+            EncryptionType="KMS",
+            KeyId=f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-kms-key-id",
+        )
+
+        # Generate Firehose client
+        firehose_client = client("firehose", region_name=AWS_REGION_EU_WEST_1)
+        delivery_stream = firehose_client.create_delivery_stream(
+            DeliveryStreamName="test-delivery-stream",
+            DeliveryStreamType="KinesisStreamAsSource",
+            KinesisStreamSourceConfiguration={
+                "KinesisStreamARN": kinesis_stream_arn,
+                "RoleARN": "arn:aws:iam::012345678901:role/firehose-role",
+            },
+            S3DestinationConfiguration={
+                "RoleARN": "arn:aws:iam::012345678901:role/firehose-role",
+                "BucketARN": "arn:aws:s3:::test-bucket",
+                "Prefix": "",
+                "BufferingHints": {"IntervalInSeconds": 300, "SizeInMBs": 5},
+                "CompressionFormat": "UNCOMPRESSED",
+            },
+            Tags=[{"Key": "key", "Value": "value"}],
+        )
+        arn = delivery_stream["DeliveryStreamARN"]
+        stream_name = arn.split("/")[-1]
+
+        from prowler.providers.aws.services.firehose.firehose_service import Firehose
+        from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.firehose.firehose_stream_encrypted_at_rest.firehose_stream_encrypted_at_rest.firehose_client",
+                new=Firehose(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.firehose.firehose_stream_encrypted_at_rest.firehose_stream_encrypted_at_rest.kinesis_client",
+                    new=Kinesis(aws_provider),
+                ):
+                    # Test Check
+                    from prowler.providers.aws.services.firehose.firehose_stream_encrypted_at_rest.firehose_stream_encrypted_at_rest import (
+                        firehose_stream_encrypted_at_rest,
+                    )
+
+                    check = firehose_stream_encrypted_at_rest()
+                    result = check.execute()
+
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Firehose Stream {stream_name} does not have at rest encryption enabled but the source stream test-kinesis-stream has at rest encryption enabled."
+                    )
