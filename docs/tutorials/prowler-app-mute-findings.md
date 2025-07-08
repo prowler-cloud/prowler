@@ -5,6 +5,7 @@ Prowler App allows users to mute specific findings to focus on the most critical
 ## What Is the Mutelist Feature?
 
 The Mutelist feature enables users to:
+
 - **Suppress specific findings** from appearing in future scans
 - **Focus on critical issues** by hiding resolved or accepted risks
 - **Maintain audit trails** of muted findings for compliance purposes
@@ -13,6 +14,7 @@ The Mutelist feature enables users to:
 ## Prerequisites
 
 Before muting findings, ensure:
+
 - Valid access to Prowler App with appropriate permissions
 - A provider added to the Prowler App
 - Understanding of the security implications of muting specific findings
