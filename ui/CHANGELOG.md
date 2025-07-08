@@ -20,7 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [v1.8.1] (Prowler 5.8.1)
 
 ### 🔄 Changed
-- Latest new failed findings now use `GET /findings/latest` [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
 
 ### Removed
 - Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
