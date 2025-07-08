@@ -7,10 +7,27 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
+- SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
 
 ### 🔄 Changed
 
+- Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
+
 ### 🐞 Fixed
+
+### Removed
+
+---
+
+## [v1.8.1] (Prowler 5.8.1)
+
+### 🔄 Changed
+
+- Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
+
+### Removed
+
+- Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
 ---
 
@@ -33,7 +50,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
 - Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
-<!-- - SAML login integration [(#8094)](https://github.com/prowler-cloud/prowler/pull/8094) -->
 
 ### 🔄 Changed
 

@@ -5,6 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     DeleteRetentionPolicy,
     FileServiceProperties,
+    SMBProtocolSettings,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -87,6 +88,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
             name="default",
             type="Microsoft.Storage/storageAccounts/fileServices",
             share_delete_retention_policy=retention_policy,
+            smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -145,6 +147,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
             name="default",
             type="Microsoft.Storage/storageAccounts/fileServices",
             share_delete_retention_policy=retention_policy,
+            smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [

@@ -24,7 +24,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         # Link existing accounts with the same email address
         email = sociallogin.account.extra_data.get("email")
-        if sociallogin.account.provider == "saml":
+        if sociallogin.provider.id == "saml":
             email = sociallogin.user.email
         if email:
             existing_user = self.get_user_by_email(email)
@@ -38,33 +38,40 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         with transaction.atomic(using=MainRouter.admin_db):
             user = super().save_user(request, sociallogin, form)
-            provider = sociallogin.account.provider
+            provider = sociallogin.provider.id
             extra = sociallogin.account.extra_data
 
-            if provider == "saml":
-                # Handle SAML-specific logic
-                user.first_name = (
-                    extra.get("firstName", [""])[0] if extra.get("firstName") else ""
-                )
-                user.last_name = (
-                    extra.get("lastName", [""])[0] if extra.get("lastName") else ""
-                )
-                user.company_name = (
-                    extra.get("organization", [""])[0]
-                    if extra.get("organization")
-                    else ""
-                )
-                user.name = f"{user.first_name} {user.last_name}".strip()
-                if user.name == "":
-                    user.name = "N/A"
+            if provider != "saml":
+                # Handle other providers (e.g., GitHub, Google)
                 user.save(using=MainRouter.admin_db)
+                social_account_name = extra.get("name")
+                if social_account_name:
+                    user.name = social_account_name
+                    user.save(using=MainRouter.admin_db)
 
-                email_domain = user.email.split("@")[-1]
-                tenant = (
-                    SAMLConfiguration.objects.using(MainRouter.admin_db)
-                    .get(email_domain=email_domain)
-                    .tenant
+                tenant = Tenant.objects.using(MainRouter.admin_db).create(
+                    name=f"{user.email.split('@')[0]} default tenant"
                 )
+                with rls_transaction(str(tenant.id)):
+                    Membership.objects.using(MainRouter.admin_db).create(
+                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+                    )
+                    role = Role.objects.using(MainRouter.admin_db).create(
+                        name="admin",
+                        tenant_id=tenant.id,
+                        manage_users=True,
+                        manage_account=True,
+                        manage_billing=True,
+                        manage_providers=True,
+                        manage_integrations=True,
+                        manage_scans=True,
+                        unlimited_visibility=True,
+                    )
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user,
+                        role=role,
+                        tenant_id=tenant.id,
+                    )
 
                 with rls_transaction(str(tenant.id)):
                     role_name = (

@@ -77,6 +77,7 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     MembershipFilter,
+    ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
     ProviderSecretFilter,
@@ -97,6 +98,7 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -150,6 +152,9 @@ from api.v1.serializers import (
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
+    ProcessorCreateSerializer,
+    ProcessorSerializer,
+    ProcessorUpdateSerializer,
     ProviderCreateSerializer,
     ProviderGroupCreateSerializer,
     ProviderGroupMembershipSerializer,
@@ -347,6 +352,11 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
                 "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
             },
+            {
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
+            },
         ]
         return super().get(request, *args, **kwargs)
 
@@ -449,8 +459,6 @@ class CustomSAMLLoginView(LoginView):
         if request.method == "GET":
             # Convert GET to POST while preserving parameters
             request.method = "POST"
-            # Safe because SAML validates signatures
-            request.POST = request.GET.copy()
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -557,14 +565,26 @@ class TenantFinishACSView(FinishACSView):
         if not user or not user.is_authenticated:
             return response
 
+        # Defensive check to avoid edge case failures due to inconsistent or incomplete data in the database
+        # This handles scenarios like partially deleted or missing related objects
         try:
+            check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
+            with rls_transaction(str(check.tenant_id)):
+                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )
+            user_id = User.objects.get(email=str(user)).id
             social_account = SocialAccount.objects.get(
-                user=user, provider=social_app.provider
+                user=str(user_id), provider=social_app.provider_id
             )
-        except (SocialApp.DoesNotExist, SocialAccount.DoesNotExist):
+        except (
+            SAMLDomainIndex.DoesNotExist,
+            SAMLConfiguration.DoesNotExist,
+            SocialApp.DoesNotExist,
+            SocialAccount.DoesNotExist,
+            User.DoesNotExist,
+        ):
             return response
 
         extra = social_account.extra_data
@@ -626,7 +646,9 @@ class TenantFinishACSView(FinishACSView):
             },
         )
 
-        serializer = TokenSocialLoginSerializer(data={"email": user.email})
+        serializer = TokenSocialLoginSerializer(
+            data={"email": user.email, "tenant_id": str(tenant.id)}
+        )
         serializer.is_valid(raise_exception=True)
 
         token_data = serializer.validated_data
@@ -2137,9 +2159,12 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         # ToRemove: Temporary fallback mechanism
         if not queryset.exists():
-            scan_ids = Scan.objects.filter(
+            raw_scans_ids = Scan.objects.filter(
                 tenant_id=tenant_id, **scan_based_filters
-            ).values_list("id", flat=True)
+            ).values_list("id", "unique_resource_count")
+            scan_ids = [
+                scan_id for scan_id, count in raw_scans_ids if count and count > 0
+            ]
             for scan_id in scan_ids:
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
@@ -2225,7 +2250,12 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
         )
-        latest_scans_ids = list(latest_scans_queryset.values_list("id", flat=True))
+        raw_latest_scans_ids = list(
+            latest_scans_queryset.values_list("id", "unique_resource_count")
+        )
+        latest_scans_ids = [
+            scan_id for scan_id, count in raw_latest_scans_ids if count and count > 0
+        ]
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -3563,3 +3593,54 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Processor"],
+        summary="List all processors",
+        description="Retrieve a list of all configured processors with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Processor"],
+        summary="Retrieve processor details",
+        description="Fetch detailed information about a specific processor by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Processor"],
+        summary="Create a new processor",
+        description="Register a new processor with the system, providing necessary configuration details. There can "
+        "only be one processor of each type per tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["Processor"],
+        summary="Partially update a processor",
+        description="Modify certain fields of an existing processor without affecting other settings.",
+    ),
+    destroy=extend_schema(
+        tags=["Processor"],
+        summary="Delete a processor",
+        description="Remove a processor from the system by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ProcessorViewSet(BaseRLSViewSet):
+    queryset = Processor.objects.all()
+    serializer_class = ProcessorSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = ProcessorFilter
+    ordering = ["processor_type", "-inserted_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def get_queryset(self):
+        queryset = Processor.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return ProcessorCreateSerializer
+        elif self.action == "partial_update":
+            return ProcessorUpdateSerializer
+        return super().get_serializer_class()
