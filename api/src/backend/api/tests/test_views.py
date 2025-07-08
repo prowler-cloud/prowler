@@ -2038,6 +2038,104 @@ class TestProviderSecretViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_provider_secrets_partial_update_with_secret_type(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                    "secret_type": "service_account",
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.name == "new_name"
+        assert provider_secret.secret == {"service_account_key": {}}
+
+    def test_provider_secrets_partial_update_with_invalid_secret_type(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                    "secret_type": "static",
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_provider_secrets_partial_update_without_secret_type_but_different(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
 
 @pytest.mark.django_db
 class TestScanViewSet:
