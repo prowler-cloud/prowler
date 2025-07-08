@@ -74,9 +74,9 @@ Lighthouse can provide additional context to help you understand the findings:
 - Provide risk assessments based on your environment and context
 - Connect related findings to show broader security patterns
 
-<img src="../img/lighthouse-feature3a.png" alt="Business Context">
+<img src="../img/lighthouse-config.png" alt="Business Context">
 
-<img src="../img/lighthouse-feature3b.png" alt="Contextual Responses">
+<img src="../img/lighthouse-feature3.png" alt="Contextual Responses">
 
 ## Important Notes
 
