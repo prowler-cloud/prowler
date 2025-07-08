@@ -6,6 +6,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
+- `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+
+### Changed
+- Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
 ---
 
@@ -29,7 +33,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)
-- `/metadata` and `/latest` endpoints for `/resources`. Performance improvements [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
