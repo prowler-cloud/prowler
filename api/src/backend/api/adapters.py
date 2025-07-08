@@ -3,14 +3,7 @@ from django.db import transaction
 
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
-from api.models import (
-    Membership,
-    Role,
-    SAMLConfiguration,
-    Tenant,
-    User,
-    UserRoleRelationship,
-)
+from api.models import Membership, Role, Tenant, User, UserRoleRelationship
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -42,74 +35,6 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
             extra = sociallogin.account.extra_data
 
             if provider != "saml":
-                # Handle other providers (e.g., GitHub, Google)
-                user.save(using=MainRouter.admin_db)
-                social_account_name = extra.get("name")
-                if social_account_name:
-                    user.name = social_account_name
-                    user.save(using=MainRouter.admin_db)
-
-                tenant = Tenant.objects.using(MainRouter.admin_db).create(
-                    name=f"{user.email.split('@')[0]} default tenant"
-                )
-                with rls_transaction(str(tenant.id)):
-                    Membership.objects.using(MainRouter.admin_db).create(
-                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
-                    )
-                    role = Role.objects.using(MainRouter.admin_db).create(
-                        name="admin",
-                        tenant_id=tenant.id,
-                        manage_users=True,
-                        manage_account=True,
-                        manage_billing=True,
-                        manage_providers=True,
-                        manage_integrations=True,
-                        manage_scans=True,
-                        unlimited_visibility=True,
-                    )
-                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                        user=user,
-                        role=role,
-                        tenant_id=tenant.id,
-                    )
-
-                with rls_transaction(str(tenant.id)):
-                    role_name = (
-                        extra.get("userType", ["saml_default_role"])[0].strip()
-                        if extra.get("userType")
-                        else "saml_default_role"
-                    )
-
-                    try:
-                        role = Role.objects.using(MainRouter.admin_db).get(
-                            name=role_name, tenant_id=tenant.id
-                        )
-                    except Role.DoesNotExist:
-                        role = Role.objects.using(MainRouter.admin_db).create(
-                            name=role_name,
-                            tenant_id=tenant.id,
-                            manage_users=False,
-                            manage_account=False,
-                            manage_billing=False,
-                            manage_providers=False,
-                            manage_integrations=False,
-                            manage_scans=False,
-                            unlimited_visibility=False,
-                        )
-
-                    Membership.objects.using(MainRouter.admin_db).create(
-                        user=user,
-                        tenant=tenant,
-                        role=Membership.RoleChoices.MEMBER,
-                    )
-
-                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                        user=user,
-                        role=role,
-                        tenant_id=tenant.id,
-                    )
-
-            else:
                 # Handle other providers (e.g., GitHub, Google)
                 user.save(using=MainRouter.admin_db)
                 social_account_name = extra.get("name")
