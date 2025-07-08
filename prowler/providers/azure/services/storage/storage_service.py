@@ -1,6 +1,5 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from azure.mgmt.storage import StorageManagementClient
 from pydantic import BaseModel
@@ -203,30 +202,26 @@ class Storage(AzureService):
                     )
 
 
-@dataclass
-class DeleteRetentionPolicy:
+class DeleteRetentionPolicy(BaseModel):
     enabled: bool
     days: int
 
 
-@dataclass
-class BlobProperties:
+class BlobProperties(BaseModel):
     id: str
     name: str
     type: str
-    default_service_version: str
     container_delete_retention_policy: DeleteRetentionPolicy
-    versioning_enabled: bool = False
+    default_service_version: Optional[str] = None
+    versioning_enabled: Optional[bool] = None
 
 
-@dataclass
-class NetworkRuleSet:
+class NetworkRuleSet(BaseModel):
     bypass: str
     default_action: str
 
 
-@dataclass
-class PrivateEndpointConnection:
+class PrivateEndpointConnection(BaseModel):
     id: str
     name: str
     type: str
@@ -255,19 +250,18 @@ class FileServiceProperties(BaseModel):
     smb_protocol_settings: SMBProtocolSettings
 
 
-@dataclass
-class Account:
+class Account(BaseModel):
     id: str
     name: str
     resouce_group_name: str
     enable_https_traffic_only: bool
-    infrastructure_encryption: bool
+    infrastructure_encryption: Optional[bool] = None
     allow_blob_public_access: bool
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
-    private_endpoint_connections: List[PrivateEndpointConnection]
-    key_expiration_period_in_days: str
+    private_endpoint_connections: list[PrivateEndpointConnection]
+    key_expiration_period_in_days: Optional[str] = None
     location: str
     replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
     allow_cross_tenant_replication: bool = True
