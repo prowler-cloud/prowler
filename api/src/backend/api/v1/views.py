@@ -1998,9 +1998,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        queryset = self._optimize_tags_loading(self.get_queryset())
+        instance = get_object_or_404(queryset, pk=kwargs.get("pk"))
+        mapping_ids = list(
+            ResourceFindingMapping.objects.filter(
+                resource=instance, tenant_id=request.tenant_id
+            ).values_list("finding_id", flat=True)
+        )
         latest_findings = (
-            instance.findings.filter(tenant_id=self.request.tenant_id)
+            Finding.all_objects.filter(id__in=mapping_ids, tenant_id=request.tenant_id)
             .order_by("uid", "-inserted_at")
             .distinct("uid")
         )
