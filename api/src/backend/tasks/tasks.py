@@ -51,7 +51,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id, scan_id),
-        generate_outputs.si(
+        generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
     ).apply_async()
@@ -249,7 +249,7 @@ def delete_tenant_task(tenant_id: str):
     queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
-def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
+def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """
     Process findings in batches and generate output files in multiple formats.
 

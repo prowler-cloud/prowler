@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tasks.tasks import generate_outputs
+from tasks.tasks import generate_outputs_task
 
 
 @pytest.mark.django_db
@@ -17,7 +17,7 @@ class TestGenerateOutputs:
         with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
             mock_filter.return_value.exists.return_value = False
 
-            result = generate_outputs(
+            result = generate_outputs_task(
                 scan_id=self.scan_id,
                 provider_id=self.provider_id,
                 tenant_id=self.tenant_id,
@@ -99,7 +99,7 @@ class TestGenerateOutputs:
             mock_compress.return_value = "/tmp/zipped.zip"
             mock_upload.return_value = "s3://bucket/zipped.zip"
 
-            result = generate_outputs(
+            result = generate_outputs_task(
                 scan_id=self.scan_id,
                 provider_id=self.provider_id,
                 tenant_id=self.tenant_id,
@@ -150,7 +150,7 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            result = generate_outputs(
+            result = generate_outputs_task(
                 scan_id="scan",
                 provider_id="provider",
                 tenant_id=self.tenant_id,
@@ -208,7 +208,7 @@ class TestGenerateOutputs:
                     {"aws": [(lambda x: True, MagicMock())]},
                 ),
             ):
-                generate_outputs(
+                generate_outputs_task(
                     scan_id=self.scan_id,
                     provider_id=self.provider_id,
                     tenant_id=self.tenant_id,
@@ -276,7 +276,7 @@ class TestGenerateOutputs:
                     }
                 },
             ):
-                result = generate_outputs(
+                result = generate_outputs_task(
                     scan_id=self.scan_id,
                     provider_id=self.provider_id,
                     tenant_id=self.tenant_id,
@@ -346,7 +346,7 @@ class TestGenerateOutputs:
         ):
             mock_summary.return_value.exists.return_value = True
 
-            result = generate_outputs(
+            result = generate_outputs_task(
                 scan_id=self.scan_id,
                 provider_id=self.provider_id,
                 tenant_id=self.tenant_id,
@@ -407,7 +407,7 @@ class TestGenerateOutputs:
                 ),
             ):
                 with caplog.at_level("ERROR"):
-                    generate_outputs(
+                    generate_outputs_task(
                         scan_id=self.scan_id,
                         provider_id=self.provider_id,
                         tenant_id=self.tenant_id,
