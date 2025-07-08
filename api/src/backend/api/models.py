@@ -943,6 +943,11 @@ class Invitation(RowLevelSecurityProtectedModel):
         null=True,
     )
 
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
 
