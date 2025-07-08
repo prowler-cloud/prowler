@@ -1,10 +1,11 @@
-import clsx from "clsx";
 import Link from "next/link";
 import React from "react";
 
+import { cn } from "@/lib";
+
 interface CustomLinkProps
   extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  path: string;
+  href: string;
   target?: "_self" | "_blank";
   rel?: string;
   className?: string;
@@ -12,11 +13,12 @@ interface CustomLinkProps
   variant?:
     | "default"
     | "dashed"
-    | "underline"
     | "ghost"
     | "block"
     | "solid"
-    | "unstyled";
+    | "unstyled"
+    | "iconButton"
+    | "textLink";
   color?:
     | "primary"
     | "secondary"
@@ -25,6 +27,7 @@ interface CustomLinkProps
     | "danger"
     | "success"
     | "muted";
+  size?: "md" | "sm" | "lg";
   startContent?: React.ReactNode;
   endContent?: React.ReactNode;
   isIconOnly?: boolean;
@@ -40,34 +43,46 @@ const linkClasses = {
 
 const variantClasses = {
   default: "",
-  dashed: "border border-dashed border-current",
-  underline: "underline hover:opacity-80",
-  ghost: "bg-transparent text-inherit",
+  dashed:
+    "border border-default border-dashed bg-transparent  justify-center whitespace-nowrap shadow-sm hover:border-solid hover:bg-default-100 active:bg-default-200 active:border-solid",
+  iconButton:
+    "whitespace-nowrap rounded-[14px] border-2 border-gray-200 bg-prowler-grey-medium p-3 bg-transparent",
+  ghost:
+    "whitespace-nowrap border border-prowler-theme-green text-default-500 hover:bg-prowler-theme-green hover:!text-black disabled:opacity-30",
+  solid: "whitespace-nowrap min-w-20",
+  textLink: "h-auto w-fit min-w-0 p-0 text-blue-500",
   block: "block w-full text-left",
   unstyled: "",
-  solid: "rounded-md px-4 py-2 !font-bold",
 };
 
 const colorClasses = {
   primary: "text-prowler-theme-green",
   secondary: "text-default-800 dark:text-white",
-  action: "bg-prowler-theme-green font-bold text-prowler-theme-midnight ",
+  action:
+    "bg-prowler-theme-green font-bold text-prowler-theme-midnight hover:opacity-80 transition-opacity duration-100",
   transparent: "border-0 border-transparent bg-transparent",
   danger: "text-red-600 dark:text-red-400",
   success: "text-green-600 dark:text-green-400",
   muted: "text-gray-500 dark:text-gray-400",
 };
 
+const sizeClasses = {
+  sm: "text-xs px-4 h-8 rounded-lg",
+  md: "text-sm px-4 py-2 h-10 rounded-lg",
+  lg: "text-lg px-5 py-3 h-12 rounded-xl",
+};
+
 export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
   (
     {
-      path,
+      href,
       target = "_self",
       rel,
       className,
       children,
       variant = "default",
       color = "primary",
+      size = "md",
       startContent,
       endContent,
       isIconOnly = false,
@@ -88,9 +103,10 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
       </>
     );
 
-    const combinedClasses = clsx(
+    const combinedClasses = cn(
       linkClasses.base,
       colorClasses[color],
+      sizeClasses[size],
       variantClasses[variant],
       isIconOnly && linkClasses.iconOnly,
       isDisabled && linkClasses.disabled,
@@ -107,7 +123,7 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
       </span>
     ) : (
       <Link
-        href={path}
+        href={href}
         target={target}
         rel={computedRel}
         ref={ref}

@@ -29,13 +29,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     <>
       <div className="px-2">
         <CustomLink
-          path="/scans"
-          className={cn(
-            isOpen ? "w-full" : "w-fit",
-            "px justify-center rounded-md px-8 py-3 !font-bold",
-          )}
+          href="/scans"
+          className={cn(isOpen ? "w-full" : "w-fit", "justify-center")}
+          variant="solid"
           ariaLabel="Launch Scan"
           color="action"
+          size="md"
           endContent={isOpen ? <AddIcon size={20} /> : null}
         >
           {isOpen ? "Launch Scan" : <AddIcon size={20} />}

@@ -21,8 +21,9 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
           <CustomLink
             ariaLabel="Learn more about findings"
             color="transparent"
-            className="h-auto min-w-0 p-0 text-xs text-primary"
-            path="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
+            size="sm"
+            className="h-auto min-w-0 p-0 text-primary"
+            href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
             target="_blank"
           >
             Learn more

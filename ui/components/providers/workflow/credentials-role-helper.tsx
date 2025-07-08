@@ -19,8 +19,8 @@ export const CredentialsRoleHelper = () => {
         <CustomLink
           ariaLabel="Use the following AWS CloudFormation Quick Link to deploy the IAM Role"
           color="transparent"
-          className="h-auto w-fit min-w-0 p-0 text-blue-500"
-          path={`${getAWSCredentialsTemplateLinks().cloudformationQuickLink}${session?.tenantId}`}
+          variant="textLink"
+          href={`${getAWSCredentialsTemplateLinks().cloudformationQuickLink}${session?.tenantId}`}
           target="_blank"
         >
           Use the following AWS CloudFormation Quick Link to deploy the IAM Role
@@ -41,8 +41,8 @@ export const CredentialsRoleHelper = () => {
           <CustomLink
             ariaLabel="CloudFormation Template"
             color="transparent"
-            className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            path={getAWSCredentialsTemplateLinks().cloudformation}
+            variant="textLink"
+            href={getAWSCredentialsTemplateLinks().cloudformation}
             target="_blank"
           >
             CloudFormation Template
@@ -50,8 +50,8 @@ export const CredentialsRoleHelper = () => {
           <CustomLink
             ariaLabel="Terraform Code"
             color="transparent"
-            className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            path={getAWSCredentialsTemplateLinks().terraform}
+            variant="textLink"
+            href={getAWSCredentialsTemplateLinks().terraform}
             target="_blank"
           >
             Terraform Code

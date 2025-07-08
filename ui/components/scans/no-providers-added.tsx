@@ -27,11 +27,12 @@ export const NoProvidersAdded = () => {
             </div>
 
             <CustomLink
-              path="/providers/connect-account"
+              href="/providers/connect-account"
               ariaLabel="Go to Add Cloud Provider page"
               className="w-full max-w-xs justify-center"
               variant="solid"
               color="action"
+              size="md"
             >
               Get Started
             </CustomLink>

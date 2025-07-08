@@ -179,10 +179,11 @@ export const ProvidersOverview = ({
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
           <CustomLink
-            path="/providers"
+            href="/providers"
             ariaLabel="Go to Providers page"
             variant="solid"
             color="action"
+            size="sm"
             endContent={<AddIcon size={20} />}
           >
             Add Provider

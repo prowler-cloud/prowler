@@ -28,11 +28,12 @@ export const NoProvidersConnected = () => {
         </div>
         <div className="w-full md:w-auto md:flex-shrink-0">
           <CustomLink
-            path="/providers"
+            href="/providers"
             className="w-full justify-center md:w-fit"
             ariaLabel="Go to Cloud providers page"
             variant="solid"
             color="action"
+            size="md"
           >
             Review Cloud Providers
           </CustomLink>

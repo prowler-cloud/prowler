@@ -25,11 +25,12 @@ export const NoScansAvailable = () => {
               </div>
             </div>
             <CustomLink
-              path="/scans"
+              href="/scans"
               className="flex-shrink-0"
               ariaLabel="Go to Scans page"
               variant="solid"
               color="action"
+              size="sm"
             >
               Go to Scans
             </CustomLink>

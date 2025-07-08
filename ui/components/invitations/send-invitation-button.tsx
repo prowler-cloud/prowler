@@ -8,10 +8,11 @@ export const SendInvitationButton = () => {
   return (
     <div className="flex w-full items-center justify-end">
       <CustomLink
-        path={"/invitations/new"}
+        href={"/invitations/new"}
         ariaLabel="Send Invitation"
         variant="solid"
         color="action"
+        size="md"
         endContent={<AddIcon size={20} />}
       >
         Send Invitation

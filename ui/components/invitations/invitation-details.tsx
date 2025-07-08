@@ -110,10 +110,11 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       </Card>
       <div className="flex w-full items-center justify-end">
         <CustomLink
-          path={"/invitations/"}
+          href={"/invitations/"}
           ariaLabel="Send Invitation"
           variant="solid"
           color="action"
+          size="md"
           endContent={<AddIcon size={20} />}
         >
           Back to Invitations

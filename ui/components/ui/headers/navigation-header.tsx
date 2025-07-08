@@ -19,8 +19,8 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
     <>
       <header className="flex items-center gap-3 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
         <CustomLink
-          path={href || ""}
-          className="rounded-xl border-2 border-gray-200 bg-prowler-grey-medium bg-transparent p-3"
+          href={href || ""}
+          variant="iconButton"
           ariaLabel="Navigation button"
           color="muted"
         >

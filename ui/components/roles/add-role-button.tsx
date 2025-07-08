@@ -8,10 +8,11 @@ export const AddRoleButton = () => {
   return (
     <div className="flex w-full items-center justify-end">
       <CustomLink
-        path="/roles/new"
+        href="/roles/new"
         ariaLabel="Add Role"
         variant="solid"
         color="action"
+        size="md"
         endContent={<AddIcon size={20} />}
       >
         Add Role

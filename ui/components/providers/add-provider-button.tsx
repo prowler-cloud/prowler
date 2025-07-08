@@ -7,9 +7,10 @@ import { AddIcon } from "../icons";
 export const AddProviderButton = () => {
   return (
     <CustomLink
-      path="/providers/connect-account"
+      href="/providers/connect-account"
       ariaLabel="Add Cloud Provider"
       variant="solid"
+      size="md"
       color="action"
       endContent={<AddIcon size={20} />}
     >
