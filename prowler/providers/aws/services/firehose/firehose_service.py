@@ -90,13 +90,45 @@ class Firehose(AWSService):
             describe_stream = self.regional_clients[
                 stream.region
             ].describe_delivery_stream(DeliveryStreamName=stream.name)
+
             encryption_config = describe_stream.get(
                 "DeliveryStreamDescription", {}
             ).get("DeliveryStreamEncryptionConfiguration", {})
+
             stream.kms_encryption = EncryptionStatus(
                 encryption_config.get("Status", "DISABLED")
             )
             stream.kms_key_arn = encryption_config.get("KeyARN", "")
+
+            stream.delivery_stream_type = describe_stream.get(
+                "DeliveryStreamDescription", {}
+            ).get("DeliveryStreamType", "")
+
+            source_config = describe_stream.get("DeliveryStreamDescription", {}).get(
+                "Source", {}
+            )
+            stream.source = Source(
+                direct_put=DirectPutSourceDescription(
+                    troughput_hint_in_mb_per_sec=source_config.get(
+                        "DirectPutSourceDescription", {}
+                    ).get("TroughputHintInMBPerSec", 0)
+                ),
+                kinesis_stream=KinesisStreamSourceDescription(
+                    kinesis_stream_arn=source_config.get(
+                        "KinesisStreamSourceDescription", {}
+                    ).get("KinesisStreamARN", "")
+                ),
+                msk=MSKSourceDescription(
+                    msk_cluster_arn=source_config.get("MSKSourceDescription", {}).get(
+                        "MSKClusterARN", ""
+                    )
+                ),
+                database=DatabaseSourceDescription(
+                    endpoint=source_config.get("DatabaseSourceDescription", {}).get(
+                        "Endpoint", ""
+                    )
+                ),
+            )
         except ClientError as error:
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -114,6 +146,39 @@ class EncryptionStatus(Enum):
     DISABLING_FAILED = "DISABLING_FAILED"
 
 
+class DirectPutSourceDescription(BaseModel):
+    """Model for the DirectPut source of a Firehose stream"""
+
+    troughput_hint_in_mb_per_sec: int = Field(default_factory=int)
+
+
+class KinesisStreamSourceDescription(BaseModel):
+    """Model for the KinesisStream source of a Firehose stream"""
+
+    kinesis_stream_arn: str = Field(default_factory=str)
+
+
+class MSKSourceDescription(BaseModel):
+    """Model for the MSK source of a Firehose stream"""
+
+    msk_cluster_arn: str = Field(default_factory=str)
+
+
+class DatabaseSourceDescription(BaseModel):
+    """Model for the Database source of a Firehose stream"""
+
+    endpoint: str = Field(default_factory=str)
+
+
+class Source(BaseModel):
+    """Model for the source of a Firehose stream"""
+
+    direct_put: Optional[DirectPutSourceDescription]
+    kinesis_stream: Optional[KinesisStreamSourceDescription]
+    msk: Optional[MSKSourceDescription]
+    database: Optional[DatabaseSourceDescription]
+
+
 class DeliveryStream(BaseModel):
     """Model for a Firehose Delivery Stream"""
 
@@ -123,3 +188,5 @@ class DeliveryStream(BaseModel):
     kms_key_arn: Optional[str] = Field(default_factory=str)
     kms_encryption: Optional[str] = Field(default_factory=str)
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
+    delivery_stream_type: Optional[str] = Field(default_factory=str)
+    source: Source = Field(default_factory=Source)
