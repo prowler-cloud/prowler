@@ -1,12 +1,12 @@
-# Configuring SAML Single Sign-On (SSO) in Prowler
+# SAML Single Sign-On (SSO) Configuration
 
-This guide provides comprehensive instructions to configure SAML-based Single Sign-On (SSO) in a Prowler environment. This configuration allows users to authenticate using the organization's Identity Provider (IdP).
+This guide provides comprehensive instructions to configure SAML-based Single Sign-On (SSO) in Prowler App. This configuration allows users to authenticate using the organization's Identity Provider (IdP).
 
 This document is divided into two main sections:
 
 - **User Guide**: For organization administrators to configure SAML SSO through Prowler App.
 
-- **Developer and Administrator Guide**: For developers and system administrators running self-hosted Prowler instances, providing technical details on environment configuration, API usage, and testing.
+- **Developer and Administrator Guide**: For developers and system administrators running self-hosted Prowler App instances, providing technical details on environment configuration, API usage, and testing.
 
 ---
 
@@ -33,13 +33,13 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 
 To access the account settings, click the "Account" button in the top-right corner of Prowler App, or navigate directly to `https://cloud.prowler.com/profile` (or `http://localhost:3000/profile` for local setups).
 
-![Access Profile Settings](../img/saml-step-1.png)
+![Access Profile Settings](../img/saml/saml-step-1.png)
 
 #### Step 2: Enable SAML Integration
 
 On the profile page, find the "SAML SSO Integration" card and click "Enable" to begin the configuration process.
 
-![Enable SAML Integration](../img/saml-step-2.png)
+![Enable SAML Integration](../img/saml/saml-step-2.png)
 
 #### Step 3: Configure the Identity Provider (IdP)
 
@@ -50,10 +50,10 @@ The Prowler SAML configuration panel displays the information needed to configur
 
 To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler and use them to set up a new SAML application.
 
-![IdP configuration](../img/idp_config.png)
+![IdP configuration](../img/saml/idp_config.png)
 
 ???+ info "IdP Configuration"
-    The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
+    The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](./prowler-app-sso-entra.md).
 
 #### Step 4: Configure Attribute Mapping in the IdP
 
@@ -63,7 +63,7 @@ For Prowler to correctly identify and provision users, the IdP must be configure
 |----------------|---------------------------------------------------------------------------------------------------------|----------|
 | `firstName`    | The user's first name.                                                                                  | Yes      |
 | `lastName`     | The user's last name.                                                                                   | Yes      |
-| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). This must match a role name in Prowler. | Yes      |
+| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role will be created with minimal permissions. You can then edit the permissions for that role in the [Role Management](https://docs.prowler.com/projects/prowler-saas/en/latest/admin-guide/manage-users/#roles) tab. | No       |
 | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
 ???+ warning "Dynamic Updates"
@@ -74,23 +74,33 @@ For Prowler to correctly identify and provision users, the IdP must be configure
 Once the IdP is configured, it provides a **metadata XML file**. This file contains the IdP's configuration information, such as its public key and login URL.
 
 To complete the Prowler-side configuration:
+
 1.  Return to the Prowler SAML configuration page.
+
 2.  Enter the **email domain** for the organization (e.g., `mycompany.com`). Prowler uses this to identify users who should authenticate via SAML.
+
 3.  Upload the **metadata XML file** downloaded from the IdP.
 
-![Configure Prowler with IdP Metadata](../img/saml-step-3.png)
+![Configure Prowler with IdP Metadata](../img/saml/saml-step-3.png)
 
 #### Step 6: Save and Verify Configuration
 
 Click the "Save" button to complete the setup. The "SAML Integration" card will now show an "Active" status, indicating that the configuration is complete and enabled.
 
-![Verify Integration Status](../img/saml-step-4.png)
+![Verify Integration Status](../img/saml/saml-step-4.png)
+
+???+ info "IdP Configuration"
+    The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
+
+##### Remove SAML Configuration
+You can disable SAML SSO by removing the existing configuration from the integration panel.
+![Remove SAML configuration](../img/saml/saml-step-remove.png)
 
 ### Signing in with SAML SSO
 
 Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". They will be redirected to the IdP to authenticate and then returned to Prowler.
 
-![Sign in with SAML SSO](../img/saml-step-5.png)
+![Sign in with SAML SSO](../img/saml/saml-step-5.png)
 
 ---
 
