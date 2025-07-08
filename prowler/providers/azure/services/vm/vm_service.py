@@ -104,6 +104,11 @@ class VirtualMachines(AzureService):
                                 location=vm.location,
                                 security_profile=getattr(vm, "security_profile", None),
                                 extensions=extensions,
+                                image_reference=getattr(
+                                    getattr(storage_profile, "image_reference", None),
+                                    "id",
+                                    None,
+                                ),
                                 linux_configuration=linux_configuration,
                             )
                         }
@@ -204,6 +209,7 @@ class VirtualMachine(BaseModel):
     security_profile: Optional[SecurityProfile]
     extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
+    image_reference: Optional[str] = None
     linux_configuration: Optional[LinuxConfiguration] = None
 
 
