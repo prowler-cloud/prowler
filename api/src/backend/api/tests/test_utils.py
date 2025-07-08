@@ -320,6 +320,21 @@ class TestValidateInvitation:
                 "invitation_token": "This invitation is no longer valid."
             }
 
+    def test_invitation_with_different_email(self):
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.side_effect = Invitation.DoesNotExist
+
+            with pytest.raises(ValidationError) as exc_info:
+                validate_invitation("VALID_TOKEN", "different@example.com")
+
+            assert exc_info.value.detail == {
+                "invitation_token": "Invalid invitation code."
+            }
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email="different@example.com"
+            )
+
     def test_valid_invitation_uppercase_email(self):
         """Test that validate_invitation works with case-insensitive email lookup."""
         uppercase_email = "USER@example.com"
