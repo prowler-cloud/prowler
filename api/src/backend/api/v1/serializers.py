@@ -1315,12 +1315,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            "secret_type": {"required": False},
         }
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
