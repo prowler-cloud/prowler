@@ -1527,6 +1527,12 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             email_domain=self.email_domain, defaults={"tenant": self.tenant}
         )
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+        SocialApp.objects.filter(provider="saml", client_id=self.email_domain).delete()
+        SAMLDomainIndex.objects.filter(email_domain=self.email_domain).delete()
+
     def _parse_metadata(self):
         """
         Parse the raw IdP metadata XML and extract:
