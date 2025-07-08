@@ -1,28 +1,28 @@
 # Mute Findings (Mutelist)
 
-Prowler App allows users to mute specific findings to focus on the most critical security issues. This comprehensive guide demonstrates how to effectively use the mutelist feature to manage and prioritize security findings.
+Prowler App allows users to mute specific findings to focus on the most critical security issues. This comprehensive guide demonstrates how to effectively use the Mutelist feature to manage and prioritize security findings.
 
 ## What Is the Mutelist Feature?
 
-The mutelist feature enables users to:
-  - **Suppress specific findings** from appearing in future scans
-  - **Focus on critical issues** by hiding resolved or accepted risks
-  - **Maintain audit trails** of muted findings for compliance purposes
-  - **Streamline security workflows** by reducing noise from non-critical findings
+The Mutelist feature enables users to:
+- **Suppress specific findings** from appearing in future scans
+- **Focus on critical issues** by hiding resolved or accepted risks
+- **Maintain audit trails** of muted findings for compliance purposes
+- **Streamline security workflows** by reducing noise from non-critical findings
 
 ## Prerequisites
 
 Before muting findings, ensure:
-  - Valid access to Prowler App with appropriate permissions
-  - A provider added to the Prowler App
-  - Understanding of the security implications of muting specific findings
+- Valid access to Prowler App with appropriate permissions
+- A provider added to the Prowler App
+- Understanding of the security implications of muting specific findings
 
 ???+ warning
     Muting findings does not resolve underlying security issues. Review each finding carefully before muting to ensure it represents an acceptable risk or has been properly addressed.
 
 ## Step 1: Add a provider
 
-To configure mutelist:
+To configure Mutelist:
 
 1. Log into Prowler App
 2. Navigate to the providers page
