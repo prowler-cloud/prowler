@@ -5,19 +5,20 @@ Prowler App allows users to mute specific findings to focus on the most critical
 ## What Is the Mutelist Feature?
 
 The mutelist feature enables users to:
-* **Suppress specific findings** from appearing in future scans
-* **Focus on critical issues** by hiding resolved or accepted risks
-* **Maintain audit trails** of muted findings for compliance purposes
-* **Streamline security workflows** by reducing noise from non-critical findings
+  - **Suppress specific findings** from appearing in future scans
+  - **Focus on critical issues** by hiding resolved or accepted risks
+  - **Maintain audit trails** of muted findings for compliance purposes
+  - **Streamline security workflows** by reducing noise from non-critical findings
 
 ## Prerequisites
 
 Before muting findings, ensure:
-* Valid access to Prowler App with appropriate permissions
-* A provider added to the Prowler App
-* Understanding of the security implications of muting specific findings
+  - Valid access to Prowler App with appropriate permissions
+  - A provider added to the Prowler App
+  - Understanding of the security implications of muting specific findings
 
-**Warning:** Muting findings does not resolve underlying security issues. Review each finding carefully before muting to ensure it represents an acceptable risk or has been properly addressed.
+???+ warning
+    Muting findings does not resolve underlying security issues. Review each finding carefully before muting to ensure it represents an acceptable risk or has been properly addressed.
 
 ## Step 1: Add a provider
 
@@ -31,17 +32,17 @@ To configure mutelist:
 ![Button enabled in scans pages](../img/mutelist-ui-3.png)
 
 
-## Step 2: Configure Muting Parameters
+## Step 2: Configure Mutelist
 
 1. Open the modal by clicking "Configure Muted Findings" button
 ![Open modal](../img/mutelist-ui-4.png)
-2. Provide a valid YAML configuration (more information in [Mutelist](../tutorials/mutelist.md))
+1. Provide a valid Mutelist in `YAML` format. More details about Mutelist [here](../tutorials/mutelist.md)
 ![Valid YAML configuration](../img/mutelist-ui-5.png)
 If the YAML configuration is invalid, an error message will be displayed
 ![Wrong YAML configuration](../img/mutelist-ui-7.png)
 ![Wrong YAML configuration 2](../img/mutelist-ui-8.png)
 
-## Step 3: Review the muted findings
+## Step 3: Review the Mutelist
 
 1. Once added, the configuration can be removed or updated
 ![Remove or update configuration](../img/mutelist-ui-6.png)
@@ -51,3 +52,6 @@ If the YAML configuration is invalid, an error message will be displayed
 1. Run a new scan
 2. Check the muted findings in the scan results
 ![Check muted fidings](../img/mutelist-ui-9.png)
+
+???+ note
+    The Mutelist configuration takes effect on the next scans.
