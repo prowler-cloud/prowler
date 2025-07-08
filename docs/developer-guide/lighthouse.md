@@ -15,7 +15,8 @@ AI agents fall into two main categories:
 
 Prowler Lighthouse is an autonomous agent - selecting the right tool(s) based on the users query.
 
-> Note: To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
+???+ note
+    To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
 
 ### LLM Dependency
 
@@ -66,7 +67,8 @@ Modifying the supervisor prompt allows you to:
 - Modify task delegation to specialized agents
 - Set up guardrails (query types to answer or decline)
 
-> Note: The supervisor agent should not have its own tools. This design keeps the system modular and maintainable.
+???+ note
+    The supervisor agent should not have its own tools. This design keeps the system modular and maintainable.
 
 ### How to Create New Specialized Agents
 
@@ -75,11 +77,13 @@ The supervisor agent and all specialized agents are defined in the `route.ts` fi
 To add new capabilities or all Lighthouse to interact with other APIs, create additional specialized agents:
 
 1. First determine what the new agent would do. Create a detailed prompt defining the agent's purpose and capabilities. You can see an example from [here](https://github.com/prowler-cloud/prowler/blob/master/ui/lib/lighthouse/prompts.ts#L359-L385).
-> Note: Ensure that the new agent's capabilities don't collide with existing agents. For example, if there's already a *findings_agent* that talks to findings APIs don't create a new agent to do the same.
+???+ note
+    Ensure that the new agent's capabilities don't collide with existing agents. For example, if there's already a *findings_agent* that talks to findings APIs don't create a new agent to do the same.
 
 2. Create necessary tools for the agents to access specific data or perform actions. A tool is a specialized function that extends the capabilities of LLM by allowing it to access external data or APIs. A tool is triggered by LLM based on the description of the tool and the user's query.
 For example, the description of `getScanTool` is "Fetches detailed information about a specific scan by its ID." If the description doesn't convey what the tool is capable of doing, LLM will not invoke the function. If the description of `getScanTool` was set to something random or not set at all, LLM will not answer queries like "Give me the critical issues from the scan ID xxxxxxxxxxxxxxx"
-> Note: Ensure that one tool is added to one agent only. Adding tools is optional. There can be agents with no tools at all.
+???+ note
+    Ensure that one tool is added to one agent only. Adding tools is optional. There can be agents with no tools at all.
 
 3. Use the `createReactAgent` function to define a new agent. For example, the rolesAgent name is "roles_agent" and has access to call tools "*getRolesTool*" and "*getRoleTool*"
 ```js

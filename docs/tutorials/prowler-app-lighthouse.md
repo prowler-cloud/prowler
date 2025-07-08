@@ -13,12 +13,14 @@ Here's what's happening behind the scenes:
 - The system uses a multi-agent architecture built with [LanggraphJS](https://github.com/langchain-ai/langgraphjs) for LLM logic and [Vercel AI SDK UI](https://sdk.vercel.ai/docs/ai-sdk-ui/overview) for frontend chatbot.
 - It uses a ["supervisor" architecture](https://langchain-ai.lang.chat/langgraphjs/tutorials/multi_agent/agent_supervisor/) that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
 - The system connects to OpenAI models to understand, fetch the right data, and respond to the user's query.
-> **Note**: Lighthouse is tested against `gpt-4o` and `gpt-4o-mini` OpenAI models.
+???+ note
+    Lighthouse is tested against `gpt-4o` and `gpt-4o-mini` OpenAI models.
 - The supervisor agent is the main contact point. It is what users interact with directly from the chat interface. It coordinates with other agents to answer users' questions comprehensively.
 
 <img src="../img/lighthouse-architecture.png" alt="Lighthouse Architecture">
 
-**Note**: All agents can only read relevant security data. They cannot modify your data or access sensitive information like configured secrets or tenant details.
+???+ note
+    All agents can only read relevant security data. They cannot modify your data or access sensitive information like configured secrets or tenant details.
 
 ## Set up
 
@@ -176,7 +178,8 @@ Not all Prowler API endpoints are integrated with Lighthouse. They are intention
 - List OpenAI configuration - `/api/v1/lighthouse-config`
 - Retrieve OpenAI key and configuration - `/api/v1/lighthouse-config/{id}`
 
-**Note**: Agents only have access to hit GET endpoints. They don't have access to other HTTP methods.
+???+ note
+    Agents only have access to hit GET endpoints. They don't have access to other HTTP methods.
 
 ## FAQs
 
