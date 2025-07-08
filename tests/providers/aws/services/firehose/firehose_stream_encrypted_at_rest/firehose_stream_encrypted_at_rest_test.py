@@ -198,7 +198,7 @@ class Test_firehose_stream_encrypted_at_rest:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Firehose Stream {stream_name} does not have at rest encryption enabled."
+                    == f"Firehose Stream {stream_name} does not have at rest encryption enabled or the source stream is not encrypted."
                 )
 
     @mock_aws
@@ -253,7 +253,7 @@ class Test_firehose_stream_encrypted_at_rest:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Firehose Stream {stream_name} does not have at rest encryption enabled."
+                    == f"Firehose Stream {stream_name} does not have at rest encryption enabled or the source stream is not encrypted."
                 )
 
     @mock_aws
