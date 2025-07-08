@@ -332,7 +332,7 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="different@example.com"
+                token="VALID_TOKEN", email__iexact="different@example.com"
             )
 
     def test_valid_invitation_uppercase_email(self):
