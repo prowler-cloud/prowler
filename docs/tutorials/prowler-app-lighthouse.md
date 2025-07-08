@@ -10,9 +10,10 @@ Prowler Lighthouse uses OpenAI's language models and integrates with your Prowle
 
 Here's what's happening behind the scenes:
 
-- The system uses a multi-agent architecture built with LanggraphJS for LLM logic and Vercel AI SDK UI for frontend chatbot.
-- It uses a "supervisor" architecture that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
-- The system connects to OpenAI models to understand, fetch the right data, and respond to the user's query. (Tested with gpt-4o and gpt-4o-mini)
+- The system uses a multi-agent architecture built with [LanggraphJS](https://github.com/langchain-ai/langgraphjs) for LLM logic and [Vercel AI SDK UI](https://sdk.vercel.ai/docs/ai-sdk-ui/overview) for frontend chatbot.
+- It uses a ["supervisor" architecture](https://langchain-ai.lang.chat/langgraphjs/tutorials/multi_agent/agent_supervisor/) that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
+- The system connects to OpenAI models to understand, fetch the right data, and respond to the user's query.
+> **Note**: Lighthouse is tested against `gpt-4o` and `gpt-4o-mini` OpenAI models.
 - The supervisor agent is the main contact point. It is what users interact with directly from the chat interface. It coordinates with other agents to answer users' questions comprehensively.
 
 <img src="../img/lighthouse-architecture.png" alt="Lighthouse Architecture">
@@ -88,7 +89,7 @@ Prowler Lighthouse is powerful, but there are limitations:
 
 ### Getting Help
 
-If you encounter issues with Prowler Lighthouse or have suggestions for improvements, please reach out through our Slack channel.
+If you encounter issues with Prowler Lighthouse or have suggestions for improvements, please [reach out through our Slack channel](https://goto.prowler.com/slack).
 
 ### What Data Is Shared to OpenAI?
 

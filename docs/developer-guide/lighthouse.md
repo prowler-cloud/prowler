@@ -10,8 +10,10 @@ AI agents combine Large Language Models (LLMs) with specialized tools that provi
 
 AI agents fall into two main categories:
 
-- **Autonomous Agents**: Freely choose from available tools to complete tasks, adapting their approach based on context. They decide which tools to use and when.
-- **Workflow Agents**: Follow structured paths with predefined logic. They execute specific tool sequences, though modern workflows can include conditional logic.
+- **Autonomous Agents**: Freely chooses from available tools to complete tasks, adapting their approach based on context. They decide which tools to use and when.
+- **Workflow Agents**: Follows structured paths with predefined logic. They execute specific tool sequences and can include conditional logic.
+
+Prowler Lighthouse is an autonomous agent - selecting the right tool(s) based on the users query.
 
 > Note: To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
 
@@ -120,9 +122,9 @@ When developing new agents or capabilities:
 - **Clear Responsibility Boundaries**: Each agent should have a defined purpose with minimal overlap. No two agents should access the same tools or different tools accessing the same Prowler APIs.
 - **Minimal Data Access**: Agents should only request the data they need, keeping requests specific to minimize context window usage, cost, and response time.
 - **Thorough Prompting:** Ensure agent prompts include clear instructions about:
-  - The agent's purpose and limitations
-  - How to use its tools
-  - How to format responses for the supervisor
-  - Error handling procedures (Optional)
+    - The agent's purpose and limitations
+    - How to use its tools
+    - How to format responses for the supervisor
+    - Error handling procedures (Optional)
 - **Security Considerations:** Agents should never modify data or access sensitive information like secrets or credentials.
 - **Testing:** Thoroughly test new agents with various queries before deploying to production.
