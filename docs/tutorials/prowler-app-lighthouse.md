@@ -194,7 +194,7 @@ Context windows are limited. While demo data fits inside the context window, que
 
 **3. Is my security data shared with OpenAI?**
 
-We send the minimum data needed to generate useful responses. If required for the user's query, agents can fetch security findings and remediation information. However, LLMs don't have access to sensitive configuration like provider secrets and tenant details.
+Minimal data is shared to generate useful responses. Agents can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The Lighthouse key is only accessible to our NextJS server and is never sent to LLMs. Resource metadata (names, tags, account/project IDs, etc) may be shared with OpenAI based on your query requirements.
 
 **4. Can the Lighthouse change my cloud environment?**
 
