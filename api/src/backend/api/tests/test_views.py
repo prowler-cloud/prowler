@@ -6345,10 +6345,10 @@ class TestProcessorViewSet:
       '*':
         Checks:
             iam_user_hardware_mfa_enabled:
-            Regions:
-                - '*'
-            Resources:
-                - '*'
+                Regions:
+                    - '*'
+                Resources:
+                    - '*'
     """
 
     def test_list_processors(self, authenticated_client, processor_fixture):
