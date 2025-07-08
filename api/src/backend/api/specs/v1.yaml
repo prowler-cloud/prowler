@@ -3368,26 +3368,12 @@ paths:
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
-      description: |-
-        This mixin provides a helper attributes to select or prefetch related models
-        based on the include specified in the URL.
-
-        __all__ can be used to specify a prefetch which should be done regardless of the include
-
-
-        .. code:: python
-
-            # When MyViewSet is called with ?include=author it will prefetch author and authorbio
-            class MyViewSet(viewsets.ModelViewSet):
-                queryset = Book.objects.all()
-                prefetch_for_includes = {
-                    '__all__': [],
-                    'category.section': ['category']
-                }
-                select_for_includes = {
-                    '__all__': [],
-                    'author': ['author', 'author__authorbio'],
-                }
+      description: Retrieve an aggregated overview of findings and resources grouped
+        by providers. The response includes the count of passed, failed, and manual
+        findings, along with the total number of resources managed by each provider.
+        Only the latest findings for each provider are considered in the aggregation
+        to ensure accurate and up-to-date insights.
+      summary: Get aggregated provider data
       parameters:
       - in: query
         name: fields[providers-overview]
@@ -4689,6 +4675,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[updated_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -12688,30 +12677,25 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - findings
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - findings
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type findings
-              title: findings
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
           required:
           - provider

@@ -1852,6 +1852,14 @@ class TaskViewSet(BaseRLSViewSet):
         summary="List all resources",
         description="Retrieve a list of all resources with options for filtering by various criteria. Resources are "
         "objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[updated_at]",
+                description="At least one of the variations of the `filter[updated_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
     ),
     retrieve=extend_schema(
         tags=["Resource"],
