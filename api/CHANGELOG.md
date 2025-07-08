@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
 ### Changed
+- `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
 - Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
 ---
@@ -16,7 +17,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.9.1] (Prowler v5.8.1)
 
 ### Changed
-- Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214) 
+- Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214)
 
 ### Fixed
 - Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)

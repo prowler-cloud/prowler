@@ -34,6 +34,7 @@ from api.db_utils import (
     IntegrationTypeEnumField,
     InvitationStateEnumField,
     MemberRoleEnumField,
+    ProcessorTypeEnumField,
     ProviderEnumField,
     ProviderSecretTypeEnumField,
     ScanTriggerEnumField,
@@ -409,20 +410,6 @@ class Scan(RowLevelSecurityProtectedModel):
     name = models.CharField(
         blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
     )
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-    )
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-        null=True,
-        blank=True,
-    )
     trigger = ScanTriggerEnumField(
         choices=TriggerChoices.choices,
     )
@@ -441,8 +428,28 @@ class Scan(RowLevelSecurityProtectedModel):
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
-
-    # TODO: mutelist foreign key
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
+    processor = models.ForeignKey(
+        "Processor",
+        on_delete=models.SET_NULL,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "scans"
@@ -704,6 +711,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
     muted = models.BooleanField(default=False, null=False)
+    muted_reason = models.TextField(
+        blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
+    )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Denormalize resource data for performance
@@ -1808,3 +1818,42 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "lighthouse-configurations"
+
+
+class Processor(RowLevelSecurityProtectedModel):
+    class ProcessorChoices(models.TextChoices):
+        MUTELIST = "mutelist", _("Mutelist")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    processor_type = ProcessorTypeEnumField(choices=ProcessorChoices.choices)
+    configuration = models.JSONField(default=dict)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "processors"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "processor_type"),
+                name="unique_processor_types_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="processor_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "processor_type"],
+                name="processor_tenant_type_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "processors"

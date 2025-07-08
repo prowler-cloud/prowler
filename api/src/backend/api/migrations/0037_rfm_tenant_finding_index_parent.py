@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0033_rfm_tenant_finding_index_partitions"),
+        ("api", "0036_rfm_tenant_finding_index_partitions"),
     ]
 
     operations = [

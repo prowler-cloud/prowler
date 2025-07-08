@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0035_resource_failed_findings_count"),
+        ("api", "0038_resource_failed_findings_count"),
     ]
 
     operations = [

@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0032_saml"),
+        ("api", "0035_finding_muted_reason"),
     ]
 
     operations = [

@@ -29,6 +29,7 @@ from api.models import (
     Integration,
     Invitation,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -6568,3 +6569,186 @@ class TestLighthouseConfigViewSet:
             reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestProcessorViewSet:
+    valid_mutelist_configuration = """Mutelist:
+    Accounts:
+      '*':
+        Checks:
+            iam_user_hardware_mfa_enabled:
+                Regions:
+                    - '*'
+                Resources:
+                    - '*'
+    """
+
+    def test_list_processors(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(reverse("processor-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_retrieve_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.get(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_create_processor_valid(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": self.valid_mutelist_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_create_processor_invalid(
+        self, authenticated_client, invalid_configuration
+    ):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_processor_valid(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": {
+                        "Mutelist": {
+                            "Accounts": {
+                                "1234567890": {
+                                    "Checks": {
+                                        "iam_user_hardware_mfa_enabled": {
+                                            "Regions": ["*"],
+                                            "Resources": ["*"],
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        processor.refresh_from_db()
+        assert (
+            processor.configuration["Mutelist"]["Accounts"]["1234567890"]
+            == payload["data"]["attributes"]["configuration"]["Mutelist"]["Accounts"][
+                "1234567890"
+            ]
+        )
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_update_processor_invalid(
+        self, authenticated_client, processor_fixture, invalid_configuration
+    ):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_delete_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.delete(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Processor.objects.filter(id=processor.id).exists()
+
+    def test_processors_filters(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "mutelist"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["processor_type"] == "mutelist"
+
+    def test_processors_filters_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_processors_create_another_with_same_type(
+        self, authenticated_client, processor_fixture
+    ):
+        pass
+
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": self.valid_mutelist_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

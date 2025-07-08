@@ -29,6 +29,7 @@ from api.models import (
     Invitation,
     Membership,
     PermissionChoices,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
@@ -783,3 +784,12 @@ class IntegrationFilter(FilterSet):
         fields = {
             "inserted_at": ["date", "gte", "lte"],
         }
+
+
+class ProcessorFilter(FilterSet):
+    processor_type = ChoiceFilter(choices=Processor.ProcessorChoices.choices)
+    processor_type__in = ChoiceInFilter(
+        choices=Processor.ProcessorChoices.choices,
+        field_name="processor_type",
+        lookup_expr="in",
+    )
