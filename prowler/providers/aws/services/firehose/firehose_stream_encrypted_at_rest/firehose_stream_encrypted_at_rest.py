@@ -37,9 +37,9 @@ class firehose_stream_encrypted_at_rest(Check):
                     report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled but the source stream {source_stream.name} has at rest encryption enabled."
 
             # Check if the stream has encryption enabled directly
-            elif stream.kms_encryption != EncryptionStatus.ENABLED:
-                report.status = "FAIL"
-                report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled."
+            elif stream.kms_encryption == EncryptionStatus.ENABLED:
+                report.status = "PASS"
+                report.status_extended = f"Firehose Stream {stream.name} does have at rest encryption enabled."
 
             findings.append(report)
 
