@@ -32,7 +32,7 @@ class Storage(AzureService):
                         resouce_group_name = None
                     key_expiration_period_in_days = None
                     if storage_account.key_policy:
-                        key_expiration_period_in_days = (
+                        key_expiration_period_in_days = int(
                             storage_account.key_policy.key_expiration_period_in_days
                         )
                     replication_settings = ReplicationSettings(storage_account.sku.name)
@@ -253,6 +253,7 @@ class FileServiceProperties(BaseModel):
 class Account(BaseModel):
     id: str
     name: str
+    location: str
     resouce_group_name: str
     enable_https_traffic_only: bool
     infrastructure_encryption: Optional[bool] = None
@@ -261,8 +262,7 @@ class Account(BaseModel):
     encryption_type: str
     minimum_tls_version: str
     private_endpoint_connections: list[PrivateEndpointConnection]
-    key_expiration_period_in_days: Optional[str] = None
-    location: str
+    key_expiration_period_in_days: Optional[int] = None
     replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
     allow_cross_tenant_replication: bool = True
     allow_shared_key_access: bool = True
