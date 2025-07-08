@@ -187,6 +187,10 @@ export const MutedFindingsConfigForm = ({
               </Link>
               .
             </li>
+            <li>
+              A default Mutelist is used, to exclude certain predefined
+              resources, if no Mutelist is provided.
+            </li>
           </ul>
         </div>
 
