@@ -321,7 +321,7 @@ class TestProviderViewSet:
 @pytest.mark.django_db
 class TestLimitedVisibility:
     TEST_EMAIL = "rbac@rbac.com"
-    TEST_PASSWORD = "thisisapassword123"
+    TEST_PASSWORD = "Thisisapassword123@"
 
     @pytest.fixture
     def limited_admin_user(

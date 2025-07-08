@@ -108,7 +108,7 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
     user1_email = "user1@testing.com"
     user2_email = "user2@testing.com"
 
-    password = "thisisapassword123"
+    password = "Thisisapassword123@"
 
     user1_response = client.post(
         reverse("user-list"),

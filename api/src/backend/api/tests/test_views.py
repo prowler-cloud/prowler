@@ -93,7 +93,7 @@ class TestUserViewSet:
     def test_users_create(self, client):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "NewPassword123!",
             "email": "NeWuSeR@example.com",
         }
         response = client.post(
@@ -134,6 +134,10 @@ class TestUserViewSet:
             "password1",  # Common password and too similar to a common password
             "dev12345",  # Similar to username
             ("querty12" * 9) + "a",  # Too long, 73 characters
+            "NewPassword123",  # No special character
+            "newpassword123",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_create_invalid_passwords(self, authenticated_client, password):
