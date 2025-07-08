@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0032_scan_disable_on_cascade_periodic_tasks"),
+        ("api", "0032_saml"),
     ]
 
     operations = [
