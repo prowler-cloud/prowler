@@ -121,44 +121,44 @@ export const useRelatedFilters = ({
 
       if (shouldDeselectScan) {
         updateFilter(FilterType.SCAN, null);
-      } else {
-        // Add provider if not already selected
-        if (scanProviderId && !currentProviders.includes(scanProviderId)) {
-          updateFilter(FilterType.PROVIDER_UID, [
-            ...currentProviders,
-            scanProviderId,
-          ]);
-        }
+        // } else {
+        //   // Add provider if not already selected
+        //   if (scanProviderId && !currentProviders.includes(scanProviderId)) {
+        //     updateFilter(FilterType.PROVIDER_UID, [
+        //       ...currentProviders,
+        //       scanProviderId,
+        //     ]);
+        //   }
 
-        // Only add provider type if there are none selected
-        if (
-          scanProviderType &&
-          currentProviderTypes.length === 0 &&
-          !isManualDeselection.current
-        ) {
-          updateFilter(FilterType.PROVIDER_TYPE, [scanProviderType]);
-        }
+        //   // Only add provider type if there are none selected
+        //   if (
+        //     scanProviderType &&
+        //     currentProviderTypes.length === 0 &&
+        //     !isManualDeselection.current
+        //   ) {
+        //     updateFilter(FilterType.PROVIDER_TYPE, [scanProviderType]);
+        //   }
       }
     }
 
-    // Handle provider selection logic
-    if (
-      currentProviders.length > 0 &&
-      deselectedProviders.length === 0 &&
-      !isManualDeselection.current
-    ) {
-      const providerTypes = currentProviders
-        .map(getProviderType)
-        .filter((type): type is ProviderType => type !== null);
-      const selectedProviderTypes = Array.from(new Set(providerTypes));
+    // // Handle provider selection logic
+    // if (
+    //   currentProviders.length > 0 &&
+    //   deselectedProviders.length === 0 &&
+    //   !isManualDeselection.current
+    // ) {
+    //   const providerTypes = currentProviders
+    //     .map(getProviderType)
+    //     .filter((type): type is ProviderType => type !== null);
+    //   const selectedProviderTypes = Array.from(new Set(providerTypes));
 
-      if (
-        selectedProviderTypes.length > 0 &&
-        currentProviderTypes.length === 0
-      ) {
-        updateFilter(FilterType.PROVIDER_TYPE, selectedProviderTypes);
-      }
-    }
+    //   if (
+    //     selectedProviderTypes.length > 0 &&
+    //     currentProviderTypes.length === 0
+    //   ) {
+    //     updateFilter(FilterType.PROVIDER_TYPE, selectedProviderTypes);
+    //   }
+    // }
 
     // Update available providers
     if (currentProviderTypes.length > 0) {

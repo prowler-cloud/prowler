@@ -130,6 +130,12 @@ class TokenSerializer(BaseTokenSerializer):
 
 class TokenSocialLoginSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
+    tenant_id = serializers.UUIDField(
+        write_only=True,
+        required=False,
+        help_text="If not provided, the tenant ID of the first membership that was added"
+        " to the user will be used.",
+    )
 
     # Output tokens
     refresh = serializers.CharField(read_only=True)
@@ -1223,8 +1229,8 @@ class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     tenant_id = serializers.CharField()
-    user = serializers.EmailField()
-    password = serializers.CharField()
+    user = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1332,12 +1338,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            "secret_type": {"required": False},
         }
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)

@@ -121,6 +121,7 @@ class Codebuild(AWSService):
             )
             project.tags = project_info.get("tags", [])
             project.service_role_arn = project_info.get("serviceRole", "")
+            project.project_visibility = project_info.get("projectVisibility", "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -222,6 +223,7 @@ class Project(BaseModel):
     s3_logs: Optional[s3Logs]
     cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
+    project_visibility: Optional[str] = None
 
 
 class ExportConfig(BaseModel):

@@ -115,7 +115,9 @@ export default async function ComplianceDetail({
     >
       {selectedScanId && selectedScan && (
         <div className="flex max-w-[328px] flex-col items-start">
-          <ComplianceScanInfo scan={selectedScan} />
+          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+            <ComplianceScanInfo scan={selectedScan} />
+          </div>
           <Spacer y={8} />
         </div>
       )}

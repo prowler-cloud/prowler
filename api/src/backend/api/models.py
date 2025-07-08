@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -954,6 +955,11 @@ class Invitation(RowLevelSecurityProtectedModel):
         null=True,
     )
 
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
 
@@ -1382,6 +1388,26 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
         ]
 
 
+class SAMLToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    token = models.JSONField(unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "saml_tokens"
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+        super().save(*args, **kwargs)
+
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expires_at
+
+
 class SAMLDomainIndex(models.Model):
     """
     Public index of SAML domains. No RLS. Used for fast lookup in SAML login flow.
@@ -1513,6 +1539,12 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             email_domain=self.email_domain, defaults={"tenant": self.tenant}
         )
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+        SocialApp.objects.filter(provider="saml", client_id=self.email_domain).delete()
+        SAMLDomainIndex.objects.filter(email_domain=self.email_domain).delete()
+
     def _parse_metadata(self):
         """
         Parse the raw IdP metadata XML and extract:
@@ -1580,19 +1612,24 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             provider="saml", client_id=previous_email_domain or self.email_domain
         )
 
+        client_id = self.email_domain[:191]
+        name = f"SAML-{self.email_domain}"[:40]
+
         if social_app_qs.exists():
             social_app = social_app_qs.first()
-            social_app.client_id = self.email_domain
-            social_app.name = f"{self.tenant.name} SAML ({self.email_domain})"
+            social_app.client_id = client_id
+            social_app.name = name
             social_app.settings = settings_dict
+            social_app.provider_id = idp_settings["entity_id"]
             social_app.save()
             social_app.sites.set([current_site])
         else:
             social_app = SocialApp.objects.create(
                 provider="saml",
-                client_id=self.email_domain,
-                name=f"{self.tenant.name} SAML ({self.email_domain})",
+                client_id=client_id,
+                name=name,
                 settings=settings_dict,
+                provider_id=idp_settings["entity_id"],
             )
             social_app.sites.set([current_site])
 

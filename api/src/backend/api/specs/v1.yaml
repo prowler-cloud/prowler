@@ -10662,7 +10662,6 @@ components:
                     * `static` - Key-value pairs
                     * `role` - Role assumption
                     * `service_account` - GCP Service Account Key
-                  readOnly: true
                 secret:
                   oneOf:
                   - type: object
@@ -12420,7 +12419,6 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
-              readOnly: true
             secret:
               oneOf:
               - type: object
