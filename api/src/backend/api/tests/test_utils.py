@@ -254,7 +254,7 @@ class TestValidateInvitation:
 
             assert result == invitation
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="user@example.com"
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_validation_error(self):
@@ -269,7 +269,7 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_not_found(self):
@@ -284,7 +284,7 @@ class TestValidateInvitation:
 
             assert exc_info.value.detail == "Invitation is not valid."
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_expired(self, invitation):
@@ -332,5 +332,27 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="different@example.com"
+                token="VALID_TOKEN", email__iexact="different@example.com"
+            )
+
+    def test_valid_invitation_uppercase_email(self):
+        """Test that validate_invitation works with case-insensitive email lookup."""
+        uppercase_email = "USER@example.com"
+
+        invitation = MagicMock(spec=Invitation)
+        invitation.token = "VALID_TOKEN"
+        invitation.email = uppercase_email
+        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.state = Invitation.State.PENDING
+        invitation.tenant = MagicMock()
+
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+
+            result = validate_invitation("VALID_TOKEN", "user@example.com")
+
+            assert result == invitation
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )
