@@ -227,7 +227,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     return result
 
 
-@shared_task(name="scan-summary")
+@shared_task(name="scan-summary", queue="overview")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -381,7 +381,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="scan-compliance-overviews")
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
