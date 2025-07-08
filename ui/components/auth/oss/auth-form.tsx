@@ -62,6 +62,8 @@ export const AuthForm = ({
   const isSamlMode = form.watch("isSamlMode");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    //getting an new posthog init
+    posthog.reset(true);
     if (type === "sign-in") {
       if (data.isSamlMode) {
         const email = data.email.toLowerCase();
@@ -109,13 +111,19 @@ export const AuthForm = ({
 
     if (type === "sign-up") {
       const newUser = await createNewUser(data);
-
       if (!newUser.errors) {
-        posthog.reset(true);
+        let firstName = "";
+        let lastName = "";
+        if (data.name) {
+          const nameParts = data.name.trim().split(" ");
+          firstName = nameParts[0] || "";
+          lastName = nameParts.slice(1).join(" ") || "";
+        }
         posthog.capture("user_registered", {
-          email: data.email,
-          name: data.name,
-          company: data.company,
+          email: data.email.toLocaleLowerCase(),
+          firstname: firstName,
+          lastname: lastName,
+          company: data.company || "",
         });
         posthog.identify(data.email.toLowerCase());
         toast({
