@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
+- fix(firehose): list all streams and fix `firehose_stream_encrypted_at_rest` logic [(#8213)](https://github.com/prowler-cloud/prowler/pull/8213)
 
 ---
 
