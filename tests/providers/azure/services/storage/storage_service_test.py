@@ -5,6 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     BlobProperties,
     DeleteRetentionPolicy,
     FileServiceProperties,
+    NetworkRuleSet,
     ReplicationSettings,
     SMBProtocolSettings,
     Storage,
@@ -21,7 +22,7 @@ def mock_storage_get_storage_accounts(_):
         name="name",
         type="type",
         default_service_version=None,
-        container_delete_retention_policy=None,
+        container_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
     )
     retention_policy = DeleteRetentionPolicy(enabled=True, days=7)
     file_service_properties = FileServiceProperties(
@@ -36,15 +37,17 @@ def mock_storage_get_storage_accounts(_):
             Account(
                 id="id",
                 name="name",
-                resouce_group_name=None,
+                resouce_group_name="rg",
                 enable_https_traffic_only=False,
                 infrastructure_encryption=False,
-                allow_blob_public_access=None,
-                network_rule_set=None,
+                allow_blob_public_access=False,
+                network_rule_set=NetworkRuleSet(
+                    bypass="AzureServices", default_action="Allow"
+                ),
                 encryption_type="None",
-                minimum_tls_version=None,
+                minimum_tls_version="TLS1_2",
                 key_expiration_period_in_days=None,
-                private_endpoint_connections=None,
+                private_endpoint_connections=[],
                 location="westeurope",
                 blob_properties=blob_properties,
                 default_to_entra_authorization=True,
@@ -79,7 +82,7 @@ class Test_Storage_Service:
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name == "name"
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].resouce_group_name
-            is None
+            == "rg"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].enable_https_traffic_only
@@ -91,10 +94,21 @@ class Test_Storage_Service:
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_blob_public_access
-            is None
+            is False
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set is None
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set
+            is not None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set.bypass
+            == "AzureServices"
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].network_rule_set.default_action
+            == "Allow"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].encryption_type == "None"
@@ -104,7 +118,7 @@ class Test_Storage_Service:
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].minimum_tls_version
-            is None
+            == "TLS1_2"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
@@ -116,7 +130,7 @@ class Test_Storage_Service:
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].private_endpoint_connections
-            is None
+            == []
         )
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
             0
@@ -125,7 +139,9 @@ class Test_Storage_Service:
             name="name",
             type="type",
             default_service_version=None,
-            container_delete_retention_policy=None,
+            container_delete_retention_policy=DeleteRetentionPolicy(
+                enabled=True, days=7
+            ),
         )
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
             0
@@ -175,7 +191,19 @@ class Test_Storage_Service:
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].blob_properties.container_delete_retention_policy
-            is None
+            is not None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].blob_properties.container_delete_retention_policy.enabled
+            is True
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].blob_properties.container_delete_retention_policy.days
+            == 7
         )
 
     def test_get_file_service_properties(self):
