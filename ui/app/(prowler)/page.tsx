@@ -32,7 +32,7 @@ export default function Home({
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
-      <FilterControls providers />
+      <FilterControls providers mutedFindings showClearButton={false} />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
         <div className="col-span-12 lg:col-span-4">
@@ -59,7 +59,7 @@ export default function Home({
             key={searchParamsKey}
             fallback={<SkeletonTableNewFindings />}
           >
-            <SSRDataNewFindingsTable />
+            <SSRDataNewFindingsTable searchParams={searchParams} />
           </Suspense>
         </div>
       </div>
@@ -124,7 +124,11 @@ const SSRFindingsBySeverity = async ({
   );
 };
 
-const SSRDataNewFindingsTable = async () => {
+const SSRDataNewFindingsTable = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
   const page = 1;
   const sort = "severity,-inserted_at";
 
@@ -133,11 +137,21 @@ const SSRDataNewFindingsTable = async () => {
     "filter[delta]": "new",
   };
 
+  const filters = searchParams
+    ? Object.fromEntries(
+        Object.entries(searchParams).filter(([key]) =>
+          key.startsWith("filter["),
+        ),
+      )
+    : {};
+
+  const combinedFilters = { ...defaultFilters, ...filters };
+
   const findingsData = await getLatestFindings({
     query: undefined,
     page,
     sort,
-    filters: defaultFilters,
+    filters: combinedFilters,
   });
 
   // Create dictionaries for resources, scans, and providers

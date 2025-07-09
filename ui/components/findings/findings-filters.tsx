@@ -38,6 +38,7 @@ export const FindingsFilters = ({
       <FilterControls
         search
         date
+        mutedFindings
         customFilters={[
           ...filterFindings,
           {
