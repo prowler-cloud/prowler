@@ -4,7 +4,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.0] (Prowler UNRELEASED)
 
-### Added
+### Added
 
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
@@ -14,7 +14,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.9.1] (Prowler v5.8.1)
 
 ### Changed
-- Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214) 
+- Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214)
+- Optimized include parameters for resources view ([#8229])(https://github.com/prowler-cloud/prowler/pull/8229)
 
 ### Fixed
 - Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)

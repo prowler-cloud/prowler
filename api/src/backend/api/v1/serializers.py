@@ -1025,8 +1025,8 @@ class ResourceSerializer(RLSSerializer):
         }
 
     included_serializers = {
-        "findings": "api.v1.serializers.FindingSerializer",
-        "provider": "api.v1.serializers.ProviderSerializer",
+        "findings": "api.v1.serializers.FindingIncludeSerializer",
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
     }
 
     @extend_schema_field(
@@ -1049,7 +1049,7 @@ class ResourceSerializer(RLSSerializer):
 
 class ResourceIncludeSerializer(RLSSerializer):
     """
-    Serializer for the Resource model.
+    Serializer for the included Resource model.
     """
 
     tags = serializers.SerializerMethodField()
@@ -1126,6 +1126,28 @@ class FindingSerializer(RLSSerializer):
         "scan": ScanIncludeSerializer,
         "resources": ResourceIncludeSerializer,
     }
+
+
+class FindingIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the include Finding model.
+    """
+
+    class Meta:
+        model = Finding
+        fields = [
+            "id",
+            "uid",
+            "status",
+            "severity",
+            "check_id",
+            "check_metadata",
+            "inserted_at",
+            "updated_at",
+            "first_seen_at",
+            "muted",
+            "muted_reason",
+        ]
 
 
 # To be removed when the related endpoint is removed as well
