@@ -2,7 +2,7 @@ import { Bot } from "lucide-react";
 import Link from "next/link";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
-import { CacheService } from "@/lib/lighthouse/cache";
+import { CacheService, initializeTenantCache } from "@/lib/lighthouse/cache";
 
 interface BannerConfig {
   message: string;
@@ -29,6 +29,7 @@ const renderBanner = ({ message, href, gradient }: BannerConfig) => (
 
 export const LighthouseBanner = async () => {
   try {
+    await initializeTenantCache();
     const lighthouseConfig = await getLighthouseConfig();
 
     if (!lighthouseConfig) {

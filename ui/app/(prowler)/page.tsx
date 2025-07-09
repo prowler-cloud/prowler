@@ -23,19 +23,7 @@ import { SkeletonTableNewFindings } from "@/components/overview/new-findings-tab
 import { ContentLayout } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
-import { initializeTenantCache } from "@/lib/lighthouse/cache";
 import { FindingProps, SearchParamsProps } from "@/types";
-
-const SSRCacheInitializer = async () => {
-  try {
-    // Initialize tenant cache, scan summary, and trigger recommendation generation
-    await initializeTenantCache();
-    return null;
-  } catch (error) {
-    console.error("Error initializing cache:", error);
-    return null;
-  }
-};
 
 export default function Home({
   searchParams,
@@ -45,15 +33,11 @@ export default function Home({
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
-<<<<<<< HEAD
       <FilterControls providers mutedFindings showClearButton={false} />
-=======
-      <Suspense fallback={null}>
-        <SSRCacheInitializer />
-      </Suspense>
 
-      <FilterControls providers />
->>>>>>> e3c63c01b (feat: add caching recommendations in valkey)
+      {/* <Suspense fallback={null}>
+        <SSRCacheInitializer />
+      </Suspense> */}
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
         <div className="col-span-12 lg:col-span-4">
@@ -174,7 +158,6 @@ const SSRDataNewFindingsTable = async ({
     sort,
     filters: combinedFilters,
   });
-
   // Create dictionaries for resources, scans, and providers
   const resourceDict = createDict("resources", findingsData);
   const scanDict = createDict("scans", findingsData);
