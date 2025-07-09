@@ -3,6 +3,7 @@ from config.env import env
 
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
+    "is not connected",
     "ProviderConnectionError",
     # Authentication Errors from AWS
     "InvalidToken",

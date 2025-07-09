@@ -12,6 +12,7 @@ from tasks.jobs.scan import (
 )
 from tasks.utils import CustomEncoder
 
+from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
@@ -204,7 +205,7 @@ class TestPerformScan:
         provider_id = str(provider.id)
         checks_to_execute = ["check1", "check2"]
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ProviderConnectionError):
             perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
 
         scan.refresh_from_db()
