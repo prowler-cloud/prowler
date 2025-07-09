@@ -30,7 +30,10 @@ class SpecialCharactersValidator:
         self.special_characters = special_characters or string.punctuation
 
     def validate(self, password, user=None):
-        if not any(char in self.special_characters for char in password):
+        if (
+            sum(1 for char in password if char in self.special_characters)
+            < self.min_special_characters
+        ):
             raise ValidationError(
                 _("This password must contain at least one special character."),
                 code="password_no_special_characters",
