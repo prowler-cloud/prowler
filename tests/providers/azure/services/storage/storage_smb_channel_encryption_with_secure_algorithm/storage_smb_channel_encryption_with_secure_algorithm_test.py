@@ -87,7 +87,9 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             name="fs1",
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
-            smb_protocol_settings=SMBProtocolSettings(channel_encryption=[]),
+            smb_protocol_settings=SMBProtocolSettings(
+                channel_encryption=[], supported_versions=[]
+            ),
         )
         storage_client = mock.MagicMock()
         storage_client.storage_accounts = {
@@ -142,7 +144,7 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
             smb_protocol_settings=SMBProtocolSettings(
-                channel_encryption=["AES-128-GCM"]
+                channel_encryption=["AES-128-GCM"], supported_versions=[]
             ),
         )
         storage_client = mock.MagicMock()
@@ -198,7 +200,7 @@ class Test_storage_smb_channel_encryption_with_secure_algorithm:
             type="type1",
             share_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
             smb_protocol_settings=SMBProtocolSettings(
-                channel_encryption=["AES-256-GCM"]
+                channel_encryption=["AES-256-GCM"], supported_versions=[]
             ),
         )
         storage_client = mock.MagicMock()
