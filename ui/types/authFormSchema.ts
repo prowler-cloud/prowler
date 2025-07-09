@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export type AuthSocialProvider = "google" | "github";
+import { SPECIAL_CHARACTERS } from "@/lib/utils";
 
-const SPECIAL_CHARACTERS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+export type AuthSocialProvider = "google" | "github";
 
 export const PASSWORD_REQUIREMENTS = {
   minLength: 12,

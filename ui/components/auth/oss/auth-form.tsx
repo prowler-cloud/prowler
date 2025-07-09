@@ -233,7 +233,6 @@ export const AuthForm = ({
                   {type === "sign-up" && (
                     <PasswordRequirementsMessage
                       password={form.watch("password") || ""}
-                      className="mt-2"
                     />
                   )}
                 </>

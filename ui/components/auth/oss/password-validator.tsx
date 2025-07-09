@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertCircle, CheckCircle } from "lucide-react";
-import { useMemo } from "react";
 
 import {
   PASSWORD_REQUIREMENTS,
@@ -13,75 +12,53 @@ interface PasswordRequirementsMessageProps {
   className?: string;
 }
 
+const REQUIREMENTS = [
+  {
+    key: "minLength",
+    checker: passwordRequirementCheckers.minLength,
+    label: `At least ${PASSWORD_REQUIREMENTS.minLength} characters`,
+  },
+  {
+    key: "specialChars",
+    checker: passwordRequirementCheckers.specialChars,
+    label: "Special characters",
+  },
+  {
+    key: "uppercase",
+    checker: passwordRequirementCheckers.uppercase,
+    label: "Uppercase letters",
+  },
+  {
+    key: "lowercase",
+    checker: passwordRequirementCheckers.lowercase,
+    label: "Lowercase letters",
+  },
+  {
+    key: "numbers",
+    checker: passwordRequirementCheckers.numbers,
+    label: "Numbers",
+  },
+];
+
 export const PasswordRequirementsMessage = ({
   password,
   className = "",
 }: PasswordRequirementsMessageProps) => {
-  const requirements = useMemo(
-    () => [
-      {
-        key: "minLength",
-        checker: passwordRequirementCheckers.minLength,
-        label: `At least ${PASSWORD_REQUIREMENTS.minLength} characters`,
-      },
-      {
-        key: "specialChars",
-        checker: passwordRequirementCheckers.specialChars,
-        label: "Special characters",
-      },
-      {
-        key: "uppercase",
-        checker: passwordRequirementCheckers.uppercase,
-        label: "Uppercase letters",
-      },
-      {
-        key: "lowercase",
-        checker: passwordRequirementCheckers.lowercase,
-        label: "Lowercase letters",
-      },
-      {
-        key: "numbers",
-        checker: passwordRequirementCheckers.numbers,
-        label: "Numbers",
-      },
-    ],
-    [],
-  );
-
-  const validationResults = useMemo(() => {
-    const hasPasswordInput = password.length > 0;
-
-    if (!hasPasswordInput) {
-      return null;
-    }
-
-    const results = requirements.map((req) => ({
-      ...req,
-      isMet: req.checker(password),
-    }));
-
-    const metCount = results.filter((r) => r.isMet).length;
-    const allRequirementsMet = metCount === requirements.length;
-
-    return {
-      results,
-      metCount,
-      allRequirementsMet,
-      hasPasswordInput,
-    };
-  }, [password, requirements]);
-
-  // Don't show anything if no password has been entered
-  if (!validationResults?.hasPasswordInput) {
+  const hasPasswordInput = password.length > 0;
+  if (!hasPasswordInput) {
     return null;
   }
-
-  const { results, allRequirementsMet } = validationResults;
+  const results = REQUIREMENTS.map((req) => ({
+    ...req,
+    isMet: req.checker(password),
+  }));
+  const metCount = results.filter((r) => r.isMet).length;
+  const allRequirementsMet = metCount === REQUIREMENTS.length;
 
   return (
     <div className={className}>
       <div
-        className={`rounded-md border p-3 ${
+        className={`rounded-xl border p-3 ${
           allRequirementsMet
             ? "border-system-success bg-system-success/10"
             : "border-red-200 bg-red-50"
@@ -107,7 +84,7 @@ export const PasswordRequirementsMessage = ({
                 aria-hidden="true"
               />
               <p className="text-xs font-medium leading-tight text-red-700">
-                Your password must include:
+                Password must include:
               </p>
             </div>
             <ul className="ml-6 space-y-0.5" aria-label="Password requirements">
