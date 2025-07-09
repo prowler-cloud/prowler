@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { PASSWORD_REQUIREMENTS } from "@/types/authFormSchema";
 
 interface CustomInputProps<T extends FieldValues> {
   control: Control<T>;
@@ -90,6 +91,38 @@ export const CustomInput = <T extends FieldValues>({
     </button>
   );
 
+  // Password manager attributes for new passwords
+  const getPasswordAttributes = () => {
+    if (!password) return {};
+
+    return {
+      // Apple's passwordrules attribute (supported by 1Password, Safari, etc.)
+      passwordrules: `required: upper; required: lower; required: digit; required: special; minlength: ${PASSWORD_REQUIREMENTS.minLength}; allowed: ${PASSWORD_REQUIREMENTS.specialChars};`,
+
+      // Standard HTML5 attributes
+      minLength: PASSWORD_REQUIREMENTS.minLength,
+
+      // Autocomplete for password managers
+      autoComplete: "new-password",
+
+      // Pattern for browsers that support it (backup)
+      pattern: `^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[${PASSWORD_REQUIREMENTS.specialChars.replace(/[[\]\\-]/g, "\\$&")}]).{${PASSWORD_REQUIREMENTS.minLength},}$`,
+
+      // Title for accessibility and password managers
+      title: `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters long and include uppercase letters, lowercase letters, numbers, and special characters.`,
+    };
+  };
+
+  // Confirm password attributes
+  const getConfirmPasswordAttributes = () => {
+    if (!confirmPassword) return {};
+
+    return {
+      autoComplete: "new-password",
+      // No passwordrules for confirm password - it just needs to match
+    };
+  };
+
   return (
     <FormField
       control={control}
@@ -116,6 +149,8 @@ export const CustomInput = <T extends FieldValues>({
               endContent={endContent}
               isDisabled={isDisabled}
               isReadOnly={isReadOnly}
+              {...(password ? getPasswordAttributes() : {})}
+              {...(confirmPassword ? getConfirmPasswordAttributes() : {})}
               {...field}
             />
           </FormControl>
