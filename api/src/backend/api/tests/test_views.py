@@ -135,7 +135,7 @@ class TestUserViewSet:
             "dev12345",  # Similar to username
             ("querty12" * 9) + "a",  # Too long, 73 characters
             "NewPassword123",  # No special character
-            "Newpassword123@",  # No uppercase letter
+            "newpassword123@",  # No uppercase letter
             "NEWPASSWORD123",  # No lowercase letter
             "NewPassword@",  # No number
         ],
@@ -271,6 +271,10 @@ class TestUserViewSet:
             # Fails UserAttributeSimilarityValidator (too similar to email)
             "dev12345",
             "test@prowler.com",
+            "NewPassword123",  # No special character
+            "newpassword123@",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_partial_update_invalid_password(

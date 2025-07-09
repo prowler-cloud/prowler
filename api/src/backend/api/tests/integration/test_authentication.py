@@ -11,7 +11,7 @@ def test_basic_authentication():
     client = APIClient()
 
     test_user = "test_email@prowler.com"
-    test_password = "test_password"
+    test_password = "Test_password@"
 
     # Check that a 401 is returned when no basic authentication is provided
     no_auth_response = client.get(reverse("provider-list"))
@@ -187,7 +187,7 @@ class TestTokenSwitchTenant:
         client = APIClient()
 
         test_user = "test_email@prowler.com"
-        test_password = "test_password"
+        test_password = "Test_password@"
 
         # Check that we can create a new user without any kind of authentication
         user_creation_response = client.post(
