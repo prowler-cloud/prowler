@@ -5,11 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     DeleteRetentionPolicy,
     FileServiceProperties,
-<<<<<<< HEAD
-=======
     NetworkRuleSet,
-    SMBProtocolSettings,
->>>>>>> d34e709d9 (fix(azure/storage): use BaseModel for all Storage models (#8222))
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
