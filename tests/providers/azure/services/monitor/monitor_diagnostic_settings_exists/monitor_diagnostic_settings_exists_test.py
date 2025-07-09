@@ -91,6 +91,21 @@ class Test_monitor_diagnostic_settings_exists:
                 )
                 from prowler.providers.azure.services.storage.storage_service import (
                     Account,
+                    BlobProperties,
+                    DeleteRetentionPolicy,
+                    NetworkRuleSet,
+                )
+
+                # Create a valid BlobProperties instance
+                valid_blob_properties = BlobProperties(
+                    id="id",
+                    name="name",
+                    type="type",
+                    default_service_version="default_service_version",
+                    container_delete_retention_policy=DeleteRetentionPolicy(
+                        enabled=False, days=0
+                    ),
+                    versioning_enabled=True,
                 )
 
                 monitor_client.diagnostics_settings = {
@@ -138,42 +153,34 @@ class Test_monitor_diagnostic_settings_exists:
                             name="storageaccountname1",
                             resouce_group_name="rg",
                             enable_https_traffic_only=True,
-                            infrastructure_encryption="Enabled",
+                            infrastructure_encryption=True,
                             allow_blob_public_access=True,
-                            network_rule_set="AllowAll",
+                            network_rule_set=NetworkRuleSet(
+                                bypass="AzureServices", default_action="Allow"
+                            ),
                             encryption_type="Microsoft.CustomerManagedKeyVault",
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
-                            key_expiration_period_in_days=365,
+                            key_expiration_period_in_days="365",
                             location="euwest",
-                            blob_properties=mock.MagicMock(
-                                id="id",
-                                name="name",
-                                type="type",
-                                default_service_version="default_service_version",
-                                container_delete_retention_policy="container_delete_retention_policy",
-                            ),
+                            blob_properties=valid_blob_properties,
                         ),
                         Account(
                             id="/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname2",
                             name="storageaccountname2",
                             resouce_group_name="rg",
                             enable_https_traffic_only=False,
-                            infrastructure_encryption="Enabled",
+                            infrastructure_encryption=True,
                             allow_blob_public_access=False,
-                            network_rule_set="AllowAll",
+                            network_rule_set=NetworkRuleSet(
+                                bypass="AzureServices", default_action="Allow"
+                            ),
                             encryption_type="Microsoft.Storage",
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
-                            key_expiration_period_in_days=365,
+                            key_expiration_period_in_days="365",
                             location="euwest",
-                            blob_properties=mock.MagicMock(
-                                id="id",
-                                name="name",
-                                type="type",
-                                default_service_version="default_service_version",
-                                container_delete_retention_policy="container_delete_retention_policy",
-                            ),
+                            blob_properties=valid_blob_properties,
                         ),
                     ]
                 }
