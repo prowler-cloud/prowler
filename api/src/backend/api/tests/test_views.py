@@ -135,7 +135,7 @@ class TestUserViewSet:
             "dev12345",  # Similar to username
             ("querty12" * 9) + "a",  # Too long, 73 characters
             "NewPassword123",  # No special character
-            "newpassword123",  # No uppercase letter
+            "Newpassword123@",  # No uppercase letter
             "NEWPASSWORD123",  # No lowercase letter
             "NewPassword@",  # No number
         ],
@@ -168,7 +168,7 @@ class TestUserViewSet:
         # First user created; no errors should occur
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "nonexistentemail@prowler.com",
         }
         response = authenticated_client.post(
@@ -178,7 +178,7 @@ class TestUserViewSet:
 
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": email,
         }
         response = authenticated_client.post(
@@ -3954,7 +3954,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": invitation.email,
         }
         assert invitation.state == Invitation.State.PENDING.value
@@ -4046,7 +4046,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": new_email,
         }
 

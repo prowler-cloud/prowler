@@ -27,7 +27,7 @@ export const PasswordRequirementsMessage = ({
       {
         key: "specialChars",
         checker: passwordRequirementCheckers.specialChars,
-        label: "Special symbols (@, #, $, etc.)",
+        label: "Special characters",
       },
       {
         key: "uppercase",
