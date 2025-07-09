@@ -5,6 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     DeleteRetentionPolicy,
     FileServiceProperties,
+    NetworkRuleSet,
     SMBProtocolSettings,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -45,16 +46,18 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     file_service_properties=None,
                 )
             ]
@@ -95,16 +98,18 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     file_service_properties=file_service_properties,
                 )
             ]
@@ -154,16 +159,18 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     file_service_properties=file_service_properties,
                 )
             ]
