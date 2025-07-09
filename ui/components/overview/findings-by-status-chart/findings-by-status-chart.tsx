@@ -4,10 +4,11 @@ import { Card, CardBody } from "@nextui-org/react";
 import { Chip } from "@nextui-org/react";
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 import { Label, Pie, PieChart } from "recharts";
 
-import { NotificationIcon, SuccessIcon } from "@/components/icons";
+import { MutedIcon, NotificationIcon, SuccessIcon } from "@/components/icons";
 import {
   ChartConfig,
   ChartContainer,
@@ -32,8 +33,10 @@ interface FindingsByStatusChartProps {
       attributes: {
         fail: number;
         pass: number;
+        muted: number;
         pass_new: number;
         fail_new: number;
+        muted_new: number;
         total: number;
       };
     };
@@ -52,19 +55,29 @@ const chartConfig = {
     label: "Fail",
     color: "hsl(var(--chart-fail))",
   },
+  muted: {
+    label: "Muted",
+    color: "hsl(var(--chart-muted))",
+  },
 } satisfies ChartConfig;
 
 export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
   findingsByStatus,
 }) => {
+  const searchParams = useSearchParams();
+  const shouldShowMuted = searchParams.get("filter[muted]") !== "false";
+
   const {
     fail = 0,
     pass = 0,
+    muted = 0,
     pass_new = 0,
     fail_new = 0,
+    muted_new = 0,
   } = findingsByStatus?.data?.attributes || {};
-  const chartData = useMemo(
-    () => [
+
+  const chartData = useMemo(() => {
+    const data = [
       {
         findings: "Success",
         number: pass,
@@ -75,9 +88,18 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
         number: fail,
         fill: "var(--color-fail)",
       },
-    ],
-    [pass, fail],
-  );
+    ];
+
+    if (shouldShowMuted) {
+      data.push({
+        findings: "Muted",
+        number: muted,
+        fill: "var(--color-muted)",
+      });
+    }
+
+    return data;
+  }, [pass, fail, muted, shouldShowMuted]);
 
   const updatedChartData = calculatePercent(chartData);
 
@@ -85,6 +107,8 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
     () => chartData.reduce((acc, curr) => acc + curr.number, 0),
     [chartData],
   );
+
+  const hasDataToShow = totalFindings > 0;
 
   const emptyChartData = [
     {
@@ -105,7 +129,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             <PieChart>
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               <Pie
-                data={totalFindings > 0 ? chartData : emptyChartData}
+                data={hasDataToShow ? chartData : emptyChartData}
                 dataKey="number"
                 nameKey="findings"
                 innerRadius={65}
@@ -126,7 +150,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                             y={viewBox.cy}
                             className="fill-foreground text-xl font-bold"
                           >
-                            {totalFindings > 0
+                            {hasDataToShow
                               ? totalFindings.toLocaleString()
                               : "0"}
                           </tspan>
@@ -135,7 +159,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                             y={(viewBox.cy || 0) + 20}
                             className="fill-foreground text-xs"
                           >
-                            Findings
+                            {"Findings"}
                           </tspan>
                         </text>
                       );
@@ -204,6 +228,46 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                 <TrendingUp className="h-4 w-4" />
               </div>
             </div>
+
+            {shouldShowMuted && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href="/findings?filter[muted]=true"
+                    className="flex items-center space-x-2"
+                  >
+                    <Chip
+                      className="h-5"
+                      variant="flat"
+                      startContent={<MutedIcon size={18} />}
+                      color="warning"
+                      radius="lg"
+                      size="md"
+                    >
+                      {chartData.find((item) => item.findings === "Muted")
+                        ?.number || 0}
+                    </Chip>
+                    <span>
+                      {updatedChartData.find(
+                        (item) => item.findings === "Muted",
+                      )?.percent || "0%"}
+                    </span>
+                  </Link>
+                </div>
+                <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
+                  {muted_new > 0 ? (
+                    <>
+                      +{muted_new} muted findings from last day{" "}
+                      <TrendingUp className="h-4 w-4" />
+                    </>
+                  ) : muted_new < 0 ? (
+                    <>{muted_new} muted findings from last day</>
+                  ) : (
+                    "No change from last day"
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardBody>

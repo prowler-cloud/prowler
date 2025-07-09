@@ -1495,7 +1495,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             ),
         ]
 
-    def clean(self, old_email_domain=None):
+    def clean(self, old_email_domain=None, is_create=False):
         # Domain must not contain @
         if "@" in self.email_domain:
             raise ValidationError({"email_domain": "Domain must not contain @"})
@@ -1519,6 +1519,25 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
                 {"tenant": "There is a problem with your email domain."}
             )
 
+        # The entityID must be unique in the system
+        idp_settings = self._parsed_metadata
+        entity_id = idp_settings.get("entity_id")
+
+        if entity_id:
+            # Find any SocialApp with this entityID
+            q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
+
+            # If updating, exclude our own SocialApp from the check
+            if not is_create:
+                q = q.exclude(client_id=old_email_domain)
+            else:
+                q = q.exclude(client_id=self.email_domain)
+
+            if q.exists():
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
+
     def save(self, *args, **kwargs):
         self.email_domain = self.email_domain.strip().lower()
         is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
@@ -1531,7 +1550,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             old_email_domain = None
             old_metadata_xml = None
 
-        self.clean(old_email_domain)
+        self._parsed_metadata = self._parse_metadata()
+        self.clean(old_email_domain, is_create)
         super().save(*args, **kwargs)
 
         if is_create or (
@@ -1574,6 +1594,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
 
         # Entity ID
         entity_id = root.attrib.get("entityID")
+        if not entity_id:
+            raise ValidationError({"metadata_xml": "Missing entityID in metadata."})
 
         # SSO endpoint (must exist)
         sso = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService", ns)
@@ -1612,9 +1634,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         Create or update the corresponding SocialApp based on email_domain.
         If the domain changed, update the matching SocialApp.
         """
-        idp_settings = self._parse_metadata()
         settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
-        settings_dict["idp"] = idp_settings
+        settings_dict["idp"] = self._parsed_metadata
 
         current_site = Site.objects.get(id=settings.SITE_ID)
 
@@ -1630,7 +1651,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             social_app.client_id = client_id
             social_app.name = name
             social_app.settings = settings_dict
-            social_app.provider_id = idp_settings["entity_id"]
+            social_app.provider_id = self._parsed_metadata["entity_id"]
             social_app.save()
             social_app.sites.set([current_site])
         else:
@@ -1639,7 +1660,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
                 client_id=client_id,
                 name=name,
                 settings=settings_dict,
-                provider_id=idp_settings["entity_id"],
+                provider_id=self._parsed_metadata["entity_id"],
             )
             social_app.sites.set([current_site])
 

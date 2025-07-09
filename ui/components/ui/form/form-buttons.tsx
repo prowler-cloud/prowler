@@ -15,6 +15,7 @@ interface FormCancelButtonProps {
 interface FormSubmitButtonProps {
   children?: React.ReactNode;
   loadingText?: string;
+  isDisabled?: boolean;
 }
 
 interface FormButtonsProps {
@@ -22,6 +23,7 @@ interface FormButtonsProps {
   submitText?: string;
   cancelText?: string;
   loadingText?: string;
+  isDisabled?: boolean;
 }
 
 export const FormCancelButton = ({
@@ -45,6 +47,7 @@ export const FormCancelButton = ({
 export const FormSubmitButton = ({
   children = "Save",
   loadingText = "Loading",
+  isDisabled = false,
 }: FormSubmitButtonProps) => {
   const { pending } = useFormStatus();
 
@@ -57,6 +60,7 @@ export const FormSubmitButton = ({
       color="action"
       size="lg"
       isLoading={pending}
+      isDisabled={isDisabled}
       startContent={!pending && <SaveIcon size={24} />}
     >
       {pending ? <>{loadingText}</> : <span>{children}</span>}
@@ -69,12 +73,13 @@ export const FormButtons = ({
   submitText = "Save",
   cancelText = "Cancel",
   loadingText = "Loading",
+  isDisabled = false,
 }: FormButtonsProps) => {
   return (
     <div className="flex w-full justify-center space-x-6">
       <FormCancelButton setIsOpen={setIsOpen}>{cancelText}</FormCancelButton>
 
-      <FormSubmitButton loadingText={loadingText}>
+      <FormSubmitButton loadingText={loadingText} isDisabled={isDisabled}>
         {submitText}
       </FormSubmitButton>
     </div>

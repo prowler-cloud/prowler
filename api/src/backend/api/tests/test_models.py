@@ -3,7 +3,7 @@ from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 
 from api.db_router import MainRouter
-from api.models import Resource, ResourceTag, SAMLConfiguration, SAMLDomainIndex, Tenant
+from api.models import Resource, ResourceTag, SAMLConfiguration, SAMLDomainIndex
 
 
 @pytest.mark.django_db
@@ -142,8 +142,8 @@ class TestSAMLConfigurationModel:
     </md:EntityDescriptor>
     """
 
-    def test_creates_valid_configuration(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant A")
+    def test_creates_valid_configuration(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         config = SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="ssoexample.com",
             metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
@@ -153,8 +153,8 @@ class TestSAMLConfigurationModel:
         assert config.email_domain == "ssoexample.com"
         assert SocialApp.objects.filter(client_id="ssoexample.com").exists()
 
-    def test_email_domain_with_at_symbol_fails(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant B")
+    def test_email_domain_with_at_symbol_fails(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         config = SAMLConfiguration(
             email_domain="invalid@domain.com",
             metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
@@ -168,9 +168,8 @@ class TestSAMLConfigurationModel:
         assert "email_domain" in errors
         assert "Domain must not contain @" in errors["email_domain"][0]
 
-    def test_duplicate_email_domain_fails(self):
-        tenant1 = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant C1")
-        tenant2 = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant C2")
+    def test_duplicate_email_domain_fails(self, tenants_fixture):
+        tenant1, tenant2, *_ = tenants_fixture
 
         SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="duplicate.com",
@@ -191,8 +190,8 @@ class TestSAMLConfigurationModel:
         assert "tenant" in errors
         assert "There is a problem with your email domain." in errors["tenant"][0]
 
-    def test_duplicate_tenant_config_fails(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant D")
+    def test_duplicate_tenant_config_fails(self, tenants_fixture):
+        tenant = tenants_fixture[0]
 
         SAMLConfiguration.objects.using(MainRouter.admin_db).create(
             email_domain="unique1.com",
@@ -216,8 +215,8 @@ class TestSAMLConfigurationModel:
             in errors["tenant"][0]
         )
 
-    def test_invalid_metadata_xml_fails(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant E")
+    def test_invalid_metadata_xml_fails(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         config = SAMLConfiguration(
             email_domain="brokenxml.com",
             metadata_xml="<bad<xml>",
@@ -232,8 +231,8 @@ class TestSAMLConfigurationModel:
         assert "Invalid XML" in errors["metadata_xml"][0]
         assert "not well-formed" in errors["metadata_xml"][0]
 
-    def test_metadata_missing_sso_fails(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant F")
+    def test_metadata_missing_sso_fails(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         xml = """<md:EntityDescriptor entityID="x" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
                 <md:IDPSSODescriptor></md:IDPSSODescriptor>
                 </md:EntityDescriptor>"""
@@ -250,8 +249,8 @@ class TestSAMLConfigurationModel:
         assert "metadata_xml" in errors
         assert "Missing SingleSignOnService" in errors["metadata_xml"][0]
 
-    def test_metadata_missing_certificate_fails(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(name="Tenant G")
+    def test_metadata_missing_certificate_fails(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         xml = """<md:EntityDescriptor entityID="x" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
                     <md:IDPSSODescriptor>
                         <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.com/sso"/>
@@ -270,10 +269,8 @@ class TestSAMLConfigurationModel:
         assert "metadata_xml" in errors
         assert "X509Certificate" in errors["metadata_xml"][0]
 
-    def test_deletes_saml_configuration_and_related_objects(self):
-        tenant = Tenant.objects.using(MainRouter.admin_db).create(
-            name="Tenant for Deletion"
-        )
+    def test_deletes_saml_configuration_and_related_objects(self, tenants_fixture):
+        tenant = tenants_fixture[0]
         email_domain = "deleteme.com"
 
         # Create the configuration
@@ -306,3 +303,24 @@ class TestSAMLConfigurationModel:
             .filter(email_domain=email_domain)
             .exists()
         )
+
+    def test_duplicate_entity_id_fails_on_creation(self, tenants_fixture):
+        tenant1, tenant2, *_ = tenants_fixture
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
+            email_domain="first.com",
+            metadata_xml=self.VALID_METADATA,
+            tenant=tenant1,
+        )
+
+        config = SAMLConfiguration(
+            email_domain="second.com",
+            metadata_xml=self.VALID_METADATA,
+            tenant=tenant2,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            config.save()
+
+        errors = exc_info.value.message_dict
+        assert "metadata_xml" in errors
+        assert "There is a problem with your metadata." in errors["metadata_xml"][0]
