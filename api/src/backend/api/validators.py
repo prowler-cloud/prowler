@@ -25,7 +25,7 @@ class MaximumLengthValidator:
 
 
 class SpecialCharactersValidator:
-    def __init__(self, special_characters=None):
+    def __init__(self, special_characters=None, min_special_characters=1):
         # Use string.punctuation if no custom characters provided
         self.special_characters = special_characters or string.punctuation
 
@@ -34,7 +34,10 @@ class SpecialCharactersValidator:
             raise ValidationError(
                 _("This password must contain at least one special character."),
                 code="password_no_special_characters",
-                params={"special_characters": self.special_characters},
+                params={
+                    "special_characters": self.special_characters,
+                    "min_special_characters": self.min_special_characters,
+                },
             )
 
     def get_help_text(self):

@@ -161,6 +161,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "api.validators.SpecialCharactersValidator",
+        "OPTIONS": {
+            "min_special_characters": 1,
+        },
     },
     {
         "NAME": "api.validators.UppercaseValidator",
