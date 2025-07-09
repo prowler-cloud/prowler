@@ -2,7 +2,7 @@ import { Bot } from "lucide-react";
 import Link from "next/link";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
-import { CacheService } from "@/lib/lighthouse/cache";
+import { CacheService, initializeTenantCache } from "@/lib/lighthouse/cache";
 
 interface BannerConfig {
   message: string;
@@ -40,12 +40,13 @@ const renderBanner = ({
 
 export const LighthouseBanner = async () => {
   try {
+    await initializeTenantCache();
     // Check if Lighthouse is configured
     const lighthouseConfig = await getLighthouseConfig();
 
     if (!lighthouseConfig?.attributes) {
       return renderBanner({
-        message: "Enable Lighthouse to Secure Your Cloud With AI Insights",
+        message: "Enable Lighthouse to secure your cloud with AI insights",
         href: "/lighthouse/config",
         gradient:
           "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
@@ -73,7 +74,7 @@ export const LighthouseBanner = async () => {
 
     if (isProcessing) {
       return renderBanner({
-        message: "Lighthouse Is Reviewing Your Findings for Insights",
+        message: "Lighthouse is reviewing your findings for insights",
         href: "",
         gradient:
           "bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:ring-orange-500/50 dark:from-orange-600 dark:to-yellow-600 dark:hover:from-orange-700 dark:hover:to-yellow-700 dark:focus:ring-orange-400/50",
