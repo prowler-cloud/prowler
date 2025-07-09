@@ -83,7 +83,7 @@ export const PasswordRequirementsMessage = ({
       <div
         className={`rounded-md border p-3 ${
           allRequirementsMet
-          ? "border-system-success bg-system-success/10"
+            ? "border-system-success bg-system-success/10"
             : "border-red-200 bg-red-50"
         }`}
         role="region"
@@ -100,17 +100,17 @@ export const PasswordRequirementsMessage = ({
             </p>
           </div>
         ) : (
-            <div className="space-y-1">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
               <AlertCircle
                 className="h-4 w-4 flex-shrink-0 text-red-600"
                 aria-hidden="true"
               />
-                <p className="text-xs font-medium leading-tight text-red-700">
+              <p className="text-xs font-medium leading-tight text-red-700">
                 Your password must include:
               </p>
             </div>
-              <ul className="ml-6 space-y-0.5" aria-label="Password requirements">
+            <ul className="ml-6 space-y-0.5" aria-label="Password requirements">
               {results.map((req) => (
                 <li
                   key={req.key}
