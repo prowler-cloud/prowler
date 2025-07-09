@@ -71,21 +71,12 @@ export const getFindingsSchema = z.object({
         .optional()
         .describe("Comma-separated list of UUID values"),
 
-      // Impact and Severity filters
+      // Impact filters
       "filter[impact]": impactEnum.optional(),
       "filter[impact__in]": z
         .string()
         .optional()
         .describe("Comma-separated list of impact values"),
-      "filter[severity]": z
-        .enum(["critical", "high", "medium", "low", "informational"])
-        .optional(),
-      "filter[severity__in]": z
-        .string()
-        .optional()
-        .describe(
-          "Comma-separated list of severity values. Do not use it with severity filter.",
-        ),
 
       // Date filters
       "filter[inserted_at]": z
@@ -104,6 +95,9 @@ export const getFindingsSchema = z.object({
         .string()
         .optional()
         .describe("Date in format YYYY-MM-DD"),
+
+      // Muted filter
+      "filter[muted]": z.boolean().optional(),
 
       // Provider filters
       "filter[provider]": z.string().optional().describe("Provider UUID"),
@@ -175,6 +169,17 @@ export const getFindingsSchema = z.object({
         .string()
         .optional()
         .describe("Comma-separated list of service values"),
+
+      // Severity filters
+      "filter[severity]": z
+        .enum(["critical", "high", "medium", "low", "informational"])
+        .optional(),
+      "filter[severity__in]": z
+        .string()
+        .optional()
+        .describe(
+          "Comma-separated list of severity values. Do not use it with severity filter.",
+        ),
 
       // Status filters
       "filter[status]": statusEnum.optional(),
