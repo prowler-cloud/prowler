@@ -7,6 +7,7 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
@@ -21,6 +22,7 @@ from api.models import (
     InvitationRoleRelationship,
     LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -29,6 +31,7 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     StateChoices,
     StatusChoices,
@@ -43,7 +46,9 @@ from api.v1.serializer_utils.integrations import (
     IntegrationCredentialField,
     S3ConfigSerializer,
 )
+from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from prowler.lib.mutelist.mutelist import Mutelist
 
 # Tokens
 
@@ -129,6 +134,12 @@ class TokenSerializer(BaseTokenSerializer):
 
 class TokenSocialLoginSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
+    tenant_id = serializers.UUIDField(
+        write_only=True,
+        required=False,
+        help_text="If not provided, the tenant ID of the first membership that was added"
+        " to the user will be used.",
+    )
 
     # Output tokens
     refresh = serializers.CharField(read_only=True)
@@ -850,6 +861,7 @@ class ScanSerializer(RLSSerializer):
             "completed_at",
             "scheduled_at",
             "next_scan_at",
+            "processor",
             "url",
         ]
 
@@ -1103,6 +1115,7 @@ class FindingSerializer(RLSSerializer):
             "updated_at",
             "first_seen_at",
             "muted",
+            "muted_reason",
             "url",
             # Relationships
             "scan",
@@ -1308,12 +1321,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            "secret_type": {"required": False},
         }
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
@@ -2064,26 +2078,148 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return super().update(instance, validated_data)
 
 
+# Processors
+
+
+class ProcessorSerializer(RLSSerializer):
+    """
+    Serializer for the Processor model.
+    """
+
+    configuration = ProcessorConfigField()
+
+    class Meta:
+        model = Processor
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+            "url",
+        ]
+
+
+class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Processor.objects.all(),
+                fields=["processor_type"],
+                message="A processor with the same type already exists.",
+            )
+        ]
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = attrs.get("processor_type")
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
+
+
+class ProcessorUpdateSerializer(BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = self.instance.processor_type
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
+
+
 # SSO
 
 
-# class SamlInitiateSerializer(serializers.Serializer):
-#     email_domain = serializers.CharField()
+class SamlInitiateSerializer(serializers.Serializer):
+    email_domain = serializers.CharField()
 
-#     class JSONAPIMeta:
-#         resource_name = "saml-initiate"
-
-
-# class SamlMetadataSerializer(serializers.Serializer):
-#     class JSONAPIMeta:
-#         resource_name = "saml-meta"
+    class JSONAPIMeta:
+        resource_name = "saml-initiate"
 
 
-# class SAMLConfigurationSerializer(RLSSerializer):
-#     class Meta:
-#         model = SAMLConfiguration
-#         fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
-#         read_only_fields = ["id", "created_at", "updated_at"]
+class SamlMetadataSerializer(serializers.Serializer):
+    class JSONAPIMeta:
+        resource_name = "saml-meta"
+
+
+class SAMLConfigurationSerializer(RLSSerializer):
+    class Meta:
+        model = SAMLConfiguration
+        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class LighthouseConfigSerializer(RLSSerializer):
