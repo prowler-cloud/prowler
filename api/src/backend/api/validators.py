@@ -28,6 +28,7 @@ class SpecialCharactersValidator:
     def __init__(self, special_characters=None, min_special_characters=1):
         # Use string.punctuation if no custom characters provided
         self.special_characters = special_characters or string.punctuation
+        self.min_special_characters = min_special_characters
 
     def validate(self, password, user=None):
         if (
