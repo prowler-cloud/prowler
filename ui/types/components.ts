@@ -73,9 +73,11 @@ export interface FindingsByStatusData {
     attributes: {
       fail: number;
       pass: number;
+      muted: number;
       total: number;
       fail_new: number;
       pass_new: number;
+      muted_new: number;
       [key: string]: number;
     };
   };
