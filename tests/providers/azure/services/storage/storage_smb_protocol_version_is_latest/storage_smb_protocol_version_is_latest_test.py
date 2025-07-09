@@ -5,6 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     DeleteRetentionPolicy,
     FileServiceProperties,
+    NetworkRuleSet,
     SMBProtocolSettings,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -48,11 +49,13 @@ class Test_storage_smb_protocol_version_is_latest:
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="type",
                     minimum_tls_version="TLS1_2",
                     private_endpoint_connections=[],
-                    key_expiration_period_in_days="",
+                    key_expiration_period_in_days=None,
                     location="eastus",
                     file_service_properties=None,
                 )
@@ -98,11 +101,13 @@ class Test_storage_smb_protocol_version_is_latest:
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="type",
                     minimum_tls_version="TLS1_2",
                     private_endpoint_connections=[],
-                    key_expiration_period_in_days="",
+                    key_expiration_period_in_days=None,
                     location="eastus",
                     file_service_properties=file_service_properties,
                 )
@@ -153,11 +158,13 @@ class Test_storage_smb_protocol_version_is_latest:
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="type",
                     minimum_tls_version="TLS1_2",
                     private_endpoint_connections=[],
-                    key_expiration_period_in_days="",
+                    key_expiration_period_in_days=None,
                     location="eastus",
                     file_service_properties=file_service_properties,
                 )
@@ -208,11 +215,13 @@ class Test_storage_smb_protocol_version_is_latest:
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="type",
                     minimum_tls_version="TLS1_2",
                     private_endpoint_connections=[],
-                    key_expiration_period_in_days="",
+                    key_expiration_period_in_days=None,
                     location="eastus",
                     file_service_properties=file_service_properties,
                 )
@@ -258,11 +267,13 @@ class Test_storage_smb_protocol_version_is_latest:
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="type",
                     minimum_tls_version="TLS1_2",
                     private_endpoint_connections=[],
-                    key_expiration_period_in_days="",
+                    key_expiration_period_in_days=None,
                     location="eastus",
                     file_service_properties=file_service_properties,
                 )
