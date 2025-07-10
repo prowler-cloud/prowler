@@ -11,7 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### Security
 
-- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
 ### 🔄 Changed
 
