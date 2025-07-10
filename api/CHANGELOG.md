@@ -9,6 +9,11 @@ All notable changes to the **Prowler API** are documented in this file.
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
 
+### Security
+
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+
+
 ---
 
 ## [v1.9.1] (Prowler v5.8.1)
