@@ -1,13 +1,14 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { EntityInfoShort } from "@/components/ui/entities";
+import { EntityInfoShort, SnippetChip } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { ResourceProps } from "@/types";
+import { ProviderType, ResourceProps } from "@/types";
 
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -63,28 +64,18 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
     cell: ({ row }) => <ResourceDetailsCell row={row} />,
   },
   {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Resource Name"}
-        param="name"
-      />
-    ),
+    accessorKey: "resourceName",
+    header: "Resource name",
     cell: ({ row }) => {
       const resourceName = getResourceData(row, "name");
+
       return (
-        <>
-          <div className="relative flex max-w-[370px] flex-row items-center gap-2 3xl:max-w-[660px]">
-            <div className="flex w-full flex-row items-center gap-4">
-              <p className="w-full whitespace-normal break-words text-sm">
-                {typeof resourceName === "string"
-                  ? resourceName
-                  : "Invalid name"}
-              </p>
-            </div>
-          </div>
-        </>
+        <SnippetChip
+          value={resourceName as string}
+          formatter={(value: string) => `...${value.slice(-30)}`}
+          className="w-[300px] truncate"
+          icon={<Database size={16} />}
+        />
       );
     },
   },
@@ -169,9 +160,9 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       return (
         <>
           <EntityInfoShort
-            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
-            entityAlias={alias as string}
-            entityId={uid as string}
+            cloudProvider={provider as ProviderType}
+            entityAlias={alias && typeof alias === "string" ? alias : undefined}
+            entityId={uid && typeof uid === "string" ? uid : undefined}
           />
         </>
       );
