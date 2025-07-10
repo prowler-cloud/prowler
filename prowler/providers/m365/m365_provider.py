@@ -955,7 +955,9 @@ class M365Provider(Provider):
                 )
             # since that exception is not considered as critical, we keep filling another identity fields
             identity.identity_id = (
-                getenv("AZURE_CLIENT_ID") or "Unknown user id (Missing AAD permissions)"
+                getenv("AZURE_CLIENT_ID")
+                or session.get("client_id")
+                or "Unknown user id (Missing AAD permissions)"
             )
             if sp_env_auth:
                 identity.identity_type = "Service Principal"
@@ -978,6 +980,12 @@ class M365Provider(Provider):
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
+            else:
+                # Prowler Cloud Static Credentials
+                if session.get("user") and session.get("password"):
+                    identity.identity_type = "Service Principal and User Credentials"
+                else:
+                    identity.identity_type = "Service Principal"
 
             # Retrieve tenant id from the client
             client = GraphServiceClient(credentials=session)
