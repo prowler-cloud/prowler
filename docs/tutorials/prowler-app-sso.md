@@ -66,6 +66,10 @@ For Prowler to correctly identify and provision users, the IdP must be configure
 | `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
 | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
+???+ info "IdP Attribute Mapping"
+    Note that the attribute name is just an example and may be different in your IdP. For instance, if your IdP provides a 'division' attribute, you can map it to 'userType'.
+    ![IdP configuration](../img/saml/saml_attribute_statements.png)
+
 ???+ warning "Dynamic Updates"
     These attributes are updated in Prowler each time a user logs in. Changes made in the IdP will be reflected in Prowler upon the user's next session.
 
