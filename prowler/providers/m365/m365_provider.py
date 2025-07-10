@@ -956,7 +956,7 @@ class M365Provider(Provider):
             # since that exception is not considered as critical, we keep filling another identity fields
             identity.identity_id = (
                 getenv("AZURE_CLIENT_ID")
-                or session.client_id
+                or session.credentials[0]._credential.client_id
                 or "Unknown user id (Missing AAD permissions)"
             )
             if sp_env_auth:
