@@ -14,6 +14,7 @@ from api.compliance import (
     generate_scan_compliance,
 )
 from api.db_utils import create_objects_in_batches, rls_transaction
+from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
@@ -139,7 +140,7 @@ def perform_prowler_scan(
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                exc = ValueError(
+                exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
