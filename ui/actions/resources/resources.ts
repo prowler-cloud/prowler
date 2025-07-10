@@ -3,12 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 
 export const getResources = async ({
   page = 1,
@@ -16,17 +11,17 @@ export const getResources = async ({
   sort = "",
   filters = {},
   pageSize = 10,
+  include = "",
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  if (isNaN(Number(page)) || page < 1)
-    redirect("resources?include=findings,provider");
+  if (isNaN(Number(page)) || page < 1) redirect("resources");
 
-  const url = new URL(`${apiBaseUrl}/resources?include=findings,provider`);
+  const url = new URL(`${apiBaseUrl}/resources`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
-
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+  if (include) url.searchParams.append("include", include);
 
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
@@ -46,31 +41,112 @@ export const getResources = async ({
     revalidatePath("/resources");
     return parsedData;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching resources:", error);
     return undefined;
   }
 };
 
-export const getResourceById = async (resourceId: string) => {
+export const getLatestResources = async ({
+  page = 1,
+  query = "",
+  sort = "",
+  include = "",
+  filters = {},
+  pageSize = 10,
+}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(
-    `${apiBaseUrl}/resources/${resourceId}?fields[resources]=provider,region&include=findings,provider`,
-  );
+  if (isNaN(Number(page)) || page < 1) redirect("resources");
+
+  const url = new URL(`${apiBaseUrl}/resources/latest`);
+
+  if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+  if (include) url.searchParams.append("include", include);
+
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value));
+  });
 
   try {
-    const resource = await fetch(url.toString(), {
+    const resources = await fetch(url.toString(), {
       headers,
     });
-    const data = await resource.json();
+
+    const data = await resources.json();
+    const parsedData = parseStringify(data);
+
+    revalidatePath("/resources");
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching latest resources:", error);
+    return undefined;
+  }
+};
+
+export const getMetadataInfo = async ({
+  query = "",
+  sort = "",
+  filters = {},
+}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/resources/metadata`);
+
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value));
+  });
+
+  try {
+    const metadata = await fetch(url.toString(), {
+      headers,
+    });
+
+    const data = await metadata.json();
     const parsedData = parseStringify(data);
 
     return parsedData;
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error fetching metadata info:", error);
+    return undefined;
+  }
+};
+
+export const getLatestMetadataInfo = async ({
+  query = "",
+  sort = "",
+  filters = {},
+}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/resources/metadata/latest`);
+
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value));
+  });
+
+  try {
+    const metadata = await fetch(url.toString(), {
+      headers,
+    });
+
+    const data = await metadata.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching latest metadata info:", error);
+    return undefined;
   }
 };
 
@@ -94,8 +170,7 @@ export const getResourceFields = async (fields: string, filters = {}) => {
 
     return parsedData;
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    console.error("Error fetching resource fields:", error);
+    return undefined;
   }
 };

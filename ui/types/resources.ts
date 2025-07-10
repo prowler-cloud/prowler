@@ -10,6 +10,7 @@ export interface ResourceProps {
     service: string;
     tags: Record<string, string>;
     type: string;
+    failed_findings_count: number;
   };
   relationships: {
     provider: {

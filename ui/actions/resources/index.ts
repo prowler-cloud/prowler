@@ -1,1 +1,7 @@
-export * from "./resources";
+export {
+  getLatestMetadataInfo,
+  getLatestResources,
+  getMetadataInfo,
+  getResourceFields,
+  getResources,
+} from "./resources";

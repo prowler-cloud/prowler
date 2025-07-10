@@ -1,9 +1,12 @@
 import { Spacer } from "@nextui-org/react";
-import { format, parseISO } from "date-fns";
 import { Suspense } from "react";
 
-import { getResourceFields, getResources } from "@/actions/resources";
-import { getScans } from "@/actions/scans";
+import {
+  getLatestMetadataInfo,
+  getLatestResources,
+  getMetadataInfo,
+  getResources,
+} from "@/actions/resources";
 import { FilterControls } from "@/components/filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ColumnResources } from "@/components/resources/table/column-resources";
@@ -23,104 +26,52 @@ export default async function Resources({
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
+  const { filters, query } = extractFiltersAndQuery(searchParams);
 
-  // Check if the searchParams contain any date or filter
+  // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  const { filters } = extractFiltersAndQuery(searchParams);
-  filters["page[size]"] = "100"; // TODO: Remove page[size] 100 when metadata endpoint implemented
-
-  if (!hasDateOrScan) {
-    const scansData = await getScans({
-      filters: {
-        "fields[scans]": "inserted_at",
-      },
-    });
-
-    if (scansData?.data?.length !== 0) {
-      const latestScandate = scansData.data?.[0]?.attributes?.inserted_at;
-      if (latestScandate) {
-        const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
-        filters["filter[updated_at]"] = formattedDate;
-      }
-    }
-  }
-
-  const outputFilters = replaceFilterFieldKey(
+  const metadataInfoData = await (
+    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
+  )({
+    query,
+    sort: encodedSort,
     filters,
-    "inserted_at",
-    "updated_at",
-  );
+  });
 
-  // Resource call for filters
-  const resourcesData = await getResourceFields(
-    "name,type,region,service",
-    outputFilters,
-  );
-
-  let resourceNameList: string[] = [];
-  let typeList: string[] = [];
-  let regionList: string[] = [];
-  let serviceList: string[] = [];
-
-  if (resourcesData?.data) {
-    resourceNameList = Array.from(
-      new Set(
-        resourcesData.data.map((item: ResourceProps) => item.attributes.name) ||
-          [],
-      ),
-    );
-
-    typeList = Array.from(
-      new Set(
-        resourcesData.data.map((item: ResourceProps) => item.attributes.type) ||
-          [],
-      ),
-    );
-
-    regionList = Array.from(
-      new Set(
-        resourcesData.data.map(
-          (item: ResourceProps) => item.attributes.region,
-        ) || [],
-      ),
-    );
-
-    serviceList = Array.from(
-      new Set(
-        resourcesData.data.map(
-          (item: ResourceProps) => item.attributes.service,
-        ) || [],
-      ),
-    );
-  }
+  // Extract unique regions, services, types, and names from the metadata endpoint
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+  const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
+  const uniqueResourceTypes =
+    metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueResourceNames =
+    metadataInfoData?.data?.attributes?.resource_names || [];
 
   return (
     <ContentLayout title="Resources" icon="carbon:data-view">
       <FilterControls search date />
-      <Spacer y={8} />
       <DataTableFilterCustom
         filters={[
           {
             key: "name",
             labelCheckboxGroup: "Resources",
-            values: resourceNameList,
+            values: uniqueResourceNames,
           },
           {
             key: "region",
             labelCheckboxGroup: "Region",
-            values: regionList,
+            values: uniqueRegions,
           },
           {
             key: "type",
             labelCheckboxGroup: "Type",
-            values: typeList,
+            values: uniqueResourceTypes,
           },
           {
             key: "service",
             labelCheckboxGroup: "Service",
-            values: serviceList,
+            values: uniqueServices,
           },
         ]}
         defaultOpen={true}
@@ -146,49 +97,38 @@ const SSRDataTable = async ({
     sort: searchParams.sort ?? defaultSort,
   });
 
-  // Check if the searchParams contain any date or filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
-
   const { filters, query } = extractFiltersAndQuery(searchParams);
-
-  if (!hasDateOrScan) {
-    // Fetch scans data latest date
-    const scansData = await getScans({
-      filters: {
-        "fields[scans]": "inserted_at",
-      },
-    });
-
-    if (scansData?.data?.length !== 0) {
-      const latestScandate = scansData?.data?.[0]?.attributes?.inserted_at;
-      const formattedDate = format(parseISO(latestScandate), "yyyy-MM-dd");
-      filters["filter[updated_at]"] = formattedDate;
-    }
-  }
+  // Check if the searchParams contain any date or scan filter
+  const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
   const outputFilters = replaceFilterFieldKey(
     filters,
-    "inserted_at",
+    "updated_at",
     "updated_at",
   );
-  const resourcesData = await getResources({
+
+  const fetchResources = hasDateOrScan ? getResources : getLatestResources;
+
+  const resourcesData = await fetchResources({
     query,
     page,
-    filters: outputFilters,
     sort: encodedSort,
+    filters: outputFilters,
     pageSize,
+    include: "findings,provider",
   });
 
+  // Create dictionaries for findings and providers
   const findingsDict = createDict("findings", resourcesData);
   const providerDict = createDict("providers", resourcesData);
 
-  // Expand each resources with its corresponding findings and provider
+  // Expand each resource with its corresponding findings and provider
   const expandedResources = resourcesData?.data
     ? resourcesData.data.map((resource: ResourceProps) => {
         const findings = {
           meta: resource.relationships.findings.meta,
           data: resource.relationships.findings.data?.map(
-            (finding) => findingsDict[finding.id],
+            (finding: any) => findingsDict[finding.id],
           ),
         };
 
@@ -209,10 +149,18 @@ const SSRDataTable = async ({
   };
 
   return (
-    <DataTable
-      columns={ColumnResources}
-      data={expandedResponse?.data || []}
-      metadata={resourcesData?.meta}
-    />
+    <>
+      {resourcesData?.errors && (
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+          <p className="mr-2 font-semibold">Error:</p>
+          <p>{resourcesData.errors[0].detail}</p>
+        </div>
+      )}
+      <DataTable
+        columns={ColumnResources}
+        data={expandedResponse?.data || []}
+        metadata={resourcesData?.meta}
+      />
+    </>
   );
 };

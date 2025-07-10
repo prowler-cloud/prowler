@@ -10,13 +10,13 @@ import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderType, ResourceProps } from "@/types";
 
-import { DataTableRowDetails } from "./data-table-row-details";
+import { ResourceDetail } from "./resource-detail";
 
 const getResourceData = (
   row: { original: ResourceProps },
   field: keyof ResourceProps["attributes"],
 ) => {
-  return row.original.attributes?.[field] || `No ${field} found in resource`;
+  return row.original.attributes?.[field];
 };
 
 const getChipStyle = (count: number) => {
@@ -48,10 +48,7 @@ const ResourceDetailsCell = ({ row }: { row: any }) => {
         description="View the Resource details"
         defaultOpen={isOpen}
       >
-        <DataTableRowDetails
-          resourceData={row.original}
-          resourceId={row.original.id}
-        />
+        <ResourceDetail resourceDetails={row.original} />
       </TriggerSheet>
     </div>
   );
@@ -83,18 +80,18 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
     accessorKey: "failedFindings",
     header: () => <div className="text-center">Failed Findings</div>,
     cell: ({ row }) => {
-      const count = row.original.relationships.findings.data.filter(
-        (data) =>
-          data.attributes.status === "FAIL" && data.attributes.delta === "new",
-      ).length;
+      const failedFindingsCount = getResourceData(
+        row,
+        "failed_findings_count",
+      ) as number;
 
       return (
         <>
           <p className="text-center">
             <span
-              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(count)}`}
+              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(failedFindingsCount)}`}
             >
-              {count}
+              {failedFindingsCount}
             </span>
           </p>
         </>
@@ -125,7 +122,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const type = getResourceData(row, "type");
 
       return (
-        <div className="max-w-[150px] whitespace-normal break-words text-xs">
+        <div className="max-w-[150px] whitespace-nowrap break-words text-xs">
           {typeof type === "string" ? type : "Invalid type"}
         </div>
       );

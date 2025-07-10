@@ -2,6 +2,7 @@ export * from "./accordion/Accordion";
 export * from "./action-card/ActionCard";
 export * from "./alert/Alert";
 export * from "./alert-dialog/AlertDialog";
+export * from "./breadcrumbs";
 export * from "./chart/Chart";
 export * from "./content-layout/content-layout";
 export * from "./dialog/dialog";
