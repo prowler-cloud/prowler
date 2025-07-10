@@ -430,6 +430,9 @@ azure:
   # TODO: create common config
   shodan_api_key: null
 
+  # Configurable minimal risk level for attack path notifications
+  defender_attack_path_minimal_risk_level: "High"
+
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
   php_latest_version: "8.2"
