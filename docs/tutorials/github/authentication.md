@@ -16,7 +16,7 @@ Here are the available login methods and their respective flags:
 Use this method by providing your personal access token directly.
 
 ```console
-prowler github --personal-access-token pat
+prowler github --github-personal-access-token pat
 ```
 
 ### OAuth App Token
