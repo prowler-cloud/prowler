@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 ### Fixed
+- Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
 
 ---
 
