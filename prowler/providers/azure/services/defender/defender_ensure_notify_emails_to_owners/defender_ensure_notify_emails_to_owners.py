@@ -15,14 +15,13 @@ class defender_ensure_notify_emails_to_owners(Check):
                     metadata=self.metadata(), resource=contact_configuration
                 )
                 report.subscription = subscription_name
-                report.status = "PASS"
-                report.status_extended = (
-                    f"The Owner role is notified for subscription {subscription_name}."
-                )
                 if (
                     contact_configuration.notifications_by_role.state
                     and "Owner" in contact_configuration.notifications_by_role.roles
                 ):
+                    report.status = "PASS"
+                    report.status_extended = f"The Owner role is notified for subscription {subscription_name}."
+                else:
                     report.status = "FAIL"
                     report.status_extended = f"The Owner role is not notified for subscription {subscription_name}."
 
