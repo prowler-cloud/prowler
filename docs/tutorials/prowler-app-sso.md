@@ -66,7 +66,7 @@ For Prowler to correctly identify and provision users, the IdP must be configure
 |----------------|---------------------------------------------------------------------------------------------------------|----------|
 | `firstName`    | The user's first name.                                                                                  | Yes      |
 | `lastName`     | The user's last name.                                                                                   | Yes      |
-| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role called `saml_no_permissions` will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
+| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role called `no_permissions` will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
 | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
 ???+ info "IdP Attribute Mapping"
