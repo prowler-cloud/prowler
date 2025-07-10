@@ -23,6 +23,7 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
@@ -381,8 +382,27 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
         scanner_args={"key1": "value1", "key2": {"key21": "value21"}},
     )
+    provider6 = Provider.objects.create(
+        provider="m365",
+        uid="m365.test.com",
+        alias="m365_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5
+    return provider1, provider2, provider3, provider4, provider5, provider6
+
+
+@pytest.fixture
+def processor_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    processor = Processor.objects.create(
+        tenant_id=tenant.id,
+        processor_type="mutelist",
+        configuration="Mutelist:\n  Accounts:\n    *:\n      Checks:\n        iam_user_hardware_mfa_enabled:\n         "
+        " Regions:\n            - *\n          Resources:\n            - *",
+    )
+
+    return processor
 
 
 @pytest.fixture
@@ -1118,7 +1138,7 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
 @pytest.fixture
 def saml_setup(tenants_fixture):
     tenant_id = tenants_fixture[0].id
-    domain = "example.com"
+    domain = "prowler.com"
 
     SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
 

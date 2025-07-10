@@ -1,4 +1,4 @@
-FROM python:3.12.10-slim-bookworm AS build
+FROM python:3.12.11-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
@@ -6,7 +6,8 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends wget libicu72 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -46,10 +47,6 @@ ENV PATH="${HOME}/.local/bin:${PATH}"
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
-# By default poetry does not compile Python source files to bytecode during installation.
-# This speeds up the installation process, but the first execution may take a little more
-# time because Python then compiles source files to bytecode automatically. If you want to
-# compile source files to bytecode during installation, you can use the --compile option
 RUN poetry install --compile && \
     rm -rf ~/.cache/pip
 

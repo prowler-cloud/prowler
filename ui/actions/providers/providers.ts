@@ -13,7 +13,6 @@ import {
 } from "@/lib";
 import {
   buildSecretConfig,
-  buildUpdateSecretConfig,
   handleApiError,
   handleApiResponse,
 } from "@/lib/provider-credentials/build-crendentials";
@@ -194,8 +193,7 @@ export const updateCredentialsProvider = async (
   ) as ProviderType;
 
   try {
-    const secret = buildUpdateSecretConfig(formData, providerType);
-
+    const { secretType, secret } = buildSecretConfig(formData, providerType);
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers,
@@ -203,7 +201,7 @@ export const updateCredentialsProvider = async (
         data: {
           type: "provider-secrets",
           id: credentialsId,
-          attributes: { secret },
+          attributes: { secret_type: secretType, secret },
         },
       }),
     });

@@ -17,6 +17,7 @@ from api.db_utils import create_objects_in_batches, rls_transaction
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    Processor,
     Provider,
     Resource,
     ResourceScanSummary,
@@ -26,7 +27,7 @@ from api.models import (
     StateChoices,
 )
 from api.models import StatusChoices as FindingStatus
-from api.utils import initialize_prowler_provider
+from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
@@ -132,10 +133,24 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Find the mutelist processor if it exists
+    with rls_transaction(tenant_id):
+        try:
+            mutelist_processor = Processor.objects.get(
+                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
+            )
+        except Processor.DoesNotExist:
+            mutelist_processor = None
+        except Exception as e:
+            logger.error(f"Error processing mutelist rules: {e}")
+            mutelist_processor = None
+
     try:
         with rls_transaction(tenant_id):
             try:
-                prowler_provider = initialize_prowler_provider(provider_instance)
+                prowler_provider = initialize_prowler_provider(
+                    provider_instance, mutelist_processor
+                )
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
@@ -149,7 +164,8 @@ def perform_prowler_scan(
                 provider_instance.save()
 
         # If the provider is not connected, raise an exception outside the transaction.
-        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked as not connected.
+        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked
+        # as not connected.
         if exc:
             raise exc
 
@@ -273,6 +289,9 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
+                    # If the finding is muted at this time the reason must be the configured Mutelist
+                    muted_reason = "Muted by mutelist" if finding.muted else None
+
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -288,6 +307,7 @@ def perform_prowler_scan(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
+                        muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
@@ -526,7 +546,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         with rls_transaction(tenant_id):
             scan_instance = Scan.objects.get(pk=scan_id)
             provider_instance = scan_instance.provider
-            prowler_provider = initialize_prowler_provider(provider_instance)
+            prowler_provider = return_prowler_provider(provider_instance)
 
         # Get check status data by region from findings
         check_status_by_region = {}

@@ -2,7 +2,40 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [v1.8.0] (Prowler v5.8.0) – Not released
+## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
+
+### 🚀 Added
+
+- Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
+- SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
+
+### Security
+
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
+
+### 🔄 Changed
+
+- Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
+
+### 🐞 Fixed
+
+### Removed
+
+---
+
+## [v1.8.1] (Prowler 5.8.1)
+
+### 🔄 Changed
+
+- Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
+
+### Removed
+
+- Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
+
+---
+
+## [v1.8.0] (Prowler v5.8.0)
 
 ### 🚀 Added
 
@@ -15,11 +48,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: CIS [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
 - Compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
 - Compliance detail view: KISA [(#7965)](https://github.com/prowler-cloud/prowler/pull/7965)
-- Compliance detail view: ProwlerThreatScore [(#7966)](https://github.com/prowler-cloud/prowler/pull/7966)
+- Compliance detail view: ProwlerThreatScore [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 - Compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
-- Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
+- Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
 - Lighthouse chat interface [(#7878)](https://github.com/prowler-cloud/prowler/pull/7878)
+- Google Tag Manager integration [(#8058)](https://github.com/prowler-cloud/prowler/pull/8058)
 
 ### 🔄 Changed
 
@@ -27,12 +61,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Aligned Next.js version to `v14.2.29` across Prowler and Cloud environments for consistency and improved maintainability [(#7962)](https://github.com/prowler-cloud/prowler/pull/7962)
 - Refactor credentials forms with reusable components and error handling [(#7988)](https://github.com/prowler-cloud/prowler/pull/7988)
 - Updated the provider details section in Scan and Findings detail pages [(#7968)](https://github.com/prowler-cloud/prowler/pull/7968)
+- Make user and password fields optional but mutually required for M365 cloud provider [(#8044)](https://github.com/prowler-cloud/prowler/pull/8044)
+- Improve filter behaviour and relationships between filters in findings page [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)
+- Set filters panel to be always open by default [(#8085)](https://github.com/prowler-cloud/prowler/pull/8085)
+- Updated "Sign in"/"Sign up" capitalization for consistency [(#8136)](https://github.com/prowler-cloud/prowler/pull/8136)
+- Duplicate API base URL as an env var to make it accessible in client components [(#8131)](https://github.com/prowler-cloud/prowler/pull/8131)
 
 ### 🐞 Fixed
 
 - Sync between filter buttons and URL when filters change [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
 - Improve heatmap perfomance [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
 - SelectScanProvider warning fixed with empty alias [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
+- Prevent console warnings for accessibility and SVG[(#8019)](https://github.com/prowler-cloud/prowler/pull/8019)
 
 ---
 

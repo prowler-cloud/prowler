@@ -13,6 +13,8 @@ interface CustomServerInputProps {
   isRequired?: boolean;
   isInvalid?: boolean;
   errorMessage?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -28,6 +30,8 @@ export const CustomServerInput = ({
   isRequired = false,
   isInvalid = false,
   errorMessage,
+  value,
+  onChange,
 }: CustomServerInputProps) => {
   return (
     <div className="flex flex-col">
@@ -42,6 +46,8 @@ export const CustomServerInput = ({
         isRequired={isRequired}
         isInvalid={isInvalid}
         errorMessage={errorMessage}
+        value={value}
+        onChange={onChange}
         classNames={{
           label: "tracking-tight font-light !text-default-500 text-xs !z-0",
           input: "text-default-500 text-small",

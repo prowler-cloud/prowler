@@ -158,6 +158,7 @@ class TestPerformScan:
         assert scan_finding.raw_result == finding.raw
         assert scan_finding.muted
         assert scan_finding.compliance == finding.compliance
+        assert scan_finding.muted_reason == "Muted by mutelist"
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
@@ -399,9 +400,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -427,9 +426,7 @@ class TestCreateComplianceRequirements:
                 "us-east-1",
                 "us-west-2",
             ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -512,9 +509,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -557,9 +552,7 @@ class TestCreateComplianceRequirements:
                 "us-east-1",
                 "us-west-2",
             ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -607,9 +600,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -641,9 +632,7 @@ class TestCreateComplianceRequirements:
             mock_prowler_provider_instance.get_regions.side_effect = AttributeError(
                 "No get_regions method"
             )
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "kubernetes_cis": {
@@ -676,9 +665,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -704,9 +691,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -743,9 +728,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
@@ -759,7 +742,7 @@ class TestCreateComplianceRequirements:
             tenant_id = str(tenant.id)
             scan_id = str(scan.id)
 
-            mock_initialize_prowler_provider.side_effect = Exception(
+            mock_prowler_provider.side_effect = Exception(
                 "Provider initialization failed"
             )
 
@@ -774,9 +757,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -800,9 +781,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {}
 
@@ -821,8 +800,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -862,9 +841,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_return_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -898,8 +875,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -911,7 +888,6 @@ class TestCreateComplianceRequirements:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            providers_fixture[0]
 
             mock_findings_filter.return_value = []
 
@@ -921,7 +897,7 @@ class TestCreateComplianceRequirements:
                 "us-west-2",
                 "eu-west-1",
             ]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -990,8 +966,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -1009,7 +985,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider = MagicMock()
             mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -1077,8 +1053,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -1090,13 +1066,12 @@ class TestCreateComplianceRequirements:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            providers_fixture[0]
 
             mock_findings_filter.return_value = []
 
             mock_prowler_provider = MagicMock()
             mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {

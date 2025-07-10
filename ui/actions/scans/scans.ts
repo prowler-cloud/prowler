@@ -16,12 +16,8 @@ export const getScans = async ({
   sort = "",
   filters = {},
   pageSize = 10,
-}: {
-  page?: number;
-  query?: string;
-  sort?: string;
-  filters?: Record<string, string | number | boolean>;
-  pageSize?: number;
+  fields = {},
+  include = "",
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -33,6 +29,12 @@ export const getScans = async ({
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
+  if (include) url.searchParams.append("include", include);
+
+  // Handle fields parameters
+  Object.entries(fields).forEach(([key, value]) => {
+    url.searchParams.append(`fields[${key}]`, String(value));
+  });
 
   // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
