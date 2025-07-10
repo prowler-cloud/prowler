@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
 - SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
+- Resource view [(#7760)](https://github.com/prowler-cloud/prowler/pull/7760)
 
 ### Security
 

@@ -36,18 +36,14 @@ export const getScans = async ({
     url.searchParams.append(`fields[${key}]`, String(value));
   });
 
-  // Handle multiple filters
+  // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
-    const scans = await fetch(url.toString(), {
-      headers,
-    });
-    const data = await scans.json();
+    const response = await fetch(url.toString(), { headers });
+    const data = await response.json();
     const parsedData = parseStringify(data);
     revalidatePath("/scans");
     return parsedData;
