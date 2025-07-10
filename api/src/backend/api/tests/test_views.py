@@ -5978,7 +5978,8 @@ class TestSAMLConfigurationViewSet:
 
 @pytest.mark.django_db
 class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
+    def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -5999,7 +6000,8 @@ class TestTenantFinishACSView:
 
         assert response.status_code in [200, 302]
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
