@@ -8,8 +8,15 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.9.1] (Prowler v5.8.1)
 
+### Added
+- Custom exception for provider connection errors during scans [(#8234)](https://github.com/prowler-cloud/prowler/pull/8234)
+
 ### Changed
+<<<<<<< HEAD
 - Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214) 
+=======
+- Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214)
+>>>>>>> 430f83154 (feat(exceptions): add custom error for provider connection during scans (#8234))
 
 ### Fixed
 - Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)
