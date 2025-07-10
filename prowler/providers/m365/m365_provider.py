@@ -956,7 +956,7 @@ class M365Provider(Provider):
             # since that exception is not considered as critical, we keep filling another identity fields
             identity.identity_id = (
                 getenv("AZURE_CLIENT_ID")
-                or session.get("client_id")
+                or session.client_id
                 or "Unknown user id (Missing AAD permissions)"
             )
             if sp_env_auth:
@@ -982,7 +982,7 @@ class M365Provider(Provider):
                     )
             else:
                 # Prowler Cloud Static Credentials
-                if session.get("user") and session.get("password"):
+                if session.get("user") and session.password:
                     identity.identity_type = "Service Principal and User Credentials"
                 else:
                     identity.identity_type = "Service Principal"
