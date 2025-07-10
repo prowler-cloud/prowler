@@ -14,7 +14,7 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
@@ -360,3 +360,139 @@ class GithubProvider(Provider):
             f"{Style.BRIGHT}Using the GitHub credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        personal_access_token: str = "",
+        oauth_app_token: str = "",
+        github_app_key: str = "",
+        github_app_id: int = 0,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> Connection:
+        """Test connection to GitHub.
+
+        Test the connection to GitHub using the provided credentials.
+
+        Args:
+            personal_access_token (str): GitHub personal access token.
+            oauth_app_token (str): GitHub OAuth App token.
+            github_app_key (str): GitHub App key.
+            github_app_id (int): GitHub App ID.
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID, in this case it's the GitHub organization/username.
+
+        Returns:
+            Connection: Connection object with success status or error information.
+
+        Raises:
+            Exception: If failed to test the connection to GitHub.
+            GithubEnvironmentVariableError: If environment variables are missing.
+            GithubInvalidTokenError: If the provided token is invalid.
+            GithubInvalidCredentialsError: If the provided App credentials are invalid.
+            GithubSetUpSessionError: If there is an error setting up the session.
+            GithubSetUpIdentityError: If there is an error setting up the identity.
+
+        Examples:
+            >>> GithubProvider.test_connection(personal_access_token="ghp_xxxxxxxxxxxxxxxx")
+            Connection(is_connected=True)
+            >>> GithubProvider.test_connection(github_app_id=12345, github_app_key="/path/to/key.pem")
+            Connection(is_connected=True)
+            >>> GithubProvider.test_connection(provider_id="my-org")
+            Connection(is_connected=True)
+        """
+        try:
+            # Set up the GitHub session
+            session = GithubProvider.setup_session(
+                personal_access_token=personal_access_token,
+                oauth_app_token=oauth_app_token,
+                github_app_id=github_app_id,
+                github_app_key=github_app_key,
+            )
+
+            # Set up the identity to test the connection
+            retry_config = GithubRetry(total=3)
+            if session.token:
+                try:
+                    auth = Auth.Token(session.token)
+                    Github(auth=auth, retry=retry_config)
+                    logger.info("GitHub provider: Connection to GitHub successful")
+                    return Connection(is_connected=True)
+
+                except Exception as error:
+                    logger.error(
+                        f"Failed to authenticate with GitHub using token: {error}"
+                    )
+                    raise GithubInvalidTokenError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                    )
+
+            elif session.id != 0 and session.key:
+                auth = Auth.AppAuth(session.id, session.key)
+                gi = GithubIntegration(auth=auth, retry=retry_config)
+                try:
+                    gi.get_app()
+                    logger.info("GitHub provider: Connection to GitHub App successful")
+                    return Connection(is_connected=True)
+
+                except Exception as error:
+                    logger.error(
+                        f"Failed to authenticate with GitHub using App credentials: {error}"
+                    )
+                    raise GithubInvalidCredentialsError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                    )
+            elif oauth_app_token:
+                auth = Auth.Token(oauth_app_token)
+                Github(auth=auth, retry=retry_config)
+                logger.info(
+                    "GitHub provider: Connection to GitHub OAuth App successful"
+                )
+                return Connection(is_connected=True)
+
+        # Exceptions from setup_session
+        except GithubEnvironmentVariableError as environment_error:
+            logger.error(
+                f"{environment_error.__class__.__name__}[{environment_error.__traceback__.tb_lineno}]: {environment_error}"
+            )
+            if raise_on_exception:
+                raise environment_error
+            return Connection(error=environment_error)
+        except GithubSetUpSessionError as session_error:
+            logger.error(
+                f"{session_error.__class__.__name__}[{session_error.__traceback__.tb_lineno}]: {session_error}"
+            )
+            if raise_on_exception:
+                raise session_error
+            return Connection(error=session_error)
+        # Exceptions from authentication
+        except GithubInvalidTokenError as token_error:
+            logger.error(
+                f"{token_error.__class__.__name__}[{token_error.__traceback__.tb_lineno}]: {token_error}"
+            )
+            if raise_on_exception:
+                raise token_error
+            return Connection(error=token_error)
+        except GithubInvalidCredentialsError as credentials_error:
+            logger.error(
+                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
+            )
+            if raise_on_exception:
+                raise credentials_error
+            return Connection(error=credentials_error)
+        except GithubSetUpIdentityError as identity_error:
+            logger.error(
+                f"{identity_error.__class__.__name__}[{identity_error.__traceback__.tb_lineno}]: {identity_error}"
+            )
+            if raise_on_exception:
+                raise identity_error
+            return Connection(error=identity_error)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
