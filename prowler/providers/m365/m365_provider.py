@@ -443,6 +443,7 @@ class M365Provider(Provider):
         if credentials:
             if identity and credentials.user:
                 identity.user = credentials.user
+                identity.identity_type = "Service Principal and User Credentials"
             test_session = M365PowerShell(credentials, identity)
             try:
                 if init_modules:
@@ -982,10 +983,7 @@ class M365Provider(Provider):
                     )
             else:
                 # Prowler Cloud Static Credentials
-                if session.get("user") and session.password:
-                    identity.identity_type = "Service Principal and User Credentials"
-                else:
-                    identity.identity_type = "Service Principal"
+                identity.identity_type = "Service Principal"
 
             # Retrieve tenant id from the client
             client = GraphServiceClient(credentials=session)
