@@ -122,12 +122,26 @@ class GithubProvider(Provider):
         """
         logger.info("Instantiating GitHub Provider...")
 
-        self._session = self.setup_session(
+        self._session = GithubProvider.setup_session(
             personal_access_token,
             oauth_app_token,
             github_app_id,
             github_app_key,
         )
+
+        # Set the authentication method
+        if personal_access_token:
+            self._auth_method = "Personal Access Token"
+        elif oauth_app_token:
+            self._auth_method = "OAuth App Token"
+        elif github_app_id and github_app_key:
+            self._auth_method = "GitHub App Token"
+        elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
+            self._auth_method = "Environment Variable for Personal Access Token"
+        elif environ.get("GITHUB_OAUTH_APP_TOKEN", ""):
+            self._auth_method = "Environment Variable for OAuth App Token"
+        elif environ.get("GITHUB_APP_ID", "") and environ.get("GITHUB_APP_KEY", ""):
+            self._auth_method = "Environment Variables for GitHub App Key and ID"
 
         self._identity = self.setup_identity()
 
@@ -195,8 +209,8 @@ class GithubProvider(Provider):
         """
         return self._mutelist
 
+    @staticmethod
     def setup_session(
-        self,
         personal_access_token: str = None,
         oauth_app_token: str = None,
         github_app_id: int = 0,
@@ -223,18 +237,14 @@ class GithubProvider(Provider):
             # Ensure that at least one authentication method is selected. Default to environment variable for PAT if none is provided.
             if personal_access_token:
                 session_token = personal_access_token
-                self._auth_method = "Personal Access Token"
 
             elif oauth_app_token:
                 session_token = oauth_app_token
-                self._auth_method = "OAuth App Token"
 
             elif github_app_id and github_app_key:
                 app_id = github_app_id
                 with open(github_app_key, "r") as rsa_key:
                     app_key = rsa_key.read()
-
-                self._auth_method = "GitHub App Token"
 
             else:
                 # PAT
@@ -242,8 +252,6 @@ class GithubProvider(Provider):
                     "Looking for GITHUB_PERSONAL_ACCESS_TOKEN environment variable as user has not provided any token...."
                 )
                 session_token = environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
-                if session_token:
-                    self._auth_method = "Environment Variable for Personal Access Token"
 
                 if not session_token:
                     # OAUTH
@@ -251,8 +259,6 @@ class GithubProvider(Provider):
                         "Looking for GITHUB_OAUTH_APP_TOKEN environment variable as user has not provided any token...."
                     )
                     session_token = environ.get("GITHUB_OAUTH_APP_TOKEN", "")
-                    if session_token:
-                        self._auth_method = "Environment Variable for OAuth App Token"
 
                     if not session_token:
                         # APP
@@ -263,11 +269,9 @@ class GithubProvider(Provider):
                         app_key = format_rsa_key(environ.get(r"GITHUB_APP_KEY", ""))
 
                         if app_id and app_key:
-                            self._auth_method = (
-                                "Environment Variables for GitHub App Key and ID"
-                            )
+                            pass
 
-            if not self._auth_method:
+            if not session_token and not (app_id and app_key):
                 raise GithubEnvironmentVariableError(
                     file=os.path.basename(__file__),
                     message="No authentication method selected and not environment variables were found.",
@@ -415,7 +419,7 @@ class GithubProvider(Provider):
             if session.token:
                 try:
                     auth = Auth.Token(session.token)
-                    Github(auth=auth, retry=retry_config)
+                    Github(auth=auth, retry=retry_config).get_user().id
                     logger.info("GitHub provider: Connection to GitHub successful")
                     return Connection(is_connected=True)
 
@@ -429,10 +433,10 @@ class GithubProvider(Provider):
                     )
 
             elif session.id != 0 and session.key:
-                auth = Auth.AppAuth(session.id, session.key)
-                gi = GithubIntegration(auth=auth, retry=retry_config)
                 try:
-                    gi.get_app()
+                    auth = Auth.AppAuth(session.id, session.key)
+                    gi = GithubIntegration(auth=auth, retry=retry_config)
+                    gi.get_app().id
                     logger.info("GitHub provider: Connection to GitHub App successful")
                     return Connection(is_connected=True)
 
