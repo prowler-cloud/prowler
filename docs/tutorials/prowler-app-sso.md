@@ -22,6 +22,9 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 -   **SP-Initiated SSO**: Users can initiate login directly from the Prowler login page.
 -   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created.
 
+???+ warning "Deactivate SAML"
+    Important: If the SAML configuration is removed, users who previously authenticated via SAML will need to reset their password to regain access using standard login. This is because their accounts no longer have valid authentication credentials without the SAML integration.
+
 ### Prerequisites
 
 -   Administrator access to the Prowler organization is required.
@@ -63,7 +66,7 @@ For Prowler to correctly identify and provision users, the IdP must be configure
 |----------------|---------------------------------------------------------------------------------------------------------|----------|
 | `firstName`    | The user's first name.                                                                                  | Yes      |
 | `lastName`     | The user's last name.                                                                                   | Yes      |
-| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
+| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role called `saml_no_permissions` will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
 | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
 ???+ info "IdP Attribute Mapping"
