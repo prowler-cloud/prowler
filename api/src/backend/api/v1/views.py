@@ -560,10 +560,11 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
 
 class TenantFinishACSView(FinishACSView):
     def dispatch(self, request, organization_slug):
-        response = super().dispatch(request, organization_slug)
+        super().dispatch(request, organization_slug)
         user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
-            return response
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
 
         # Defensive check to avoid edge case failures due to inconsistent or incomplete data in the database
         # This handles scenarios like partially deleted or missing related objects
@@ -585,7 +586,8 @@ class TenantFinishACSView(FinishACSView):
             SocialAccount.DoesNotExist,
             User.DoesNotExist,
         ):
-            return response
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
 
         extra = social_account.extra_data
         user.first_name = (
@@ -607,9 +609,9 @@ class TenantFinishACSView(FinishACSView):
             .tenant
         )
         role_name = (
-            extra.get("userType", ["saml_default_role"])[0].strip()
+            extra.get("userType", ["no_permissions"])[0].strip()
             if extra.get("userType")
-            else "saml_default_role"
+            else "no_permissions"
         )
         try:
             role = Role.objects.using(MainRouter.admin_db).get(

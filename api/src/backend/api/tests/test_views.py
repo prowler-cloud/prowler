@@ -6037,7 +6037,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["saml_default_role"],
+                "userType": ["no_permissions"],
             },
         )
 
@@ -6091,7 +6091,7 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
         assert role.tenant == tenants_fixture[0]
 
         assert (
