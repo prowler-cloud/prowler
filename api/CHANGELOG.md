@@ -13,6 +13,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 - Optimized include parameters for resources view [(#8229)](https://github.com/prowler-cloud/prowler/pull/8229)
 
+### Fixed
+- Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+
 ---
 
 ## [v1.9.1] (Prowler v5.8.1)
