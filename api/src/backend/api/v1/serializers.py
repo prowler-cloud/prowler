@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from rest_framework_json_api import serializers
@@ -330,7 +331,7 @@ class APIKeySerializer(BaseSerializerV1):
     """
     Serializer for listing API Keys.
     """
-    user = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
+    created_by = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
     
     class Meta:
         model = APIKey
@@ -342,7 +343,7 @@ class APIKeySerializer(BaseSerializerV1):
             "last_used_at",
             "created_at",
             "revoked_at",
-            "user",
+            "created_by",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -381,32 +382,49 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         return value
     
     def create(self, validated_data):
-        # Generate the actual API key
-        raw_key = APIKey.generate_key()
-        key_hash = APIKey.hash_key(raw_key)
-        
-        # Extract prefix from the raw key (pk_XXXXXX....)
-        prefix = raw_key.split('.')[0]
-        
-        # Get the requesting user from context
+        # Get the requesting user and tenant from context
         user = self.context['request'].user
+        tenant_id = self.context['request'].tenant_id
         
         # Get client IP
         ip_address = self.context['request'].META.get('REMOTE_ADDR')
         
-        # Create the API key instance
-        api_key = APIKey.objects.create(
-            user=user,
-            key_hash=key_hash,
-            prefix=prefix,
-            created_ip=ip_address,
-            **validated_data
-        )
+        # Retry logic for prefix collisions (very unlikely but possible)
+        max_retries = 5
+        for attempt in range(max_retries):
+            # Generate the actual API key
+            raw_key = APIKey.generate_key()
+            key_hash = APIKey.hash_key(raw_key)
+            
+            # Extract prefix from the raw key using the model method
+            prefix = APIKey.extract_prefix(raw_key)
+            
+            try:
+                # Create the API key instance
+                api_key = APIKey.objects.create(
+                    created_by=user,
+                    tenant_id=tenant_id,
+                    key_hash=key_hash,
+                    prefix=prefix,
+                    created_ip=ip_address,
+                    **validated_data
+                )
+                
+                # Store the raw key temporarily for the response
+                api_key._raw_key = raw_key
+                
+                return api_key
+                
+            except IntegrityError:
+                # Prefix collision occurred, try again
+                if attempt == max_retries - 1:
+                    raise serializers.ValidationError(
+                        "Unable to generate unique API key. Please try again."
+                    )
+                continue
         
-        # Store the raw key temporarily for the response
-        api_key._raw_key = raw_key
-        
-        return api_key
+        # This should never be reached due to the exception above
+        raise serializers.ValidationError("Failed to create API key after multiple attempts.")
     
     def to_representation(self, instance):
         data = super().to_representation(instance)

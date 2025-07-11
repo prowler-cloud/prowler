@@ -3583,7 +3583,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-class APIKeyViewSet(BaseViewSet):
+class APIKeyViewSet(BaseRLSViewSet):
     serializer_class = APIKeySerializer
     http_method_names = ["get", "post", "delete"]
     filterset_class = APIKeyFilter
@@ -3592,8 +3592,8 @@ class APIKeyViewSet(BaseViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Users can only see their own API keys
-        return APIKey.objects.filter(user=self.request.user)
+        # Return API keys for the current tenant
+        return APIKey.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":

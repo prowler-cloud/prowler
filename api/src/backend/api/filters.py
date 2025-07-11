@@ -632,6 +632,7 @@ class APIKeyFilter(FilterSet):
         model = APIKey
         fields = {
             "name": ["exact", "icontains"],
+            "created_by": ["exact"],
             "created_at": ["date", "gte", "lte"],
             "expires_at": ["date", "gte", "lte", "isnull"],
             "revoked_at": ["isnull"],

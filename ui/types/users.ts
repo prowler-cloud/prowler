@@ -166,7 +166,7 @@ export interface APIKey {
     revoked_at: string | null;
   };
   relationships?: {
-    user: {
+    created_by: {
       data: {
         id: string;
         type: "users";

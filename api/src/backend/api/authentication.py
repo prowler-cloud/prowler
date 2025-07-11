@@ -45,13 +45,13 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         
         # Extract prefix for faster lookup
         try:
-            prefix = key.split('.')[0]
-        except (IndexError, AttributeError):
+            prefix = APIKey.extract_prefix(key)
+        except ValueError:
             raise exceptions.AuthenticationFailed('Invalid API key format.')
         
         # Try to find the API key
         try:
-            api_key = APIKey.objects.select_related('user').get(
+            api_key = APIKey.objects.select_related('created_by').get(
                 prefix=prefix,
                 key_hash=key_hash
             )
@@ -66,7 +66,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed('API key has expired.')
         
         # Check if the user is active
-        if not api_key.user.is_active:
+        if not api_key.created_by.is_active:
             raise exceptions.AuthenticationFailed('User inactive or deleted.')
         
         # Update last used timestamp and IP
@@ -75,20 +75,15 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         api_key.save(update_fields=['last_used_at', 'last_used_ip'])
         
         # Return user and auth token (similar to JWT auth)
-        # For API Key auth, we need to include tenant_id for RLS
-        # Get the user's first membership to determine tenant_id
-        membership = api_key.user.memberships.first()
-        if not membership:
-            raise exceptions.AuthenticationFailed('User has no tenant memberships.')
-        
+        # For API Key auth, the tenant_id comes from the API key itself
         auth_info = {
             'api_key_id': str(api_key.id),
             'api_key_name': api_key.name,
-            'user_id': str(api_key.user.id),
-            'tenant_id': str(membership.tenant_id),
+            'user_id': str(api_key.created_by.id),
+            'tenant_id': str(api_key.tenant_id),
         }
         
-        return (api_key.user, auth_info)
+        return (api_key.created_by, auth_info)
     
     def authenticate_header(self, request):
         return self.keyword 

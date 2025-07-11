@@ -155,7 +155,7 @@ class User(AbstractBaseUser):
         resource_name = "users"
 
 
-class APIKey(models.Model):
+class APIKey(RowLevelSecurityProtectedModel):
     """
     Model for API Keys that can be used for programmatic access to the API.
     Keys are hashed and never stored in plaintext.
@@ -166,11 +166,12 @@ class APIKey(models.Model):
         validators=[MinLengthValidator(3)],
         help_text="Human-readable name to identify the API key"
     )
-    user = models.ForeignKey(
+    created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="api_keys",
-        related_query_name="api_key"
+        related_name="created_api_keys",
+        related_query_name="created_api_key",
+        help_text="User who created this API key"
     )
     key_hash = models.CharField(
         max_length=128,
@@ -209,17 +210,19 @@ class APIKey(models.Model):
         help_text="IP address from which the key was last used"
     )
 
-    class Meta:
+    class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "api_keys"
         indexes = [
             models.Index(fields=["prefix"], name="api_keys_prefix_idx"),
-            models.Index(fields=["user", "revoked_at"], name="api_keys_user_active_idx"),
+            models.Index(fields=["tenant_id", "revoked_at"], name="api_keys_tenant_active_idx"),
+            models.Index(fields=["created_by", "revoked_at"], name="api_keys_user_active_idx"),
         ]
         constraints = [
-            BaseSecurityConstraint(
-                name="statements_on_%(class)s",
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            )
+            ),
         ]
 
     class JSONAPIMeta:
@@ -235,16 +238,31 @@ class APIKey(models.Model):
 
     def revoke(self):
         """Revoke the API key."""
+        from django.utils import timezone
         self.revoked_at = timezone.now()
         self.save()
 
     @classmethod
     def generate_key(cls):
-        """Generate a new API key."""
-        # Generate a secure random key: prefix.random_string
-        prefix = generate_random_token(6)
+        """Generate a new API key with a unique prefix."""
+        # Generate a unique prefix to avoid collisions
+        # Use 8 characters for good uniqueness (62^8 = ~218 trillion combinations)
+        prefix = generate_random_token(8)
         random_part = generate_random_token(32)
         return f"pk_{prefix}.{random_part}"
+
+    @classmethod
+    def extract_prefix(cls, key):
+        """Extract prefix from API key for database lookup."""
+        try:
+            # Key format is: pk_XXXXXXXX.YYYYYYYY...
+            # We want just the XXXXXXXX part (without pk_)
+            parts = key.split('.')
+            if len(parts) != 2 or not parts[0].startswith('pk_'):
+                raise ValueError("Invalid API key format")
+            return parts[0][3:]  # Remove 'pk_' prefix
+        except (IndexError, AttributeError):
+            raise ValueError("Invalid API key format")
 
     @classmethod
     def hash_key(cls, key):
@@ -253,10 +271,10 @@ class APIKey(models.Model):
         return hashlib.sha256(key.encode()).hexdigest()
 
     def save(self, *args, **kwargs):
-        # Ensure prefix is set from key_hash if not already set
-        if not self.prefix and self.key_hash:
-            # Extract first 8 chars of hash as prefix for quick lookups
-            self.prefix = self.key_hash[:8]
+        # The prefix should already be set during creation
+        # If not set, this is an error in the creation process
+        if not self.prefix:
+            raise ValueError("API key prefix must be set before saving")
         super().save(*args, **kwargs)
 
 
