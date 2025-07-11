@@ -14,7 +14,7 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
@@ -122,14 +122,28 @@ class GithubProvider(Provider):
         """
         logger.info("Instantiating GitHub Provider...")
 
-        self._session = self.setup_session(
+        self._session = GithubProvider.setup_session(
             personal_access_token,
             oauth_app_token,
             github_app_id,
             github_app_key,
         )
 
-        self._identity = self.setup_identity()
+        # Set the authentication method
+        if personal_access_token:
+            self._auth_method = "Personal Access Token"
+        elif oauth_app_token:
+            self._auth_method = "OAuth App Token"
+        elif github_app_id and github_app_key:
+            self._auth_method = "GitHub App Token"
+        elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
+            self._auth_method = "Environment Variable for Personal Access Token"
+        elif environ.get("GITHUB_OAUTH_APP_TOKEN", ""):
+            self._auth_method = "Environment Variable for OAuth App Token"
+        elif environ.get("GITHUB_APP_ID", "") and environ.get("GITHUB_APP_KEY", ""):
+            self._auth_method = "Environment Variables for GitHub App Key and ID"
+
+        self._identity = GithubProvider.setup_identity(self._session)
 
         # Audit Config
         if config_content:
@@ -195,8 +209,8 @@ class GithubProvider(Provider):
         """
         return self._mutelist
 
+    @staticmethod
     def setup_session(
-        self,
         personal_access_token: str = None,
         oauth_app_token: str = None,
         github_app_id: int = 0,
@@ -223,18 +237,14 @@ class GithubProvider(Provider):
             # Ensure that at least one authentication method is selected. Default to environment variable for PAT if none is provided.
             if personal_access_token:
                 session_token = personal_access_token
-                self._auth_method = "Personal Access Token"
 
             elif oauth_app_token:
                 session_token = oauth_app_token
-                self._auth_method = "OAuth App Token"
 
             elif github_app_id and github_app_key:
                 app_id = github_app_id
                 with open(github_app_key, "r") as rsa_key:
                     app_key = rsa_key.read()
-
-                self._auth_method = "GitHub App Token"
 
             else:
                 # PAT
@@ -242,8 +252,6 @@ class GithubProvider(Provider):
                     "Looking for GITHUB_PERSONAL_ACCESS_TOKEN environment variable as user has not provided any token...."
                 )
                 session_token = environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
-                if session_token:
-                    self._auth_method = "Environment Variable for Personal Access Token"
 
                 if not session_token:
                     # OAUTH
@@ -251,8 +259,6 @@ class GithubProvider(Provider):
                         "Looking for GITHUB_OAUTH_APP_TOKEN environment variable as user has not provided any token...."
                     )
                     session_token = environ.get("GITHUB_OAUTH_APP_TOKEN", "")
-                    if session_token:
-                        self._auth_method = "Environment Variable for OAuth App Token"
 
                     if not session_token:
                         # APP
@@ -263,11 +269,9 @@ class GithubProvider(Provider):
                         app_key = format_rsa_key(environ.get(r"GITHUB_APP_KEY", ""))
 
                         if app_id and app_key:
-                            self._auth_method = (
-                                "Environment Variables for GitHub App Key and ID"
-                            )
+                            pass
 
-            if not self._auth_method:
+            if not session_token and not (app_id and app_key):
                 raise GithubEnvironmentVariableError(
                     file=os.path.basename(__file__),
                     message="No authentication method selected and not environment variables were found.",
@@ -289,8 +293,9 @@ class GithubProvider(Provider):
                 original_exception=error,
             )
 
+    @staticmethod
     def setup_identity(
-        self,
+        session: GithubSession,
     ) -> Union[GithubIdentityInfo, GithubAppIdentityInfo]:
         """
         Returns the GitHub identity information
@@ -298,12 +303,11 @@ class GithubProvider(Provider):
         Returns:
             GithubIdentityInfo | GithubAppIdentityInfo: An instance of GithubIdentityInfo or GithubAppIdentityInfo containing the identity information.
         """
-        credentials = self.session
 
         try:
             retry_config = GithubRetry(total=3)
-            if credentials.token:
-                auth = Auth.Token(credentials.token)
+            if session.token:
+                auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
                     identity = GithubIdentityInfo(
@@ -318,8 +322,8 @@ class GithubProvider(Provider):
                         original_exception=error,
                     )
 
-            elif credentials.id != 0 and credentials.key:
-                auth = Auth.AppAuth(credentials.id, credentials.key)
+            elif session.id != 0 and session.key:
+                auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
                 try:
                     identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
@@ -360,3 +364,63 @@ class GithubProvider(Provider):
             f"{Style.BRIGHT}Using the GitHub credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        personal_access_token: str = "",
+        oauth_app_token: str = "",
+        github_app_key: str = "",
+        github_app_id: int = 0,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> Connection:
+        """Test connection to GitHub.
+
+        Test the connection to GitHub using the provided credentials.
+
+        Args:
+            personal_access_token (str): GitHub personal access token.
+            oauth_app_token (str): GitHub OAuth App token.
+            github_app_key (str): GitHub App key.
+            github_app_id (int): GitHub App ID.
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID, in this case it's the GitHub organization/username.
+
+        Returns:
+            Connection: Connection object with success status or error information.
+
+        Raises:
+            Exception: If failed to test the connection to GitHub.
+            GithubEnvironmentVariableError: If environment variables are missing.
+            GithubInvalidTokenError: If the provided token is invalid.
+            GithubInvalidCredentialsError: If the provided App credentials are invalid.
+            GithubSetUpSessionError: If there is an error setting up the session.
+            GithubSetUpIdentityError: If there is an error setting up the identity.
+
+        Examples:
+            >>> GithubProvider.test_connection(personal_access_token="ghp_xxxxxxxxxxxxxxxx")
+            Connection(is_connected=True)
+            >>> GithubProvider.test_connection(github_app_id=12345, github_app_key="/path/to/key.pem")
+            Connection(is_connected=True)
+            >>> GithubProvider.test_connection(provider_id="my-org")
+            Connection(is_connected=True)
+        """
+        try:
+            # Set up the GitHub session
+            session = GithubProvider.setup_session(
+                personal_access_token=personal_access_token,
+                oauth_app_token=oauth_app_token,
+                github_app_id=github_app_id,
+                github_app_key=github_app_key,
+            )
+
+            # Set up the identity to test the connection
+            GithubProvider.setup_identity(session)
+            return Connection(is_connected=True)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
