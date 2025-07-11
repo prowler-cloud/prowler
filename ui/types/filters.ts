@@ -19,16 +19,6 @@ export interface CustomDropdownFilterProps {
   onFilterChange: (key: string, values: string[]) => void;
 }
 
-export interface FilterControlsProps {
-  search?: boolean;
-  providers?: boolean;
-  date?: boolean;
-  regions?: boolean;
-  accounts?: boolean;
-  mutedFindings?: boolean;
-  customFilters?: FilterOption[];
-}
-
 export enum FilterType {
   SCAN = "scan__in",
   PROVIDER_UID = "provider_uid__in",

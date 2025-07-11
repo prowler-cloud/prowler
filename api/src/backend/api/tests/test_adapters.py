@@ -5,8 +5,6 @@ from allauth.socialaccount.models import SocialLogin
 from django.contrib.auth import get_user_model
 
 from api.adapters import ProwlerSocialAccountAdapter
-from api.db_router import MainRouter
-from api.models import Membership, SAMLConfiguration, Tenant
 
 User = get_user_model()
 
@@ -27,7 +25,8 @@ class TestProwlerSocialAccountAdapter:
 
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.account = MagicMock()
-        sociallogin.account.provider = "saml"
+        sociallogin.provider = MagicMock()
+        sociallogin.provider.id = "saml"
         sociallogin.account.extra_data = {}
         sociallogin.user = create_test_user
         sociallogin.connect = MagicMock()
@@ -46,45 +45,12 @@ class TestProwlerSocialAccountAdapter:
 
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.account = MagicMock()
-        sociallogin.account.provider = "github"
+        sociallogin.provider = MagicMock()
+        sociallogin.user = MagicMock()
+        sociallogin.provider.id = "saml"
         sociallogin.account.extra_data = {}
         sociallogin.connect = MagicMock()
 
         adapter.pre_social_login(rf.get("/"), sociallogin)
 
         sociallogin.connect.assert_not_called()
-
-    def test_save_user_saml_flow(
-        self,
-        rf,
-        saml_setup,
-        saml_sociallogin,
-    ):
-        adapter = ProwlerSocialAccountAdapter()
-        request = rf.get("/")
-        saml_sociallogin.user.email = saml_setup["email"]
-        saml_sociallogin.account.extra_data = {
-            "firstName": [],
-            "lastName": [],
-            "organization": [],
-            "userType": [],
-        }
-
-        tenant = Tenant.objects.using(MainRouter.admin_db).get(
-            id=saml_setup["tenant_id"]
-        )
-        saml_config = SAMLConfiguration.objects.using(MainRouter.admin_db).get(
-            tenant=tenant
-        )
-        assert saml_config.email_domain == saml_setup["domain"]
-
-        user = adapter.save_user(request, saml_sociallogin)
-
-        assert user.name == "N/A"
-        assert user.company_name == ""
-        assert user.email == saml_setup["email"]
-        assert (
-            Membership.objects.using(MainRouter.admin_db)
-            .filter(user=user, tenant=tenant)
-            .exists()
-        )

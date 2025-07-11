@@ -187,25 +187,6 @@ export const buildSecretConfig = (
   return builder();
 };
 
-// Helper function to build secret for update (reuses existing logic)
-export const buildUpdateSecretConfig = (
-  formData: FormData,
-  providerType: ProviderType,
-) => {
-  // Reuse the same secret building logic as add, but only return the secret
-  const { secret } = buildSecretConfig(formData, providerType);
-
-  // Handle special case for M365 password field inconsistency
-  if (providerType === "m365") {
-    return {
-      ...secret,
-      password: formData.get(ProviderCredentialFields.PASSWORD),
-    };
-  }
-
-  return secret;
-};
-
 // Helper function to handle API responses consistently
 export const handleApiResponse = async (
   response: Response,

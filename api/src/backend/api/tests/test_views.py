@@ -5,6 +5,7 @@ import os
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
@@ -28,6 +29,7 @@ from api.models import (
     Integration,
     Invitation,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -91,7 +93,7 @@ class TestUserViewSet:
     def test_users_create(self, client):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "NewPassword123!",
             "email": "NeWuSeR@example.com",
         }
         response = client.post(
@@ -132,6 +134,10 @@ class TestUserViewSet:
             "password1",  # Common password and too similar to a common password
             "dev12345",  # Similar to username
             ("querty12" * 9) + "a",  # Too long, 73 characters
+            "NewPassword123",  # No special character
+            "newpassword123@",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_create_invalid_passwords(self, authenticated_client, password):
@@ -162,7 +168,7 @@ class TestUserViewSet:
         # First user created; no errors should occur
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "nonexistentemail@prowler.com",
         }
         response = authenticated_client.post(
@@ -172,7 +178,7 @@ class TestUserViewSet:
 
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": email,
         }
         response = authenticated_client.post(
@@ -265,6 +271,10 @@ class TestUserViewSet:
             # Fails UserAttributeSimilarityValidator (too similar to email)
             "dev12345",
             "test@prowler.com",
+            "NewPassword123",  # No special character
+            "newpassword123@",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_partial_update_invalid_password(
@@ -2037,6 +2047,104 @@ class TestProviderSecretViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_provider_secrets_partial_update_with_secret_type(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                    "secret_type": "service_account",
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.name == "new_name"
+        assert provider_secret.secret == {"service_account_key": {}}
+
+    def test_provider_secrets_partial_update_with_invalid_secret_type(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                    "secret_type": "static",
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_provider_secrets_partial_update_without_secret_type_but_different(
+        self, authenticated_client, provider_secret_fixture
+    ):
+        provider_secret, *_ = provider_secret_fixture
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "name": "new_name",
+                    "secret": {
+                        "service_account_key": {},
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(provider_secret.provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
 
 @pytest.mark.django_db
 class TestScanViewSet:
@@ -3379,6 +3487,61 @@ class TestFindingViewSet:
             ]
         }
 
+    def test_findings_metadata_backfill(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.unique_resource_count = 1
+        scan.save()
+
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": str(scan.id)},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_called()
+
+    def test_findings_metadata_backfill_no_resources(
+        self, authenticated_client, scans_fixture
+    ):
+        scan_id = str(scans_fixture[0].id)
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": scan_id},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_not_called()
+
+    def test_findings_metadata_latest_backfill(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.unique_resource_count = 1
+        scan.save()
+
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_called()
+
+    def test_findings_metadata_latest_backfill_no_resources(
+        self, authenticated_client, scans_fixture
+    ):
+        with patch(
+            "api.v1.views.backfill_scan_resource_summaries_task.apply_async"
+        ) as mock_backfill_task:
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill_task.assert_not_called()
+
     def test_findings_latest(self, authenticated_client, latest_scan_finding):
         response = authenticated_client.get(
             reverse("finding-latest"),
@@ -3795,7 +3958,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": invitation.email,
         }
         assert invitation.state == Invitation.State.PENDING.value
@@ -3887,7 +4050,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": new_email,
         }
 
@@ -5710,21 +5873,6 @@ class TestSAMLInitiateAPIView:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()["errors"]["detail"] == "Unauthorized domain."
 
-    def test_missing_certificates(self, authenticated_client, saml_setup, monkeypatch):
-        monkeypatch.setenv("SAML_PUBLIC_CERT", "")
-        monkeypatch.setenv("SAML_PRIVATE_KEY", "")
-
-        url = reverse("api_saml_initiate")
-        payload = {"email_domain": saml_setup["email"]}
-
-        response = authenticated_client.post(url, data=payload, format="json")
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert (
-            response.json()["errors"]["detail"]
-            == "SAML configuration is invalid: missing certificates."
-        )
-
 
 @pytest.mark.django_db
 class TestSAMLConfigurationViewSet:
@@ -5830,7 +5978,8 @@ class TestSAMLConfigurationViewSet:
 
 @pytest.mark.django_db
 class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
+    def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -5851,7 +6000,8 @@ class TestTenantFinishACSView:
 
         assert response.status_code in [200, 302]
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -5877,10 +6027,10 @@ class TestTenantFinishACSView:
     ):
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
-        original_email = user.email
         original_name = user.name
         original_company = user.company_name
-        user.email = f"doe@{saml_setup['email']}"
+        user.company_name = "testing_company"
+        user.is_authenticate = True
 
         social_account = SocialAccount(
             user=user,
@@ -5888,8 +6038,8 @@ class TestTenantFinishACSView:
             extra_data={
                 "firstName": ["John"],
                 "lastName": ["Doe"],
-                "organization": ["TestOrg"],
-                "userType": ["saml_default_role"],
+                "organization": ["testing_company"],
+                "userType": ["no_permissions"],
             },
         )
 
@@ -5902,15 +6052,26 @@ class TestTenantFinishACSView:
             patch(
                 "allauth.socialaccount.providers.saml.views.get_app_or_404"
             ) as mock_get_app_or_404,
-            patch("allauth.socialaccount.models.SocialApp.objects.get"),
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
             patch(
                 "allauth.socialaccount.models.SocialAccount.objects.get"
             ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
                 provider="saml", client_id="testtenant", name="Test App", settings={}
             )
             mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(
+                tenant_id=tenants_fixture[0].id
+            )
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
             response = view(request, organization_slug="testtenant")
@@ -5930,9 +6091,9 @@ class TestTenantFinishACSView:
 
         user.refresh_from_db()
         assert user.name == "John Doe"
-        assert user.company_name == "TestOrg"
+        assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
         assert role.tenant == tenants_fixture[0]
 
         assert (
@@ -5941,7 +6102,13 @@ class TestTenantFinishACSView:
             .exists()
         )
 
-        user.email = original_email
+        membership = Membership.objects.using(MainRouter.admin_db).get(
+            user=user, tenant=tenants_fixture[0]
+        )
+        assert membership.role == Membership.RoleChoices.MEMBER
+        assert membership.user == user
+        assert membership.tenant == tenants_fixture[0]
+
         user.name = original_name
         user.company_name = original_company
         user.save()
@@ -6277,3 +6444,186 @@ class TestLighthouseConfigViewSet:
             reverse("lighthouseconfiguration-connection", kwargs={"pk": "random_id"})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestProcessorViewSet:
+    valid_mutelist_configuration = """Mutelist:
+    Accounts:
+      '*':
+        Checks:
+            iam_user_hardware_mfa_enabled:
+                Regions:
+                    - '*'
+                Resources:
+                    - '*'
+    """
+
+    def test_list_processors(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(reverse("processor-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_retrieve_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.get(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_create_processor_valid(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": self.valid_mutelist_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_create_processor_invalid(
+        self, authenticated_client, invalid_configuration
+    ):
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_processor_valid(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": {
+                        "Mutelist": {
+                            "Accounts": {
+                                "1234567890": {
+                                    "Checks": {
+                                        "iam_user_hardware_mfa_enabled": {
+                                            "Regions": ["*"],
+                                            "Resources": ["*"],
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        processor.refresh_from_db()
+        assert (
+            processor.configuration["Mutelist"]["Accounts"]["1234567890"]
+            == payload["data"]["attributes"]["configuration"]["Mutelist"]["Accounts"][
+                "1234567890"
+            ]
+        )
+
+    @pytest.mark.parametrize(
+        "invalid_configuration",
+        [
+            None,
+            "",
+            "invalid configuration",
+            {"invalid": "configuration"},
+        ],
+    )
+    def test_update_processor_invalid(
+        self, authenticated_client, processor_fixture, invalid_configuration
+    ):
+        processor = processor_fixture
+        payload = {
+            "data": {
+                "type": "processors",
+                "id": str(processor.id),
+                "attributes": {
+                    "configuration": invalid_configuration,
+                },
+            },
+        }
+        response = authenticated_client.patch(
+            reverse("processor-detail", kwargs={"pk": processor.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_delete_processor(self, authenticated_client, processor_fixture):
+        processor = processor_fixture
+        response = authenticated_client.delete(
+            reverse("processor-detail", kwargs={"pk": processor.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Processor.objects.filter(id=processor.id).exists()
+
+    def test_processors_filters(self, authenticated_client, processor_fixture):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "mutelist"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["processor_type"] == "mutelist"
+
+    def test_processors_filters_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("processor-list"),
+            {"filter[processor_type]": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_processors_create_another_with_same_type(
+        self, authenticated_client, processor_fixture
+    ):
+        pass
+
+        payload = {
+            "data": {
+                "type": "processors",
+                "attributes": {
+                    "processor_type": "mutelist",
+                    "configuration": self.valid_mutelist_configuration,
+                },
+            },
+        }
+        response = authenticated_client.post(
+            reverse("processor-list"),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

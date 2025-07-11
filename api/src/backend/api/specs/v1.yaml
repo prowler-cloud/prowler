@@ -389,6 +389,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -860,6 +861,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -1354,6 +1356,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -3540,6 +3543,222 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewServiceResponse'
           description: ''
+  /api/v1/processors:
+    get:
+      operationId: processors_list
+      description: Retrieve a list of all configured processors with options for filtering
+        by various criteria.
+      summary: List all processors
+      parameters:
+      - in: query
+        name: fields[processors]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - processor_type
+            - configuration
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[processor_type]
+        schema:
+          type: string
+          enum:
+          - mutelist
+        description: '* `mutelist` - Mutelist'
+      - in: query
+        name: filter[processor_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - mutelist
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `mutelist` - Mutelist
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - processor_type
+            - -processor_type
+            - configuration
+            - -configuration
+            - url
+            - -url
+        explode: false
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProcessorList'
+          description: ''
+    post:
+      operationId: processors_create
+      description: Register a new processor with the system, providing necessary configuration
+        details. There can only be one processor of each type per tenant.
+      summary: Create a new processor
+      tags:
+      - Processor
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorCreateResponse'
+          description: ''
+  /api/v1/processors/{id}:
+    get:
+      operationId: processors_retrieve
+      description: Fetch detailed information about a specific processor by its ID.
+      summary: Retrieve processor details
+      parameters:
+      - in: query
+        name: fields[processors]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - processor_type
+            - configuration
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorResponse'
+          description: ''
+    patch:
+      operationId: processors_partial_update
+      description: Modify certain fields of an existing processor without affecting
+        other settings.
+      summary: Partially update a processor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorUpdateResponse'
+          description: ''
+    delete:
+      operationId: processors_destroy
+      description: Remove a processor from the system by its ID.
+      summary: Delete a processor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/provider-groups:
     get:
       operationId: provider_groups_list
@@ -5372,6 +5591,7 @@ paths:
             - completed_at
             - scheduled_at
             - next_scan_at
+            - processor
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -5683,6 +5903,7 @@ paths:
             - completed_at
             - scheduled_at
             - next_scan_at
+            - processor
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7519,6 +7740,11 @@ components:
               nullable: true
             muted:
               type: boolean
+            muted_reason:
+              type: string
+              nullable: true
+              minLength: 3
+              maxLength: 500
           required:
           - uid
           - status
@@ -9306,6 +9532,15 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - data
+    PaginatedProcessorList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Processor'
+      required:
+      - data
     PaginatedProviderGroupList:
       type: object
       properties:
@@ -9687,6 +9922,106 @@ components:
                   readOnly: true
       required:
       - data
+    PatchedProcessorUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - processors
+            id: {}
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Mutelist
+                    properties:
+                      Mutelist:
+                        type: object
+                        properties:
+                          Accounts:
+                            type: object
+                            patternProperties:
+                              .*:
+                                type: object
+                                properties:
+                                  Checks:
+                                    type: object
+                                    patternProperties:
+                                      .*:
+                                        type: object
+                                        properties:
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Exceptions:
+                                            type: object
+                                            properties:
+                                              Accounts:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Regions:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Resources:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Tags:
+                                                type: array
+                                                items:
+                                                  type: string
+                                            additionalProperties: false
+                                          Description:
+                                            type: string
+                                        required:
+                                        - Regions
+                                        - Resources
+                                        additionalProperties: false
+                                    additionalProperties: false
+                                required:
+                                - Checks
+                                additionalProperties: false
+                            additionalProperties: false
+                        required:
+                        - Accounts
+                        additionalProperties: false
+                    additionalProperties: false
+              required:
+              - configuration
+      required:
+      - data
     PatchedProviderGroupMembershipRequest:
       type: object
       properties:
@@ -9863,7 +10198,6 @@ components:
                     * `static` - Key-value pairs
                     * `role` - Role assumption
                     * `service_account` - GCP Service Account Key
-                  readOnly: true
                 secret:
                   oneOf:
                   - type: object
@@ -10458,6 +10792,425 @@ components:
               required:
               - name
               - email
+      required:
+      - data
+    Processor:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            processor_type:
+              enum:
+              - mutelist
+              type: string
+              description: '* `mutelist` - Mutelist'
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - processor_type
+          - configuration
+    ProcessorCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            processor_type:
+              enum:
+              - mutelist
+              type: string
+              description: '* `mutelist` - Mutelist'
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - processor_type
+          - configuration
+    ProcessorCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - processors
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                processor_type:
+                  enum:
+                  - mutelist
+                  type: string
+                  description: '* `mutelist` - Mutelist'
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Mutelist
+                    properties:
+                      Mutelist:
+                        type: object
+                        properties:
+                          Accounts:
+                            type: object
+                            patternProperties:
+                              .*:
+                                type: object
+                                properties:
+                                  Checks:
+                                    type: object
+                                    patternProperties:
+                                      .*:
+                                        type: object
+                                        properties:
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Exceptions:
+                                            type: object
+                                            properties:
+                                              Accounts:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Regions:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Resources:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Tags:
+                                                type: array
+                                                items:
+                                                  type: string
+                                            additionalProperties: false
+                                          Description:
+                                            type: string
+                                        required:
+                                        - Regions
+                                        - Resources
+                                        additionalProperties: false
+                                    additionalProperties: false
+                                required:
+                                - Checks
+                                additionalProperties: false
+                            additionalProperties: false
+                        required:
+                        - Accounts
+                        additionalProperties: false
+                    additionalProperties: false
+              required:
+              - processor_type
+              - configuration
+      required:
+      - data
+    ProcessorCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProcessorCreate'
+      required:
+      - data
+    ProcessorResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Processor'
+      required:
+      - data
+    ProcessorUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - configuration
+    ProcessorUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProcessorUpdate'
       required:
       - data
     Provider:
@@ -11621,7 +12374,6 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
-              readOnly: true
             secret:
               oneOf:
               - type: object
@@ -12629,6 +13381,31 @@ components:
               description: The identifier of the related object.
               title: Resource Identifier
               nullable: true
+            processor:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - processors
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
           required:
           - provider
     ScanCreateRequest:
@@ -13187,6 +13964,10 @@ components:
       type: string
       enum:
       - lighthouse-configurations
+    Type552Enum:
+      type: string
+      enum:
+      - processors
     Type6bbEnum:
       type: string
       enum:
@@ -13512,3 +14293,6 @@ tags:
   description: Endpoints for managing Lighthouse configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
+- name: Processor
+  description: Endpoints for managing post-processors used to process Prowler findings,
+    including registration, configuration, and deletion of post-processing actions.

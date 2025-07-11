@@ -54,6 +54,7 @@ nav:
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
           - Social Login: tutorials/prowler-app-social-login.md
           - SSO with SAML: tutorials/prowler-app-sso.md
+          - Lighthouse: tutorials/prowler-app-lighthouse.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
@@ -106,6 +107,8 @@ nav:
           - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
+      - IaC:
+          - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:
       - General Concepts:
         - Introduction: developer-guide/introduction.md
@@ -115,6 +118,7 @@ nav:
         - Outputs: developer-guide/outputs.md
         - Integrations: developer-guide/integrations.md
         - Compliance: developer-guide/security-compliance-framework.md
+        - Lighthouse: developer-guide/lighthouse.md
       - Provider Specific Details:
         - AWS: developer-guide/aws-details.md
         - Azure: developer-guide/azure-details.md

@@ -73,9 +73,11 @@ export interface FindingsByStatusData {
     attributes: {
       fail: number;
       pass: number;
+      muted: number;
       total: number;
       fail_new: number;
       pass_new: number;
+      muted_new: number;
       [key: string]: number;
     };
   };
@@ -450,6 +452,7 @@ export interface FindingProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     muted: boolean;
+    muted_reason?: string;
     check_metadata: {
       risk: string;
       notes: string;
