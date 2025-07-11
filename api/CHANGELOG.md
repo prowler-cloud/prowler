@@ -15,13 +15,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [v1.9.2] (Prowler v5.8.2)
-
-### Fixed
-- Pinned lxml and xmlsec versions to avoid compatibility issues [(#8253)](https://github.com/prowler-cloud/prowler/pull/8253)
-
----
-
 ## [v1.9.1] (Prowler v5.8.1)
 
 ### Added
