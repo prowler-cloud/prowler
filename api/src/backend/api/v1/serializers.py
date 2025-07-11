@@ -414,7 +414,6 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                     tenant_id=tenant_id,
                     key_hash=key_hash,
                     prefix=prefix,
-                    created_ip=ip_address,
                     **validated_data
                 )
                 

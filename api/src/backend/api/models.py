@@ -199,17 +199,6 @@ class APIKey(RowLevelSecurityProtectedModel):
         blank=True,
         help_text="Time when the key was revoked. Null means active."
     )
-    # For audit logging
-    created_ip = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        help_text="IP address from which the key was created"
-    )
-    last_used_ip = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        help_text="IP address from which the key was last used"
-    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "api_keys"

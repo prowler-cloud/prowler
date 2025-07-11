@@ -25,8 +25,6 @@ class Migration(migrations.Migration):
                 ('last_used_at', models.DateTimeField(blank=True, null=True, help_text='Last time this API key was used')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('revoked_at', models.DateTimeField(blank=True, null=True, help_text='Time when the key was revoked. Null means active.')),
-                ('created_ip', models.GenericIPAddressField(blank=True, null=True, help_text='IP address from which the key was created')),
-                ('last_used_ip', models.GenericIPAddressField(blank=True, null=True, help_text='IP address from which the key was last used')),
                 ('tenant_id', models.UUIDField(help_text='Tenant ID for multi-tenancy support')),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='api_keys', related_query_name='api_key', to='api.user')),
             ],
