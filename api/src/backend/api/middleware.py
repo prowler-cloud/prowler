@@ -83,8 +83,6 @@ class APIKeyRateLimitMiddleware:
         # Rate limit settings
         self.enabled = getattr(settings, 'API_RATE_LIMIT_ENABLED', True)
         self.requests_per_minute = getattr(settings, 'API_RATE_LIMIT_REQUESTS_PER_MINUTE', 120)
-        self.requests_per_hour = getattr(settings, 'API_RATE_LIMIT_REQUESTS_PER_HOUR', 3600)
-        self.requests_per_day = getattr(settings, 'API_RATE_LIMIT_REQUESTS_PER_DAY', 50000)
         
         # Cache key prefixes
         self.cache_prefix = "api_rate_limit"

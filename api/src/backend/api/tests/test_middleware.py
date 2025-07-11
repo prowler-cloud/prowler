@@ -151,8 +151,6 @@ class TestAPIKeyRateLimitMiddleware:
 
     @override_settings(
         API_RATE_LIMIT_REQUESTS_PER_MINUTE=2,
-        API_RATE_LIMIT_REQUESTS_PER_HOUR=10,
-        API_RATE_LIMIT_REQUESTS_PER_DAY=100
     )
     def test_rate_limit_enforcement_per_minute(self, middleware, api_key_request):
         """Test rate limit enforcement for per-minute limits."""
@@ -182,9 +180,7 @@ class TestAPIKeyRateLimitMiddleware:
         assert "minute" in response_data["errors"][0]["detail"]
 
     @override_settings(
-        API_RATE_LIMIT_REQUESTS_PER_MINUTE=0,  # Disabled
-        API_RATE_LIMIT_REQUESTS_PER_HOUR=1,    # Very low limit
-        API_RATE_LIMIT_REQUESTS_PER_DAY=100
+        API_RATE_LIMIT_REQUESTS_PER_MINUTE=0
     )
     def test_rate_limit_enforcement_per_hour(self, middleware, api_key_request):
         """Test rate limit enforcement for per-hour limits."""
@@ -202,9 +198,7 @@ class TestAPIKeyRateLimitMiddleware:
         assert "hour" in response_data["errors"][0]["detail"]
 
     @override_settings(
-        API_RATE_LIMIT_REQUESTS_PER_MINUTE=0,  # Disabled
-        API_RATE_LIMIT_REQUESTS_PER_HOUR=0,    # Disabled
-        API_RATE_LIMIT_REQUESTS_PER_DAY=1      # Very low limit
+        API_RATE_LIMIT_REQUESTS_PER_MINUTE=0
     )
     def test_rate_limit_enforcement_per_day(self, middleware, api_key_request):
         """Test rate limit enforcement for per-day limits."""

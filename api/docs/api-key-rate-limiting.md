@@ -22,20 +22,7 @@ Rate limiting is configured through environment variables:
 |----------|---------|-------------|
 | `API_RATE_LIMIT_ENABLED` | `true` | Enable/disable rate limiting globally |
 | `API_RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | Maximum requests per minute per API key |
-| `API_RATE_LIMIT_REQUESTS_PER_HOUR` | `3600` | Maximum requests per hour per API key |
-| `API_RATE_LIMIT_REQUESTS_PER_DAY` | `50000` | Maximum requests per day per API key |
 | `VALKEY_CACHE_DB` | `1` | Redis/Valkey database number for caching |
-
-### Disabling Specific Limits
-
-Set any limit to `0` or negative value to disable that specific time window:
-
-```bash
-# Disable per-minute limits but keep hourly and daily
-API_RATE_LIMIT_REQUESTS_PER_MINUTE=0
-API_RATE_LIMIT_REQUESTS_PER_HOUR=1000
-API_RATE_LIMIT_REQUESTS_PER_DAY=10000
-```
 
 ### Example Configuration
 
@@ -43,13 +30,9 @@ API_RATE_LIMIT_REQUESTS_PER_DAY=10000
 # Conservative limits for production
 API_RATE_LIMIT_ENABLED=true
 API_RATE_LIMIT_REQUESTS_PER_MINUTE=60
-API_RATE_LIMIT_REQUESTS_PER_HOUR=2000
-API_RATE_LIMIT_REQUESTS_PER_DAY=20000
 
 # Development/testing with higher limits
 API_RATE_LIMIT_REQUESTS_PER_MINUTE=300
-API_RATE_LIMIT_REQUESTS_PER_HOUR=10000
-API_RATE_LIMIT_REQUESTS_PER_DAY=100000
 ```
 
 ## Behavior
@@ -226,24 +209,21 @@ Rate limiting requires a functioning cache backend (Redis/Valkey):
 ## Configuration Examples by Use Case
 
 ### High-Volume Automation
+
 ```bash
 API_RATE_LIMIT_REQUESTS_PER_MINUTE=300
-API_RATE_LIMIT_REQUESTS_PER_HOUR=10000  
-API_RATE_LIMIT_REQUESTS_PER_DAY=100000
 ```
 
 ### Interactive Applications
+
 ```bash
 API_RATE_LIMIT_REQUESTS_PER_MINUTE=120
-API_RATE_LIMIT_REQUESTS_PER_HOUR=3600
-API_RATE_LIMIT_REQUESTS_PER_DAY=25000
 ```
 
 ### Restrictive Production Environment
+
 ```bash
 API_RATE_LIMIT_REQUESTS_PER_MINUTE=60
-API_RATE_LIMIT_REQUESTS_PER_HOUR=1800
-API_RATE_LIMIT_REQUESTS_PER_DAY=10000
 ```
 
 For questions or support with rate limiting configuration, please refer to the Prowler documentation or contact support. 
