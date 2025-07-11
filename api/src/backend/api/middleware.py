@@ -237,8 +237,6 @@ class APIKeyRateLimitMiddleware:
         # Define time windows
         windows = [
             ('minute', 60, self.requests_per_minute),
-            ('hour', 3600, self.requests_per_hour),
-            ('day', 86400, self.requests_per_day),
         ]
         
         for window_name, window_seconds, limit in windows:
