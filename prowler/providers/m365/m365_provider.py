@@ -989,7 +989,7 @@ class M365Provider(Provider):
             else:
                 # Prowler Cloud Static Credentials
                 identity.identity_type = "Service Principal"
-                identity.identity_id = session.client_id
+                identity.identity_id = session._client_id
 
             # Retrieve tenant id from the client
             client = GraphServiceClient(credentials=session)
