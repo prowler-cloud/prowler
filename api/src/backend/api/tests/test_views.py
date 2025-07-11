@@ -93,7 +93,7 @@ class TestUserViewSet:
     def test_users_create(self, client):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "NewPassword123!",
             "email": "NeWuSeR@example.com",
         }
         response = client.post(
@@ -134,6 +134,10 @@ class TestUserViewSet:
             "password1",  # Common password and too similar to a common password
             "dev12345",  # Similar to username
             ("querty12" * 9) + "a",  # Too long, 73 characters
+            "NewPassword123",  # No special character
+            "newpassword123@",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_create_invalid_passwords(self, authenticated_client, password):
@@ -164,7 +168,7 @@ class TestUserViewSet:
         # First user created; no errors should occur
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "nonexistentemail@prowler.com",
         }
         response = authenticated_client.post(
@@ -174,7 +178,7 @@ class TestUserViewSet:
 
         user_payload = {
             "name": "test_email_validator",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": email,
         }
         response = authenticated_client.post(
@@ -267,6 +271,10 @@ class TestUserViewSet:
             # Fails UserAttributeSimilarityValidator (too similar to email)
             "dev12345",
             "test@prowler.com",
+            "NewPassword123",  # No special character
+            "newpassword123@",  # No uppercase letter
+            "NEWPASSWORD123",  # No lowercase letter
+            "NewPassword@",  # No number
         ],
     )
     def test_users_partial_update_invalid_password(
@@ -3950,7 +3958,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": invitation.email,
         }
         assert invitation.state == Invitation.State.PENDING.value
@@ -4042,7 +4050,7 @@ class TestInvitationViewSet:
 
         data = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": new_email,
         }
 
@@ -5970,7 +5978,8 @@ class TestSAMLConfigurationViewSet:
 
 @pytest.mark.django_db
 class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
+    def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -5991,7 +6000,8 @@ class TestTenantFinishACSView:
 
         assert response.status_code in [200, 302]
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -6029,7 +6039,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["saml_default_role"],
+                "userType": ["no_permissions"],
             },
         )
 
@@ -6083,7 +6093,7 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
         assert role.tenant == tenants_fixture[0]
 
         assert (

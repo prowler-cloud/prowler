@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
 - SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
 
+### Security
+
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
+
 ### 🔄 Changed
 
 - Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)

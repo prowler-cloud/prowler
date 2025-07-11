@@ -16,15 +16,16 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Title & description wording for `iam_user_accesskey_unused` check for AWS provider [(#8233)](https://github.com/prowler-cloud/prowler/pull/8233)
+- Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
 
 ---
 
 ## [v5.8.1] (Prowler 5.8.1)
 
 ### Fixed
-- fix(iam): detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
-- list all streams and `firehose_stream_encrypted_at_rest` logic [(#8213)](https://github.com/prowler-cloud/prowler/pull/8213)
-- fix(ec2): allow empty values for http_endpoint in templates [(#8184)](https://github.com/prowler-cloud/prowler/pull/8184)
+- Detect wildcarded ARNs in sts:AssumeRole policy resources [(#8164)](https://github.com/prowler-cloud/prowler/pull/8164)
+- List all streams and `firehose_stream_encrypted_at_rest` logic [(#8213)](https://github.com/prowler-cloud/prowler/pull/8213)
+- Allow empty values for http_endpoint in templates [(#8184)](https://github.com/prowler-cloud/prowler/pull/8184)
 - Convert all Azure Storage models to Pydantic models to avoid serialization issues [(#8222)](https://github.com/prowler-cloud/prowler/pull/8222)
 
 ---
