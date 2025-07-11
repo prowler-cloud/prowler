@@ -53,6 +53,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "api.middleware.APIKeyRateLimitMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.APILoggingMiddleware",
@@ -246,6 +247,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Cache settings
 CACHE_MAX_AGE = env.int("DJANGO_CACHE_MAX_AGE", 3600)
 CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
+
+# Django Cache Configuration (using same Valkey instance as Celery)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{env('VALKEY_HOST', default='valkey')}:{env('VALKEY_PORT', default='6379')}/{env('VALKEY_CACHE_DB', default='1')}",
+        "KEY_PREFIX": "prowler_cache",
+    }
+}
+
+# Rate Limiting Settings
+API_RATE_LIMIT_REQUESTS_PER_MINUTE = env.int("API_RATE_LIMIT_REQUESTS_PER_MINUTE", 120)
+API_RATE_LIMIT_REQUESTS_PER_HOUR = env.int("API_RATE_LIMIT_REQUESTS_PER_HOUR", 3600)
+API_RATE_LIMIT_REQUESTS_PER_DAY = env.int("API_RATE_LIMIT_REQUESTS_PER_DAY", 50000)
+API_RATE_LIMIT_ENABLED = env.bool("API_RATE_LIMIT_ENABLED", True)
 
 
 TESTING = False

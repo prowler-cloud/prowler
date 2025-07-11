@@ -8,6 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
+- API Key rate limiting with configurable per-minute, per-hour, and per-day limits to prevent abuse and protect against credential leaks
 
 ### Security
 
