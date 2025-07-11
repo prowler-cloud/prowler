@@ -4638,8 +4638,8 @@ tzlocal = "5.3.1"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "master"
-resolved_reference = "a2faf548afc96b429c5f1d27a50457fc9a32a11d"
+reference = "PRWLR-7588-review-m-365-identity-type-and-m-365-identity-id-in-report"
+resolved_reference = "3b0df1b782aa7c6d3950c02367dbf0eab8b1ec14"
 
 [[package]]
 name = "psutil"
@@ -7114,4 +7114,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "6802b33984c2f8438c9dc02dac0a0c14d5a78af60251bd0c80ca59bc2182c48e"
+content-hash = "c22ba9b04955ac6dcc7879b623cd59372c68036453ef5de94447f9f980cdb94d"
