@@ -20,7 +20,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
+from django.db.models import Count, F, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -1954,7 +1954,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             )
             queryset = queryset.filter(
                 Q(text_search=search_query) | Q(tags__text_search=search_query)
-            )
+            ).distinct()
 
         return queryset
 
@@ -2319,17 +2319,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 search_value, config="simple", search_type="plain"
             )
 
-            resource_match = Resource.all_objects.filter(
-                text_search=search_query,
-                id__in=ResourceFindingMapping.objects.filter(
-                    resource_id=OuterRef("pk"),
-                    tenant_id=tenant_id,
-                ).values("resource_id"),
-            )
-
-            queryset = queryset.filter(
-                Q(text_search=search_query) | Q(Exists(resource_match))
-            )
+            queryset = queryset.filter(text_search=search_query)
 
         return queryset
 

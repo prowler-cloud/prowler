@@ -655,6 +655,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
+            "servicename": "ec2",
         },
         first_seen_at="2024-01-02T00:00:00Z",
     )
@@ -681,6 +682,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
+            "servicename": "s3",
         },
         first_seen_at="2024-01-02T00:00:00Z",
         muted=True,

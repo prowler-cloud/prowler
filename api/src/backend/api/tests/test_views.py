@@ -3374,7 +3374,7 @@ class TestFindingViewSet:
                 ("search", "dev-qa", 1),
                 ("search", "orange juice", 1),
                 # full text search on resource
-                ("search", "ec2", 2),
+                ("search", "ec2", 1),
                 # full text search on finding tags (disabled for now)
                 # ("search", "value2", 2),
                 # Temporary disabled until we implement tag filtering in the UI
