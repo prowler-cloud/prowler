@@ -13,6 +13,12 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
+---
+
+## [v1.9.2] (Prowler v5.8.2)
+
+### Fixed
+- Pinned lxml and xmlsec versions to avoid compatibility issues [(#8253)](https://github.com/prowler-cloud/prowler/pull/8253)
 
 ---
 
