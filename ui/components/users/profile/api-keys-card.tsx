@@ -129,8 +129,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
     });
   };
 
-  const activeKeys = apiKeys.filter((key) => !key.attributes.revoked_at);
-  const revokedKeys = apiKeys.filter((key) => key.attributes.revoked_at);
+  // API now only returns non-revoked keys, so all keys are active
+  const activeKeys = apiKeys;
 
   return (
     <>
@@ -164,7 +164,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                       id="key-name"
                       placeholder="My API Key"
                       value={keyName}
-                      onChange={(e) => setKeyName(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKeyName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -271,40 +271,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
             </Table>
           )}
 
-          {revokedKeys.length > 0 && (
-            <div className="mt-8">
-              <h4 className="mb-4 text-sm font-medium text-muted-foreground">
-                Revoked Keys ({revokedKeys.length})
-              </h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Prefix</TableHead>
-                    <TableHead>Revoked</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {revokedKeys.map((apiKey) => (
-                    <TableRow key={apiKey.id} className="opacity-50">
-                      <TableCell className="font-medium">
-                        {apiKey.attributes.name}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {apiKey.attributes.prefix}...
-                      </TableCell>
-                      <TableCell>
-                        {format(
-                          new Date(apiKey.attributes.revoked_at!),
-                          "MMM d, yyyy",
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+
         </CardContent>
       </Card>
 

@@ -342,7 +342,6 @@ class APIKeySerializer(BaseSerializerV1):
             "expires_at",
             "last_used_at",
             "created_at",
-            "revoked_at",
             "created_by",
         ]
         extra_kwargs = {
@@ -350,7 +349,6 @@ class APIKeySerializer(BaseSerializerV1):
             "prefix": {"read_only": True},
             "last_used_at": {"read_only": True},
             "created_at": {"read_only": True},
-            "revoked_at": {"read_only": True},
         }
 
 

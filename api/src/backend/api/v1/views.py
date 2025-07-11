@@ -3564,12 +3564,12 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["User"],
         summary="List all API keys",
-        description="Retrieve a list of all API keys for the authenticated user.",
+        description="Retrieve a list of all active API keys for the current tenant. Revoked keys are not included.",
     ),
     retrieve=extend_schema(
         tags=["User"],
         summary="Retrieve API key details",
-        description="Fetch detailed information about a specific API key.",
+        description="Fetch detailed information about a specific active API key.",
     ),
     create=extend_schema(
         tags=["User"],
@@ -3592,8 +3592,11 @@ class APIKeyViewSet(BaseRLSViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Return API keys for the current tenant
-        return APIKey.objects.filter(tenant_id=self.request.tenant_id)
+        # Return only non-revoked API keys for the current tenant
+        return APIKey.objects.filter(
+            tenant_id=self.request.tenant_id, 
+            revoked_at__isnull=True
+        )
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -3603,14 +3606,8 @@ class APIKeyViewSet(BaseRLSViewSet):
     def destroy(self, request, *args, **kwargs):
         api_key = self.get_object()
         
-        # Check if the key is already revoked
-        if api_key.revoked_at:
-            return Response(
-                {"detail": "API key is already revoked."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Revoke the key
+        # Revoke the key (the queryset already filters out revoked keys,
+        # so if we found it, it's not revoked yet)
         api_key.revoke()
         
         return Response(status=status.HTTP_204_NO_CONTENT)

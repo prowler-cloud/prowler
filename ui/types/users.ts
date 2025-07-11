@@ -163,7 +163,6 @@ export interface APIKey {
     expires_at: string | null;
     last_used_at: string | null;
     created_at: string;
-    revoked_at: string | null;
   };
   relationships?: {
     created_by: {
