@@ -1,11 +1,10 @@
-# Generated manually for API Key model
+# Generated manually for API Key model with multi-tenancy
 
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
 from api.db_utils import generate_random_token
 import django.core.validators
-from api.rls import BaseSecurityConstraint
 
 
 class Migration(migrations.Migration):
@@ -28,7 +27,8 @@ class Migration(migrations.Migration):
                 ('revoked_at', models.DateTimeField(blank=True, null=True, help_text='Time when the key was revoked. Null means active.')),
                 ('created_ip', models.GenericIPAddressField(blank=True, null=True, help_text='IP address from which the key was created')),
                 ('last_used_ip', models.GenericIPAddressField(blank=True, null=True, help_text='IP address from which the key was last used')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='api_keys', related_query_name='api_key', to='api.user')),
+                ('tenant_id', models.UUIDField(help_text='Tenant ID for multi-tenancy support')),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='api_keys', related_query_name='api_key', to='api.user')),
             ],
             options={
                 'db_table': 'api_keys',
@@ -40,13 +40,22 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='apikey',
-            index=models.Index(fields=['user', 'revoked_at'], name='api_keys_user_active_idx'),
+            index=models.Index(fields=['tenant_id', 'revoked_at'], name='api_keys_tenant_active_idx'),
         ),
-        migrations.AddConstraint(
+        migrations.AddIndex(
             model_name='apikey',
-            constraint=BaseSecurityConstraint(
-                name='statements_on_apikey',
-                statements=['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
-            ),
+            index=models.Index(fields=['created_by', 'revoked_at'], name='api_keys_user_active_idx'),
+        ),
+        # Enable RLS and create policy
+        migrations.RunSQL(
+            """
+            ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+            CREATE POLICY rls_on_api_keys ON api_keys FOR ALL 
+            USING (tenant_id = current_setting('row_level_security.tenant_id')::uuid);
+            """,
+            reverse_sql="""
+            DROP POLICY IF EXISTS rls_on_api_keys ON api_keys;
+            ALTER TABLE api_keys DISABLE ROW LEVEL SECURITY;
+            """
         ),
     ] 
