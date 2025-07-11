@@ -1,8 +1,18 @@
 from unittest.mock import patch
 
+import pytest
+
 from prowler.config.config import (
     default_fixer_config_file_path,
     load_and_validate_config_file,
+)
+from prowler.providers.common.models import Connection
+from prowler.providers.github.exceptions.exceptions import (
+    GithubEnvironmentVariableError,
+    GithubInvalidCredentialsError,
+    GithubInvalidTokenError,
+    GithubSetUpIdentityError,
+    GithubSetUpSessionError,
 )
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.github.models import (
@@ -141,3 +151,354 @@ class TestGitHubProvider:
                 "inactive_not_archived_days_threshold": 180,
             }
             assert provider._fixer_config == fixer_config
+
+    def test_test_connection_with_personal_access_token_success(self):
+        """Test successful connection with personal access token."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.return_value.id = 12345
+
+            connection = GithubProvider.test_connection(personal_access_token=PAT_TOKEN)
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
+
+    def test_test_connection_with_oauth_app_token_success(self):
+        """Test successful connection with OAuth app token."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=OAUTH_TOKEN, id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github"),
+        ):
+            connection = GithubProvider.test_connection(oauth_app_token=OAUTH_TOKEN)
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
+
+    def test_test_connection_with_github_app_success(self):
+        """Test successful connection with GitHub App credentials."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key=APP_KEY),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.AppAuth"),
+            patch(
+                "prowler.providers.github.github_provider.GithubIntegration"
+            ) as mock_integration,
+        ):
+            # Mock the GitHub App API call
+            mock_app = patch.object(mock_integration.return_value, "get_app").start()
+            mock_app.return_value.id = APP_ID
+
+            connection = GithubProvider.test_connection(
+                github_app_id=APP_ID, github_app_key=APP_KEY
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
+
+    def test_test_connection_with_invalid_token_raises_exception(self):
+        """Test connection with invalid token raises exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="invalid-token", id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call to raise an exception
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.side_effect = Exception("Invalid token")
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                with pytest.raises(GithubInvalidTokenError):
+                    GithubProvider.test_connection(
+                        personal_access_token="invalid-token"
+                    )
+
+                # Logger is called twice: once in auth block, once in exception handling
+                assert mock_logger.error.call_count == 2
+
+    def test_test_connection_with_invalid_token_no_raise(self):
+        """Test connection with invalid token without raising exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="invalid-token", id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call to raise an exception
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.side_effect = Exception("Invalid token")
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                connection = GithubProvider.test_connection(
+                    personal_access_token="invalid-token", raise_on_exception=False
+                )
+
+                assert isinstance(connection, Connection)
+                assert connection.is_connected is False
+                assert isinstance(connection.error, GithubInvalidTokenError)
+                # Logger is called twice: once in auth block, once in exception handling
+                assert mock_logger.error.call_count == 2
+
+    def test_test_connection_with_invalid_app_credentials_raises_exception(self):
+        """Test connection with invalid GitHub App credentials raises exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key="invalid-key"),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.AppAuth"),
+            patch(
+                "prowler.providers.github.github_provider.GithubIntegration"
+            ) as mock_integration,
+        ):
+            # Mock the GitHub App API call to raise an exception
+            mock_app = patch.object(mock_integration.return_value, "get_app").start()
+            mock_app.side_effect = Exception("Invalid credentials")
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                with pytest.raises(GithubInvalidCredentialsError):
+                    GithubProvider.test_connection(
+                        github_app_id=APP_ID, github_app_key="invalid-key"
+                    )
+
+                # Logger is called twice: once in auth block, once in exception handling
+                assert mock_logger.error.call_count == 2
+
+    def test_test_connection_with_invalid_app_credentials_no_raise(self):
+        """Test connection with invalid GitHub App credentials without raising exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key="invalid-key"),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.AppAuth"),
+            patch(
+                "prowler.providers.github.github_provider.GithubIntegration"
+            ) as mock_integration,
+        ):
+            # Mock the GitHub App API call to raise an exception
+            mock_app = patch.object(mock_integration.return_value, "get_app").start()
+            mock_app.side_effect = Exception("Invalid credentials")
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                connection = GithubProvider.test_connection(
+                    github_app_id=APP_ID,
+                    github_app_key="invalid-key",
+                    raise_on_exception=False,
+                )
+
+                assert isinstance(connection, Connection)
+                assert connection.is_connected is False
+                assert isinstance(connection.error, GithubInvalidCredentialsError)
+                # Logger is called twice: once in auth block, once in exception handling
+                assert mock_logger.error.call_count == 2
+
+    def test_test_connection_setup_session_error_raises_exception(self):
+        """Test connection when setup_session raises an exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubSetUpSessionError(
+                    file="test_file.py", original_exception=Exception("Setup error")
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            with pytest.raises(GithubSetUpSessionError):
+                GithubProvider.test_connection(personal_access_token=PAT_TOKEN)
+
+            mock_logger.error.assert_called_once()
+
+    def test_test_connection_setup_session_error_no_raise(self):
+        """Test connection when setup_session raises an exception without raising."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubSetUpSessionError(
+                    file="test_file.py", original_exception=Exception("Setup error")
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            connection = GithubProvider.test_connection(
+                personal_access_token=PAT_TOKEN, raise_on_exception=False
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, GithubSetUpSessionError)
+            mock_logger.error.assert_called_once()
+
+    def test_test_connection_environment_variable_error_raises_exception(self):
+        """Test connection when environment variable error occurs."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="test_file.py", original_exception=Exception("Env error")
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            with pytest.raises(GithubEnvironmentVariableError):
+                GithubProvider.test_connection(personal_access_token=PAT_TOKEN)
+
+            mock_logger.error.assert_called_once()
+
+    def test_test_connection_environment_variable_error_no_raise(self):
+        """Test connection when environment variable error occurs without raising."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="test_file.py", original_exception=Exception("Env error")
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            connection = GithubProvider.test_connection(
+                personal_access_token=PAT_TOKEN, raise_on_exception=False
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, GithubEnvironmentVariableError)
+            mock_logger.error.assert_called_once()
+
+    def test_test_connection_setup_identity_error_raises_exception(self):
+        """Test connection when setup_identity raises an exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call to raise an exception
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.side_effect = GithubSetUpIdentityError(
+                file="test_file.py", original_exception=Exception("Identity error")
+            )
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                with pytest.raises(GithubInvalidTokenError) as exc_info:
+                    GithubProvider.test_connection(personal_access_token=PAT_TOKEN)
+                assert "GithubSetUpIdentityError" in str(exc_info.value)
+                mock_logger.error.call_count == 2
+
+    def test_test_connection_setup_identity_error_no_raise(self):
+        """Test connection when setup_identity raises an exception without raising."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call to raise an exception
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.side_effect = GithubSetUpIdentityError(
+                file="test_file.py", original_exception=Exception("Identity error")
+            )
+
+            with patch(
+                "prowler.providers.github.github_provider.logger"
+            ) as mock_logger:
+                connection = GithubProvider.test_connection(
+                    personal_access_token=PAT_TOKEN, raise_on_exception=False
+                )
+
+                assert isinstance(connection, Connection)
+                assert connection.is_connected is False
+                assert isinstance(connection.error, GithubInvalidTokenError)
+                assert "GithubSetUpIdentityError" in str(connection.error)
+                mock_logger.error.call_count == 2
+
+    def test_test_connection_generic_exception_raises_exception(self):
+        """Test connection when a generic exception occurs."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=Exception("Generic error"),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            with pytest.raises(Exception) as exc_info:
+                GithubProvider.test_connection(personal_access_token=PAT_TOKEN)
+
+            assert str(exc_info.value) == "Generic error"
+            mock_logger.critical.assert_called_once()
+
+    def test_test_connection_generic_exception_no_raise(self):
+        """Test connection when a generic exception occurs without raising."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=Exception("Generic error"),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            connection = GithubProvider.test_connection(
+                personal_access_token=PAT_TOKEN, raise_on_exception=False
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, Exception)
+            assert str(connection.error) == "Generic error"
+            mock_logger.critical.assert_called_once()
+
+    def test_test_connection_with_provider_id(self):
+        """Test connection with provider_id parameter (should be ignored for GitHub)."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+        ):
+            # Mock the GitHub API call
+            mock_user = patch.object(mock_github.return_value, "get_user").start()
+            mock_user.return_value.id = 12345
+
+            connection = GithubProvider.test_connection(
+                personal_access_token=PAT_TOKEN, provider_id="test-org"
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
