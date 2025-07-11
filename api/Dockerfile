@@ -57,10 +57,6 @@ RUN poetry install --no-root && \
 
 RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
 
-# Prevents known compatibility error between lxml and libxml2/libxmlsec versions.
-# See: https://github.com/xmlsec/python-xmlsec/issues/320
-RUN poetry run pip install --force-reinstall --no-binary lxml lxml
-
 COPY src/backend/ ./backend/
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 

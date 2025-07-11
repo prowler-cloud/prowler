@@ -4,6 +4,25 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.0] (Prowler UNRELEASED)
 
+<<<<<<< HEAD
+=======
+### Added
+
+- SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
+- `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
+
+### Security
+
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
+
+---
+
+## [v1.9.2] (Prowler v5.8.2)
+
+### Fixed
+- Pinned lxml and xmlsec versions to avoid compatibility issues [(#8253)](https://github.com/prowler-cloud/prowler/pull/8253)
+
+>>>>>>> 8bcec4926 (fix: set lxml version (#8253))
 ---
 
 ## [v1.9.1] (Prowler v5.8.1)
