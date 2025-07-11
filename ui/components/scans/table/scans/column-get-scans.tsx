@@ -10,6 +10,7 @@ import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderType, ScanProps } from "@/types";
 
+import { LinkToComplianceFromScan } from "../../link-to-compliance-from-scan";
 import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { TriggerIcon } from "../../trigger-icon";
 import { DataTableDownloadDetails } from "./data-table-download-details";
@@ -107,6 +108,20 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const scanState = row.original.attributes?.state;
       return (
         <LinkToFindingsFromScan
+          scanId={id}
+          isDisabled={!["completed", "executing"].includes(scanState)}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "compliance",
+    header: "Compliance",
+    cell: ({ row }) => {
+      const { id } = getScanData(row);
+      const scanState = row.original.attributes?.state;
+      return (
+        <LinkToComplianceFromScan
           scanId={id}
           isDisabled={!["completed", "executing"].includes(scanState)}
         />
