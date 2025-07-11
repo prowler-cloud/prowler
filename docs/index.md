@@ -596,7 +596,7 @@ There are several supported login methods:
 
 ```console
 # Personal Access Token (PAT):
-prowler github --github-personal-access-token pat
+prowler github --personal-access-token pat
 
 # OAuth App Token:
 prowler github --oauth-app-token oauth_token

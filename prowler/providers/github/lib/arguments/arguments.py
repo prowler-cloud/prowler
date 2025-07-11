@@ -6,7 +6,7 @@ def init_parser(self):
     github_auth_subparser = github_parser.add_argument_group("Authentication Modes")
     # Authentication Modes
     github_auth_subparser.add_argument(
-        "--github-personal-access-token",
+        "--personal-access-token",
         nargs="?",
         help="Personal Access Token to log in against GitHub",
         default=None,
