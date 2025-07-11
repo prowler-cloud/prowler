@@ -40,22 +40,22 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         return self.authenticate_credentials(api_key, request)
     
     def authenticate_credentials(self, key, request):
-        # Hash the provided key
-        key_hash = APIKey.hash_key(key)
-        
         # Extract prefix for faster lookup
         try:
             prefix = APIKey.extract_prefix(key)
         except ValueError:
             raise exceptions.AuthenticationFailed('Invalid API key format.')
         
-        # Try to find the API key
-        try:
-            api_key = APIKey.objects.select_related('created_by').get(
-                prefix=prefix,
-                key_hash=key_hash
-            )
-        except APIKey.DoesNotExist:
+        # Find potential API keys by prefix, then verify with password check
+        candidate_keys = APIKey.objects.select_related('created_by').filter(prefix=prefix)
+        
+        api_key = None
+        for candidate in candidate_keys:
+            if APIKey.verify_key(key, candidate.key_hash):
+                api_key = candidate
+                break
+        
+        if not api_key:
             raise exceptions.AuthenticationFailed('Invalid API key.')
         
         # Check if the key is valid

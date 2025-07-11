@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=255, validators=[django.core.validators.MinLengthValidator(3)], help_text='Human-readable name to identify the API key')),
-                ('key_hash', models.CharField(max_length=128, unique=True, help_text='SHA-256 hash of the API key')),
+                ('key_hash', models.CharField(max_length=255, unique=True, help_text='Django password hash of the API key')),
                 ('prefix', models.CharField(max_length=10, help_text='Prefix of the API key for identification')),
                 ('expires_at', models.DateTimeField(blank=True, null=True, help_text='Expiration time. Null means no expiration.')),
                 ('last_used_at', models.DateTimeField(blank=True, null=True, help_text='Last time this API key was used')),

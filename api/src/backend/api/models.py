@@ -175,9 +175,9 @@ class APIKey(RowLevelSecurityProtectedModel):
         help_text="User who created this API key"
     )
     key_hash = models.CharField(
-        max_length=128,
+        max_length=255,
         unique=True,
-        help_text="SHA-256 hash of the API key"
+        help_text="Django password hash of the API key"
     )
     prefix = models.CharField(
         max_length=10,
@@ -267,9 +267,15 @@ class APIKey(RowLevelSecurityProtectedModel):
 
     @classmethod
     def hash_key(cls, key):
-        """Hash an API key using SHA-256."""
-        import hashlib
-        return hashlib.sha256(key.encode()).hexdigest()
+        """Hash an API key using Django's secure password hashing."""
+        from django.contrib.auth.hashers import make_password
+        return make_password(key)
+
+    @classmethod
+    def verify_key(cls, key, key_hash):
+        """Verify an API key against its hash using Django's password verification."""
+        from django.contrib.auth.hashers import check_password
+        return check_password(key, key_hash)
 
     def save(self, *args, **kwargs):
         # The prefix should already be set during creation
