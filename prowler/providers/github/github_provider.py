@@ -143,7 +143,7 @@ class GithubProvider(Provider):
         elif environ.get("GITHUB_APP_ID", "") and environ.get("GITHUB_APP_KEY", ""):
             self._auth_method = "Environment Variables for GitHub App Key and ID"
 
-        self._identity = self.setup_identity()
+        self._identity = GithubProvider.setup_identity(self._session)
 
         # Audit Config
         if config_content:
@@ -293,8 +293,9 @@ class GithubProvider(Provider):
                 original_exception=error,
             )
 
+    @staticmethod
     def setup_identity(
-        self,
+        session: GithubSession,
     ) -> Union[GithubIdentityInfo, GithubAppIdentityInfo]:
         """
         Returns the GitHub identity information
@@ -302,12 +303,11 @@ class GithubProvider(Provider):
         Returns:
             GithubIdentityInfo | GithubAppIdentityInfo: An instance of GithubIdentityInfo or GithubAppIdentityInfo containing the identity information.
         """
-        credentials = self.session
 
         try:
             retry_config = GithubRetry(total=3)
-            if credentials.token:
-                auth = Auth.Token(credentials.token)
+            if session.token:
+                auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
                     identity = GithubIdentityInfo(
@@ -322,8 +322,8 @@ class GithubProvider(Provider):
                         original_exception=error,
                     )
 
-            elif credentials.id != 0 and credentials.key:
-                auth = Auth.AppAuth(credentials.id, credentials.key)
+            elif session.id != 0 and session.key:
+                auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
                 try:
                     identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
@@ -415,84 +415,8 @@ class GithubProvider(Provider):
             )
 
             # Set up the identity to test the connection
-            retry_config = GithubRetry(total=3)
-            if session.token:
-                try:
-                    auth = Auth.Token(session.token)
-                    Github(auth=auth, retry=retry_config).get_user().id
-                    logger.info("GitHub provider: Connection to GitHub successful")
-                    return Connection(is_connected=True)
-
-                except Exception as error:
-                    logger.error(
-                        f"Failed to authenticate with GitHub using token: {error}"
-                    )
-                    raise GithubInvalidTokenError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
-
-            elif session.id != 0 and session.key:
-                try:
-                    auth = Auth.AppAuth(session.id, session.key)
-                    gi = GithubIntegration(auth=auth, retry=retry_config)
-                    gi.get_app().id
-                    logger.info("GitHub provider: Connection to GitHub App successful")
-                    return Connection(is_connected=True)
-
-                except Exception as error:
-                    logger.error(
-                        f"Failed to authenticate with GitHub using App credentials: {error}"
-                    )
-                    raise GithubInvalidCredentialsError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
-            elif oauth_app_token:
-                auth = Auth.Token(oauth_app_token)
-                Github(auth=auth, retry=retry_config)
-                logger.info(
-                    "GitHub provider: Connection to GitHub OAuth App successful"
-                )
-                return Connection(is_connected=True)
-
-        # Exceptions from setup_session
-        except GithubEnvironmentVariableError as environment_error:
-            logger.error(
-                f"{environment_error.__class__.__name__}[{environment_error.__traceback__.tb_lineno}]: {environment_error}"
-            )
-            if raise_on_exception:
-                raise environment_error
-            return Connection(error=environment_error)
-        except GithubSetUpSessionError as session_error:
-            logger.error(
-                f"{session_error.__class__.__name__}[{session_error.__traceback__.tb_lineno}]: {session_error}"
-            )
-            if raise_on_exception:
-                raise session_error
-            return Connection(error=session_error)
-        # Exceptions from authentication
-        except GithubInvalidTokenError as token_error:
-            logger.error(
-                f"{token_error.__class__.__name__}[{token_error.__traceback__.tb_lineno}]: {token_error}"
-            )
-            if raise_on_exception:
-                raise token_error
-            return Connection(error=token_error)
-        except GithubInvalidCredentialsError as credentials_error:
-            logger.error(
-                f"{credentials_error.__class__.__name__}[{credentials_error.__traceback__.tb_lineno}]: {credentials_error}"
-            )
-            if raise_on_exception:
-                raise credentials_error
-            return Connection(error=credentials_error)
-        except GithubSetUpIdentityError as identity_error:
-            logger.error(
-                f"{identity_error.__class__.__name__}[{identity_error.__traceback__.tb_lineno}]: {identity_error}"
-            )
-            if raise_on_exception:
-                raise identity_error
-            return Connection(error=identity_error)
+            GithubProvider.setup_identity(session)
+            return Connection(is_connected=True)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
