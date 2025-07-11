@@ -58,6 +58,22 @@ class NDJSONFormatter(logging.Formatter):
             log_record["duration"] = record.duration
         if hasattr(record, "status_code"):
             log_record["status_code"] = record.status_code
+        
+        # Add API key activity logging fields
+        if hasattr(record, "api_key_id"):
+            log_record["api_key_id"] = record.api_key_id
+        if hasattr(record, "api_key_name"):
+            log_record["api_key_name"] = record.api_key_name
+        if hasattr(record, "authentication_method"):
+            log_record["authentication_method"] = record.authentication_method
+        if hasattr(record, "is_api_key_request"):
+            log_record["is_api_key_request"] = record.is_api_key_request
+        if hasattr(record, "source_ip"):
+            log_record["source_ip"] = record.source_ip
+        if hasattr(record, "user_agent"):
+            log_record["user_agent"] = record.user_agent
+        if hasattr(record, "content_length"):
+            log_record["content_length"] = record.content_length
 
         if record.exc_info:
             log_record["exc_info"] = self.formatException(record.exc_info)
@@ -89,9 +105,9 @@ class HumanReadableFormatter(logging.Formatter):
 
         # Add REST API extra fields
         if hasattr(record, "user_id"):
-            log_components.append(f"({record.user_id})")
+            log_components.append(f"(user:{record.user_id})")
         if hasattr(record, "tenant_id"):
-            log_components.append(f"[{record.tenant_id}]")
+            log_components.append(f"[tenant:{record.tenant_id}]")
         if hasattr(record, "method"):
             log_components.append(f'"{record.method} {record.path}"')
         if hasattr(record, "query_params"):
@@ -100,6 +116,16 @@ class HumanReadableFormatter(logging.Formatter):
             log_components.append(f"done in {record.duration}s:")
         if hasattr(record, "status_code"):
             log_components.append(f"{record.status_code}")
+        
+        # Add API key activity logging fields for human readable format
+        if hasattr(record, "api_key_id"):
+            log_components.append(f"(api_key:{record.api_key_id})")
+        if hasattr(record, "api_key_name"):
+            log_components.append(f"[key_name:{record.api_key_name}]")
+        if hasattr(record, "authentication_method"):
+            log_components.append(f"[auth:{record.authentication_method}]")
+        if hasattr(record, "source_ip"):
+            log_components.append(f"from {record.source_ip}")
 
         if record.exc_info:
             log_components.append(self.formatException(record.exc_info))

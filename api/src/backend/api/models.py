@@ -274,6 +274,120 @@ class APIKey(RowLevelSecurityProtectedModel):
         super().save(*args, **kwargs)
 
 
+class APIKeyActivity(RowLevelSecurityProtectedModel):
+    """
+    Model for tracking comprehensive API key activity for security auditing and compliance.
+    
+    This model provides persistent logging of all API key usage, including:
+    - Key identifier and name for audit trails
+    - User information for accountability
+    - Endpoint access patterns for security monitoring  
+    - Timestamp and source IP for incident response
+    - Request/response metadata for forensic analysis
+    
+    All API key requests are logged here regardless of success/failure status
+    to provide complete visibility into API key usage patterns.
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    timestamp = models.DateTimeField(auto_now_add=True, editable=False, db_index=True)
+    
+    # API Key identification - critical for audit trails
+    api_key = models.ForeignKey(
+        APIKey,
+        on_delete=models.CASCADE,
+        related_name="activity_logs",
+        related_query_name="activity_log",
+        help_text="API key that was used for this request"
+    )
+    
+    # User information - for accountability
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="api_key_activities",
+        related_query_name="api_key_activity",
+        help_text="User who owns the API key"
+    )
+    
+    # Request details - for security monitoring
+    method = models.CharField(max_length=10, help_text="HTTP method (GET, POST, etc.)")
+    endpoint = models.CharField(max_length=500, help_text="API endpoint that was accessed")
+    source_ip = models.GenericIPAddressField(
+        help_text="Source IP address of the request",
+        db_index=True
+    )
+    user_agent = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="User agent string from the request"
+    )
+    
+    # Response details - for forensic analysis
+    status_code = models.IntegerField(help_text="HTTP status code of the response")
+    response_size = models.IntegerField(
+        null=True, 
+        blank=True,
+        help_text="Size of the response in bytes"
+    )
+    duration_ms = models.IntegerField(
+        null=True,
+        blank=True, 
+        help_text="Request duration in milliseconds"
+    )
+    
+    # Additional context for security analysis
+    query_params = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Query parameters from the request (for audit purposes)"
+    )
+    is_rate_limited = models.BooleanField(
+        default=False,
+        help_text="Whether this request was rate limited"
+    )
+    
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_key_activities"
+        ordering = ["-timestamp"]
+        
+        indexes = [
+            # Primary lookup patterns for security monitoring
+            models.Index(fields=["api_key", "-timestamp"], name="api_key_activity_key_time_idx"),
+            models.Index(fields=["user", "-timestamp"], name="api_key_activity_user_time_idx"),
+            models.Index(fields=["tenant_id", "-timestamp"], name="api_key_activity_tenant_time_idx"),
+            
+            # Security analysis indexes
+            models.Index(fields=["source_ip", "-timestamp"], name="api_key_activity_ip_time_idx"),
+            models.Index(fields=["endpoint", "-timestamp"], name="api_key_activity_endpoint_time_idx"),
+            models.Index(fields=["status_code", "-timestamp"], name="api_key_activity_status_time_idx"),
+            
+            # Incident response indexes
+            models.Index(
+                fields=["tenant_id", "api_key", "source_ip", "-timestamp"], 
+                name="api_key_activity_incident_idx"
+            ),
+            models.Index(
+                fields=["tenant_id", "is_rate_limited", "-timestamp"],
+                name="api_key_activity_rate_limit_idx"
+            ),
+        ]
+        
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-key-activities"
+
+    def __str__(self):
+        return f"API Key Activity: {self.api_key.name} - {self.method} {self.endpoint} at {self.timestamp}"
+
+
 class Membership(models.Model):
     class RoleChoices(models.TextChoices):
         OWNER = "owner", _("Owner")
