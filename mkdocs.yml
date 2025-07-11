@@ -106,6 +106,8 @@ nav:
           - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
+      - GitHub:
+          - Authentication: tutorials/github/authentication.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:
