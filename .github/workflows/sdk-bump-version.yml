@@ -97,6 +97,7 @@ jobs:
             commit-message: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
             branch: "version-bump-to-v${{ env.BUMP_VERSION_TO }}"
             title: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
+            labels: no-changelog
             body: |
               ### Description
 
@@ -135,6 +136,7 @@ jobs:
             commit-message: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
             branch: "version-bump-to-v${{ env.PATCH_VERSION_TO }}"
             title: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
+            labels: no-changelog
             body: |
               ### Description
 
