@@ -18,7 +18,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.9.2] (Prowler v5.8.2)
 
 ### Changed
-- `POST /schedules/daily` returns a `409 CONFLICT` if already created [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- `POST /schedules/daily` returns a `409 CONFLICT` if already created [(#8258)](https://github.com/prowler-cloud/prowler/pull/8258)
 
 ---
 
