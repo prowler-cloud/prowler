@@ -1958,16 +1958,6 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         return queryset
 
-    @staticmethod
-    def _add_failed_findings_annotation(queryset):
-        """Add failed findings count annotation to queryset"""
-        return queryset.annotate(
-            failed_findings_count=Count(
-                "resourcefindingmapping__finding",
-                filter=Q(resourcefindingmapping__finding__status="FAIL"),
-            )
-        )
-
     def _optimize_tags_loading(self, queryset):
         """Optimize tags loading with prefetch_related to avoid N+1 queries"""
         # Use prefetch_related to load all tags in a single query
