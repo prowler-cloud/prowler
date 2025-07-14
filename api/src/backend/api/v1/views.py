@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
@@ -10,6 +11,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
 from config.env import env
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
@@ -189,6 +191,8 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+
+logger = logging.getLogger(BackendLogger.API)
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -559,10 +563,28 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
 
 
 class TenantFinishACSView(FinishACSView):
+    def _rollback_saml_user(self, request):
+        """Helper function to rollback SAML user if it was just created and validation fails"""
+        saml_user_id = request.session.get("saml_user_created")
+        if saml_user_id:
+            try:
+                User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
+            except User.DoesNotExist:
+                pass
+            request.session.pop("saml_user_created", None)
+
     def dispatch(self, request, organization_slug):
-        super().dispatch(request, organization_slug)
+        try:
+            super().dispatch(request, organization_slug)
+        except Exception as e:
+            logger.error(f"SAML dispatch failed: {e}")
+            self._rollback_saml_user(request)
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
+
         user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
+            self._rollback_saml_user(request)
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
@@ -585,7 +607,9 @@ class TenantFinishACSView(FinishACSView):
             SocialApp.DoesNotExist,
             SocialAccount.DoesNotExist,
             User.DoesNotExist,
-        ):
+        ) as e:
+            logger.error(f"SAML user is not authenticated: {e}")
+            self._rollback_saml_user(request)
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
@@ -659,6 +683,7 @@ class TenantFinishACSView(FinishACSView):
         )
         callback_url = env.str("SAML_SSO_CALLBACK_URL")
         redirect_url = f"{callback_url}?id={saml_token.id}"
+        request.session.pop("saml_user_created", None)
 
         return redirect(redirect_url)
 
