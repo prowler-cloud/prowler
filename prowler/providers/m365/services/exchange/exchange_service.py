@@ -260,7 +260,7 @@ class ExternalMailConfig(BaseModel):
 class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
-    sender_domain_is: list[str]
+    sender_domain_is: Optional[list[str]]
     redirect_message_to: Optional[list[str]]
 
 

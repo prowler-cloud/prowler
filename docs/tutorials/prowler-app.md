@@ -101,7 +101,26 @@ For Azure, Prowler App uses a service principal application to authenticate, for
 
 ---
 ### **Step 4.3: GCP Credentials**
-To connect your GCP Project, you need to use the Application Default Credentials (ADC) returned by the `gcloud` CLI. Here’s how to set up:
+
+For Google Cloud, first enter your `GCP Project ID` and then select the authentication method you want to use:
+
+- **Service Account Authentication** (**Recommended**)
+- **Application Default Credentials**
+
+**Service Account Authentication** is the recommended authentication method for automated systems and machine-to-machine interactions, like Prowler. For detailed information about this, refer to the [Google Cloud documentation](https://cloud.google.com/iam/docs/service-account-overview).
+
+<img src="../img/gcp-auth-methods.png" alt="GCP Authentication Methods" width="700"/>
+
+#### **Step 4.3.1: Service Account Authentication**
+
+First of all, in the same project that you selected in the previous step, you need to create a service account and then generate a key in JSON format for it. For more information about this, you can follow the next Google Cloud documentation tutorials:
+
+- [Create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
+- [Generate a key for a service account](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
+
+<img src="../img/gcp-service-account-creds.png" alt="GCP Service Account Credentials" width="700"/>
+
+#### **Step 4.3.2: Application Default Credentials**
 
 1. Run the following command in your terminal to authenticate with GCP:
 ```bash
@@ -151,7 +170,15 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 ---
 
 ### **Step 4.5: M365 Credentials**
-For M365, Prowler App uses a service principal application with user and password to authenticate, for more information about the requirements needed for this provider check this [section](../getting-started/requirements.md#microsoft-365). Also, the detailed steps of how to add this provider to Prowler Cloud and start using it are [here](./microsoft365/getting-started-m365.md).
+For M365, you must enter your Domain ID and choose the authentication method you want to use:
+
+- Service Principal Authentication (Recommended)
+- User Authentication (only works if the user does not have MFA enabled)
+
+???+ note
+    User authentication with M365_USER and M365_PASSWORD is optional and will only work if the account does not enforce MFA.
+
+For full setup instructions and requirements, check the [Microsoft 365 provider requirements](./microsoft365/getting-started-m365.md).
 
 <img src="../../img/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700"/>
 

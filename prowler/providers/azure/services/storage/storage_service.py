@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from azure.mgmt.storage import StorageManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -32,7 +32,7 @@ class Storage(AzureService):
                         resouce_group_name = None
                     key_expiration_period_in_days = None
                     if storage_account.key_policy:
-                        key_expiration_period_in_days = (
+                        key_expiration_period_in_days = int(
                             storage_account.key_policy.key_expiration_period_in_days
                         )
                     replication_settings = ReplicationSettings(storage_account.sku.name)
@@ -147,73 +147,100 @@ class Storage(AzureService):
             client = self.clients[subscription]
             for account in accounts:
                 try:
-                    service_properties = client.file_services.get_service_properties(
-                        account.resouce_group_name, account.name
-                    )
-                    soft_delete_enabled = False
-                    retention_days = 0
-                    if (
-                        hasattr(service_properties, "share_delete_retention_policy")
-                        and service_properties.share_delete_retention_policy
-                    ):
-                        soft_delete_enabled = getattr(
-                            service_properties.share_delete_retention_policy,
-                            "enabled",
-                            False,
+                    file_service_properties = (
+                        client.file_services.get_service_properties(
+                            account.resouce_group_name, account.name
                         )
-                        retention_days = (
+                    )
+                    share_delete_retention_policy = getattr(
+                        file_service_properties,
+                        "share_delete_retention_policy",
+                        None,
+                    )
+
+                    smb_channel_encryption_raw = getattr(
+                        getattr(
                             getattr(
-                                service_properties.share_delete_retention_policy,
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "channel_encryption",
+                        None,
+                    )
+
+                    smb_supported_versions_raw = getattr(
+                        getattr(
+                            getattr(
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "versions",
+                        None,
+                    )
+
+                    account.file_service_properties = FileServiceProperties(
+                        id=file_service_properties.id,
+                        name=file_service_properties.name,
+                        type=file_service_properties.type,
+                        share_delete_retention_policy=DeleteRetentionPolicy(
+                            enabled=getattr(
+                                share_delete_retention_policy,
+                                "enabled",
+                                False,
+                            ),
+                            days=getattr(
+                                share_delete_retention_policy,
                                 "days",
                                 0,
-                            )
-                            if soft_delete_enabled
-                            else 0
-                        )
-
-                    file_shares = client.file_shares.list(
-                        account.resouce_group_name, account.name
+                            ),
+                        ),
+                        smb_protocol_settings=SMBProtocolSettings(
+                            channel_encryption=(
+                                smb_channel_encryption_raw.rstrip(";").split(";")
+                                if smb_channel_encryption_raw
+                                else []
+                            ),
+                            supported_versions=(
+                                smb_supported_versions_raw.rstrip(";").split(";")
+                                if smb_supported_versions_raw
+                                else []
+                            ),
+                        ),
                     )
-                    account.file_shares = []
-                    for file_share in file_shares:
-                        account.file_shares.append(
-                            FileShare(
-                                id=file_share.id,
-                                name=file_share.name,
-                                soft_delete_enabled=soft_delete_enabled,
-                                retention_days=retention_days,
-                            )
-                        )
                 except Exception as error:
                     logger.error(
                         f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
 
-@dataclass
-class DeleteRetentionPolicy:
+class DeleteRetentionPolicy(BaseModel):
     enabled: bool
     days: int
 
 
-@dataclass
-class BlobProperties:
+class BlobProperties(BaseModel):
     id: str
     name: str
     type: str
-    default_service_version: str
     container_delete_retention_policy: DeleteRetentionPolicy
-    versioning_enabled: bool = False
+    default_service_version: Optional[str] = None
+    versioning_enabled: Optional[bool] = None
 
 
-@dataclass
-class NetworkRuleSet:
+class NetworkRuleSet(BaseModel):
     bypass: str
     default_action: str
 
 
-@dataclass
-class PrivateEndpointConnection:
+class PrivateEndpointConnection(BaseModel):
     id: str
     name: str
     type: str
@@ -230,31 +257,35 @@ class ReplicationSettings(Enum):
     STANDARD_RAGZRS = "Standard_RAGZRS"
 
 
-@dataclass
-class Account:
+class SMBProtocolSettings(BaseModel):
+    channel_encryption: list[str]
+    supported_versions: list[str]
+
+
+class FileServiceProperties(BaseModel):
     id: str
     name: str
+    type: str
+    share_delete_retention_policy: DeleteRetentionPolicy
+    smb_protocol_settings: SMBProtocolSettings
+
+
+class Account(BaseModel):
+    id: str
+    name: str
+    location: str
     resouce_group_name: str
     enable_https_traffic_only: bool
-    infrastructure_encryption: bool
+    infrastructure_encryption: Optional[bool] = None
     allow_blob_public_access: bool
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
-    private_endpoint_connections: List[PrivateEndpointConnection]
-    key_expiration_period_in_days: str
-    location: str
+    private_endpoint_connections: list[PrivateEndpointConnection]
+    key_expiration_period_in_days: Optional[int] = None
     replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
     allow_cross_tenant_replication: bool = True
     allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None
     default_to_entra_authorization: bool = False
-    file_shares: list = None
-
-
-@dataclass
-class FileShare:
-    id: str
-    name: str
-    soft_delete_enabled: bool
-    retention_days: int
+    file_service_properties: Optional[FileServiceProperties] = None

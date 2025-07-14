@@ -11,7 +11,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0030_samlconfigurations"),
+        ("api", "0029_findings_check_index_parent"),
     ]
 
     operations = [
@@ -54,6 +54,7 @@ class Migration(migrations.Migration):
                             ("gpt-4o-mini-2024-07-18", "GPT-4o Mini v2024-07-18"),
                             ("gpt-4o-mini", "GPT-4o Mini Default"),
                         ],
+                        default="gpt-4o-2024-08-06",
                         help_text="Must be one of the supported model names",
                         max_length=50,
                     ),
