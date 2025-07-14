@@ -4,7 +4,7 @@ import { Spacer } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-import { FilterControlsProps } from "@/types";
+import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
 import { ClearFiltersButton } from "./clear-filters-button";
@@ -15,6 +15,17 @@ import { CustomRegionSelection } from "./custom-region-selection";
 import { CustomSearchInput } from "./custom-search-input";
 import { CustomSelectProvider } from "./custom-select-provider";
 
+export interface FilterControlsProps {
+  search?: boolean;
+  providers?: boolean;
+  date?: boolean;
+  regions?: boolean;
+  accounts?: boolean;
+  mutedFindings?: boolean;
+  customFilters?: FilterOption[];
+  showClearButton?: boolean;
+}
+
 export const FilterControls: React.FC<FilterControlsProps> = ({
   search = false,
   providers = false,
@@ -22,16 +33,17 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   regions = false,
   accounts = false,
   mutedFindings = false,
+  showClearButton = true,
   customFilters,
 }) => {
   const searchParams = useSearchParams();
-  const [showClearButton, setShowClearButton] = useState(false);
+  const [hasFilters, setHasFilters] = useState(false);
 
   useEffect(() => {
     const hasFilters = Array.from(searchParams.keys()).some(
       (key) => key.startsWith("filter[") || key === "sort",
     );
-    setShowClearButton(hasFilters);
+    setHasFilters(hasFilters);
   }, [searchParams]);
 
   return (
@@ -43,7 +55,9 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         {regions && <CustomRegionSelection />}
         {accounts && <CustomAccountSelection />}
         {mutedFindings && <CustomCheckboxMutedFindings />}
-        {!customFilters && showClearButton && <ClearFiltersButton />}
+        {!customFilters && hasFilters && showClearButton && (
+          <ClearFiltersButton />
+        )}
       </div>
       <Spacer y={8} />
       {customFilters && (
