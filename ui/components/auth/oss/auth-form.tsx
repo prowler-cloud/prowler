@@ -55,7 +55,7 @@ export const AuthForm = ({
           variant: "destructive",
           title: "SAML Authentication Error",
           description:
-            "An error occurred while attempting to login via your third-party account.",
+            "An error occurred while attempting to login via your Identity Provider (IdP). Please check your IdP configuration.",
         });
       }, 100);
     }
