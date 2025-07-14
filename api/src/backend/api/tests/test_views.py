@@ -5984,6 +5984,7 @@ class TestTenantFinishACSView:
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = type("Anonymous", (), {"is_authenticated": False})()
+        request.session = {}
 
         with patch(
             "allauth.socialaccount.providers.saml.views.get_app_or_404"
@@ -6006,6 +6007,7 @@ class TestTenantFinishACSView:
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = users_fixture[0]
+        request.session = {}
 
         with patch(
             "allauth.socialaccount.providers.saml.views.get_app_or_404"
@@ -6047,6 +6049,7 @@ class TestTenantFinishACSView:
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = user
+        request.session = {}
 
         with (
             patch(
@@ -6112,6 +6115,44 @@ class TestTenantFinishACSView:
         user.name = original_name
         user.company_name = original_company
         user.save()
+
+    def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
+        """Test that a user is properly deleted when created during SAML flow and an error occurs"""
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
+
+        # Create a test user to simulate one created during SAML flow
+        test_user = User.objects.using(MainRouter.admin_db).create(
+            email="testuser@example.com", name="Test User"
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = users_fixture[0]
+        request.session = {"saml_user_created": test_user.id}
+
+        # Force an exception to trigger rollback
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.side_effect = Exception("Test error")
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+            # Verify the user was deleted
+            assert (
+                not User.objects.using(MainRouter.admin_db)
+                .filter(id=test_user.id)
+                .exists()
+            )
+
+            # Verify session was cleaned up
+            assert "saml_user_created" not in request.session
+
+            # Verify proper redirect
+            assert response.status_code == 302
+            assert "sso_saml_failed=true" in response.url
 
 
 @pytest.mark.django_db
