@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -41,6 +42,24 @@ export const AuthForm = ({
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const samlError = searchParams.get("sso_saml_failed");
+
+    if (samlError) {
+      // Add a delay to the toast to ensure it is rendered
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "SAML Authentication Error",
+          description:
+            "An error occurred while attempting to login via your third-party account.",
+        });
+      }, 100);
+    }
+  }, [searchParams, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,7 +77,6 @@ export const AuthForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
-  const { toast } = useToast();
   const isSamlMode = form.watch("isSamlMode");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
