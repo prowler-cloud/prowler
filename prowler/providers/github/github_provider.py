@@ -19,6 +19,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
     GithubInvalidCredentialsError,
+    GithubInvalidProviderIdError,
     GithubInvalidTokenError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
@@ -215,6 +216,7 @@ class GithubProvider(Provider):
         oauth_app_token: str = None,
         github_app_id: int = 0,
         github_app_key: str = None,
+        github_app_key_content: str = None,
     ) -> GithubSession:
         """
         Returns the GitHub headers responsible  authenticating API calls.
@@ -224,7 +226,7 @@ class GithubProvider(Provider):
             oauth_app_token (str): GitHub OAuth App token.
             github_app_id (int): GitHub App ID.
             github_app_key (str): GitHub App key.
-
+            github_app_key_content (str): GitHub App key content.
         Returns:
             GithubSession: Authenticated session token for API requests.
         """
@@ -241,10 +243,13 @@ class GithubProvider(Provider):
             elif oauth_app_token:
                 session_token = oauth_app_token
 
-            elif github_app_id and github_app_key:
+            elif github_app_id and (github_app_key or github_app_key_content):
                 app_id = github_app_id
-                with open(github_app_key, "r") as rsa_key:
-                    app_key = rsa_key.read()
+                if github_app_key:
+                    with open(github_app_key, "r") as rsa_key:
+                        app_key = rsa_key.read()
+                else:
+                    app_key = format_rsa_key(github_app_key_content)
 
             else:
                 # PAT
@@ -266,7 +271,7 @@ class GithubProvider(Provider):
                             "Looking for GITHUB_APP_ID and GITHUB_APP_KEY environment variables as user has not provided any token...."
                         )
                         app_id = environ.get("GITHUB_APP_ID", "")
-                        app_key = format_rsa_key(environ.get(r"GITHUB_APP_KEY", ""))
+                        app_key = format_rsa_key(environ.get("GITHUB_APP_KEY", ""))
 
                         if app_id and app_key:
                             pass
@@ -366,10 +371,92 @@ class GithubProvider(Provider):
         print_boxes(report_lines, report_title)
 
     @staticmethod
+    def validate_provider_id(
+        session: GithubSession,
+        provider_id: str,
+    ) -> None:
+        """
+        Validate that the provider ID (username or organization) is accessible with the given credentials.
+
+        Args:
+            session (GithubSession): The GitHub session with authentication.
+            provider_id (str): The provider ID to validate (username or organization name).
+
+        Raises:
+            GithubInvalidProviderIdError: If the provider ID is not accessible with the given credentials.
+
+        Examples:
+            >>> GithubProvider.validate_provider_id(session, "my-username")
+            >>> GithubProvider.validate_provider_id(session, "my-organization")
+        """
+        try:
+            retry_config = GithubRetry(total=3)
+
+            if session.token:
+                # For Personal Access Token and OAuth App Token
+                auth = Auth.Token(session.token)
+                g = Github(auth=auth, retry=retry_config)
+
+                # First check if the provider ID is the authenticated user
+                authenticated_user = g.get_user()
+                if authenticated_user.login == provider_id:
+                    return
+
+                # Then check if the provider ID is an organization the token has access to
+                try:
+                    g.get_organization(provider_id)
+                    return
+                except Exception:
+                    # Organization doesn't exist or the token doesn't have access to it
+                    pass
+
+                raise GithubInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provider ID '{provider_id}' is not accessible with the provided credentials. "
+                    f"Authenticated user: {authenticated_user.login}",
+                )
+
+            elif session.id != 0 and session.key:
+                # For GitHub App
+                auth = Auth.AppAuth(session.id, session.key)
+                gi = GithubIntegration(auth=auth, retry=retry_config)
+
+                # Check if the provider ID is in the app's installations
+                for installation in gi.get_installations():
+                    try:
+                        # Check if the installation id is the username or organization id
+                        account_login = installation.raw_data.get("account", {}).get(
+                            "login"
+                        )
+                        if account_login == provider_id:
+                            return
+                    except Exception:
+                        continue
+
+                raise GithubInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provider ID '{provider_id}' is not accessible with the provided GitHub App credentials.",
+                )
+
+        except GithubInvalidProviderIdError:
+            # Re-raise the specific exception
+            raise
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise GithubInvalidProviderIdError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=f"Error validating provider ID '{provider_id}'",
+            )
+
+    @staticmethod
     def test_connection(
         personal_access_token: str = "",
         oauth_app_token: str = "",
         github_app_key: str = "",
+        github_app_key_content: str = "",
         github_app_id: int = 0,
         raise_on_exception: bool = True,
         provider_id: str = None,
@@ -382,6 +469,7 @@ class GithubProvider(Provider):
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
             github_app_key (str): GitHub App key.
+            github_app_key_content (str): GitHub App key content.
             github_app_id (int): GitHub App ID.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             provider_id (str): The provider ID, in this case it's the GitHub organization/username.
@@ -396,6 +484,7 @@ class GithubProvider(Provider):
             GithubInvalidCredentialsError: If the provided App credentials are invalid.
             GithubSetUpSessionError: If there is an error setting up the session.
             GithubSetUpIdentityError: If there is an error setting up the identity.
+            GithubInvalidProviderIdError: If the provided provider ID is not accessible with the given credentials.
 
         Examples:
             >>> GithubProvider.test_connection(personal_access_token="ghp_xxxxxxxxxxxxxxxx")
@@ -412,11 +501,24 @@ class GithubProvider(Provider):
                 oauth_app_token=oauth_app_token,
                 github_app_id=github_app_id,
                 github_app_key=github_app_key,
+                github_app_key_content=github_app_key_content,
             )
 
             # Set up the identity to test the connection
             GithubProvider.setup_identity(session)
+
+            # Validate provider ID if provided
+            if provider_id:
+                GithubProvider.validate_provider_id(session, provider_id)
+
             return Connection(is_connected=True)
+        except GithubInvalidProviderIdError as provider_id_error:
+            logger.critical(
+                f"{provider_id_error.__class__.__name__}[{provider_id_error.__traceback__.tb_lineno}]: {provider_id_error}"
+            )
+            if raise_on_exception:
+                raise provider_id_error
+            return Connection(error=provider_id_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

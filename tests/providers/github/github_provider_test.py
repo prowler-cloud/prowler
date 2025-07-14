@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,6 +10,7 @@ from prowler.providers.common.models import Connection
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
     GithubInvalidCredentialsError,
+    GithubInvalidProviderIdError,
     GithubInvalidTokenError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
@@ -444,7 +445,7 @@ class TestGitHubProvider:
             mock_logger.critical.assert_called_once()
 
     def test_test_connection_with_provider_id(self):
-        """Test connection with provider_id parameter (should be ignored for GitHub)."""
+        """Test connection with provider_id parameter (should validate provider ID)."""
         with (
             patch(
                 "prowler.providers.github.github_provider.GithubProvider.setup_session",
@@ -458,6 +459,10 @@ class TestGitHubProvider:
                     account_url=ACCOUNT_URL,
                 ),
             ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.validate_provider_id",
+                return_value=None,
+            ),
         ):
             connection = GithubProvider.test_connection(
                 personal_access_token=PAT_TOKEN, provider_id="test-org"
@@ -466,3 +471,173 @@ class TestGitHubProvider:
             assert isinstance(connection, Connection)
             assert connection.is_connected is True
             assert connection.error is None
+
+    def test_test_connection_with_invalid_provider_id_raises_exception(self):
+        """Test connection with invalid provider_id raises exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubIdentityInfo(
+                    account_id=ACCOUNT_ID,
+                    account_name=ACCOUNT_NAME,
+                    account_url=ACCOUNT_URL,
+                ),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.validate_provider_id",
+                side_effect=GithubInvalidProviderIdError(
+                    file="test_file.py", message="Invalid provider ID"
+                ),
+            ),
+        ):
+            with pytest.raises(GithubInvalidProviderIdError):
+                GithubProvider.test_connection(
+                    personal_access_token=PAT_TOKEN, provider_id="invalid-org"
+                )
+
+    def test_test_connection_with_invalid_provider_id_no_raise(self):
+        """Test connection with invalid provider_id without raising exception."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubIdentityInfo(
+                    account_id=ACCOUNT_ID,
+                    account_name=ACCOUNT_NAME,
+                    account_url=ACCOUNT_URL,
+                ),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.validate_provider_id",
+                side_effect=GithubInvalidProviderIdError(
+                    file="test_file.py", message="Invalid provider ID"
+                ),
+            ),
+        ):
+            connection = GithubProvider.test_connection(
+                personal_access_token=PAT_TOKEN,
+                provider_id="invalid-org",
+                raise_on_exception=False,
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, GithubInvalidProviderIdError)
+
+    def test_validate_provider_id_with_valid_user(self):
+        """Test validate_provider_id with valid user (matches authenticated user)."""
+        mock_session = GithubSession(token=PAT_TOKEN, id="", key="")
+
+        with (
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+            patch("prowler.providers.github.github_provider.GithubRetry"),
+        ):
+            # Mock the GitHub client and user
+            mock_user = MagicMock()
+            mock_user.login = "test-user"
+            mock_github_instance = MagicMock()
+            mock_github_instance.get_user.return_value = mock_user
+            mock_github.return_value = mock_github_instance
+
+            # Should not raise an exception
+            GithubProvider.validate_provider_id(mock_session, "test-user")
+
+    def test_validate_provider_id_with_valid_organization(self):
+        """Test validate_provider_id with valid organization."""
+        mock_session = GithubSession(token=PAT_TOKEN, id="", key="")
+
+        with (
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+            patch("prowler.providers.github.github_provider.GithubRetry"),
+        ):
+            # Mock the GitHub client and user
+            mock_user = MagicMock()
+            mock_user.login = "test-user"
+            mock_github_instance = MagicMock()
+            mock_github_instance.get_user.return_value = mock_user
+            mock_github_instance.get_organization.return_value = (
+                MagicMock()
+            )  # Organization exists
+            mock_github.return_value = mock_github_instance
+
+            # Should not raise an exception
+            GithubProvider.validate_provider_id(mock_session, "test-org")
+
+    def test_validate_provider_id_with_invalid_provider_id(self):
+        """Test validate_provider_id with invalid provider ID."""
+        mock_session = GithubSession(token=PAT_TOKEN, id="", key="")
+
+        with (
+            patch("prowler.providers.github.github_provider.Auth.Token"),
+            patch("prowler.providers.github.github_provider.Github") as mock_github,
+            patch("prowler.providers.github.github_provider.GithubRetry"),
+        ):
+            # Mock the GitHub client and user
+            mock_user = MagicMock()
+            mock_user.login = "test-user"
+            mock_github_instance = MagicMock()
+            mock_github_instance.get_user.return_value = mock_user
+            mock_github_instance.get_organization.side_effect = Exception("Not found")
+            mock_github_instance.get_user.side_effect = [
+                mock_user,
+                Exception("Not found"),
+            ]
+            mock_github.return_value = mock_github_instance
+
+            with pytest.raises(GithubInvalidProviderIdError):
+                GithubProvider.validate_provider_id(mock_session, "invalid-provider")
+
+    def test_validate_provider_id_with_github_app(self):
+        """Test validate_provider_id with GitHub App credentials."""
+        mock_session = GithubSession(token="", id=APP_ID, key=APP_KEY)
+
+        with (
+            patch("prowler.providers.github.github_provider.Auth.AppAuth"),
+            patch(
+                "prowler.providers.github.github_provider.GithubIntegration"
+            ) as mock_integration,
+            patch("prowler.providers.github.github_provider.GithubRetry"),
+        ):
+            # Mock the GitHub integration and installations
+            mock_installation = MagicMock()
+            mock_installation.account.login = "test-org"
+            mock_integration_instance = MagicMock()
+            mock_integration_instance.get_installations.return_value = [
+                mock_installation
+            ]
+            mock_integration.return_value = mock_integration_instance
+
+            # Should not raise an exception
+            GithubProvider.validate_provider_id(mock_session, "test-org")
+
+    def test_validate_provider_id_with_github_app_invalid_org(self):
+        """Test validate_provider_id with GitHub App credentials and invalid organization."""
+        mock_session = GithubSession(token="", id=APP_ID, key=APP_KEY)
+
+        with (
+            patch("prowler.providers.github.github_provider.Auth.AppAuth"),
+            patch(
+                "prowler.providers.github.github_provider.GithubIntegration"
+            ) as mock_integration,
+            patch("prowler.providers.github.github_provider.GithubRetry"),
+        ):
+            # Mock the GitHub integration and installations
+            mock_installation = MagicMock()
+            mock_installation.account.login = "other-org"
+            mock_integration_instance = MagicMock()
+            mock_integration_instance.get_installations.return_value = [
+                mock_installation
+            ]
+            mock_integration.return_value = mock_integration_instance
+
+            with pytest.raises(GithubInvalidProviderIdError):
+                GithubProvider.validate_provider_id(mock_session, "invalid-org")
