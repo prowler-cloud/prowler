@@ -186,7 +186,6 @@ export const ResourceDetail = ({
     );
   }
 
-  // Default view: show resource details
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Resource Details section */}
@@ -265,9 +264,10 @@ export const ResourceDetail = ({
               const checktitle = check_metadata?.checktitle || "Unknown check";
 
               return (
-                <div
+                <button
                   key={index}
-                  className="flex flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
+                  onClick={() => navigateToFinding(id)}
+                  className="flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-medium text-gray-800 dark:text-prowler-theme-pale/90">
@@ -283,7 +283,7 @@ export const ResourceDetail = ({
                       />
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

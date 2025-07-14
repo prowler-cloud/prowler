@@ -43,21 +43,13 @@ export default async function Resources({
   // Extract unique regions, services, types, and names from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes =
-    metadataInfoData?.data?.attributes?.resource_types || [];
-  const uniqueResourceNames =
-    metadataInfoData?.data?.attributes?.resource_names || [];
+  const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
 
   return (
     <ContentLayout title="Resources" icon="carbon:data-view">
       <FilterControls search date />
       <DataTableFilterCustom
         filters={[
-          {
-            key: "name",
-            labelCheckboxGroup: "Resources",
-            values: uniqueResourceNames,
-          },
           {
             key: "region",
             labelCheckboxGroup: "Region",
@@ -103,7 +95,7 @@ const SSRDataTable = async ({
 
   const outputFilters = replaceFilterFieldKey(
     filters,
-    "updated_at",
+    "inserted_at",
     "updated_at",
   );
 
@@ -143,11 +135,6 @@ const SSRDataTable = async ({
       })
     : [];
 
-  const expandedResponse = {
-    ...resourcesData,
-    data: expandedResources,
-  };
-
   return (
     <>
       {resourcesData?.errors && (
@@ -158,7 +145,7 @@ const SSRDataTable = async ({
       )}
       <DataTable
         columns={ColumnResources}
-        data={expandedResponse?.data || []}
+        data={expandedResources || []}
         metadata={resourcesData?.meta}
       />
     </>
