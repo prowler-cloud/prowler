@@ -43,18 +43,18 @@ class Test_storage_default_network_access_rule_is_denied:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
+                    allow_blob_public_access=False,
                     network_rule_set=NetworkRuleSet(
-                        default_action="Allow", bypass="AzureServices"
+                        bypass="AzureServices", default_action="Allow"
                     ),
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                 )
             ]
         }
@@ -95,18 +95,18 @@ class Test_storage_default_network_access_rule_is_denied:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
+                    allow_blob_public_access=False,
                     network_rule_set=NetworkRuleSet(
                         default_action="Deny", bypass="AzureServices"
                     ),
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                 )
             ]
         }

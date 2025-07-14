@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { authenticate, createNewUser } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
+import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
@@ -219,15 +220,22 @@ export const AuthForm = ({
                 showFormMessage={type !== "sign-in"}
               />
               {!isSamlMode && (
-                <CustomInput
-                  control={form.control}
-                  name="password"
-                  password
-                  isInvalid={
-                    !!form.formState.errors.password ||
-                    !!form.formState.errors.email
-                  }
-                />
+                <>
+                  <CustomInput
+                    control={form.control}
+                    name="password"
+                    password
+                    isInvalid={
+                      !!form.formState.errors.password ||
+                      !!form.formState.errors.email
+                    }
+                  />
+                  {type === "sign-up" && (
+                    <PasswordRequirementsMessage
+                      password={form.watch("password") || ""}
+                    />
+                  )}
+                </>
               )}
               {/* {type === "sign-in" && (
                 <div className="flex items-center justify-between px-1 py-2">
@@ -401,8 +409,7 @@ export const AuthForm = ({
                     </Tooltip>
                   </>
                 )}
-                {/* TODO after v5.8: Add SAML SSO back in */}
-                {/* <Button
+                <Button
                   startContent={
                     !isSamlMode && (
                       <Icon
@@ -419,7 +426,7 @@ export const AuthForm = ({
                   }}
                 >
                   {isSamlMode ? "Back" : "Continue with SAML SSO"}
-                </Button> */}
+                </Button>
               </div>
             </>
           )}

@@ -187,16 +187,6 @@ export const buildSecretConfig = (
   return builder();
 };
 
-// Helper function to build secret for update (reuses existing logic)
-export const buildUpdateSecretConfig = (
-  formData: FormData,
-  providerType: ProviderType,
-) => {
-  // Reuse the same secret building logic as add
-  const { secret } = buildSecretConfig(formData, providerType);
-  return secret;
-};
-
 // Helper function to handle API responses consistently
 export const handleApiResponse = async (
   response: Response,
