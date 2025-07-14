@@ -1071,7 +1071,6 @@ class ResourceIncludeSerializer(RLSSerializer):
 
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
-    failed_findings_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Resource
@@ -1085,7 +1084,6 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
-            "failed_findings_count",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
