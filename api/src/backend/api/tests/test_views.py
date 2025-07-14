@@ -5361,6 +5361,33 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily_already_scheduled(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
+    ):
+        provider, *_ = providers_fixture
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+        json_payload = {
+            "provider_id": str(provider.id),
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+
 
 @pytest.mark.django_db
 class TestIntegrationViewSet:

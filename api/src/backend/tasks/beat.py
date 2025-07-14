@@ -28,9 +28,9 @@ def schedule_provider_scan(provider_instance: Provider):
             [
                 {
                     "detail": "There is already a scheduled scan for this provider.",
-                    "status": 400,
+                    "status": 409,
                     "source": {"pointer": "/data/attributes/provider_id"},
-                    "code": "invalid",
+                    "code": "conflict",
                 }
             ]
         )
