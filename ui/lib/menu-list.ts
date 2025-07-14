@@ -135,7 +135,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse", icon: Cog },
+            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
@@ -157,11 +157,11 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       ],
     },
     {
-      groupLabel: "Prowler Lighthouse",
+      groupLabel: "Prowler Lighthouse AI",
       menus: [
         {
           href: "/lighthouse",
-          label: "Lighthouse",
+          label: "Lighthouse AI",
           icon: Bot,
         },
       ],
