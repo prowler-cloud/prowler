@@ -55,29 +55,31 @@ const TagsSection = ({ tags }: { tags: Record<string, string> }) => {
 
   return (
     <Section title="Resource Tags">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="flex flex-wrap justify-between">
         {tagEntries.map(([key, value]) => (
-          <div key={key} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-prowler-theme-pale/90">
-                {key}:
+          <div key={key} className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700 dark:text-prowler-theme-pale/90">
+              {key}:
+            </span>
+            <Snippet
+              className="bg-gray-50 dark:bg-slate-800"
+              hideSymbol
+              size="sm"
+              classNames={{
+                base: "max-w-48",
+              }}
+            >
+              <span className="text-xs">
+                {renderValue(value).slice(0, 16)}
+                {renderValue(value).length > 16 && "..."}
               </span>
-              <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-                <span className="text-xs">{renderValue(value)}</span>
-              </Snippet>
-            </div>
+            </Snippet>
           </div>
         ))}
       </div>
     </Section>
   );
 };
-
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center py-8">
-    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-  </div>
-);
 
 const buildCustomBreadcrumbs = (
   resourceName: string,
@@ -118,8 +120,6 @@ export const ResourceDetail = ({
   const [findingDetails, setFindingDetails] = useState<FindingProps | null>(
     null,
   );
-  const [loadingFinding, setLoadingFinding] = useState(false);
-  const [findingError, setFindingError] = useState<string | null>(null);
 
   const resource = resourceDetails;
   const attributes = resource.attributes;
@@ -128,8 +128,6 @@ export const ResourceDetail = ({
 
   const navigateToFinding = async (findingId: string) => {
     setSelectedFindingId(findingId);
-    setLoadingFinding(true);
-    setFindingError(null);
 
     try {
       const findingData = await getFindingById(
@@ -155,21 +153,15 @@ export const ResourceDetail = ({
         };
 
         setFindingDetails(expandedFinding);
-      } else {
-        setFindingError("Finding not found");
       }
     } catch (error) {
       console.error("Error fetching finding:", error);
-      setFindingError("Error loading finding details");
-    } finally {
-      setLoadingFinding(false);
     }
   };
 
   const handleBackToResource = () => {
     setSelectedFindingId(null);
     setFindingDetails(null);
-    setFindingError(null);
   };
 
   // If a finding is selected, show the finding detail
@@ -189,17 +181,7 @@ export const ResourceDetail = ({
           )}
         />
 
-        {loadingFinding && <LoadingSpinner />}
-
-        {findingError && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
-            {findingError}
-          </div>
-        )}
-
-        {findingDetails && !loadingFinding && (
-          <FindingDetail findingDetails={findingDetails} />
-        )}
+        {findingDetails && <FindingDetail findingDetails={findingDetails} />}
       </div>
     );
   }
