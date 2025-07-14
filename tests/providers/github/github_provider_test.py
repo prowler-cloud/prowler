@@ -609,7 +609,7 @@ class TestGitHubProvider:
         ):
             # Mock the GitHub integration and installations
             mock_installation = MagicMock()
-            mock_installation.account.login = "test-org"
+            mock_installation.raw_data = {"account": {"login": "test-org"}}
             mock_integration_instance = MagicMock()
             mock_integration_instance.get_installations.return_value = [
                 mock_installation
@@ -632,7 +632,7 @@ class TestGitHubProvider:
         ):
             # Mock the GitHub integration and installations
             mock_installation = MagicMock()
-            mock_installation.account.login = "other-org"
+            mock_installation.raw_data = {"account": {"login": "other-org"}}
             mock_integration_instance = MagicMock()
             mock_integration_instance.get_installations.return_value = [
                 mock_installation
