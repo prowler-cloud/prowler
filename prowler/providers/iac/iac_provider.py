@@ -5,6 +5,7 @@ import tempfile
 from os import environ
 from typing import List
 
+from alive_progress import alive_bar
 from checkov.ansible.runner import Runner as AnsibleRunner
 from checkov.argo_workflows.runner import Runner as ArgoWorkflowsRunner
 from checkov.arm.runner import Runner as ArmRunner
@@ -252,7 +253,20 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {repository_url} into {temporary_directory}..."
             )
-            porcelain.clone(repository_url, temporary_directory, depth=1)
+            with alive_bar(
+                ctrl_c=False,
+                bar="blocks",
+                spinner="classic",
+                stats=False,
+                enrich_print=False,
+            ) as bar:
+                try:
+                    bar.title = f"-> Cloning {repository_url}..."
+                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    bar.title = "-> Repository cloned successfully!"
+                except Exception as clone_error:
+                    bar.title = "-> Cloning failed!"
+                    raise clone_error
             return temporary_directory
         except Exception as error:
             logger.critical(
