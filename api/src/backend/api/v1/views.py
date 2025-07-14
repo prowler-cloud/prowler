@@ -567,10 +567,7 @@ class TenantFinishACSView(FinishACSView):
         """Helper function to rollback SAML user if it was just created and validation fails"""
         saml_user_id = request.session.get("saml_user_created")
         if saml_user_id:
-            try:
-                User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
-            except User.DoesNotExist:
-                pass
+            User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
             request.session.pop("saml_user_created", None)
 
     def dispatch(self, request, organization_slug):
