@@ -5978,7 +5978,8 @@ class TestSAMLConfigurationViewSet:
 
 @pytest.mark.django_db
 class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
+    def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -5999,7 +6000,8 @@ class TestTenantFinishACSView:
 
         assert response.status_code in [200, 302]
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
@@ -6037,7 +6039,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["saml_default_role"],
+                "userType": ["no_permissions"],
             },
         )
 
@@ -6091,7 +6093,7 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
         assert role.tenant == tenants_fixture[0]
 
         assert (

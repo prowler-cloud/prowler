@@ -10,6 +10,7 @@ def init_parser(self):
         nargs="?",
         help="Personal Access Token to log in against GitHub",
         default=None,
+        metavar="GITHUB_PERSONAL_ACCESS_TOKEN",
     )
 
     github_auth_subparser.add_argument(
@@ -17,6 +18,7 @@ def init_parser(self):
         nargs="?",
         help="OAuth App Token to log in against GitHub",
         default=None,
+        metavar="GITHUB_OAUTH_APP_TOKEN",
     )
 
     # GitHub App Authentication
@@ -25,6 +27,7 @@ def init_parser(self):
         nargs="?",
         help="GitHub App ID to log in against GitHub",
         default=None,
+        metavar="GITHUB_APP_ID",
     )
     github_auth_subparser.add_argument(
         "--github-app-key",
@@ -32,4 +35,5 @@ def init_parser(self):
         nargs="?",
         help="GitHub App Key Path to log in against GitHub",
         default=None,
+        metavar="GITHUB_APP_KEY",
     )
