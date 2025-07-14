@@ -37,7 +37,7 @@ prowler github --github-app-id app_id --github-app-key app_key
 If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
 1. `GITHUB_PERSONAL_ACCESS_TOKEN`
-2. `OAUTH_APP_TOKEN`
+2. `GITHUB_OAUTH_APP_TOKEN`
 3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
 ???+ note
