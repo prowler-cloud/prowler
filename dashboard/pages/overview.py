@@ -190,7 +190,13 @@ else:
         data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
 
     # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
-    data = data.sort_values("TIMESTAMP").drop_duplicates("FINDING_UID", keep="last")
+    data["DATE"] = data["TIMESTAMP"].dt.date
+    data = (
+        data.sort_values("TIMESTAMP")
+        .groupby(["DATE", "FINDING_UID"], as_index=False)
+        .last()
+    )
+    data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
 
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
     data_valid = pd.DataFrame()
