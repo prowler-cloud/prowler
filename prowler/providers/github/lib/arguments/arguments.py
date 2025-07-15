@@ -31,6 +31,7 @@ def init_parser(self):
     )
     github_auth_subparser.add_argument(
         "--github-app-key",
+        "--github-app-key-path",
         nargs="?",
         help="GitHub App Key Path to log in against GitHub",
         default=None,
