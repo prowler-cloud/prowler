@@ -286,6 +286,22 @@ class Test_IAM_Service:
                 }
             ],
         }
+        # Hybrid role - assumable by both service and AWS account
+        hybrid_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "cloudformation.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                },
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                    "Action": "sts:AssumeRole",
+                },
+            ],
+        }
         service_role = iam_client.create_role(
             RoleName="test-1",
             AssumeRolePolicyDocument=dumps(service_policy_document),
@@ -296,6 +312,13 @@ class Test_IAM_Service:
         role = iam_client.create_role(
             RoleName="test-2",
             AssumeRolePolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )["Role"]
+        hybrid_role = iam_client.create_role(
+            RoleName="test-3",
+            AssumeRolePolicyDocument=dumps(hybrid_policy_document),
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -314,6 +337,8 @@ class Test_IAM_Service:
         ]
         assert is_service_role(service_role)
         assert not is_service_role(role)
+        # Hybrid role should return False even though it has a service principal
+        assert not is_service_role(hybrid_role)
 
     # Test IAM Get Groups
     @mock_aws
