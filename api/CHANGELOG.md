@@ -15,6 +15,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+- RBAC is now applied to `GET /overviews/providers` [(#8277)](https://github.com/prowler-cloud/prowler/pull/8277)
 
 ### Security
 
