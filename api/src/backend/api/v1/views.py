@@ -1,8 +1,12 @@
 import glob
+import json
+import logging
 import os
+import tempfile
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 
+import boto3
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
@@ -48,7 +52,8 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.viewsets import ViewSet
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
@@ -59,6 +64,7 @@ from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    generate_threatscore_report_task,
     perform_scan_task,
 )
 
@@ -1472,6 +1478,15 @@ class ProviderViewSet(BaseRLSViewSet):
         },
         request=None,
     ),
+    threatscore_report=extend_schema(
+        tags=["Scan"],
+        summary="Generate ThreatScore report",
+        description="Generate a ThreatScore report for a specific scan",
+        request=None,
+        responses={
+            202: OpenApiResponse(description="ThreatScore report generation started")
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1528,6 +1543,8 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
+        elif self.action == "threatscore_report":
+            return None
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1790,6 +1807,39 @@ class ScanViewSet(BaseRLSViewSet):
                     "task-detail", kwargs={"pk": prowler_task.id}
                 )
             },
+        )
+
+    @action(detail=True, methods=["post"], url_path="threatscore-report")
+    def threatscore_report(self, request, pk=None):
+        scan = self.get_object()
+        tenant_id = self.request.tenant_id
+        provider_id = str(scan.provider_id)
+        scan_id = str(scan.id)
+        compliance_id = request.data.get("compliance_id")
+        output_path = request.data.get(
+            "output_path", f"/tmp/threatscore_report_{scan_id}.pdf"
+        )
+        only_failed = request.data.get("only_failed", True)
+        min_risk_level = request.data.get("min_risk_level", 4)
+        if not compliance_id:
+            return Response(
+                {"detail": "compliance_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        generate_threatscore_report_task.apply_async(
+            kwargs={
+                "tenant_id": tenant_id,
+                "scan_id": scan_id,
+                "provider_id": provider_id,
+                "compliance_id": compliance_id,
+                "output_path": output_path,
+                "only_failed": only_failed,
+                "min_risk_level": min_risk_level,
+            }
+        )
+        return Response(
+            {"detail": "ThreatScore report generation started."},
+            status=status.HTTP_202_ACCEPTED,
         )
 
 
@@ -3646,3 +3696,173 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+class ReportsViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
+    logger = logging.getLogger("prowler.reports")
+
+    def _get_task_and_validate(self, report_id, user):
+        try:
+            task = Task.objects.get(id=report_id)
+        except Task.DoesNotExist:
+            return None, Response(
+                {"detail": "Report not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        scan_id = None
+        try:
+            kwargs = json.loads(task.task_runner_task.task_kwargs.replace("'", '"'))
+            scan_id = kwargs.get("scan_id")
+        except Exception:
+            pass
+        if scan_id:
+            try:
+                scan = Scan.objects.get(id=scan_id)
+                if scan.tenant_id != user.tenant_id:
+                    return None, Response(
+                        {"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+                    )
+            except Scan.DoesNotExist:
+                return None, Response(
+                    {"detail": "Scan not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+        return task, None
+
+    @action(detail=False, methods=["post"], url_path="pdf/generate")
+    def pdf_generate(self, request):
+        scan_id = request.data.get("scan_id")
+        compliance_id = request.data.get("compliance_id")
+        options = request.data.get("options", {})
+        only_failed = options.get("only_failed", True)
+        min_risk_level = options.get("min_risk_level", 4)
+        if not scan_id or not compliance_id:
+            return Response(
+                {"detail": "scan_id and compliance_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            scan = Scan.objects.get(id=scan_id)
+            if scan.tenant_id != request.user.tenant_id:
+                return Response(
+                    {"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+                )
+        except Scan.DoesNotExist:
+            return Response(
+                {"detail": "Scan not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        tenant_id = scan.tenant_id
+        provider_id = scan.provider_id
+        output_path = f"/tmp/threatscore_report_{scan_id}.pdf"
+        celery_task = generate_threatscore_report_task.apply_async(
+            kwargs={
+                "tenant_id": tenant_id,
+                "scan_id": scan_id,
+                "provider_id": provider_id,
+                "compliance_id": compliance_id,
+                "output_path": output_path,
+                "only_failed": only_failed,
+                "min_risk_level": min_risk_level,
+            }
+        )
+        self.logger.info(
+            f"User {request.user.id} initiated ThreatScore report for scan {scan_id} (task {celery_task.id})"
+        )
+        return Response(
+            {"report_id": celery_task.id, "status": "initiated"},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(detail=False, methods=["get"], url_path="pdf/status/(?P<report_id>[^/]+)")
+    def pdf_status(self, request, report_id=None):
+        task, error = self._get_task_and_validate(report_id, request.user)
+        if error:
+            return error
+        state = task.state
+        output_path = None
+        try:
+            kwargs = json.loads(task.task_runner_task.task_kwargs.replace("'", '"'))
+            output_path = kwargs.get("output_path")
+        except Exception:
+            pass
+        if state == "SUCCESS":
+            status_str = "ready"
+        elif state in ("PENDING", "RECEIVED", "STARTED", "RETRY"):
+            status_str = "processing"
+        elif state == "FAILURE":
+            status_str = "failed"
+        else:
+            status_str = "initiated"
+        resp = {"status": status_str}
+        if status_str == "ready" and output_path:
+            resp["output_path"] = output_path
+        return Response(resp, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="pdf/download/(?P<report_id>[^/]+)")
+    def pdf_download(self, request, report_id=None):
+        task, error = self._get_task_and_validate(report_id, request.user)
+        if error:
+            return error
+        if task.state != "SUCCESS":
+            return Response(
+                {"detail": "Report not ready"}, status=status.HTTP_202_ACCEPTED
+            )
+        output_path = getattr(task, "result", None)
+        if not output_path:
+            try:
+                kwargs = json.loads(task.task_runner_task.task_kwargs.replace("'", '"'))
+                output_path = kwargs.get("output_path")
+            except Exception:
+                pass
+        if not output_path:
+            self.logger.warning(
+                f"User {request.user.id} tried to download missing report {report_id} (no path)"
+            )
+            return Response(
+                {"detail": "Report file not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        if output_path.startswith("s3://"):
+            import re
+
+            match = re.match(r"s3://([^/]+)/(.+)", output_path)
+            if not match:
+                return Response(
+                    {"detail": "Invalid S3 URI"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+            bucket, key = match.groups()
+            s3 = boto3.client("s3")
+            try:
+                with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                    s3.download_fileobj(bucket, key, tmp)
+                    tmp_path = tmp.name
+                with open(tmp_path, "rb") as f:
+                    pdf_data = f.read()
+                os.unlink(tmp_path)
+            except Exception as e:
+                self.logger.warning(
+                    f"User {request.user.id} failed S3 download for report {report_id}: {e}"
+                )
+                return Response(
+                    {"detail": "Report file not found in S3"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            filename = os.path.basename(key)
+        else:
+            if not os.path.exists(output_path):
+                self.logger.warning(
+                    f"User {request.user.id} tried to download missing report {report_id} at {output_path}"
+                )
+                return Response(
+                    {"detail": "Report file not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            with open(output_path, "rb") as f:
+                pdf_data = f.read()
+            filename = os.path.basename(output_path)
+        self.logger.info(
+            f"User {request.user.id} downloaded ThreatScore report {report_id} from {output_path}"
+        )
+        response = Response(pdf_data, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
