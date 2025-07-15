@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       prowler_version:
-        description: 'Prowler version to release'
+        description: 'Prowler version to release (e.g., 5.9.0)'
         required: true
         type: string
 
@@ -46,7 +46,7 @@ jobs:
           API_VERSION="1.${MINOR_VERSION}.${PATCH_VERSION}"
           echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
 
-          # Calculate UI version (1.X.X format) - same as API for now
+          # Calculate UI version (1.X.X format)
           UI_VERSION="1.${MINOR_VERSION}.${PATCH_VERSION}"
           echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
 
@@ -58,26 +58,6 @@ jobs:
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
           exit 1
-        fi
-
-    - name: Create or checkout release branch
-      run: |
-        # Check if branch exists locally or remotely
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists locally, checking out..."
-          git checkout "$BRANCH_NAME"
-        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists remotely, checking out..."
-          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
-        else
-          # For minor releases (patch = 0), create new branch; for patches, branch should exist
-          if [ "$PATCH_VERSION" -eq 0 ]; then
-            echo "Creating new branch $BRANCH_NAME for minor release..."
-            git checkout -b "$BRANCH_NAME"
-          else
-            echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
-            exit 1
-          fi
         fi
 
     - name: Verify version in pyproject.toml
@@ -129,6 +109,26 @@ jobs:
           exit 1
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
+
+    - name: Create or checkout release branch
+      run: |
+        # Check if branch exists locally or remotely
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists locally, checking out..."
+          git checkout "$BRANCH_NAME"
+        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          # For minor releases (patch = 0), create new branch; for patches, branch should exist
+          if [ "$PATCH_VERSION" -eq 0 ]; then
+            echo "Creating new branch $BRANCH_NAME for minor release..."
+            git checkout -b "$BRANCH_NAME"
+          else
+            echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
+            exit 1
+          fi
+        fi
 
     - name: Extract changelog entries
       run: |
@@ -192,17 +192,6 @@ jobs:
 
         echo "Combined changelog preview:"
         cat combined_changelog.md
-
-    - name: Create tag
-      run: |
-        # Check if tag already exists
-        if git tag -l "$PROWLER_VERSION" | grep -q "^$PROWLER_VERSION$"; then
-          echo "Tag $PROWLER_VERSION already exists, skipping tag creation"
-        else
-          echo "Creating tag $PROWLER_VERSION"
-          git tag "$PROWLER_VERSION"
-          git push origin "$PROWLER_VERSION"
-        fi
 
     - name: Create draft release
       uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
