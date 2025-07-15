@@ -63,13 +63,11 @@ export const LaunchScanWorkflow = ({
 
     const data = await scanOnDemand(formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      const error = data.errors[0];
-      const errorMessage = `${error.detail}`;
+    if (data?.error) {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: errorMessage,
+        description: data.error,
       });
     } else {
       toast({
