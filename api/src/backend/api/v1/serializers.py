@@ -341,7 +341,6 @@ class APIKeySerializer(BaseSerializerV1):
     """
     Serializer for listing API Keys.
     """
-    created_by = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
     
     class Meta:
         model = APIKey
@@ -352,7 +351,6 @@ class APIKeySerializer(BaseSerializerV1):
             "expires_at",
             "last_used_at",
             "created_at",
-            "created_by",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -390,12 +388,8 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         return value
     
     def create(self, validated_data):
-        # Get the requesting user and tenant from context
-        user = self.context['request'].user
+        # Get tenant from context
         tenant_id = self.context['request'].tenant_id
-        
-        # Get client IP
-        ip_address = self.context['request'].META.get('REMOTE_ADDR')
         
         # Retry logic for prefix collisions (very unlikely but possible)
         max_retries = 5
@@ -410,7 +404,6 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
             try:
                 # Create the API key instance
                 api_key = APIKey.objects.create(
-                    created_by=user,
                     tenant_id=tenant_id,
                     key_hash=key_hash,
                     prefix=prefix,

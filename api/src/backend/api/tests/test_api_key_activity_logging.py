@@ -42,7 +42,6 @@ class APIKeyActivityLoggingTest(TestCase):
         # Create test API key
         self.api_key = APIKey.objects.create(
             name="Test API Key",
-            created_by=self.user,
             tenant_id=self.tenant.id,
             key_hash="test_hash",
             prefix="testkey"

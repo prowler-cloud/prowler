@@ -1,4 +1,5 @@
 # Generated manually for API Key model and API Key Activity logging with multi-tenancy
+# This migration creates API keys without user association and optional user in activity logging
 
 from django.db import migrations, models
 import django.db.models.deletion
@@ -27,7 +28,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('revoked_at', models.DateTimeField(blank=True, null=True, help_text='Time when the key was revoked. Null means active.')),
                 ('tenant_id', models.UUIDField(help_text='Tenant ID for multi-tenancy support')),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='api_keys', related_query_name='api_key', to='api.user')),
             ],
             options={
                 'db_table': 'api_keys',
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='apikey',
-            index=models.Index(fields=['created_by', 'revoked_at'], name='api_keys_user_active_idx'),
+            index=models.Index(fields=['tenant_id', 'prefix'], name='api_keys_tenant_prefix_idx'),
         ),
         # Enable RLS and create policy for api_keys
         migrations.RunSQL(
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                 ('query_params', models.JSONField(blank=True, default=dict, help_text='Query parameters from the request (for audit purposes)')),
                 ('tenant_id', models.UUIDField(help_text='Tenant ID for multi-tenancy support')),
                 ('api_key', models.ForeignKey(help_text='API key that was used for this request', on_delete=django.db.models.deletion.CASCADE, related_name='activity_logs', related_query_name='activity_log', to='api.apikey')),
-                ('user', models.ForeignKey(help_text='User who owns the API key', on_delete=django.db.models.deletion.CASCADE, related_name='api_key_activities', related_query_name='api_key_activity', to='api.user')),
+                ('user', models.ForeignKey(blank=True, null=True, help_text='User who owns the API key (optional for API key authentication)', on_delete=django.db.models.deletion.SET_NULL, related_name='api_key_activities', related_query_name='api_key_activity', to='api.user')),
             ],
             options={
                 'db_table': 'api_key_activities',
@@ -86,10 +86,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='apikeyactivity',
             index=models.Index(fields=['api_key', '-timestamp'], name='api_key_activity_key_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['user', '-timestamp'], name='api_key_activity_user_time_idx'),
         ),
         migrations.AddIndex(
             model_name='apikeyactivity',

@@ -164,14 +164,6 @@ export interface APIKey {
     last_used_at: string | null;
     created_at: string;
   };
-  relationships?: {
-    created_by: {
-      data: {
-        id: string;
-        type: "users";
-      };
-    };
-  };
 }
 
 export interface APIKeyCreateData {

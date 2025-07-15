@@ -123,7 +123,6 @@ class APILoggingMiddleware:
             # Create the activity record
             APIKeyActivity.objects.create(
                 api_key=api_key,
-                user=api_key.created_by,
                 tenant_id=api_key.tenant_id,
                 method=request.method,
                 endpoint=request.path,

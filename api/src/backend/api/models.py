@@ -167,13 +167,6 @@ class APIKey(RowLevelSecurityProtectedModel):
         validators=[MinLengthValidator(3)],
         help_text="Human-readable name to identify the API key"
     )
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="created_api_keys",
-        related_query_name="created_api_key",
-        help_text="User who created this API key"
-    )
     key_hash = models.CharField(
         max_length=255,
         unique=True,
@@ -297,15 +290,6 @@ class APIKeyActivity(RowLevelSecurityProtectedModel):
         related_name="activity_logs",
         related_query_name="activity_log",
         help_text="API key that was used for this request"
-    )
-    
-    # User information - for accountability
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="api_key_activities",
-        related_query_name="api_key_activity",
-        help_text="User who owns the API key"
     )
     
     # Request details - for security monitoring

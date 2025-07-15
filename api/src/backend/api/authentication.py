@@ -47,7 +47,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             raise exceptions.AuthenticationFailed('Invalid API key format.')
         
         # Find potential API keys by prefix, then verify with password check
-        candidate_keys = APIKey.objects.select_related('created_by').filter(prefix=prefix)
+        candidate_keys = APIKey.objects.filter(prefix=prefix)
         
         api_key = None
         for candidate in candidate_keys:
@@ -65,25 +65,19 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             else:
                 raise exceptions.AuthenticationFailed('API key has expired.')
         
-        # Check if the user is active
-        if not api_key.created_by.is_active:
-            raise exceptions.AuthenticationFailed('User inactive or deleted.')
-        
-        # Update last used timestamp and IP
+        # Update last used timestamp
         api_key.last_used_at = timezone.now()
-        api_key.last_used_ip = request.META.get('REMOTE_ADDR')
-        api_key.save(update_fields=['last_used_at', 'last_used_ip'])
+        api_key.save(update_fields=['last_used_at'])
         
-        # Return user and auth token (similar to JWT auth)
+        # Return anonymous user and auth token
         # For API Key auth, the tenant_id comes from the API key itself
         auth_info = {
             'api_key_id': str(api_key.id),
             'api_key_name': api_key.name,
-            'user_id': str(api_key.created_by.id),
             'tenant_id': str(api_key.tenant_id),
         }
         
-        return (api_key.created_by, auth_info)
+        return (AnonymousUser(), auth_info)
     
     def authenticate_header(self, request):
         return self.keyword 
