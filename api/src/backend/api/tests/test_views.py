@@ -326,6 +326,19 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
 
+    def test_users_destroy_unexpected_exception(
+        self, authenticated_client, create_test_user
+    ):
+        with patch(
+            "api.v1.views.UserViewSet.perform_destroy",
+            side_effect=Exception("Unexpected"),
+        ):
+            response = authenticated_client.delete(
+                reverse("user-detail", kwargs={"pk": create_test_user.id})
+            )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["detail"] == "Failed to delete the user"
+
     @pytest.mark.parametrize(
         "attribute_key, attribute_value, error_field",
         [

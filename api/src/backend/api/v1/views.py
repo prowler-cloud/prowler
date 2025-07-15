@@ -782,9 +782,7 @@ class UserViewSet(BaseUserViewset):
 
         try:
             return super().destroy(request, *args, **kwargs)
-        except Exception as e:
-            print("Exception caught in destroy():", e)
-
+        except Exception:
             raise ValidationError(
                 [
                     {
