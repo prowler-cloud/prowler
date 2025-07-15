@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
+- Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 
 ---
 
