@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from allauth.socialaccount.models import SocialLogin
@@ -54,3 +54,24 @@ class TestProwlerSocialAccountAdapter:
         adapter.pre_social_login(rf.get("/"), sociallogin)
 
         sociallogin.connect.assert_not_called()
+
+    def test_save_user_saml_sets_session_flag(self, rf):
+        adapter = ProwlerSocialAccountAdapter()
+        request = rf.get("/")
+        request.session = {}
+
+        sociallogin = MagicMock(spec=SocialLogin)
+        sociallogin.provider = MagicMock()
+        sociallogin.provider.id = "saml"
+        sociallogin.account = MagicMock()
+        sociallogin.account.extra_data = {}
+
+        mock_user = MagicMock()
+        mock_user.id = 123
+
+        with patch("api.adapters.super") as mock_super:
+            with patch("api.adapters.transaction"):
+                with patch("api.adapters.MainRouter"):
+                    mock_super.return_value.save_user.return_value = mock_user
+                    adapter.save_user(request, sociallogin)
+                    assert request.session["saml_user_created"] == "123"
