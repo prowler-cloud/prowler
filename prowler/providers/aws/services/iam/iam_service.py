@@ -18,12 +18,9 @@ def is_service_role(role):
             statements = [statements]
 
         for statement in statements:
-            if (
-                statement.get("Effect") != "Allow"
-                or not any(
+            if statement.get("Effect") != "Allow" or not any(
                 action in statement.get("Action", [])
                 for action in ("sts:AssumeRole", "sts:*", "*")
-            )
             ):
                 return False
 
