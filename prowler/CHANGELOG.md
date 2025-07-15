@@ -10,6 +10,19 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
+<<<<<<< HEAD
+=======
+- Ensure `is_service_role` only returns `True` for service roles [(#8274)](https://github.com/prowler-cloud/prowler/pull/8274)
+- Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
+- Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
+
+---
+
+## [v5.8.2] (Prowler UNRELEASED)
+
+### Fixed
+- Fix error in Dashboard Overview page when reading CSV files [(#8257)](https://github.com/prowler-cloud/prowler/pull/8257)
+>>>>>>> bf0013dae (fix(aws): make `is_service_role` more restrictive to avoid false positives (#8274))
 
 ---
 
