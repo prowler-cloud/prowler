@@ -783,14 +783,14 @@ class UserViewSet(BaseUserViewset):
         try:
             return super().destroy(request, *args, **kwargs)
         except Exception as e:
-            print("Exception caught in destroy():", e) 
+            print("Exception caught in destroy():", e)
 
             raise ValidationError(
                 [
                     {
                         "detail": "Failed to delete the user",
                         "status": "400",
-                        "code": "delete_failed"
+                        "code": "delete_failed",
                     }
                 ]
             )
