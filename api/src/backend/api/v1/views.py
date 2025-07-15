@@ -769,18 +769,13 @@ class UserViewSet(BaseUserViewset):
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
 
-        user_roles = get_role(self.request.user)
-
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
-            else User.objects.all()  # is this needed?
+            else User.objects.all()
         )
 
-        if user_roles.manage_account:
-            return queryset.prefetch_related("memberships", "roles")
-        else:
-            return queryset
+        return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
         if self.action == "create":
@@ -796,6 +791,11 @@ class UserViewSet(BaseUserViewset):
             return UserUpdateSerializer
         else:
             return UserSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["role"] = get_role(self.request.user)
+        return context
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):

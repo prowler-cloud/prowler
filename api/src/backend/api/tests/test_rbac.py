@@ -151,6 +151,14 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
 
+    # TODO
+    # User with manage_account and not manage_users can't see other users
+    # User with manage_users can see all users without memberships and roles
+    # User with manage_users and manage_account can see all users with memberships and roles
+    # User with manage_account can create roles
+    # User with manage_account can link user with roles
+    # User with manage_users can't link user with roles
+
 
 @pytest.mark.django_db
 class TestProviderViewSet:

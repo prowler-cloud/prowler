@@ -278,8 +278,18 @@ class UserSerializer(BaseSerializerV1):
         }
 
     included_serializers = {
-        "roles": "api.v1.serializers.RoleSerializer",
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
     }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        role = self.context.get("role")
+
+        if not role.manage_account:
+            representation["memberships"] = []
+            representation["roles"] = []
+
+        return representation
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -1690,6 +1700,37 @@ class RoleUpdateSerializer(RoleSerializer):
             UserRoleRelationship.objects.bulk_create(through_model_instances)
 
         return super().update(instance, validated_data)
+
+
+class RoleIncludeSerializer(RLSSerializer):
+    permission_state = serializers.SerializerMethodField()
+
+    def get_permission_state(self, obj) -> str:
+        return obj.permission_state
+
+    class Meta:
+        model = Role
+        fields = [
+            "id",
+            "name",
+            "manage_users",
+            "manage_account",
+            # Disable for the first release
+            # "manage_billing",
+            # /Disable for the first release
+            "manage_integrations",
+            "manage_providers",
+            "manage_scans",
+            "permission_state",
+            "unlimited_visibility",
+            "inserted_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
 
 
 class ProviderGroupResourceIdentifierSerializer(serializers.Serializer):
