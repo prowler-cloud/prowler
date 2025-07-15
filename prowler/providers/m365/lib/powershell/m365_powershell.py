@@ -869,6 +869,20 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
 
+    def set_audit_log_config(self):
+        """
+        Set Purview Admin Audit Log Settings.
+
+        Sets the audit log configuration settings for Microsoft Purview.
+
+        Args:
+            enabled (bool): Whether to enable or disable the audit log.
+
+        """
+        return self.execute(
+            "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true"
+        )
+
     def get_sharing_policy(self) -> dict:
         """
         Get Exchange Online Sharing Policy.

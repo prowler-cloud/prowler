@@ -28,10 +28,12 @@ class Test_kms_cmk_not_deleted_unintentionally_fixer:
             ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally_fixer import (
-                fixer,
+                KmsCmkNotDeletedUnintentionallyFixer,
             )
 
-            assert fixer(key["KeyId"], AWS_REGION_US_EAST_1)
+            assert KmsCmkNotDeletedUnintentionallyFixer().fix(
+                region=AWS_REGION_US_EAST_1, resource_id=key["KeyId"]
+            )
 
     @mock_aws
     def test_kms_cmk_enabled(self):
@@ -54,10 +56,12 @@ class Test_kms_cmk_not_deleted_unintentionally_fixer:
             ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally_fixer import (
-                fixer,
+                KmsCmkNotDeletedUnintentionallyFixer,
             )
 
-            assert fixer(key["KeyId"], AWS_REGION_US_EAST_1)
+            assert KmsCmkNotDeletedUnintentionallyFixer().fix(
+                region=AWS_REGION_US_EAST_1, resource_id=key["KeyId"]
+            )
 
     @mock_aws
     def test_kms_cmk_deleted_unintentionally_error(self):
@@ -80,7 +84,9 @@ class Test_kms_cmk_not_deleted_unintentionally_fixer:
             ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally_fixer import (
-                fixer,
+                KmsCmkNotDeletedUnintentionallyFixer,
             )
 
-            assert not fixer("KeyIdNonExisting", AWS_REGION_US_EAST_1)
+            assert not KmsCmkNotDeletedUnintentionallyFixer().fix(
+                region=AWS_REGION_US_EAST_1, resource_id="KeyIdNonExisting"
+            )

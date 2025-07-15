@@ -159,14 +159,6 @@ def init_parser(self):
         help="Scan unused services",
     )
 
-    # Prowler Fixer
-    prowler_fixer_subparser = aws_parser.add_argument_group("Prowler Fixer")
-    prowler_fixer_subparser.add_argument(
-        "--fixer",
-        action="store_true",
-        help="Fix the failed findings that can be fixed by Prowler",
-    )
-
 
 def validate_session_duration(session_duration: int) -> int:
     """validate_session_duration validates that the input session_duration is valid"""

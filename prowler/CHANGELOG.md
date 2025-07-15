@@ -90,6 +90,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Removed
 - OCSF version number references to point always to the latest [(#8064)](https://github.com/prowler-cloud/prowler/pull/8064)
 
+### Fixed
+- Update SDK Azure call for ftps_state in the App Service. [(#7923)](https://github.com/prowler-cloud/prowler/pull/7923)
+
 ---
 
 ## [v5.7.5] (Prowler 5.7.5)
