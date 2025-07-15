@@ -11,12 +11,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_linux_enforce_ssh_authentication` check for Azure provider [(#8149)](https://github.com/prowler-cloud/prowler/pull/8149)
 - `vm_ensure_using_approved_images` check for Azure provider [(#8168)](https://github.com/prowler-cloud/prowler/pull/8168)
 - `vm_scaleset_associated_load_balancer` check for Azure provider [(#8181)](https://github.com/prowler-cloud/prowler/pull/8181)
+- Add `test_connection` method to GitHub provider [(#8248)](https://github.com/prowler-cloud/prowler/pull/8248)
 
 ### Changed
 
 ### Fixed
 - Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
+- Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
 
 ---
 
