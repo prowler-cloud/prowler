@@ -7,11 +7,13 @@ import pytest
 from tasks.jobs.scan import (
     _create_finding_delta,
     _store_resources,
+    _update_resource_failed_findings_count,
     create_compliance_requirements,
     perform_prowler_scan,
 )
 from tasks.utils import CustomEncoder
 
+from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
@@ -158,6 +160,7 @@ class TestPerformScan:
         assert scan_finding.raw_result == finding.raw
         assert scan_finding.muted
         assert scan_finding.compliance == finding.compliance
+        assert scan_finding.muted_reason == "Muted by mutelist"
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
@@ -203,7 +206,7 @@ class TestPerformScan:
         provider_id = str(provider.id)
         checks_to_execute = ["check1", "check2"]
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ProviderConnectionError):
             perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
 
         scan.refresh_from_db()
@@ -399,9 +402,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -427,9 +428,7 @@ class TestCreateComplianceRequirements:
                 "us-east-1",
                 "us-west-2",
             ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -512,9 +511,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -557,9 +554,7 @@ class TestCreateComplianceRequirements:
                 "us-east-1",
                 "us-west-2",
             ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -607,9 +602,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -641,9 +634,7 @@ class TestCreateComplianceRequirements:
             mock_prowler_provider_instance.get_regions.side_effect = AttributeError(
                 "No get_regions method"
             )
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "kubernetes_cis": {
@@ -676,9 +667,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -704,9 +693,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -743,9 +730,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
@@ -759,7 +744,7 @@ class TestCreateComplianceRequirements:
             tenant_id = str(tenant.id)
             scan_id = str(scan.id)
 
-            mock_initialize_prowler_provider.side_effect = Exception(
+            mock_prowler_provider.side_effect = Exception(
                 "Provider initialization failed"
             )
 
@@ -774,9 +759,7 @@ class TestCreateComplianceRequirements:
     ):
         with (
             patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -800,9 +783,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {}
 
@@ -821,8 +802,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -862,9 +843,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider_instance = MagicMock()
             mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            mock_return_prowler_provider.return_value = mock_prowler_provider_instance
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -898,8 +877,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -911,7 +890,6 @@ class TestCreateComplianceRequirements:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            providers_fixture[0]
 
             mock_findings_filter.return_value = []
 
@@ -921,7 +899,7 @@ class TestCreateComplianceRequirements:
                 "us-west-2",
                 "eu-west-1",
             ]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -990,8 +968,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -1009,7 +987,7 @@ class TestCreateComplianceRequirements:
 
             mock_prowler_provider = MagicMock()
             mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -1077,8 +1055,8 @@ class TestCreateComplianceRequirements:
         with (
             patch("api.db_utils.rls_transaction"),
             patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
+                "tasks.jobs.scan.return_prowler_provider"
+            ) as mock_return_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
@@ -1090,13 +1068,12 @@ class TestCreateComplianceRequirements:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            providers_fixture[0]
 
             mock_findings_filter.return_value = []
 
             mock_prowler_provider = MagicMock()
             mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            mock_return_prowler_provider.return_value = mock_prowler_provider
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -1190,3 +1167,85 @@ class TestCreateComplianceRequirements:
             assert len(req_2_objects) == 2
             assert all(obj.requirement_status == "PASS" for obj in req_1_objects)
             assert all(obj.requirement_status == "FAIL" for obj in req_2_objects)
+
+
+@pytest.mark.django_db
+class TestUpdateResourceFailedFindingsCount:
+    @patch("api.models.Resource.all_objects.filter")
+    @patch("api.models.Finding.all_objects.filter")
+    def test_failed_findings_count_update(
+        self,
+        mock_finding_filter,
+        mock_resource_filter,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        scan.provider = provider
+        scan.save()
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        resource1 = MagicMock()
+        resource1.uid = "res-1"
+        resource1.failed_findings_count = None
+        resource1.save = MagicMock()
+
+        resource2 = MagicMock()
+        resource2.uid = "res-2"
+        resource2.failed_findings_count = None
+        resource2.save = MagicMock()
+
+        mock_resource_filter.return_value = [resource1, resource2]
+
+        fake_subquery_qs = MagicMock()
+        fake_subquery_qs.order_by.return_value = fake_subquery_qs
+        fake_subquery_qs.values.return_value = fake_subquery_qs
+        fake_subquery_qs.__getitem__.return_value = fake_subquery_qs
+
+        def finding_filter_side_effect(*args, **kwargs):
+            if "status" in kwargs:
+                qs_count = MagicMock()
+                if kwargs.get("resources") == resource1:
+                    qs_count.count.return_value = 3
+                else:
+                    qs_count.count.return_value = 0
+                return qs_count
+            return fake_subquery_qs
+
+        mock_finding_filter.side_effect = finding_filter_side_effect
+
+        _update_resource_failed_findings_count(tenant_id, scan_id)
+
+        # resource1 should have been updated to 3
+        assert resource1.failed_findings_count == 3
+        resource1.save.assert_called_once_with(update_fields=["failed_findings_count"])
+
+        # resource2 should have been updated to 0
+        assert resource2.failed_findings_count == 0
+        resource2.save.assert_called_once_with(update_fields=["failed_findings_count"])
+
+    @patch("api.models.Resource.all_objects.filter", return_value=[])
+    @patch("api.models.Finding.all_objects.filter")
+    def test_no_resources_no_error(
+        self,
+        mock_finding_filter,
+        mock_resource_filter,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        _update_resource_failed_findings_count(str(tenant.id), str(scan.id))
+
+        mock_finding_filter.assert_not_called()

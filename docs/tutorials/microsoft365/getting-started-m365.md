@@ -30,7 +30,7 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Custom Domain Names](./img/custom-domain-names.png)
 
-Once you are there just select the domain you want to use.
+Once you are there just select the domain you want to use as unique identifier for your M365 account in Prowler Cloud/App.
 
 ---
 
@@ -92,7 +92,7 @@ With this done you will have all the needed keys, summarized in the following ta
 
 ---
 
-### Grant required API permissions
+### Grant required Graph API permissions
 
 Assign the following Microsoft Graph permissions:
 
@@ -100,7 +100,7 @@ Assign the following Microsoft Graph permissions:
 - `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in.
+- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in only if using user authentication.
 
 ???+ note
     You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
@@ -128,18 +128,83 @@ Follow these steps to assign the permissions:
 
     ![Application Permissions](./img/app-permissions.png)
 
+---
 
-4. Click `+ Add a permission` > `Microsoft Graph` > `Delegated permissions`
 
-    ![Add API Permission](./img/add-delegated-api-permission.png)
+### Grant PowerShell modules permissions
 
-5. Search and select:
+The permissions you need to grant depends on whether you are using user credentials or service principal to authenticate to the M365 modules.
+
+???+ warning "Warning"
+    Make sure you add the correct set of permissions for the authentication method you are using.
+
+
+#### If using application(service principal) authentication (Recommended)
+
+To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
+
+???+ warning "Warning"
+    You need to have a license that allows you to use the APIs.
+
+1. Add Exchange API:
+
+    - Search and select`Office 365 Exchange Online` API in **APIs my organization uses**.
+
+    ![Office 365 Exchange Online API](./img/search-exchange-api.png)
+
+    - Select `Exchange.ManageAsApp` permission and click on `Add permissions`.
+
+    ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
+
+    You also need to assign the `Exchange Administrator` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
+
+    ![Roles and administrators](./img/here.png)
+
+    Once in the directory level assignment, search for `Exchange Administrator` and click on it to open the assginments page of that role.
+
+    ![Exchange Administrator Role](./img/exchange-administrator-role.png)
+
+    Click on `Add assignments`, search for your app and click on `Assign`.
+
+    You have to select it as `Active` and click on `Assign` to assign the role to the app.
+
+    ![Assign Exchange Administrator Role](./img/assign-exchange-administrator-role.png)
+
+2. Add Teams API:
+
+    - Search and select `Skype and Teams Tenant Admin API` API in **APIs my organization uses**.
+
+    ![Skype and Teams Tenant Admin API](./img/search-skype-teams-tenant-admin-api.png)
+
+    - Select `application_access` permission and click on `Add permissions`.
+
+    ![application_access Permission](./img/teams-permission.png)
+
+3. Click on `Grant admin consent for <your-tenant-name>` to grant admin consent.
+
+    ![Grant Admin Consent](./img/grant-external-api-permissions.png)
+
+    The final result of permission assignment should be this:
+
+    ![Final Permission Assignment](./img/final-permissions.png)
+
+---
+
+#### If using user authentication
+
+This method is not recommended because it requires a user with MFA enabled and Microsoft will not allow MFA capable users to authenticate programmatically after 1st September 2025. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mandatory-multifactor-authentication?tabs=dotnet) for more information.
+
+???+ warning
+    Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
+
+
+1. Search and select:
 
     - `User.Read`
 
     ![Permission Screenshots](./img/directory-permission-delegated.png)
 
-6. After adding all the permissions, click on `Grant admin consent`
+2. Click `Add permissions`, then **grant admin consent**
 
     ![Grant Admin Consent](./img/grant-admin-consent.png)
 
@@ -147,37 +212,32 @@ Follow these steps to assign the permissions:
 
     ![Final Permission Assignment](./img/final-permissions-m365.png)
 
----
+3. Assign **required roles** to your **user**
 
-### Assign required roles to your user
+    Assign one of the following roles to your User:
 
-Assign one of the following roles to your User:
+    - `Global Reader` (recommended): this allows you to read all roles needed.
+    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
 
-- `Global Reader` (recommended): this allows you to read all roles needed.
-- `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
+    Follow these steps to assign the role:
 
-Follow these steps to assign the role:
+    1. Go to Users > All Users > Click on the email for the user you will use
 
-1. Go to Users > All Users > Click on the email for the user you will use
+        ![User Overview](./img/user-info-page.png)
 
-    ![User Overview](./img/user-info-page.png)
+    2. Click `Assigned Roles`
 
-2. Click `Assigned Roles`
+        ![User Roles](./img/user-role-page.png)
 
-    ![User Roles](./img/user-role-page.png)
+    3. Click on `Add assignments`, then search and select:
 
-3. Click on `Add assignments`, then search and select:
+        - `Global Reader` This is the recommended, if you want to use the others just search for them
 
-    - `Global Reader` This is the recommended, if you want to use the others just search for them
+        ![Global Reader Screenshots](./img/global-reader.png)
 
-    ![Global Reader Screenshots](./img/global-reader.png)
+    4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
 
-4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
-
-    ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
-
-???+ warning
-    Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
+        ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
 
 ---
 
@@ -193,6 +253,8 @@ Follow these steps to assign the role:
     - `Client ID`
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
+
+    If you are using user authentication, also add:
     - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
     - `M365_PASSWORD` the password of the user
 
