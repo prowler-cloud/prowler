@@ -24,6 +24,8 @@ class AWSISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class AzureISO27001Model(BaseModel):
@@ -49,6 +51,8 @@ class AzureISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class GCPISO27001Model(BaseModel):
@@ -74,6 +78,8 @@ class GCPISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class KubernetesISO27001Model(BaseModel):
@@ -99,6 +105,8 @@ class KubernetesISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class NHNISO27001Model(BaseModel):
@@ -124,6 +132,8 @@ class NHNISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str
 
 
 class M365ISO27001Model(BaseModel):
@@ -149,3 +159,5 @@ class M365ISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

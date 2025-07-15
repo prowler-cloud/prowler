@@ -1790,6 +1790,7 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
+    compliance_name = serializers.CharField()
     framework_description = serializers.CharField()
     name = serializers.CharField()
     framework = serializers.CharField()

@@ -1,5 +1,6 @@
 {
   "Framework": "SOC2",
+  "Name": "System and Organization Controls 2 (SOC2)",
   "Version": "",
   "Provider": "Azure",
   "Description": "System and Organization Controls (SOC), defined by the American Institute of Certified Public Accountants (AICPA), is the name of a set of reports that's produced during an audit. It's intended for use by service organizations (organizations that provide information systems as a service to other organizations) to issue validated reports of internal controls over those information systems to the users of those services. The reports focus on controls grouped into five categories known as Trust Service Principles.",

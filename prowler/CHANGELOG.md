@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_scaleset_associated_load_balancer` check for Azure provider [(#8181)](https://github.com/prowler-cloud/prowler/pull/8181)
 - Support for remote repository scanning in IaC provider [(#8193)](https://github.com/prowler-cloud/prowler/pull/8193)
 - Add `test_connection` method to GitHub provider [(#8248)](https://github.com/prowler-cloud/prowler/pull/8248)
+- Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 
 ### Changed
 - Refactor the Azure Defender get security contact configuration method to use the API REST endpoint instead of the SDK [(#8241)](https://github.com/prowler-cloud/prowler/pull/8241)
