@@ -48,7 +48,7 @@ class TestScheduleProviderScan:
         with patch("tasks.tasks.perform_scheduled_scan_task.apply_async"):
             schedule_provider_scan(provider_instance)
 
-        # Now, try scheduling again, should raise ValidationError
+        # Now, try scheduling again, should raise ConflictException
         with pytest.raises(ConflictException) as exc_info:
             schedule_provider_scan(provider_instance)
 
