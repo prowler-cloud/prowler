@@ -1,4 +1,5 @@
-from unittest.mock import patch
+import json
+from unittest.mock import MagicMock, patch
 
 from prowler.lib.check.models import (
     Check_Report_GCP,
@@ -35,8 +36,13 @@ def get_mock_gcp_finding():
         Notes="",
         Compliance=[],
     )
+    resource = MagicMock()
+    resource.name = "resource_name"
+    resource.id = "resource_id"
+    resource.location = "location"
     return Check_Report_GCP(
-        metadata.dict(),
+        json.dumps(metadata.dict()),
+        resource,
         project_id="project_id",
         resource_id="resource_id",
         resource_name="resource_name",
