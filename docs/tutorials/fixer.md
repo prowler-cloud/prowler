@@ -1,152 +1,227 @@
-# Prowler Fixer (remediation)
-Prowler allows you to fix some of the failed findings it identifies. You can use the `--fixer` flag to run the fixes that are available for the checks that failed.
+# Prowler Fixers (remediations)
 
-```sh
-prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
-```
+Prowler supports automated remediation ("fixers") for certain findings. This system is extensible and provider-agnostic, allowing you to implement fixers for AWS, Azure, GCP, and M365 using a unified interface.
 
-<img src="../img/fixer.png">
+---
+
+## Overview
+
+- **Fixers** are Python classes that encapsulate the logic to remediate a failed check.
+- Each provider has its own base fixer class, inheriting from a common abstract base (`Fixer`).
+- Fixers are automatically discovered and invoked by Prowler when the `--fixer` flag is used.
 
 ???+ note
-    You can see all the available fixes for each provider with the `--list-remediations` or `--list-fixers flag.
+    Right now, fixers are only available through the CLI.
 
-    ```sh
-    prowler <provider> --list-fixers
-    ```
-It's important to note that using the fixers for `Access Analyzer`, `GuardDuty`, and `SecurityHub` may incur additional costs. These AWS services might trigger actions or deploy resources that can lead to charges on your AWS account.
-## Writing a Fixer
-To write a fixer, you need to create a file called `<check_id>_fixer.py` inside the check folder, with a function called `fixer` that receives either the region or the resource to be fixed as a parameter, and returns a boolean value indicating if the fix was successful or not.
+---
 
-For example, the regional fixer for the `ec2_ebs_default_encryption` check, which enables EBS encryption by default in a region, would look like this:
-```python
-from prowler.lib.logger import logger
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+## How to Use Fixers
 
+To run fixers for failed findings:
 
-def fixer(region):
-    """
-    Enable EBS encryption by default in a region. NOTE: Custom KMS keys for EBS Default Encryption may be overwritten.
-    Requires the ec2:EnableEbsEncryptionByDefault permission:
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "ec2:EnableEbsEncryptionByDefault",
-                "Resource": "*"
-            }
-        ]
-    }
-    Args:
-        region (str): AWS region
-    Returns:
-        bool: True if EBS encryption by default is enabled, False otherwise
-    """
-    try:
-        regional_client = ec2_client.regional_clients[region]
-        return regional_client.enable_ebs_encryption_by_default()[
-            "EbsEncryptionByDefault"
-        ]
-    except Exception as error:
-        logger.error(
-            f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-        return False
+```sh
+prowler <provider> -c <check_id_1> <check_id_2> ... --fixer
 ```
-On the other hand, the fixer for the `s3_account_level_public_access_blocks` check, which enables the account-level public access blocks for S3, would look like this:
+
+<img src="../img/fixer-info.png">
+
+<img src="../img/fixer-no-needed.png">
+
+To list all available fixers for a provider:
+
+```sh
+prowler <provider> --list-fixers
+```
+
+> **Note:** Some fixers may incur additional costs (e.g., enabling certain cloud services like `Access Analyzer`, `GuardDuty`, and `SecurityHub` in AWS).
+
+---
+
+## Fixer Class Structure
+
+### Base Class
+
+All fixers inherit from the abstract `Fixer` class (`prowler/lib/fix/fixer.py`). This class defines the required interface and common logic.
+
+**Key methods and properties:**
+- `__init__(description, cost_impact=False, cost_description=None)`: Sets metadata for the fixer.
+- `_get_fixer_info()`: Returns a dictionary with fixer metadata.
+- `fix(finding=None, **kwargs)`: Abstract method. Must be implemented by each fixer to perform the remediation.
+- `get_fixer_for_finding(finding)`: Factory method to dynamically load the correct fixer for a finding.
+- `run_fixer(findings)`: Runs the fixer(s) for one or more findings.
+
+### Provider-Specific Base Classes
+
+Each provider extends the base class to add provider-specific logic and metadata:
+
+- **AWS:** `AWSFixer` (`prowler/providers/aws/lib/fix/fixer.py`)
+- **Azure:** `AzureFixer` (`prowler/providers/azure/lib/fix/fixer.py`)
+- **GCP:** `GCPFixer` (`prowler/providers/gcp/lib/fix/fixer.py`)
+- **M365:** `M365Fixer` (`prowler/providers/m365/lib/fix/fixer.py`)
+
+These classes may add fields such as required permissions, IAM policies, or provider-specific client handling.
+
+---
+
+## Writing a Fixer
+
+### 1. **Location and Naming**
+
+- Place your fixer in the check’s directory, named `<check_id>_fixer.py`.
+- The fixer class should be named in PascalCase, matching the check ID, ending with `Fixer`.
+  Example: For `ec2_ebs_default_encryption`, use `Ec2EbsDefaultEncryptionFixer`.
+
+### 2. **Class Definition**
+
+- Inherit from the provider’s base fixer class.
+- Implement the `fix()` method. This method receives a finding and/or keyword arguments and must return `True` if the remediation was successful, `False` otherwise.
+
+**Example (AWS):**
 ```python
-from prowler.lib.logger import logger
-from prowler.providers.aws.services.s3.s3control_client import s3control_client
+from prowler.providers.aws.lib.fix.fixer import AWSFixer
 
-
-def fixer(resource_id: str) -> bool:
-    """
-    Enable S3 Block Public Access for the account. NOTE: By blocking all S3 public access you may break public S3 buckets.
-    Requires the s3:PutAccountPublicAccessBlock permission:
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "s3:PutAccountPublicAccessBlock",
+class Ec2EbsDefaultEncryptionFixer(AWSFixer):
+    def __init__(self):
+        super().__init__(
+            description="Enable EBS encryption by default in a region.",
+            service="ec2",
+            iam_policy_required={
+                "Action": ["ec2:EnableEbsEncryptionByDefault"],
                 "Resource": "*"
             }
-        ]
-    }
-    Returns:
-        bool: True if S3 Block Public Access is enabled, False otherwise
-    """
-    try:
-        s3control_client.client.put_public_access_block(
-            AccountId=resource_id,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": True,
-                "IgnorePublicAcls": True,
-                "BlockPublicPolicy": True,
-                "RestrictPublicBuckets": True,
-            },
         )
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-        return False
-    else:
+
+    def fix(self, finding=None, **kwargs):
+        # Remediation logic here
         return True
 ```
 
-## Fixer Config file
-For some fixers, you can have configurable parameters depending on your use case. You can either use the default config file in `prowler/config/fixer_config.yaml` or create a custom config file and pass it to the fixer with the `--fixer-config` flag. The config file should be a YAML file with the following structure:
-```yaml
-# Fixer configuration file
-aws:
-  # ec2_ebs_default_encryption
-  # No configuration needed for this check
+**Example (Azure):**
+```python
+from prowler.providers.azure.lib.fix.fixer import AzureFixer
 
-  # s3_account_level_public_access_blocks
-  # No configuration needed for this check
+class AppFunctionFtpsDeploymentDisabledFixer(AzureFixer):
+    def __init__(self):
+        super().__init__(
+            description="Disable FTP/FTPS deployments for Azure Functions.",
+            service="app",
+            permissions_required={
+                "actions": [
+                    "Microsoft.Web/sites/write",
+                    "Microsoft.Web/sites/config/write"
+                ]
+            }
+        )
 
-  # iam_password_policy_* checks:
-  iam_password_policy:
-      MinimumPasswordLength: 14
-      RequireSymbols: True
-      RequireNumbers: True
-      RequireUppercaseCharacters: True
-      RequireLowercaseCharacters: True
-      AllowUsersToChangePassword: True
-      MaxPasswordAge: 90
-      PasswordReusePrevention: 24
-      HardExpiry: False
-
-  # accessanalyzer_enabled
-  accessanalyzer_enabled:
-    AnalyzerName: "DefaultAnalyzer"
-    AnalyzerType: "ACCOUNT_UNUSED_ACCESS"
-
-  # guardduty_is_enabled
-  # No configuration needed for this check
-
-  # securityhub_enabled
-  securityhub_enabled:
-    EnableDefaultStandards: True
-
-  # cloudtrail_multi_region_enabled
-  cloudtrail_multi_region_enabled:
-    TrailName: "DefaultTrail"
-    S3BucketName: "my-cloudtrail-bucket"
-    IsMultiRegionTrail: True
-    EnableLogFileValidation: True
-    # CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789012:log-group:my-cloudtrail-log-group"
-    # CloudWatchLogsRoleArn: "arn:aws:iam::123456789012:role/my-cloudtrail-role"
-    # KmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
-
-  # kms_cmk_rotation_enabled
-  # No configuration needed for this check
-
-  # ec2_ebs_snapshot_account_block_public_access
-  ec2_ebs_snapshot_account_block_public_access:
-    State: "block-all-sharing"
-
-  # ec2_instance_account_imdsv2_enabled
-  # No configuration needed for this check
+    def fix(self, finding=None, **kwargs):
+        # Remediation logic here
+        return True
 ```
+
+**Example (GCP):**
+```python
+from prowler.providers.gcp.lib.fix.fixer import GCPFixer
+
+class ComputeInstancePublicIPFixer(GCPFixer):
+    def __init__(self):
+        super().__init__(
+            description="Remove public IP from Compute Engine instance.",
+            service="compute",
+            iam_policy_required={
+                "roles": ["roles/compute.instanceAdmin.v1"]
+            }
+        )
+
+    def fix(self, finding=None, **kwargs):
+        # Remediation logic here
+        return True
+```
+
+**Example (M365):**
+```python
+from prowler.providers.m365.lib.fix.fixer import M365Fixer
+
+class AppFunctionFtpsDeploymentDisabledFixer(M365Fixer):
+    def __init__(self):
+        super().__init__(
+            description="Disable FTP/FTPS deployments for Azure Functions.",
+            service="app",
+            permissions_required={
+                "actions": [
+                    "Microsoft.Web/sites/write",
+                    "Microsoft.Web/sites/config/write"
+                ]
+            }
+        )
+
+    def fix(self, finding=None, **kwargs):
+        # Remediation logic here
+        return True
+```
+---
+
+## Fixer info
+
+Each fixer should provide:
+
+- **description:** What the fixer does.
+- **cost_impact:** Whether the remediation may incur costs.
+- **cost_description:** Details about potential costs (if any).
+
+For some providers, there will be additional information that needs to be added to the fixer info, like:
+
+- **service:** The cloud service affected.
+- **permissions/IAM policy required:** The minimum permissions needed for the fixer to work.
+
+In order to get the fixer info, you can use the flag `--fixer-info`. And it will print the fixer info in a pretty format.
+
+---
+
+## Fixer Config File
+
+Some fixers support configurable parameters.
+You can use the default config file at `prowler/config/fixer_config.yaml` or provide your own with `--fixer-config`.
+
+**Example YAML:**
+```yaml
+aws:
+  ec2_ebs_default_encryption: {}
+  iam_password_policy:
+    MinimumPasswordLength: 14
+    RequireSymbols: True
+    # ...
+azure:
+  app_function_ftps_deployment_disabled:
+    ftps_state: "Disabled"
+```
+
+---
+
+## Best Practices
+
+- Always document the permissions required for your fixer.
+- Handle exceptions gracefully and log errors.
+- Return `True` only if the remediation was actually successful.
+- Use the provider’s client libraries and follow their best practices for API calls.
+
+---
+
+## Troubleshooting
+
+- If a fixer is not available for a check, Prowler will print a warning.
+- If a fixer fails due to missing permissions, check the required IAM roles or permissions and update your execution identity accordingly.
+- Use the `--list-fixers` flag to see all available fixers for your provider.
+
+---
+
+## Extending to New Providers
+
+To add support for a new provider:
+
+1. Implement a new base fixer class inheriting from `Fixer`.
+2. Place it in the appropriate provider directory.
+3. Follow the same structure for check-specific fixers.
+
+---
+
+**For more details, see the code in `prowler/lib/fix/fixer.py` and the provider-specific fixer base classes.**
