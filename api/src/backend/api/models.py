@@ -203,9 +203,7 @@ class APIKey(RowLevelSecurityProtectedModel):
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "api_keys"
         indexes = [
-            models.Index(fields=["prefix"], name="api_keys_prefix_idx"),
-            models.Index(fields=["tenant_id", "revoked_at"], name="api_keys_tenant_active_idx"),
-            models.Index(fields=["created_by", "revoked_at"], name="api_keys_user_active_idx"),
+            models.Index(fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"),
         ]
         constraints = [
             RowLevelSecurityConstraint(
