@@ -780,7 +780,21 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except Exception as e:
+            print("Exception caught in destroy():", e) 
+
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Failed to delete the user",
+                        "status": "400",
+                        "code": "delete_failed"
+
+                    }
+                ]
+            )
 
     @extend_schema(
         parameters=[
