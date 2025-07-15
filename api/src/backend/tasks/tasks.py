@@ -1,9 +1,8 @@
-import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
-from celery import chain, current_task, shared_task
+from celery import chain, shared_task
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
@@ -34,9 +33,6 @@ from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
-from util.compliance_report.threatscore_report_generator import (
-    generate_threatscore_report,
-)
 
 logger = get_task_logger(__name__)
 
@@ -424,49 +420,3 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
-
-
-@shared_task(
-    base=RLSTask,
-    name="scan-threatscore-report",
-    queue="scan-reports",
-)
-@set_tenant(keep_tenant=True)
-def generate_threatscore_report_task(
-    scan_id: str,
-    compliance_id: str,
-    output_path: str,
-    provider_id: str,
-    tenant_id: str,
-    only_failed: bool = True,
-    min_risk_level: int = 4,
-):
-    generate_threatscore_report(
-        scan_id=scan_id,
-        compliance_id=compliance_id,
-        output_path=output_path,
-        provider_id=provider_id,
-        tenant_id=tenant_id,
-        only_failed=only_failed,
-        min_risk_level=min_risk_level,
-    )
-
-    s3_uri = None
-    if os.path.exists(output_path):
-        try:
-            s3_uri = _upload_to_s3(tenant_id, output_path, scan_id)
-        except Exception as e:
-            logger.error(f"Error uploading PDF to S3: {e}")
-
-    from api.models import Task
-
-    task_id = current_task.request.id if hasattr(current_task, "request") else None
-    if task_id:
-        try:
-            task = Task.objects.get(id=task_id)
-            result_path = s3_uri if s3_uri else output_path
-            task.result = result_path
-            task.save(update_fields=["result"])
-        except Exception as e:
-            logger.error(f"Error saving PDF location to Task: {e}")
-    return {"pdf_location": s3_uri if s3_uri else output_path}
