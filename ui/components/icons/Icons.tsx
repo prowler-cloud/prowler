@@ -1117,3 +1117,49 @@ export const KubernetesIcon: React.FC<IconSvgProps> = ({
     </svg>
   );
 };
+
+export const LighthouseIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 200 200"
+      width={size || width}
+      height={size || height}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="12"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* Square container with rounded corners, broken top-right edge */}
+      <path
+        d="M30 50 Q30 30 50 30 H140
+               M30 50 V150 Q30 170 50 170 H150 Q170 170 170 150 V100"
+      />
+
+      {/* Slightly smaller center star */}
+      <path
+        d="M100 60
+               L114 89 L140 100
+               L114 111 L100 140
+               L86 111 L60 100
+               L86 89 Z"
+      />
+
+      {/* Small star in top-right corner */}
+      <path
+        d="M160 35
+               L168 50 L182 58
+               L168 66 L160 80
+               L152 66 L138 58
+               L152 50 Z"
+      />
+    </svg>
+  );
+};

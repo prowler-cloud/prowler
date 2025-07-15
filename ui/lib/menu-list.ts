@@ -3,7 +3,6 @@
 import {
   AlertCircle,
   Bookmark,
-  Bot,
   CloudCog,
   Cog,
   Group,
@@ -28,6 +27,7 @@ import {
   DocIcon,
   GCPIcon,
   KubernetesIcon,
+  LighthouseIcon,
   M365Icon,
   SupportIcon,
 } from "@/components/icons/Icons";
@@ -162,7 +162,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         {
           href: "/lighthouse",
           label: "Lighthouse AI",
-          icon: Bot,
+          icon: LighthouseIcon,
         },
       ],
     },
