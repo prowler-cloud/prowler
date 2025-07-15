@@ -5,10 +5,17 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.10.0] (Prowler UNRELEASED)
 
 ### Added
-
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
+- `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+
+### Changed
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
+- Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+- Optimized include parameters for resources view [(#8229)](https://github.com/prowler-cloud/prowler/pull/8229)
+
+### Fixed
+- Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
 ### Security
 

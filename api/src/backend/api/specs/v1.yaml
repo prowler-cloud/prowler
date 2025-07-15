@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.9.0
+  version: 1.10.0
   description: |-
     Prowler API specification.
 
@@ -4711,6 +4711,7 @@ paths:
             - tags
             - provider
             - findings
+            - failed_findings_count
             - url
             - type
         description: endpoint return only specific fields in the response on a per-type
@@ -4847,6 +4848,21 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query
@@ -4916,6 +4932,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[updated_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -5011,6 +5030,7 @@ paths:
             - tags
             - provider
             - findings
+            - failed_findings_count
             - url
             - type
         description: endpoint return only specific fields in the response on a per-type
@@ -5045,6 +5065,774 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ResourceResponse'
+          description: ''
+  /api/v1/resources/latest:
+    get:
+      operationId: resources_latest_retrieve
+      description: Retrieve a list of the latest resources from the latest scans for
+        each provider with options for filtering by various criteria.
+      summary: List the latest resources
+      parameters:
+      - in: query
+        name: fields[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - uid
+            - name
+            - region
+            - service
+            - tags
+            - provider
+            - findings
+            - failed_findings_count
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - findings
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+          description: ''
+  /api/v1/resources/metadata:
+    get:
+      operationId: resources_metadata_retrieve
+      description: Fetch unique metadata values from a set of resources. This is useful
+        for dynamic filtering.
+      summary: Retrieve metadata values from resources
+      parameters:
+      - in: query
+        name: fields[resources-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+            - types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+        description: At least one of the variations of the `filter[updated_at]` filter
+          must be provided.
+        required: true
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceMetadataResponse'
+          description: ''
+  /api/v1/resources/metadata/latest:
+    get:
+      operationId: resources_metadata_latest_retrieve
+      description: Fetch unique metadata values from a set of resources from the latest
+        scans for each provider. This is useful for dynamic filtering.
+      summary: Retrieve metadata values from the latest resources
+      parameters:
+      - in: query
+        name: fields[resources-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+            - types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceMetadataResponse'
           description: ''
   /api/v1/roles:
     get:
@@ -12761,6 +13549,9 @@ components:
                 env: prod
                 owner: johndoe
               readOnly: true
+            failed_findings_count:
+              type: integer
+              readOnly: true
             type:
               type: string
               readOnly: true
@@ -12800,33 +13591,72 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - findings
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - findings
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type findings
-              title: findings
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
           required:
           - provider
+    ResourceMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ResourceMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            services:
+              type: array
+              items:
+                type: string
+            regions:
+              type: array
+              items:
+                type: string
+            types:
+              type: array
+              items:
+                type: string
+          required:
+          - services
+          - regions
+          - types
+    ResourceMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceMetadata'
+      required:
+      - data
+    ResourceMetadataTypeEnum:
+      type: string
+      enum:
+      - resources-metadata
     ResourceResponse:
       type: object
       properties:
