@@ -768,12 +768,19 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
+
+        user_roles = get_role(self.request.user)
+
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
-            else User.objects.all()
+            else User.objects.all()  # is this needed?
         )
-        return queryset.prefetch_related("memberships", "roles")
+
+        if user_roles.manage_account:
+            return queryset.prefetch_related("memberships", "roles")
+        else:
+            return queryset
 
     def get_permissions(self):
         if self.action == "create":
@@ -919,7 +926,7 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_USERS]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
