@@ -3,8 +3,11 @@ from unittest.mock import patch
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
-    FileShare,
+    DeleteRetentionPolicy,
+    FileServiceProperties,
+    NetworkRuleSet,
     ReplicationSettings,
+    SMBProtocolSettings,
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -19,33 +22,41 @@ def mock_storage_get_storage_accounts(_):
         name="name",
         type="type",
         default_service_version=None,
-        container_delete_retention_policy=None,
+        container_delete_retention_policy=DeleteRetentionPolicy(enabled=True, days=7),
     )
-    file_shares = [
-        FileShare(id="fs1", name="share1", soft_delete_enabled=True, retention_days=7),
-        FileShare(id="fs2", name="share2", soft_delete_enabled=False, retention_days=0),
-    ]
+    retention_policy = DeleteRetentionPolicy(enabled=True, days=7)
+    file_service_properties = FileServiceProperties(
+        id="id",
+        name="name",
+        type="type",
+        share_delete_retention_policy=retention_policy,
+        smb_protocol_settings=SMBProtocolSettings(
+            channel_encryption=[], supported_versions=[]
+        ),
+    )
     return {
         AZURE_SUBSCRIPTION_ID: [
             Account(
                 id="id",
                 name="name",
-                resouce_group_name=None,
+                resouce_group_name="rg",
                 enable_https_traffic_only=False,
                 infrastructure_encryption=False,
-                allow_blob_public_access=None,
-                network_rule_set=None,
+                allow_blob_public_access=False,
+                network_rule_set=NetworkRuleSet(
+                    bypass="AzureServices", default_action="Allow"
+                ),
                 encryption_type="None",
-                minimum_tls_version=None,
+                minimum_tls_version="TLS1_2",
                 key_expiration_period_in_days=None,
-                private_endpoint_connections=None,
+                private_endpoint_connections=[],
                 location="westeurope",
                 blob_properties=blob_properties,
                 default_to_entra_authorization=True,
                 replication_settings=ReplicationSettings.STANDARD_LRS,
                 allow_cross_tenant_replication=True,
                 allow_shared_key_access=True,
-                file_shares=file_shares,
+                file_service_properties=file_service_properties,
             )
         ]
     }
@@ -73,7 +84,7 @@ class Test_Storage_Service:
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name == "name"
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].resouce_group_name
-            is None
+            == "rg"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].enable_https_traffic_only
@@ -85,10 +96,21 @@ class Test_Storage_Service:
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_blob_public_access
-            is None
+            is False
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set is None
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set
+            is not None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set.bypass
+            == "AzureServices"
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].network_rule_set.default_action
+            == "Allow"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].encryption_type == "None"
@@ -98,7 +120,7 @@ class Test_Storage_Service:
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].minimum_tls_version
-            is None
+            == "TLS1_2"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
@@ -110,7 +132,7 @@ class Test_Storage_Service:
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].private_endpoint_connections
-            is None
+            == []
         )
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
             0
@@ -119,7 +141,9 @@ class Test_Storage_Service:
             name="name",
             type="type",
             default_service_version=None,
-            container_delete_retention_policy=None,
+            container_delete_retention_policy=DeleteRetentionPolicy(
+                enabled=True, days=7
+            ),
         )
         assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
             0
@@ -169,17 +193,35 @@ class Test_Storage_Service:
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].blob_properties.container_delete_retention_policy
-            is None
+            is not None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].blob_properties.container_delete_retention_policy.enabled
+            is True
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].blob_properties.container_delete_retention_policy.days
+            == 7
         )
 
-    def test_get_file_shares_properties(self):
+    def test_get_file_service_properties(self):
         storage = Storage(set_mocked_azure_provider())
         account = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0]
-        assert hasattr(account, "file_shares")
-        assert len(account.file_shares) == 2
-        assert account.file_shares[0].name == "share1"
-        assert account.file_shares[0].soft_delete_enabled is True
-        assert account.file_shares[0].retention_days == 7
-        assert account.file_shares[1].name == "share2"
-        assert account.file_shares[1].soft_delete_enabled is False
-        assert account.file_shares[1].retention_days == 0
+        assert hasattr(account, "file_service_properties")
+        assert (
+            account.file_service_properties.share_delete_retention_policy.enabled
+            is True
+        )
+        assert account.file_service_properties.share_delete_retention_policy.days == 7
+        assert (
+            account.file_service_properties.smb_protocol_settings.channel_encryption
+            == []
+        )
+        assert (
+            account.file_service_properties.smb_protocol_settings.supported_versions
+            == []
+        )
