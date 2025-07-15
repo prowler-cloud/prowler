@@ -23,6 +23,10 @@ To run fixers for failed findings:
 prowler <provider> -c <check_id_1> <check_id_2> ... --fixer
 ```
 
+<img src="../img/fixer-info.png">
+
+<img src="../img/fixer-no-needed.png">
+
 To list all available fixers for a provider:
 
 ```sh
