@@ -42,18 +42,19 @@ jobs:
           BRANCH_NAME="v${MAJOR_VERSION}.${MINOR_VERSION}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "${GITHUB_ENV}"
 
-          # Calculate API version (1.X.X format)
-          API_VERSION="1.${MINOR_VERSION}.${PATCH_VERSION}"
-          echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
-
-          # Calculate UI version (1.X.X format)
+          # Calculate UI version (1.X.X format - matches Prowler minor version)
           UI_VERSION="1.${MINOR_VERSION}.${PATCH_VERSION}"
           echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
 
+          # Calculate API version (1.X.X format - one minor version ahead)
+          API_MINOR_VERSION=$((MINOR_VERSION + 1))
+          API_VERSION="1.${API_MINOR_VERSION}.${PATCH_VERSION}"
+          echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
-          echo "API version: $API_VERSION"
           echo "UI version: $UI_VERSION"
+          echo "API version: $API_VERSION"
           echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
