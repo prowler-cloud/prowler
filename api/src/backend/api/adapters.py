@@ -65,5 +65,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                         role=role,
                         tenant_id=tenant.id,
                     )
+            else:
+                request.session["saml_user_created"] = str(user.id)
 
         return user
