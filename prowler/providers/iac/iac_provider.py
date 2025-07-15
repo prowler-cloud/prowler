@@ -1,7 +1,11 @@
 import json
+import shutil
 import sys
+import tempfile
+from os import environ
 from typing import List
 
+from alive_progress import alive_bar
 from checkov.ansible.runner import Runner as AnsibleRunner
 from checkov.argo_workflows.runner import Runner as ArgoWorkflowsRunner
 from checkov.arm.runner import Runner as ArmRunner
@@ -35,6 +39,7 @@ from checkov.terraform.runner import Runner as TerraformRunner
 from checkov.terraform_json.runner import TerraformJsonRunner
 from checkov.yaml_doc.runner import Runner as YamlDocRunner
 from colorama import Fore, Style
+from dulwich import porcelain
 
 from prowler.config.config import (
     default_config_file_path,
@@ -54,21 +59,56 @@ class IacProvider(Provider):
     def __init__(
         self,
         scan_path: str = ".",
+        scan_repository_url: str = None,
         frameworks: list[str] = ["all"],
         exclude_path: list[str] = [],
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
+        github_username: str = None,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
         self.scan_path = scan_path
+        self.scan_repository_url = scan_repository_url
         self.frameworks = frameworks
         self.exclude_path = exclude_path
         self.region = "global"
         self.audited_account = "local-iac"
         self._session = None
         self._identity = "prowler"
+        self._auth_method = "No auth"
+
+        if scan_repository_url:
+            oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
+            github_username = github_username or environ.get("GITHUB_USERNAME")
+            personal_access_token = personal_access_token or environ.get(
+                "GITHUB_PERSONAL_ACCESS_TOKEN"
+            )
+
+            if oauth_app_token:
+                self.oauth_app_token = oauth_app_token
+                self.github_username = None
+                self.personal_access_token = None
+                self._auth_method = "OAuth App Token"
+                logger.info("Using OAuth App Token for GitHub authentication")
+            elif github_username and personal_access_token:
+                self.github_username = github_username
+                self.personal_access_token = personal_access_token
+                self.oauth_app_token = None
+                self._auth_method = "Personal Access Token"
+                logger.info(
+                    "Using GitHub username and personal access token for authentication"
+                )
+            else:
+                self.github_username = None
+                self.personal_access_token = None
+                self.oauth_app_token = None
+                logger.debug(
+                    "No GitHub authentication method provided; proceeding without authentication."
+                )
 
         # Audit Config
         if config_content:
@@ -96,6 +136,10 @@ class IacProvider(Provider):
         )
 
         Provider.set_global_provider(self)
+
+    @property
+    def auth_method(self):
+        return self._auth_method
 
     @property
     def type(self):
@@ -183,8 +227,72 @@ class IacProvider(Provider):
             )
             sys.exit(1)
 
+    def _clone_repository(
+        self,
+        repository_url: str,
+        github_username: str = None,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
+    ) -> str:
+        """
+        Clone a git repository to a temporary directory, supporting GitHub authentication.
+        """
+        try:
+            if github_username and personal_access_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://{github_username}:{personal_access_token}@github.com/",
+                )
+            elif oauth_app_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://oauth2:{oauth_app_token}@github.com/",
+                )
+
+            temporary_directory = tempfile.mkdtemp()
+            logger.info(
+                f"Cloning repository {repository_url} into {temporary_directory}..."
+            )
+            with alive_bar(
+                ctrl_c=False,
+                bar="blocks",
+                spinner="classic",
+                stats=False,
+                enrich_print=False,
+            ) as bar:
+                try:
+                    bar.title = f"-> Cloning {repository_url}..."
+                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    bar.title = "-> Repository cloned successfully!"
+                except Exception as clone_error:
+                    bar.title = "-> Cloning failed!"
+                    raise clone_error
+            return temporary_directory
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
     def run(self) -> List[CheckReportIAC]:
-        return self.run_scan(self.scan_path, self.frameworks, self.exclude_path)
+        temp_dir = None
+        if self.scan_repository_url:
+            scan_dir = temp_dir = self._clone_repository(
+                self.scan_repository_url,
+                getattr(self, "github_username", None),
+                getattr(self, "personal_access_token", None),
+                getattr(self, "oauth_app_token", None),
+            )
+        else:
+            scan_dir = self.scan_path
+
+        try:
+            reports = self.run_scan(scan_dir, self.frameworks, self.exclude_path)
+        finally:
+            if temp_dir:
+                logger.info(f"Removing temporary directory {temp_dir}...")
+                shutil.rmtree(temp_dir)
+
+        return reports
 
     def run_scan(
         self, directory: str, frameworks: list[str], exclude_path: list[str]
@@ -249,15 +357,32 @@ class IacProvider(Provider):
             sys.exit(1)
 
     def print_credentials(self):
-        report_lines = [
-            f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
-        ]
+        if self.scan_repository_url:
+            report_title = (
+                f"{Style.BRIGHT}Scanning remote IaC repository:{Style.RESET_ALL}"
+            )
+            report_lines = [
+                f"Repository: {Fore.YELLOW}{self.scan_repository_url}{Style.RESET_ALL}",
+            ]
+        else:
+            report_title = (
+                f"{Style.BRIGHT}Scanning local IaC directory:{Style.RESET_ALL}"
+            )
+            report_lines = [
+                f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
+            ]
+
         if self.exclude_path:
             report_lines.append(
                 f"Excluded paths: {Fore.YELLOW}{', '.join(self.exclude_path)}{Style.RESET_ALL}"
             )
+
         report_lines.append(
             f"Frameworks: {Fore.YELLOW}{', '.join(self.frameworks)}{Style.RESET_ALL}"
         )
-        report_title = f"{Style.BRIGHT}Scanning local IaC directory:{Style.RESET_ALL}"
+
+        report_lines.append(
+            f"Authentication method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+        )
+
         print_boxes(report_lines, report_title)

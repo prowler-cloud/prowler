@@ -491,11 +491,15 @@ The provided credentials must have the appropriate permissions to perform all th
 
 ## Infrastructure as Code (IaC)
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
 
 ### Authentication
 
-The IaC provider does not require any authentication or credentials since it scans local files directly. This makes it ideal for CI/CD pipelines and local development environments.
+- For local scans, no authentication is required.
+- For remote repository scans, authentication can be provided via:
+    - [**GitHub Username and Personal Access Token (PAT)**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+    - [**GitHub OAuth App Token**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+    - [**Git URL**](https://git-scm.com/docs/git-clone#_git_urls)
 
 ### Supported Frameworks
 
@@ -515,27 +519,3 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 - Kustomize
 - OpenAPI
 - SAST, SCA (Software Composition Analysis)
-
-### Usage
-
-To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
-
-#### Basic Example
-
-```console
-prowler iac --scan-path ./my-iac-directory
-```
-
-#### Specify Frameworks
-
-Scan only Terraform and Kubernetes files:
-
-```console
-prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
-```
-
-#### Exclude Paths
-
-```console
-prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
-```
