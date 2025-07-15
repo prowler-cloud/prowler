@@ -791,7 +791,6 @@ class UserViewSet(BaseUserViewset):
                         "detail": "Failed to delete the user",
                         "status": "400",
                         "code": "delete_failed"
-
                     }
                 ]
             )
