@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_ensure_using_approved_images` check for Azure provider [(#8168)](https://github.com/prowler-cloud/prowler/pull/8168)
 - `vm_scaleset_associated_load_balancer` check for Azure provider [(#8181)](https://github.com/prowler-cloud/prowler/pull/8181)
 - Add `test_connection` method to GitHub provider [(#8248)](https://github.com/prowler-cloud/prowler/pull/8248)
+- Migrate AWS fixers to new class structure [(#8009)](https://github.com/prowler-cloud/prowler/pull/8009)
 
 ### Changed
 

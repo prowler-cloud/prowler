@@ -27,8 +27,9 @@ class Test_s3_account_level_public_access_block_fixer:
             ),
         ):
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer import (
-                fixer,
+                S3AccountLevelPublicAccessBlocksFixer,
             )
 
+            fixer = S3AccountLevelPublicAccessBlocksFixer()
             # By default, the account has not public access blocked
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            assert fixer.fix(resource_id=AWS_ACCOUNT_NUMBER)

@@ -66,10 +66,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE_ACP(self):
@@ -126,10 +129,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AllUsers_FULL_CONTROL(self):
@@ -186,10 +192,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE(self):
@@ -246,10 +255,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE_ACP(self):
@@ -306,10 +318,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_FULL_CONTROL(self):
@@ -366,10 +381,13 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert fixer(bucket_name_us, AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert fixer.fix(
+                    resource_id=bucket_name_us, region=AWS_REGION_US_EAST_1
+                )
 
     @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE_error(self):
@@ -426,7 +444,11 @@ class Test_s3_bucket_public_write_acl_fixer:
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.s3.s3_bucket_public_write_acl.s3_bucket_public_write_acl_fixer import (
-                    fixer,
+                    S3BucketPublicWriteAclFixer,
                 )
 
-                assert not fixer("bucket_name_us_non_existing", AWS_REGION_US_EAST_1)
+                fixer = S3BucketPublicWriteAclFixer()
+                assert not fixer.fix(
+                    resource_id="bucket_name_us_non_existing",
+                    region=AWS_REGION_US_EAST_1,
+                )

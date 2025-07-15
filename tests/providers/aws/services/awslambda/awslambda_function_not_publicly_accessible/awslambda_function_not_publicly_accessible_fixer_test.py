@@ -11,7 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_awslambda_function_not_publicly_accessible_fixer:
+class TestLambdaFunctionNotPubliclyAccessibleFixer:
     @mock_aws
     def test_function_public(self):
         # Create the mock IAM role
@@ -71,12 +71,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
                 new=Lambda(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
-                fixer,
+                LambdaFunctionNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(function_name, AWS_REGION_EU_WEST_1)
+            fixer = LambdaFunctionNotPubliclyAccessibleFixer()
+            assert fixer.fix(region=AWS_REGION_EU_WEST_1, resource_id=function_name)
 
     @mock_aws
     def test_function_public_with_source_account(self):
@@ -139,12 +139,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
                 new=Lambda(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
-                fixer,
+                LambdaFunctionNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(function_name, AWS_REGION_EU_WEST_1)
+            fixer = LambdaFunctionNotPubliclyAccessibleFixer()
+            assert fixer.fix(region=AWS_REGION_EU_WEST_1, resource_id=function_name)
 
     @mock_aws
     def test_function_not_public(self):
@@ -206,12 +206,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
                 new=Lambda(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
-                fixer,
+                LambdaFunctionNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(function_name, AWS_REGION_EU_WEST_1)
+            fixer = LambdaFunctionNotPubliclyAccessibleFixer()
+            assert fixer.fix(region=AWS_REGION_EU_WEST_1, resource_id=function_name)
 
     @mock_aws
     def test_function_public_error(self):
@@ -272,9 +272,9 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
                 new=Lambda(aws_provider),
             ),
         ):
-            # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
-                fixer,
+                LambdaFunctionNotPubliclyAccessibleFixer,
             )
 
-            assert not fixer("non-exsting", AWS_REGION_EU_WEST_1)
+            fixer = LambdaFunctionNotPubliclyAccessibleFixer()
+            assert not fixer.fix(region=AWS_REGION_EU_WEST_1, resource_id="non-exsting")

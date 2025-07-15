@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
-class Test_ec2_ami_public_fixer:
+class TestEc2AmiPublicFixer:
     @mock_aws
     def test_one_private_ami(self):
         ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -42,10 +42,11 @@ class Test_ec2_ami_public_fixer:
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public_fixer import (
-                fixer,
+                Ec2AmiPublicFixer,
             )
 
-            assert fixer(image_id, AWS_REGION_US_EAST_1)
+            fixer = Ec2AmiPublicFixer()
+            assert fixer.fix(region=AWS_REGION_US_EAST_1, resource_id=image_id)
 
     @mock_aws
     def test_one_public_ami(self):
@@ -85,10 +86,11 @@ class Test_ec2_ami_public_fixer:
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public_fixer import (
-                fixer,
+                Ec2AmiPublicFixer,
             )
 
-            assert fixer(image_id, AWS_REGION_US_EAST_1)
+            fixer = Ec2AmiPublicFixer()
+            assert fixer.fix(region=AWS_REGION_US_EAST_1, resource_id=image_id)
 
     @mock_aws
     def test_one_public_ami_error(self):
@@ -128,7 +130,10 @@ class Test_ec2_ami_public_fixer:
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public_fixer import (
-                fixer,
+                Ec2AmiPublicFixer,
             )
 
-            assert not fixer("image_id_non_existing", AWS_REGION_US_EAST_1)
+            fixer = Ec2AmiPublicFixer()
+            assert not fixer.fix(
+                region=AWS_REGION_US_EAST_1, resource_id="image_id_non_existing"
+            )

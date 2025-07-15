@@ -5,7 +5,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_ec2_ebs_default_encryption_fixer:
+class TestEc2EbsDefaultEncryptionFixer:
     @mock_aws
     def test_ec2_ebs_encryption_fixer(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -23,8 +23,8 @@ class Test_ec2_ebs_default_encryption_fixer:
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_ebs_default_encryption.ec2_ebs_default_encryption_fixer import (
-                fixer,
+                Ec2EbsDefaultEncryptionFixer,
             )
 
-            # By default, the account has not public access blocked
-            assert fixer(region=AWS_REGION_US_EAST_1)
+            fixer = Ec2EbsDefaultEncryptionFixer()
+            assert fixer.fix(region=AWS_REGION_US_EAST_1)

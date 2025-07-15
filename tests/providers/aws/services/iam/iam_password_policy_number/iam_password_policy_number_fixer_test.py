@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_iam_password_policy_number_fixer:
+class TestIamPasswordPolicyNumberFixer:
     @mock_aws
     def test_iam_password_policy_number_fixer(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -40,7 +40,7 @@ class Test_iam_password_policy_number_fixer:
                 hard_expiry=True,
             )
             from prowler.providers.aws.services.iam.iam_password_policy_number.iam_password_policy_number_fixer import (
-                fixer,
+                IamPasswordPolicyNumberFixer,
             )
 
-            assert fixer(resource_id=AWS_ACCOUNT_NUMBER)
+            assert IamPasswordPolicyNumberFixer().fix(resource_id=AWS_ACCOUNT_NUMBER)

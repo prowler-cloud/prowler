@@ -39,7 +39,7 @@ def mock_make_api_call_public_snapshot_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_documentdb_cluster_public_snapshot_fixer:
+class TestDocumentdbClusterPublicSnapshotFixer:
     @mock_aws
     def test_documentdb_cluster_public_snapshot_fixer(self):
         with mock.patch(
@@ -63,10 +63,13 @@ class Test_documentdb_cluster_public_snapshot_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer import (
-                    fixer,
+                    DocumentdbClusterPublicSnapshotFixer,
                 )
 
-                assert fixer(resource_id="test-snapshot", region=AWS_REGION_EU_WEST_1)
+                fixer = DocumentdbClusterPublicSnapshotFixer()
+                assert fixer.fix(
+                    region=AWS_REGION_EU_WEST_1, resource_id="test-snapshot"
+                )
 
     @mock_aws
     def test_documentdb_cluster_public_snapshot_fixer_error(self):
@@ -91,9 +94,10 @@ class Test_documentdb_cluster_public_snapshot_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer import (
-                    fixer,
+                    DocumentdbClusterPublicSnapshotFixer,
                 )
 
-                assert not fixer(
-                    resource_id="test-snapshot", region=AWS_REGION_EU_WEST_1
+                fixer = DocumentdbClusterPublicSnapshotFixer()
+                assert not fixer.fix(
+                    region=AWS_REGION_EU_WEST_1, resource_id="test-snapshot"
                 )

@@ -76,10 +76,13 @@ class Test_opensearch_service_domains_not_publicly_accessible_fixer:
             ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible_fixer import (
-                fixer,
+                OpensearchServiceDomainsNotPubliclyAccessibleFixer,
             )
 
-            assert not fixer("domain_name_non_existing", AWS_REGION_US_WEST_2)
+            fixer = OpensearchServiceDomainsNotPubliclyAccessibleFixer()
+            assert not fixer.fix(
+                resource_id="domain_name_non_existing", region=AWS_REGION_US_WEST_2
+            )
 
     @mock_aws
     def test_policy_data_not_restricted_with_principal_AWS(self):
@@ -107,10 +110,11 @@ class Test_opensearch_service_domains_not_publicly_accessible_fixer:
             ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible_fixer import (
-                fixer,
+                OpensearchServiceDomainsNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(domain_name, AWS_REGION_US_WEST_2)
+            fixer = OpensearchServiceDomainsNotPubliclyAccessibleFixer()
+            assert fixer.fix(resource_id=domain_name, region=AWS_REGION_US_WEST_2)
 
     @mock_aws
     def test_policy_data_not_restricted_with_principal_no_AWS(self):
@@ -138,7 +142,8 @@ class Test_opensearch_service_domains_not_publicly_accessible_fixer:
             ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible_fixer import (
-                fixer,
+                OpensearchServiceDomainsNotPubliclyAccessibleFixer,
             )
 
-            assert fixer(domain_name, AWS_REGION_US_WEST_2)
+            fixer = OpensearchServiceDomainsNotPubliclyAccessibleFixer()
+            assert fixer.fix(resource_id=domain_name, region=AWS_REGION_US_WEST_2)

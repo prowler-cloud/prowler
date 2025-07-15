@@ -61,10 +61,13 @@ class Test_neptune_cluster_public_snapshot_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer import (
-                    fixer,
+                    NeptuneClusterPublicSnapshotFixer,
                 )
 
-                assert fixer(resource_id="test-snapshot", region=AWS_REGION_EU_WEST_1)
+                fixer = NeptuneClusterPublicSnapshotFixer()
+                assert fixer.fix(
+                    resource_id="test-snapshot", region=AWS_REGION_EU_WEST_1
+                )
 
     @mock_aws
     def test_neptune_cluster_public_snapshot_fixer_error(self):
@@ -87,9 +90,10 @@ class Test_neptune_cluster_public_snapshot_fixer:
                 ),
             ):
                 from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot_fixer import (
-                    fixer,
+                    NeptuneClusterPublicSnapshotFixer,
                 )
 
-                assert not fixer(
+                fixer = NeptuneClusterPublicSnapshotFixer()
+                assert not fixer.fix(
                     resource_id="test-snapshot", region=AWS_REGION_EU_WEST_1
                 )
