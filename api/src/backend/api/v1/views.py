@@ -3487,9 +3487,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 tenant_id=self.request.tenant_id, scan__provider__in=providers
             )
 
-        if self.action == "providers":
-            return _get_filtered_queryset(Finding)
-        elif self.action in ("findings", "findings_severity", "services"):
+        if self.action in ("findings", "findings_severity", "services", "providers"):
             return _get_filtered_queryset(ScanSummary)
         else:
             return super().get_queryset()
@@ -3526,6 +3524,9 @@ class OverviewViewSet(BaseRLSViewSet):
     def providers(self, request):
         tenant_id = self.request.tenant_id
 
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
         latest_scan_ids = (
             Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
@@ -3534,9 +3535,7 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         findings_aggregated = (
-            ScanSummary.all_objects.filter(
-                tenant_id=tenant_id, scan_id__in=latest_scan_ids
-            )
+            filtered_queryset.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
             .values(
                 "scan__provider_id",
                 provider=F("scan__provider__provider"),
