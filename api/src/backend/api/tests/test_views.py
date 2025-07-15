@@ -14,7 +14,13 @@ import jwt
 import pytest
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
-from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    TEST_PASSWORD,
+    TEST_USER,
+    TODAY,
+    today_after_n_days,
+)
 from django.conf import settings
 from django.http import JsonResponse
 from django.test import RequestFactory
@@ -46,14 +52,6 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
-
-TODAY = str(datetime.today().date())
-
-
-def today_after_n_days(n_days: int) -> str:
-    return datetime.strftime(
-        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
-    )
 
 
 class TestViewSet:

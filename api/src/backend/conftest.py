@@ -46,10 +46,17 @@ from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 
+TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.fixture(scope="module")

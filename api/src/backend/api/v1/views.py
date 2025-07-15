@@ -3568,7 +3568,7 @@ class OverviewViewSet(BaseRLSViewSet):
             )
 
         return Response(
-            OverviewProviderSerializer(overview, many=True).data,
+            self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
         )
 
@@ -3652,7 +3652,7 @@ class OverviewViewSet(BaseRLSViewSet):
         for item in severity_counts:
             severity_data[item["severity"]] = item["count"]
 
-        serializer = OverviewSeveritySerializer(severity_data)
+        serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="services")
@@ -3687,7 +3687,7 @@ class OverviewViewSet(BaseRLSViewSet):
             .order_by("service")
         )
 
-        serializer = OverviewServiceSerializer(services_data, many=True)
+        serializer = self.get_serializer(services_data, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
