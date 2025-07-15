@@ -6,7 +6,11 @@ export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
 
-  if (!user && pathname.startsWith("/prowler")) {
+  if (
+    !user &&
+    !pathname.includes("/sign-in") &&
+    !pathname.includes("/sign-up")
+  ) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
