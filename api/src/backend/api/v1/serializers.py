@@ -1185,6 +1185,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GITHUB.value:
+                serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
@@ -1262,6 +1264,30 @@ class KubernetesProviderSecret(serializers.Serializer):
 
     class Meta:
         resource_name = "provider-secrets"
+
+
+class GithubProviderSecret(serializers.Serializer):
+    personal_access_token = serializers.CharField(required=False)
+    oauth_app_token = serializers.CharField(required=False)
+    github_app_id = serializers.IntegerField(required=False)
+    github_app_key_content = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+    def validate(self, attrs):
+        # Ensure at least one authentication method is provided
+        if not any(
+            [
+                attrs.get("personal_access_token"),
+                attrs.get("oauth_app_token"),
+                attrs.get("github_app_id") and attrs.get("github_app_key_content"),
+            ]
+        ):
+            raise serializers.ValidationError(
+                "At least one authentication method must be provided: personal_access_token, oauth_app_token, or both github_app_id and github_app_key_content"
+            )
+        return attrs
 
 
 class AWSRoleAssumptionProviderSecret(serializers.Serializer):
