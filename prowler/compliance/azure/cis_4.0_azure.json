@@ -7,9 +7,7 @@
     {
       "Id": "2.2.1.1",
       "Description": "Ensure public network access is Disabled",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "2 Common Reference Recommendations",
@@ -53,9 +51,7 @@
     {
       "Id": "3.1.1",
       "Description": "Ensure that Azure Databricks is deployed in a customer-managed virtual network (VNet)",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -123,7 +119,7 @@
       "Id": "3.1.8",
       "Description": "Ensure that data at rest and in transit is encrypted in Azure Databricks using customer managed keys (CMK)",
       "Checks": [
-        "-"
+        "databricks_workspace_cmk_encryption_enabled"
       ],
       "Attributes": [
         {
@@ -146,7 +142,7 @@
       "Id": "6.3.3",
       "Description": "Ensure that use of the 'User Access Administrator' role is restricted",
       "Checks": [
-        "-"
+        "iam_role_user_access_admin_restricted"
       ],
       "Attributes": [
         {
@@ -169,7 +165,7 @@
       "Id": "7.1.2.11",
       "Description": "Ensure that an Activity Log Alert exists for Service Health",
       "Checks": [
-        "-"
+        "monitor_alert_service_health_exists"
       ],
       "Attributes": [
         {
@@ -192,7 +188,7 @@
       "Id": "8.8",
       "Description": "Ensure that virtual network flow log retention days is set to greater than or equal to 90",
       "Checks": [
-        "-"
+        "network_flow_log_more_than_90_days"
       ],
       "Attributes": [
         {
@@ -214,7 +210,7 @@
       "Id": "9.1.10",
       "Description": "Ensure that Microsoft Defender for Cloud is configured to check VM operating systems for updates",
       "Checks": [
-        "-"
+        "defender_ensure_system_updates_are_applied"
       ],
       "Attributes": [
         {
@@ -236,9 +232,7 @@
     {
       "Id": "9.1.15",
       "Description": "Ensure that 'Notify about attack paths with the following risk level (or higher)' is enabled",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -260,7 +254,7 @@
       "Id": "9.3.7",
       "Description": "Ensure that Public Network Access when using Private Endpoint is disabled",
       "Checks": [
-        "-"
+        "keyvault_access_only_through_private_endpoints"
       ],
       "Attributes": [
         {
@@ -283,7 +277,7 @@
       "Id": "10.1.1",
       "Description": "Ensure soft delete for Azure File Shares is Enabled",
       "Checks": [
-        "-"
+        "storage_ensure_file_shares_soft_delete_is_enabled"
       ],
       "Attributes": [
         {
@@ -351,7 +345,7 @@
       "Id": "10.1.2",
       "Description": "Ensure 'SMB protocol version' is set to 'SMB 3.1.1' or higher for SMB file shares",
       "Checks": [
-        "-"
+        "storage_smb_protocol_version_is_latest"
       ],
       "Attributes": [
         {
@@ -374,7 +368,7 @@
       "Id": "10.1.3",
       "Description": "Ensure 'SMB channel encryption' is set to 'AES-256-GCM' or higher for SMB file shares",
       "Checks": [
-        "-"
+        "storage_smb_channel_encryption_with_secure_algorithm"
       ],
       "Attributes": [
         {
@@ -397,7 +391,7 @@
       "Id": "10.2.1",
       "Description": "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled",
       "Checks": [
-        "-"
+        "storage_ensure_soft_delete_is_enabled"
       ],
       "Attributes": [
         {
@@ -420,7 +414,7 @@
       "Id": "10.2.2",
       "Description": "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts",
       "Checks": [
-        "-"
+        "storage_blob_versioning_is_enabled"
       ],
       "Attributes": [
         {
@@ -443,7 +437,7 @@
       "Id": "10.3.8",
       "Description": "Ensure 'Cross Tenant Replication' is not enabled",
       "Checks": [
-        "-"
+        "storage_cross_tenant_replication_disabled"
       ],
       "Attributes": [
         {
@@ -466,7 +460,7 @@
       "Id": "10.3.9",
       "Description": "Ensure that 'Allow Blob Anonymous Access' is set to 'Disabled'",
       "Checks": [
-        "-"
+        "storage_blob_public_access_level_is_disabled"
       ],
       "Attributes": [
         {
@@ -489,7 +483,7 @@
       "Id": "10.3.12",
       "Description": "Ensure Redundancy is set to 'geo-redundant storage (GRS)' on critical Azure Storage Accounts",
       "Checks": [
-        "-"
+        "storage_geo_redundant_enabled"
       ],
       "Attributes": [
         {
@@ -622,7 +616,7 @@
       "Id": "10.3.1.3",
       "Description": "Ensure 'Allow storage account key access' for Azure Storage Accounts is 'Disabled'",
       "Checks": [
-        "-"
+        "storage_account_key_access_disabled"
       ],
       "Attributes": [
         {
@@ -645,7 +639,7 @@
       "Id": "10.3.3.1",
       "Description": "Ensure that 'Default to Microsoft Entra authorization in the Azure portal' is set to 'Enabled'",
       "Checks": [
-        "-"
+        "storage_default_to_entra_authorization_enabled"
       ],
       "Attributes": [
         {
@@ -689,9 +683,7 @@
     {
       "Id": "2.1.1.1.1",
       "Description": "Ensure Critical Data is Encrypted with Microsoft Managed Keys (MMK)",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "2 Common Reference Recommendations",
@@ -734,9 +726,7 @@
     {
       "Id": "3.1.2",
       "Description": "Ensure that network security groups are configured for Databricks subnets",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -801,9 +791,7 @@
     {
       "Id": "3.1.3",
       "Description": "Ensure that traffic is encrypted between cluster worker nodes",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -893,9 +881,7 @@
     {
       "Id": "3.1.4",
       "Description": "Ensure that users and groups are synced from Microsoft Entra ID to Azure Databricks",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -938,9 +924,7 @@
     {
       "Id": "3.1.5",
       "Description": "Ensure that Unity Catalog is configured for Azure Databricks",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -961,9 +945,7 @@
     {
       "Id": "3.1.6",
       "Description": "Ensure that usage is restricted and expiry is enforced for Databricks personal access tokens",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -984,9 +966,7 @@
     {
       "Id": "3.1.7",
       "Description": "Ensure that diagnostic log delivery is configured for Azure Databricks",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -1007,9 +987,7 @@
     {
       "Id": "6.5",
       "Description": "Ensure that 'Number of methods required to reset' is set to '2'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1075,9 +1053,7 @@
     {
       "Id": "6.6",
       "Description": "Ensure that account 'Lockout threshold' is less than or equal to '10'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1097,9 +1073,7 @@
     {
       "Id": "6.7",
       "Description": "Ensure that account 'Lockout duration in seconds' is greater than or equal to '60'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1119,9 +1093,7 @@
     {
       "Id": "6.8",
       "Description": "Ensure that a 'Custom banned password list' is set to 'Enforce'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1141,9 +1113,7 @@
     {
       "Id": "6.9",
       "Description": "Ensure that 'Number of days before users are asked to re-confirm their authentication information' is not set to '0'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1163,9 +1133,7 @@
     {
       "Id": "6.1",
       "Description": "Ensure that 'Notify users on password resets?' is set to 'Yes'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1185,9 +1153,7 @@
     {
       "Id": "6.11",
       "Description": "Ensure that 'Notify all admins when other admins reset their password?' is set to 'Yes'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1207,9 +1173,7 @@
     {
       "Id": "6.17",
       "Description": "Ensure that 'Restrict access to Microsoft Entra admin center' is set to 'Yes'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1367,9 +1331,7 @@
     {
       "Id": "6.18",
       "Description": "Ensure that 'Restrict user ability to access groups features in My Groups' is set to 'Yes'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1389,9 +1351,7 @@
     {
       "Id": "6.2",
       "Description": "Ensure that 'Owners can manage group membership requests in My Groups' is set to 'No'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1411,9 +1371,7 @@
     {
       "Id": "6.22",
       "Description": "Ensure that 'Require Multifactor Authentication to register or join devices with Microsoft Entra' is set to 'Yes'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1433,9 +1391,7 @@
     {
       "Id": "6.25",
       "Description": "Ensure that 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' is set to 'Permit no one'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1685,9 +1641,7 @@
     {
       "Id": "6.1.3",
       "Description": "Ensure that 'Allow users to remember multifactor authentication on devices they trust' is disabled",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1863,9 +1817,7 @@
     {
       "Id": "6.2.2",
       "Description": "Ensure that an exclusionary geographic Conditional Access policy is considered",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1886,9 +1838,7 @@
     {
       "Id": "6.2.3",
       "Description": "Ensure that an exclusionary device code flow policy is considered",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -1909,9 +1859,7 @@
     {
       "Id": "6.2.4",
       "Description": "Ensure that a multifactor authentication policy exists for all users",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -2024,9 +1972,7 @@
     {
       "Id": "6.2.5",
       "Description": "Ensure that multifactor authentication is required for risky sign-ins",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -2047,9 +1993,7 @@
     {
       "Id": "6.3.1",
       "Description": "Ensure that Azure admin accounts are not used for daily operations",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -2139,9 +2083,7 @@
     {
       "Id": "6.3.2",
       "Description": "Ensure that guest users are reviewed on a regular basis",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -2162,9 +2104,7 @@
     {
       "Id": "6.3.4",
       "Description": "Ensure that all 'privileged' role assignments are periodically reviewed",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6 Identity Services",
@@ -2185,9 +2125,7 @@
     {
       "Id": "7.2",
       "Description": "Ensure that Resource Locks are set for Mission-Critical Azure Resources",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2575,9 +2513,7 @@
     {
       "Id": "7.1.4",
       "Description": "Ensure that Azure Monitor Resource Logging is Enabled for All Services that Support it",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2644,9 +2580,7 @@
     {
       "Id": "7.1.5",
       "Description": "Ensure that SKU Basic/Consumption is not used on artifacts that need to be monitored (Particularly for Production Workloads)",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2690,9 +2624,7 @@
     {
       "Id": "7.1.1.7",
       "Description": "Ensure that virtual network flow logs are captured and sent to Log Analytics",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2713,9 +2645,7 @@
     {
       "Id": "7.1.1.8",
       "Description": "Ensure that a Microsoft Entra diagnostic setting exists to send Microsoft Graph activity logs to an appropriate destination",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2736,9 +2666,7 @@
     {
       "Id": "7.1.1.9",
       "Description": "Ensure that a Microsoft Entra diagnostic setting exists to send Microsoft Entra activity logs to an appropriate destination",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2759,9 +2687,7 @@
     {
       "Id": "7.1.1.10",
       "Description": "Ensure that Intune logs are captured and sent to Log Analytics",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "7 Management and Governance Services",
@@ -2782,9 +2708,7 @@
     {
       "Id": "8.7",
       "Description": "Ensure that Public IP addresses are Evaluated on a Periodic Basis",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "8 Networking Services",
@@ -2896,9 +2820,7 @@
     {
       "Id": "9.1.16",
       "Description": "Ensure that Microsoft Defender External Attack Surface Monitoring (EASM) is enabled",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -2919,9 +2841,7 @@
     {
       "Id": "9.1.3.3",
       "Description": "Ensure that 'Endpoint protection' component status is set to 'On'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -2942,9 +2862,7 @@
     {
       "Id": "9.1.3.4",
       "Description": "Ensure that 'Agentless scanning for machines' component status is set to 'On'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -2965,9 +2883,7 @@
     {
       "Id": "9.1.3.5",
       "Description": "Ensure that 'File Integrity Monitoring' component status is set to 'On'",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -2988,9 +2904,7 @@
     {
       "Id": "9.3.10",
       "Description": "Ensure that Azure Key Vault Managed HSM is used when required",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 Security Services",
@@ -3057,9 +2971,7 @@
     {
       "Id": "10.3.10",
       "Description": "Ensure Azure Resource Manager Delete locks are applied to Azure Storage Accounts",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "10 Storage Services",
@@ -3149,9 +3061,7 @@
     {
       "Id": "10.3.11",
       "Description": "Ensure Azure Resource Manager ReadOnly locks are considered for Azure Storage Accounts",
-      "Checks": [
-        "-"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "10 Storage Services",
