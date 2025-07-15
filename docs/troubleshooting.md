@@ -20,7 +20,8 @@ See section [Logging](./tutorials/logging.md) for further information or [contac
     When running Prowler App via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
 
     **Workaround:**
-    - Ensure your AWS credentials and configuration are available to the Docker container. You can do this by mounting your local `.aws` directory into the container. For example, in your `docker-compose.yaml`, add the following volume to the relevant services:
+
+      - Ensure your AWS credentials and configuration are available to the Docker container. You can do this by mounting your local `.aws` directory into the container. For example, in your `docker-compose.yaml`, add the following volume to the relevant services:
 
       ```yaml
       volumes:
@@ -40,4 +41,5 @@ See section [Logging](./tutorials/logging.md) for further information or [contac
       ```env
       AWS_PROFILE=prowler-profile
       ```
+
     - If you are scanning multiple AWS accounts, you may need to add multiple profiles to your AWS config. Note that this workaround is mainly for local testing; for production or multi-account setups, follow the [CloudFormation Template guide](https://github.com/prowler-cloud/prowler/issues/7745) and ensure the correct IAM roles and permissions are set up in each account.
