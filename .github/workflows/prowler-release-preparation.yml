@@ -14,7 +14,8 @@ env:
   PROWLER_VERSION: ${{ github.event.inputs.prowler_version }}
 
 jobs:
-  release:
+  prepare-release:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     permissions:
       contents: write
