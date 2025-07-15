@@ -1275,20 +1275,6 @@ class GithubProviderSecret(serializers.Serializer):
     class Meta:
         resource_name = "provider-secrets"
 
-    def validate(self, attrs):
-        # Ensure at least one authentication method is provided
-        if not any(
-            [
-                attrs.get("personal_access_token"),
-                attrs.get("oauth_app_token"),
-                attrs.get("github_app_id") and attrs.get("github_app_key_content"),
-            ]
-        ):
-            raise serializers.ValidationError(
-                "At least one authentication method must be provided: personal_access_token, oauth_app_token, or both github_app_id and github_app_key_content"
-            )
-        return attrs
-
 
 class AWSRoleAssumptionProviderSecret(serializers.Serializer):
     role_arn = serializers.CharField()
