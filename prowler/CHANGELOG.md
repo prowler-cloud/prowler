@@ -13,6 +13,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [v5.8.2] (Prowler UNRELEASED)
+
+### Fixed
+- Fix error in Dashboard Overview page when reading CSV files [(#8257)](https://github.com/prowler-cloud/prowler/pull/8257)
+
+---
+
 ## [v5.8.1] (Prowler 5.8.1)
 
 ### Fixed
