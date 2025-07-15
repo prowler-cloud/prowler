@@ -147,40 +147,9 @@ class APIKeyActivityLoggingTest(TestCase):
                 self.assertEqual(activity.response_size, 512)
                 self.assertEqual(activity.duration_ms, 250)
                 self.assertEqual(activity.query_params, {})
-                self.assertFalse(activity.is_rate_limited)
 
-    def test_middleware_logs_rate_limited_requests(self):
-        """Test that rate-limited API key requests are properly logged."""
-        request = self.factory.get("/api/v1/findings")
-        request.META['REMOTE_ADDR'] = '203.0.113.0'
-        
-        auth_info = {
-            'api_key_id': str(self.api_key.id),
-            'api_key_name': self.api_key.name,
-            'user_id': str(self.user.id),
-            'tenant_id': str(self.tenant.id),
-        }
-        
-        response = MagicMock()
-        response.status_code = 429  # Rate limited
-        response.get.return_value = None
-        
-        with patch('api.middleware.extract_auth_info') as mock_extract_auth_info:
-            mock_extract_auth_info.return_value = auth_info
-            
-            middleware = APILoggingMiddleware(lambda req: response)
-            
-            with patch('api.middleware.time.time') as mock_time:
-                mock_time.side_effect = [1000.0, 1000.100]  # 100ms duration
-                
-                middleware(request)
-                
-                # Verify rate limit was recorded
-                activity = APIKeyActivity.objects.first()
-                self.assertEqual(activity.status_code, 429)
-                self.assertTrue(activity.is_rate_limited)
-                self.assertIsNone(activity.response_size)
-                self.assertEqual(activity.duration_ms, 100)
+
+
 
     def test_middleware_logs_query_parameters_for_audit(self):
         """Test that query parameters are logged for audit purposes."""
@@ -324,7 +293,7 @@ class APIKeyActivityLoggingTest(TestCase):
                 source_ip=f'192.168.1.{i+1}',
                 status_code=200,
                 query_params={},
-                is_rate_limited=False
+
             )
             activities.append(activity)
         
@@ -364,8 +333,7 @@ class APIKeyActivityLoggingTest(TestCase):
             endpoint='/api/v1/scans',
             source_ip='10.0.0.1',
             status_code=201,
-            query_params={},
-            is_rate_limited=False
+            query_params={}
         )
         
         str_repr = str(activity)

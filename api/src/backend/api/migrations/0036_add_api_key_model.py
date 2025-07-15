@@ -72,7 +72,6 @@ class Migration(migrations.Migration):
                 ('response_size', models.IntegerField(blank=True, null=True, help_text='Size of the response in bytes')),
                 ('duration_ms', models.IntegerField(blank=True, null=True, help_text='Request duration in milliseconds')),
                 ('query_params', models.JSONField(blank=True, default=dict, help_text='Query parameters from the request (for audit purposes)')),
-                ('is_rate_limited', models.BooleanField(default=False, help_text='Whether this request was rate limited')),
                 ('tenant_id', models.UUIDField(help_text='Tenant ID for multi-tenancy support')),
                 ('api_key', models.ForeignKey(help_text='API key that was used for this request', on_delete=django.db.models.deletion.CASCADE, related_name='activity_logs', related_query_name='activity_log', to='api.apikey')),
                 ('user', models.ForeignKey(help_text='User who owns the API key', on_delete=django.db.models.deletion.CASCADE, related_name='api_key_activities', related_query_name='api_key_activity', to='api.user')),
@@ -111,10 +110,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='apikeyactivity',
             index=models.Index(fields=['tenant_id', 'api_key', 'source_ip', '-timestamp'], name='api_key_activity_incident_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['tenant_id', 'is_rate_limited', '-timestamp'], name='api_key_activity_rate_limit_idx'),
         ),
         
         # Enable RLS and create policy for api_key_activities

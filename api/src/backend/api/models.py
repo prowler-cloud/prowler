@@ -342,10 +342,7 @@ class APIKeyActivity(RowLevelSecurityProtectedModel):
         blank=True,
         help_text="Query parameters from the request (for audit purposes)"
     )
-    is_rate_limited = models.BooleanField(
-        default=False,
-        help_text="Whether this request was rate limited"
-    )
+
     
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "api_key_activities"
@@ -367,10 +364,7 @@ class APIKeyActivity(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "api_key", "source_ip", "-timestamp"], 
                 name="api_key_activity_incident_idx"
             ),
-            models.Index(
-                fields=["tenant_id", "is_rate_limited", "-timestamp"],
-                name="api_key_activity_rate_limit_idx"
-            ),
+
         ]
         
         constraints = [

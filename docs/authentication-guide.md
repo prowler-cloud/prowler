@@ -119,7 +119,6 @@ API Keys are long-lived credentials designed for programmatic access to the Prow
 - **Format**: `pk_<8-char-prefix>.<32-char-random>` (e.g., `pk_a1b2c3d4.xyz789...`)
 - **Storage**: Hashed using Django's secure password hashing (never stored in plaintext)
 - **Lifetime**: Configurable expiration (1 day, 7 days, 30 days, 90 days, or never)
-- **Rate Limiting**: Subject to configurable rate limits (not applied to JWT tokens)
 - **Revocation**: Can be immediately revoked
 - **Audit Trail**: Tracks last used timestamp and IP address
 
@@ -150,8 +149,6 @@ Authorization: ApiKey pk_a1b2c3d4.xyz789abcdef...
 
 - **Unique prefix-based lookup** for performance and collision avoidance
 - **Secure hashing** using Django's password hashing algorithms
-- **Rate limiting protection** with configurable limits per time window
-- **Admin bypass** for users with unlimited visibility roles
 - **Comprehensive audit logging** including usage tracking
 - **One-time display** during creation with security warnings
 
@@ -183,16 +180,6 @@ curl -X POST https://api.prowler.com/api/v1/users/{user-id}/api-keys \
   }'
 ```
 
-### Rate Limiting
-
-API Keys are subject to rate limiting to prevent abuse:
-
-| Time Window | Default Limit | Environment Variable |
-|-------------|---------------|---------------------|
-| Per Minute | 120 requests | `API_RATE_LIMIT_REQUESTS_PER_MINUTE` |
-
-Rate limits can be disabled by setting values to 0 or negative numbers.
-
 ## Permission Scopes and Access Control
 
 Both JWT tokens and API keys inherit the same permission scopes from the associated user account through Prowler's Role-Based Access Control (RBAC) system.
@@ -205,7 +192,7 @@ Both JWT tokens and API keys inherit the same permission scopes from the associa
 - **`MANAGE_PROVIDERS`**: Add and configure cloud providers
 - **`MANAGE_INTEGRATIONS`**: Set up and manage third-party integrations
 - **`MANAGE_SCANS`**: Trigger and manage security scans
-- **`UNLIMITED_VISIBILITY`**: Bypass data filtering and rate limits
+- **`UNLIMITED_VISIBILITY`**: Bypass data filtering
 
 ### Scope Inheritance
 
@@ -263,7 +250,6 @@ Both authentication methods enforce tenant-level isolation:
 ### API Key Limitations
 
 - **One-Time Display**: Lost keys cannot be recovered, only replaced
-- **Rate Limiting**: Subject to usage limits (JWT tokens are not)
 - **Long-Term Exposure**: Higher risk if compromised due to longer lifetime
 - **Revocation Only**: Cannot be temporarily disabled, only permanently revoked
 
@@ -271,7 +257,6 @@ Both authentication methods enforce tenant-level isolation:
 
 - **JWT Tokens**: No database lookup required for validation (stateless)
 - **API Keys**: Require database lookup for verification (stateful)
-- **Rate Limiting**: Only applies to API keys, adding slight overhead
 
 ## Migration and Integration Patterns
 
@@ -291,9 +276,7 @@ When moving from interactive to automated access:
 
 1. Create API keys with appropriate expiration
 2. Update authentication headers to use ApiKey format
-3. Implement rate limiting awareness
-4. Add retry logic for rate limit responses
-5. Store keys securely in environment variables
+3. Store keys securely in environment variables
 
 ## Troubleshooting
 
@@ -309,9 +292,6 @@ When moving from interactive to automated access:
 **Solution**: Verify `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY` configuration
 
 ### Common API Key Issues
-
-**Problem**: Rate limit exceeded (HTTP 429)
-**Solution**: Implement exponential backoff; check rate limit configuration
 
 **Problem**: API key always returns 401
 **Solution**: Verify key format and ensure it hasn't been revoked or expired
@@ -330,11 +310,7 @@ DJANGO_TOKEN_VERIFYING_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY
 DJANGO_ACCESS_TOKEN_LIFETIME=30  # minutes
 DJANGO_REFRESH_TOKEN_LIFETIME=1440  # minutes (24 hours)
 
-# API Key Rate Limiting
-API_RATE_LIMIT_ENABLED=true
-API_RATE_LIMIT_REQUESTS_PER_MINUTE=120
-
-# Cache Configuration (required for rate limiting)
+# Cache Configuration
 VALKEY_HOST=valkey
 VALKEY_PORT=6379
 VALKEY_CACHE_DB=1

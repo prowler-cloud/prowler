@@ -53,7 +53,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "api.middleware.APIKeyRateLimitMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.APILoggingMiddleware",
@@ -256,11 +255,6 @@ CACHES = {
         "KEY_PREFIX": "prowler_cache",
     }
 }
-
-# Rate Limiting Settings
-API_RATE_LIMIT_REQUESTS_PER_MINUTE = env.int("API_RATE_LIMIT_REQUESTS_PER_MINUTE", 120)
-API_RATE_LIMIT_ENABLED = env.bool("API_RATE_LIMIT_ENABLED", True)
-
 
 TESTING = False
 
