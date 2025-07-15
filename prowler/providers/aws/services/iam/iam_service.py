@@ -13,38 +13,31 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 def is_service_role(role):
     try:
-        if "Statement" in role["AssumeRolePolicyDocument"]:
-            if isinstance(role["AssumeRolePolicyDocument"]["Statement"], list):
-                for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-                    if (
-                        statement["Effect"] == "Allow"
-                        and (
-                            "sts:AssumeRole" in statement["Action"]
-                            or "sts:*" in statement["Action"]
-                            or "*" in statement["Action"]
-                        )
-                        # This is what defines a service role
-                        and "Service" in statement["Principal"]
-                    ):
-                        return True
-            else:
-                statement = role["AssumeRolePolicyDocument"]["Statement"]
-                if (
-                    statement["Effect"] == "Allow"
-                    and (
-                        "sts:AssumeRole" in statement["Action"]
-                        or "sts:*" in statement["Action"]
-                        or "*" in statement["Action"]
-                    )
-                    # This is what defines a service role
-                    and "Service" in statement["Principal"]
-                ):
-                    return True
+        statements = role.get("AssumeRolePolicyDocument", {}).get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for statement in statements:
+            if (
+                statement.get("Effect") != "Allow"
+                or not any(
+                action in statement.get("Action", [])
+                for action in ("sts:AssumeRole", "sts:*", "*")
+            )
+            ):
+                return False
+
+            principal = statement.get("Principal", {})
+            if set(principal.keys()) != {"Service"}:
+                return False
+
+        return True
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-    return False
+        return False
 
 
 class IAM(AWSService):
