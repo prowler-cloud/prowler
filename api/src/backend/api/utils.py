@@ -75,20 +75,21 @@ def return_prowler_provider(
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
     """
-    if provider.provider == Provider.ProviderChoices.AWS.value:
-        prowler_provider = AwsProvider
-    elif provider.provider == Provider.ProviderChoices.GCP.value:
-        prowler_provider = GcpProvider
-    elif provider.provider == Provider.ProviderChoices.AZURE.value:
-        prowler_provider = AzureProvider
-    elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
-        prowler_provider = KubernetesProvider
-    elif provider.provider == Provider.ProviderChoices.M365.value:
-        prowler_provider = M365Provider
-    elif provider.provider == Provider.ProviderChoices.GITHUB.value:
-        prowler_provider = GithubProvider
-    else:
-        raise ValueError(f"Provider type {provider.provider} not supported")
+    match provider.provider:
+        case Provider.ProviderChoices.AWS.value:
+            prowler_provider = AwsProvider
+        case Provider.ProviderChoices.GCP.value:
+            prowler_provider = GcpProvider
+        case Provider.ProviderChoices.AZURE.value:
+            prowler_provider = AzureProvider
+        case Provider.ProviderChoices.KUBERNETES.value:
+            prowler_provider = KubernetesProvider
+        case Provider.ProviderChoices.M365.value:
+            prowler_provider = M365Provider
+        case Provider.ProviderChoices.GITHUB.value:
+            prowler_provider = GithubProvider
+        case _:
+            raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
 
 
