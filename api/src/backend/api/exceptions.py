@@ -57,6 +57,11 @@ class TaskInProgressException(TaskManagementError):
         super().__init__()
 
 
+# Provider connection errors
+class ProviderConnectionError(Exception):
+    """Base exception for provider connection errors."""
+
+
 def custom_exception_handler(exc, context):
     if isinstance(exc, django_validation_error):
         if hasattr(exc, "error_dict"):

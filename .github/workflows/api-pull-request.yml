@@ -136,12 +136,6 @@ jobs:
         run: |
           poetry check --lock
 
-      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions - https://github.com/xmlsec/python-xmlsec/issues/320
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run pip install --force-reinstall --no-binary lxml lxml
-
       - name: Lint with ruff
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -211,7 +205,7 @@ jobs:
           files_ignore: ${{ env.IGNORE_FILES }}
       - name: Set up Docker Buildx
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - name: Build Container
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0

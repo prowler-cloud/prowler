@@ -11,6 +11,7 @@ SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
@@ -158,6 +159,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        "NAME": "api.validators.SpecialCharactersValidator",
+        "OPTIONS": {
+            "min_special_characters": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.UppercaseValidator",
+        "OPTIONS": {
+            "min_uppercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.LowercaseValidator",
+        "OPTIONS": {
+            "min_lowercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.NumericValidator",
+        "OPTIONS": {
+            "min_numeric": 1,
+        },
+    },
 ]
 
 SIMPLE_JWT = {
@@ -249,5 +274,6 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
 
-# This is needed to forward the host header when defined
-USE_X_FORWARDED_HOST = True
+# SAML requirement
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True

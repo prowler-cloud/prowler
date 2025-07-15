@@ -85,7 +85,7 @@ const SSRDataUser = async () => {
         </div>
       </div>
       <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
-        <SamlIntegrationCard id={samlConfig.data[0]?.id} />
+        <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
       </div>
     </div>
   );

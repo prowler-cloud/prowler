@@ -67,3 +67,27 @@ export interface ExpandedScanData extends ScanProps {
     alias: string;
   };
 }
+
+export interface ScansApiResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ScanProps[];
+  included?: Array<{
+    type: string;
+    id: string;
+    attributes: any;
+    relationships?: any;
+  }>;
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
