@@ -170,7 +170,15 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 ---
 
 ### **Step 4.5: M365 Credentials**
-For M365, Prowler App uses a service principal application with user and password to authenticate, for more information about the requirements needed for this provider check this [section](../getting-started/requirements.md#microsoft-365). Also, the detailed steps of how to add this provider to Prowler Cloud and start using it are [here](./microsoft365/getting-started-m365.md).
+For M365, you must enter your Domain ID and choose the authentication method you want to use:
+
+- Service Principal Authentication (Recommended)
+- User Authentication (only works if the user does not have MFA enabled)
+
+???+ note
+    User authentication with M365_USER and M365_PASSWORD is optional and will only work if the account does not enforce MFA.
+
+For full setup instructions and requirements, check the [Microsoft 365 provider requirements](./microsoft365/getting-started-m365.md).
 
 <img src="../../img/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700"/>
 
