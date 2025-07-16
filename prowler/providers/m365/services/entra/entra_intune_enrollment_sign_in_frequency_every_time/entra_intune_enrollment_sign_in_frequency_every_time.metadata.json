@@ -1,0 +1,33 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_intune_enrollment_sign_in_frequency_every_time",
+  "CheckTitle": "Ensure sign-in frequency for Intune Enrollment is set to every time",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that Conditional Access policies enforce sign-in frequency to Every time for Microsoft Intune Enrollment Application.",
+  "Risk": "If not enforced, attackers with compromised credentials may enroll a new device into Intune and gain persistent and elevated access through a bypass of compliance-based Conditional Access rules.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/intune/intune-service/fundamentals/deployment-guide-enrollment",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. o Under Users include All users. o Under Target resources select Resources (formerly cloud apps), choose Select resources and add Microsoft Intune Enrollment to the list. o Under Grant select Grant access. o Check either Require multifactor authentication or Require authentication strength. o Under Session check Sign-in frequency and select Every time. 4. Under Enable policy set it to Report-only until the organization is ready to enable it. 5. Click Create",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a Conditional Access policy that targets Microsoft Intune Enrollment and enforces sign-in frequency to 'Every time'. This ensures that users must reauthenticate for each Intune enrollment action, reducing the risk of unauthorized device enrollment using compromised credentials. Note: Microsoft accounts for a five-minute clock skew when 'every time' is selected, ensuring users are not prompted more frequently than once every five minutes.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
+    }
+  },
+  "Categories": [
+    "e3",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
