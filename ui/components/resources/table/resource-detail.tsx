@@ -1,12 +1,14 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet, Spinner } from "@nextui-org/react";
 import { InfoIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getFindingById } from "@/actions/findings";
+import { getResourceById } from "@/actions/resources";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
+import { CustomSection } from "@/components/ui/custom";
 import {
   DateWithTime,
   EntityInfoShort,
@@ -14,71 +16,10 @@ import {
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { FindingProps, ResourceProps } from "@/types";
+import { FindingProps, ProviderType, ResourceProps } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const Section = ({
-  title,
-  children,
-  action,
-}: {
-  title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-    <div className="flex items-center justify-between">
-      <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
-        {title}
-      </h3>
-      {action && <div>{action}</div>}
-    </div>
-    {children}
-  </div>
-);
-
-const TagsSection = ({ tags }: { tags: Record<string, string> }) => {
-  const tagEntries = Object.entries(tags || {});
-
-  if (tagEntries.length === 0) {
-    return (
-      <Section title="Resource Tags">
-        <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
-          No tags found for this resource.
-        </p>
-      </Section>
-    );
-  }
-
-  return (
-    <Section title="Resource Tags">
-      <div className="flex flex-wrap justify-between">
-        {tagEntries.map(([key, value]) => (
-          <div key={key} className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700 dark:text-prowler-theme-pale/90">
-              {key}:
-            </span>
-            <Snippet
-              className="bg-gray-50 dark:bg-slate-800"
-              hideSymbol
-              size="sm"
-              classNames={{
-                base: "max-w-48",
-              }}
-            >
-              <span className="text-xs">
-                {renderValue(value).slice(0, 16)}
-                {renderValue(value).length > 16 && "..."}
-              </span>
-            </Snippet>
-          </div>
-        ))}
-      </div>
-    </Section>
-  );
 };
 
 const buildCustomBreadcrumbs = (
@@ -88,10 +29,7 @@ const buildCustomBreadcrumbs = (
 ): CustomBreadcrumbItem[] => {
   const breadcrumbs: CustomBreadcrumbItem[] = [
     {
-      name:
-        resourceName.length > 20
-          ? `${resourceName.slice(-20)}...`
-          : resourceName,
+      name: "Resource Details",
       isClickable: !!findingTitle,
       onClick: findingTitle ? onBackToResource : undefined,
       isLast: !findingTitle,
@@ -110,10 +48,15 @@ const buildCustomBreadcrumbs = (
 };
 
 export const ResourceDetail = ({
-  resourceDetails,
+  resourceId,
+  initialResourceData,
 }: {
-  resourceDetails: ResourceProps;
+  resourceId: string;
+  initialResourceData: ResourceProps;
 }) => {
+  const [findingsData, setFindingsData] = useState<any[]>([]);
+  const [findingsLoading, setFindingsLoading] = useState(true);
+  const [findingsError, setFindingsError] = useState<string | null>(null);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
@@ -121,10 +64,43 @@ export const ResourceDetail = ({
     null,
   );
 
-  const resource = resourceDetails;
-  const attributes = resource.attributes;
-  const providerData = resource.relationships.provider.data.attributes;
-  const allFindings = resource.relationships.findings.data || [];
+  useEffect(() => {
+    const loadFindings = async () => {
+      setFindingsLoading(true);
+      setFindingsError(null);
+
+      try {
+        const resourceData = await getResourceById(resourceId, {
+          include: ["findings"],
+        });
+
+        if (resourceData?.data?.relationships?.findings) {
+          // Create dictionary for findings
+          const findingsDict = createDict("findings", resourceData);
+
+          // Expand findings
+          const findings =
+            resourceData.data.relationships.findings.data?.map(
+              (finding: any) => findingsDict[finding.id],
+            ) || [];
+
+          setFindingsData(findings);
+        } else {
+          setFindingsData([]);
+        }
+      } catch (err) {
+        console.error("Error loading findings:", err);
+        setFindingsError("Error loading findings");
+        setFindingsData([]);
+      } finally {
+        setFindingsLoading(false);
+      }
+    };
+
+    if (resourceId) {
+      loadFindings();
+    }
+  }, [resourceId]);
 
   const navigateToFinding = async (findingId: string) => {
     setSelectedFindingId(findingId);
@@ -164,7 +140,22 @@ export const ResourceDetail = ({
     setFindingDetails(null);
   };
 
-  // If a finding is selected, show the finding detail
+  if (!initialResourceData) {
+    return (
+      <div className="flex min-h-96 flex-col items-center justify-center gap-4 rounded-lg p-8">
+        <Spinner size="lg" />
+        <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
+          Loading resource details...
+        </p>
+      </div>
+    );
+  }
+
+  const resource = initialResourceData;
+  const attributes = resource.attributes;
+  const providerData = resource.relationships.provider.data.attributes;
+  const allFindings = findingsData;
+
   if (selectedFindingId) {
     const findingTitle =
       findingDetails?.attributes?.check_metadata?.checktitle ||
@@ -189,9 +180,9 @@ export const ResourceDetail = ({
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Resource Details section */}
-      <Section title="Resource Details">
+      <CustomSection title="Resource Details">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Resource ID" variant="simple">
+          <InfoField label="Resource UID" variant="simple">
             <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
               <span className="whitespace-pre-line text-xs">
                 {renderValue(attributes.uid)}
@@ -200,9 +191,7 @@ export const ResourceDetail = ({
           </InfoField>
           <div className="flex w-full items-end justify-between space-x-2">
             <EntityInfoShort
-              cloudProvider={
-                providerData.provider as "aws" | "azure" | "gcp" | "kubernetes"
-              }
+              cloudProvider={providerData.provider as ProviderType}
               entityAlias={providerData.alias as string}
               entityId={providerData.uid as string}
             />
@@ -231,14 +220,35 @@ export const ResourceDetail = ({
             <DateWithTime inline dateTime={attributes.updated_at} />
           </InfoField>
         </div>
-      </Section>
 
-      {/* Resource Tags section */}
-      <TagsSection tags={attributes.tags} />
+        {attributes.tags && Object.entries(attributes.tags).length > 0 && (
+          <div className="flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+              Tags
+            </h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {Object.entries(attributes.tags).map(([key, value]) => (
+                <InfoField key={key} label={key}>
+                  {renderValue(value)}
+                </InfoField>
+              ))}
+            </div>
+          </div>
+        )}
+      </CustomSection>
 
       {/* Finding associated with this resource section */}
-      <Section title="Findings associated with this resource">
-        {allFindings.length > 0 ? (
+      <CustomSection title="Findings associated with this resource">
+        {findingsLoading ? (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <Spinner size="sm" />
+            <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
+              Loading findings...
+            </p>
+          </div>
+        ) : findingsError ? (
+          <p className="py-4 text-sm text-red-600">{findingsError}</p>
+        ) : allFindings.length > 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
               Total findings: {allFindings.length}
@@ -270,7 +280,7 @@ export const ResourceDetail = ({
                   className="flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+                    <h3 className="text-left text-sm font-medium text-gray-800 dark:text-prowler-theme-pale/90">
                       {checktitle}
                     </h3>
                     <div className="flex items-center gap-2">
@@ -292,7 +302,7 @@ export const ResourceDetail = ({
             No findings found for this resource.
           </p>
         )}
-      </Section>
+      </CustomSection>
     </div>
   );
 };

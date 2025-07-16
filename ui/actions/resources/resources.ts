@@ -174,3 +174,44 @@ export const getResourceFields = async (fields: string, filters = {}) => {
     return undefined;
   }
 };
+
+export const getResourceById = async (
+  id: string,
+  {
+    fields = [],
+    include = [],
+  }: {
+    fields?: string[];
+    include?: string[];
+  } = {},
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/resources/${id}`);
+
+  if (fields.length > 0) {
+    url.searchParams.append("fields[resources]", fields.join(","));
+  }
+
+  if (include.length > 0) {
+    url.searchParams.append("include", include.join(","));
+  }
+
+  try {
+    const resource = await fetch(url.toString(), {
+      headers,
+    });
+
+    if (!resource.ok) {
+      throw new Error(`Error fetching resource: ${resource.status}`);
+    }
+
+    const data = await resource.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching resource by ID:", error);
+    return undefined;
+  }
+};

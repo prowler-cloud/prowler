@@ -48,7 +48,10 @@ const ResourceDetailsCell = ({ row }: { row: any }) => {
         description="View the Resource details"
         defaultOpen={isOpen}
       >
-        <ResourceDetail resourceDetails={row.original} />
+        <ResourceDetail
+          resourceId={row.original.id}
+          initialResourceData={row.original}
+        />
       </TriggerSheet>
     </div>
   );

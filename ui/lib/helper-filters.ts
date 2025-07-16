@@ -55,7 +55,7 @@ export const extractSortAndKey = (searchParams: Record<string, unknown>) => {
  * @param newField - The field name to replace with (e.g., 'updated_at').
  * @returns A new object with the updated filter key if a match is found.
  */
-export function replaceFilterFieldKey(
+export function replaceFieldKey(
   obj: Record<string, string>,
   oldField: string,
   newField: string,

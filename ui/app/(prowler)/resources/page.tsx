@@ -17,7 +17,7 @@ import {
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
-  replaceFilterFieldKey,
+  replaceFieldKey,
 } from "@/lib";
 import { ResourceProps, SearchParamsProps } from "@/types";
 
@@ -28,6 +28,7 @@ export default async function Resources({
 }) {
   const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
   const { filters, query } = extractFiltersAndQuery(searchParams);
+  const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");
 
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
@@ -36,8 +37,8 @@ export default async function Resources({
     hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
+    filters: outputFilters,
     sort: encodedSort,
-    filters,
   });
 
   // Extract unique regions, services, types, and names from the metadata endpoint
@@ -83,21 +84,16 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const defaultSort = "name";
   const { encodedSort } = extractSortAndKey({
     ...searchParams,
-    sort: searchParams.sort ?? defaultSort,
+    ...(searchParams.sort && { sort: searchParams.sort }),
   });
 
   const { filters, query } = extractFiltersAndQuery(searchParams);
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  const outputFilters = replaceFilterFieldKey(
-    filters,
-    "inserted_at",
-    "updated_at",
-  );
+  const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");
 
   const fetchResources = hasDateOrScan ? getResources : getLatestResources;
 
@@ -107,30 +103,25 @@ const SSRDataTable = async ({
     sort: encodedSort,
     filters: outputFilters,
     pageSize,
-    include: "findings,provider",
+    include: "provider",
   });
 
-  // Create dictionaries for findings and providers
-  const findingsDict = createDict("findings", resourcesData);
+  // Create dictionary for providers (removed findings dict since we're not including findings anymore)
   const providerDict = createDict("providers", resourcesData);
 
-  // Expand each resource with its corresponding findings and provider
+  // Expand each resource with its corresponding provider (removed findings expansion)
   const expandedResources = resourcesData?.data
     ? resourcesData.data.map((resource: ResourceProps) => {
-        const findings = {
-          meta: resource.relationships.findings.meta,
-          data: resource.relationships.findings.data?.map(
-            (finding: any) => findingsDict[finding.id],
-          ),
-        };
-
         const provider = {
           data: providerDict[resource.relationships.provider.data.id],
         };
 
         return {
           ...resource,
-          relationships: { findings, provider },
+          relationships: {
+            ...resource.relationships,
+            provider,
+          },
         };
       })
     : [];
