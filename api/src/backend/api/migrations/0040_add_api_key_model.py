@@ -5,7 +5,7 @@ from django.db import migrations, models
 import django.db.models.deletion
 import uuid
 from uuid import uuid4
-from api.db_utils import generate_random_token
+from api.db_utils import generate_random_token, DB_PROWLER_USER
 import django.core.validators
 
 
@@ -47,12 +47,14 @@ class Migration(migrations.Migration):
         ),
         # Enable RLS and create policy for api_keys
         migrations.RunSQL(
-            """
+            f"""
             ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
             CREATE POLICY rls_on_api_keys ON api_keys FOR ALL 
             USING (tenant_id = current_setting('row_level_security.tenant_id')::uuid);
+            GRANT SELECT, INSERT, UPDATE, DELETE ON api_keys TO {DB_PROWLER_USER};
             """,
-            reverse_sql="""
+            reverse_sql=f"""
+            REVOKE ALL ON api_keys FROM {DB_PROWLER_USER};
             DROP POLICY IF EXISTS rls_on_api_keys ON api_keys;
             ALTER TABLE api_keys DISABLE ROW LEVEL SECURITY;
             """
@@ -110,12 +112,14 @@ class Migration(migrations.Migration):
         
         # Enable RLS and create policy for api_key_activities
         migrations.RunSQL(
-            """
+            f"""
             ALTER TABLE api_key_activities ENABLE ROW LEVEL SECURITY;
             CREATE POLICY rls_on_api_key_activities ON api_key_activities FOR ALL 
             USING (tenant_id = current_setting('row_level_security.tenant_id')::uuid);
+            GRANT SELECT, INSERT, UPDATE, DELETE ON api_key_activities TO {DB_PROWLER_USER};
             """,
-            reverse_sql="""
+            reverse_sql=f"""
+            REVOKE ALL ON api_key_activities FROM {DB_PROWLER_USER};
             DROP POLICY IF EXISTS rls_on_api_key_activities ON api_key_activities;
             ALTER TABLE api_key_activities DISABLE ROW LEVEL SECURITY;
             """
