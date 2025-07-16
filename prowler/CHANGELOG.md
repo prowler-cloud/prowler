@@ -24,6 +24,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 - Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
 - Add Check's metadata service name validator [(#8289)](https://github.com/prowler-cloud/prowler/pull/8289)
+- Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
+
 ---
 
 ## [v5.8.2] (Prowler UNRELEASED)
