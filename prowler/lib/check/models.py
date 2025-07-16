@@ -149,6 +149,21 @@ class CheckMetadata(BaseModel):
             raise ValueError("ResourceType must be a non-empty string")
         return resource_type
 
+    @validator("ServiceName", pre=True, always=True)
+    def validate_service_name(cls, service_name, values):
+        if not service_name:
+            raise ValueError("ServiceName must be a non-empty string")
+
+        check_id = values.get("CheckID")
+        if check_id:
+            service_from_check_id = check_id.split("_")[0]
+            if service_name != service_from_check_id:
+                raise ValueError(
+                    f"ServiceName {service_name} does not belong to CheckID {check_id}"
+                )
+
+        return service_name
+
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
         """
