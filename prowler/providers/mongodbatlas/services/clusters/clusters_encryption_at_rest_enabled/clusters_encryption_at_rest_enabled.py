@@ -28,17 +28,6 @@ class clusters_encryption_at_rest_enabled(Check):
         for cluster in clusters_client.clusters.values():
             report = CheckReportMongoDBAtlas(metadata=self.metadata(), resource=cluster)
 
-            # Skip paused clusters
-            if cluster.paused:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Cluster {cluster.name} in project {cluster.project_name} is paused, "
-                    f"encryption at rest check skipped."
-                )
-                findings.append(report)
-                continue
-
-            # Check if cluster has encryption at rest enabled
             if cluster.encryption_at_rest_provider:
                 if cluster.encryption_at_rest_provider in ATLAS_ENCRYPTION_PROVIDERS:
                     if cluster.encryption_at_rest_provider == "NONE":
