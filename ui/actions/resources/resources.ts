@@ -12,6 +12,15 @@ export const getResources = async ({
   filters = {},
   pageSize = 10,
   include = "",
+  fields = [],
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string>;
+  pageSize?: number;
+  include?: string;
+  fields?: string[];
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -19,10 +28,13 @@ export const getResources = async ({
 
   const url = new URL(`${apiBaseUrl}/resources`);
 
+  if (fields.length > 0) {
+    url.searchParams.append("fields[resources]", fields.join(","));
+  }
+
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (include) url.searchParams.append("include", include);
-
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -53,6 +65,15 @@ export const getLatestResources = async ({
   include = "",
   filters = {},
   pageSize = 10,
+  fields = [],
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string>;
+  pageSize?: number;
+  include?: string;
+  fields?: string[];
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -60,10 +81,13 @@ export const getLatestResources = async ({
 
   const url = new URL(`${apiBaseUrl}/resources/latest`);
 
+  if (fields.length > 0) {
+    url.searchParams.append("fields[resources]", fields.join(","));
+  }
+
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (include) url.searchParams.append("include", include);
-
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -146,31 +170,6 @@ export const getLatestMetadataInfo = async ({
     return parsedData;
   } catch (error) {
     console.error("Error fetching latest metadata info:", error);
-    return undefined;
-  }
-};
-
-export const getResourceFields = async (fields: string, filters = {}) => {
-  const headers = await getAuthHeaders({ contentType: false });
-
-  const url = new URL(`${apiBaseUrl}/resources`);
-
-  url.searchParams.append("fields[resources]", fields);
-
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
-
-  try {
-    const resource = await fetch(url.toString(), {
-      headers,
-    });
-    const data = await resource.json();
-    const parsedData = parseStringify(data);
-
-    return parsedData;
-  } catch (error) {
-    console.error("Error fetching resource fields:", error);
     return undefined;
   }
 };

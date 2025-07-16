@@ -23,7 +23,7 @@ const renderValue = (value: string | null | undefined) => {
 };
 
 const buildCustomBreadcrumbs = (
-  resourceName: string,
+  _resourceName: string,
   findingTitle?: string,
   onBackToResource?: () => void,
 ): CustomBreadcrumbItem[] => {
@@ -55,8 +55,8 @@ export const ResourceDetail = ({
   initialResourceData: ResourceProps;
 }) => {
   const [findingsData, setFindingsData] = useState<any[]>([]);
+  const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
-  const [findingsError, setFindingsError] = useState<string | null>(null);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
@@ -67,31 +67,36 @@ export const ResourceDetail = ({
   useEffect(() => {
     const loadFindings = async () => {
       setFindingsLoading(true);
-      setFindingsError(null);
 
       try {
         const resourceData = await getResourceById(resourceId, {
           include: ["findings"],
+          fields: ["tags", "findings"],
         });
 
-        if (resourceData?.data?.relationships?.findings) {
-          // Create dictionary for findings
-          const findingsDict = createDict("findings", resourceData);
+        if (resourceData?.data) {
+          // Get tags from the detailed resource data
+          setResourceTags(resourceData.data.attributes.tags || {});
 
-          // Expand findings
-          const findings =
-            resourceData.data.relationships.findings.data?.map(
-              (finding: any) => findingsDict[finding.id],
-            ) || [];
-
-          setFindingsData(findings);
+          // Create dictionary for findings and expand them
+          if (resourceData.data.relationships?.findings) {
+            const findingsDict = createDict("findings", resourceData);
+            const findings =
+              resourceData.data.relationships.findings.data?.map(
+                (finding: any) => findingsDict[finding.id],
+              ) || [];
+            setFindingsData(findings);
+          } else {
+            setFindingsData([]);
+          }
         } else {
           setFindingsData([]);
+          setResourceTags({});
         }
       } catch (err) {
         console.error("Error loading findings:", err);
-        setFindingsError("Error loading findings");
         setFindingsData([]);
+        setResourceTags({});
       } finally {
         setFindingsLoading(false);
       }
@@ -221,20 +226,20 @@ export const ResourceDetail = ({
           </InfoField>
         </div>
 
-        {attributes.tags && Object.entries(attributes.tags).length > 0 && (
+        {resourceTags && Object.entries(resourceTags).length > 0 ? (
           <div className="flex flex-col gap-4">
             <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
               Tags
             </h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {Object.entries(attributes.tags).map(([key, value]) => (
+              {Object.entries(resourceTags).map(([key, value]) => (
                 <InfoField key={key} label={key}>
                   {renderValue(value)}
                 </InfoField>
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </CustomSection>
 
       {/* Finding associated with this resource section */}
@@ -246,8 +251,6 @@ export const ResourceDetail = ({
               Loading findings...
             </p>
           </div>
-        ) : findingsError ? (
-          <p className="py-4 text-sm text-red-600">{findingsError}</p>
         ) : allFindings.length > 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">

@@ -104,6 +104,17 @@ const SSRDataTable = async ({
     filters: outputFilters,
     pageSize,
     include: "provider",
+    fields: [
+      "name",
+      "failed_findings_count",
+      "region",
+      "service",
+      "type",
+      "provider",
+      "inserted_at",
+      "updated_at",
+      "uid",
+    ],
   });
 
   // Create dictionary for providers (removed findings dict since we're not including findings anymore)
