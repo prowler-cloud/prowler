@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21.",
   "CheckType": [
     "Infrastructure Security"
