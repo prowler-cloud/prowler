@@ -109,6 +109,7 @@ nav:
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
       - GitHub:
           - Authentication: tutorials/github/authentication.md
+          - Getting Started: tutorials/github/getting-started-github.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:

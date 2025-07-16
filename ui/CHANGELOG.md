@@ -19,6 +19,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
+
 ### Removed
 
 ---
