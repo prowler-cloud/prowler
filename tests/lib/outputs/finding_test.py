@@ -506,6 +506,57 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
+    def test_generate_output_iac_remote(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.scan_repository_url = "https://github.com/user/repo"
+        provider.auth_method = "No auth"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.file_path = "/path/to/iac/file.tf"
+        check_output.resource_name = "aws_s3_bucket.example"
+        check_output.resource_path = "/path/to/iac/file.tf"
+        check_output.file_line_range = [1, 5]
+        check_output.resource = {
+            "resource": "aws_s3_bucket.example",
+            "value": {},
+        }
+        check_output.resource_details = "test_resource_details"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="iac")
+        check_output.compliance = {}
+
+        # Mock output options
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Finding
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "No auth"
+        assert finding_output.resource_name == "aws_s3_bucket.example"
+        assert finding_output.resource_uid == "aws_s3_bucket.example"
+        assert finding_output.region == "/path/to/iac/file.tf"
+        assert finding_output.status == Status.PASS
+        assert finding_output.status_extended == "mock_status_extended"
+        assert finding_output.muted is False
+
+        # Metadata
+        assert finding_output.metadata.Provider == "iac"
+        assert finding_output.metadata.CheckID == "mock_check_id"
+        assert finding_output.metadata.CheckTitle == "mock_check_title"
+        assert finding_output.metadata.CheckType == []
+        assert finding_output.metadata.CheckAliases == []
+        assert finding_output.metadata.ServiceName == "mock_service_name"
+        assert finding_output.metadata.SubServiceName == ""
+        assert finding_output.metadata.ResourceIdTemplate == ""
+
     def assert_keys_lowercase(self, d):
         for k, v in d.items():
             assert k.islower()

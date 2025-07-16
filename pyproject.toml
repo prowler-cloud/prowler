@@ -43,6 +43,7 @@ dependencies = [
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "detect-secrets==1.5.0",
+  "dulwich==0.23.0",
   "google-api-python-client==2.163.0",
   "google-auth-httplib2>=0.1,<0.3",
   "jsonschema==4.23.0",
