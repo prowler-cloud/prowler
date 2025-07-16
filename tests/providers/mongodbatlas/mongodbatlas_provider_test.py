@@ -17,9 +17,6 @@ from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
     ATLAS_BASE_URL,
     ATLAS_PRIVATE_KEY,
     ATLAS_PUBLIC_KEY,
-    EMAIL,
-    FIRST_NAME,
-    LAST_NAME,
     MOCK_ORGS_RESPONSE,
     USER_ID,
     USERNAME,
@@ -43,9 +40,7 @@ class TestMongodbatlasProvider:
                 return_value=MongoDBAtlasIdentityInfo(
                     user_id=USER_ID,
                     username=USERNAME,
-                    email=EMAIL,
-                    first_name=FIRST_NAME,
-                    last_name=LAST_NAME,
+                    roles=["API_KEY"],
                 ),
             ),
         ):
@@ -58,7 +53,6 @@ class TestMongodbatlasProvider:
             assert provider.session.public_key == ATLAS_PUBLIC_KEY
             assert provider.session.private_key == ATLAS_PRIVATE_KEY
             assert provider.identity.username == USERNAME
-            assert provider.identity.email == EMAIL
 
     def test_setup_session_with_credentials(self):
         """Test session setup with provided credentials"""
@@ -108,9 +102,6 @@ class TestMongodbatlasProvider:
 
         assert identity.user_id == USER_ID
         assert identity.username == USERNAME
-        assert identity.email == EMAIL
-        assert identity.first_name == FIRST_NAME
-        assert identity.last_name == LAST_NAME
         assert identity.roles == ["API_KEY"]
 
     @patch("requests.get")
@@ -159,7 +150,7 @@ class TestMongodbatlasProvider:
                 return_value=MongoDBAtlasIdentityInfo(
                     user_id=USER_ID,
                     username=USERNAME,
-                    email=EMAIL,
+                    roles=["API_KEY"],
                 ),
             ),
         ):
@@ -198,7 +189,7 @@ class TestMongodbatlasProvider:
                 return_value=MongoDBAtlasIdentityInfo(
                     user_id=USER_ID,
                     username=USERNAME,
-                    email=EMAIL,
+                    roles=["API_KEY"],
                 ),
             ),
         ):
