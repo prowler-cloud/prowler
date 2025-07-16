@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 - Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
 - Use subscription ID in Azure mutelist [(#8290)](https://github.com/prowler-cloud/prowler/pull/8290)
+- `ServiceName` field in Network Firewall checks metadata [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
 
 ---
