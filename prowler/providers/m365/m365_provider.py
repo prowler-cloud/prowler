@@ -987,7 +987,7 @@ class M365Provider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
             else:
-                # Prowler Cloud Static Credentials
+                # Static Credentials
                 identity.identity_type = "Service Principal"
                 identity.identity_id = session._client_id
 
