@@ -247,9 +247,6 @@ class MongodbatlasProvider(Provider):
             identity = MongoDBAtlasIdentityInfo(
                 user_id=session.public_key,  # Use public key as identifier
                 username=f"api-key-{session.public_key[:8]}",  # Create a username from public key
-                email=None,  # Not available from orgs endpoint
-                first_name=None,  # Not available from orgs endpoint
-                last_name=None,  # Not available from orgs endpoint
                 roles=["API_KEY"],  # Indicate this is an API key authentication
             )
 
@@ -268,14 +265,8 @@ class MongodbatlasProvider(Provider):
     def print_credentials(self):
         """Print the MongoDB Atlas credentials"""
         report_lines = [
-            f"MongoDB Atlas User: {Fore.YELLOW}{self.identity.username}{Style.RESET_ALL}",
             f"MongoDB Atlas User ID: {Fore.YELLOW}{self.identity.user_id}{Style.RESET_ALL}",
         ]
-
-        if self.identity.email:
-            report_lines.append(
-                f"MongoDB Atlas Email: {Fore.YELLOW}{self.identity.email}{Style.RESET_ALL}"
-            )
 
         if self.organization_id:
             report_lines.append(

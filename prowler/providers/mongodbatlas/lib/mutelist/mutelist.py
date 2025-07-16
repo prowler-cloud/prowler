@@ -24,7 +24,7 @@ class MongoDBAtlasMutelist(Mutelist):
         return self.is_muted(
             account_name,
             finding.check_metadata.CheckID,
-            "*",  # MongoDB Atlas doesn't have regions in the same way as AWS
+            "*",  # TODO: Study regions in MongoDB Atlas
             finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
         )

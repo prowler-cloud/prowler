@@ -19,9 +19,6 @@ class MongoDBAtlasIdentityInfo(BaseModel):
 
     user_id: str
     username: str
-    email: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
     roles: Optional[List[str]] = []
 
 
