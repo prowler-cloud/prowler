@@ -97,7 +97,8 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 )}
                 key={index}
               >
-                {(isOpen && groupLabel) || isOpen === undefined ? (
+                {(menus.length > 0 && isOpen && groupLabel) ||
+                isOpen === undefined ? (
                   <p className="text-muted-foreground max-w-[248px] truncate px-4 pb-2 text-xs font-normal">
                     {groupLabel}
                   </p>
