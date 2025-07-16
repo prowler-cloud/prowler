@@ -13,7 +13,11 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import create_objects_in_batches, rls_transaction
+from api.db_utils import (
+    create_objects_in_batches,
+    rls_transaction,
+    update_objects_in_batches,
+)
 from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
@@ -549,33 +553,27 @@ def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
         scan = Scan.objects.get(pk=scan_id)
         provider_id = scan.provider_id
 
-        resources = list(
-            Resource.all_objects.filter(tenant_id=tenant_id, provider_id=provider_id)
-        )
-
-    # For each resource, calculate failed findings count based on latest findings
-    for resource in resources:
-        with rls_transaction(tenant_id):
-            # Get the latest finding for each finding.uid that affects this resource
-            latest_findings_subquery = (
-                Finding.all_objects.filter(
-                    tenant_id=tenant_id, uid=OuterRef("uid"), resources=resource
-                )
-                .order_by("-inserted_at")
-                .values("id")[:1]
-            )
-
-            # Count failed findings from the latest findings
-            failed_count = Finding.all_objects.filter(
+    with rls_transaction(tenant_id):
+        latest_finding = (
+            Finding.all_objects.filter(
                 tenant_id=tenant_id,
-                resources=resource,
-                id__in=Subquery(latest_findings_subquery),
+                resources=OuterRef("pk"),
                 status=FindingStatus.FAIL,
                 muted=False,
-            ).count()
+            )
+            .order_by("uid", "-inserted_at")
+            .distinct("uid")
+            .values("id")
+        )
 
-            resource.failed_findings_count = failed_count
-            resource.save(update_fields=["failed_findings_count"])
+    with rls_transaction(tenant_id):
+        resource_queryset = Resource.all_objects.filter(
+            tenant_id=tenant_id, provider_id=provider_id
+        ).annotate(failed_findings_count=Count(Subquery(latest_finding), distinct=True))
+
+    update_objects_in_batches(
+        tenant_id, Resource, resource_queryset, ["failed_findings_count"]
+    )
 
 
 def create_compliance_requirements(tenant_id: str, scan_id: str):
