@@ -1,0 +1,32 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "projects_network_access_list_not_open_to_world",
+  "CheckTitle": "Ensure MongoDB Atlas project network access list is not open to the world",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "mongodbatlas:project-id:project-name",
+  "Severity": "high",
+  "ResourceType": "MongoDBAtlasProject",
+  "Description": "Ensure that MongoDB Atlas projects have properly configured network access lists that don't allow unrestricted access from anywhere on the internet. Network access lists should be configured to allow access only from specific IP addresses, CIDR blocks, or AWS security groups to minimize the attack surface.",
+  "Risk": "If a MongoDB Atlas project has network access entries that allow unrestricted access (0.0.0.0/0 or ::/0), it exposes the database to potential attacks from anywhere on the internet. This significantly increases the risk of unauthorized access, data breaches, and malicious activities.",
+  "RelatedUrl": "https://docs.atlas.mongodb.com/security/ip-access-list/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure network access lists to allow access only from specific IP addresses, CIDR blocks, or AWS security groups. Remove any entries that allow unrestricted access (0.0.0.0/0 or ::/0) and replace them with more restrictive rules based on your application's requirements.",
+      "Url": "https://docs.atlas.mongodb.com/security/ip-access-list/"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies that MongoDB Atlas projects don't have network access entries that allow unrestricted access from the internet. Projects without any network access entries are also flagged as they may default to allowing unrestricted access."
+}

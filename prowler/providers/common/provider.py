@@ -255,6 +255,16 @@ class Provider(ABC):
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
                     )
+                elif "mongodbatlas" in provider_class_name.lower():
+                    provider_class(
+                        atlas_public_key=arguments.atlas_public_key,
+                        atlas_private_key=arguments.atlas_private_key,
+                        atlas_organization_id=arguments.atlas_organization_id,
+                        atlas_project_id=arguments.atlas_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
