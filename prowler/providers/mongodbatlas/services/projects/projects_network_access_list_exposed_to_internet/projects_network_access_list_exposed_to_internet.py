@@ -7,7 +7,7 @@ from prowler.providers.mongodbatlas.services.projects.projects_client import (
 )
 
 
-class projects_network_access_list_not_open_to_world(Check):
+class projects_network_access_list_exposed_to_internet(Check):
     """Check if MongoDB Atlas project network access list is not open to the world
 
     This class verifies that MongoDB Atlas projects don't have network access
@@ -28,7 +28,6 @@ class projects_network_access_list_not_open_to_world(Check):
         for project in projects_client.projects.values():
             report = CheckReportMongoDBAtlas(metadata=self.metadata(), resource=project)
 
-            # Check if project has network access entries
             if not project.network_access_entries:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -36,15 +35,12 @@ class projects_network_access_list_not_open_to_world(Check):
                     f"which may allow unrestricted access."
                 )
             else:
-                # Check for open world access
                 open_entries = []
 
                 for entry in project.network_access_entries:
-                    # Check CIDR blocks
                     if entry.cidr_block and entry.cidr_block in ATLAS_OPEN_WORLD_CIDRS:
                         open_entries.append(f"CIDR: {entry.cidr_block}")
 
-                    # Check IP addresses that are effectively open world
                     if entry.ip_address and entry.ip_address in ["0.0.0.0", "::"]:
                         open_entries.append(f"IP: {entry.ip_address}")
 

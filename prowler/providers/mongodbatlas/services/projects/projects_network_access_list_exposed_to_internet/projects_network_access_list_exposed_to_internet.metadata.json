@@ -1,7 +1,7 @@
 {
   "Provider": "mongodbatlas",
-  "CheckID": "projects_network_access_list_not_open_to_world",
-  "CheckTitle": "Ensure MongoDB Atlas project network access list is not open to the world",
+  "CheckID": "projects_network_access_list_exposed_to_internet",
+  "CheckTitle": "Ensure MongoDB Atlas project network access list is not exposed to the internet",
   "CheckType": [],
   "ServiceName": "projects",
   "SubServiceName": "",
