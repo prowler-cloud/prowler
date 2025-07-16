@@ -1,18 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Card, CardBody, CardHeader, Input } from "@nextui-org/react";
 import { format } from "date-fns";
 import { Copy, Eye, Key, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { createAPIKey, revokeAPIKey } from "@/actions/users/api-keys";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -39,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/toast";
 import { APIKey } from "@/types/users";
 
 interface APIKeysCardProps {
@@ -86,7 +79,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
       setShowKeyDialog(true);
       setKeyName("");
       setExpirationOption("never");
-      
+
       toast({
         title: "API Key created",
         description: "Your new API key has been created successfully.",
@@ -94,7 +87,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create API key",
+        description:
+          error instanceof Error ? error.message : "Failed to create API key",
         variant: "destructive",
       });
     } finally {
@@ -113,7 +107,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to revoke API key",
+        description:
+          error instanceof Error ? error.message : "Failed to revoke API key",
         variant: "destructive",
       });
     } finally {
@@ -135,80 +130,80 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>API Keys</CardTitle>
-              <CardDescription className="mt-1">
-                Manage your API keys for programmatic access
-              </CardDescription>
-            </div>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create API Key
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create API Key</DialogTitle>
-                  <DialogDescription>
-                    Create a new API key for programmatic access to Prowler.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="key-name">Key Name</Label>
-                    <Input
-                      id="key-name"
-                      placeholder="My API Key"
-                      value={keyName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKeyName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expiration">Expiration</Label>
-                    <Select
-                      value={expirationOption}
-                      onValueChange={setExpirationOption}
-                    >
-                      <SelectTrigger id="expiration">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="never">Never</SelectItem>
-                        <SelectItem value="1day">1 day</SelectItem>
-                        <SelectItem value="7days">7 days</SelectItem>
-                        <SelectItem value="30days">30 days</SelectItem>
-                        <SelectItem value="90days">90 days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowCreateDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleCreateKey}
-                    disabled={!keyName || isCreating}
-                  >
-                    {isCreating ? "Creating..." : "Create Key"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+        <CardHeader className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <h4 className="text-lg font-bold">API Keys</h4>
+            <p className="text-xs text-gray-500">
+              Manage your API keys for programmatic access
+            </p>
           </div>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create API Key
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create API Key</DialogTitle>
+                <DialogDescription>
+                  Create a new API key for programmatic access to Prowler.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="key-name">Key Name</Label>
+                  <Input
+                    id="key-name"
+                    placeholder="My API Key"
+                    value={keyName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setKeyName(e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expiration">Expiration</Label>
+                  <Select
+                    value={expirationOption}
+                    onValueChange={setExpirationOption}
+                  >
+                    <SelectTrigger id="expiration">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">Never</SelectItem>
+                      <SelectItem value="1day">1 day</SelectItem>
+                      <SelectItem value="7days">7 days</SelectItem>
+                      <SelectItem value="30days">30 days</SelectItem>
+                      <SelectItem value="90days">90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateKey}
+                  disabled={!keyName || isCreating}
+                >
+                  {isCreating ? "Creating..." : "Create Key"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
-        <CardContent>
+        <CardBody>
           {activeKeys.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Key className="mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <Key className="text-muted-foreground mb-4 h-12 w-12" />
+              <p className="muted-foreground text-sm">
                 No API keys found. Create your first API key to get started.
               </p>
             </div>
@@ -270,9 +265,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
               </TableBody>
             </Table>
           )}
-
-
-        </CardContent>
+        </CardBody>
       </Card>
 
       <Dialog open={showKeyDialog} onOpenChange={setShowKeyDialog}>
@@ -280,23 +273,19 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
           <DialogHeader>
             <DialogTitle>API Key Created</DialogTitle>
             <DialogDescription>
-              Your API key has been created. This is the only time you'll see
-              this key, so make sure to save it securely.
+              Your API key has been created. This is the only time you&apos;ll
+              see this key, so make sure to save it securely.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Key Name</Label>
-              <p className="text-sm text-muted-foreground">{newKeyName}</p>
+              <p className="muted-foreground text-sm">{newKeyName}</p>
             </div>
             <div className="space-y-2">
               <Label>API Key</Label>
               <div className="flex items-center space-x-2">
-                <Input
-                  value={newKey}
-                  readOnly
-                  className="font-mono text-xs"
-                />
+                <Input value={newKey} readOnly className="font-mono text-xs" />
                 <Button
                   size="icon"
                   variant="outline"
@@ -332,4 +321,4 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
       </Dialog>
     </>
   );
-} 
+}

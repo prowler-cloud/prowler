@@ -12,7 +12,7 @@ import django.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("api", "0033_samltoken"),
+        ("api", "0039_resource_resources_failed_findings_idx"),
     ]
 
     operations = [

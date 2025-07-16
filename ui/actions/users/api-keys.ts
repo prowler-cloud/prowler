@@ -2,14 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { APIKey, APIKeyCreateData, APIKeyCreateResponse } from "@/types/users";
 
-import { buildURL, getHeaders } from "../util";
-
 export async function getAPIKeys(): Promise<{ data: APIKey[] }> {
-  const response = await fetch(buildURL(`/api-keys`), {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/api-keys`);
+
+  const response = await fetch(url.toString(), {
     cache: "no-store",
-    headers: getHeaders(),
+    headers,
   });
 
   if (!response.ok) {
@@ -22,6 +24,7 @@ export async function getAPIKeys(): Promise<{ data: APIKey[] }> {
 export async function createAPIKey(
   data: APIKeyCreateData,
 ): Promise<APIKeyCreateResponse> {
+  const headers = await getAuthHeaders({ contentType: true });
   const body = {
     data: {
       type: "api-keys",
@@ -29,9 +32,10 @@ export async function createAPIKey(
     },
   };
 
-  const response = await fetch(buildURL("/api-keys"), {
+  const url = new URL(`${apiBaseUrl}/api-keys`);
+  const response = await fetch(url.toString(), {
     method: "POST",
-    headers: getHeaders(),
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -45,9 +49,12 @@ export async function createAPIKey(
 }
 
 export async function revokeAPIKey(apiKeyId: string): Promise<void> {
-  const response = await fetch(buildURL(`/api-keys/${apiKeyId}`), {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/api-keys/${apiKeyId}`);
+
+  const response = await fetch(url.toString(), {
     method: "DELETE",
-    headers: getHeaders(),
+    headers,
   });
 
   if (!response.ok) {
@@ -56,4 +63,4 @@ export async function revokeAPIKey(apiKeyId: string): Promise<void> {
   }
 
   revalidatePath("/profile");
-} 
+}

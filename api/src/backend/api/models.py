@@ -333,13 +333,12 @@ class APIKeyActivity(RowLevelSecurityProtectedModel):
         indexes = [
             # Primary lookup patterns for security monitoring
             models.Index(fields=["api_key", "-timestamp"], name="api_key_activity_key_time_idx"),
-            models.Index(fields=["user", "-timestamp"], name="api_key_activity_user_time_idx"),
-            models.Index(fields=["tenant_id", "-timestamp"], name="api_key_activity_tenant_time_idx"),
+            models.Index(fields=["tenant_id", "-timestamp"], name="api_key_activity_tenant_idx"),
             
             # Security analysis indexes
             models.Index(fields=["source_ip", "-timestamp"], name="api_key_activity_ip_time_idx"),
-            models.Index(fields=["endpoint", "-timestamp"], name="api_key_activity_endpoint_time_idx"),
-            models.Index(fields=["status_code", "-timestamp"], name="api_key_activity_status_time_idx"),
+            models.Index(fields=["endpoint", "-timestamp"], name="api_key_activity_endpoint_idx"),
+            models.Index(fields=["status_code", "-timestamp"], name="api_key_activity_status_idx"),
             
             # Incident response indexes
             models.Index(
