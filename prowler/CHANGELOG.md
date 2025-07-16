@@ -23,7 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Ensure `is_service_role` only returns `True` for service roles [(#8274)](https://github.com/prowler-cloud/prowler/pull/8274)
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 - Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
-
+- Add Check's metadata service name validator [(#8289)](https://github.com/prowler-cloud/prowler/pull/8289)
 ---
 
 ## [v5.8.2] (Prowler UNRELEASED)
