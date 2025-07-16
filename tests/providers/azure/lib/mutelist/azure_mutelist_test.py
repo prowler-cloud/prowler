@@ -66,7 +66,7 @@ class TestAzureMutelist:
         finding.resource_tags = {}
         finding.subscription = "subscription_1"
 
-        assert mutelist.is_finding_muted(finding)
+        assert mutelist.is_finding_muted(finding, "subscription_1")
 
     def test_mute_finding(self):
         # Mutelist
