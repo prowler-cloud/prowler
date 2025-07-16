@@ -260,7 +260,9 @@ def prowler():
             )
 
         if excluded_checks_file:
-            excluded_checks_from_file = parse_checks_from_file(excluded_checks_file, provider)
+            excluded_checks_from_file = parse_checks_from_file(
+                excluded_checks_file, provider
+            )
             checks_to_execute = exclude_checks_to_run(
                 checks_to_execute, list(excluded_checks_from_file)
             )
