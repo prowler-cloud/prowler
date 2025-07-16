@@ -161,8 +161,24 @@ class CheckMetadata(BaseModel):
                 raise ValueError(
                     f"ServiceName {service_name} does not belong to CheckID {check_id}"
                 )
+            if not service_name.islower():
+                raise ValueError(f"ServiceName {service_name} must be in lowercase")
 
         return service_name
+
+    @validator("CheckID", pre=True, always=True)
+    def valid_check_id(cls, check_id, values):
+        if not check_id:
+            raise ValueError("CheckID must be a non-empty string")
+
+        values.get("ServiceName")
+        if check_id:
+            if "-" in check_id:
+                raise ValueError(
+                    f"CheckID {check_id} contains a hyphen, which is not allowed"
+                )
+
+        return check_id
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:

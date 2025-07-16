@@ -26,10 +26,10 @@ pass_html_finding = """
                         <tr class="p-3 mb-2 bg-success-custom">
                             <td>PASS</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -44,10 +44,10 @@ fail_html_finding = """
                         <tr class="table-danger">
                             <td>FAIL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td>test-resource-uid</td>
                             <td>
 &#x2022;key1=value1
@@ -66,10 +66,10 @@ muted_html_finding = """
                         <tr class="table-warning">
                             <td>MUTED (PASS)</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -84,10 +84,10 @@ manual_html_finding = """
                         <tr class="table-info">
                             <td>MANUAL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -470,10 +470,10 @@ class TestHTML:
                 status="FAIL",
                 resource_tags={"key1": "value1", "key2": "value2"},
                 severity="high",
-                service_name="test-service",
+                service_name="service",
                 region=AWS_REGION_EU_WEST_1,
-                check_id="test-check-id",
-                check_title="test-check-id",
+                check_id="service_test_check_id",
+                check_title="service_test_check_id",
                 resource_uid="test-resource-uid",
                 status_extended="test-status-extended",
                 risk="test-risk",
