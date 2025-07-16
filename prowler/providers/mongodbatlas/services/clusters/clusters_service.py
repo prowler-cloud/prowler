@@ -49,7 +49,6 @@ class Clusters(MongoDBAtlasService):
         clusters = {}
 
         try:
-            # Get projects first to iterate through them
             from prowler.providers.mongodbatlas.services.projects.projects_client import (
                 projects_client,
             )
@@ -82,7 +81,6 @@ class Clusters(MongoDBAtlasService):
         project_clusters = {}
 
         try:
-            # Get all clusters in the project with pagination
             clusters_data = self._paginate_request(f"/groups/{project_id}/clusters")
 
             for cluster_data in clusters_data:
@@ -112,25 +110,18 @@ class Clusters(MongoDBAtlasService):
         """
         cluster_name = cluster_data.get("name", "")
 
-        # Get encryption at rest configuration
         encryption_provider = self._get_encryption_at_rest_provider(cluster_data)
 
-        # Get backup configuration
         backup_enabled = self._get_backup_enabled(cluster_data)
 
-        # Extract provider settings
         provider_settings = cluster_data.get("providerSettings", {})
 
-        # Extract replication specs
         replication_specs = cluster_data.get("replicationSpecs", [])
 
-        # Extract auto scaling settings
         auto_scaling = cluster_data.get("autoScaling", {})
 
-        # Extract connection strings
         connection_strings = cluster_data.get("connectionStrings", {})
 
-        # Extract tags
         tags = cluster_data.get("tags", [])
 
         return Cluster(
@@ -167,13 +158,11 @@ class Clusters(MongoDBAtlasService):
             Optional[str]: Encryption provider or None
         """
         try:
-            # Check if encryption at rest is enabled
             encryption_at_rest = cluster_data.get("encryptionAtRestProvider")
 
             if encryption_at_rest:
                 return encryption_at_rest
 
-            # Check provider settings for encryption
             provider_settings = cluster_data.get("providerSettings", {})
             encrypt_ebs_volume = provider_settings.get("encryptEBSVolume", False)
 
@@ -197,10 +186,9 @@ class Clusters(MongoDBAtlasService):
             bool: True if backup is enabled, False otherwise
         """
         try:
-            # Check for backup enabled flag
             backup_enabled = cluster_data.get("backupEnabled", False)
 
-            # Also check for pit enabled as an indicator of backup
+            # Also check for point-in-time enabled as an indicator of backup
             pit_enabled = cluster_data.get("pitEnabled", False)
 
             return backup_enabled or pit_enabled

@@ -16,9 +16,6 @@ ATLAS_BASE_URL = "https://cloud.mongodb.com/api/atlas/v2"
 # Test user identity
 USER_ID = "test_public_key"
 USERNAME = "api-key-test_pub"
-EMAIL = None
-FIRST_NAME = None
-LAST_NAME = None
 
 # Test project
 PROJECT_ID = "test_project_id"
@@ -95,9 +92,7 @@ def set_mocked_mongodbatlas_provider(
     identity: MongoDBAtlasIdentityInfo = MongoDBAtlasIdentityInfo(
         user_id=USER_ID,
         username=USERNAME,
-        email=EMAIL,
-        first_name=FIRST_NAME,
-        last_name=LAST_NAME,
+        roles=["API_KEY"],
     ),
     audit_config: dict = None,
     organization_id: str = None,
