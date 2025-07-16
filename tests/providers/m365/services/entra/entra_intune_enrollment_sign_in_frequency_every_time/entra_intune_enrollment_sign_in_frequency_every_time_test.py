@@ -126,7 +126,7 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_intune_enrollment_sign_in_frequency_every_time_enabled(self):
+    def test_entra_intune_sign_in_frequency_every_time_enabled(self):
         id = str(uuid4())
         display_name = "Test Intune Enrollment Policy"
         entra_client = mock.MagicMock
@@ -192,14 +192,14 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
             check = entra_intune_enrollment_sign_in_frequency_every_time()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy {display_name} enforces Every Time sign-in frequency for Intune Enrollment."
+                == "No Conditional Access Policy enforces Every Time sign-in frequency for Intune Enrollment."
             )
-            assert result[0].resource == entra_client.conditional_access_policies[id]
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_entra_all_users_intune_enrollment_4hours(self):
@@ -307,7 +307,7 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
                             included_applications=[
-                                "0000000a-0000-0000-c000-000000000000"
+                                "d4ebce55-015a-49b5-a083-c84d1797ae8c"
                             ],  # Intune Enrollment
                             excluded_applications=[],
                             included_user_actions=[],
