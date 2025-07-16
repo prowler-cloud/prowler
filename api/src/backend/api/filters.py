@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
+from dateutil.parser import parse
 from django.conf import settings
 from django.db.models import Q
 from django_filters.rest_framework import (
@@ -340,6 +341,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     tags = CharFilter(method="filter_tag")
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
 
     class Meta:
         model = Resource
@@ -352,6 +355,82 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "type": ["exact", "icontains", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
+        }
+
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("updated_at")
+            or self.data.get("updated_at__date")
+            or self.data.get("updated_at__gte")
+            or self.data.get("updated_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[updated_at], filter[updated_at.gte], "
+                        "or filter[updated_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            parse(self.data.get("updated_at__gte")).date()
+            if self.data.get("updated_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            parse(self.data.get("updated_at__lte")).date()
+            if self.data.get("updated_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
+    def filter_tag_key(self, queryset, name, value):
+        return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
+
+    def filter_tag_value(self, queryset, name, value):
+        return queryset.filter(Q(tags__value=value) | Q(tags__value__icontains=value))
+
+    def filter_tag(self, queryset, name, value):
+        # We won't know what the user wants to filter on just based on the value,
+        # and we don't want to build special filtering logic for every possible
+        # provider tag spec, so we'll just do a full text search
+        return queryset.filter(tags__text_search=value)
+
+
+class LatestResourceFilter(ProviderRelationshipFilterSet):
+    tag_key = CharFilter(method="filter_tag_key")
+    tag_value = CharFilter(method="filter_tag_value")
+    tag = CharFilter(method="filter_tag")
+    tags = CharFilter(method="filter_tag")
+
+    class Meta:
+        model = Resource
+        fields = {
+            "provider": ["exact", "in"],
+            "uid": ["exact", "icontains"],
+            "name": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
+            "service": ["exact", "icontains", "in"],
+            "type": ["exact", "icontains", "in"],
         }
 
     def filter_tag_key(self, queryset, name, value):

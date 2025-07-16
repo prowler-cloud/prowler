@@ -7,4 +7,5 @@ export * from "./custom-input";
 export * from "./custom-loader";
 export * from "./custom-radio";
 export * from "./custom-server-input";
+export * from "./custom-table-link";
 export * from "./custom-textarea";

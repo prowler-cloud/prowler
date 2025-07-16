@@ -636,6 +636,10 @@ def execute(
                     global_provider.identity.account_name
                 )
             for finding in check_findings:
+                if global_provider.type == "azure":
+                    is_finding_muted_args["subscription_id"] = (
+                        global_provider.identity.subscriptions.get(finding.subscription)
+                    )
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args

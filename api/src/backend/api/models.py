@@ -769,6 +769,8 @@ class Resource(RowLevelSecurityProtectedModel):
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
 
+    failed_findings_count = models.IntegerField(default=0)
+
     # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
@@ -814,6 +816,10 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_id"],
                 name="resources_tenant_provider_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "-failed_findings_count", "id"],
+                name="resources_failed_findings_idx",
             ),
         ]
 
@@ -1057,6 +1063,12 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - tenant_id
         #   - id
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "finding_id"],
+                name="rfm_tenant_finding_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "finding_id"),
