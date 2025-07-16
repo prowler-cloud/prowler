@@ -6,20 +6,36 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
 - SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
+- Navigation link in Scans view to access Compliance Overview [(#8251)](https://github.com/prowler-cloud/prowler/pull/8251)
+- Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
+- Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
+
+### Security
+
+- Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
 ### 🔄 Changed
 
 - Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
 
 ### 🐞 Fixed
+
+- Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
+
 ### Removed
 
 ---
 
 ## [v1.8.1] (Prowler 5.8.1)
 
+### 🔄 Changed
+
+- Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
+
 ### Removed
+
 - Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
 ---

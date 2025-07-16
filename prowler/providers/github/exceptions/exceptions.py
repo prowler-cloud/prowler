@@ -30,6 +30,10 @@ class GithubBaseException(ProwlerException):
             "message": "Github invalid App Key or App ID for GitHub APP login",
             "remediation": "Check user and password and ensure they are properly set up as in your Github account.",
         },
+        (5006, "GithubInvalidProviderIdError"): {
+            "message": "The provided provider ID does not match with the authenticated user or accessible organizations",
+            "remediation": "Check the provider ID and ensure it matches the authenticated user or an organization you have access to.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -92,4 +96,11 @@ class GithubInvalidCredentialsError(GithubCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             5005, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GithubInvalidProviderIdError(GithubCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            5006, file=file, original_exception=original_exception, message=message
         )

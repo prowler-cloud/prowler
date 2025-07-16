@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Sum, When
+from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
@@ -14,9 +14,11 @@ from api.compliance import (
     generate_scan_compliance,
 )
 from api.db_utils import create_objects_in_batches, rls_transaction
+from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    Processor,
     Provider,
     Resource,
     ResourceScanSummary,
@@ -132,14 +134,28 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Find the mutelist processor if it exists
+    with rls_transaction(tenant_id):
+        try:
+            mutelist_processor = Processor.objects.get(
+                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
+            )
+        except Processor.DoesNotExist:
+            mutelist_processor = None
+        except Exception as e:
+            logger.error(f"Error processing mutelist rules: {e}")
+            mutelist_processor = None
+
     try:
         with rls_transaction(tenant_id):
             try:
-                prowler_provider = initialize_prowler_provider(provider_instance)
+                prowler_provider = initialize_prowler_provider(
+                    provider_instance, mutelist_processor
+                )
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                exc = ValueError(
+                exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
@@ -274,6 +290,9 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
+                    # If the finding is muted at this time the reason must be the configured Mutelist
+                    muted_reason = "Muted by mutelist" if finding.muted else None
+
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -289,6 +308,7 @@ def perform_prowler_scan(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
+                        muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
@@ -356,11 +376,15 @@ def perform_prowler_scan(
 def aggregate_findings(tenant_id: str, scan_id: str):
     """
     Aggregates findings for a given scan and stores the results in the ScanSummary table.
+    Also updates the failed_findings_count for each resource based on the latest findings.
 
     This function retrieves all findings associated with a given `scan_id` and calculates various
     metrics such as counts of failed, passed, and muted findings, as well as their deltas (new,
     changed, unchanged). The results are grouped by `check_id`, `service`, `severity`, and `region`.
     These aggregated metrics are then stored in the `ScanSummary` table.
+
+    Additionally, it updates the failed_findings_count field for each resource based on the most
+    recent findings for each finding.uid.
 
     Args:
         tenant_id (str): The ID of the tenant to which the scan belongs.
@@ -381,6 +405,8 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_new: Muted findings with a delta of 'new'.
         - muted_changed: Muted findings with a delta of 'changed'.
     """
+    _update_resource_failed_findings_count(tenant_id, scan_id)
+
     with rls_transaction(tenant_id):
         findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -503,6 +529,53 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
         }
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+
+
+def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
+    """
+    Update the failed_findings_count field for resources based on the latest findings.
+
+    This function calculates the number of failed findings for each resource by:
+    1. Getting the latest finding for each finding.uid
+    2. Counting failed findings per resource
+    3. Updating the failed_findings_count field for each resource
+
+    Args:
+        tenant_id (str): The ID of the tenant to which the scan belongs.
+        scan_id (str): The ID of the scan for which to update resource counts.
+    """
+
+    with rls_transaction(tenant_id):
+        scan = Scan.objects.get(pk=scan_id)
+        provider_id = scan.provider_id
+
+        resources = list(
+            Resource.all_objects.filter(tenant_id=tenant_id, provider_id=provider_id)
+        )
+
+    # For each resource, calculate failed findings count based on latest findings
+    for resource in resources:
+        with rls_transaction(tenant_id):
+            # Get the latest finding for each finding.uid that affects this resource
+            latest_findings_subquery = (
+                Finding.all_objects.filter(
+                    tenant_id=tenant_id, uid=OuterRef("uid"), resources=resource
+                )
+                .order_by("-inserted_at")
+                .values("id")[:1]
+            )
+
+            # Count failed findings from the latest findings
+            failed_count = Finding.all_objects.filter(
+                tenant_id=tenant_id,
+                resources=resource,
+                id__in=Subquery(latest_findings_subquery),
+                status=FindingStatus.FAIL,
+                muted=False,
+            ).count()
+
+            resource.failed_findings_count = failed_count
+            resource.save(update_fields=["failed_findings_count"])
 
 
 def create_compliance_requirements(tenant_id: str, scan_id: str):

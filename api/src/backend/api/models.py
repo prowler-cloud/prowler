@@ -34,6 +34,7 @@ from api.db_utils import (
     IntegrationTypeEnumField,
     InvitationStateEnumField,
     MemberRoleEnumField,
+    ProcessorTypeEnumField,
     ProviderEnumField,
     ProviderSecretTypeEnumField,
     ScanTriggerEnumField,
@@ -409,20 +410,6 @@ class Scan(RowLevelSecurityProtectedModel):
     name = models.CharField(
         blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
     )
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-    )
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-        null=True,
-        blank=True,
-    )
     trigger = ScanTriggerEnumField(
         choices=TriggerChoices.choices,
     )
@@ -441,8 +428,28 @@ class Scan(RowLevelSecurityProtectedModel):
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
     output_location = models.CharField(blank=True, null=True, max_length=200)
-
-    # TODO: mutelist foreign key
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
+    processor = models.ForeignKey(
+        "Processor",
+        on_delete=models.SET_NULL,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "scans"
@@ -554,6 +561,8 @@ class Resource(RowLevelSecurityProtectedModel):
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
 
+    failed_findings_count = models.IntegerField(default=0)
+
     # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
@@ -599,6 +608,10 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_id"],
                 name="resources_tenant_provider_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "-failed_findings_count", "id"],
+                name="resources_failed_findings_idx",
             ),
         ]
 
@@ -698,6 +711,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
     muted = models.BooleanField(default=False, null=False)
+    muted_reason = models.TextField(
+        blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
+    )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Denormalize resource data for performance
@@ -839,6 +855,12 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - tenant_id
         #   - id
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "finding_id"],
+                name="rfm_tenant_finding_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "finding_id"),
@@ -1473,7 +1495,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             ),
         ]
 
-    def clean(self, old_email_domain=None):
+    def clean(self, old_email_domain=None, is_create=False):
         # Domain must not contain @
         if "@" in self.email_domain:
             raise ValidationError({"email_domain": "Domain must not contain @"})
@@ -1497,6 +1519,25 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
                 {"tenant": "There is a problem with your email domain."}
             )
 
+        # The entityID must be unique in the system
+        idp_settings = self._parsed_metadata
+        entity_id = idp_settings.get("entity_id")
+
+        if entity_id:
+            # Find any SocialApp with this entityID
+            q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
+
+            # If updating, exclude our own SocialApp from the check
+            if not is_create:
+                q = q.exclude(client_id=old_email_domain)
+            else:
+                q = q.exclude(client_id=self.email_domain)
+
+            if q.exists():
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
+
     def save(self, *args, **kwargs):
         self.email_domain = self.email_domain.strip().lower()
         is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
@@ -1509,7 +1550,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             old_email_domain = None
             old_metadata_xml = None
 
-        self.clean(old_email_domain)
+        self._parsed_metadata = self._parse_metadata()
+        self.clean(old_email_domain, is_create)
         super().save(*args, **kwargs)
 
         if is_create or (
@@ -1552,6 +1594,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
 
         # Entity ID
         entity_id = root.attrib.get("entityID")
+        if not entity_id:
+            raise ValidationError({"metadata_xml": "Missing entityID in metadata."})
 
         # SSO endpoint (must exist)
         sso = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService", ns)
@@ -1590,9 +1634,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         Create or update the corresponding SocialApp based on email_domain.
         If the domain changed, update the matching SocialApp.
         """
-        idp_settings = self._parse_metadata()
         settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
-        settings_dict["idp"] = idp_settings
+        settings_dict["idp"] = self._parsed_metadata
 
         current_site = Site.objects.get(id=settings.SITE_ID)
 
@@ -1608,7 +1651,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             social_app.client_id = client_id
             social_app.name = name
             social_app.settings = settings_dict
-            social_app.provider_id = idp_settings["entity_id"]
+            social_app.provider_id = self._parsed_metadata["entity_id"]
             social_app.save()
             social_app.sites.set([current_site])
         else:
@@ -1617,7 +1660,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
                 client_id=client_id,
                 name=name,
                 settings=settings_dict,
-                provider_id=idp_settings["entity_id"],
+                provider_id=self._parsed_metadata["entity_id"],
             )
             social_app.sites.set([current_site])
 
@@ -1796,3 +1839,42 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "lighthouse-configurations"
+
+
+class Processor(RowLevelSecurityProtectedModel):
+    class ProcessorChoices(models.TextChoices):
+        MUTELIST = "mutelist", _("Mutelist")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    processor_type = ProcessorTypeEnumField(choices=ProcessorChoices.choices)
+    configuration = models.JSONField(default=dict)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "processors"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "processor_type"),
+                name="unique_processor_types_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="processor_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "processor_type"],
+                name="processor_tenant_type_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "processors"

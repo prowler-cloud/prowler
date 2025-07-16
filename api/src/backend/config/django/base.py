@@ -159,6 +159,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        "NAME": "api.validators.SpecialCharactersValidator",
+        "OPTIONS": {
+            "min_special_characters": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.UppercaseValidator",
+        "OPTIONS": {
+            "min_uppercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.LowercaseValidator",
+        "OPTIONS": {
+            "min_lowercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.NumericValidator",
+        "OPTIONS": {
+            "min_numeric": 1,
+        },
+    },
 ]
 
 SIMPLE_JWT = {

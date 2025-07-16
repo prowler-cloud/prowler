@@ -710,7 +710,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>IAC path:</b> {provider.scan_path}
+                                {"<b>IAC repository URL:</b> " + provider.scan_repository_url if provider.scan_repository_url else "<b>IAC path:</b> " + provider.scan_path}
                             </li>
                         </ul>
                     </div>
@@ -723,7 +723,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>IAC authentication method:</b> local
+                                <b>IAC authentication method:</b> {provider.auth_method}
                             </li>
                         </ul>
                     </div>
