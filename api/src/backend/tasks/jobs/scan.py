@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError, connection
-from django.db.models import Case, Count, IntegerField, Sum, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
@@ -599,18 +599,27 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             prowler_provider = return_prowler_provider(provider_instance)
 
         # Get check status data by region from findings
+        findings = (
+            Finding.all_objects.filter(scan_id=scan_id, muted=False)
+            .only("id", "check_id", "status")
+            .prefetch_related(
+                Prefetch(
+                    "resources",
+                    queryset=Resource.objects.only("id", "region"),
+                    to_attr="small_resources",
+                )
+            )
+            .iterator(chunk_size=1000)
+        )
+
         check_status_by_region = {}
         with rls_transaction(tenant_id):
-            findings = Finding.objects.filter(scan_id=scan_id, muted=False)
             for finding in findings:
-                # Get region from resources
-                for resource in finding.resources.all():
+                for resource in finding.small_resources:
                     region = resource.region
-                    region_dict = check_status_by_region.setdefault(region, {})
-                    current_status = region_dict.get(finding.check_id)
-                    if current_status == "FAIL":
-                        continue
-                    region_dict[finding.check_id] = finding.status
+                    current_status = check_status_by_region.setdefault(region, {})
+                    if current_status.get(finding.check_id) != "FAIL":
+                        current_status[finding.check_id] = finding.status
 
         try:
             # Try to get regions from provider
