@@ -60,7 +60,6 @@ class Test_Parser:
         assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
-        assert not parsed.excluded_checks_file
         assert not parsed.checks_folder
         assert not parsed.service
         assert not parsed.severity
@@ -68,6 +67,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -111,13 +111,13 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -153,13 +153,13 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -190,13 +190,13 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
