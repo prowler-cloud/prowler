@@ -33,7 +33,11 @@ class entra_intune_enrollment_sign_in_frequency_every_time(Check):
             if (
                 "d4ebce55-015a-49b5-a083-c84d1797ae8c"
                 not in policy.conditions.application_conditions.included_applications
-                and "d4ebce55-015a-49b5-a083-c84d1797ae8c"
+            ):
+                continue
+
+            if (
+                "d4ebce55-015a-49b5-a083-c84d1797ae8c"
                 in policy.conditions.application_conditions.excluded_applications
             ):
                 continue
