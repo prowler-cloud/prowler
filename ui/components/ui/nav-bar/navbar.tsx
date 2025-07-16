@@ -4,7 +4,6 @@ import { ReactNode } from "react";
 
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
-import { UserProfileProps } from "@/types";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
