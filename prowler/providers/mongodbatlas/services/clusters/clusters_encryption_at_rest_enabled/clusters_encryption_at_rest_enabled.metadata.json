@@ -10,7 +10,7 @@
   "ResourceType": "MongoDBAtlasCluster",
   "Description": "Ensure that MongoDB Atlas clusters have encryption at rest enabled to protect data stored on disk. Encryption at rest provides an additional layer of security by encrypting data before it's written to storage, protecting against unauthorized access to the underlying storage media.",
   "Risk": "If encryption at rest is not enabled on MongoDB Atlas clusters, sensitive data stored in the database is vulnerable to unauthorized access if the underlying storage is compromised. This could lead to data breaches, compliance violations, and exposure of sensitive information.",
-  "RelatedUrl": "https://docs.atlas.mongodb.com/security/encryption-at-rest/",
+  "RelatedUrl": "https://www.mongodb.com/docs/atlas/security-kms-encryption/",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Enable encryption at rest for your MongoDB Atlas clusters. This can be configured when creating a new cluster or by modifying an existing cluster's settings. Choose an appropriate encryption provider (AWS KMS, Azure Key Vault, or Google Cloud KMS) based on your cloud provider and security requirements.",
-      "Url": "https://docs.atlas.mongodb.com/security/encryption-at-rest/"
+      "Url": "https://www.mongodb.com/docs/atlas/security-kms-encryption/"
     }
   },
   "Categories": [
