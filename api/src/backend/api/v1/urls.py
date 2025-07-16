@@ -4,7 +4,6 @@ from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
-    APIKeyViewSet,
     ComplianceOverviewViewSet,
     CustomSAMLLoginView,
     CustomTokenObtainView,
@@ -44,7 +43,6 @@ from api.v1.views import (
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register(r"users", UserViewSet, basename="user")
-router.register(r"api-keys", APIKeyViewSet, basename="apikey")
 router.register(r"tenants", TenantViewSet, basename="tenant")
 router.register(r"providers", ProviderViewSet, basename="provider")
 router.register(r"provider-groups", ProviderGroupViewSet, basename="providergroup")

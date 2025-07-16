@@ -975,9 +975,30 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         summary="Delete a tenant",
         description="Remove a tenant from the system by their ID.",
     ),
+    api_keys=extend_schema(
+        tags=["Tenant"],
+        summary="List all API keys for tenant",
+        description="Retrieve a list of all active API keys for the current tenant. Revoked keys are not included.",
+    ),
+    api_keys_create=extend_schema(
+        tags=["Tenant"],
+        summary="Create a new API key",
+        description="Generate a new API key for the tenant. The key will only be shown once upon creation.",
+    ),
+    api_keys_retrieve=extend_schema(
+        tags=["Tenant"],
+        summary="Retrieve API key details",
+        description="Fetch detailed information about a specific active API key.",
+    ),
+    api_keys_destroy=extend_schema(
+        tags=["Tenant"],
+        summary="Revoke an API key",
+        description="Revoke an API key. This action cannot be undone.",
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
+@method_decorator(CACHE_DECORATOR, name="api_keys")
 class TenantViewSet(BaseTenantViewset):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
@@ -1019,6 +1040,87 @@ class TenantViewSet(BaseTenantViewset):
             ).delete()
         # Delete tenant in batches
         delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # API Key management actions
+    @action(detail=True, methods=["get"], url_path="api-keys", url_name="api-keys")
+    def api_keys(self, request, pk=None):
+        """List all API keys for the tenant."""
+        tenant = self.get_object()
+        api_keys = APIKey.objects.filter(
+            tenant_id=tenant.id,
+            revoked_at__isnull=True
+        ).order_by("-created_at")
+        
+        # Apply filtering using APIKeyFilter
+        filterset = APIKeyFilter(request.GET, queryset=api_keys, request=request)
+        filtered_queryset = filterset.qs
+        
+        page = self.paginate_queryset(filtered_queryset)
+        if page is not None:
+            serializer = APIKeySerializer(page, many=True, context=self.get_serializer_context())
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = APIKeySerializer(filtered_queryset, many=True, context=self.get_serializer_context())
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="api-keys/create", url_name="api-keys-create")
+    def api_keys_create(self, request, pk=None):
+        """Create a new API key for the tenant."""
+        tenant = self.get_object()
+        
+        # Create serializer with tenant context - override the request.tenant_id temporarily
+        original_tenant_id = getattr(request, 'tenant_id', None)
+        request.tenant_id = tenant.id
+        
+        context = self.get_serializer_context()
+        
+        serializer = APIKeyCreateSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        api_key = serializer.save()
+        
+        # Restore original tenant_id
+        if original_tenant_id is not None:
+            request.tenant_id = original_tenant_id
+        elif hasattr(request, 'tenant_id'):
+            delattr(request, 'tenant_id')
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"], url_path="api-keys/(?P<api_key_id>[^/.]+)", url_name="api-keys-retrieve")
+    def api_keys_retrieve(self, request, pk=None, api_key_id=None):
+        """Retrieve details of a specific API key."""
+        tenant = self.get_object()
+        
+        try:
+            api_key = APIKey.objects.get(
+                id=api_key_id,
+                tenant_id=tenant.id,
+                revoked_at__isnull=True
+            )
+        except APIKey.DoesNotExist:
+            raise NotFound("API key not found or has been revoked.")
+        
+        serializer = APIKeySerializer(api_key, context=self.get_serializer_context())
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["delete"], url_path="api-keys/(?P<api_key_id>[^/.]+)/revoke", url_name="api-keys-destroy")
+    def api_keys_destroy(self, request, pk=None, api_key_id=None):
+        """Revoke an API key."""
+        tenant = self.get_object()
+        
+        try:
+            api_key = APIKey.objects.get(
+                id=api_key_id,
+                tenant_id=tenant.id,
+                revoked_at__isnull=True
+            )
+        except APIKey.DoesNotExist:
+            raise NotFound("API key not found or has been revoked.")
+        
+        # Revoke the key
+        api_key.revoke()
+        
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -3944,54 +4046,4 @@ class ProcessorViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
 
-@extend_schema_view(
-    list=extend_schema(
-        tags=["User"],
-        summary="List all API keys",
-        description="Retrieve a list of all active API keys for the current tenant. Revoked keys are not included.",
-    ),
-    retrieve=extend_schema(
-        tags=["User"],
-        summary="Retrieve API key details",
-        description="Fetch detailed information about a specific active API key.",
-    ),
-    create=extend_schema(
-        tags=["User"],
-        summary="Create a new API key",
-        description="Generate a new API key. The key will only be shown once upon creation.",
-    ),
-    destroy=extend_schema(
-        tags=["User"],
-        summary="Revoke an API key",
-        description="Revoke an API key. This action cannot be undone.",
-    ),
-)
-@method_decorator(CACHE_DECORATOR, name="list")
-class APIKeyViewSet(BaseRLSViewSet):
-    serializer_class = APIKeySerializer
-    http_method_names = ["get", "post", "delete"]
-    filterset_class = APIKeyFilter
-    ordering = ["-created_at"]
-    ordering_fields = ["name", "created_at", "expires_at", "last_used_at"]
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        # Return only non-revoked API keys for the current tenant
-        return APIKey.objects.filter(
-            tenant_id=self.request.tenant_id, 
-            revoked_at__isnull=True
-        )
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return APIKeyCreateSerializer
-        return APIKeySerializer
-
-    def destroy(self, request, *args, **kwargs):
-        api_key = self.get_object()
-        
-        # Revoke the key (the queryset already filters out revoked keys,
-        # so if we found it, it's not revoked yet)
-        api_key.revoke()
-        
-        return Response(status=status.HTTP_204_NO_CONTENT)
