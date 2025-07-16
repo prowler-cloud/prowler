@@ -60,6 +60,7 @@ class Test_Parser:
         assert not parsed.only_logs
         assert not parsed.check
         assert not parsed.checks_file
+        assert not parsed.excluded_checks_file
         assert not parsed.checks_folder
         assert not parsed.service
         assert not parsed.severity
@@ -110,6 +111,7 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
+        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
@@ -151,6 +153,7 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
+        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
@@ -187,6 +190,7 @@ class Test_Parser:
         assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
+        assert not parsed.excluded_checks_file
         assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
