@@ -40,7 +40,7 @@ class TestAzureMutelist:
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
-    def test_is_finding_muted(self):
+    def test_is_finding_muted_subscription_name(self):
         # Mutelist
         mutelist_content = {
             "Accounts": {
@@ -66,7 +66,39 @@ class TestAzureMutelist:
         finding.resource_tags = {}
         finding.subscription = "subscription_1"
 
-        assert mutelist.is_finding_muted(finding, "subscription_1")
+        assert mutelist.is_finding_muted(
+            finding, "12345678-1234-1234-1234-123456789012"
+        )
+
+    def test_is_finding_muted_subscription_id(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "12345678-1234-1234-1234-123456789012": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = AzureMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.check_metadata = MagicMock
+        finding.check_metadata.CheckID = "check_test"
+        finding.location = "West Europe"
+        finding.status = "FAIL"
+        finding.resource_name = "test_resource"
+        finding.resource_tags = {}
+        finding.subscription = "subscription_1"
+
+        assert mutelist.is_finding_muted(
+            finding, "12345678-1234-1234-1234-123456789012"
+        )
 
     def test_mute_finding(self):
         # Mutelist
