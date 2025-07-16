@@ -5,19 +5,15 @@ from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Sum, When
+from django.db import IntegrityError, OperationalError, connection
+from django.db.models import Case, Count, IntegerField, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import (
-    create_objects_in_batches,
-    rls_transaction,
-    update_objects_in_batches,
-)
+from api.db_utils import create_objects_in_batches, rls_transaction
 from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
@@ -551,29 +547,31 @@ def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
 
     with rls_transaction(tenant_id):
         scan = Scan.objects.get(pk=scan_id)
-        provider_id = scan.provider_id
+        provider_id = str(scan.provider_id)
 
-    with rls_transaction(tenant_id):
-        latest_finding = (
-            Finding.all_objects.filter(
-                tenant_id=tenant_id,
-                resources=OuterRef("pk"),
-                status=FindingStatus.FAIL,
-                muted=False,
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE resources AS r
+                   SET failed_findings_count = COALESCE((
+                       SELECT COUNT(*) FROM (
+                         SELECT DISTINCT ON (f.uid) f.uid
+                           FROM findings AS f
+                           JOIN resource_finding_mappings AS rfm
+                             ON rfm.finding_id = f.id
+                            AND rfm.tenant_id   = f.tenant_id
+                          WHERE f.tenant_id = %s
+                            AND f.status    = %s
+                            AND f.muted     = FALSE
+                            AND rfm.resource_id = r.id
+                          ORDER BY f.uid, f.inserted_at DESC
+                       ) AS latest_uids
+                   ), 0)
+                 WHERE r.tenant_id   = %s
+                   AND r.provider_id = %s
+            """,
+                [tenant_id, FindingStatus.FAIL, tenant_id, provider_id],
             )
-            .order_by("uid", "-inserted_at")
-            .distinct("uid")
-            .values("id")
-        )
-
-    with rls_transaction(tenant_id):
-        resource_queryset = Resource.all_objects.filter(
-            tenant_id=tenant_id, provider_id=provider_id
-        ).annotate(failed_findings_count=Count(Subquery(latest_finding), distinct=True))
-
-    update_objects_in_batches(
-        tenant_id, Resource, resource_queryset, ["failed_findings_count"]
-    )
 
 
 def create_compliance_requirements(tenant_id: str, scan_id: str):

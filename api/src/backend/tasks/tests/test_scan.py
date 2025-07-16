@@ -19,6 +19,7 @@ from api.models import (
     Finding,
     Provider,
     Resource,
+    Scan,
     Severity,
     StateChoices,
     StatusChoices,
@@ -1171,81 +1172,65 @@ class TestCreateComplianceRequirements:
 
 @pytest.mark.django_db
 class TestUpdateResourceFailedFindingsCount:
-    @patch("api.models.Resource.all_objects.filter")
-    @patch("api.models.Finding.all_objects.filter")
-    def test_failed_findings_count_update(
-        self,
-        mock_finding_filter,
-        mock_resource_filter,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
+
+    def test_execute_sql_update(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
     ):
-        tenant = tenants_fixture[0]
-        scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        tenant_id = resource.tenant_id
+        scan_id = resource.provider.scans.first().id
 
-        scan.provider = provider
-        scan.save()
+        # Common kwargs for all failing findings
+        base_kwargs = {
+            "tenant_id": tenant_id,
+            "scan_id": scan_id,
+            "delta": None,
+            "status": StatusChoices.FAIL,
+            "status_extended": "test status extended",
+            "impact": Severity.critical,
+            "impact_extended": "test impact extended",
+            "severity": Severity.critical,
+            "raw_result": {
+                "status": StatusChoices.FAIL,
+                "impact": Severity.critical,
+                "severity": Severity.critical,
+            },
+            "tags": {"test": "dev-qa"},
+            "check_id": "test_check_id",
+            "check_metadata": {
+                "CheckId": "test_check_id",
+                "Description": "test description apple sauce",
+                "servicename": "ec2",
+            },
+            "first_seen_at": "2024-01-02T00:00:00Z",
+        }
 
-        tenant_id = str(tenant.id)
-        scan_id = str(scan.id)
+        # UIDs to create (two with same UID, one unique)
+        uids = ["test_finding_uid_1", "test_finding_uid_1", "test_finding_uid_2"]
 
-        resource1 = MagicMock()
-        resource1.uid = "res-1"
-        resource1.failed_findings_count = None
-        resource1.save = MagicMock()
+        # Create findings and associate with the resource
+        for uid in uids:
+            finding = Finding.objects.create(uid=uid, **base_kwargs)
+            finding.add_resources([resource])
 
-        resource2 = MagicMock()
-        resource2.uid = "res-2"
-        resource2.failed_findings_count = None
-        resource2.save = MagicMock()
+        resource.refresh_from_db()
+        assert resource.failed_findings_count == 0
 
-        mock_resource_filter.return_value = [resource1, resource2]
+        _update_resource_failed_findings_count(tenant_id=tenant_id, scan_id=scan_id)
+        resource.refresh_from_db()
 
-        fake_subquery_qs = MagicMock()
-        fake_subquery_qs.order_by.return_value = fake_subquery_qs
-        fake_subquery_qs.values.return_value = fake_subquery_qs
-        fake_subquery_qs.__getitem__.return_value = fake_subquery_qs
+        # Only two since two findings share the same UID
+        assert resource.failed_findings_count == 2
 
-        def finding_filter_side_effect(*args, **kwargs):
-            if "status" in kwargs:
-                qs_count = MagicMock()
-                if kwargs.get("resources") == resource1:
-                    qs_count.count.return_value = 3
-                else:
-                    qs_count.count.return_value = 0
-                return qs_count
-            return fake_subquery_qs
-
-        mock_finding_filter.side_effect = finding_filter_side_effect
-
-        _update_resource_failed_findings_count(tenant_id, scan_id)
-
-        # resource1 should have been updated to 3
-        assert resource1.failed_findings_count == 3
-        resource1.save.assert_called_once_with(update_fields=["failed_findings_count"])
-
-        # resource2 should have been updated to 0
-        assert resource2.failed_findings_count == 0
-        resource2.save.assert_called_once_with(update_fields=["failed_findings_count"])
-
-    @patch("api.models.Resource.all_objects.filter", return_value=[])
-    @patch("api.models.Finding.all_objects.filter")
-    def test_no_resources_no_error(
+    @patch("tasks.jobs.scan.Scan.objects.get")
+    def test_scan_not_found(
         self,
-        mock_finding_filter,
-        mock_resource_filter,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
+        mock_scan_get,
     ):
-        tenant = tenants_fixture[0]
-        scan = scans_fixture[0]
-        provider = providers_fixture[0]
-        scan.provider = provider
-        scan.save()
+        mock_scan_get.side_effect = Scan.DoesNotExist
 
-        _update_resource_failed_findings_count(str(tenant.id), str(scan.id))
-
-        mock_finding_filter.assert_not_called()
+        with pytest.raises(Scan.DoesNotExist):
+            _update_resource_failed_findings_count(
+                "8614ca97-8370-4183-a7f7-e96a6c7d2c93",
+                "4705bed5-8782-4e8b-bab6-55e8043edaa6",
+            )
