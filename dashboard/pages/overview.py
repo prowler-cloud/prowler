@@ -1,5 +1,4 @@
 # Standard library imports
-import csv
 import glob
 import json
 import os
@@ -20,7 +19,6 @@ from dash.dependencies import Input, Output
 # Config import
 from dashboard.config import (
     critical_color,
-    encoding_format,
     fail_color,
     folder_path_overview,
     high_color,
@@ -46,6 +44,7 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -55,11 +54,13 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
+    try:
+        df = pd.read_csv(file, sep=";")
+        num_rows = len(df)
         if num_rows > 1:
             csv_files.append(file)
+    except Exception:
+        logger.error(f"Error reading file {file}")
 
 
 # Import logos providers
@@ -191,7 +192,13 @@ else:
         data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
 
     # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
-    data = data.sort_values("TIMESTAMP").drop_duplicates("FINDING_UID", keep="last")
+    data["DATE"] = data["TIMESTAMP"].dt.date
+    data = (
+        data.sort_values("TIMESTAMP")
+        .groupby(["DATE", "FINDING_UID"], as_index=False)
+        .last()
+    )
+    data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
 
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
     data_valid = pd.DataFrame()

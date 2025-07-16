@@ -7,7 +7,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { UserProfileProps } from "@/types";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
@@ -15,7 +14,6 @@ import { UserNav } from "../user-nav/user-nav";
 interface NavbarProps {
   title: string;
   icon: string | ReactNode;
-  user: UserProfileProps;
 }
 
 interface BreadcrumbItem {
@@ -24,7 +22,7 @@ interface BreadcrumbItem {
   isLast: boolean;
 }
 
-export function Navbar({ title, icon, user }: NavbarProps) {
+export function Navbar({ title, icon }: NavbarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -117,7 +115,7 @@ export function Navbar({ title, icon, user }: NavbarProps) {
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           <ThemeSwitch />
-          <UserNav user={user} />
+          <UserNav />
         </div>
       </div>
     </header>

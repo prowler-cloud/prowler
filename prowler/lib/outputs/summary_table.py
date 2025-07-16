@@ -55,8 +55,12 @@ def display_summary_table(
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
         elif provider.type == "iac":
-            entity_type = "Directory"
-            audited_entities = provider.scan_path
+            if provider.scan_repository_url:
+                entity_type = "Repository"
+                audited_entities = provider.scan_repository_url
+            else:
+                entity_type = "Directory"
+                audited_entities = provider.scan_path
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
