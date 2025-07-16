@@ -34,15 +34,15 @@ class TestProjectsNetworkAccessListNotOpenToWorld:
                 return_value=set_mocked_mongodbatlas_provider(),
             ),
             patch(
-                "prowler.providers.mongodbatlas.services.projects.projects_network_access_list_not_open_to_world.projects_network_access_list_not_open_to_world.projects_client",
+                "prowler.providers.mongodbatlas.services.projects.projects_network_access_list_exposed_to_internet.projects_network_access_list_exposed_to_internet.projects_client",
                 new=projects_client,
             ),
         ):
-            from prowler.providers.mongodbatlas.services.projects.projects_network_access_list_not_open_to_world.projects_network_access_list_not_open_to_world import (
-                projects_network_access_list_not_open_to_world,
+            from prowler.providers.mongodbatlas.services.projects.projects_network_access_list_exposed_to_internet.projects_network_access_list_exposed_to_internet import (
+                projects_network_access_list_exposed_to_internet,
             )
 
-            check = projects_network_access_list_not_open_to_world()
+            check = projects_network_access_list_exposed_to_internet()
             return check.execute()
 
     def test_check_with_no_network_access_entries(self):

@@ -66,7 +66,7 @@ Manages MongoDB Atlas clusters:
 
 ### Network Access List Security
 
-**Check**: `projects_network_access_list_not_open_to_world`
+**Check**: `projects_network_access_list_exposed_to_internet`
 
 Ensures that MongoDB Atlas projects don't have network access entries that allow unrestricted access from the internet.
 
@@ -111,7 +111,7 @@ prowler mongodbatlas --atlas-project-id <project_id>
 
 ```bash
 # Run only network access checks
-prowler mongodbatlas --checks projects_network_access_list_not_open_to_world
+prowler mongodbatlas --checks projects_network_access_list_exposed_to_internet
 
 # Run only encryption checks
 prowler mongodbatlas --checks clusters_encryption_at_rest_enabled

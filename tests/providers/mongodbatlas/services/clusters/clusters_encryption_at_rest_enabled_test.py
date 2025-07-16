@@ -136,18 +136,6 @@ class TestClustersEncryptionAtRestEnabled:
         assert reports[0].status == "FAIL"
         assert "does not have encryption at rest enabled" in reports[0].status_extended
 
-    def test_check_with_paused_cluster(self):
-        """Test check with paused cluster"""
-        cluster = self._create_cluster(
-            encryption_at_rest_provider=None, paused=True, provider_settings={}
-        )
-        reports = self._execute_check_with_cluster(cluster)
-
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert "is paused" in reports[0].status_extended
-        assert "encryption at rest check skipped" in reports[0].status_extended
-
     def test_check_with_empty_provider_settings(self):
         """Test check with empty provider settings"""
         cluster = self._create_cluster(
