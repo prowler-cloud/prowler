@@ -23,6 +23,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
     print_checks,
@@ -121,6 +122,7 @@ def prowler():
 
     checks = args.check
     excluded_checks = args.excluded_check
+    excluded_checks_file = args.excluded_checks_file
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
@@ -257,11 +259,19 @@ def prowler():
                 checks_to_execute, excluded_checks
             )
 
+        if excluded_checks_file:
+            excluded_checks_from_file = parse_checks_from_file(excluded_checks_file, provider)
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, list(excluded_checks_from_file)
+            )
+
         # Exclude services if --excluded-services
         if excluded_services:
             checks_to_execute = exclude_services_to_run(
                 checks_to_execute, excluded_services, provider
             )
+
+
 
         # Once the provider is set and we have the eventual checks based on the resource identifier,
         # it is time to check what Prowler's checks are going to be executed
