@@ -271,8 +271,6 @@ def prowler():
                 checks_to_execute, excluded_services, provider
             )
 
-
-
         # Once the provider is set and we have the eventual checks based on the resource identifier,
         # it is time to check what Prowler's checks are going to be executed
         checks_from_resources = (
