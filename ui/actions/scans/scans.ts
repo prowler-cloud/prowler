@@ -140,21 +140,18 @@ export const scanOnDemand = async (formData: FormData) => {
     });
 
     if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || "Failed to start scan");
-      } catch {
-        throw new Error("Failed to start scan");
-      }
+      const errorData = await response.json();
+
+      return { success: false, error: errorData.errors[0].detail };
     }
 
     const data = await response.json();
-
     revalidatePath("/scans");
+
     return parseStringify(data);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error starting scan:", error);
+
     return { error: getErrorMessage(error) };
   }
 };

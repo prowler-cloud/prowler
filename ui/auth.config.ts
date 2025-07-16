@@ -90,6 +90,7 @@ export const authConfig = {
           email: userMeResponse.email,
           company: userMeResponse?.company,
           dateJoined: userMeResponse.dateJoined,
+          permissions: userMeResponse.permissions,
         };
 
         return {
@@ -121,6 +122,8 @@ export const authConfig = {
             email: userMeResponse.email,
             company: userMeResponse?.company,
             dateJoined: userMeResponse.dateJoined,
+
+            permissions: userMeResponse.permissions,
           };
 
           return {
@@ -171,6 +174,15 @@ export const authConfig = {
         companyName: user?.company,
         email: user?.email,
         dateJoined: user?.dateJoined,
+        permissions: user?.permissions || {
+          manage_users: false,
+          manage_account: false,
+          manage_providers: false,
+          manage_scans: false,
+          manage_integrations: false,
+          manage_billing: false,
+          unlimited_visibility: false,
+        },
       };
 
       if (account && user) {

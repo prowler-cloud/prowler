@@ -12,10 +12,9 @@ import { UserNav } from "../user-nav/user-nav";
 interface NavbarProps {
   title: string;
   icon: string | ReactNode;
-  user: UserProfileProps;
 }
 
-export function Navbar({ title, icon, user }: NavbarProps) {
+export function Navbar({ title, icon }: NavbarProps) {
   return (
     <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-primary">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
@@ -30,7 +29,7 @@ export function Navbar({ title, icon, user }: NavbarProps) {
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           <ThemeSwitch />
-          <UserNav user={user} />
+          <UserNav />
         </div>
       </div>
     </header>

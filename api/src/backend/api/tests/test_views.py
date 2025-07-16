@@ -14,7 +14,13 @@ import jwt
 import pytest
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
-from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    TEST_PASSWORD,
+    TEST_USER,
+    TODAY,
+    today_after_n_days,
+)
 from django.conf import settings
 from django.http import JsonResponse
 from django.test import RequestFactory
@@ -46,14 +52,6 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
-
-TODAY = str(datetime.today().date())
-
-
-def today_after_n_days(n_days: int) -> str:
-    return datetime.strftime(
-        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
-    )
 
 
 class TestViewSet:
@@ -2966,12 +2964,21 @@ class TestTaskViewSet:
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("resource-list"))
+        response = authenticated_client.get(
+            reverse("resource-list"), {"filter[updated_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_resources_list(self, authenticated_client, resources_fixture):
+    def test_resources_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("resource-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_resources_list(self, authenticated_client, resources_fixture):
+        response = authenticated_client.get(
+            reverse("resource-list"), {"filter[updated_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
 
@@ -2992,7 +2999,8 @@ class TestResourceViewSet:
         findings_fixture,
     ):
         response = authenticated_client.get(
-            reverse("resource-list"), {"include": include_values}
+            reverse("resource-list"),
+            {"include": include_values, "filter[updated_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
@@ -3020,8 +3028,9 @@ class TestResourceViewSet:
                 ("region.icontains", "west", 1),
                 ("service", "ec2", 2),
                 ("service.icontains", "ec", 2),
-                ("inserted_at.gte", "2024-01-01 00:00:00", 3),
-                ("updated_at.lte", "2024-01-01 00:00:00", 0),
+                ("inserted_at.gte", today_after_n_days(-1), 3),
+                ("updated_at.gte", today_after_n_days(-1), 3),
+                ("updated_at.lte", today_after_n_days(1), 3),
                 ("type.icontains", "prowler", 2),
                 # provider filters
                 ("provider_type", "aws", 3),
@@ -3041,7 +3050,8 @@ class TestResourceViewSet:
                 ("tags", "multi word", 1),
                 # full text search on resource
                 ("search", "arn", 3),
-                ("search", "def1", 1),
+                # To improve search efficiency, full text search is not fully applicable
+                # ("search", "def1", 1),
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
@@ -3056,13 +3066,41 @@ class TestResourceViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "updated_at" not in filter_name:
+            filters["filter[updated_at]"] = TODAY
         response = authenticated_client.get(
             reverse("resource-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
+
+    def test_resource_filter_by_scan_id(
+        self, authenticated_client, resources_fixture, scans_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {"filter[scan]": scans_fixture[0].id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_resource_filter_by_scan_id_in(
+        self, authenticated_client, resources_fixture, scans_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {
+                "filter[scan.in]": [
+                    scans_fixture[0].id,
+                    scans_fixture[1].id,
+                ]
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
 
     def test_resource_filter_by_provider_id_in(
         self, authenticated_client, resources_fixture
@@ -3073,7 +3111,8 @@ class TestResourceViewSet:
                 "filter[provider.in]": [
                     resources_fixture[0].provider.id,
                     resources_fixture[1].provider.id,
-                ]
+                ],
+                "filter[updated_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -3110,13 +3149,13 @@ class TestResourceViewSet:
     )
     def test_resources_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("resource-list"), {"sort": sort_field}
+            reverse("resource-list"), {"filter[updated_at]": TODAY, "sort": sort_field}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_resources_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("resource-list"), {"sort": "invalid"}
+            reverse("resource-list"), {"filter[updated_at]": TODAY, "sort": "invalid"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
@@ -3148,6 +3187,100 @@ class TestResourceViewSet:
             reverse("resource-detail", kwargs={"pk": "random_id"}),
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_resources_metadata_retrieve(
+        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+    ):
+        resource_1, *_ = resources_fixture
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": resource_1.updated_at.strftime("%Y-%m-%d")},
+        )
+        data = response.json()
+
+        expected_services = {"ec2", "s3"}
+        expected_regions = {"us-east-1", "eu-west-1"}
+        expected_resource_types = {"prowler-test"}
+
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+
+    def test_resources_metadata_resource_filter_retrieve(
+        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+    ):
+        resource_1, *_ = resources_fixture
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {
+                "filter[region]": "eu-west-1",
+                "filter[updated_at]": resource_1.updated_at.strftime("%Y-%m-%d"),
+            },
+        )
+        data = response.json()
+
+        expected_services = {"s3"}
+        expected_regions = {"eu-west-1"}
+        expected_resource_types = {"prowler-test"}
+
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+
+    def test_resources_metadata_future_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": "2048-01-01"},
+        )
+        data = response.json()
+        assert data["data"]["type"] == "resources-metadata"
+        assert data["data"]["id"] is None
+        assert data["data"]["attributes"]["services"] == []
+        assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["types"] == []
+
+    def test_resources_metadata_invalid_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("resource-metadata"),
+            {"filter[updated_at]": "2048-01-011"},
+        )
+        assert response.json() == {
+            "errors": [
+                {
+                    "detail": "Enter a valid date.",
+                    "status": "400",
+                    "source": {"pointer": "/data/attributes/updated_at"},
+                    "code": "invalid",
+                }
+            ]
+        }
+
+    def test_resources_latest(self, authenticated_client, latest_scan_resource):
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_metadata_latest(
+        self, authenticated_client, latest_scan_resource
+    ):
+        response = authenticated_client.get(
+            reverse("resource-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+
+        assert attributes["services"] == [latest_scan_resource.service]
+        assert attributes["regions"] == [latest_scan_resource.region]
+        assert attributes["types"] == [latest_scan_resource.type]
 
 
 @pytest.mark.django_db
@@ -3247,7 +3380,7 @@ class TestFindingViewSet:
                 ("search", "dev-qa", 1),
                 ("search", "orange juice", 1),
                 # full text search on resource
-                ("search", "ec2", 2),
+                ("search", "ec2", 1),
                 # full text search on finding tags (disabled for now)
                 # ("search", "value2", 2),
                 # Temporary disabled until we implement tag filtering in the UI
@@ -5361,6 +5494,30 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.v1.views.Task.objects.get")
+    def test_schedule_daily_already_scheduled(
+        self,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
+    ):
+        provider, *_ = providers_fixture
+        prowler_task = tasks_fixture[0]
+        mock_task_get.return_value = prowler_task
+        json_payload = {
+            "provider_id": str(provider.id),
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+
 
 @pytest.mark.django_db
 class TestIntegrationViewSet:
@@ -5978,11 +6135,13 @@ class TestSAMLConfigurationViewSet:
 
 @pytest.mark.django_db
 class TestTenantFinishACSView:
-    def test_dispatch_skips_if_user_not_authenticated(self):
+    def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = type("Anonymous", (), {"is_authenticated": False})()
+        request.session = {}
 
         with patch(
             "allauth.socialaccount.providers.saml.views.get_app_or_404"
@@ -5999,11 +6158,13 @@ class TestTenantFinishACSView:
 
         assert response.status_code in [200, 302]
 
-    def test_dispatch_skips_if_social_app_not_found(self, users_fixture):
+    def test_dispatch_skips_if_social_app_not_found(self, users_fixture, monkeypatch):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
         request = RequestFactory().get(
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = users_fixture[0]
+        request.session = {}
 
         with patch(
             "allauth.socialaccount.providers.saml.views.get_app_or_404"
@@ -6037,7 +6198,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["saml_default_role"],
+                "userType": ["no_permissions"],
             },
         )
 
@@ -6045,6 +6206,7 @@ class TestTenantFinishACSView:
             reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
         )
         request.user = user
+        request.session = {}
 
         with (
             patch(
@@ -6091,7 +6253,7 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="saml_default_role")
+        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
         assert role.tenant == tenants_fixture[0]
 
         assert (
@@ -6110,6 +6272,44 @@ class TestTenantFinishACSView:
         user.name = original_name
         user.company_name = original_company
         user.save()
+
+    def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
+        """Test that a user is properly deleted when created during SAML flow and an error occurs"""
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
+
+        # Create a test user to simulate one created during SAML flow
+        test_user = User.objects.using(MainRouter.admin_db).create(
+            email="testuser@example.com", name="Test User"
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = users_fixture[0]
+        request.session = {"saml_user_created": test_user.id}
+
+        # Force an exception to trigger rollback
+        with patch(
+            "allauth.socialaccount.providers.saml.views.get_app_or_404"
+        ) as mock_get_app:
+            mock_get_app.side_effect = Exception("Test error")
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+            # Verify the user was deleted
+            assert (
+                not User.objects.using(MainRouter.admin_db)
+                .filter(id=test_user.id)
+                .exists()
+            )
+
+            # Verify session was cleaned up
+            assert "saml_user_created" not in request.session
+
+            # Verify proper redirect
+            assert response.status_code == 302
+            assert "sso_saml_failed=true" in response.url
 
 
 @pytest.mark.django_db
