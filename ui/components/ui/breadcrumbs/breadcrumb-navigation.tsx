@@ -129,19 +129,19 @@ export function BreadcrumbNavigation({
                 href={buildNavigationUrl(breadcrumb.path)}
                 className="flex cursor-pointer items-center space-x-2"
               >
-                <span className="text-sm font-bold text-default-700 transition-colors hover:text-primary">
+                <span className="text-wrap text-sm font-bold text-default-700 transition-colors hover:text-primary">
                   {breadcrumb.name}
                 </span>
               </Link>
             ) : breadcrumb.isClickable && breadcrumb.onClick ? (
               <button
                 onClick={breadcrumb.onClick}
-                className="cursor-pointer text-sm font-medium text-primary transition-colors hover:text-primary-600"
+                className="cursor-pointer text-wrap text-sm font-medium text-primary transition-colors hover:text-primary-600"
               >
                 {breadcrumb.name}
               </button>
             ) : (
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-wrap text-sm font-medium text-gray-900 dark:text-gray-100">
                 {breadcrumb.name}
               </span>
             )}
