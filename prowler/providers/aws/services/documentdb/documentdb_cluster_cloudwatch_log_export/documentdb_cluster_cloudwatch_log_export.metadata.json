@@ -3,7 +3,7 @@
   "CheckID": "documentdb_cluster_cloudwatch_log_export",
   "CheckTitle": "Check if DocumentDB clusters are using the log export feature.",
   "CheckType": [],
-  "ServiceName": "documentdb",
+  "ServiceName": "DocumentDB",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
