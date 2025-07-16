@@ -28,9 +28,9 @@ class entra_users_mfa_capable(Check):
         for user in entra_client.users.values():
             report = CheckReportM365(
                 metadata=self.metadata(),
-                resource={},
-                resource_name="Users",
-                resource_id="users",
+                resource=user,
+                resource_name=user.name,
+                resource_id=user.id,
             )
 
             if not user.is_mfa_capable:

@@ -3,7 +3,7 @@
   "CheckID": "networkfirewall_in_all_vpc",
   "CheckTitle": "Ensure all VPCs have Network Firewall enabled",
   "CheckType": [],
-  "ServiceName": "network-firewall",
+  "ServiceName": "networkfirewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",

@@ -50,7 +50,11 @@ export const UserBasicInfoCard = ({
           </div>
           <div className="flex flex-col gap-2">
             <InfoField label="Organization ID" variant="transparent">
-              <TenantIdCopy id={tenantId} />
+              {tenantId ? (
+                <TenantIdCopy id={tenantId} />
+              ) : (
+                <span className="text-xs font-light">No organization</span>
+              )}
             </InfoField>
           </div>
         </div>
