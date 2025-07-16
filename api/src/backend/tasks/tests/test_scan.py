@@ -701,7 +701,6 @@ class TestCreateComplianceRequirements:
 
 @pytest.mark.django_db
 class TestUpdateResourceFailedFindingsCount:
-
     def test_execute_sql_update(
         self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
     ):
