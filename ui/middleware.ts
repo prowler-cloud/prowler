@@ -1,10 +1,49 @@
-import NextAuth from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
 
-import { authConfig } from "./auth.config";
+import { auth } from "@/auth.config";
 
-export default NextAuth(authConfig).auth;
+const publicRoutes = [
+  "/sign-in",
+  "/sign-up",
+  // In Cloud uncomment the following lines:
+  // "/reset-password",
+  // "/email-verification",
+  // "/set-password",
+];
+
+const isPublicRoute = (pathname: string): boolean => {
+  return publicRoutes.some((route) => pathname.startsWith(route));
+};
+
+export default auth((req: NextRequest & { auth: any }) => {
+  const { pathname } = req.nextUrl;
+  const user = req.auth?.user;
+
+  if (!user && !isPublicRoute(pathname)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  if (user?.permissions) {
+    const permissions = user.permissions;
+
+    if (pathname.startsWith("/billing") && !permissions.manage_billing) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
-  // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - *.png, *.jpg, *.jpeg, *.svg, *.ico (image files)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|ico|css|js)$).*)",
+  ],
 };

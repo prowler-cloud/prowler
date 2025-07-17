@@ -168,3 +168,24 @@ export const getLatestMetadataInfo = async ({
     return undefined;
   }
 };
+
+export const getFindingById = async (findingId: string, include = "") => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/findings/${findingId}`);
+  if (include) url.searchParams.append("include", include);
+
+  try {
+    const finding = await fetch(url.toString(), {
+      headers,
+    });
+
+    const data = await finding.json();
+    const parsedData = parseStringify(data);
+
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching finding by ID:", error);
+    return undefined;
+  }
+};
