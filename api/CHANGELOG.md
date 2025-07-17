@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 
 ---
 
@@ -70,7 +71,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)
-- S3 integration [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 
 ### Changed
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
