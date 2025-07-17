@@ -134,7 +134,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       ],
     },
     {
-      groupLabel: "Inventory",
+      groupLabel: "",
       menus: [
         {
           href: "",
