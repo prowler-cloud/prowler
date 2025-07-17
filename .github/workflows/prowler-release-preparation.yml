@@ -206,6 +206,7 @@ jobs:
         name: Prowler ${{ env.PROWLER_VERSION }}
         body_path: combined_changelog.md
         draft: true
+        target_commitish: ${{ env.PATCH_VERSION == '0' && 'master' || env.BRANCH_NAME }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
