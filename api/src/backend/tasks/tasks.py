@@ -17,6 +17,7 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -53,6 +54,11 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        ),
+    ).apply_async()
+    chain(
+        generate_threatscore_report_task.si(
+            tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
         ),
     ).apply_async()
 
@@ -420,3 +426,23 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+@set_tenant(keep_tenant=True)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    )
