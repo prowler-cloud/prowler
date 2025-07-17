@@ -559,7 +559,6 @@ def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
                            FROM findings AS f
                            JOIN resource_finding_mappings AS rfm
                              ON rfm.finding_id = f.id
-                            AND rfm.tenant_id   = f.tenant_id
                           WHERE f.tenant_id = %s
                             AND f.status    = %s
                             AND f.muted     = FALSE
