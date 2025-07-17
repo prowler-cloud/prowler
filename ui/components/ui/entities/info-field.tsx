@@ -13,7 +13,7 @@ interface InfoFieldProps {
 
 <Tooltip
   className="text-xs"
-  content="Download a ZIP file containing the JSON (OCSF), CSV, and HTML reports."
+  content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
 >
   <div className="flex items-center gap-2">
     <InfoIcon className="mb-1 text-primary" size={12} />
