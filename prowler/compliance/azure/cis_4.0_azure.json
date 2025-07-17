@@ -51,7 +51,9 @@
     {
       "Id": "3.1.1",
       "Description": "Ensure that Azure Databricks is deployed in a customer-managed virtual network (VNet)",
-      "Checks": [],
+      "Checks": [
+        "databricks_workspace_vnet_injection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Analytics Services",
@@ -232,7 +234,9 @@
     {
       "Id": "9.1.15",
       "Description": "Ensure that 'Notify about attack paths with the following risk level (or higher)' is enabled",
-      "Checks": [],
+      "Checks": [
+        "defender_attack_path_notifications_properly_configured"
+      ],
       "Attributes": [
         {
           "Section": "9 Security Services",
