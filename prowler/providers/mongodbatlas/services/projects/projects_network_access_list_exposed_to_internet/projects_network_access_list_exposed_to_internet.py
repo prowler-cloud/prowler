@@ -1,7 +1,6 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportMongoDBAtlas
-from prowler.providers.mongodbatlas.config import ATLAS_OPEN_WORLD_CIDRS
 from prowler.providers.mongodbatlas.services.projects.projects_client import (
     projects_client,
 )
@@ -38,7 +37,7 @@ class projects_network_access_list_exposed_to_internet(Check):
                 open_entries = []
 
                 for entry in project.network_access_entries:
-                    if entry.cidr_block and entry.cidr_block in ATLAS_OPEN_WORLD_CIDRS:
+                    if entry.cidr_block and entry.cidr_block in ["0.0.0.0/0", "::/0"]:
                         open_entries.append(f"CIDR: {entry.cidr_block}")
 
                     if entry.ip_address and entry.ip_address in ["0.0.0.0", "::"]:
