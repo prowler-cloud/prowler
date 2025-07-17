@@ -236,7 +236,6 @@ Detailed documentation at https://docs.prowler.com
         )
         exclude_checks_parser.add_argument(
             "--excluded-checks-file",
-            "-E",
             nargs="?",
             help="JSON file containing the checks to be excluded. See config/checklist_example.json",
         )
