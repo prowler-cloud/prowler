@@ -1776,6 +1776,15 @@ class ComplianceOverviewMetadataSerializer(serializers.Serializer):
         resource_name = "compliance-overviews-metadata"
 
 
+class ComplianceOverviewThreatscoreReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+    name = serializers.CharField()
+
+    class Meta:
+        resource_name = "scan-threatscore-reports"
+        fields = ["id", "name"]
+
+
 # Overviews
 
 
