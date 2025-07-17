@@ -16,155 +16,202 @@ For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.c
 ???+ important
     There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI. They can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 
-## Adding a New Provider
+---
 
-To integrate an unsupported Prowler provider and implement its security checks, create a dedicated folder for all related files (e.g., services, checks)."
+## Provider Types in Prowler
 
-This folder must be placed within [`prowler/providers/<new_provider_name>/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+Prowler supports several types of providers, each with its own implementation pattern and use case. Understanding the differences is key to designing your provider correctly.
 
-Within this folder the following folders are also to be created:
+### 1. SDK Providers
 
-- `lib` – Stores additional utility functions and core files required by every provider. The following files and subfolders are commonly found in every provider's `lib` folder:
+**Definition:**
+- Use the official SDK of the provider to interact with its resources and APIs.
+- Examples: AWS (boto3), Azure (azure-identity), GCP (google-auth), Kubernetes (kubernetes), M365 (msal/msgraph).
 
-    - `service/service.py` – Provides a generic service class to be inherited by all services.
-    - `arguments/arguments.py` – Handles provider-specific argument parsing.
-    - `mutelist/mutelist.py` – Manages the mutelist functionality for the provider.
+**Typical Use Cases:**
+- Cloud platforms and services with mature Python SDKs.
+- Need to support multiple authentication methods (profiles, service principals, etc).
 
-- `services` – Stores all [services](./services.md) that the provider offers and want to be audited by [Prowler checks](./checks.md).
+**Key Characteristics:**
+- Authentication and session management handled by the SDK.
+- Arguments: `profile`, `region`, `tenant_id`, `client_id`, `client_secret`, etc.
+- Outputs: Standardized via SDK models and responses.
 
-- `__init__.py` (empty) – Ensures Python recognizes this folder as a package.
+**Example Skeleton:**
+```python
+from prowler.providers.common.provider import Provider
+import boto3  # Example for AWS
 
-- `<new_provider_name>_provider.py` – Defines authentication logic, configurations, and other provider-specific data.
+class AwsProvider(Provider):
+    _type: str = "aws"
+    _session: boto3.Session
+    # ...
+    def __init__(self, profile=None, region=None, ...):
+        self._session = boto3.Session(profile_name=profile, region_name=region)
+        # ...
+```
 
-- `models.py` – Contains necessary models for the new provider.
+---
 
-By adhering to this structure, Prowler can effectively support services and security checks for additional providers.
+### 2. API Providers
+
+**Definition:**
+- Interact directly with the provider's REST API using HTTP requests (e.g., via `requests`).
+- Examples: NHN Cloud, GitHub (partially).
+
+**Typical Use Cases:**
+- Providers without a mature or official Python SDK.
+- Custom or community providers.
+
+**Key Characteristics:**
+- Manual management of authentication (tokens, username/password, etc).
+- Arguments: `username`, `password`, `tenant_id`, `token`, etc.
+- Outputs: Dicts or custom models based on API responses.
+
+**Example Skeleton:**
+```python
+from prowler.providers.common.provider import Provider
+import requests
+
+class NhnProvider(Provider):
+    _type: str = "nhn"
+    _session: requests.Session
+    # ...
+    def __init__(self, username, password, tenant_id, ...):
+        self._session = requests.Session()
+        token = self.get_token(username, password, tenant_id)
+        self._session.headers.update({"Authorization": f"Bearer {token}"})
+        # ...
+```
+
+---
+
+### 3. Tool/Wrapper Providers
+
+**Definition:**
+- Integrate a third-party tool as a library and map its arguments/outputs to Prowler's interface.
+- Example: IAC (Checkov).
+
+**Typical Use Cases:**
+- Infrastructure as Code (IaC) scanning, or when the provider is a CLI tool or external binary/library.
+
+**Key Characteristics:**
+- No session or identity management; the tool handles scanning and output.
+- Arguments: `scan_path`, `frameworks`, `exclude_path`, etc.
+- Outputs: Adapted from the tool's output format.
+
+**Example Skeleton:**
+```python
+from prowler.providers.common.provider import Provider
+from checkov.runner_filter import RunnerFilter
+
+class IacProvider(Provider):
+    _type: str = "iac"
+    def __init__(self, scan_path, frameworks, ...):
+        self.scan_path = scan_path
+        self.frameworks = frameworks
+        # ...
+    def run_scan(self):
+        # Call Checkov or similar tool
+        ...
+```
+
+---
+
+## Adding a New Provider (End-to-End)
+
+To integrate a new provider and make it available in the CLI, API, and UI, follow these steps:
+
+### 1. Create the Provider in the Backend
+
+#### 1.1. Folder Structure
+
+Create a new folder in [`prowler/providers/<new_provider_name>/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers):
+
+- `lib/` – Utility functions and core files (see below).
+- `services/` – All services to be audited by Prowler checks.
+- `__init__.py` – Empty, marks the folder as a Python package.
+- `<new_provider_name>_provider.py` – Main provider class (authentication, config, etc).
+- `models.py` – Data models for the provider.
+
+**lib/ folder should include:**
+- `service/service.py` – Generic service class for all services.
+- `arguments/arguments.py` – Argument parsing for the provider.
+- `mutelist/mutelist.py` – Mutelist logic for the provider.
 
 ???+ important
-    If your new provider requires a Python library (such as an official SDK or API client) to connect to its services, make sure to add it as a dependency in the `pyproject.toml` file. This ensures that all contributors and users have the necessary packages installed when working with your provider.
+    If your new provider requires a Python library (such as an official SDK or API client) to connect to its services, add it as a dependency in `pyproject.toml`.
 
-## Provider Structure in Prowler
+#### 1.2. Implement the Provider Class
 
-Prowler's provider architecture is designed to facilitate security audits through a generic service tailored to each provider. This is accomplished by passing the necessary parameters to the constructor, which initializes all required session values.
+All providers inherit from [`prowler/providers/common/provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py).
 
-### Base Class
+- For **SDK providers**, use the official SDK for authentication and resource access.
+- For **API providers**, use `requests` or similar to manage tokens and API calls.
+- For **Tool providers**, integrate the tool as a library and map its arguments/outputs.
 
-All Prowler providers inherit from the same base class located in [`prowler/providers/common/provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py). It is an [abstract base class](https://docs.python.org/3/library/abc.html) that defines the interface for all provider classes.
+#### 1.3. Map Arguments and Outputs
 
-### Provider Class
+- **SDK**: `profile`, `region`, `tenant_id`, `client_id`, `client_secret`, etc.
+- **API**: `username`, `password`, `tenant_id`, `token`, etc.
+- **Tool**: `scan_path`, `frameworks`, `exclude_path`, etc.
 
-#### Provider Implementation Guidance
+---
 
-Given the complexity and variability of providers, use existing provider implementations as templates when developing new integrations.
+### 2. Register the Provider in the CLI
 
-- [AWS](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_provider.py)
-- [GCP](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
-- [Azure](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
-- [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
-- [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
-- [GitHub](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
+- Ensure your provider is discoverable by the CLI. The CLI dynamically loads providers from the `prowler/providers/` directory.
+- Add argument parsing logic in `lib/cli/parser.py` if you need custom CLI flags.
 
-### Basic Provider Implementation: Pseudocode Example
+---
 
-To simplify understanding, the following pseudocode outlines the fundamental structure of a provider, including library imports necessary for authentication.
+### 3. Integrate the Provider in the API
 
-```python title="Provider Example Class"
+- Register the provider in the backend API (see `api/src/backend/api/models.py` and `api/src/backend/api/v1/views.py`).
+- Add your provider to the `ProviderChoices` enum and validation logic if needed.
+- Ensure the API can create, update, and manage your provider (see `ProviderViewSet`).
 
-# Library Imports for Authentication
+---
 
-# When implementing authentication for a provider, import the required libraries.
+### 4. Integrate the Provider in the UI
 
-from prowler.config.config import load_and_validate_config_file
-from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
-from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
-from prowler.providers.common.provider import Provider
-from prowler.providers.<new_provider_name>.models import (
-    # All provider models needed.
-    ProviderSessionModel,
-    ProviderIdentityModel,
-    ProviderOutputOptionsModel
-)
+- Add your provider to the supported list in the UI (see `ui/types/formSchemas.ts`, `ui/components/providers/radio-group-provider.tsx`, and related files).
+- Implement the provider's credential form and validation.
+- Ensure the provider appears in the provider selection, creation, and management flows.
 
-class NewProvider(Provider):
-    # All properties from the class, some of which are properties in the base class.
-    _type: str = "<provider_name>"
-    _session: <ProviderSessionModel>
-    _identity: <ProviderIdentityModel>
-    _audit_config: dict
-    _output_options: ProviderOutputOptionsModel
-    _mutelist: dict
-    audit_metadata: Audit_Metadata
+---
 
-    def __init__(self, arguments):
-        """
-        Initializes the NewProvider instance.
-        Args:
-            arguments (dict): A dictionary containing configuration arguments.
-        """
-        logger.info("Setting <NewProviderName> provider ...")
+## Implementation Guidance and Examples
 
-        # Initializing the Provider Session
+Use existing providers as templates:
 
-        # Steps:
+- [AWS (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_provider.py)
+- [Azure (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
+- [GCP (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
+- [Kubernetes (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
+- [M365 (SDK/API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/m365/m365_provider.py)
+- [GitHub (API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
+- [NHN (API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/nhn/nhn_provider.py)
+- [IAC (Tool)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/iac/iac_provider.py)
 
-        # - Retrieve Account Information
-        # - Extract relevant account identifiers (subscriptions, projects, or other service references) from the provided arguments.
+---
 
-        # Establish a Session
+## Checklist for New Providers
 
-        # Use the method enforced by the parent class to set up the session:
-        self._session = self.setup_session(credentials_file)
+- [ ] Folder and files created in `prowler/providers/<name>`
+- [ ] Provider class implemented and inherits from `Provider`
+- [ ] Authentication/session logic implemented
+- [ ] Arguments/flags mapped and documented
+- [ ] Outputs and metadata standardized
+- [ ] Registered in the CLI
+- [ ] Registered in the API (models, serializers, views)
+- [ ] Registered in the UI (types, forms, selection)
+- [ ] Minimal usage example provided
 
-        # Define Provider Identity
-        # Assign the identity class, typically provided by the Python provider library:
-        self._identity = <ProviderIdentityModel>()
+---
 
-        # Configure the Provider
-        # Set the provider-specific configuration.
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
+## Next Steps
 
-    # All the enforced properties by the parent class.
-    @property
-    def identity(self):
-        return self._identity
-
-    @property
-    def session(self):
-        return self._session
-
-    @property
-    def type(self):
-        return self._type
-
-    @property
-    def audit_config(self):
-        return self._audit_config
-
-    @property
-    def output_options(self):
-        return self._output_options
-
-    def setup_session(self, <all_needed_for_auth>):
-        """
-        Sets up the Provider session.
-
-        Args:
-            <all_needed_for_auth> Can include all necessary arguments to set up the session
-
-        Returns:
-            Credentials necessary to communicate with the provider.
-        """
-        pass
-
-    """
-    This method is enforced by parent class and is used to print all relevant
-    information during the prowler execution as a header of execution.
-    Displaying Account Information with Color Formatting. In Prowler, Account IDs, usernames, and other identifiers are typically displayed using color formatting provided by the colorama module (Fore).
-    """
-    def print_credentials(self):
-        pass
-```
+- [How to add a new Service](./services.md)
+- [How to add new Checks](./checks.md)
+- [How to contribute](../contributing.md)
