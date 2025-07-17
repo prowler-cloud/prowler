@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.10.0] (Prowler UNRELEASED)
+## [v1.10.0] (Prowler v5.9.0)
 
 ### Added
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)

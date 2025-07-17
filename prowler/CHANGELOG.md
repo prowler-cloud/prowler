@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.9.0] (Prowler UNRELEASED)
+## [v5.9.0] (Prowler v5.9.0)
 
 ### Added
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider [(#8123)](https://github.com/prowler-cloud/prowler/pull/8123)
@@ -35,7 +35,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.8.2] (Prowler UNRELEASED)
+## [v5.8.2] (Prowler 5.8.2)
 
 ### Fixed
 - Fix error in Dashboard Overview page when reading CSV files [(#8257)](https://github.com/prowler-cloud/prowler/pull/8257)
