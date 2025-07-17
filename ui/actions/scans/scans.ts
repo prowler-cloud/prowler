@@ -36,18 +36,14 @@ export const getScans = async ({
     url.searchParams.append(`fields[${key}]`, String(value));
   });
 
-  // Handle multiple filters
+  // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
-    const scans = await fetch(url.toString(), {
-      headers,
-    });
-    const data = await scans.json();
+    const response = await fetch(url.toString(), { headers });
+    const data = await response.json();
     const parsedData = parseStringify(data);
     revalidatePath("/scans");
     return parsedData;
@@ -144,21 +140,18 @@ export const scanOnDemand = async (formData: FormData) => {
     });
 
     if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || "Failed to start scan");
-      } catch {
-        throw new Error("Failed to start scan");
-      }
+      const errorData = await response.json();
+
+      return { success: false, error: errorData.errors[0].detail };
     }
 
     const data = await response.json();
-
     revalidatePath("/scans");
+
     return parseStringify(data);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error starting scan:", error);
+
     return { error: getErrorMessage(error) };
   }
 };

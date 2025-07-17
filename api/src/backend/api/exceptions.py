@@ -78,3 +78,21 @@ def custom_exception_handler(exc, context):
                 message_item["message"] for message_item in exc.detail["messages"]
             ]
     return exception_handler(exc, context)
+
+
+class ConflictException(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "A conflict occurred. The resource already exists."
+    default_code = "conflict"
+
+    def __init__(self, detail=None, code=None, pointer=None):
+        error_detail = {
+            "detail": detail or self.default_detail,
+            "status": self.status_code,
+            "code": self.default_code,
+        }
+
+        if pointer:
+            error_detail["source"] = {"pointer": pointer}
+
+        super().__init__(detail=[error_detail])
